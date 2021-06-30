@@ -23,7 +23,6 @@ import {
   roundNumber,
   formatDate,
   UserClientService,
-  UserType,
   formatWeek,
   slackNotify,
   getSlackID,
@@ -78,7 +77,7 @@ export const TimesheetSummary: FC<Props> = ({
   const [timesheetsJobs, setTimesheetsJobs] = useState<Job[]>();
   const [loading, setLoading] = useState<boolean>(true);
   const [loaded, setLoaded] = useState<boolean>(false);
-  const [user, setUser] = useState<User.AsObject>();
+  const [user, setUser] = useState<User>();
   const handlePendingPayrollToggleReject = useCallback(
     (timesheets?: TimesheetLine[]) => () => {
       setPendingPayrollReject(timesheets);

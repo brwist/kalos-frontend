@@ -31,7 +31,7 @@ export const useFetchAll = (fetchFn: () => Promise<Response>) => {
         });
       })();
     }
-  }, [fetchedCount, totalCount, fetchFn]);
+  }, [fetchedCount, totalCount, fetchFn, data]);
   return { data, isLoading: false };
 };
 

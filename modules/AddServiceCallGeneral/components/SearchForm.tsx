@@ -1,8 +1,9 @@
 import React, { FC, useState, useCallback } from 'react';
 import { Button } from '../../ComponentsLibrary/Button';
 import { PlainForm, Schema } from '../../ComponentsLibrary/PlainForm';
-import { getCFAppUrl, UsersFilter } from '../../../helpers';
+import { getCFAppUrl } from '../../../helpers';
 import './searchForm.less';
+import { UsersFilter } from '@kalos-core/kalos-rpc/User';
 
 interface Props {
   onSearch: (search: UsersFilter) => void;

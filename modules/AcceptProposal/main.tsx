@@ -46,10 +46,10 @@ interface state {
   isLoading: boolean;
   total: number;
   docID: number;
-  quoteLines: QuoteLine.AsObject[];
+  quoteLines: QuoteLine[];
   selected: number[];
-  property: Property.AsObject;
-  customer: User.AsObject;
+  property: Property;
+  customer: User;
   notes: string;
 }
 
@@ -72,8 +72,8 @@ export class AcceptProposal extends React.PureComponent<props, state> {
       total: 0,
       quoteLines: [],
       selected: [],
-      property: new Property().toObject(),
-      customer: new User().toObject(),
+      property: new Property(),
+      customer: new User(),
       docID: 0,
     };
 
@@ -86,12 +86,15 @@ export class AcceptProposal extends React.PureComponent<props, state> {
     this.SigPad = React.createRef();
   }
 
-  addQuoteLine = (ql: QuoteLine.AsObject) => {
-    ql.description = ql.description
-      .replace(/---\w{11}---/g, '"')
-      .replace(/-\w{11}-/g, "'")
-      .replace(/-percent-/g, '%')
-      .replace(/-and-/g, '&');
+  addQuoteLine = (ql: QuoteLine) => {
+    ql.setDescription(
+      ql
+        .getDescription()
+        .replace(/---\w{11}---/g, '"')
+        .replace(/-\w{11}-/g, "'")
+        .replace(/-percent-/g, '%')
+        .replace(/-and-/g, '&'),
+    );
     this.setState(prevState => ({
       quoteLines: prevState.quoteLines.concat(ql),
     }));
@@ -133,10 +136,10 @@ export class AcceptProposal extends React.PureComponent<props, state> {
 
   getTotal = () => {
     const qls = this.state.quoteLines.filter(ql =>
-      this.state.selected.includes(ql.id),
+      this.state.selected.includes(ql.getId()),
     );
-    return qls.reduce((acc: number, curr: QuoteLine.AsObject) => {
-      return acc + parseInt(curr.adjustment);
+    return qls.reduce((acc: number, curr: QuoteLine) => {
+      return acc + parseInt(curr.getAdjustment());
     }, 0);
   };
 
@@ -165,7 +168,7 @@ export class AcceptProposal extends React.PureComponent<props, state> {
       );
       const doc = await this.DocClient.Get(req);
       this.setState({
-        docID: doc.id,
+        docID: doc.getId(),
       });
     } catch (err) {
       console.log(err);
@@ -220,14 +223,14 @@ export class AcceptProposal extends React.PureComponent<props, state> {
       <ApprovedProposal
         sigURL={this.state.sigURL}
         quoteLines={this.state.quoteLines.filter(ql =>
-          this.state.selected.includes(ql.id),
+          this.state.selected.includes(ql.getId()),
         )}
         jobNumber={this.props.jobNumber}
         property={this.state.property}
         name={
           this.props.useBusinessName
-            ? this.state.customer.businessname
-            : `${this.state.customer.firstname} ${this.state.customer.lastname}`
+            ? this.state.customer.getBusinessname()
+            : `${this.state.customer.getFirstname()} ${this.state.customer.getLastname()}`
         }
         total={this.getTotal()}
         notes={this.state.notes}
@@ -251,14 +254,14 @@ export class AcceptProposal extends React.PureComponent<props, state> {
       <ApprovedProposal
         sigURL={this.state.sigURL}
         quoteLines={this.state.quoteLines.filter(ql =>
-          this.state.selected.includes(ql.id),
+          this.state.selected.includes(ql.getId()),
         )}
         jobNumber={this.props.jobNumber}
         property={this.state.property}
         name={
           this.props.useBusinessName
-            ? this.state.customer.businessname
-            : `${this.state.customer.firstname} ${this.state.customer.lastname}`
+            ? this.state.customer.getBusinessname()
+            : `${this.state.customer.getFirstname()} ${this.state.customer.getLastname()}`
         }
         total={this.getTotal()}
         notes={this.state.notes}
@@ -271,7 +274,7 @@ export class AcceptProposal extends React.PureComponent<props, state> {
     );
     urlObj.setContentType('pdf');
     const urlRes = await this.S3Client.GetUploadURL(urlObj);
-    const uploadRes = await fetch(urlRes.url, {
+    const uploadRes = await fetch(urlRes.getUrl(), {
       body: fd,
       method: 'PUT',
     });
@@ -303,7 +306,8 @@ export class AcceptProposal extends React.PureComponent<props, state> {
     const qd = new QuoteDocument();
     qd.setDocumentId(this.state.docID);
     const res = await this.QDClient.Get(qd);
-    const notes = res.jobNotes
+    const notes = res
+      .getJobNotes()
       .replace(/---\w{11}---/g, '"')
       .replace(/-\w{11}-/g, "'")
       .replace(/-percent-/g, '%')
@@ -323,8 +327,8 @@ export class AcceptProposal extends React.PureComponent<props, state> {
           {
             title: 'Customer',
             value: this.props.useBusinessName
-              ? this.state.customer.businessname
-              : `${this.state.customer.firstname} ${this.state.customer.lastname}`,
+              ? this.state.customer.getBusinessname()
+              : `${this.state.customer.getFirstname()} ${this.state.customer.getLastname()}`,
           },
           {
             title: 'Job Number',
@@ -332,9 +336,9 @@ export class AcceptProposal extends React.PureComponent<props, state> {
           },
           {
             title: 'Address',
-            value: `${this.state.property.address}, ${
-              this.state.property.city
-            }, ${this.state.property.state || 'FL'}`,
+            value: `${this.state.property.getAddress()}, ${this.state.property.getCity()}, ${
+              this.state.property.getState() || 'FL'
+            }`,
           },
           {
             title: 'Link to Call',
@@ -363,9 +367,10 @@ export class AcceptProposal extends React.PureComponent<props, state> {
       await this.createLog();
       await this.pingSlack();
       const name =
-        this.props.useBusinessName && this.state.customer.businessname != ''
-          ? this.state.customer.businessname
-          : `${this.state.customer.firstname}`;
+        this.props.useBusinessName &&
+        this.state.customer.getBusinessname() != ''
+          ? this.state.customer.getBusinessname()
+          : `${this.state.customer.getFirstname()}`;
       window.location.href = `https://app.kalosflorida.com/index.cfm?action=customer:service.post_proposal&user_id=${this.props.userID}&username=${name}&jobNumber=${this.props.jobNumber}`;
     } catch (err) {
       alert(
@@ -419,21 +424,19 @@ export class AcceptProposal extends React.PureComponent<props, state> {
                 { name: 'Confirm', width: 80, align: 'center' },
               ]}
               data={[
-                ...this.state.quoteLines.map(
-                  ({ id, description, adjustment }) => [
-                    { value: description },
-                    { value: usd(+adjustment) },
-                    {
-                      value: (
-                        <Checkbox
-                          checked={this.state.selected.includes(id)}
-                          value={id}
-                          onChange={this.handleSelect}
-                        />
-                      ),
-                    },
-                  ],
-                ),
+                ...this.state.quoteLines.map((id, description, adjustment) => [
+                  { value: description },
+                  { value: usd(+adjustment) },
+                  {
+                    value: (
+                      <Checkbox
+                        checked={this.state.selected.includes(id.getId())}
+                        value={id}
+                        onChange={this.handleSelect}
+                      />
+                    ),
+                  },
+                ]),
                 [
                   {
                     value: (
@@ -493,8 +496,8 @@ export class AcceptProposal extends React.PureComponent<props, state> {
             ]}
             data={[
               ...this.state.quoteLines
-                .filter(ql => this.state.selected.includes(ql.id))
-                .map(({ description, adjustment }) => [
+                .filter(ql => this.state.selected.includes(ql.getId()))
+                .map((description, adjustment) => [
                   { value: description },
                   { value: usd(+adjustment) },
                 ]),

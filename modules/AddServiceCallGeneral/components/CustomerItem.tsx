@@ -1,15 +1,16 @@
 import React, { FC, useCallback } from 'react';
 import { Link } from '../../ComponentsLibrary/Link';
 import { InfoTable, Data, Columns } from '../../ComponentsLibrary/InfoTable';
-import { UserType, PropertyType, UserClientService } from '../../../helpers';
-import { getPropertyAddress } from '@kalos-core/kalos-rpc/Property';
+import { UserClientService } from '../../../helpers';
+import { getPropertyAddress, Property } from '@kalos-core/kalos-rpc/Property';
+import { User } from '@kalos-core/kalos-rpc/User';
 
 export interface Props {
   loggedUserId: number;
-  customer: UserType;
-  onAddServiceCall: (property: PropertyType) => void;
-  onCustomerClick: (customer: UserType) => void;
-  onAddProperty: (customer: UserType) => void;
+  customer: User;
+  onAddServiceCall: (property: Property) => void;
+  onCustomerClick: (customer: User) => void;
+  onAddProperty: (customer: User) => void;
 }
 
 export const CustomerItem: FC<Props> = ({
@@ -18,32 +19,29 @@ export const CustomerItem: FC<Props> = ({
   onCustomerClick,
   onAddProperty,
 }) => {
-  const { propertiesList } = customer;
+  const propertiesList = customer.getPropertiesList();
   const handleCustomerClick = useCallback(
-    (customer: UserType) => (
-      event: React.MouseEvent<HTMLAnchorElement, MouseEvent>,
-    ) => {
-      event.preventDefault();
-      onCustomerClick(customer);
-    },
+    (customer: User) =>
+      (event: React.MouseEvent<HTMLAnchorElement, MouseEvent>) => {
+        event.preventDefault();
+        onCustomerClick(customer);
+      },
     [onCustomerClick],
   );
   const handlePropertyClick = useCallback(
-    (property: PropertyType) => (
-      event: React.MouseEvent<HTMLAnchorElement, MouseEvent>,
-    ) => {
-      event.preventDefault();
-      onAddServiceCall(property);
-    },
+    (property: Property) =>
+      (event: React.MouseEvent<HTMLAnchorElement, MouseEvent>) => {
+        event.preventDefault();
+        onAddServiceCall(property);
+      },
     [onAddServiceCall],
   );
   const handleAddProperty = useCallback(
-    (customer: UserType) => () => onAddProperty(customer),
+    (customer: User) => () => onAddProperty(customer),
     [onAddProperty],
   );
-  const customerNameAndBusinessName = UserClientService.getCustomerNameAndBusinessName(
-    customer,
-  );
+  const customerNameAndBusinessName =
+    UserClientService.getCustomerNameAndBusinessName(customer);
   const columns: Columns = [
     {
       name: (

@@ -9,8 +9,6 @@ import { ServicesRendered } from '@kalos-core/kalos-rpc/ServicesRendered';
 import {
   getRPCFields,
   makeFakeRows,
-  UserType,
-  PropertyType,
   PropertyClientService,
   JobTypeClientService,
   JobSubtypeClientService,
@@ -18,7 +16,7 @@ import {
   loadProjects,
   JobTypeSubtypeClientService,
   ServicesRenderedClientService,
-  ActivityLogClientService,
+  makeSafeFormObject,
 } from '../../../helpers';
 import { ENDPOINT, OPTION_BLANK } from '../../../constants';
 import { Modal } from '../Modal';
@@ -44,11 +42,9 @@ import { format } from 'date-fns';
 const EventClientService = new EventClient(ENDPOINT);
 const UserClientService = new UserClient(ENDPOINT);
 
-export type EventType = Event.AsObject;
-type JobTypeType = JobType.AsObject;
-type JobSubtypeType = JobSubtype.AsObject;
-export type JobTypeSubtypeType = JobTypeSubtype.AsObject;
-export type ServicesRenderedType = ServicesRendered.AsObject;
+export type EventType = Event;
+export type JobTypeSubtypeType = JobTypeSubtype;
+export type ServicesRenderedType = ServicesRendered;
 
 export interface Props {
   userID: number;
@@ -61,11 +57,11 @@ export interface Props {
   projectParentId?: number;
 }
 
-const SCHEMA_PROPERTY_NOTIFICATION: Schema<UserType> = [
+const SCHEMA_PROPERTY_NOTIFICATION: Schema<User> = [
   [
     {
       label: 'Notification',
-      name: 'notification',
+      name: 'getNotification',
       required: true,
       multiline: true,
     },
@@ -89,34 +85,34 @@ export const ServiceCall: FC<Props> = props => {
   const [pendingSave, setPendingSave] = useState<boolean>(false);
   const [requestValid, setRequestValid] = useState<boolean>(false);
   const [serviceCallId, setServiceCallId] = useState<number>(eventId || 0);
-  const [entry, setEntry] = useState<EventType>(new Event().toObject());
-  const [property, setProperty] = useState<PropertyType>(
-    new Property().toObject(),
-  );
-  const [customer, setCustomer] = useState<UserType>(new User().toObject());
-  const [propertyEvents, setPropertyEvents] = useState<EventType[]>([]);
+  const [entry, setEntry] = useState<Event>(new Event());
+  const [property, setProperty] = useState<Property>(new Property());
+  const [customer, setCustomer] = useState<User>(new User());
+  const [propertyEvents, setPropertyEvents] = useState<Event[]>([]);
   const [loaded, setLoaded] = useState<boolean>(false);
   const [loading, setLoading] = useState<boolean>(true);
   const [saving, setSaving] = useState<boolean>(false);
-  const [jobTypes, setJobTypes] = useState<JobTypeType[]>([]);
-  const [jobSubtypes, setJobSubtype] = useState<JobSubtypeType[]>([]);
-  const [jobTypeSubtypes, setJobTypeSubtypes] = useState<JobTypeSubtypeType[]>(
+  const [error, setError] = useState<boolean>(false);
+  const [jobTypes, setJobTypes] = useState<JobType[]>([]);
+  const [jobSubtypes, setJobSubtype] = useState<JobSubtype[]>([]);
+  const [jobTypeSubtypes, setJobTypeSubtypes] = useState<JobTypeSubtype[]>([]);
+
+  const [servicesRendered, setServicesRendered] = useState<ServicesRendered[]>(
     [],
   );
-
-  const [servicesRendered, setServicesRendered] = useState<
-    ServicesRenderedType[]
-  >([]);
-  const [loggedUser, setLoggedUser] = useState<UserType>();
-  const [notificationEditing, setNotificationEditing] =
-    useState<boolean>(false);
-  const [notificationViewing, setNotificationViewing] =
-    useState<boolean>(false);
-  const [projects, setProjects] = useState<EventType[]>([]);
+  const [loggedUser, setLoggedUser] = useState<User>();
+  const [notificationEditing, setNotificationEditing] = useState<boolean>(
+    false,
+  );
+  const [notificationViewing, setNotificationViewing] = useState<boolean>(
+    false,
+  );
+  const [projects, setProjects] = useState<Event[]>([]);
   const [parentId, setParentId] = useState<number | null>(null);
-  const [confirmedParentId, setConfirmedParentId] =
-    useState<number | null>(null);
-  const [error, setError] = useState<string>('');
+  const [confirmedParentId, setConfirmedParentId] = useState<number | null>(
+    null,
+  );
+  const [projectData, setProjectData] = useState<Event>(new Event());
   const loadEntry = useCallback(
     async (_serviceCallId = serviceCallId) => {
       if (_serviceCallId) {
@@ -132,10 +128,15 @@ export const ServiceCall: FC<Props> = props => {
     async (_serviceCallId = serviceCallId) => {
       if (_serviceCallId) {
         setLoading(true);
-        const servicesRendered =
-          await ServicesRenderedClientService.loadServicesRenderedByEventID(
-            _serviceCallId,
-          );
+        const req = new ServicesRendered();
+        req.setIsActive(1);
+        req.setEventId(_serviceCallId);
+        const servicesRendered = (
+          await ServicesRenderedClientService.BatchGet(req)
+        ).getResultsList();
+        //const servicesRendered = await ServicesRenderedClientService.loadServicesRenderedByEventID(
+        //  _serviceCallId,
+        //);
         setServicesRendered(servicesRendered);
         setLoading(false);
       }
@@ -150,6 +151,9 @@ export const ServiceCall: FC<Props> = props => {
 
   const load = useCallback(async () => {
     setLoading(true);
+    let newProjectData = projectData;
+    newProjectData.setPropertyId(propertyId);
+    setProjectData(newProjectData);
     try {
       let promises = [];
 
@@ -245,20 +249,12 @@ export const ServiceCall: FC<Props> = props => {
       setLoading(false);
     }
   }, [
-    setLoading,
-    setLoaded,
-    setJobTypes,
-    userID,
+    projectData,
     propertyId,
-    setPropertyEvents,
+    userID,
     loggedUserId,
-    setLoggedUser,
-    setProperty,
-    setCustomer,
-    setProjects,
     loadEntry,
     loadServicesRenderedData,
-    handleSetError,
   ]);
 
   const handleSetParentId = useCallback(
@@ -284,14 +280,23 @@ export const ServiceCall: FC<Props> = props => {
   }, [setPendingSave, setTabKey, setTabIdx, tabKey, tabIdx]);
   const saveServiceCall = useCallback(async () => {
     setSaving(true);
-    const req = new Event();
+    const req = entry;
     req.setIsActive(1);
-    const fieldMaskList: string[] = ['IsActive'];
     if (serviceCallId) {
       req.setId(serviceCallId);
+      req.addFieldMask('Id');
     } else {
       setLoading(true);
     }
+    let res = new Event();
+    if (serviceCallId) {
+      console.log('saving existing ID');
+      res = await EventClientService.Update(req);
+    } else {
+      res = await EventClientService.Create(req);
+      console.log('creating new one');
+    }
+    /*
     requestFields.forEach(fieldName => {
       //@ts-ignore
       if (fieldName === 'id' || typeof entry[fieldName] === 'object') return;
@@ -304,12 +309,13 @@ export const ServiceCall: FC<Props> = props => {
     const res = await EventClientService[serviceCallId ? 'Update' : 'Create'](
       req,
     );
+    */
     setEntry(res);
     setSaving(false);
     if (!serviceCallId) {
-      setServiceCallId(res.id);
-      await loadEntry(res.id);
-      await loadServicesRenderedData(res.id);
+      setServiceCallId(res.getId());
+      await loadEntry(res.getId());
+      await loadServicesRenderedData(res.getId());
     }
     if (onSave) {
       onSave();
@@ -326,44 +332,19 @@ export const ServiceCall: FC<Props> = props => {
     loadServicesRenderedData,
   ]);
   const saveProject = useCallback(
-    async (data: EventType) => {
+    async (data: Event) => {
       setSaving(true);
-      if (confirmedParentId) data.parentId = confirmedParentId;
-      try {
-        const event = await EventClientService.upsertEvent(data);
-
-        setSaving(false);
-        try {
-          let req = new ActivityLog();
-          req.setUserId(loggedUserId);
-          req.setActivityName(
-            `Created event: ${event.id} ${
-              asProject
-                ? `as project with department id: ${event.departmentId}`
-                : ''
-            }`,
-          );
-          req.setActivityDate(format(new Date(), 'yyyy-MM-dd hh:mm:ss'));
-          req.setPropertyId(property.id);
-          req.setEventId(event.id);
-          await ActivityLogClientService.Create(req);
-        } catch (err) {
-          console.error(
-            `An error occurred while uploading the log for the project: ${err}. If this issue persists, please inform a member of the webtech team.`,
-          );
-          handleSetError(
-            `An error occurred while uploading the log for the project: ${err}. If this issue persists, please inform a member of the webtech team.`,
-          );
-        }
-        if (onSave) {
-          onSave();
-        }
-        if (onClose) {
-          onClose();
-        }
-      } catch (err) {
-        console.error('An error occurred while uploading the project: ', err, '. If this issue persists, please inform a member of the webtech team.');
-        handleSetError(`An error occurred while uploading the project: ${err}. If this issue persists, please inform a member of the webtech team.`);
+      if (confirmedParentId) {
+        data.setParentId(confirmedParentId);
+      }
+      const temp = makeSafeFormObject(data, new Event());
+      await EventClientService.upsertEvent(data);
+      setSaving(false);
+      if (onSave) {
+        onSave();
+      }
+      if (onClose) {
+        onClose();
       }
     },
     [
@@ -381,7 +362,11 @@ export const ServiceCall: FC<Props> = props => {
       load();
       setLoaded(true);
     }
-    if (entry && entry.customer && entry.customer.notification !== '') {
+    if (
+      entry &&
+      entry.getCustomer() &&
+      entry.getCustomer()!.getNotification() !== ''
+    ) {
       setNotificationViewing(true);
     }
     if (pendingSave && requestValid) {
@@ -414,8 +399,10 @@ export const ServiceCall: FC<Props> = props => {
   );
 
   const handleChangeEntry = useCallback(
-    (data: EventType) => {
-      setEntry({ ...entry, ...data });
+    (data: Event) => {
+      const temp = makeSafeFormObject(data, new Event());
+      const tempObject = Object.assign(entry, temp);
+      setEntry(tempObject);
       setPendingSave(false);
     },
     [entry, setEntry, setPendingSave],
@@ -434,8 +421,9 @@ export const ServiceCall: FC<Props> = props => {
   );
 
   const handleSaveCustomer = useCallback(
-    async (data: UserType) => {
+    async (data: User) => {
       setSaving(true);
+      const temp = makeSafeFormObject(data, new User());
       const entry = new User();
       entry.setId(userID);
       const fieldMaskList = [];
@@ -446,41 +434,46 @@ export const ServiceCall: FC<Props> = props => {
         fieldMaskList.push(upperCaseProp);
       }
       entry.setFieldMaskList(fieldMaskList);
-      await UserClientService.Update(entry);
+      //await UserClientService.Update(entry);
       await loadEntry();
       setSaving(false);
       handleSetNotificationEditing(false)();
     },
-    [setSaving, userID, handleSetNotificationEditing, loadEntry],
+    [userID, loadEntry, handleSetNotificationEditing],
   );
 
   const handleOnAddMaterials = useCallback(
     async (materialUsed, materialTotal) => {
       await EventClientService.updateMaterialUsed(
         serviceCallId,
-        materialUsed + entry.materialUsed,
-        materialTotal + entry.materialTotal,
+        materialUsed + entry.getMaterialUsed(),
+        materialTotal + entry.getMaterialTotal(),
       );
       await loadEntry();
     },
     [serviceCallId, entry, loadEntry],
   );
 
-  const jobTypeOptions: Option[] = jobTypes.map(
-    ({ id: value, name: label }) => ({ label, value }),
-  );
+  const jobTypeOptions: Option[] = jobTypes.map(id => ({
+    label: id.getName(),
+    value: id.getId(),
+  }));
 
   const jobSubtypeOptions: Option[] = [
     { label: OPTION_BLANK, value: 0 },
     ...jobTypeSubtypes
-      .filter(({ jobTypeId }) => jobTypeId === entry.jobTypeId)
-      .map(({ jobSubtypeId }) => ({
-        value: jobSubtypeId,
-        label: jobSubtypes.find(({ id }) => id === jobSubtypeId)?.name || '',
+      .filter(jobTypeId => jobTypeId.getJobTypeId() === entry.getJobTypeId())
+      .map(jobSubtypeId => ({
+        value: jobSubtypeId.getId(),
+        label:
+          jobSubtypes
+            .find(id => id.getId() === jobSubtypeId.getId())
+            ?.getName() || '',
       })),
   ];
 
-  const { id, logJobNumber, contractNumber } = entry;
+  //const { id, logJobNumber, contractNumber } = entry;
+  /*
   const {
     firstname,
     lastname,
@@ -493,7 +486,26 @@ export const ServiceCall: FC<Props> = props => {
     billingTerms,
     notification,
   } = customer;
+
   const { address, city, state, zip } = property;
+  */
+  const id = entry.getId();
+  const logJobNumber = entry.getLogJobNumber();
+  const contractNumber = entry.getContractNumber();
+  const firstname = customer.getFirstname();
+  const lastname = customer.getLastname();
+  const businessname = customer.getBusinessname();
+  const phone = customer.getPhone();
+  const altphone = customer.getAltphone();
+  const cellphone = customer.getCellphone();
+  const fax = customer.getFax();
+  const email = customer.getEmail();
+  const billingTerms = customer.getBillingTerms();
+  const notification = customer.getNotification();
+  const address = property.getAddress();
+  const city = property.getCity();
+  const state = property.getState();
+  const zip = property.getZip();
   const data: Data = [
     [
       { label: 'Customer', value: `${firstname} ${lastname}` },
@@ -527,25 +539,25 @@ export const ServiceCall: FC<Props> = props => {
   const SCHEMA_PROJECT: Schema<EventType> = [
     [
       {
-        name: 'dateStarted',
+        name: 'getDateStarted',
         label: 'Start Date',
         type: 'date',
         required: true,
       },
       {
-        name: 'dateEnded',
+        name: 'getDateEnded',
         label: 'End Date',
         type: 'date',
         required: true,
       },
       {
-        name: 'timeStarted',
+        name: 'getTimeStarted',
         label: 'Time Started',
         type: 'time',
         required: true,
       },
       {
-        name: 'timeEnded',
+        name: 'getTimeEnded',
         label: 'Time Ended',
         type: 'time',
         required: true,
@@ -553,61 +565,57 @@ export const ServiceCall: FC<Props> = props => {
     ],
     [
       {
-        name: 'departmentId',
+        name: 'getDepartmentId',
         label: 'Department',
         type: 'department',
         required: true,
       },
       {
-        name: 'description',
+        name: 'getDescription',
         label: 'Description',
         multiline: true,
       },
     ],
     [
       {
-        name: 'isAllDay',
+        name: 'getIsAllDay',
         label: 'Is all-day?',
         type: 'checkbox',
       },
       {
-        name: 'isLmpc',
+        name: 'getIsLmpc',
         label: 'Is LMPC?',
         type: 'checkbox',
       },
       {
-        name: 'highPriority',
+        name: 'getHighPriority',
         label: 'High priority?',
         type: 'checkbox',
       },
       {
-        name: 'isResidential',
+        name: 'getIsResidential',
         label: 'Is residential?',
         type: 'checkbox',
       },
     ],
     [
       {
-        name: 'color',
+        name: 'getColor',
         label: 'Color',
         type: 'color',
       },
     ],
     [
       {
-        name: 'propertyId',
+        name: 'getPropertyId',
         type: 'hidden',
       },
     ],
   ];
   return (
-    <div>
-      {error && (
-        <Alert title="Error" open={true} onClose={() => handleSetError('')}>
-          {`${error}`}
-        </Alert>
-      )}
+    <>
       <SectionBar
+        key={loading.toString()}
         title={asProject ? 'Project Details' : 'Service Call Details'}
         actions={
           serviceCallId
@@ -655,22 +663,20 @@ export const ServiceCall: FC<Props> = props => {
             : []
         }
       >
-        <InfoTable
-          data={data}
-          loading={loading}
-          error={error !== '' && error !== undefined}
-        />
+        <InfoTable data={data} error={error} />
       </SectionBar>
       {asProject ? (
         <>
           <Form
             title="Project Data"
             schema={SCHEMA_PROJECT}
-            data={{ ...new Event().toObject(), propertyId }}
+            data={projectData}
             onClose={onClose || (() => {})}
-            onSave={(data: EventType) =>
-              saveProject({ ...data, departmentId: Number(data.departmentId) })
-            }
+            onSave={(data: Event) => {
+              let newData = makeSafeFormObject(data, new Event());
+              newData.setDepartmentId(Number(newData.getDepartmentId()));
+              saveProject(newData);
+            }}
           />
           {parentId != confirmedParentId && parentId != null && (
             <Confirm
@@ -689,14 +695,12 @@ export const ServiceCall: FC<Props> = props => {
           {loaded && projects.length > 0 ? (
             <GanttChart
               events={projects.map(task => {
-                const {
-                  id,
-                  description,
-                  dateStarted: dateStart,
-                  dateEnded: dateEnd,
-                  logJobStatus,
-                  color,
-                } = task;
+                const id = task.getId();
+                const description = task.getDescription();
+                const dateStart = task.getDateStarted();
+                const dateEnd = task.getDateEnded();
+                const logJobStatus = task.getLogJobNumber();
+                const color = task.getColor();
                 const [startDate, startHour] = dateStart.split(' ');
                 const [endDate, endHour] = dateEnd.split(' ');
                 return {
@@ -712,8 +716,10 @@ export const ServiceCall: FC<Props> = props => {
                   },
                 };
               })}
-              startDate={projects[0].dateStarted.substr(0, 10)}
-              endDate={projects[projects.length - 1].dateEnded.substr(0, 10)}
+              startDate={projects[0].getDateStarted().substr(0, 10)}
+              endDate={projects[projects.length - 1]
+                .getDateEnded()
+                .substr(0, 10)}
               loading={loading}
             />
           ) : (
@@ -747,7 +753,7 @@ export const ServiceCall: FC<Props> = props => {
             ]}
           />
           <Tabs
-            key={tabKey}
+            key={tabKey + loading.toString()}
             defaultOpenIdx={tabIdx}
             onChange={setTabIdx}
             tabs={[
@@ -755,6 +761,7 @@ export const ServiceCall: FC<Props> = props => {
                 label: 'Request',
                 content: (
                   <Request
+                    key={loading.toString()}
                     //@ts-ignore
                     ref={requestRef}
                     serviceItem={entry}
@@ -862,7 +869,7 @@ export const ServiceCall: FC<Props> = props => {
             handleSetNotificationEditing(false)();
           }}
         >
-          <Form<UserType>
+          <Form<User>
             title={
               notificationViewing
                 ? 'Customer Notification'
@@ -895,7 +902,9 @@ export const ServiceCall: FC<Props> = props => {
                       variant: 'outlined',
                       onClick: () => {
                         handleSetNotificationViewing(false)();
-                        handleSaveCustomer({ notification: '' } as UserType);
+                        let newUser = new User();
+                        newUser.setNotification('');
+                        handleSaveCustomer(newUser);
                       },
                     },
                   ]
@@ -904,6 +913,6 @@ export const ServiceCall: FC<Props> = props => {
           />
         </Modal>
       )}
-    </div>
+    </>
   );
 };

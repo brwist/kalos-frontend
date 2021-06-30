@@ -103,14 +103,14 @@ export class AltGallery extends React.PureComponent<props, state> {
       );
       const galleryData = docs.map(d => {
         return {
-          key: `${this.props.transactionID}-${d.reference}`,
+          key: `${this.props.transactionID}-${d.getReference()}`,
           bucket: 'kalos-transactions',
         };
       });
 
       const documentList = docs.map(d => ({
-        reference: d.reference,
-        id: d.transactionId,
+        reference: d.getReference(),
+        id: d.getTransactionId(),
       }));
       documentList.reverse();
       this.setState({ fileList: galleryData, documentList }, () =>

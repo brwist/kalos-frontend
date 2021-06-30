@@ -7,7 +7,7 @@ import { SectionBar } from '../../../ComponentsLibrary/SectionBar';
 import { InfoTable } from '../../../ComponentsLibrary/InfoTable';
 import { Modal } from '../../../ComponentsLibrary/Modal';
 import { SpiffTool } from '../../../SpiffToolLogs/components/SpiffTool';
-import { TaskType, makeFakeRows, formatWeek } from '../../../../helpers';
+import { makeFakeRows, formatWeek } from '../../../../helpers';
 import {
   TaskClient,
   Task,
@@ -31,10 +31,10 @@ export const ToolLogs: FC<Props> = ({
   userId,
 }) => {
   const [loading, setLoading] = useState<boolean>(false);
-  const [toolLogs, setToolLogs] = useState<TaskType[]>([]);
+  const [toolLogs, setToolLogs] = useState<Task[]>([]);
   const [page, setPage] = useState<number>(0);
   const [count, setCount] = useState<number>(0);
-  const [pendingView, setPendingView] = useState<TaskType>();
+  const [pendingView, setPendingView] = useState<Task>();
   const [startDay, setStartDay] = useState<Date>(
     startOfWeek(subDays(new Date(), 7), { weekStartsOn: 6 }),
   );
@@ -68,19 +68,17 @@ export const ToolLogs: FC<Props> = ({
         endDate: format(addDays(new Date(week), 6), 'yyyy-MM-dd'),
       });
     }
-    const {
-      resultsList,
-      totalCount,
-    } = await TaskClientService.loadPendingToolLogs(filter);
-    setToolLogs(resultsList);
-    setCount(totalCount);
+
+    const results = await TaskClientService.loadPendingToolLogs(filter);
+    setToolLogs(results.getResultsList());
+    setCount(results.getTotalCount());
     setLoading(false);
   }, [page, employeeId, week, role, departmentId]);
   useEffect(() => {
     load();
   }, [page, employeeId, week, load]);
   const handleTogglePendingView = useCallback(
-    (pendingView?: TaskType) => () => setPendingView(pendingView),
+    (pendingView?: Task) => () => setPendingView(pendingView),
     [],
   );
   return (
@@ -103,20 +101,20 @@ export const ToolLogs: FC<Props> = ({
             : toolLogs.map(e => {
                 return [
                   {
-                    value: e.ownerName,
+                    value: e.getOwnerName(),
                     onClick: handleTogglePendingView(e),
                   },
                   {
-                    value: e.timeDue
+                    value: e.getTimeDue()
                       ? formatWeek(
                           format(
-                            startOfWeek(parseISO(e.timeDue), {
+                            startOfWeek(parseISO(e.getTimeDue()), {
                               weekStartsOn: 6,
                             }),
                             'yyyy-MM-dd',
                           ),
                         )
-                      : e.timeDue,
+                      : e.getTimeDue(),
                     onClick: handleTogglePendingView(e),
                     actions: [
                       <IconButton
@@ -136,12 +134,13 @@ export const ToolLogs: FC<Props> = ({
         <Modal open onClose={handleTogglePendingView(undefined)} fullScreen>
           <SpiffTool
             loggedUserId={userId}
-            ownerId={pendingView.externalId}
+            ownerId={pendingView.getExternalId()}
             type="Tool"
             needsManagerAction={role === 'Manager' ? true : false}
             needsPayrollAction={role === 'Payroll' ? true : false}
             needsAuditAction={role === 'Auditor' ? true : false}
             role={role}
+            toggle={false}
             onClose={handleTogglePendingView(undefined)}
           />
         </Modal>

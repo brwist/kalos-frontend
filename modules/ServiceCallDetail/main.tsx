@@ -36,9 +36,9 @@ interface props extends PageWrapperProps {
 }
 
 interface state {
-  technicians: User.AsObject[];
-  event: Event.AsObject;
-  callbacks: Event.AsObject[];
+  technicians: User[];
+  event: Event;
+  callbacks: Event[];
   isEditing: boolean;
 }
 
@@ -49,7 +49,7 @@ export class ServiceCallDetail extends React.PureComponent<props, state> {
   constructor(props: props) {
     super(props);
     this.state = {
-      event: new Event().toObject(),
+      event: new Event(),
       callbacks: [],
       technicians: [],
       isEditing: false,
@@ -67,11 +67,11 @@ export class ServiceCallDetail extends React.PureComponent<props, state> {
 
   async fetchCallbacks() {
     const req = new Event();
-    req.setPropertyId(this.state.event.propertyId);
+    req.setPropertyId(this.state.event.getPropertyId());
     req.setIsActive(1);
     const result = await this.EventClient.BatchGet(req);
     this.setState({
-      callbacks: result.toObject().resultsList,
+      callbacks: result.getResultsList(),
     });
   }
 
@@ -85,9 +85,7 @@ export class ServiceCallDetail extends React.PureComponent<props, state> {
     const result = await this.UserClient.BatchGet(req);
     this.setState(
       prevState => ({
-        technicians: prevState.technicians.concat(
-          result.toObject().resultsList,
-        ),
+        technicians: prevState.technicians.concat(result.getResultsList()),
       }),
       async () => {
         if (this.state.technicians.length !== result.getTotalCount()) {
@@ -108,7 +106,7 @@ export class ServiceCallDetail extends React.PureComponent<props, state> {
       const event = new Event();
       const upperCaseProp = `${prop[0].toUpperCase()}${prop.slice(1)}`;
       const methodName = `set${upperCaseProp}`;
-      event.setId(this.state.event.id);
+      event.setId(this.state.event.getId());
       //@ts-ignore
       event[methodName](value);
       event.setFieldMaskList([upperCaseProp]);
@@ -165,7 +163,7 @@ export class ServiceCallDetail extends React.PureComponent<props, state> {
     child: ReactNode,
   ) {
     const { event } = this.state;
-    let assigned = event.logTechnicianAssigned.split(',');
+    let assigned = event.getLogTechnicianAssigned().split(',');
     assigned = assigned.filter(a => a !== '0');
     const id = e.currentTarget.name;
     if (assigned.includes(id!)) {
@@ -226,10 +224,12 @@ export class ServiceCallDetail extends React.PureComponent<props, state> {
 
   render() {
     const { event, isEditing } = this.state;
-    const startTime = event.dateStarted.split(' ')[0] + 'T' + event.timeStarted;
-    const endTime = event.dateEnded.split(' ')[0] + 'T' + event.timeEnded;
+    const startTime =
+      event.getDateStarted().split(' ')[0] + 'T' + event.getTimeStarted();
+    const endTime =
+      event.getDateEnded().split(' ')[0] + 'T' + event.getTimeEnded();
 
-    if (event.id) {
+    if (event.getId()) {
       return (
         <PageWrapper {...this.props} userID={this.props.userID}>
           <Grid container direction="column" alignItems="center">
@@ -259,7 +259,7 @@ export class ServiceCallDetail extends React.PureComponent<props, state> {
                     margin="normal"
                     id="date-picker-inline"
                     label="Date Started"
-                    value={new Date(event.dateStarted.replace(' ', 'T'))}
+                    value={new Date(event.getDateStarted().replace(' ', 'T'))}
                     onChange={this.onStartDateChange}
                     disabled={!isEditing}
                   />
@@ -268,27 +268,27 @@ export class ServiceCallDetail extends React.PureComponent<props, state> {
                     margin="normal"
                     id="date-picker-inline"
                     label="Date Ended"
-                    value={new Date(event.dateEnded.replace(' ', 'T'))}
+                    value={new Date(event.getDateEnded().replace(' ', 'T'))}
                     onChange={this.onEndDateChange}
                     disabled={!isEditing}
                   />
                 </MuiPickersUtilsProvider>
                 <JobTypePicker
                   disabled={!isEditing}
-                  selected={event.jobTypeId}
+                  selected={event.getJobTypeId()}
                   onSelect={this.updateJobType}
                 />
                 <JobSubtypePicker
                   disabled={!isEditing}
                   onSelect={this.updateSubType}
-                  selected={event.jobSubtypeId}
-                  jobTypeID={event.jobTypeId}
+                  selected={event.getJobSubtypeId()}
+                  jobTypeID={event.getJobTypeId()}
                 />
                 <FormControl style={{ marginTop: 10 }}>
                   <InputLabel htmlFor="Status-select">Job Status</InputLabel>
                   <NativeSelect
                     disabled={!isEditing}
-                    value={event.logJobStatus}
+                    value={event.getLogJobStatus()}
                     onChange={e => this.updateStatus(e.currentTarget.value)}
                     inputProps={{
                       id: 'Status-select',
@@ -305,7 +305,7 @@ export class ServiceCallDetail extends React.PureComponent<props, state> {
                   <InputLabel htmlFor="Payment-select">Payment Type</InputLabel>
                   <NativeSelect
                     disabled={!isEditing}
-                    value={event.logPaymentType}
+                    value={event.getLogPaymentType()}
                     onChange={e =>
                       this.updatePaymentType(e.currentTarget.value)
                     }
@@ -326,7 +326,7 @@ export class ServiceCallDetail extends React.PureComponent<props, state> {
                   label="Amount Quoted"
                   margin="normal"
                   variant="outlined"
-                  defaultValue={event.amountQuoted}
+                  defaultValue={event.getAmountQuoted()}
                 />
                 <FormControl style={{ marginTop: 10 }}>
                   <InputLabel htmlFor="tech-select-input">
@@ -334,7 +334,7 @@ export class ServiceCallDetail extends React.PureComponent<props, state> {
                   </InputLabel>
                   <Select
                     disabled={!isEditing}
-                    value={event.logTechnicianAssigned.split(',')}
+                    value={event.getLogTechnicianAssigned().split(',')}
                     multiple
                     onChange={this.handleTechnicianSelect}
                     input={<Input id="tech-select-input" />}
@@ -342,13 +342,13 @@ export class ServiceCallDetail extends React.PureComponent<props, state> {
                       <div style={{ display: 'flex', flexWrap: 'wrap' }}>
                         {(selected as string[]).map(s => {
                           const tech = this.state.technicians.find(
-                            t => t.id === parseInt(s),
+                            t => t.getId() === parseInt(s),
                           );
                           if (tech) {
                             return (
                               <Chip
                                 key={s}
-                                label={`${tech.firstname} ${tech.lastname}`}
+                                label={`${tech.getFirstname()} ${tech.getLastname()}`}
                                 style={{ margin: 2 }}
                               />
                             );
@@ -367,10 +367,10 @@ export class ServiceCallDetail extends React.PureComponent<props, state> {
                   >
                     {this.state.technicians.map(t => (
                       <MenuItem
-                        key={`${t.firstname}-${t.lastname}-${t.id}`}
-                        value={`${t.id}`}
+                        key={`${t.getFirstname()}-${t.getLastname()}-${t.getId()}`}
+                        value={`${t.getId()}`}
                       >
-                        {t.firstname} {t.lastname}
+                        {t.getFirstname()} {t.getLastname()}
                       </MenuItem>
                     ))}
                   </Select>
@@ -405,7 +405,7 @@ export class ServiceCallDetail extends React.PureComponent<props, state> {
                   <InputLabel htmlFor="age-native-helper">Sector</InputLabel>
                   <NativeSelect
                     disabled={!isEditing}
-                    value={event.isResidential}
+                    value={event.getIsResidential()}
                     onChange={this.handleIsResidentialChange}
                     inputProps={{
                       id: 'age-native-helper',
@@ -419,7 +419,7 @@ export class ServiceCallDetail extends React.PureComponent<props, state> {
                   <InputLabel htmlFor="dq-select">Diagnostic Quoted</InputLabel>
                   <NativeSelect
                     disabled={!isEditing}
-                    value={event.diagnosticQuoted}
+                    value={event.getDiagnosticQuoted()}
                     onChange={this.handleIsDiagnosticQuoted}
                     inputProps={{
                       id: 'dq-select',
@@ -433,7 +433,7 @@ export class ServiceCallDetail extends React.PureComponent<props, state> {
                   <InputLabel htmlFor="LMPC-select">Is LMPC?</InputLabel>
                   <NativeSelect
                     disabled={!isEditing}
-                    value={event.isLmpc}
+                    value={event.getIsLmpc()}
                     onChange={this.handleIsLMPC}
                     inputProps={{
                       id: 'LMPC-select',
@@ -449,7 +449,7 @@ export class ServiceCallDetail extends React.PureComponent<props, state> {
                   </InputLabel>
                   <NativeSelect
                     disabled={!isEditing}
-                    value={event.isCallback}
+                    value={event.getIsCallback()}
                     onChange={this.handleIsCallback}
                     inputProps={{
                       id: 'IsCallback-select',
@@ -464,8 +464,8 @@ export class ServiceCallDetail extends React.PureComponent<props, state> {
                     Reason Of Callback
                   </InputLabel>
                   <NativeSelect
-                    disabled={!event.isCallback}
-                    value={event.callbackOriginalId}
+                    disabled={!event.getIsCallback()}
+                    value={event.getCallbackOriginalId()}
                     onChange={this.handleCallbackSelect}
                     inputProps={{
                       id: 'Callback-select',
@@ -473,8 +473,11 @@ export class ServiceCallDetail extends React.PureComponent<props, state> {
                   >
                     <option value={0}>Select Original Call</option>
                     {this.state.callbacks.map(cb => (
-                      <option value={cb.id} key={`${cb.name}-${cb.id}`}>
-                        {cb.name}
+                      <option
+                        value={cb.getId()}
+                        key={`${cb.getName()}-${cb.getId()}`}
+                      >
+                        {cb.getName()}
                       </option>
                     ))}
                   </NativeSelect>
@@ -494,7 +497,7 @@ export class ServiceCallDetail extends React.PureComponent<props, state> {
                 label="Service Needed"
                 margin="normal"
                 variant="outlined"
-                defaultValue={event.description}
+                defaultValue={event.getDescription()}
                 multiline
                 fullWidth
                 style={{ padding: 5 }}
@@ -505,7 +508,7 @@ export class ServiceCallDetail extends React.PureComponent<props, state> {
                 label="Service Call Notes"
                 margin="normal"
                 variant="outlined"
-                defaultValue={event.logNotes}
+                defaultValue={event.getLogNotes()}
                 multiline
                 fullWidth
                 style={{ padding: 5 }}
