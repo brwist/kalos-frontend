@@ -47,32 +47,32 @@ export default class Transaction extends React.PureComponent<props, state> {
     const user = new User();
     user.setId(this.props.userID);
     const userData = await this.UserClient.Get(user);
-    const deptList = this.getDepartmentList(userData.permissionGroupsList);
+    const deptList = this.getDepartmentList(userData.getPermissionGroupsList());
     if (deptList.includes(',')) {
       console.log('setting multi dpt to true!');
       userHasMultipleDepartments = true;
     }
     this.setState({
-      isAdmin: userData.isAdmin === 1,
-      isSU: userData.isSu === 1,
-      userDepartmentID: userData.employeeDepartmentId,
-      userName: `${userData.firstname} ${userData.lastname}`,
+      isAdmin: userData.getIsAdmin() === 1,
+      isSU: userData.getIsSu() === 1,
+      userDepartmentID: userData.getEmployeeDepartmentId(),
+      userName: `${userData.getFirstname()} ${userData.getLastname()}`,
       isLoading: false,
       userDepartmentList: deptList,
       userHasMultipleDepartments,
     });
   }
 
-  getDepartmentList(pgList: PermissionGroup.AsObject[]) {
+  getDepartmentList(pgList: PermissionGroup[]) {
     let departmentList: string[] = [];
-    const dpts = pgList.filter(pg => pg.type === PERMISSION_DEPARTMENT);
+    const dpts = pgList.filter(pg => pg.getType() === PERMISSION_DEPARTMENT);
     console.log({ pgList, dpts });
     if (dpts.length > 1) {
       console.log('dpts is long!');
       for (const d of dpts) {
         try {
           const filter: { key: string; value: string } = JSON.parse(
-            d.filterData,
+            d.getFilterData(),
           );
           console.log(filter);
           departmentList = departmentList.concat(filter.value);

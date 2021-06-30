@@ -1,7 +1,7 @@
 import React, { FC, useState, useEffect, useCallback } from 'react';
 import { TransactionUserView } from './components/view';
 import { Loader } from '../Loader/main';
-import { UserType, UserClientService } from '../../helpers';
+import { UserClientService } from '../../helpers';
 import { ENDPOINT, PERMISSION_NAME_MANAGER } from '../../constants';
 import { PageWrapper, PageWrapperProps } from '../PageWrapper/main';
 import { User } from '@kalos-core/kalos-rpc/User';
@@ -30,7 +30,7 @@ const Transaction: FC<Props> = props => {
     uploadPhotoTransactionOpen,
     setUploadPhotoTransactionOpen,
   ] = useState<boolean>(false);
-  const [user, setUser] = useState<UserType>();
+  const [user, setUser] = useState<User>();
   const [costCenters, setCostCenters] = useState<TransactionAccountList>();
   const [isManager, setIsManager] = useState<boolean>(false);
   const [toggleAddTransaction, setToggleAddTransaction] = useState<boolean>(
@@ -41,10 +41,10 @@ const Transaction: FC<Props> = props => {
   );
   const [role, setRole] = useState<RoleType>();
 
-  const managerCheck = useCallback(async (u: User.AsObject) => {
-    const pg = u.permissionGroupsList.filter(
-      pg => pg.name === PERMISSION_NAME_MANAGER,
-    );
+  const managerCheck = useCallback(async (u: User) => {
+    const pg = u
+      .getPermissionGroupsList()
+      .filter(pg => pg.getName() === PERMISSION_NAME_MANAGER);
     if (pg.length > 0) {
       return true;
     }
@@ -71,18 +71,20 @@ const Transaction: FC<Props> = props => {
     //await UserClientService.refreshToken();
     const user = await UserClientService.loadUserById(userID);
     setUser(user);
-    const foundRole = user.permissionGroupsList.find(p => p.type === 'role');
+    const foundRole = user
+      .getPermissionGroupsList()
+      .find(p => p.getType() === 'role');
     if (foundRole) {
-      setRole(foundRole.name as RoleType);
+      setRole(foundRole.getName() as RoleType);
     }
     const isManager = await managerCheck(user);
-    const groupDepartments = user.permissionGroupsList.filter(
-      group => group.type === 'department',
-    );
+    const groupDepartments = user
+      .getPermissionGroupsList()
+      .filter(group => group.getType() === 'department');
     const totalDepartments = [];
 
     for (let i = 0; i < groupDepartments.length; i++) {
-      let permissionObj = JSON.parse(groupDepartments[i].filterData);
+      let permissionObj = JSON.parse(groupDepartments[i].getFilterData());
       totalDepartments.push(permissionObj.value);
     }
     setManagerDepartmentIds(totalDepartments);
@@ -157,7 +159,7 @@ const Transaction: FC<Props> = props => {
           <TransactionUserView
             userID={userID}
             userName={UserClientService.getCustomerName(user)}
-            departmentId={user.employeeDepartmentId}
+            departmentId={user.getEmployeeDepartmentId()}
             departmentList={managerDepartmentIds}
             isManager={isManager}
             role={role}

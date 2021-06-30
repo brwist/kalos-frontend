@@ -7,13 +7,10 @@ import { Modal } from '../../ComponentsLibrary/Modal';
 import { AccountPicker } from '../../ComponentsLibrary/Pickers';
 import { Form, Schema } from '../../ComponentsLibrary/Form';
 import { ENDPOINT } from '../../../constants';
-import { getRPCFields } from '../../../helpers';
+import { getRPCFields, makeSafeFormObject } from '../../../helpers';
 
 const transactionClient = new TransactionClient(ENDPOINT);
-
-type Entry = Transaction.AsObject;
-
-interface EntryWithDate extends Entry {
+interface EntryWithDate extends Transaction {
   date?: string;
 }
 
@@ -21,33 +18,33 @@ type Props = {
   show: boolean;
   entry: EntryWithDate;
   onClose: () => void;
-  onSave: (entry: Transaction.AsObject) => void;
+  onSave: (entry: Transaction) => void;
 };
 
 const CreateModal: FC<Props> = ({ show, entry, onClose, onSave }) => {
   const [saving, setSaving] = useState<boolean>(false);
   const [costCenterId, setCostCenterId] = useState<number>(0);
-  const data = { ...entry };
+  const data = entry;
 
   const SCHEMA: Schema<EntryWithDate> = [
-    [{ label: 'Vendor', name: 'vendor' }],
+    [{ label: 'Vendor', name: 'getVendor' }],
     [
-      { label: 'date', name: 'timestamp', type: 'date', required: true },
-      { label: 'Amount', name: 'amount', type: 'number', required: true },
+      { label: 'date', name: 'getTimestamp', type: 'date', required: true },
+      { label: 'Amount', name: 'getAmount', type: 'number', required: true },
     ],
     [
       {
         label: 'Description',
-        name: 'description',
+        name: 'getDescription',
         multiline: true,
         required: true,
       },
     ],
-    [{ label: 'Notes', name: 'notes', multiline: true }],
+    [{ label: 'Notes', name: 'getNotes', multiline: true }],
     [
       {
         label: 'Department',
-        name: 'departmentId',
+        name: 'getDepartmentId',
         type: 'department',
         required: true,
       },
@@ -60,10 +57,12 @@ const CreateModal: FC<Props> = ({ show, entry, onClose, onSave }) => {
                 setCostCenterId(costCenterID);
               }
             }}
-            sort={(a, b) => a.description.localeCompare(b.description)}
+            sort={(a, b) =>
+              a.getDescription().localeCompare(b.getDescription())
+            }
             renderItem={i => (
-              <option value={i.id} key={`${i.id}-account-select`}>
-                {i.description} ({i.id})
+              <option value={i.getId()} key={`${i.getId()}-account-select`}>
+                {i.getDescription()} ({i.getId()})
               </option>
             )}
           />
@@ -75,13 +74,9 @@ const CreateModal: FC<Props> = ({ show, entry, onClose, onSave }) => {
   const handleCreate = useCallback(
     async (data: EntryWithDate) => {
       setSaving(true);
-      data.costCenterId = costCenterId;
+      data = makeSafeFormObject(data, new Transaction());
+      data.setCostCenterId(costCenterId);
       const req = new Transaction();
-      for (const fieldName in data) {
-        const { methodName } = getRPCFields(fieldName);
-        //@ts-ignore
-        req[methodName](data[fieldName]);
-      }
       const result = await transactionClient.Create(req);
       onSave(result);
     },
