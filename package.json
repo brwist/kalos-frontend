@@ -14,11 +14,8 @@
     "bust": "gulp -LL bust",
     "less": "lessc styles/index.less styles/main.css",
     "upload": "gulp -LL upload",
-    "test-async": "jest -u",
     "test": "ts-mocha -r esm -r ./test/babel-helper.js",
-    "test-watch": "jest --watch",
-    "test-watch-all": "jest --watchAll",
-    "test-coverage": "jest --collectCoverage"
+    "test-watch": "ts-mocha -r esm -r ./test/babel-helper.js -w"
   },
   "author": "Robert Milejczak <robbie@kalosflorida.com>",
   "license": "MIT",
