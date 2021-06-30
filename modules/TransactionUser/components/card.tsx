@@ -29,12 +29,12 @@ import { PDFMaker } from '../../ComponentsLibrary/PDFMaker';
 import ReIcon from '@material-ui/icons/RefreshSharp';
 import {
   timestamp,
-  FileType,
   S3ClientService,
   getFileExt,
   FileClientService,
   TransactionDocumentClientService,
 } from '../../../helpers';
+import { File } from '@kalos-core/kalos-rpc/File';
 import { ENDPOINT } from '../../../constants';
 import { EmailClient, EmailConfig } from '@kalos-core/kalos-rpc/Email';
 import { Field } from '../../ComponentsLibrary/Field';
@@ -47,7 +47,7 @@ import './card.css';
 import { parseISO } from 'date-fns';
 
 interface props {
-  txn: Transaction.AsObject;
+  txn: Transaction;
   userDepartmentID: number;
   userName: string;
   userID: number;
@@ -59,15 +59,26 @@ interface props {
 }
 
 interface state {
-  txn: Transaction.AsObject;
+  txn: Transaction;
   pendingAddFromGallery: boolean;
   pendingAddFromSingleFile: boolean;
   costCenters: TransactionAccountList;
 }
 
 const hardcodedList = [
-  1, 2, 601002, 674002, 674001, 673002, 61700, 681001, 601001, 51500, 68500,
-  62600, 643002,
+  1,
+  2,
+  601002,
+  674002,
+  674001,
+  673002,
+  61700,
+  681001,
+  601001,
+  51500,
+  68500,
+  62600,
+  643002,
 ];
 
 export class TxnCard extends React.PureComponent<props, state> {
@@ -112,10 +123,10 @@ export class TxnCard extends React.PureComponent<props, state> {
     this.LastSingleFileUpload = null; // Will be set when user uploads an image
   }
 
-  async makeLog<K extends keyof Transaction.AsObject>(
+  async makeLog<K extends keyof Transaction>(
     prop: K,
-    oldValue: Transaction.AsObject[K],
-    newValue: Transaction.AsObject[K],
+    oldValue: Transaction[K],
+    newValue: Transaction[K],
   ) {
     try {
       const log = new TransactionActivity();
@@ -130,20 +141,20 @@ export class TxnCard extends React.PureComponent<props, state> {
     }
   }
 
-  updateTransaction<K extends keyof Transaction.AsObject>(prop: K) {
-    return async (value: Transaction.AsObject[K]) => {
+  updateTransaction<K extends keyof Transaction>(prop: K) {
+    return async (value: Transaction[K]) => {
       try {
         const reqObj = new Transaction();
         const upperCaseProp = `${prop[0].toLocaleUpperCase()}${prop.slice(1)}`;
         const methodName = `set${upperCaseProp}`;
         const oldValue = this.state.txn[prop];
-        reqObj.setId(this.state.txn.id);
+        reqObj.setId(this.state.txn.getId());
         //@ts-ignore
         reqObj[methodName](value);
         reqObj.setFieldMaskList([upperCaseProp]);
         const updatedTxn = await this.TxnClient.Update(reqObj);
         this.setState(() => ({ txn: updatedTxn }));
-        if (prop !== 'notes') {
+        if (prop !== 'getNotes') {
           await this.makeLog(prop, oldValue, value);
         }
       } catch (err) {
@@ -152,12 +163,12 @@ export class TxnCard extends React.PureComponent<props, state> {
     };
   }
   updateNotes = (val: React.ReactText) =>
-    this.updateTransaction('notes')(val.toString());
-  updateVendor = this.updateTransaction('vendor');
-  updateCostCenterID = this.updateTransaction('costCenterId');
-  updateDepartmentID = this.updateTransaction('departmentId');
-  updateStatus = this.updateTransaction('statusId');
-  handleJobNumber = this.updateTransaction('jobId');
+    this.state.txn.setNotes(val.toString());
+  updateVendor = this.state.txn.setVendor;
+  updateCostCenterID = this.updateTransaction('getCostCenterId');
+  updateDepartmentID = this.updateTransaction('getDepartmentId');
+  updateStatus = this.updateTransaction('getStatusId');
+  handleJobNumber = this.updateTransaction('getJobId');
 
   async submit() {
     const { txn } = this.state;
@@ -166,10 +177,10 @@ export class TxnCard extends React.PureComponent<props, state> {
         'Are you sure you want to submit this transaction? You will be unable to edit it again unless it is rejected, so please make sure all information is correct',
       );
       if (ok) {
-        if (txn.jobId !== 0) {
+        if (txn.getJobId() !== 0) {
           try {
             const job = new Event();
-            job.setId(txn.jobId);
+            job.setId(txn.getJobId());
             //const res = await this.EventClient.Get(job);
             //console.log(res);
             //if (!res || res.id === 0) {
@@ -179,14 +190,14 @@ export class TxnCard extends React.PureComponent<props, state> {
             console.log(err);
           }
         }
-        if (!txn.costCenter) {
+        if (!txn.getCostCenter()) {
           throw 'A purchase category must be assigned';
-        } else if (txn.notes === '') {
+        } else if (txn.getNotes() === '') {
           throw 'Please provide a brief description in the notes';
         } else {
           try {
             const d = new TransactionDocument();
-            d.setTransactionId(this.state.txn.id);
+            d.setTransactionId(this.state.txn.getId());
             // const res = await this.DocsClient.Get(d);
           } catch (err) {
             throw 'Please attach a photo to this receipt before submitting';
@@ -196,26 +207,22 @@ export class TxnCard extends React.PureComponent<props, state> {
             ? 'manager receipt accepted automatically'
             : 'submitted for approval';
           if (
-            txn.costCenterId === 2 ||
-            txn.costCenter?.id === 2 ||
-            txn.costCenterId === 1 ||
-            txn.costCenter?.id === 1
+            txn.getCostCenterId() === 2 ||
+            txn.getCostCenter()?.getId() === 2 ||
+            txn.getCostCenterId() === 1 ||
+            txn.getCostCenter()?.getId() === 1
           ) {
             statusID = 3;
             statusMessage =
               'receipt marked as accidental or fraudulent and sent directly to accounting for review';
             const mailBody = `<html><body><p>A${getTransactionTypeString(
               txn,
-            )} transaction has been reported by ${txn.ownerName} (${
-              txn.cardUsed
-            }).
-              Amount $${txn.amount} Vendor: ${txn.vendor} Post date: ${
-              txn.timestamp
-            }
-              Department: ${txn.department?.classification} ${
-              txn.department?.description
-            }
-              ${txn.notes != '' ? `Notes: ${txn.notes}` : ''}</p>
+            )} transaction has been reported by ${txn.getOwnerName()} (${txn.getCardUsed()}).
+              Amount $${txn.getAmount()} Vendor: ${txn.getVendor()} Post date: ${txn.getTimestamp()}
+              Department: ${txn
+                .getDepartment()
+                ?.getClassification()} ${txn.getDepartment()?.getDescription()}
+              ${txn.getNotes() != '' ? `Notes: ${txn.getNotes()}` : ''}</p>
               <a href="https://app.kalosflorida.com/index.cfm?action=admin:reports.transactions">Click here to view receipts</a>
               </body></html>
             `;
@@ -259,8 +266,8 @@ export class TxnCard extends React.PureComponent<props, state> {
     await this.LogClient.Create(log);
   }
 
-  testCostCenter(acc: TransactionAccount.AsObject) {
-    return hardcodedList.includes(acc.id);
+  testCostCenter(acc: TransactionAccount) {
+    return hardcodedList.includes(acc.getId());
   }
 
   toggleAddFromGallery = () =>
@@ -271,17 +278,17 @@ export class TxnCard extends React.PureComponent<props, state> {
       pendingAddFromSingleFile: !this.state.pendingAddFromSingleFile,
     });
 
-  addFromSingleFile = async ({ file }: { file: FileType; url: string }) => {
+  addFromSingleFile = async ({ file }: { file: File; url: string }) => {
     this.setState({ pendingAddFromSingleFile: false });
-    const { id } = this.state.txn;
+    const id = this.state.txn.getId();
     const bucket = 'kalos-transactions';
     const status = await S3ClientService.moveFileBetweenS3Buckets(
       {
-        key: file.name,
-        bucket: file.bucket,
+        key: file.getName(),
+        bucket: file.getBucket(),
       },
       {
-        key: `${id}-${file.name}`,
+        key: `${id}-${file.getName()}`,
         bucket,
       },
     );
@@ -337,7 +344,9 @@ export class TxnCard extends React.PureComponent<props, state> {
     alert('Upload complete');
   };
 
-  deriveCallout(txn: Transaction.AsObject): {
+  deriveCallout(
+    txn: Transaction.AsObject,
+  ): {
     severity: 'error' | 'success';
     text: string;
   } {
@@ -705,8 +714,18 @@ function costCenterSortByPopularity(
 }
 
 const ALLOWED_ACCOUNT_IDS = [
-  601002, 673002, 673001, 51400, 643002, 643003, 601001, 51500, 601004, 1,
-  68500, 66600,
+  601002,
+  673002,
+  673001,
+  51400,
+  643002,
+  643003,
+  601001,
+  51500,
+  601004,
+  1,
+  68500,
+  66600,
 ];
 
 function getGalleryData(txn: Transaction.AsObject): GalleryData[] {
@@ -718,10 +737,13 @@ function getGalleryData(txn: Transaction.AsObject): GalleryData[] {
   });
 }
 
-function getTransactionTypeString(txn: Transaction.AsObject) {
-  if (txn.costCenterId === 2 || txn.costCenter?.id === 2) {
+function getTransactionTypeString(txn: Transaction) {
+  if (txn.getCostCenterId() === 2 || txn.getCostCenter()?.getId() === 2) {
     return 'fraudulent';
-  } else if (txn.costCenterId === 1 || txn.costCenter?.id === 1) {
+  } else if (
+    txn.getCostCenterId() === 1 ||
+    txn.getCostCenter()?.getId() === 1
+  ) {
     return 'n accidental';
   }
 }

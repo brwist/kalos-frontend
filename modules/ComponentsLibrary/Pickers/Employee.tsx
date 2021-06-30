@@ -89,14 +89,25 @@ export class EmployeePicker extends React.PureComponent<props, state> {
       }
     }
   }
-
+  createUser(userList: User.AsObject[]) {
+    let newUserList = [];
+    for (let i = 0; i < userList.length; i++) {
+      let tempUser = new User();
+      tempUser.setId(userList[i].id);
+      tempUser.setFirstname(userList[i].firstname);
+      tempUser.setLastname(userList[i].lastname);
+      newUserList.push(tempUser);
+    }
+    return newUserList;
+  }
   componentDidMount() {
     const cacheListStr = localStorage.getItem('EMPLOYEE_LIST');
     if (cacheListStr) {
       const cacheList = JSON.parse(cacheListStr);
       if (cacheList && cacheList.length !== 0) {
+        const tempList = this.createUser(cacheList);
         this.setState({
-          list: cacheList,
+          list: tempList,
         });
       } else {
         this.fetchUsers();
@@ -107,6 +118,7 @@ export class EmployeePicker extends React.PureComponent<props, state> {
   }
 
   render() {
+    console.log(this.state.list);
     const list = this.state.list.sort((a, b) =>
       `${a.getLastname()} ${a.getFirstname()}`
         .toLowerCase()

@@ -26,7 +26,7 @@ import { Tooltip } from '../../ComponentsLibrary/Tooltip';
 import { parseISO } from 'date-fns';
 
 interface props {
-  txn: Transaction.AsObject;
+  txn: Transaction;
   departmentView: boolean;
   acceptOverride: boolean;
   userID: number;
@@ -74,7 +74,7 @@ export function TransactionRow({
       try {
         const u8 = new Uint8Array(fr.result as ArrayBuffer);
         await clients.docs.upload(
-          txn.id,
+          txn.getId(),
           FileInput.current!.files![0].name,
           u8,
         );
@@ -129,7 +129,7 @@ export function TransactionRow({
 
   const dispute = async (reason: string) => {
     const userReq = new User();
-    userReq.setId(txn.ownerId);
+    userReq.setId(txn.getOwnerId());
     const user = await clients.user.Get(userReq);
 
     // Request for this user
@@ -138,15 +138,15 @@ export function TransactionRow({
     const sendingUser = await clients.user.Get(sendingReq);
     const body = getRejectTxnBody(
       reason,
-      txn.amount,
-      txn.description,
-      txn.vendor,
+      txn.getAmount(),
+      txn.getDescription(),
+      txn.getVendor(),
     );
     const email: EmailConfig = {
       type: 'receipts',
-      recipient: user.email,
+      recipient: user.getEmail(),
       subject: 'Receipts',
-      from: sendingUser.email,
+      from: sendingUser.getEmail(),
       body,
     };
 
@@ -156,12 +156,12 @@ export function TransactionRow({
       alert('An error occurred, user was not notified via email');
     }
     try {
-      const id = await getSlackID(txn.ownerName);
+      const id = await getSlackID(txn.getOwnerName());
       await slackNotify(
         id,
-        `A receipt you submitted has been rejected | ${
-          txn.description
-        } | $${prettyMoney(txn.amount)}. Reason: ${reason}`,
+        `A receipt you submitted has been rejected | ${txn.getDescription()} | $${prettyMoney(
+          txn.getAmount(),
+        )}. Reason: ${reason}`,
       );
       await slackNotify(
         id,
@@ -182,28 +182,35 @@ export function TransactionRow({
     toggleEditingCostCenter();
   };
 
-  const amount = prettyMoney(txn.amount);
+  const amount = prettyMoney(txn.getAmount());
   return [
     {
-      value: parseISO(txn.timestamp.split(' ').join('T')).toLocaleDateString(),
+      value: parseISO(
+        txn.getTimestamp().split(' ').join('T'),
+      ).toLocaleDateString(),
     },
     {
-      value: `${txn.ownerName}` || '',
+      value: `${txn.getOwnerName()}` || '',
     },
     {
       value: editingCostCenter ? (
         <AccountPicker
-          selected={txn.costCenter ? txn.costCenter.id : 0}
+          selected={txn.getCostCenter() ? txn.getCostCenter()!.getId() : 0}
           onSelect={handleCostCenterSelect}
           hideInactive
           renderItem={i => (
-            <option value={i.id} key={`${i.description}-${i.id}`}>
-              {i.description}
+            <option
+              value={i.getId()}
+              key={`${i.getDescription()}-${i.getId()}`}
+            >
+              {i.getDescription()}
             </option>
           )}
         />
-      ) : txn.costCenter ? (
-        `${txn.costCenter.description} (${txn.costCenter.id})`
+      ) : txn.getCostCenter() ? (
+        `${txn
+          .getCostCenter()!
+          .getDescription()} (${txn.getCostCenter()!.getId()})`
       ) : (
         ''
       ),
@@ -214,18 +221,20 @@ export function TransactionRow({
       ],
     },
     {
-      value: txn.department
-        ? `${txn.department.description} (${txn.department.classification})`
+      value: txn.getDepartment()
+        ? `${txn
+            .getDepartment()!
+            .getDescription()} (${txn.getDepartment()!.getClassification()})`
         : '',
     },
     {
-      value: txn.jobId,
+      value: txn.getJobId(),
     },
     {
       value: `$ ${amount}`,
     },
     {
-      value: txn.vendor,
+      value: txn.getVendor(),
     },
     {
       value: '',
@@ -236,10 +245,8 @@ export function TransactionRow({
             onClick={() =>
               copyToClipboard(
                 `${parseISO(
-                  txn.timestamp.split(' ').join('T'),
-                ).toLocaleDateString()},${txn.description},${amount},${
-                  txn.ownerName
-                },${txn.vendor}`,
+                  txn.getTimestamp().split(' ').join('T'),
+                ).toLocaleDateString()},${txn.getDescription()},${amount},${txn.getOwnerName()},${txn.getVendor()}`,
               )
             }
           >
@@ -270,31 +277,31 @@ export function TransactionRow({
           text="Edit Notes"
           prompt="Update Txn Notes: "
           Icon={NotesIcon}
-          defaultValue={txn.notes}
+          defaultValue={txn.getNotes()}
           multiline
         />,
         <AltGallery
           key="receiptPhotos"
           title="Transaction Photos"
           fileList={getGalleryData(txn)}
-          transactionID={txn.id}
+          transactionID={txn.getId()}
           text="View photos"
           iconButton
         />,
-        <TxnLog key="txnLog" iconButton txnID={txn.id} />,
+        <TxnLog key="txnLog" iconButton txnID={txn.getId()} />,
         <TxnNotes
           key="viewNotes"
           iconButton
           text="View notes"
-          notes={txn.notes}
-          disabled={txn.notes === ''}
+          notes={txn.getNotes()}
+          disabled={txn.getNotes() === ''}
         />,
         ...([9928, 9646, 1734].includes(userID)
           ? [
               <Tooltip
                 key="audit"
                 content={
-                  txn.isAudited && userID !== 1734
+                  txn.getIsAudited() && userID !== 1734
                     ? 'This transaction has already been audited'
                     : 'Mark as correct'
                 }
@@ -302,7 +309,7 @@ export function TransactionRow({
                 <IconButton
                   size="small"
                   onClick={userID === 1734 ? forceAccept : auditTxn}
-                  disabled={txn.isAudited && userID !== 1734}
+                  disabled={txn.getIsAudited() && userID !== 1734}
                 >
                   <CheckIcon />
                 </IconButton>
@@ -350,10 +357,10 @@ export function prettyMoney(amount: number): string {
   }
 }
 
-function getGalleryData(txn: Transaction.AsObject): GalleryData[] {
-  return txn.documentsList.map(d => {
+function getGalleryData(txn: Transaction): GalleryData[] {
+  return txn.getDocumentsList().map(d => {
     return {
-      key: `${txn.id}-${d.reference}`,
+      key: `${txn.getId()}-${d.getReference()}`,
       bucket: 'kalos-transactions',
     };
   });

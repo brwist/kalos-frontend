@@ -43,7 +43,7 @@ interface props {
 interface state {
   page: number;
   isLoading: boolean;
-  transactions: Transaction.AsObject[];
+  transactions: Transaction[];
   filters: IFilter;
   departmentView: boolean;
   count: number;
@@ -164,19 +164,19 @@ export class TransactionAdminView extends React.Component<props, state> {
 
   copyPage() {
     const dataStr = this.state.transactions.reduce(
-      (acc: string, curr: Transaction.AsObject) => {
+      (acc: string, curr: Transaction) => {
         if (acc.length === 0) {
           return `${new Date(
-            curr.timestamp.split(' ').join('T'),
-          ).toLocaleDateString()},${curr.description},${prettyMoney(
-            curr.amount,
-          )},${curr.ownerName},${curr.vendor}`;
+            curr.getTimestamp().split(' ').join('T'),
+          ).toLocaleDateString()},${curr.getDescription()},${prettyMoney(
+            curr.getAmount(),
+          )},${curr.getOwnerName()},${curr.getVendor()}`;
         } else {
           return `${acc}\n${new Date(
-            curr.timestamp.split(' ').join('T'),
-          ).toLocaleDateString()},${curr.description},${prettyMoney(
-            curr.amount,
-          )},${curr.ownerName},${curr.vendor}`;
+            curr.getTimestamp().split(' ').join('T'),
+          ).toLocaleDateString()},${curr.getDescription()},${prettyMoney(
+            curr.getAmount(),
+          )},${curr.getOwnerName()},${curr.getVendor()}`;
         }
       },
       '',
@@ -389,11 +389,11 @@ export class TransactionAdminView extends React.Component<props, state> {
         const evtReq = new Event();
         evtReq.setId(eventID);
         const evt = await this.EventClient.Get(evtReq);
-        url = `${url}&property_id=${evt.propertyId}`;
+        url = `${url}&property_id=${evt.getPropertyId()}`;
         const propertyReq = new Property();
-        propertyReq.setId(evt.propertyId);
+        propertyReq.setId(evt.getPropertyId());
         const property = await this.PropertyClient.Get(propertyReq);
-        url = `${url}&user_id=${property.userId}`;
+        url = `${url}&user_id=${property.getUserId()}`;
         const el = document.createElement('a');
         el.target = '_blank';
         el.href = url;
@@ -418,12 +418,12 @@ export class TransactionAdminView extends React.Component<props, state> {
         } else {
           res = await this.TxnClient.BatchGet(reqObj);
         }
-        console.log('request', reqObj.toObject());
+        console.log('request', reqObj);
         const asObject = res.toObject();
         console.log(asObject);
         this.setState({
-          transactions: asObject.resultsList,
-          count: asObject.totalCount,
+          transactions: res.getResultsList(),
+          count: res.getTotalCount(),
           isLoading: false,
         });
       }),
@@ -465,7 +465,7 @@ export class TransactionAdminView extends React.Component<props, state> {
       'Are you sure want to mark the current page as recorded?',
     );
     if (ok) {
-      const ids = this.state.transactions.map(t => t.id);
+      const ids = this.state.transactions.map(t => t.getId());
       const req = new RecordPageReq();
       req.setTransactionIdsList(ids);
       req.setAdminId(this.props.userID);
@@ -484,12 +484,10 @@ export class TransactionAdminView extends React.Component<props, state> {
       reqObj.setIsActive(1);
       req.setRequestData(reqObj);
       this.toggleLoading(async () => {
-        const transactionList = (
-          await this.TxnClient.RecordPage(req)
-        ).toObject();
+        const transactionList = await this.TxnClient.RecordPage(req);
         this.setState({
-          transactions: transactionList.resultsList,
-          count: transactionList.totalCount,
+          transactions: transactionList.getResultsList(),
+          count: transactionList.getTotalCount(),
           isLoading: false,
         });
       });
@@ -510,9 +508,9 @@ export class TransactionAdminView extends React.Component<props, state> {
       const fns = this.state.transactions
         .map(t => {
           if (this.state.acceptOverride) {
-            return this.makeUpdateStatus(t.id, 3, 'accepted');
+            return this.makeUpdateStatus(t.getId(), 3, 'accepted');
           } else {
-            return this.makeRecordTransaction(t.id);
+            return this.makeRecordTransaction(t.getId());
           }
         })
         .map(f => f());
@@ -582,8 +580,8 @@ export class TransactionAdminView extends React.Component<props, state> {
     const { sortBy, sortDir } = this.state.filters.sort;
     if (sortBy === 'timestamp') {
       return this.state.transactions.sort((a, b) => {
-        const dateA = new Date(a.timestamp.split(' ')[0]);
-        const dateB = new Date(b.timestamp.split(' ')[0]);
+        const dateA = new Date(a.getTimestamp().split(' ')[0]);
+        const dateB = new Date(b.getTimestamp().split(' ')[0]);
 
         if (sortDir === 'asc') {
           return dateA.valueOf() - dateB.valueOf();
@@ -596,9 +594,9 @@ export class TransactionAdminView extends React.Component<props, state> {
     if (sortBy === 'amount') {
       return this.state.transactions.sort((a, b) => {
         if (sortDir === 'asc') {
-          return a.amount - b.amount;
+          return a.getAmount() - b.getAmount();
         } else {
-          return b.amount - a.amount;
+          return b.getAmount() - a.getAmount();
         }
       });
     }
@@ -606,9 +604,9 @@ export class TransactionAdminView extends React.Component<props, state> {
     if (sortBy === 'cost_center_id') {
       return this.state.transactions.sort((a, b) => {
         if (sortDir === 'asc') {
-          return a.costCenterId - b.costCenterId;
+          return a.getCostCenterId() - b.getCostCenterId();
         } else {
-          return b.costCenterId - a.costCenterId;
+          return b.getCostCenterId() - a.getCostCenterId();
         }
       });
     }
@@ -616,17 +614,17 @@ export class TransactionAdminView extends React.Component<props, state> {
     if (sortBy === 'job_number') {
       return this.state.transactions.sort((a, b) => {
         if (sortDir === 'asc') {
-          return a.jobId - b.jobId;
+          return a.getJobId() - b.getJobId();
         } else {
-          return b.jobId - a.jobId;
+          return b.getJobId() - a.getJobId();
         }
       });
     }
     if (sortBy === 'owner_name') {
       return this.state.transactions.sort((a, b) => {
         if (sortDir === 'asc') {
-          const splitA = a.ownerName.split(' ');
-          const splitB = b.ownerName.split(' ');
+          const splitA = a.getOwnerName().split(' ');
+          const splitB = b.getOwnerName().split(' ');
           const lastA = splitA[splitA.length - 1].toLowerCase();
           const lastB = splitB[splitB.length - 1].toLowerCase();
           const firstA = splitA[0].toLowerCase();
@@ -641,8 +639,8 @@ export class TransactionAdminView extends React.Component<props, state> {
           }
           return 0;
         } else {
-          const splitA = a.ownerName.split(' ');
-          const splitB = b.ownerName.split(' ');
+          const splitA = a.getOwnerName().split(' ');
+          const splitB = b.getOwnerName().split(' ');
           const lastA = splitA[splitA.length - 1].toLowerCase();
           const lastB = splitB[splitB.length - 1].toLowerCase();
           const firstA = splitA[0].toLowerCase();
@@ -662,9 +660,9 @@ export class TransactionAdminView extends React.Component<props, state> {
     if (sortBy === 'description') {
       return this.state.transactions.sort((a, b) => {
         if (sortDir === 'asc') {
-          return a.vendor.localeCompare(b.vendor);
+          return a.getVendor().localeCompare(b.getVendor());
         } else {
-          return b.vendor.localeCompare(a.vendor);
+          return b.getVendor().localeCompare(a.getVendor());
         }
       });
     }
@@ -679,7 +677,7 @@ export class TransactionAdminView extends React.Component<props, state> {
     }));
   };
 
-  handleSave = (entry: Transaction.AsObject): void => {
+  handleSave = (entry: Transaction): void => {
     this.setState(prev => ({
       ...prev,
       showCreateModal: false,
@@ -773,8 +771,11 @@ export class TransactionAdminView extends React.Component<props, state> {
                   }
                 }}
                 renderItem={i => (
-                  <option value={i.id} key={`${i.id}-department-select`}>
-                    {i.description} - {i.value}
+                  <option
+                    value={i.getId()}
+                    key={`${i.getId()}-department-select`}
+                  >
+                    {i.getDescription()} - {i.getValue()}
                   </option>
                 )}
               />
@@ -832,10 +833,12 @@ export class TransactionAdminView extends React.Component<props, state> {
                   this.setFilter('costCenterID', costCenterID);
                 }
               }}
-              sort={(a, b) => a.description.localeCompare(b.description)}
+              sort={(a, b) =>
+                a.getDescription().localeCompare(b.getDescription())
+              }
               renderItem={i => (
-                <option value={i.id} key={`${i.id}-account-select`}>
-                  {i.description} ({i.id})
+                <option value={i.getId()} key={`${i.getId()}-account-select`}>
+                  {i.getDescription()} ({i.getId()})
                 </option>
               )}
             />
@@ -891,7 +894,7 @@ export class TransactionAdminView extends React.Component<props, state> {
         </div>
         <CreateModal
           show={this.state.showCreateModal}
-          entry={{} as Transaction.AsObject}
+          entry={{} as Transaction}
           onClose={this.toggleCreateModal}
           onSave={this.handleSave}
         />
@@ -935,19 +938,21 @@ export class TransactionAdminView extends React.Component<props, state> {
                     userID: this.props.userID,
                     acceptOverride: this.state.acceptOverride,
                     departmentView: this.state.departmentView,
-                    enter: this.makeRecordTransaction(txn.id),
-                    audit: this.makeAuditTransaction(txn.id),
-                    accept: this.makeUpdateStatus(txn.id, 3, 'accepted'),
-                    reject: this.makeUpdateStatus(txn.id, 4, 'rejected'),
+                    enter: this.makeRecordTransaction(txn.getId()),
+                    audit: this.makeAuditTransaction(txn.getId()),
+                    accept: this.makeUpdateStatus(txn.getId(), 3, 'accepted'),
+                    reject: this.makeUpdateStatus(txn.getId(), 4, 'rejected'),
                     refresh: this.fetchTxns,
-                    addJobNumber: this.makeAddJobNumber(txn.id),
-                    updateNotes: this.makeUpdateNotes(txn.id),
-                    updateCostCenter: this.makeUpdateCostCenter(txn.id),
-                    updateDepartment: this.makeUpdateDepartment(txn.id),
+                    addJobNumber: this.makeAddJobNumber(txn.getId()),
+                    updateNotes: this.makeUpdateNotes(txn.getId()),
+                    updateCostCenter: this.makeUpdateCostCenter(txn.getId()),
+                    updateDepartment: this.makeUpdateDepartment(txn.getId()),
                     toggleLoading: this.toggleLoading,
-                    editingCostCenter: this.state.editingCostCenter[txn.id],
+                    editingCostCenter: this.state.editingCostCenter[
+                      txn.getId()
+                    ],
                     toggleEditingCostCenter: () =>
-                      this.toggleEditingCostCenter(txn.id),
+                      this.toggleEditingCostCenter(txn.getId()),
                   }),
                 )
           }
@@ -959,8 +964,8 @@ export class TransactionAdminView extends React.Component<props, state> {
 }
 
 function makeEmployeeTest(departmentID: number) {
-  return (user: User.AsObject) => {
-    return user.employeeDepartmentId === departmentID;
+  return (user: User) => {
+    return user.getEmployeeDepartmentId() === departmentID;
   };
 }
 
