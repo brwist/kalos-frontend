@@ -14,13 +14,13 @@ import { ServiceCall } from '../ServiceCall';
 import { Modal } from '../Modal';
 import {
   makeFakeRows,
-  EventType,
   formatDate,
   UserClientService,
   getCFAppUrl,
   loadEventsByFilterDeleted,
 } from '../../../helpers';
 import { ROWS_PER_PAGE } from '../../../constants';
+import { Event } from '@kalos-core/kalos-rpc/Event';
 
 interface Props {
   loggedUserId: number;
@@ -51,8 +51,8 @@ export const DeletedServiceCallsReport: FC<Props> = ({
 }) => {
   const [loaded, setLoaded] = useState<boolean>(false);
   const [loading, setLoading] = useState<boolean>(false);
-  const [entries, setEntries] = useState<EventType[]>([]);
-  const [printEntries, setPrintEntries] = useState<EventType[]>([]);
+  const [entries, setEntries] = useState<Event[]>([]);
+  const [printEntries, setPrintEntries] = useState<Event[]>([]);
   const [page, setPage] = useState<number>(0);
   const [count, setCount] = useState<number>(0);
   const [form, setForm] = useState<FilterForm>({
@@ -63,7 +63,7 @@ export const DeletedServiceCallsReport: FC<Props> = ({
     isActive: false,
   });
   const [printStatus, setPrintStatus] = useState<Status>('idle');
-  const [pendingEdit, setPendingEdit] = useState<EventType>();
+  const [pendingEdit, setPendingEdit] = useState<Event>();
   const load = useCallback(async () => {
     setLoading(true);
     console.log({ form });
@@ -72,9 +72,10 @@ export const DeletedServiceCallsReport: FC<Props> = ({
       filter: form,
       sort: {
         orderBy: 'date_started',
-        orderByField: 'dateStarted',
+        orderByField: 'getDateStarted',
         orderDir: 'ASC',
       },
+      req: new Event(),
     });
     setEntries(results);
     console.log({ results });
@@ -102,9 +103,10 @@ export const DeletedServiceCallsReport: FC<Props> = ({
       filter: form,
       sort: {
         orderBy: 'date_started',
-        orderByField: 'dateStarted',
+        orderByField: 'getDateStarted',
         orderDir: 'ASC',
       },
+      req: new Event(),
     });
     setPrintEntries(results);
   }, [setPrintEntries, form, printEntries, count]);
@@ -113,22 +115,23 @@ export const DeletedServiceCallsReport: FC<Props> = ({
     await loadPrintEntries();
     setPrintStatus('loaded');
   }, [loadPrintEntries, setPrintStatus]);
-  const handlePrinted = useCallback(() => setPrintStatus('idle'), [
-    setPrintStatus,
-  ]);
-  const handleSearch = useCallback(() => setLoaded(false), [setForm]);
+  const handlePrinted = useCallback(
+    () => setPrintStatus('idle'),
+    [setPrintStatus],
+  );
+  const handleSearch = useCallback(() => setLoaded(false), []);
   const handleSetPendingEdit = useCallback(
-    (pendingEdit?: EventType) => () => setPendingEdit(pendingEdit),
+    (pendingEdit?: Event) => () => setPendingEdit(pendingEdit),
     [setPendingEdit],
   );
   const handleOpenTasks = useCallback(
-    (entry: EventType) => () => {
+    (entry: Event) => () => {
       // TODO Replace with react Tasks module, once it's built
       window.open(
         [
           getCFAppUrl('admin:tasks.list'),
           'code=servicecall',
-          `id=${entry.id}`,
+          `id=${entry.getId()}`,
         ].join('&'),
       );
     },
@@ -159,18 +162,15 @@ export const DeletedServiceCallsReport: FC<Props> = ({
       },
     ],
   ];
-  const getData = (entries: EventType[]): Data =>
+  const getData = (entries: Event[]): Data =>
     loading
       ? makeFakeRows(5, 5)
       : entries.map(entry => {
-          const {
-            id,
-            property,
-            customer,
-            name,
-            dateStarted,
-            logJobStatus,
-          } = entry;
+          const property = entry.getProperty();
+          const customer = entry.getCustomer();
+          const name = entry.getName();
+          const dateStarted = entry.getDateStarted();
+          const logJobStatus = entry.getLogJobStatus();
           const disabled = !property || !customer;
           return [
             {
@@ -262,9 +262,9 @@ export const DeletedServiceCallsReport: FC<Props> = ({
       {pendingEdit && (
         <Modal open onClose={handleSetPendingEdit()} fullScreen>
           <ServiceCall
-            serviceCallId={pendingEdit.id}
-            userID={pendingEdit.customer!.id}
-            propertyId={pendingEdit.property!.id}
+            serviceCallId={pendingEdit.getId()}
+            userID={pendingEdit.getCustomer()!.getId()}
+            propertyId={pendingEdit.getProperty()!.getId()}
             loggedUserId={loggedUserId}
             onClose={handleSetPendingEdit()}
           />

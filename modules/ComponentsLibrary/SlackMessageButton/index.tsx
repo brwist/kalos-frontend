@@ -1,15 +1,9 @@
 import { IconButton } from '@material-ui/core';
 import Typography from '@material-ui/core/Typography';
 import React, { CSSProperties } from 'react';
-import {
-  getSlackID,
-  getSlackList,
-  slackNotify,
-  UserClientService,
-} from '../../../helpers';
+import { getSlackID, slackNotify, UserClientService } from '../../../helpers';
 import { Alert } from '../Alert';
 import { Button } from '../Button/index';
-import { ConfirmDelete } from '../ConfirmDelete';
 import { Form, Schema } from '../Form';
 import { Modal } from '../Modal';
 
@@ -97,7 +91,7 @@ export class SlackMessageButton extends React.PureComponent<Props, State> {
   getUserNameFromId = async () => {
     try {
       let user = await UserClientService.loadUserById(this.props.loggedUserId);
-      this.userName = `${user.firstname} ${user.lastname}`;
+      this.userName = `${user.getFirstname()} ${user.getLastname()}`;
     } catch (error: any) {
       console.error('Could not fetch the user name from the given ID.');
     }

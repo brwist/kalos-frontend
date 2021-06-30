@@ -26,28 +26,24 @@ const ColorIndicator = ({ status }: ColorIndicatorProps) => (
 );
 
 type TimesheetLineProps = {
-  card: TimesheetLine.AsObject;
+  card: TimesheetLine;
 };
 
 export const TimesheetLineCard: FC<TimesheetLineProps> = ({
   card,
 }): JSX.Element => {
   const { editTimesheetCard } = useEditTimesheet();
-  const {
-    timeStarted,
-    timeFinished,
-    userApprovalDatetime,
-    adminApprovalDatetime,
-    briefDescription,
-    classCode,
-    referenceNumber,
-    notes,
-    eventId,
-    eventUserId,
-    eventPropertyId,
-    adminApprovalUserName,
-    payrollProcessed,
-  } = card;
+  const adminApprovalDatetime = card.getAdminApprovalDatetime();
+  const payrollProcessed = card.getPayrollProcessed();
+  const userApprovalDatetime = card.getUserApprovalDatetime();
+  const timeStarted = card.getTimeStarted();
+  const timeFinished = card.getTimeFinished();
+  const classCode = card.getClassCode();
+  const eventId = card.getEventId();
+  const briefDescription = card.getBriefDescription();
+  const referenceNumber = card.getReferenceNumber();
+  const notes = card.getNotes();
+  const adminApprovalUserName = card.getAdminApprovalUserName();
   let status;
   if (payrollProcessed) {
     status = 'Processed';
@@ -66,7 +62,7 @@ export const TimesheetLineCard: FC<TimesheetLineProps> = ({
   } else {
     status = 'Pending';
   }
-  const payrollDiff = classCode?.billable
+  const payrollDiff = classCode?.getBillable()
     ? differenceInMinutes(parseISO(timeFinished), parseISO(timeStarted)) / 60
     : 0;
 
@@ -111,8 +107,8 @@ export const TimesheetLineCard: FC<TimesheetLineProps> = ({
                   [
                     getCFAppUrl('admin:service.editServicecall'),
                     `id=${eventId}`,
-                    `user_id=${eventUserId}`,
-                    `property_id=${eventPropertyId}`,
+                    `user_id=${card.getEventUserId()}`,
+                    `property_id=${card.getEventPropertyId()}`,
                   ].join('&'),
                   '_blank',
                 );
@@ -122,7 +118,7 @@ export const TimesheetLineCard: FC<TimesheetLineProps> = ({
             </Typography>
           )}
           <Typography>
-            {classCode?.classcodeId + '-' + classCode?.description}
+            {classCode?.getClasscodeId() + '-' + classCode?.getDescription()}
           </Typography>
           {briefDescription && (
             <Typography variant="body2">
@@ -162,7 +158,7 @@ export const ServicesRenderedCard: FC<ServicesRenderedProps> = ({
     <Card
       className={clsx('TimesheetTimesheetCardCard', 'servicesRendered')}
       onClick={() => {
-        editServicesRenderedCard(card);
+        console.log(card);
       }}
     >
       <CardActionArea>

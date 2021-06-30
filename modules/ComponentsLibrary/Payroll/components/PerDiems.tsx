@@ -17,7 +17,6 @@ import { Tooltip } from '../../Tooltip';
 import { Confirm } from '../../Confirm';
 import { Button } from '../../Button';
 import {
-  PerDiemType,
   makeFakeRows,
   formatDate,
   PerDiemClientService,
@@ -27,7 +26,7 @@ import {
 import { NULL_TIME, OPTION_ALL, ROWS_PER_PAGE } from '../../../../constants';
 import { RoleType } from '../index';
 import { getDepartmentName } from '@kalos-core/kalos-rpc/Common';
-import { PerDiem as PerDiemReq } from '@kalos-core/kalos-rpc/PerDiem';
+import { PerDiem } from '@kalos-core/kalos-rpc/PerDiem';
 
 interface Props {
   loggedUserId: number;
@@ -42,7 +41,7 @@ const formatWeek = (date: string) => {
   return `Week of ${format(d, 'MMMM')}, ${format(d, 'do')}`;
 };
 
-export const PerDiem: FC<Props> = ({
+export const PerDiems: FC<Props> = ({
   loggedUserId,
   departmentId,
   employeeId,
@@ -50,20 +49,17 @@ export const PerDiem: FC<Props> = ({
   role,
 }) => {
   const [loading, setLoading] = useState<boolean>(false);
-  const [perDiems, setPerDiems] = useState<PerDiemType[]>([]);
+  const [perDiems, setPerDiems] = useState<PerDiem[]>([]);
   const [page, setPage] = useState<number>(0);
   const [count, setCount] = useState<number>(0);
-  const [perDiemViewed, setPerDiemViewed] = useState<PerDiemType>();
-  const [pendingApprove, setPendingApprove] = useState<PerDiemType>();
-  const [pendingAudited, setPendingAudited] = useState<PerDiemType>();
-  const [pendingDeny, setPendingDeny] = useState<PerDiemType>();
+  const [perDiemViewed, setPerDiemViewed] = useState<PerDiem>();
+  const [pendingApprove, setPendingApprove] = useState<PerDiem>();
+  const [pendingAudited, setPendingAudited] = useState<PerDiem>();
+  const [pendingDeny, setPendingDeny] = useState<PerDiem>();
   const [rejectionMessage, setRejectionMessage] = useState<string>('');
   const [toggleButton, setToggleButton] = useState<boolean>(false);
-  const [pendingPayroll, setPendingPayroll] = useState<PerDiemType>();
-  const [
-    pendingPayrollReject,
-    setPendingPayrollReject,
-  ] = useState<PerDiemType>();
+  const [pendingPayroll, setPendingPayroll] = useState<PerDiem>();
+  const [pendingPayrollReject, setPendingPayrollReject] = useState<PerDiem>();
   const managerFilter = role === 'Manager';
   const auditorFilter = role == 'Auditor';
   const payrollFilter = role == 'Payroll';
@@ -81,8 +77,8 @@ export const PerDiem: FC<Props> = ({
       'date_submitted',
       'ASC',
     );
-    setPerDiems(perDiems.resultsList);
-    setCount(perDiems.totalCount);
+    setPerDiems(perDiems.getResultsList());
+    setCount(perDiems.getTotalCount());
     setLoading(false);
   }, [
     departmentId,
@@ -98,27 +94,27 @@ export const PerDiem: FC<Props> = ({
     load();
   }, [load]);
   const handlePerDiemViewedToggle = useCallback(
-    (perDiem?: PerDiemType) => () => setPerDiemViewed(perDiem),
+    (perDiem?: PerDiem) => () => setPerDiemViewed(perDiem),
     [setPerDiemViewed],
   );
   const handlePendingApproveToggle = useCallback(
-    (perDiem?: PerDiemType) => () => setPendingApprove(perDiem),
+    (perDiem?: PerDiem) => () => setPendingApprove(perDiem),
     [setPendingApprove],
   );
   const handlePendingDenyToggle = useCallback(
-    (perDiem?: PerDiemType) => () => setPendingDeny(perDiem),
+    (perDiem?: PerDiem) => () => setPendingDeny(perDiem),
     [setPendingDeny],
   );
   const handlePendingAuditedToggle = useCallback(
-    (perDiem?: PerDiemType) => () => setPendingAudited(perDiem),
+    (perDiem?: PerDiem) => () => setPendingAudited(perDiem),
     [setPendingAudited],
   );
   const handlePendingPayrollToggle = useCallback(
-    (perDiem?: PerDiemType) => () => setPendingPayroll(perDiem),
+    (perDiem?: PerDiem) => () => setPendingPayroll(perDiem),
     [setPendingPayroll],
   );
   const handlePendingPayrollToggleReject = useCallback(
-    (perDiem?: PerDiemType) => () => {
+    (perDiem?: PerDiem) => () => {
       setPendingPayrollReject(perDiem);
     },
     [setPendingPayrollReject],
@@ -129,7 +125,7 @@ export const PerDiem: FC<Props> = ({
   }, [toggleButton]);
   const handleApprove = useCallback(async () => {
     if (!pendingApprove) return;
-    const { id } = pendingApprove;
+    const id = pendingApprove.getId();
     setLoading(true);
     setPendingApprove(undefined);
     await PerDiemClientService.approvePerDiemById(id, loggedUserId);
@@ -137,19 +133,19 @@ export const PerDiem: FC<Props> = ({
   }, [load, loggedUserId, pendingApprove]);
   const handleDeny = useCallback(async () => {
     if (!pendingDeny) return;
-    const { id } = pendingDeny;
-    const slackID = await getSlackID(pendingDeny.ownerName);
+    const id = pendingDeny.getId();
+    const slackID = await getSlackID(pendingDeny.getOwnerName());
     if (slackID != '0') {
       slackNotify(
         slackID,
         `Your PerDiem for ${formatWeek(
-          pendingDeny.dateStarted,
+          pendingDeny.getDateStarted(),
         )} was denied by Manager for the following reason:` + rejectionMessage,
       );
     } else {
       console.log('We could not find the user, but we will still reject');
     }
-    const req = new PerDiemReq();
+    const req = new PerDiem();
     req.setId(id);
     req.setDateSubmitted(NULL_TIME);
     setLoading(true);
@@ -159,7 +155,7 @@ export const PerDiem: FC<Props> = ({
   }, [load, pendingDeny, rejectionMessage]);
   const handleAudit = useCallback(async () => {
     if (pendingAudited) {
-      const { id } = pendingAudited;
+      const id = pendingAudited.getId();
       setLoading(true);
       setPendingAudited(undefined);
       await PerDiemClientService.updatePerDiemNeedsAudit(id);
@@ -168,7 +164,7 @@ export const PerDiem: FC<Props> = ({
   }, [load, pendingAudited]);
   const handlePayroll = useCallback(async () => {
     if (pendingPayroll) {
-      const { id } = pendingPayroll;
+      const id = pendingPayroll.getId();
       setLoading(true);
       setPendingPayroll(undefined);
       await PerDiemClientService.updatePerDiemPayrollProcessed(id);
@@ -177,13 +173,13 @@ export const PerDiem: FC<Props> = ({
   }, [load, pendingPayroll]);
   const handlePayrollRejected = useCallback(async () => {
     if (pendingPayrollReject) {
-      const { id } = pendingPayrollReject;
-      const slackID = await getSlackID(pendingPayrollReject.ownerName);
+      const id = pendingPayrollReject.getId();
+      const slackID = await getSlackID(pendingPayrollReject.getOwnerName());
       if (slackID != '0') {
         slackNotify(
           slackID,
           `Your PerDiem for ${formatWeek(
-            pendingPayrollReject.dateStarted,
+            pendingPayrollReject.getDateStarted(),
           )} was rejected by Payroll for the following reason:` +
             rejectionMessage,
         );
@@ -192,7 +188,7 @@ export const PerDiem: FC<Props> = ({
       }
       setLoading(true);
       setPendingPayrollReject(undefined);
-      const req = new PerDiemReq();
+      const req = new PerDiem();
       req.setPayrollProcessed(false);
       req.setId(id);
       req.setDateApproved(NULL_TIME);
@@ -239,21 +235,21 @@ export const PerDiem: FC<Props> = ({
             : perDiems.map(el => {
                 return [
                   {
-                    value: el.ownerName,
+                    value: el.getOwnerName(),
                     onClick: handlePerDiemViewedToggle(el),
                   },
                   {
-                    value: getDepartmentName(el.department),
+                    value: getDepartmentName(el.getDepartment()),
                     onClick: handlePerDiemViewedToggle(el),
                   },
                   {
-                    value: formatWeek(el.dateStarted),
+                    value: formatWeek(el.getDateStarted()),
                     onClick: handlePerDiemViewedToggle(el),
                   },
                   {
-                    value: `${formatDate(el.dateApproved)} by ${
-                      el.approvedByName
-                    }`,
+                    value: `${formatDate(
+                      el.getDateApproved(),
+                    )} by ${el.getApprovedByName()}`,
                     onClick: handlePerDiemViewedToggle(el),
                     actions: [
                       <Tooltip
@@ -323,8 +319,8 @@ export const PerDiem: FC<Props> = ({
                               size="small"
                               onClick={handlePendingPayrollToggle(el)}
                               disabled={
-                                el.payrollProcessed ||
-                                el.dateApproved === NULL_TIME
+                                el.getPayrollProcessed() ||
+                                el.getDateApproved() === NULL_TIME
                               }
                             >
                               <AccountBalanceWalletIcon />
@@ -343,8 +339,8 @@ export const PerDiem: FC<Props> = ({
                               size="small"
                               onClick={handlePendingPayrollToggleReject(el)}
                               disabled={
-                                el.payrollProcessed ||
-                                el.dateApproved === NULL_TIME
+                                el.getPayrollProcessed() ||
+                                el.getDateApproved() === NULL_TIME
                               }
                             >
                               <NotInterestedIcon />
@@ -362,12 +358,12 @@ export const PerDiem: FC<Props> = ({
       {perDiemViewed && (
         <Modal open onClose={handlePerDiemViewedToggle(undefined)} fullScreen>
           <SectionBar
-            title={`Per Diem: ${perDiemViewed.ownerName}`}
+            title={`Per Diem: ${perDiemViewed.getOwnerName()}`}
             subtitle={
               <>
-                Department: {getDepartmentName(perDiemViewed.department)}
+                Department: {getDepartmentName(perDiemViewed.getDepartment())}
                 <br />
-                {formatWeek(perDiemViewed.dateStarted)}
+                {formatWeek(perDiemViewed.getDateStarted())}
               </>
             }
             actions={[

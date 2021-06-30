@@ -22,7 +22,7 @@ interface Props {
   onClose: () => void;
   onSave: (addressPair: AddressPair.AddressPair) => void;
   addressFields: number;
-  schema: Schema<AddressPair.AsObject>;
+  schema: Schema<AddressPair.AddressPair>;
   perDiemRowIds: number[];
 }
 
@@ -33,7 +33,7 @@ interface State {
   noteLengthPopupOpen: boolean;
   saving: boolean;
   perDiemDropDownSelected: any;
-  perDiems: PerDiem.AsObject[] | null;
+  perDiems: PerDiem[] | null;
 }
 
 const componentForm = {
@@ -106,9 +106,9 @@ export class PlaceAutocompleteAddressForm extends React.PureComponent<
       'https://polyfill.io/v3/polyfill.min.js?features=default',
     );
     await this.loadScriptByUrl(
-      `https://maps.googleapis.com/maps/api/js?key=${
-        (await ApiKeyClientService.getKeyByKeyName('google_maps')).apiKey
-      }&libraries=places`,
+      `https://maps.googleapis.com/maps/api/js?key=${(
+        await ApiKeyClientService.getKeyByKeyName('google_maps')
+      ).getApiKey()}&libraries=places`,
     );
     this.handleLoad();
   };
@@ -193,10 +193,19 @@ export class PlaceAutocompleteAddressForm extends React.PureComponent<
             indexOfForm,
           ).value = street_number + ' ' + val;
           if (indexOfForm == 0) {
-            this.state.address.StreetAddressOrigin = street_number + ' ' + val;
+            this.setState({
+              address: {
+                ...this.state.address,
+                StreetAddressOrigin: street_number + ' ' + val,
+              },
+            });
           } else {
-            this.state.address.StreetAddressDestination =
-              street_number + ' ' + val;
+            this.setState({
+              address: {
+                ...this.state.address,
+                StreetAddressDestination: street_number + ' ' + val,
+              },
+            });
           }
           continue;
         }
@@ -204,52 +213,102 @@ export class PlaceAutocompleteAddressForm extends React.PureComponent<
         switch (addressType) {
           case 'locality':
             if (indexOfForm == 0) {
-              this.state.address.CityOrigin = val;
+              this.setState({
+                address: {
+                  ...this.state.address,
+                  CityOrigin: val,
+                },
+              });
             } else {
-              this.state.address.CityDestination = val;
+              this.setState({
+                address: {
+                  ...this.state.address,
+                  CityDestination: val,
+                },
+              });
             }
             break;
           case 'administrative_area_level_1':
             if (indexOfForm == 0) {
-              this.state.address.StateOrigin = val;
+              this.setState({
+                address: {
+                  ...this.state.address,
+                  StateOrigin: val,
+                },
+              });
             } else {
-              this.state.address.StateDestination = val;
+              this.setState({
+                address: {
+                  ...this.state.address,
+                  StateDestination: val,
+                },
+              });
             }
             break;
           case 'country':
             if (indexOfForm == 0) {
-              this.state.address.CountryOrigin = val;
+              this.setState({
+                address: {
+                  ...this.state.address,
+                  CountryOrigin: val,
+                },
+              });
             } else {
-              this.state.address.CountryDestination = val;
+              this.setState({
+                address: {
+                  ...this.state.address,
+                  CountryDestination: val,
+                },
+              });
             }
             break;
           case 'postal_code':
             if (indexOfForm == 0) {
-              this.state.address.ZipCodeOrigin = val;
+              this.setState({
+                address: {
+                  ...this.state.address,
+                  ZipCodeOrigin: val,
+                },
+              });
             } else {
-              this.state.address.ZipCodeDestination = val;
+              this.setState({
+                address: {
+                  ...this.state.address,
+                  ZipCodeDestination: val,
+                },
+              });
             }
             break;
         }
 
         if (indexOfForm == 0) {
-          this.state.address.FullAddressOrigin =
-            this.state.address.StreetAddressOrigin +
-            ', ' +
-            this.state.address.CityOrigin +
-            ', ' +
-            this.state.address.StateOrigin +
-            ', ' +
-            this.state.address.CountryOrigin;
+          this.setState({
+            address: {
+              ...this.state.address,
+              FullAddressOrigin:
+                this.state.address.StreetAddressOrigin +
+                ', ' +
+                this.state.address.CityOrigin +
+                ', ' +
+                this.state.address.StateOrigin +
+                ', ' +
+                this.state.address.CountryOrigin,
+            },
+          });
         } else {
-          this.state.address.FullAddressDestination =
-            this.state.address.StreetAddressDestination +
-            ', ' +
-            this.state.address.CityDestination +
-            ', ' +
-            this.state.address.StateDestination +
-            ', ' +
-            this.state.address.CountryDestination;
+          this.setState({
+            address: {
+              ...this.state.address,
+              FullAddressDestination:
+                this.state.address.StreetAddressDestination +
+                ', ' +
+                this.state.address.CityDestination +
+                ', ' +
+                this.state.address.StateDestination +
+                ', ' +
+                this.state.address.CountryDestination,
+            },
+          });
         }
 
         // Sets the input field text to the value given by val
@@ -287,7 +346,7 @@ export class PlaceAutocompleteAddressForm extends React.PureComponent<
   }
 
   getPerDiemsFromIds = async (ids: number[]) => {
-    let list: PerDiem.AsObject[] = [];
+    let list: PerDiem[] = [];
     for await (const id of ids) {
       let pd = new PerDiem();
       pd.setId(id);
@@ -386,10 +445,10 @@ export class PlaceAutocompleteAddressForm extends React.PureComponent<
                         this.state.perDiems.map((key, idx) => {
                           return (
                             <MenuItem
-                              value={key.id + ' | ' + idx}
-                              key={key.id + ' | ' + idx}
+                              value={key.getId() + ' | ' + idx}
+                              key={key.getId() + ' | ' + idx}
                             >
-                              {key.department?.value} | Notes: "{key.notes}"
+                              {key.getDepartment()?.getValue()} | {key.getNotes()}
                             </MenuItem>
                           );
                         })

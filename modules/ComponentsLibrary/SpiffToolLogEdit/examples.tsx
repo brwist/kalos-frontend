@@ -1,30 +1,48 @@
-import React from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
 import { SpiffToolLogEdit } from './';
 import { ExampleTitle } from '../helpers';
-import spiffExample from './spiffExample';
-import toolExample from './toolExample';
+import { Task } from '@kalos-core/kalos-rpc/Task';
+import { TaskClientService } from '../../../helpers';
 
-export default () => (
-  <>
-    <ExampleTitle>Spiff</ExampleTitle>
-    <SpiffToolLogEdit
-      data={spiffExample}
-      loggedUserId={101253}
-      type="Spiff"
-      onClose={() => console.log('CLOSE')}
-      onSave={() => console.log('SAVE')}
-      onStatusChange={() => console.log('UPSERT STATUS')}
-      loading={false}
-    />
-    <ExampleTitle>Tool</ExampleTitle>
-    <SpiffToolLogEdit
-      data={toolExample}
-      loggedUserId={101253}
-      type="Tool"
-      onClose={() => console.log('CLOSE')}
-      onSave={() => console.log('SAVE')}
-      onStatusChange={() => console.log('UPSERT STATUS')}
-      loading={false}
-    />
-  </>
-);
+export default () => {
+  const [results, setResults] = useState<Task[]>([]);
+  const load = useCallback(async () => {
+    // Load the example data
+    let req = new Task();
+    req.setId(104483);
+    const res = await TaskClientService.Get(req);
+
+    req.setId(104456);
+    const res2 = await TaskClientService.Get(req);
+
+    setResults([res, res2]);
+  }, [setResults]);
+  useEffect(() => {
+    load();
+  }, [load]);
+  if (results.length == 0) return <>Loading dev data...</>;
+  return (
+    <>
+      <ExampleTitle>Spiff</ExampleTitle>
+      <SpiffToolLogEdit
+        data={results[0]!}
+        loggedUserId={101253}
+        type="Spiff"
+        onClose={() => console.log('CLOSE')}
+        onSave={() => console.log('SAVE')}
+        onStatusChange={() => console.log('UPSERT STATUS')}
+        loading={false}
+      />
+      <ExampleTitle>Tool</ExampleTitle>
+      <SpiffToolLogEdit
+        data={results[1]!}
+        loggedUserId={101253}
+        type="Tool"
+        onClose={() => console.log('CLOSE')}
+        onSave={() => console.log('SAVE')}
+        onStatusChange={() => console.log('UPSERT STATUS')}
+        loading={false}
+      />
+    </>
+  );
+};

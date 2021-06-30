@@ -9,14 +9,7 @@ import { Modal } from '../../Modal';
 import { Confirm } from '../../Confirm';
 import PageviewIcon from '@material-ui/icons/Pageview';
 import { Timesheet as TimesheetComponent } from '../../Timesheet';
-import {
-  TimesheetLineType,
-  makeFakeRows,
-  UserType,
-  TimesheetLineClientService,
-  UserClientService,
-  timestamp,
-} from '../../../../helpers';
+import { makeFakeRows } from '../../../../helpers';
 import { ROWS_PER_PAGE, OPTION_ALL } from '../../../../constants';
 import {
   TimesheetLine,
@@ -51,23 +44,23 @@ export const TimesheetPendingApproval: FC<Props> = ({
   loggedUser,
 }) => {
   const [loading, setLoading] = useState<boolean>(false);
-  const [timesheets, setTimesheets] = useState<TimesheetLineType[]>([]);
+  const [timesheets, setTimesheets] = useState<TimesheetLine[]>([]);
   const [page, setPage] = useState<number>(0);
   const [count, setCount] = useState<number>(0);
 
   const [
     timesheetSummaryToggle,
     setTimesheetSummaryToggle,
-  ] = useState<TimesheetLineType>();
+  ] = useState<TimesheetLine>();
   const [startDay, setStartDay] = useState<Date>(
     startOfWeek(subDays(new Date(), 7), { weekStartsOn: 6 }),
   );
   const [endDay, setEndDay] = useState<Date>(addDays(startDay, 7));
-  const [pendingView, setPendingView] = useState<TimesheetLineType>();
+  const [pendingView, setPendingView] = useState<TimesheetLine>();
   const [
     pendingCreateEmptyTimesheetLine,
     setPendingCreateEmptyTimesheetLine,
-  ] = useState<TimesheetLineType>();
+  ] = useState<TimesheetLine>();
   const load = useCallback(async () => {
     setLoading(true);
     const filter = {
@@ -86,9 +79,11 @@ export const TimesheetPendingApproval: FC<Props> = ({
     }
 
     const getTimesheets = createTimesheetFetchFunction(filter, type);
-    const { resultsList, totalCount } = (await getTimesheets()).toObject();
+    const results = await getTimesheets();
+    const resultsList = results.getResultsList();
     let sortedResultsLists = resultsList.sort((a, b) =>
-      a.technicianUserName.split(' ')[1] > b.technicianUserName.split(' ')[1]
+      a.getTechnicianUserName().split(' ')[1] >
+      b.getTechnicianUserName().split(' ')[1]
         ? 1
         : -1,
     );
@@ -100,7 +95,7 @@ export const TimesheetPendingApproval: FC<Props> = ({
     load();
   }, [load]);
   const handleTogglePendingView = useCallback(
-    (pendingView?: TimesheetLineType) => () => {
+    (pendingView?: TimesheetLine) => () => {
       setPendingView(pendingView);
       load();
     },
@@ -131,22 +126,22 @@ export const TimesheetPendingApproval: FC<Props> = ({
             : timesheets.map(e => {
                 return [
                   {
-                    value: e.technicianUserName,
+                    value: e.getTechnicianUserName(),
                     onClick: handleTogglePendingView(e),
                   },
                   {
-                    value: e.departmentName,
+                    value: e.getDepartmentName(),
                     onClick: handleTogglePendingView(e),
                   },
                   {
                     value:
                       type === 'Manager'
-                        ? e.userApprovalDatetime === NULL_TIME
-                          ? e.referenceNumber === 'auto'
+                        ? e.getUserApprovalDatetime() === NULL_TIME
+                          ? e.getReferenceNumber() === 'auto'
                             ? 'No Timesheet Submitted'
                             : 'Timesheet Pending'
                           : 'Submitted'
-                        : formatWeek(e.adminApprovalDatetime),
+                        : formatWeek(e.getAdminApprovalDatetime()),
                     onClick: handleTogglePendingView(e),
                     actions: [
                       <IconButton
@@ -166,7 +161,7 @@ export const TimesheetPendingApproval: FC<Props> = ({
                           <PageviewIcon />
                         </IconButton>
                       ),
-                      e.referenceNumber === 'auto' && (
+                      e.getReferenceNumber() === 'auto' && (
                         <IconButton
                           key="createEmpty"
                           onClick={() => setPendingCreateEmptyTimesheetLine(e)}
@@ -185,9 +180,9 @@ export const TimesheetPendingApproval: FC<Props> = ({
       {pendingView && (
         <Modal open onClose={handleTogglePendingView(undefined)} fullScreen>
           <TimesheetComponent
-            timesheetOwnerId={pendingView.technicianUserId}
+            timesheetOwnerId={pendingView.getTechnicianUserId()}
             userId={loggedUser}
-            week={pendingView.timeStarted}
+            week={pendingView.getTimeStarted()}
             onClose={handleTogglePendingView(undefined)}
             startOnWeek={type === 'Payroll' || type === 'Manager'}
           />
@@ -200,11 +195,11 @@ export const TimesheetPendingApproval: FC<Props> = ({
           fullScreen
         >
           <TimesheetSummary
-            userId={timesheetSummaryToggle.technicianUserId}
+            userId={timesheetSummaryToggle.getTechnicianUserId()}
             loggedUserId={loggedUser}
             notReady={false}
             onClose={() => setTimesheetSummaryToggle(undefined)}
-            username={timesheetSummaryToggle.technicianUserName}
+            username={timesheetSummaryToggle.getTechnicianUserName()}
           ></TimesheetSummary>
         </Modal>
       )}

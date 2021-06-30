@@ -23,14 +23,16 @@ import {
   format,
   endOfWeek,
 } from 'date-fns';
-import { Trip } from '@kalos-core/kalos-rpc/compiled-protos/perdiem_pb';
+import {
+  PerDiemRow,
+  Trip,
+} from '@kalos-core/kalos-rpc/compiled-protos/perdiem_pb';
 import {
   roundNumber,
   formatDate,
   TaskClientService,
-  PerDiemRowType,
+  TimeoffRequestClientService,
   PerDiemClientService,
-  PerDiemType,
   usd,
   timestamp,
   SpiffToolAdminActionClientService,
@@ -60,7 +62,21 @@ export const CostSummary: FC<Props> = ({
   const [totalHoursProcessed, setTotalHoursProcessed] = useState<number>(0);
 
   const [totalSpiffsWeekly, setTotalSpiffsWeekly] = useState<number>(0);
-  const [perDiems, setPerDiems] = useState<PerDiemType[]>([]);
+  const [spiffsWeekly, setSpiffsWeekly] = useState<Task[]>();
+  const [totalPTO, setTotalPTO] = useState<number>(0);
+  const [totalPerDiem, setTotalPerDiem] = useState<{
+    totalMeals: number;
+    totalLodging: number;
+    totalMileage: number;
+    processed: number;
+  }>({ totalMeals: 0, totalLodging: 0, totalMileage: 0, processed: 0 });
+  const [totalPerDiemProcessed, setTotalPerDiemProcessed] = useState<{
+    totalMeals: number;
+    totalLodging: number;
+    totalMileage: number;
+    processed: number;
+  }>({ totalMeals: 0, totalLodging: 0, totalMileage: 0, processed: 0 });
+  const [perDiems, setPerDiems] = useState<PerDiem[]>([]);
   const [trips, setTrips] = useState<Trip[]>();
   const [loaded, setLoaded] = useState<boolean>(false);
   const today = new Date();
@@ -117,9 +133,9 @@ export const CostSummary: FC<Props> = ({
           distanceSubtotal += tempTripList[j].getDistanceInMiles() - 30;
         }
       } else {
-        distanceSubtotal += tempTripList[j].toObject().distanceInMiles;
+        distanceSubtotal += tempTripList[j].getDistanceInMiles();
       }
-      if (tempTripList[j].toObject().payrollProcessed === false) {
+      if (tempTripList[j].getPayrollProcessed() === false) {
         processed = false;
       }
     }
@@ -151,22 +167,21 @@ export const CostSummary: FC<Props> = ({
           );
         }
       } else {
-        distanceSubtotal += tempTripList[j].toObject().distanceInMiles;
+        distanceSubtotal += tempTripList[j].getDistanceInMiles();
       }
-      if (tempTripList[j].toObject().payrollProcessed === false) {
+      if (tempTripList[j].getPayrollProcessed() === false) {
         processed = false;
       }
     }
     return { totalDistance: distanceSubtotal, processed };
   }, [userId]);
   const getPerDiemTotals = useCallback(async () => {
-    const {
-      resultsList,
-    } = await PerDiemClientService.loadPerDiemByUserIdAndDateStartedAudited(
+    const pdRes = await PerDiemClientService.loadPerDiemByUserIdAndDateStartedAudited(
       userId,
       formatDateFns(endDay),
     );
     //get PerDiems, set them
+    const resultsList = pdRes.getResultsList();
     setPerDiems(resultsList);
     const year = +format(startDay, 'yyyy');
     const month = +format(startDay, 'M');
@@ -174,10 +189,10 @@ export const CostSummary: FC<Props> = ({
     for (let i = 0; i < resultsList.length; i++) {
       let zipCodes = [resultsList[i]]
         .reduce(
-          (aggr, { rowsList }) => [...aggr, ...rowsList],
-          [] as PerDiemRowType[],
+          (aggr, pd) => [...aggr, ...pd.getRowsList()],
+          [] as PerDiemRow[],
         )
-        .map(({ zipCode }) => zipCode);
+        .map(pd => pd.getZipCode());
       for (let j = 0; j < zipCodes.length; j++) {
         zipCodesList.push(zipCodes[j]);
       }
@@ -191,7 +206,7 @@ export const CostSummary: FC<Props> = ({
     let filteredPerDiems = resultsList;
     if (resultsList.length > 0) {
       for (let i = 0; i < resultsList.length; i++) {
-        if (resultsList[i].payrollProcessed) {
+        if (resultsList[i].getPayrollProcessed()) {
           processed = 1;
         }
       }
@@ -205,24 +220,26 @@ export const CostSummary: FC<Props> = ({
       };
     }
     let allRowsList = filteredPerDiems.reduce(
-      (aggr, { rowsList }) => [...aggr, ...rowsList],
-      [] as PerDiemRowType[],
+      (aggr, pd) => [...aggr, ...pd.getRowsList()],
+      [] as PerDiemRow[],
     );
     let totalMeals = allRowsList.reduce(
-      (aggr, { zipCode }) => aggr + govPerDiemByZipCode(zipCode).meals,
+      (aggr, pdr) => aggr + govPerDiemByZipCode(pdr.getZipCode()).meals,
       0,
     );
     let totalLodging = allRowsList.reduce(
-      (aggr, { zipCode, mealsOnly }) =>
-        aggr + (mealsOnly ? 0 : govPerDiemByZipCode(zipCode).lodging),
+      (aggr, pdr) =>
+        aggr +
+        (pdr.getMealsOnly()
+          ? 0
+          : govPerDiemByZipCode(pdr.getZipCode()).lodging),
       0,
     );
     let totalMileage = 0;
     for (let i = 0; i < allRowsList.length; i++) {
-      totalMileage = allRowsList[i].tripsList.reduce(
-        (aggr, { distanceInMiles }) => aggr + distanceInMiles,
-        0,
-      );
+      totalMileage = allRowsList[i]
+        .getTripsList()
+        .reduce((aggr, t) => aggr + t.getDistanceInMiles(), 0);
     }
 
     const totals = { totalMeals, totalLodging, totalMileage, processed };
@@ -249,12 +266,12 @@ export const CostSummary: FC<Props> = ({
     const month = +format(startDay, 'M');
     const zipCodesList = [];
     for (let i = 0; i < resultsList.length; i++) {
-      let zipCodes = [resultsList[i].toObject()]
+      let zipCodes = [resultsList[i]]
         .reduce(
-          (aggr, { rowsList }) => [...aggr, ...rowsList],
-          [] as PerDiemRowType[],
+          (aggr, pd) => [...aggr, ...pd.getRowsList()],
+          [] as PerDiemRow[],
         )
-        .map(({ zipCode }) => zipCode);
+        .map(pdr => pdr.getZipCode());
       for (let j = 0; j < zipCodes.length; j++) {
         zipCodesList.push(zipCodes[j]);
       }
@@ -276,24 +293,26 @@ export const CostSummary: FC<Props> = ({
     }
     const processed = 1;
     let allRowsList = filteredPerDiems.reduce(
-      (aggr: PerDiemRowType[], pd) => [...aggr, ...pd.toObject().rowsList],
+      (aggr: PerDiemRow[], pd) => [...aggr, ...pd.getRowsList()],
       [],
     );
     let totalMeals = allRowsList.reduce(
-      (aggr, { zipCode }) => aggr + govPerDiemByZipCode(zipCode).meals,
+      (aggr, pdr) => aggr + govPerDiemByZipCode(pdr.getZipCode()).meals,
       0,
     );
     let totalLodging = allRowsList.reduce(
-      (aggr, { zipCode, mealsOnly }) =>
-        aggr + (mealsOnly ? 0 : govPerDiemByZipCode(zipCode).lodging),
+      (aggr, pdr) =>
+        aggr +
+        (pdr.getMealsOnly()
+          ? 0
+          : govPerDiemByZipCode(pdr.getZipCode()).lodging),
       0,
     );
     let totalMileage = 0;
     for (let i = 0; i < allRowsList.length; i++) {
-      totalMileage = allRowsList[i].tripsList.reduce(
-        (aggr, { distanceInMiles }) => aggr + distanceInMiles,
-        0,
-      );
+      totalMileage = allRowsList[i]
+        .getTripsList()
+        .reduce((aggr, t) => aggr + t.getDistanceInMiles(), 0);
     }
 
     const totals = {
@@ -359,9 +378,9 @@ export const CostSummary: FC<Props> = ({
       let toolTotal = 0;
       for (let i = 0; i < results.length; i++) {
         if (spiffType == 'Spiff') {
-          spiffTotal += results[i].toObject().spiffAmount;
+          spiffTotal += results[i].getSpiffAmount();
         } else {
-          toolTotal += results[i].toObject().toolpurchaseCost;
+          toolTotal += results[i].getToolpurchaseCost();
         }
       }
       if (spiffType === 'Spiff') {
@@ -429,9 +448,9 @@ export const CostSummary: FC<Props> = ({
       console.log(tempResults);
       for (let i = 0; i < results.length; i++) {
         if (spiffType == 'Spiff') {
-          spiffTotal += results[i].toObject().spiffAmount;
+          spiffTotal += results[i].getSpiffAmount();
         } else {
-          toolTotal += results[i].toObject().toolpurchaseCost;
+          toolTotal += results[i].getToolpurchaseCost();
         }
       }
       if (spiffType === 'Spiff') {
@@ -497,8 +516,8 @@ export const CostSummary: FC<Props> = ({
     let total = 0;
     for (let i = 0; i < results.length; i++) {
       {
-        const timeFinished = results[i].toObject().timeFinished;
-        const timeStarted = results[i].toObject().timeStarted;
+        const timeFinished = results[i].getTimeFinished();
+        const timeStarted = results[i].getTimeStarted();
         const subtotal = roundNumber(
           differenceInMinutes(parseISO(timeFinished), parseISO(timeStarted)) /
             60,
@@ -509,34 +528,15 @@ export const CostSummary: FC<Props> = ({
     }
     return total;
   }, [endDay, startDay, userId]);
-
-  const toggleProcessSpiffTool = async (spiffTool: Task) => {
-    const tempSpiffs = spiffs;
-    for (let i = 0; i < spiffs!.length; i++) {
-      if (tempSpiffs![i].getId() == spiffTool.getId()) {
-        console.log('we found it');
-        tempSpiffs![i].setPayrollProcessed(true);
-      }
-    }
-    dispatch({ type: 'updateSpiff', data: spiffTool });
-    dispatch({
-      type: 'updateTotalSpiffsProcessed',
-      value: spiffTool.getSpiffAmount(),
-    });
-
-    const id = spiffTool.getId();
-    const req = new Task();
-    req.setId(id);
+  const toggleProcessSpiffTool = async (req: Task) => {
     req.setFieldMaskList(['PayrollProcessed']);
     req.setPayrollProcessed(true);
     const adminReq = new SpiffToolAdminAction();
     await TaskClientService.Update(req);
-    if (spiffTool.getActionsList()) {
-      for (let i = 0; i < spiffTool.getActionsList().length; i++) {
-        if (
-          spiffTool.getActionsList()[i].getDateProcessed() === NULL_TIME_VALUE
-        ) {
-          adminReq.setId(spiffTool.getActionsList()[i].getId());
+    if (req.getActionsList()) {
+      for (let i = 0; i < req.getActionsList().length; i++) {
+        if (req.getActionsList()[i].getDateProcessed() === NULL_TIME_VALUE) {
+          adminReq.setId(req.getActionsList()[i].getId());
           adminReq.setDateProcessed(timestamp());
           adminReq.setFieldMaskList(['DateProcessed']);
           await SpiffToolAdminActionClientService.Update(adminReq);
@@ -545,23 +545,10 @@ export const CostSummary: FC<Props> = ({
     }
     //setSpiffsWeekly(tempSpiffs);
   };
-  const toggleProcessPerDiems = async (perDiems: PerDiem.AsObject[]) => {
+  const toggleProcessPerDiems = async (perDiems: PerDiem[]) => {
     for (let i = 0; i < perDiems.length; i++) {
       let req = new PerDiem();
-      const tempPerDiem = totalPerDiem;
-      const tempTrips = tripsTotal;
-      dispatch({ type: 'updateTripsTotalProcessed', data: tempTrips });
-      dispatch({ type: 'updatePerDiemTotalProcessed', data: tempPerDiem });
-      tempPerDiem.processed = 1;
-      tempTrips.processed = true;
-      tempTrips.totalDistance = 0;
-      tempPerDiem.totalLodging = 0;
-      tempPerDiem.totalMeals = 0;
-
-      dispatch({ type: 'updateTripsTotal', data: tempTrips });
-      dispatch({ type: 'updatePerDiemTotal', data: tempPerDiem });
-
-      req.setId(perDiems[i].id);
+      req.setId(perDiems[i].getId());
       req.setPayrollProcessed(true);
       req.setFieldMaskList(['PayrollProcessed', 'DateProcessed']);
       req.setDateProcessed(timestamp());
@@ -569,9 +556,7 @@ export const CostSummary: FC<Props> = ({
     }
     if (trips && trips.length > 0) {
       for (let i = 0; i < trips.length; i++) {
-        await PerDiemClientService.updateTripPayrollProcessed(
-          trips[i].toObject().id,
-        );
+        await PerDiemClientService.updateTripPayrollProcessed(trips[i].getId());
       }
     }
   };
@@ -778,26 +763,25 @@ export const CostSummary: FC<Props> = ({
                       ),
                     },
                     {
-                      value: formatDate(spiff.toObject().timeCreated),
+                      value: formatDate(spiff.getTimeCreated()),
                     },
                     {
-                      value: usd(spiff.toObject().spiffAmount),
+                      value: usd(spiff.getSpiffAmount()),
                     },
                     {
-                      value: spiff.toObject().spiffJobNumber,
+                      value: spiff.getSpiffJobNumber(),
                     },
                     {
                       value:
-                        spiff.toObject().payrollProcessed === true
+                        spiff.getPayrollProcessed() === true
                           ? 'Complete'
                           : 'Incomplete',
                       actions:
-                        spiff.toObject().payrollProcessed === false
+                        spiff.getPayrollProcessed() === false
                           ? [
                               <IconButton
                                 key="processSpiffWeekly"
                                 size="small"
-                                disabled={spiff.getPayrollProcessed() === true}
                                 onClick={() => toggleProcessSpiffTool(spiff)}
                               >
                                 <CheckIcon />

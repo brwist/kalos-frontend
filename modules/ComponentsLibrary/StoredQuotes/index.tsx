@@ -16,20 +16,18 @@ import { ENDPOINT } from '../../../constants';
 
 const StoredQuoteClientService = new StoredQuoteClient(ENDPOINT);
 
-type StoredQuoteType = StoredQuote.AsObject;
-
 interface Props {
   label?: string;
   open: boolean;
   onClose: () => void;
-  onSelect: (storedQuote: StoredQuoteType) => void;
+  onSelect: (storedQuote: StoredQuote) => void;
 }
 
-const SCHEMA: Schema<StoredQuoteType> = [
+const SCHEMA: Schema<StoredQuote> = [
   [
     {
       label: 'Description',
-      name: 'description',
+      name: 'getDescription',
       multiline: true,
       required: true,
     },
@@ -37,13 +35,13 @@ const SCHEMA: Schema<StoredQuoteType> = [
   [
     {
       label: 'Price',
-      name: 'price',
+      name: 'getPrice',
       type: 'number',
       startAdornment: '$',
       required: true,
     },
   ],
-  [{ name: 'id', type: 'hidden' }],
+  [{ name: 'getId', type: 'hidden' }],
 ];
 
 export const StoredQuotes: FC<Props> = ({
@@ -53,22 +51,22 @@ export const StoredQuotes: FC<Props> = ({
   onSelect,
 }) => {
   const [loaded, setLoaded] = useState<boolean>(false);
-  const [storedQuotes, setStoredQuotes] = useState<StoredQuoteType[]>([]);
+  const [storedQuotes, setStoredQuotes] = useState<StoredQuote[]>([]);
   const [edit, setEdit] = useState<boolean>(false);
-  const [editing, setEditing] = useState<StoredQuoteType>();
+  const [editing, setEditing] = useState<StoredQuote>();
   const [saving, setSaving] = useState<boolean>(false);
-  const [deleting, setDeleting] = useState<StoredQuoteType>();
+  const [deleting, setDeleting] = useState<StoredQuote>();
   const toggleEdit = useCallback(() => () => setEdit(!edit), [edit, setEdit]);
   const handleClose = useCallback(() => {
     setEdit(false);
     onClose();
   }, [setEdit, onClose]);
   const handleSetEditing = useCallback(
-    (editing?: StoredQuoteType) => () => setEditing(editing),
+    (editing?: StoredQuote) => () => setEditing(editing),
     [setEditing],
   );
   const handleSetDeleting = useCallback(
-    (deleting?: StoredQuoteType) => () => setDeleting(deleting),
+    (deleting?: StoredQuote) => () => setDeleting(deleting),
     [setDeleting],
   );
   const load = useCallback(async () => {
@@ -90,15 +88,15 @@ export const StoredQuotes: FC<Props> = ({
     [onSelect, handleClose],
   );
   const handleSave = useCallback(
-    async ({ id, description, price }: StoredQuoteType) => {
+    async (quote: StoredQuote) => {
       setSaving(true);
-      const isNew = id === 0;
+      const isNew = quote.getId() === 0;
       const req = new StoredQuote();
       if (!isNew) {
-        req.setId(id);
+        req.setId(quote.getId());
       }
-      req.setDescription(description);
-      req.setPrice(price);
+      req.setDescription(quote.getDescription());
+      req.setPrice(quote.getPrice());
       req.setFieldMaskList(['Description', 'Price']);
       await StoredQuoteClientService[isNew ? 'Create' : 'Update'](req);
       await load();
@@ -111,21 +109,21 @@ export const StoredQuotes: FC<Props> = ({
     if (deleting) {
       setDeleting(undefined);
       const req = new StoredQuote();
-      req.setId(deleting.id);
+      req.setId(deleting.getId());
       await StoredQuoteClientService.Delete(req);
       await load();
     }
-  }, [setDeleting, deleting]);
+  }, [deleting, load]);
   const data: Data = loaded
     ? storedQuotes.map(storedQuote => {
         const price = (
           <span key={0} className="StoredQuotesPrice">
-            {usd(storedQuote.price)}
+            {usd(storedQuote.getPrice())}
           </span>
         );
         return [
           {
-            value: storedQuote.description,
+            value: storedQuote.getDescription(),
             onClick: edit ? undefined : handleSelect(storedQuote),
             actions: edit
               ? [
@@ -159,7 +157,7 @@ export const StoredQuotes: FC<Props> = ({
             actions={[
               {
                 label: 'Create',
-                onClick: handleSetEditing(new StoredQuote().toObject()),
+                onClick: handleSetEditing(new StoredQuote()),
                 variant: 'outlined',
               },
               { label: 'Edit', onClick: toggleEdit(), variant: 'outlined' },
@@ -173,7 +171,7 @@ export const StoredQuotes: FC<Props> = ({
       {editing && (
         <Modal open onClose={handleSetEditing()}>
           <Form
-            title={`${editing.id === 0 ? 'Create' : 'Edit'} Quick Add`}
+            title={`${editing.getId() === 0 ? 'Create' : 'Edit'} Quick Add`}
             data={editing}
             onClose={handleSetEditing()}
             onSave={handleSave}
@@ -186,7 +184,7 @@ export const StoredQuotes: FC<Props> = ({
         <ConfirmDelete
           open
           kind="Quick Add"
-          name={deleting.description}
+          name={deleting.getDescription()}
           onClose={handleSetDeleting()}
           onConfirm={handleDelete}
         />

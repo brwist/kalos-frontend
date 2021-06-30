@@ -21,10 +21,9 @@ import {
   formatDate,
   TaskClientService,
   makeFakeRows,
-  TaskType,
-  SpiffTypeType,
 } from '../../../../helpers';
 import { ROWS_PER_PAGE } from '../../../../constants';
+import { SpiffType, Task } from '@kalos-core/kalos-rpc/Task';
 
 interface Props {
   serviceItem: EventType;
@@ -41,39 +40,34 @@ export const Spiffs: FC<Props> = ({
   const [loaded, setLoaded] = useState<boolean>(false);
   const [page, setPage] = useState<number>(0);
   const [count, setCount] = useState<number>(0);
-  const [entries, setEntries] = useState<TaskType[]>([]);
-  const [deleting, setDeleting] = useState<TaskType>();
+  const [entries, setEntries] = useState<Task[]>([]);
+  const [deleting, setDeleting] = useState<Task>();
   const [spiffTypes, setSpiffTypes] = useState<{
-    [key: number]: SpiffTypeType;
+    [key: number]: SpiffType;
   }>({});
-  const [edited, setEdited] = useState<TaskType>();
+  const [edited, setEdited] = useState<Task>();
   const [status, setStatus] = useState<number>();
   const load = useCallback(async () => {
     setLoading(true);
     const spiffTypes = await TaskClientService.loadSpiffTypes();
     setSpiffTypes(
-      spiffTypes.reduce((aggr, item) => ({ ...aggr, [item.id]: item }), {}),
+      spiffTypes.reduce(
+        (aggr, item) => ({ ...aggr, [item.getId()]: item }),
+        {},
+      ),
     );
     const { resultsList, count } = await TaskClientService.loadSpiffToolLogs({
       page,
       type: 'Spiff',
-      jobNumber: serviceItem.logJobNumber,
+      jobNumber: serviceItem.getLogJobNumber(),
     });
     setEntries(resultsList);
     setCount(count);
     if (edited) {
-      setEdited(resultsList.find(({ id }) => id === edited.id));
+      setEdited(resultsList.find(task => task.getId() === edited.getId()));
     }
     setLoading(false);
-  }, [
-    setLoading,
-    setEntries,
-    setCount,
-    page,
-    edited,
-    setEdited,
-    serviceItem.logJobNumber,
-  ]);
+  }, [page, serviceItem, edited]);
   useEffect(() => {
     if (!loaded) {
       setLoaded(true);
@@ -88,22 +82,21 @@ export const Spiffs: FC<Props> = ({
     [setPage],
   );
   const handleSetEdited = useCallback(
-    (edited?: TaskType, status?: number) => () => {
+    (edited?: Task, status?: number) => () => {
       setEdited(edited);
       setStatus(status);
     },
     [setEdited, setStatus],
   );
   const handleToggleDeleting = useCallback(
-    (entry?: TaskType) => () => setDeleting(entry),
+    (entry?: Task) => () => setDeleting(entry),
     [setDeleting],
   );
   const handleDelete = useCallback(async () => {
     if (deleting) {
-      const { id } = deleting;
       setDeleting(undefined);
       setLoading(true);
-      await TaskClientService.deleteSpiffTool(id);
+      await TaskClientService.deleteSpiffTool(deleting.getId());
       setLoaded(false);
     }
   }, [deleting, setLoading, setLoaded, setDeleting]);
@@ -120,24 +113,17 @@ export const Spiffs: FC<Props> = ({
   const data: Data = loading
     ? makeFakeRows(8, 5)
     : entries.map(entry => {
-        const {
-          datePerformed,
-          referenceNumber,
-          briefDescription,
-          spiffTypeId,
-          spiffAmount,
-          ownerName,
-          actionsList,
-        } = entry;
-        const lastStatus = actionsList[0] ? actionsList[0].status : 0;
+        const lastStatus = entry.getActionsList()[0]
+          ? entry.getActionsList()[0].getStatus()
+          : 0;
         return [
-          { value: formatDate(datePerformed) },
-          { value: referenceNumber },
-          { value: briefDescription },
-          { value: spiffTypes[spiffTypeId].ext },
-          { value: ownerName },
-          { value: <SpiffActionsList actionsList={actionsList} /> },
-          { value: usd(spiffAmount) },
+          { value: formatDate(entry.getDatePerformed()) },
+          { value: entry.getReferenceNumber() },
+          { value: entry.getBriefDescription() },
+          { value: spiffTypes[entry.getSpiffTypeId()].getExt() },
+          { value: entry.getOwnerName() },
+          { value: <SpiffActionsList actionsList={entry.getActionsList()} /> },
+          { value: usd(entry.getSpiffAmount()) },
           {
             value: '',
             actions: [
@@ -233,11 +219,11 @@ export const Spiffs: FC<Props> = ({
           onClose={handleToggleDeleting()}
           kind="Spiff"
           name={[
-            `claimed by ${deleting.ownerName}`,
-            ...(deleting.datePerformed
-              ? [`at ${formatDate(deleting.datePerformed)}`]
+            `claimed by ${deleting.getOwnerName()}`,
+            ...(deleting.getDatePerformed()
+              ? [`at ${formatDate(deleting.getDatePerformed())}`]
               : []),
-            `for amount ${usd(deleting.spiffAmount)}`,
+            `for amount ${usd(deleting.getSpiffAmount())}`,
           ].join(' ')}
           onConfirm={handleDelete}
         />

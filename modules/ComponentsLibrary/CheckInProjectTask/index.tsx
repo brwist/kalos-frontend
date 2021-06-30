@@ -1,15 +1,9 @@
 import { addDays, format } from 'date-fns';
 import React, { FC, useCallback, useEffect, useState } from 'react';
 import { Button } from '../Button';
-import { Field as FieldComponent } from '../Field';
 import { ExtendedProjectTaskType } from '../EditProject';
-import {
-  ActivityLogClientService,
-  EventType,
-  makeFakeRows,
-  TaskClientService,
-} from '../../../helpers';
-import { Task } from '@kalos-core/kalos-rpc/Task';
+import { makeFakeRows, TaskClientService } from '../../../helpers';
+import { ProjectTask, Task } from '@kalos-core/kalos-rpc/Task';
 import { Data, InfoTable } from '../InfoTable';
 import { IconButton, Typography } from '@material-ui/core';
 import AccessTimeIcon from '@material-ui/icons/AccessTime';
@@ -17,9 +11,9 @@ import { Tooltip } from '../Tooltip';
 import { Modal } from '../Modal';
 import { EnhancedField } from '../Field/examples';
 import { Alert } from '../Alert';
-import { ActivityLog } from '@kalos-core/kalos-rpc/ActivityLog';
+import { Event } from '@kalos-core/kalos-rpc/Event/index';
 interface Props {
-  projectToUse: EventType;
+  projectToUse: Event;
   loggedUserId: number;
   serviceCallId: number;
 }
@@ -27,7 +21,6 @@ interface Props {
 export const CheckInProjectTask: FC<Props> = ({
   projectToUse,
   loggedUserId,
-  serviceCallId,
 }) => {
   const [checkedInTasks, setCheckedInTasks] = useState<Task[]>();
   const [checkInConfirmationBoxOpen, setCheckInConfirmationBoxOpen] =
@@ -58,7 +51,10 @@ export const CheckInProjectTask: FC<Props> = ({
     try {
       checkedTask = await TaskClientService.BatchGet(task);
     } catch (err) {
-      console.log({ err });
+      console.error(
+        `An error occurred while batch-getting the checked task: `,
+        err,
+      );
       if (!err.message.includes('failed to scan to struct')) {
         console.error('Error occurred during ProjectTask query:', err);
       }
@@ -81,19 +77,9 @@ export const CheckInProjectTask: FC<Props> = ({
   );
 
   const handleSaveTask = useCallback(
-    async (
-      {
-        startDate,
-        startTime,
-        endDate,
-        endTime,
-        checkedIn,
-        ...formData
-      }: ExtendedProjectTaskType,
-      typeOfTask: 'check-in' | 'check-out',
-    ) => {
+    async (formData: ExtendedProjectTaskType) => {
       const currentDate = format(new Date(), 'yyyy-MM-dd HH:mm:ss');
-      if (projectToUse.dateEnded < currentDate) {
+      if (projectToUse.getDateEnded() < currentDate) {
         console.error(
           'Cannot save to the Project - the End Date has already passed.',
         );
@@ -101,58 +87,64 @@ export const CheckInProjectTask: FC<Props> = ({
         return;
       }
       if (!projectToUse) return;
-      if (startDate > endDate && endDate != '') {
+      if (
+        formData.projectTask.getStartDate() >
+          formData.projectTask.getEndDate() &&
+        formData.projectTask.getEndDate() != ''
+      ) {
         console.error('Start Date cannot be after End Date.');
         return;
       }
-      if (projectToUse.dateStarted.substr(0, 10) > startDate) {
+      if (
+        projectToUse.getDateStarted().substr(0, 10) >
+        formData.projectTask.getStartDate()
+      ) {
         console.error(
           "Task's Start Date cannot be before Project's Start Date.",
         );
         return;
       }
-      if (projectToUse.dateEnded.substr(0, 10) < endDate) {
+      if (
+        projectToUse.getDateEnded().substr(0, 10) <
+        formData.projectTask.getEndDate()
+      ) {
         console.error(
           "Task's End Date was after the Project's End Date, setting the Task's End Date as the Project's End Date.",
         );
         // Auto set the task end date to be the project end date
-        endDate = projectToUse.dateEnded.substr(0, 10);
-        endTime = projectToUse.timeEnded;
-      }
-      try {
-        await TaskClientService.upsertEventTask({
-          ...formData,
-          eventId: serviceCallId,
-          startDate: `${startDate} ${startTime}`,
-          endDate: `${endDate} ${endTime}`,
-          checkedIn: checkedIn,
-          ...(!formData.id ? { creatorUserId: loggedUserId } : {}),
-        });
-        try {
-          let req = new ActivityLog();
-          req.setUserId(loggedUserId);
-          req.setActivityName(
-            `Created task for project ${serviceCallId} (${typeOfTask})`,
-          );
-          req.setActivityDate(format(new Date(), 'yyyy-MM-dd hh:mm:ss'));
-          req.setEventId(serviceCallId);
-          await ActivityLogClientService.Create(req);
-        } catch (err) {
-          console.error(
-            `An error occurred while attempting to create a log: ${err}`,
-          );
-        }
-      } catch (err) {
-        console.error(
-          `An error occurred while attempting to upsert an task: ${err}`,
+        formData.projectTask.setEndDate(
+          projectToUse.getDateEnded().substr(0, 10),
         );
+        formData.endTime = projectToUse.getTimeEnded();
       }
+      let req = new ProjectTask();
+      req.setId(formData.projectTask.getId());
+      req.setEventId(formData.projectTask.getEventId());
+      req.setStartDate(
+        `${formData.projectTask.getStartDate()} ${formData.startTime}:00`,
+      );
+      req.setEndDate(
+        `${formData.projectTask.getEndDate()} ${formData.endTime}:00`,
+      );
+      req.setCheckedIn(formData.projectTask.getCheckedIn());
+      req.setFieldMaskList([
+        'Id',
+        'StartDate',
+        'EndDate',
+        'CheckedIn',
+        'CreatorUserId',
+      ]);
+      req.setBriefDescription(formData.projectTask.getBriefDescription());
+      req.setPriorityId(3);
+      req.setExternalId(loggedUserId);
+      if (!formData.projectTask.getId()) req.setCreatorUserId(loggedUserId);
+
+      const result = await TaskClientService.upsertEventTask(req);
       await batchGetCheckedTasks();
       setLoaded(false);
     },
     [
       projectToUse,
-      serviceCallId,
       loggedUserId,
       batchGetCheckedTasks,
       handleSetCheckInWarningBoxOpen,
@@ -184,17 +176,23 @@ export const CheckInProjectTask: FC<Props> = ({
                 <IconButton
                   key={task.getId() + 'delete'}
                   size="small"
-                  onClick={() =>
+                  onClick={() => {
+                    let projectTask = new ProjectTask();
+                    projectTask.setStartDate(
+                      task.getHourlyStart().split(' ')[0],
+                    );
+                    projectTask.setEndDate(
+                      format(new Date(date), 'yyyy-MM-dd HH:mm:ss'),
+                    );
+                    projectTask.setId(task.getId());
+                    projectTask.setCheckedIn(false);
+
                     checkOut({
-                      ...task,
-                      id: task.getId(),
-                      startDate: task.getHourlyStart().split(' ')[0],
+                      projectTask,
                       startTime: task.getHourlyStart().split(' ')[1],
-                      endDate: format(new Date(date), 'yyyy-MM-dd HH:mm:ss'),
                       endTime: format(new Date(date), 'HH-mm'),
-                      checkedIn: false,
-                    } as ExtendedProjectTaskType)
-                  }
+                    } as ExtendedProjectTaskType);
+                  }}
                 >
                   <AccessTimeIcon />
                 </IconButton>
@@ -206,32 +204,41 @@ export const CheckInProjectTask: FC<Props> = ({
     : makeFakeRows();
 
   const checkOut = (checkedInTask: ExtendedProjectTaskType) => {
+    const date = new Date();
+
+    checkedInTask.projectTask.setCheckedIn(false);
+    checkedInTask.projectTask.setFieldMaskList([
+      ...checkedInTask.projectTask.getFieldMaskList(),
+      'CheckedIn',
+    ]);
+
     let updateTask = {
-      ...checkedInTask,
-      id: checkedInTask.id,
-      startDate: checkedInTask.startDate,
+      projectTask: checkedInTask.projectTask,
       startTime: checkedInTask.startTime,
-      endDate: format(new Date(), 'yyyy-MM-dd hh:mm:ss'),
-      endTime: format(new Date(), 'HH-mm'),
-      checkedIn: false,
-      externalId: loggedUserId,
-    };
-    handleSaveTask(updateTask, 'check-out');
+      endTime: format(new Date(date), 'HH-mm'),
+    } as ExtendedProjectTaskType;
+
+    handleSaveTask(updateTask);
   };
 
   const checkInNewTask = () => {
+    // Need to save state that it's checked in, maybe make a call to check if it's an auto generated task in the table and then
+    // if there is then use that result to set it as checked in
+    const date = new Date();
+    let projectTask = new ProjectTask();
+    projectTask.setStartDate(format(new Date(date), 'yyyy-MM-dd HH-mm-ss'));
+    projectTask.setEndDate('');
+    projectTask.setStatusId(2);
+    projectTask.setPriorityId(2);
+    projectTask.setBriefDescription(
+      briefDescription ? briefDescription : 'Auto generated task',
+    );
+    projectTask.setExternalId(loggedUserId);
+    projectTask.setCheckedIn(true);
     let taskNew = {
-      startDate: format(new Date(), 'yyyy-MM-dd hh:mm:ss'),
-      endDate: '',
-      statusId: 2,
-      priorityId: 2,
-      startTime: format(new Date(), 'hh:mm:ss'),
-      endTime: format(addDays(new Date(), 1), 'hh:mm:ss'),
-      briefDescription: briefDescription
-        ? briefDescription
-        : 'Auto generated task',
-      externalId: loggedUserId,
-      checkedIn: true,
+      projectTask,
+      startTime: format(new Date(date), 'HH-mm'),
+      endTime: format(addDays(new Date(date), 1), 'HH-mm'),
     } as ExtendedProjectTaskType;
     handleSaveTask(taskNew, 'check-in');
   };
@@ -295,14 +302,20 @@ export const CheckInProjectTask: FC<Props> = ({
                 onClick: () =>
                   checkedInTasks?.forEach(task => {
                     const date = new Date();
+                    let projectTask = new ProjectTask();
+                    projectTask.setStartDate(
+                      task.getHourlyStart().split(' ')[0],
+                    );
+                    projectTask.setEndDate(
+                      format(new Date(date), 'yyyy-MM-dd HH:mm:ss'),
+                    );
+                    projectTask.setId(task.getId());
+                    projectTask.setCheckedIn(false);
+
                     checkOut({
-                      ...task,
-                      id: task.getId(),
-                      startDate: task.getHourlyStart().split(' ')[0],
+                      projectTask,
                       startTime: task.getHourlyStart().split(' ')[1],
-                      endDate: format(new Date(date), 'yyyy-MM-dd HH:mm:ss'),
                       endTime: format(new Date(date), 'HH-mm'),
-                      checkedIn: false,
                     } as ExtendedProjectTaskType);
                   }),
               },
