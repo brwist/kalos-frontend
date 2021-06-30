@@ -7,7 +7,10 @@ const LoadActivityLogsByFilter =
   require('../helpers.ts').LoadActivityLogsByFilter;
 const milesFactor = require('../constants.ts').IRS_SUGGESTED_MILES_FACTOR;
 const EventType = require('@kalos-core/kalos-rpc/Event/index.ts').Event;
-const EventClientService = require('../helpers.ts').EventClientService;
+const EventClient = require('@kalos-core/kalos-rpc/Event').EventClient;
+const UserClient = require('@kalos-core/kalos-rpc/User').UserClient;
+const ENDPOINT = require('../constants.ts').ENDPOINT;
+require('./grpc-endpoint.js');
 
 describe('helpers', () => {
   describe('#getMimeType', () => {
@@ -31,12 +34,15 @@ describe('helpers', () => {
 describe('rpc', () => {
   describe('#EventClientService.Get', () => {
     it('should work correctly for id 1', async () => {
+      const EventClientService = new EventClient(ENDPOINT);
+      const u = new UserClient(ENDPOINT);
+
       let eventOut = new EventType();
       eventOut.setId(1);
       try {
-        console.log('Making the call');
+        await u.GetToken('test', 'test');
         const res = await EventClientService.Get(eventOut);
-        console.log('Got the event');
+        console.log('Got the event - ', res);
       } catch (err) {
         console.error(
           `The EventClientService ran into an issue while getting the event: ${err}`,
