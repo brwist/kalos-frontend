@@ -6,11 +6,11 @@ const loadActivityLogsByFilter =
 const LoadActivityLogsByFilter =
   require('../helpers.ts').LoadActivityLogsByFilter;
 const milesFactor = require('../constants.ts').IRS_SUGGESTED_MILES_FACTOR;
-const EventType = require('@kalos-core/kalos-rpc/Event/index.ts').Event;
-const EventClient = require('@kalos-core/kalos-rpc/Event').EventClient;
-const UserClient = require('@kalos-core/kalos-rpc/User').UserClient;
-const ENDPOINT = require('../constants.ts').ENDPOINT;
-require('./grpc-endpoint.js');
+const EventType = require('@kalos-core/kalos-rpc/Event/index.ts').Event; // ! These have to be "require" not "import" because Mocha runs in a Node environment
+// ! but are otherwise the same. This is named "EventType" instead of Event because of a name conflict with JS Event, you can keep the name the same for other types
+const EventClientService = require('../helpers.ts').EventClientService;
+const Setup = require('./setup.js'); // ? Sets the auth token up in a one-liner
+require('./grpc-endpoint.js'); // ? Required to run tests with RPCs in Mocha (because Mocha runs in a Node environment)
 
 describe('helpers', () => {
   describe('#getMimeType', () => {
@@ -32,14 +32,13 @@ describe('helpers', () => {
 });
 
 describe('rpc', () => {
+  before(async () => {
+    // Before any test that has an RPC in it, use this
+    await Setup.u.GetToken('test', 'test');
+  });
   describe('#EventClientService.Get', () => {
-    it('should work correctly for id 1', async () => {
+    it('should get the event with ID 1', async () => {
       let res;
-      // Can go into setup function
-      const EventClientService = new EventClient(ENDPOINT);
-      const u = new UserClient(ENDPOINT);
-      await u.GetToken('test', 'test');
-
       try {
         let req = new EventType();
         req.setId(1);
