@@ -325,14 +325,7 @@ export const ServiceItemReadings: FC<Props> = ({
       setError(true);
       setLoading(false);
     }
-  }, [
-    setLoading,
-    loadMaintenanceQuestions,
-    setEntries,
-    setMaintenanceQuestions,
-    setUsers,
-    setError,
-  ]);
+  }, [serviceItemId]);
 
   useEffect(() => {
     if (!loaded) {
@@ -385,7 +378,7 @@ export const ServiceItemReadings: FC<Props> = ({
         }
       }
     },
-    [editedEntry, setSaving, setEditing, load, setError],
+    [editedEntry, serviceItemId, loggedUserId, setEditing, load],
   );
 
   const handleSaveMaintenance = useCallback(

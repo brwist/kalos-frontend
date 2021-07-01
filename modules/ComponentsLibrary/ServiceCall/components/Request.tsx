@@ -99,15 +99,7 @@ export const Request: FC<Props> = forwardRef(
         onChange(data);
         onValid(false);
       },
-      [
-        serviceItem,
-        onChange,
-        jobTypeOptions,
-        jobSubtypeOptions,
-        resetId,
-        setResetId,
-        onValid,
-      ],
+      [onChange, onValid],
     );
     const handleSetValid = useCallback(() => onValid(true), [onValid]);
     const callbackOriginalOptions: Option[] = useMemo(
@@ -152,7 +144,7 @@ export const Request: FC<Props> = forwardRef(
         [
           {
             label: 'Payment Type',
-            name: 'getLogPaymentType',\
+            name: 'getLogPaymentType',
             required: true,
             options: PAYMENT_TYPE_LIST,
           },

@@ -127,14 +127,8 @@ export class ServiceItemLinks extends PureComponent<Props, State> {
   };
 
   render() {
-    const {
-      props,
-      state,
-      setEditing,
-      handleSave,
-      handleDelete,
-      setDeleting,
-    } = this;
+    const { props, state, setEditing, handleSave, handleDelete, setDeleting } =
+      this;
     const { kind, title = '', onClose, viewedAsCustomer = false } = props;
     const { entries, loading, saving, editedEntry, deletingEntry } = state;
     const data: Data = loading
@@ -146,7 +140,7 @@ export class ServiceItemLinks extends PureComponent<Props, State> {
               value: description || url,
               onClick: () => window.open(url),
               actions: [
-                <a key="view" href={url} target="_blank">
+                <a key="view" href={url} target="_blank" rel="noreferrer">
                   <IconButton style={{ marginLeft: 4 }} size="small">
                     <SearchIcon />
                   </IconButton>

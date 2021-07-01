@@ -41,7 +41,7 @@ import { Modal } from '../Modal';
 import { TimeOff } from '../TimeOff';
 
 import './styles.less';
-import { TripSummary } from '../TripSummary';
+import { TripSummaryNew } from '../TripSummaryNew';
 import { RoleType } from '../Payroll';
 import { NULL_TIME_VALUE } from './constants';
 import { TimeoffRequest } from '@kalos-core/kalos-rpc/TimeoffRequest';
@@ -196,8 +196,7 @@ export const Timesheet: FC<Props> = props => {
     {
       icon: <AddAlertIcon />,
       name: 'Reminder',
-      url:
-        'https://app.kalosflorida.com/index.cfm?action=admin:service.addReminder',
+      url: 'https://app.kalosflorida.com/index.cfm?action=admin:service.addReminder',
     },
     {
       icon: <AssignmentIndIcon />,
@@ -553,7 +552,8 @@ export const Timesheet: FC<Props> = props => {
   }, [timesheetOwnerId, userId]);
 
   const fetchTimeoffRequestTypes = useCallback(async () => {
-    const timeoffRequestTypes = await TimeoffRequestClientService.getTimeoffRequestTypes();
+    const timeoffRequestTypes =
+      await TimeoffRequestClientService.getTimeoffRequestTypes();
     setTimeoffRequestTypes(
       timeoffRequestTypes.reduce(
         (aggr, item) => ({ ...aggr, [item.getId()]: item.getRequestType() }),
@@ -613,9 +613,8 @@ export const Timesheet: FC<Props> = props => {
         ),
       ]);
       toReq.setDateTargetList(['time_started', 'time_started']);
-      const timeoffs = await TimeoffRequestClientService.getTimeoffRequestByFilter(
-        toReq,
-      );
+      const timeoffs =
+        await TimeoffRequestClientService.getTimeoffRequestByFilter(toReq);
       dispatch({
         type: 'fetchedTimesheetData',
         data: result,
@@ -757,7 +756,7 @@ export const Timesheet: FC<Props> = props => {
             loggedUserId={props.userId}
             perDiemRowIds={perDiemRowId!}
           />*/}
-          <TripSummary
+          <TripSummaryNew
             key={'key' + perDiemRowId}
             userId={props.userId}
             loggedUserId={props.userId}
@@ -767,7 +766,7 @@ export const Timesheet: FC<Props> = props => {
             viewingOwn
             canApprove={role === 'Manager'}
             canProcessPayroll={role === 'Payroll'}
-          ></TripSummary>
+          ></TripSummaryNew>
         </Modal>
       )}
     </div>
