@@ -240,13 +240,16 @@ export class TxnCard extends React.PureComponent<props, state> {
           }
           await this.updateStatus(statusID);
           await this.makeSubmitLog(statusID, statusMessage);
-          if (txn.costCenterId === 673002 || txn.costCenter.id === 673002) {
+          if (
+            txn.getCostCenterId() === 673002 ||
+            txn.getCostCenter()?.getId() === 673002
+          ) {
             await this.TaskClient.newToolPurchase(
-              txn.amount,
-              txn.ownerId,
-              txn.vendor,
-              txn.notes,
-              txn.timestamp,
+              txn.getAmount(),
+              txn.getOwnerId(),
+              txn.getVendor(),
+              txn.getNotes(),
+              txn.getTimestamp(),
             );
           }
           await this.props.fetchFn();
@@ -260,7 +263,7 @@ export class TxnCard extends React.PureComponent<props, state> {
   async makeSubmitLog(status: number, action: string) {
     const log = new TransactionActivity();
     log.setUserId(this.props.userID);
-    log.setTransactionId(this.state.txn.id);
+    log.setTransactionId(this.state.txn.getId());
     log.setStatusId(status);
     log.setDescription(action);
     await this.LogClient.Create(log);
@@ -298,31 +301,31 @@ export class TxnCard extends React.PureComponent<props, state> {
       );
       return;
     }
-    await FileClientService.upsertFile({
-      id: file.id,
-      ownerId: 0,
-      bucket,
-    });
-    await TransactionDocumentClientService.upsertTransactionDocument({
-      transactionId: this.state.txn.id,
-      reference: file.name,
-      fileId: file.id,
-      typeId: 1,
-    });
+    const fileReq = new File();
+    fileReq.setId(file.getId());
+    fileReq.setBucket(bucket);
+    fileReq.setOwnerId(0);
+    await FileClientService.upsertFile(fileReq);
+    const txnDocReq = new TransactionDocument();
+    txnDocReq.setTransactionId(this.state.txn.getId());
+    txnDocReq.setReference(file.getName());
+    txnDocReq.setFileId(file.getId());
+    txnDocReq.setTypeId(1);
+    await TransactionDocumentClientService.upsertTransactionDocument(txnDocReq);
     alert('Upload complete');
   };
 
-  addFromGallery = async ({ file }: { file: FileType; url: string }) => {
+  addFromGallery = async ({ file }: { file: File; url: string }) => {
     this.setState({ pendingAddFromGallery: false });
-    const { id } = this.state.txn;
+    const id = this.state.txn.getId();
     const bucket = 'kalos-transactions';
     const status = await S3ClientService.moveFileBetweenS3Buckets(
       {
-        key: file.name,
-        bucket: file.bucket,
+        key: file.getName(),
+        bucket: file.getBucket(),
       },
       {
-        key: `${id}-${file.name}`,
+        key: `${id}-${file.getName()}`,
         bucket,
       },
     );
@@ -330,17 +333,17 @@ export class TxnCard extends React.PureComponent<props, state> {
       alert('Upload failed. Please try again, or contact an administrator');
       return;
     }
-    await FileClientService.upsertFile({
-      id: file.id,
-      ownerId: 0,
-      bucket,
-    });
-    await TransactionDocumentClientService.upsertTransactionDocument({
-      transactionId: this.state.txn.id,
-      reference: file.name,
-      fileId: file.id,
-      typeId: 1,
-    });
+    const fileReq = new File();
+    fileReq.setId(file.getId());
+    fileReq.setBucket(bucket);
+    fileReq.setOwnerId(0);
+    await FileClientService.upsertFile(fileReq);
+    const txnDocReq = new TransactionDocument();
+    txnDocReq.setTransactionId(this.state.txn.getId());
+    txnDocReq.setReference(file.getName());
+    txnDocReq.setFileId(file.getId());
+    txnDocReq.setTypeId(1);
+    await TransactionDocumentClientService.upsertTransactionDocument(txnDocReq);
     alert('Upload complete');
   };
 
@@ -384,7 +387,7 @@ export class TxnCard extends React.PureComponent<props, state> {
   async onPDFGenerate(fileData: Uint8Array) {
     await this.props.toggleLoading();
     await this.DocsClient.upload(
-      this.state.txn.id,
+      this.state.txn.getId(),
       `${timestamp()}-generated.pdf`,
       fileData,
     );
@@ -403,7 +406,7 @@ export class TxnCard extends React.PureComponent<props, state> {
     }
     try {
       await this.DocsClient.upload(
-        this.state.txn.id,
+        this.state.txn.getId(),
         this.FileInput.current!.files![0].name,
         this.LastSingleFileUpload?.filedata,
       );
@@ -481,7 +484,7 @@ export class TxnCard extends React.PureComponent<props, state> {
   async refresh() {
     try {
       const req = new Transaction();
-      req.setId(this.state.txn.id);
+      req.setId(this.state.txn.getId());
       const refreshTxn = await this.TxnClient.Get(req);
       this.setState({
         txn: refreshTxn,
@@ -506,7 +509,7 @@ export class TxnCard extends React.PureComponent<props, state> {
   }
 
   componentDidMount() {
-    if (this.state.txn.departmentId === 0) {
+    if (this.state.txn.getDepartmentId() === 0) {
       this.updateDepartmentID(this.props.userDepartmentID);
     }
   }
@@ -530,11 +533,11 @@ export class TxnCard extends React.PureComponent<props, state> {
     await this.refresh();
   };
   getRejectionReason = () => {
-    const res = this.state.txn.activityLogList.find(a => {
-      return a.description.includes('rejected');
+    const res = this.state.txn.getActivityLogList().find(a => {
+      return a.getDescription().includes('rejected');
     });
     if (res) {
-      return res.description.replace('rejected', '');
+      return res.getDescription().replace('rejected', '');
     }
   };
 
@@ -549,7 +552,7 @@ export class TxnCard extends React.PureComponent<props, state> {
     const { txn, pendingAddFromGallery, pendingAddFromSingleFile } = this.state;
     const t = txn;
     const { isManager, userID } = this.props;
-    let subheader = `${t.description.split(' ')[0]} - ${t.vendor}`;
+    let subheader = `${t.getDescription().split(' ')[0]} - ${t.getVendor()}`;
     const deriveCallout = this.deriveCallout(t);
     return (
       <>
@@ -562,8 +565,8 @@ export class TxnCard extends React.PureComponent<props, state> {
         >
           <SectionBar
             title={`${parseISO(
-              t.timestamp.split(' ').join('T'),
-            ).toDateString()} - $${t.amount}`}
+              t.getTimestamp().split(' ').join('T'),
+            ).toDateString()} - $${t.getAmount()}`}
             subtitle={subheader}
             asideContent={
               <div className="TransactionUser_Actions">
@@ -583,30 +586,30 @@ export class TxnCard extends React.PureComponent<props, state> {
                   title="Transaction Photo(s)"
                   text="View Photo(s)"
                   fileList={getGalleryData(t)}
-                  transactionID={t.id}
+                  transactionID={t.getId()}
                   canDelete
                 />
                 <Button label="Submit" onClick={this.submit} />
                 <PDFMaker
-                  dateStr={t.timestamp}
-                  name={t.ownerName}
+                  dateStr={t.getTimestamp()}
+                  name={t.getOwnerName()}
                   title="Missing"
                   icon={<CloseIcon />}
-                  amount={t.amount}
+                  amount={t.getAmount()}
                   onCreate={this.onPDFGenerate}
-                  jobNumber={`${t.jobId}`}
-                  vendor={t.vendor}
+                  jobNumber={`${t.getJobId()}`}
+                  vendor={t.getVendor()}
                   pdfType="Missing Receipt"
                 />
                 {this.props.isManager && (
                   <PDFMaker
-                    dateStr={t.timestamp}
-                    name={t.ownerName}
+                    dateStr={t.getTimestamp()}
+                    name={t.getOwnerName()}
                     icon={<ReIcon />}
                     title="Recurring"
-                    amount={t.amount}
-                    vendor={t.vendor}
-                    jobNumber={`${t.jobId}`}
+                    amount={t.getAmount()}
+                    vendor={t.getVendor()}
+                    jobNumber={`${t.getJobId()}`}
                     onCreate={this.onPDFGenerate}
                     pdfType="Retrievable Receipt"
                   />
@@ -619,28 +622,33 @@ export class TxnCard extends React.PureComponent<props, state> {
           <div className="TransactionUser_Cards">
             <AccountPicker
               onSelect={this.updateCostCenterID}
-              selected={t.costCenterId}
+              selected={t.getCostCenterId()}
               sort={costCenterSortByPopularity}
               filter={
-                !isManager ? a => ALLOWED_ACCOUNT_IDS.includes(a.id) : undefined
+                !isManager
+                  ? a => ALLOWED_ACCOUNT_IDS.includes(a.getId())
+                  : undefined
               }
               hideInactive
               renderItem={i => (
-                <option value={i.id} key={`${i.id}-${i.description}`}>
-                  {i.description} ({i.id})
+                <option
+                  value={i.getId()}
+                  key={`${i.getId()}-${i.getDescription()}`}
+                >
+                  {i.getDescription()} ({i.getId()})
                 </option>
               )}
             />
             <Field
               name="department"
-              value={t.departmentId || this.props.userDepartmentID}
+              value={t.getDepartmentId() || this.props.userDepartmentID}
               onChange={val => this.updateDepartmentID(+val)}
               type="department"
             />
             <Field
               name="jobNumber"
               label="Job Number"
-              value={t.jobId}
+              value={t.getJobId()}
               onChange={val => this.handleJobNumber(+val)}
               type="eventId"
               style={{
@@ -649,7 +657,7 @@ export class TxnCard extends React.PureComponent<props, state> {
               }}
             />
             <NoteField
-              initialValue={t.notes}
+              initialValue={t.getNotes()}
               onChange={debounce(this.updateNotes, 500)}
             />
           </div>
