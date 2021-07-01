@@ -227,11 +227,11 @@ export class TripInfoTable extends React.PureComponent<Props, State> {
       await MapClientService.getTripDistance(origin, destination);
     } catch (error: any) {
       console.error(
-        'An error occurred while calculating the trip distance: ',
+        'An error occurred while calculating the trip distance in the Trip Info Table: ',
         error,
       );
       alert(
-        'An error occurred while calculating the trip distance. Please try again, or contact your administrator if this error persists.',
+        'An error occurred while calculating the trip distance in the Trip Info Table. Please try again, or contact your administrator if this error persists.',
       );
     }
   };

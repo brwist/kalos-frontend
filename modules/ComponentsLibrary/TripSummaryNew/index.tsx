@@ -423,11 +423,11 @@ export const TripSummaryNew: FC<Props> = ({
         await MapClientService.getTripDistance(origin, destination);
       } catch (error: any) {
         console.error(
-          'An error occurred while calculating the trip distance: ',
+          'An error occurred while calculating the trip distance in the Trip Summary: ',
           error,
         );
         alert(
-          'An error occurred while calculating the trip distance. Please try again, or contact your administrator if this error persists.',
+          'An error occurred while calculating the trip distance in the Trip Summary. Please try again, or contact your administrator if this error persists.',
         );
       }
     },
@@ -483,6 +483,7 @@ export const TripSummaryNew: FC<Props> = ({
     }
     if (department) trip.setDepartmentId(department.getId());
     try {
+      console.log(trip, '|', rowId, '|', userId);
       await PerDiemClientService.upsertTrip(trip, rowId!, userId);
     } catch (err) {
       console.error('An error occurred while upserting a trip: ', err);
