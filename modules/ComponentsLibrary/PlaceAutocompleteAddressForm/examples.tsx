@@ -106,7 +106,7 @@ const SCHEMA_EXAMPLE: Schema<AddressPair.AsObject> = [
 
 interface Props {}
 
-const PlaceForm: FC<Props> = ({}) => {
+const PlaceForm: FC<Props> = () => {
   const [open, setOpen] = useState<boolean>(true);
 
   const handleClose = useCallback(() => {
@@ -130,6 +130,7 @@ const PlaceForm: FC<Props> = ({}) => {
           }}
           addressFields={2} // To be implemented
           schema={SCHEMA_EXAMPLE}
+          perDiemRowIds={[500, 501, 502]}
         />
       )}
     </>
