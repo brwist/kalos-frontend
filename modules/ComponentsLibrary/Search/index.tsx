@@ -92,7 +92,7 @@ export const Search: FC<Props> = ({
             ...res
               .getResultsList()
               .filter(e => e.getId() !== excludeId)
-              .map(item => ({ ...item, kind: 1 })),
+              .map(item => ({ ...item, kind: 1 } as Entry)),
           ];
         }
       } else if (kind === 2) {
@@ -108,7 +108,7 @@ export const Search: FC<Props> = ({
             ...newUsers,
             ...res
               .getResultsList()
-              .reduce((aggr, item) => ({ ...aggr, [item.id]: item }), {}),
+              .reduce((aggr, item) => ({ ...aggr, [item.getId()]: item }), {}),
           };
           const userIds = res
             .getResultsList()
@@ -129,7 +129,9 @@ export const Search: FC<Props> = ({
           );
           entries = [
             ...entries,
-            ...usersProperties.reduce((aggr, item) => [...aggr, ...item], []),
+            ...usersProperties
+              .reduce((aggr, item) => [...aggr, ...item], [])
+              .map(e => e as Entry),
           ];
         } else if (search.getAddress() || search.getCity() || search.getZip()) {
           const res = await PropertyClientService.BatchGet(search as Property);
@@ -138,7 +140,7 @@ export const Search: FC<Props> = ({
             .filter(e => e.getId() !== excludeId);
           entries = [...entries, ...propertyEntries]; // FIXME handle duplicated entries
           const propertyUsers = await UserClientService.loadUsersByIds(
-            propertyEntries.map(({ userId }) => userId),
+            propertyEntries.map(property => property.getUserId()),
           );
           newUsers = { ...newUsers, ...propertyUsers };
         }
@@ -171,12 +173,12 @@ export const Search: FC<Props> = ({
     (entry: Entry) => () => {
       onSelect({
         ...entry,
-        ...(entry.hasOwnProperty('userId')
+        ...(Object.prototype.hasOwnProperty.call(entry, 'userId')
           ? {
               __user: users[entry.getId()],
             }
           : {}),
-      });
+      } as Entry);
       onClose();
     },
     [onSelect, onClose, users],
