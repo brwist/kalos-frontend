@@ -308,7 +308,7 @@ export const EditProject: FC<Props> = ({
       );
     }
   }, []);
-  
+
   const handleDeleteEvent = useCallback(
     async (eventId: number) => {
       setDeletingEvent(true);
@@ -610,7 +610,7 @@ export const EditProject: FC<Props> = ({
         loadEvent();
       }
     },
-    [event, tasks, loadEvent, loggedUserId],
+    [event, tasks, loadEvent],
   );
 
   const SCHEMA_SEARCH: Schema<SearchType> = [

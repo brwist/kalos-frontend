@@ -101,12 +101,10 @@ export const ServiceCall: FC<Props> = props => {
     [],
   );
   const [loggedUser, setLoggedUser] = useState<User>();
-  const [notificationEditing, setNotificationEditing] = useState<boolean>(
-    false,
-  );
-  const [notificationViewing, setNotificationViewing] = useState<boolean>(
-    false,
-  );
+  const [notificationEditing, setNotificationEditing] =
+    useState<boolean>(false);
+  const [notificationViewing, setNotificationViewing] =
+    useState<boolean>(false);
   const [projects, setProjects] = useState<Event[]>([]);
   const [parentId, setParentId] = useState<number | null>(null);
   const [confirmedParentId, setConfirmedParentId] = useState<number | null>(
@@ -145,7 +143,7 @@ export const ServiceCall: FC<Props> = props => {
   );
 
   const handleSetError = useCallback(
-    (errorMessage: string) => setError(errorMessage),
+    (error: boolean) => setError(error),
     [setError],
   );
 
@@ -255,6 +253,7 @@ export const ServiceCall: FC<Props> = props => {
     loggedUserId,
     loadEntry,
     loadServicesRenderedData,
+    handleSetError,
   ]);
 
   const handleSetParentId = useCallback(
@@ -326,7 +325,6 @@ export const ServiceCall: FC<Props> = props => {
     setEntry,
     setSaving,
     setLoading,
-    requestFields,
     onSave,
     loadEntry,
     loadServicesRenderedData,
@@ -347,15 +345,7 @@ export const ServiceCall: FC<Props> = props => {
         onClose();
       }
     },
-    [
-      onSave,
-      onClose,
-      confirmedParentId,
-      handleSetError,
-      asProject,
-      loggedUserId,
-      property.id,
-    ],
+    [onSave, onClose, confirmedParentId],
   );
   useEffect(() => {
     if (!loaded) {
