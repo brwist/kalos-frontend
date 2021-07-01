@@ -2,7 +2,6 @@ import React from 'react';
 import IconButton from '@material-ui/core/IconButton';
 import EditIcon from '@material-ui/icons/Edit';
 import {
-  EventType,
   formatTime,
   makeFakeRows,
   loadEventsByFilter,
@@ -14,6 +13,7 @@ import { ServiceCall } from '../ComponentsLibrary/ServiceCall';
 import { Form, Schema } from '../ComponentsLibrary/Form';
 import { PageWrapper, PageWrapperProps } from '../PageWrapper/main';
 import { getPropertyAddress } from '@kalos-core/kalos-rpc/Property';
+import { Event as EventType } from '@kalos-core/kalos-rpc/Event';
 
 interface Props extends PageWrapperProps {
   userId: number;
@@ -78,6 +78,7 @@ export class CallsByTech extends React.PureComponent<Props, state> {
 
   loadEvents = async () => {
     await this.toggleLoading();
+    let newEvent = new EventType();
     const { resultsList: calls } = await loadEventsByFilter({
       page: -1,
       filter: {
@@ -86,17 +87,16 @@ export class CallsByTech extends React.PureComponent<Props, state> {
       },
       sort: {
         orderBy: 'time_started',
-        orderByField: 'timeStarted',
+        orderByField: 'getTimeStarted',
         orderDir: 'ASC',
       },
+      req: newEvent,
     });
     this.setState({ calls });
     await this.toggleLoading();
   };
 
-  async componentDidMount() {
-    await UserClientService.refreshToken();
-  }
+  async componentDidMount() {}
 
   render() {
     const { editing, isLoading } = this.state;
@@ -129,37 +129,37 @@ export class CallsByTech extends React.PureComponent<Props, state> {
               ? makeFakeRows(7, 5)
               : this.state.calls.map(c => [
                   {
-                    value: `${formatTime(c.timeStarted)} - ${formatTime(
-                      c.timeEnded,
+                    value: `${formatTime(c.getTimeStarted())} - ${formatTime(
+                      c.getTimeEnded(),
                     )}`,
                     onClick: this.toggleEditing(c),
                   },
                   {
                     value: UserClientService.getCustomerNameAndBusinessName(
-                      c.customer!,
+                      c.getCustomer()!,
                     ),
                     onClick: this.toggleEditing(c),
                   },
                   {
-                    value: getPropertyAddress(c.property),
+                    value: getPropertyAddress(c.getProperty()),
                     onClick: this.toggleEditing(c),
                   },
                   {
-                    value: UserClientService.getCustomerPhone(c.customer!),
+                    value: UserClientService.getCustomerPhone(c.getCustomer()!),
                     onClick: this.toggleEditing(c),
                   },
                   {
-                    value: c.id,
+                    value: c.getId(),
                     onClick: this.toggleEditing(c),
                   },
                   {
-                    value: `${c.jobType} / ${c.jobSubtype}`,
+                    value: `${c.getJobType()} / ${c.getJobSubtype()}`,
                     onClick: this.toggleEditing(c),
                   },
                   {
-                    value: c.logJobStatus,
+                    value: c.getLogJobStatus(),
                     onClick: this.toggleEditing(c),
-                    actions: c.customer
+                    actions: c.getCustomer()
                       ? [
                           <IconButton
                             key="edit"
@@ -174,13 +174,13 @@ export class CallsByTech extends React.PureComponent<Props, state> {
                 ])
           }
         />
-        {editing && editing.customer && (
+        {editing && editing.getCustomer() && (
           <Modal open onClose={this.toggleEditing()} fullScreen>
             <ServiceCall
               loggedUserId={this.props.userId}
-              propertyId={editing.propertyId}
-              userID={editing.customer.id}
-              serviceCallId={editing.id}
+              propertyId={editing.getPropertyId()}
+              userID={editing.getCustomer()!.getId()}
+              serviceCallId={editing.getId()}
               onClose={this.toggleEditing()}
             />
           </Modal>
