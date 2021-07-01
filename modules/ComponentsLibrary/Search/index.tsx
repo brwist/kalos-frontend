@@ -282,14 +282,14 @@ export const Search: FC<Props> = ({
             {
               value: (
                 <>
-                  {users[entry.getUserId()].firstname} {users[userId].lastname}
-                  {users[userId].businessname
-                    ? `, ${users[userId].businessname}`
+                  {entry.getFirstname()} {entry.getLastname()}
+                  {entry.getBusinessname()
+                    ? `, ${entry.getBusinessname()}`
                     : ''}
-                  {(users[userId].phone || users[userId].email) && <br />}
-                  {users[userId].phone}
-                  {users[userId].phone && users[userId].email && ', '}
-                  {users[userId].email}
+                  {(entry.getPhone() || entry.getEmail()) && <br />}
+                  {entry.getPhone()}
+                  {entry.getPhone() && entry.getEmail() && ', '}
+                  {entry.getEmail()}
                 </>
               ),
               onClick: handleSelect(entry),
