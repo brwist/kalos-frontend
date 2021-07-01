@@ -916,6 +916,7 @@ export const loadActivityLogsByFilter = async ({
   filter: { activityDateStart, activityDateEnd, activityName, withUser },
   sort,
 }: LoadActivityLogsByFilter) => {
+  // TODO make this call faster 
   //FIXME move to activity log client
   const { orderBy, orderDir, orderByField } = sort;
   const req = new ActivityLog();
