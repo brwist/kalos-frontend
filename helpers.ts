@@ -407,17 +407,15 @@ function formatDate(date: string) {
  * @returns format Day (ie. Tue)
  */
 function formatDay(datetime: string) {
-  return (
-    {
-      0: 'Sun',
-      1: 'Mon',
-      2: 'Tue',
-      3: 'Wed',
-      4: 'Thu',
-      5: 'Fri',
-      6: 'Sat',
-    } as { [key: number]: string }
-  )[new Date(datetime.substr(0, 10)).getDay()];
+  return ({
+    0: 'Sun',
+    1: 'Mon',
+    2: 'Tue',
+    3: 'Wed',
+    4: 'Thu',
+    5: 'Fri',
+    6: 'Sat',
+  } as { [key: number]: string })[new Date(datetime.substr(0, 10)).getDay()];
 }
 
 /**
@@ -1863,7 +1861,24 @@ const makeSafeFormObject = function makeSafeFormObject<T>(data: T, result: T) {
   }
   return result;
 };
-
+const JSONToType = function JSONToType<T>(data: Object, result: T) {
+  const keys = Object.keys(data);
+  //so data should be the result.asObject
+  for (const key of keys) {
+    try {
+      // @ts-ignore
+      const functionName = `set${key[0].toUpperCase()}${key.substring(
+        1,
+        key.length,
+      )}`;
+      // @ts-ignore
+      result[functionName](data[key]);
+    } catch (err) {
+      console.log('failed to set value on request object', err);
+    }
+  }
+  return result;
+};
 export {
   SUBJECT_TAGS,
   SUBJECT_TAGS_TRANSACTIONS,
@@ -1898,4 +1913,5 @@ export {
   cleanOrderByField,
   cleanFieldMaskField,
   makeSafeFormObject,
+  JSONToType,
 };

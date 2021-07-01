@@ -4,6 +4,7 @@ import FormControl from '@material-ui/core/FormControl';
 import NativeSelect from '@material-ui/core/NativeSelect';
 import { User, UserClient } from '@kalos-core/kalos-rpc/User';
 import { ENDPOINT } from '../../../constants';
+import { JSONToType } from './../../../helpers';
 
 interface props {
   selected: number;
@@ -89,13 +90,16 @@ export class EmployeePicker extends React.PureComponent<props, state> {
       }
     }
   }
-  createUser(userList: User.AsObject[]) {
+  createUsers(userList: User.AsObject[]) {
     let newUserList = [];
     for (let i = 0; i < userList.length; i++) {
-      let tempUser = new User();
+      let tempUser = JSONToType(userList[i], new User());
+
+      /*
       tempUser.setId(userList[i].id);
       tempUser.setFirstname(userList[i].firstname);
       tempUser.setLastname(userList[i].lastname);
+      */
       newUserList.push(tempUser);
     }
     return newUserList;
@@ -105,7 +109,8 @@ export class EmployeePicker extends React.PureComponent<props, state> {
     if (cacheListStr) {
       const cacheList = JSON.parse(cacheListStr);
       if (cacheList && cacheList.length !== 0) {
-        const tempList = this.createUser(cacheList);
+        const tempList = this.createUsers(cacheList);
+        console.log(tempList);
         this.setState({
           list: tempList,
         });
