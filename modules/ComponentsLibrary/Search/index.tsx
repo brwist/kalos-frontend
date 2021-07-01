@@ -30,28 +30,6 @@ const kindsByName: { [key in Kind]: number } = {
   Properties: 2,
 };
 
-const makeSearchProperty = ({
-  address,
-  subdivision,
-  city,
-  zip,
-}: Property.AsObject) => {
-  const entry = new Property();
-  if (address) {
-    entry.setAddress(`%${address}%`);
-  }
-  if (subdivision) {
-    entry.setSubdivision(`%${subdivision}%`);
-  }
-  if (city) {
-    entry.setCity(`%${city}%`);
-  }
-  if (zip) {
-    entry.setZip(`%${zip}%`);
-  }
-  return entry;
-};
-
 export const Search: FC<Props> = ({
   kinds,
   open,
@@ -64,10 +42,11 @@ export const Search: FC<Props> = ({
     value: kindsByName[kind],
   }));
   const [entries, setEntries] = useState<Entry[]>([]);
-  const [users, setUsers] = useState<{ [key: number]: User.AsObject }>({});
+  const [users, setUsers] = useState<{ [key: number]: User }>({});
   const [loading, setLoading] = useState<boolean>(false);
   const [search, setSearch] = useState<Entry>({
     kind: kindsByName[kinds[0]],
+    __user: new User(),
   } as Entry);
   const { kind } = search;
 
@@ -79,14 +58,22 @@ export const Search: FC<Props> = ({
       const { kind } = search;
       let newUsers = {};
       if (kind === 1) {
+        console.log('Search: ', search.__user);
+        console.log(typeof search);
         if (
-          search.getFirstname() ||
-          search.getLastname() ||
-          search.getBusinessname() ||
-          search.getPhone() ||
-          search.getEmail()
+          search.firstname ||
+          search.lastname ||
+          search.businessname ||
+          search.phone ||
+          search.email
         ) {
-          const res = await UserClientService.BatchGet(search as User);
+          let req = new User();
+          if (search.firstname) req.setFirstname(search.firstname);
+          if (search.lastname) req.setLastname(search.lastname);
+          if (search.businessname) req.setBusinessname(search.businessname);
+          if (search.phone) req.setPhone(search.phone);
+          if (search.email) req.setEmail(search.email);
+          const res = await UserClientService.BatchGet(req);
           entries = [
             ...entries,
             ...res
@@ -97,13 +84,19 @@ export const Search: FC<Props> = ({
         }
       } else if (kind === 2) {
         if (
-          search.getFirstname() ||
-          search.getLastname() ||
-          search.getBusinessname() ||
-          search.getPhone() ||
-          search.getEmail()
+          search.firstname ||
+          search.lastname ||
+          search.businessname ||
+          search.phone ||
+          search.email
         ) {
-          const res = await UserClientService.BatchGet(search as User);
+          let req = new User();
+          if (search.firstname) req.setFirstname(search.firstname);
+          if (search.lastname) req.setLastname(search.lastname);
+          if (search.businessname) req.setBusinessname(search.businessname);
+          if (search.phone) req.setPhone(search.phone);
+          if (search.email) req.setEmail(search.email);
+          const res = await UserClientService.BatchGet(req);
           newUsers = {
             ...newUsers,
             ...res
@@ -155,6 +148,7 @@ export const Search: FC<Props> = ({
   const handleSearch = useCallback(
     (search: Entry) => {
       setSearch(search);
+      console.log('search: ', search);
       load(search);
     },
     [setSearch, load],
@@ -163,10 +157,10 @@ export const Search: FC<Props> = ({
   const handleChangeKind = useCallback(
     (newKind: number) => {
       if (kind !== newKind) {
-        handleSearch({ kind: newKind } as Entry);
+        handleSearch({ ...search, kind: newKind } as Entry);
       }
     },
-    [handleSearch, kind],
+    [handleSearch, kind, search],
   );
 
   const handleSelect = useCallback(
