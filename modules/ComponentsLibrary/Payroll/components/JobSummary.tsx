@@ -43,8 +43,8 @@ export type FilterData = {
   week: string;
 };
 interface Props {
-  employees: User[];
-  departments: TimesheetDepartment[];
+  employees: User.AsObject[];
+  departments: TimesheetDepartment.AsObject[];
   onClose: () => void;
 }
 export type Action = {

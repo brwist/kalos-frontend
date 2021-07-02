@@ -28,6 +28,7 @@ import {
   PerDiemList,
   PerDiem as pd,
 } from '@kalos-core/kalos-rpc/compiled-protos/perdiem_pb';
+import { JobSummary } from './components/JobSummary';
 import { dateTimePickerDefaultProps } from '@material-ui/pickers/constants/prop-types';
 import { Modal } from '@material-ui/core';
 
@@ -79,6 +80,7 @@ export const Payroll: FC<Props> = ({ userID }) => {
   const [employees, setEmployees] = useState<UserType[]>([]);
   const [loadedPerDiemIds, setLoadedPerDiemIds] = useState<number[]>([]);
   const [viewReport, setViewReport] = useState<boolean>(false);
+  const [openReport, setOpenReport] = useState<boolean>(false);
   const weekOptions = useMemo(
     () => [
       { label: OPTION_ALL, value: OPTION_ALL },
@@ -245,6 +247,12 @@ export const Payroll: FC<Props> = ({ userID }) => {
               schema={SCHEMA}
               className="PayrollFilter"
             />
+            {role === 'Manager' && (
+              <Button
+                label={'Open Job Report for Hours'}
+                onClick={() => setOpenReport(true)}
+              ></Button>
+            )}
             <Tabs
               tabs={[
                 ...(isTimesheet
@@ -410,20 +418,16 @@ export const Payroll: FC<Props> = ({ userID }) => {
                     ]
                   : []),
               ]}
-              {openReport && (
-                <Modal
-                  open
-                  fullScreen={true}
-                  onClose={() => setOpenReport(false)}
-                >
-                  <JobSummary
-                    employees={employees}
-                    departments={departments}
-                    onClose={() => setOpenReport(false)}
-                  ></JobSummary>
-                </Modal>
-              )}
             />
+            {openReport && (
+              <Modal open onClose={() => setOpenReport(false)}>
+                <JobSummary
+                  employees={employees}
+                  departments={departments}
+                  onClose={() => setOpenReport(false)}
+                ></JobSummary>
+              </Modal>
+            )}
           </>
         ) : (
           <Alert severity="error">
