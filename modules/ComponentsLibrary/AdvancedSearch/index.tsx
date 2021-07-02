@@ -315,8 +315,8 @@ export const AdvancedSearch: FC<Props> = ({
         userReq.setOverrideLimit(true);
         userReq.setIsEmployee(1);
         userReq.setIsActive(1);
-        userReq.setOrderBy('user_lastname');
-        userReq.setOrderDir('ASC');
+        userReq.setOrderBy(criteria.sort.orderBy);
+        userReq.setOrderDir(criteria.sort.orderDir);
         const userRes = await UserClientService.BatchGet(userReq);
         userResults = userRes.getResultsList();
         setCount(userRes.getTotalCount());
