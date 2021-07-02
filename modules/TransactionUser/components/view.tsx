@@ -26,7 +26,7 @@ interface props {
 interface state {
   page: number;
   isLoading: boolean;
-  transactions: Transaction.AsObject[];
+  transactions: Transaction[];
   totalCount: number;
   role?: RoleType;
 }
@@ -107,8 +107,8 @@ export class TransactionUserView extends React.PureComponent<props, state> {
       reqObj.setVendorCategory('%Pick%');
     }
     reqObj.setIsActive(1);
-    const res = (await this.TxnClient.BatchGet(reqObj)).toObject();
-    return res.resultsList;
+    const res = await this.TxnClient.BatchGet(reqObj);
+    return res.getResultsList();
   }
   async fetchTxnsAccountsPayable(statusID: number) {
     const reqObj = new Transaction();
@@ -165,16 +165,16 @@ export class TransactionUserView extends React.PureComponent<props, state> {
     }
   }
 
-  handleCostCenterChange(txn: Transaction.AsObject) {
+  handleCostCenterChange(txn: Transaction) {
     let IDList: number[] = [];
     for (const t of this.state.transactions) {
-      if (t.vendor === txn.vendor) {
-        IDList = [...IDList, t.id];
+      if (t.getVendor() === txn.getVendor()) {
+        IDList = [...IDList, t.getId()];
       }
     }
     const newTxns = this.state.transactions.slice().map(t => {
-      if (IDList.includes(t.id)) {
-        t.costCenterId = txn.costCenterId;
+      if (IDList.includes(t.getId())) {
+        t.setCostCenterId(txn.getCostCenterId());
         return t;
       } else {
         return t;
@@ -191,8 +191,8 @@ export class TransactionUserView extends React.PureComponent<props, state> {
 
   render() {
     const txns = this.state.transactions.sort((a, b) => {
-      const dateA = parseISO(a.timestamp.split(' ').join('T'));
-      const dateB = parseISO(b.timestamp.split(' ').join('T'));
+      const dateA = parseISO(a.getTimestamp().split(' ').join('T'));
+      const dateB = parseISO(b.getTimestamp().split(' ').join('T'));
       return dateA.getTime() - dateB.getTime();
     });
     const { isLoading } = this.state;
@@ -202,7 +202,7 @@ export class TransactionUserView extends React.PureComponent<props, state> {
         {txns.map(t => (
           <TxnCard
             txn={t}
-            key={`${t.id}`}
+            key={`${t.getId()}-txncard`}
             userID={this.props.userID}
             userName={this.props.userName}
             userDepartmentID={this.props.departmentId}
