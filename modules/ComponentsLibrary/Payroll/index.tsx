@@ -410,6 +410,19 @@ export const Payroll: FC<Props> = ({ userID }) => {
                     ]
                   : []),
               ]}
+              {openReport && (
+                <Modal
+                  open
+                  fullScreen={true}
+                  onClose={() => setOpenReport(false)}
+                >
+                  <JobSummary
+                    employees={employees}
+                    departments={departments}
+                    onClose={() => setOpenReport(false)}
+                  ></JobSummary>
+                </Modal>
+              )}
             />
           </>
         ) : (
