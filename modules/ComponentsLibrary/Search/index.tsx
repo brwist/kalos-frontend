@@ -5,7 +5,8 @@ import { ENDPOINT } from '../../../constants';
 import { Modal } from '../Modal';
 import { Form, Schema, Options } from '../Form';
 import { InfoTable, Data, Columns } from '../InfoTable';
-import { makeFakeRows } from '../../../helpers';
+import { makeFakeRows, makeSafeFormObject } from '../../../helpers';
+import { PlainForm } from '../PlainForm';
 
 const UserClientService = new UserClient(ENDPOINT);
 const PropertyClientService = new PropertyClient(ENDPOINT);
@@ -48,6 +49,7 @@ export const Search: FC<Props> = ({
     kind: kindsByName[kinds[0]],
     __user: new User(),
   } as Entry);
+  const [userSearch, setUserSearch] = useState<User>(new User());
   const { kind } = search;
 
   const load = useCallback(
@@ -58,21 +60,24 @@ export const Search: FC<Props> = ({
       const { kind } = search;
       let newUsers = {};
       if (kind === 1) {
-        console.log('Search: ', search.__user);
+        console.log('Search: ', userSearch);
         console.log(typeof search);
         if (
-          search.firstname ||
-          search.lastname ||
-          search.businessname ||
-          search.phone ||
-          search.email
+          userSearch?.getFirstname() ||
+          userSearch?.getLastname() ||
+          userSearch?.getBusinessname() ||
+          userSearch?.getPhone() ||
+          userSearch?.getEmail()
         ) {
           let req = new User();
-          if (search.firstname) req.setFirstname(search.firstname);
-          if (search.lastname) req.setLastname(search.lastname);
-          if (search.businessname) req.setBusinessname(search.businessname);
-          if (search.phone) req.setPhone(search.phone);
-          if (search.email) req.setEmail(search.email);
+          if (userSearch.getFirstname())
+            req.setFirstname(userSearch.getFirstname());
+          if (userSearch.getLastname())
+            req.setLastname(userSearch.getLastname());
+          if (userSearch.getBusinessname())
+            req.setBusinessname(userSearch.getBusinessname());
+          if (userSearch.getPhone()) req.setPhone(userSearch.getPhone());
+          if (userSearch.getEmail()) req.setEmail(userSearch.getEmail());
           const res = await UserClientService.BatchGet(req);
           entries = [
             ...entries,
@@ -84,18 +89,21 @@ export const Search: FC<Props> = ({
         }
       } else if (kind === 2) {
         if (
-          search.firstname ||
-          search.lastname ||
-          search.businessname ||
-          search.phone ||
-          search.email
+          userSearch?.getFirstname() ||
+          userSearch?.getLastname() ||
+          userSearch?.getBusinessname() ||
+          userSearch?.getPhone() ||
+          userSearch?.getEmail()
         ) {
           let req = new User();
-          if (search.firstname) req.setFirstname(search.firstname);
-          if (search.lastname) req.setLastname(search.lastname);
-          if (search.businessname) req.setBusinessname(search.businessname);
-          if (search.phone) req.setPhone(search.phone);
-          if (search.email) req.setEmail(search.email);
+          if (userSearch.getFirstname())
+            req.setFirstname(userSearch.getFirstname());
+          if (userSearch.getLastname())
+            req.setLastname(userSearch.getLastname());
+          if (userSearch.getBusinessname())
+            req.setBusinessname(userSearch.getBusinessname());
+          if (userSearch.getPhone()) req.setPhone(userSearch.getPhone());
+          if (userSearch.getEmail()) req.setEmail(userSearch.getEmail());
           const res = await UserClientService.BatchGet(req);
           newUsers = {
             ...newUsers,
@@ -142,7 +150,7 @@ export const Search: FC<Props> = ({
       setUsers({ ...users, ...newUsers });
       setLoading(false);
     },
-    [setLoading, setEntries, excludeId, users],
+    [users, userSearch, excludeId],
   );
 
   const handleSearch = useCallback(
@@ -152,6 +160,15 @@ export const Search: FC<Props> = ({
       load(search);
     },
     [setSearch, load],
+  );
+
+  const handleSetUserSearch = useCallback(
+    (newUserSearch: User) => {
+      let safe = new User();
+      makeSafeFormObject(newUserSearch, safe);
+      setUserSearch(safe);
+    },
+    [setUserSearch],
   );
 
   const handleChangeKind = useCallback(
@@ -178,6 +195,16 @@ export const Search: FC<Props> = ({
     [onSelect, onClose, users],
   );
 
+  const user_schema: Schema<User> = [
+    [
+      { label: 'First Name', name: 'getFirstname', type: 'search' },
+      { label: 'Last Name', name: 'getLastname', type: 'search' },
+      { label: 'Business Name', name: 'getBusinessname', type: 'search' },
+      { label: 'Primary Phone', name: 'getPhone', type: 'search' },
+      { label: 'Email', name: 'getEmail', type: 'search' },
+    ],
+  ];
+
   const schema: {
     [key: number]: {
       columns: Columns;
@@ -200,11 +227,6 @@ export const Search: FC<Props> = ({
             options: searchOptions,
             onChange: handleChangeKind,
           },
-          { label: 'First Name', name: 'firstname', type: 'search' },
-          { label: 'Last Name', name: 'lastname', type: 'search' },
-          { label: 'Business Name', name: 'businessname', type: 'search' },
-          { label: 'Primary Phone', name: 'phone', type: 'search' },
-          { label: 'Email', name: 'email', type: 'search' },
         ],
         [{ label: 'Results', headline: true }],
       ] as Schema<Entry>,
@@ -243,22 +265,24 @@ export const Search: FC<Props> = ({
   const data: Data = loading
     ? makeFakeRows()
     : entries.map(entry => {
+        let newEntry = new User();
+        newEntry = makeSafeFormObject(entry as User, newEntry);
         if (kind === 1) {
           return [
             {
-              value: `${entry.getFirstname()} ${entry.getLastname()}`,
+              value: `${newEntry.getFirstname()} ${newEntry.getLastname()}`,
               onClick: handleSelect(entry),
             },
             {
-              value: entry.getBusinessname(),
+              value: newEntry.getBusinessname(),
               onClick: handleSelect(entry),
             },
             {
-              value: entry.getPhone(),
+              value: newEntry.getPhone(),
               onClick: handleSelect(entry),
             },
             {
-              value: entry.getEmail(),
+              value: newEntry.getEmail(),
               onClick: handleSelect(entry),
             },
           ];
@@ -266,7 +290,7 @@ export const Search: FC<Props> = ({
         if (kind === 2) {
           return [
             {
-              value: `${entry.getAddress()}, ${entry.getCity()}, ${entry.getState()} ${entry.getZip()}`,
+              value: `${newEntry.getAddress()}, ${newEntry.getCity()}, ${newEntry.getState()} ${newEntry.getZip()}`,
               onClick: handleSelect(entry),
             },
             {
@@ -276,14 +300,14 @@ export const Search: FC<Props> = ({
             {
               value: (
                 <>
-                  {entry.getFirstname()} {entry.getLastname()}
-                  {entry.getBusinessname()
-                    ? `, ${entry.getBusinessname()}`
+                  {newEntry.getFirstname()} {newEntry.getLastname()}
+                  {newEntry.getBusinessname()
+                    ? `, ${newEntry.getBusinessname()}`
                     : ''}
-                  {(entry.getPhone() || entry.getEmail()) && <br />}
-                  {entry.getPhone()}
-                  {entry.getPhone() && entry.getEmail() && ', '}
-                  {entry.getEmail()}
+                  {(newEntry.getPhone() || newEntry.getEmail()) && <br />}
+                  {newEntry.getPhone()}
+                  {newEntry.getPhone() && newEntry.getEmail() && ', '}
+                  {newEntry.getEmail()}
                 </>
               ),
               onClick: handleSelect(entry),
@@ -294,6 +318,11 @@ export const Search: FC<Props> = ({
       });
   return (
     <Modal open={open} onClose={onClose} fullScreen>
+      <PlainForm<User>
+        schema={user_schema}
+        data={userSearch}
+        onChange={handleSetUserSearch}
+      />
       <Form
         title="Search"
         submitLabel="Search"
