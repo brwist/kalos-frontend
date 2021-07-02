@@ -66,8 +66,19 @@ interface state {
 }
 
 const hardcodedList = [
-  1, 2, 601002, 674002, 674001, 673002, 61700, 681001, 601001, 51500, 68500,
-  62600, 643002,
+  1,
+  2,
+  601002,
+  674002,
+  674001,
+  673002,
+  61700,
+  681001,
+  601001,
+  51500,
+  68500,
+  62600,
+  643002,
 ];
 
 export class TxnCard extends React.PureComponent<props, state> {
@@ -134,15 +145,20 @@ export class TxnCard extends React.PureComponent<props, state> {
     return async (value: Transaction[K]) => {
       try {
         const reqObj = new Transaction();
-        const fieldMaskItem = `${prop.slice(2)}`;
+        const fieldMaskItem = `${prop.slice(3)}`;
+        console.log('fieldmaskItem', fieldMaskItem);
         const methodName = `${prop}`;
+        console.log('setmethod', methodName);
         const fetchMethod = `g${prop.substring(1, prop.length)}`;
+        console.log('fetchmethod', fetchMethod);
         //@ts-ignore
         const oldValue = this.state.txn[fetchMethod]();
+        console.log('old value', oldValue);
         reqObj.setId(this.state.txn.getId());
         //@ts-ignore
-        reqObj[methodName](value);
+        reqObj[methodName](value());
         reqObj.setFieldMaskList([fieldMaskItem]);
+        console.log('req', reqObj);
         const updatedTxn = await this.TxnClient.Update(reqObj);
         this.setState(() => ({ txn: updatedTxn }));
         if (prop !== 'setNotes') {
@@ -154,8 +170,7 @@ export class TxnCard extends React.PureComponent<props, state> {
     };
   } //These functions both serve to update the individual fields of the record, and change
   //the state value for the entity in React
-  updateNotes = (val: React.ReactText) =>
-    this.state.txn.setNotes(val.toString());
+  updateNotes = this.updateTransaction('setNotes');
   updateVendor = this.updateTransaction('setVendor');
   updateCostCenterID = this.updateTransaction('setCostCenterId');
   updateDepartmentID = this.updateTransaction('setDepartmentId');
@@ -211,9 +226,9 @@ export class TxnCard extends React.PureComponent<props, state> {
               txn,
             )} transaction has been reported by ${txn.getOwnerName()} (${txn.getCardUsed()}).
               Amount $${txn.getAmount()} Vendor: ${txn.getVendor()} Post date: ${txn.getTimestamp()}
-              Department: ${txn.getDepartment()?.getClassification()} ${txn
-              .getDepartment()
-              ?.getDescription()}
+              Department: ${txn
+                .getDepartment()
+                ?.getClassification()} ${txn.getDepartment()?.getDescription()}
               ${txn.getNotes() != '' ? `Notes: ${txn.getNotes()}` : ''}</p>
               <a href="https://app.kalosflorida.com/index.cfm?action=admin:reports.transactions">Click here to view receipts</a>
               </body></html>
@@ -342,7 +357,9 @@ export class TxnCard extends React.PureComponent<props, state> {
     alert('Upload complete');
   };
 
-  deriveCallout(txn: Transaction): {
+  deriveCallout(
+    txn: Transaction,
+  ): {
     severity: 'error' | 'success';
     text: string;
   } {
@@ -544,8 +561,8 @@ export class TxnCard extends React.PureComponent<props, state> {
 
   render() {
     const { txn, pendingAddFromGallery, pendingAddFromSingleFile } = this.state;
-    const t = txn;
     const { isManager, userID } = this.props;
+    const t = txn;
     let subheader = `${t.getDescription().split(' ')[0]} - ${t.getVendor()}`;
     const deriveCallout = this.deriveCallout(t);
     return (
@@ -652,7 +669,10 @@ export class TxnCard extends React.PureComponent<props, state> {
             />
             <NoteField
               initialValue={t.getNotes()}
-              onChange={debounce(this.updateNotes, 500)}
+              onChange={debounce(
+                (value: string) => this.updateNotes(() => value.toString()),
+                500,
+              )}
             />
           </div>
           <input
@@ -716,8 +736,18 @@ function costCenterSortByPopularity(
 }
 
 const ALLOWED_ACCOUNT_IDS = [
-  601002, 673002, 673001, 51400, 643002, 643003, 601001, 51500, 601004, 1,
-  68500, 66600,
+  601002,
+  673002,
+  673001,
+  51400,
+  643002,
+  643003,
+  601001,
+  51500,
+  601004,
+  1,
+  68500,
+  66600,
 ];
 
 function getGalleryData(txn: Transaction): GalleryData[] {
