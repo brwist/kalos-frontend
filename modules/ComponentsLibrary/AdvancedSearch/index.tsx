@@ -237,7 +237,6 @@ export const AdvancedSearch: FC<Props> = ({
     [setPendingAddProperty],
   );
   const loadDicts = useCallback(async () => {
-    await UserClientService;
     setLoadingDicts(true);
     const jobTypes = await JobTypeClientService.loadJobTypes();
     setJobTypes(jobTypes);
@@ -249,7 +248,9 @@ export const AdvancedSearch: FC<Props> = ({
       setDepartments(departments);
       const employeeFunctions = await EmployeeFunctionClientService.loadEmployeeFunctions();
       setEmployeeFunctions(employeeFunctions);
-      const loggedUser = await UserClientService.loadUserById(loggedUserId);
+      const userReq = new User();
+      userReq.setId(loggedUserId);
+      const loggedUser = await UserClientService.Get(userReq);
       setIsAdmin(loggedUser.getIsAdmin());
     }
     setFormKey(formKey + 1);
@@ -301,14 +302,30 @@ export const AdvancedSearch: FC<Props> = ({
       ) {
         delete criteria.filter.employeeDepartmentId;
       }
-      const { results, totalCount } = await UserClientService.loadUsersByFilter(
-        criteria,
-      );
-      setCount(totalCount);
-      setUsers(results);
+      let userResults = [new User()];
+      if (kind === 'customers') {
+        const {
+          results,
+          totalCount,
+        } = await UserClientService.loadUsersByFilter(criteria);
+        setUsers(results);
+        setCount(totalCount);
+      } else {
+        const userReq = new User();
+        userReq.setOverrideLimit(true);
+        userReq.setIsEmployee(1);
+        userReq.setIsActive(1);
+        userReq.setOrderBy('user_lastname');
+        userReq.setOrderDir('ASC');
+        const userRes = await UserClientService.BatchGet(userReq);
+        userResults = userRes.getResultsList();
+        setCount(userRes.getTotalCount());
+        setUsers(userRes.getResultsList());
+      }
+      console.log(userResults);
       if (kind === 'employees') {
         const images = await Promise.all(
-          results
+          userResults
             .filter(i => !!i.getImage())
             .map(async i => ({
               image: i.getImage(),
@@ -318,6 +335,7 @@ export const AdvancedSearch: FC<Props> = ({
               ),
             })),
         );
+        console.log(images);
 
         // TODO fix type error
         setEmployeeImages(
@@ -376,6 +394,7 @@ export const AdvancedSearch: FC<Props> = ({
       load();
     }
     if (!loadedDicts) {
+      setLoadedDicts(true);
       loadDicts();
     }
   }, [loaded, setLoaded, load, loadedDicts, loadDicts]);
