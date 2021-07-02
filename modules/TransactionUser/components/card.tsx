@@ -145,31 +145,34 @@ export class TxnCard extends React.PureComponent<props, state> {
     return async (value: Transaction[K]) => {
       try {
         const reqObj = new Transaction();
-        const upperCaseProp = `${prop[0].toLocaleUpperCase()}${prop.slice(1)}`;
-        const methodName = `set${upperCaseProp}`;
-        const oldValue = this.state.txn[prop];
+        const fieldMaskItem = `${prop.slice(2)}`;
+        const methodName = `${prop}`;
+        const fetchMethod = `g${prop.substring(1, prop.length)}`;
+        //@ts-ignore
+        const oldValue = this.state.txn[fetchMethod]();
         reqObj.setId(this.state.txn.getId());
         //@ts-ignore
         reqObj[methodName](value);
-        reqObj.setFieldMaskList([upperCaseProp]);
+        reqObj.setFieldMaskList([fieldMaskItem]);
         const updatedTxn = await this.TxnClient.Update(reqObj);
         this.setState(() => ({ txn: updatedTxn }));
-        if (prop !== 'getNotes') {
+        if (prop !== 'setNotes') {
           await this.makeLog(prop, oldValue, value);
         }
       } catch (err) {
         console.log(err);
       }
     };
-  }
+  } //These functions both serve to update the individual fields of the record, and change
+  //the state value for the entity in React
   updateNotes = (val: React.ReactText) =>
     this.state.txn.setNotes(val.toString());
-  updateVendor = this.state.txn.setVendor;
-  updateCostCenterID = this.updateTransaction('getCostCenterId');
-  updateDepartmentID = this.updateTransaction('getDepartmentId');
-  updateStatus = this.updateTransaction('getStatusId');
-  handleJobNumber = this.updateTransaction('getJobId');
-
+  updateVendor = this.updateTransaction('setVendor');
+  updateCostCenterID = this.updateTransaction('setCostCenterId');
+  updateDepartmentID = this.updateTransaction('setDepartmentId');
+  updateStatus = this.updateTransaction('setStatusId');
+  updateJobNumber = this.updateTransaction('setJobId');
+  handleUpdateCostCenterId() {}
   async submit() {
     const { txn } = this.state;
     try {
@@ -226,6 +229,8 @@ export class TxnCard extends React.PureComponent<props, state> {
               <a href="https://app.kalosflorida.com/index.cfm?action=admin:reports.transactions">Click here to view receipts</a>
               </body></html>
             `;
+            //@ts-ignore
+            //TODO : Fix email type config definition
             const mailConfig: EmailConfig = {
               type: 'receipts',
               recipient: 'accounts@kalosflorida.com',
@@ -238,7 +243,8 @@ export class TxnCard extends React.PureComponent<props, state> {
               console.log('failed to send mail to accounting', err);
             }
           }
-          await this.updateStatus(statusID);
+          this.state.txn.setStatusId(statusID);
+          await this.updateStatus(this.state.txn.getStatusId);
           await this.makeSubmitLog(statusID, statusMessage);
           if (
             txn.getCostCenterId() === 673002 ||
@@ -348,27 +354,27 @@ export class TxnCard extends React.PureComponent<props, state> {
   };
 
   deriveCallout(
-    txn: Transaction.AsObject,
+    txn: Transaction,
   ): {
     severity: 'error' | 'success';
     text: string;
   } {
-    if (!txn.costCenter || txn.costCenter.id === 0)
+    if (!txn.getCostCenter() || txn.getCostCenter()?.getId() === 0)
       return {
         severity: 'error',
         text: 'Please select a purchase category',
       };
-    if (txn.costCenterId === 601002 && txn.notes === '')
+    if (txn.getCostCenterId() === 601002 && txn.getNotes() === '')
       return {
         severity: 'error',
         text: 'Fuel purchases must include mileage and gallons in the notes',
       };
-    if (txn.notes === '')
+    if (txn.getNotes() === '')
       return {
         severity: 'error',
         text: 'Purchases should include a brief description in the notes',
       };
-    if (txn.statusId === 4) {
+    if (txn.getStatusId() === 4) {
       return {
         severity: 'error',
         text: `Rejection Reason: ${this.getRejectionReason()}`,
@@ -510,7 +516,8 @@ export class TxnCard extends React.PureComponent<props, state> {
 
   componentDidMount() {
     if (this.state.txn.getDepartmentId() === 0) {
-      this.updateDepartmentID(this.props.userDepartmentID);
+      this.state.txn.setDepartmentId(this.props.userDepartmentID);
+      this.updateDepartmentID(this.state.txn.getDepartmentId);
     }
   }
 
@@ -621,7 +628,7 @@ export class TxnCard extends React.PureComponent<props, state> {
           <Alert severity={deriveCallout.severity}>{deriveCallout.text}</Alert>
           <div className="TransactionUser_Cards">
             <AccountPicker
-              onSelect={this.updateCostCenterID}
+              onSelect={(n: number) => this.updateCostCenterID(() => n)}
               selected={t.getCostCenterId()}
               sort={costCenterSortByPopularity}
               filter={
@@ -642,14 +649,14 @@ export class TxnCard extends React.PureComponent<props, state> {
             <Field
               name="department"
               value={t.getDepartmentId() || this.props.userDepartmentID}
-              onChange={val => this.updateDepartmentID(+val)}
+              onChange={val => this.updateDepartmentID(() => +val)}
               type="department"
             />
             <Field
               name="jobNumber"
               label="Job Number"
               value={t.getJobId()}
-              onChange={val => this.handleJobNumber(+val)}
+              onChange={val => this.updateJobNumber(() => +val)}
               type="eventId"
               style={{
                 alignItems: 'flex-start',
@@ -715,10 +722,10 @@ export function getMimeType(fileType: string) {
 }
 
 function costCenterSortByPopularity(
-  a: TransactionAccount.AsObject,
-  b: TransactionAccount.AsObject,
+  a: TransactionAccount,
+  b: TransactionAccount,
 ) {
-  return b.popularity - a.popularity;
+  return b.getPopularity() - a.getPopularity();
 }
 
 const ALLOWED_ACCOUNT_IDS = [
@@ -736,10 +743,10 @@ const ALLOWED_ACCOUNT_IDS = [
   66600,
 ];
 
-function getGalleryData(txn: Transaction.AsObject): GalleryData[] {
-  return txn.documentsList.map(d => {
+function getGalleryData(txn: Transaction): GalleryData[] {
+  return txn.getDocumentsList().map(d => {
     return {
-      key: `${txn.id}-${d.reference}`,
+      key: `${txn.getId()}-${d.getReference()}`,
       bucket: 'kalos-transactions',
     };
   });
