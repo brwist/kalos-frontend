@@ -93,7 +93,7 @@ export const Search: FC<Props> = ({
   );
   const [userSearch, setUserSearch] = useState<User>(new User());
   const [kind, setKind] = useState<Kind>('Customers');
-  const [entries, setEntries] = useState<User[] | Property[] | null>();
+  const [entries, setEntries] = useState<User[] | Property[]>([]);
   const load = useCallback(async () => {
     setLoading(true);
     let newUsers = {};
