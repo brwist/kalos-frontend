@@ -173,7 +173,8 @@ export const Documents: FC<Props> = ({
         } else {
           window.open(dlURL.getUrl(), '_blank');
         }
-      },
+      }
+    },
     [propertyId, userId],
   );
 
