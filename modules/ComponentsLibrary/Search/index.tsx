@@ -94,113 +94,122 @@ export const Search: FC<Props> = ({
   const [userSearch, setUserSearch] = useState<User>(new User());
   const [kind, setKind] = useState<Kind>('Customers');
   const [entries, setEntries] = useState<User[] | Property[]>([]);
-  const load = useCallback(async () => {
-    setLoading(true);
-    let newUsers = {};
-    if (kind === 'Customers') {
-      if (
-        userSearch?.getFirstname() ||
-        userSearch?.getLastname() ||
-        userSearch?.getBusinessname() ||
-        userSearch?.getPhone() ||
-        userSearch?.getEmail()
-      ) {
+  const load = useCallback(
+    async (searchInput: User | Property) => {
+      setLoading(true);
+      console.log('user search: ', searchInput);
+      let newUsers = {};
+      if (kind === 'Customers') {
+        searchInput = makeSafeFormObject(searchInput, new User());
         let req = new User();
-        if (userSearch.getFirstname())
-          req.setFirstname(userSearch.getFirstname());
-        if (userSearch.getLastname()) req.setLastname(userSearch.getLastname());
-        if (userSearch.getBusinessname())
-          req.setBusinessname(userSearch.getBusinessname());
-        if (userSearch.getPhone()) req.setPhone(userSearch.getPhone());
-        if (userSearch.getEmail()) req.setEmail(userSearch.getEmail());
+        if (searchInput.getFirstname())
+          req.setFirstname(searchInput.getFirstname());
+        if (searchInput.getLastname())
+          req.setLastname(searchInput.getLastname());
+        if (searchInput.getBusinessname())
+          req.setBusinessname(searchInput.getBusinessname());
+        if (searchInput.getPhone()) req.setPhone(searchInput.getPhone());
+        if (searchInput.getEmail()) req.setEmail(searchInput.getEmail());
         const res = await UserClientService.BatchGet(req);
         setEntries(res.getResultsList());
-      }
-    } else if (kind === 'Properties') {
-      if (
-        userSearch?.getFirstname() ||
-        userSearch?.getLastname() ||
-        userSearch?.getBusinessname() ||
-        userSearch?.getPhone() ||
-        userSearch?.getEmail()
-      ) {
-        let req = new User();
-        if (userSearch.getFirstname())
-          req.setFirstname(userSearch.getFirstname());
-        if (userSearch.getLastname()) req.setLastname(userSearch.getLastname());
-        if (userSearch.getBusinessname())
-          req.setBusinessname(userSearch.getBusinessname());
-        if (userSearch.getPhone()) req.setPhone(userSearch.getPhone());
-        if (userSearch.getEmail()) req.setEmail(userSearch.getEmail());
-        const res = await UserClientService.BatchGet(req);
-        newUsers = {
-          ...newUsers,
-          ...res
+      } else if (kind === 'Properties') {
+        searchInput = makeSafeFormObject(searchInput, new Property());
+        if (
+          searchInput?.getFirstname() ||
+          searchInput?.getLastname() ||
+          searchInput?.getBusinessname() ||
+          searchInput?.getPhone() ||
+          searchInput?.getEmail()
+        ) {
+          let req = new User();
+          if (searchInput.getFirstname())
+            req.setFirstname(searchInput.getFirstname());
+          if (searchInput.getLastname())
+            req.setLastname(searchInput.getLastname());
+          if (searchInput.getBusinessname())
+            req.setBusinessname(searchInput.getBusinessname());
+          if (searchInput.getPhone()) req.setPhone(searchInput.getPhone());
+          if (searchInput.getEmail()) req.setEmail(searchInput.getEmail());
+          const res = await UserClientService.BatchGet(req);
+          newUsers = {
+            ...newUsers,
+            ...res
+              .getResultsList()
+              .reduce((aggr, item) => ({ ...aggr, [item.getId()]: item }), {}),
+          };
+          const userIds = res
             .getResultsList()
-            .reduce((aggr, item) => ({ ...aggr, [item.getId()]: item }), {}),
-        };
-        const userIds = res
-          .getResultsList()
-          .map(e => e.getId())
-          .filter(id => id !== excludeId);
-        const usersProperties = await Promise.all(
-          userIds.map(async userId => {
-            propertySearch.setUserId(userId);
-            try {
-              const res = await PropertyClientService.BatchGet(
-                propertySearch as Property,
-              );
-              return res.getResultsList().map(item => ({ ...item, kind: 2 }));
-            } catch (e) {
-              return [];
-            }
-          }),
-        );
-        setEntries(res.getResultsList());
-      } else if (
-        propertySearch.getAddress() ||
-        propertySearch.getCity() ||
-        propertySearch.getZip()
-      ) {
-        const res = await PropertyClientService.BatchGet(
-          propertySearch as Property,
-        );
-        const propertyEntries = res
-          .getResultsList()
-          .filter(e => e.getId() !== excludeId);
-        const propertyUsers = await UserClientService.loadUsersByIds(
-          propertyEntries.map(property => property.getUserId()),
-        );
-        newUsers = { ...newUsers, ...propertyUsers };
-        setEntries(propertyEntries);
+            .map(e => e.getId())
+            .filter(id => id !== excludeId);
+          const usersProperties = await Promise.all(
+            userIds.map(async userId => {
+              propertySearch.setUserId(userId);
+              try {
+                const res = await PropertyClientService.BatchGet(
+                  propertySearch as Property,
+                );
+                return res.getResultsList().map(item => ({ ...item, kind: 2 }));
+              } catch (e) {
+                return [];
+              }
+            }),
+          );
+          setEntries(res.getResultsList());
+        } else if (
+          propertySearch.getAddress() ||
+          propertySearch.getCity() ||
+          propertySearch.getZip()
+        ) {
+          const res = await PropertyClientService.BatchGet(
+            propertySearch as Property,
+          );
+          const propertyEntries = res
+            .getResultsList()
+            .filter(e => e.getId() !== excludeId);
+          const propertyUsers = await UserClientService.loadUsersByIds(
+            propertyEntries.map(property => property.getUserId()),
+          );
+          newUsers = { ...newUsers, ...propertyUsers };
+          setEntries(propertyEntries);
+        }
       }
-    }
-    setUsers({ ...users, ...newUsers });
-    setLoading(false);
-  }, [kind, users, userSearch, propertySearch, excludeId]);
+      setUsers({ ...users, ...newUsers });
+      setLoading(false);
+    },
+    [kind, users, propertySearch, excludeId],
+  );
 
+  const handleSetKind = useCallback(
+    (newKind: Kind) => setKind(newKind),
+    [setKind],
+  );
   const handlePropertySearch = useCallback(
     (search: Property) => {
       setPropertySearch(search);
-      load();
+      load(search as Property);
     },
     [setPropertySearch, load],
   );
   const handleUserSearch = useCallback(
     (search: User) => {
       setUserSearch(search);
-      load();
+      load(search as User);
     },
     [load],
   );
 
   const handleSetUserSearch = useCallback(
     (newUserSearch: User) => {
-      let safe = new User();
-      makeSafeFormObject(newUserSearch, safe);
-      setUserSearch(safe);
+      setUserSearch(newUserSearch);
     },
     [setUserSearch],
+  );
+
+  const handleSetPropertySearch = useCallback(
+    (newPropertySearch: Property) => {
+      setPropertySearch(newPropertySearch);
+    },
+    [setPropertySearch],
   );
 
   const handleChangeKind = useCallback(
@@ -217,101 +226,25 @@ export const Search: FC<Props> = ({
     console.log('Selected: ', entry);
   }, []);
 
-  // const handleSelect = useCallback(
-  //   (entry: Entry) => () => {
-  //     onSelect({
-  //       ...entry,
-  //       ...(Object.prototype.hasOwnProperty.call(entry, 'userId')
-  //         ? {
-  //             __user: users[entry.getId()],
-  //           }
-  //         : {}),
-  //     } as Entry);
-  //     onClose();
-  //   },
-  //   [onSelect, onClose, users],
-  // );
-
-  // const schema: {
-  //   [key: number]: {
-  //     columns: Columns;
-  //     schema: Schema<Entry>;
-  //   };
-  // } = {
-  //   1: {
-  //     columns: [
-  //       { name: 'Name' },
-  //       { name: 'Business Name' },
-  //       { name: 'Primary Phone' },
-  //       { name: 'Email' },
-  //     ],
-  //     schema: [
-  //       [{ label: 'Filter', headline: true }],
-  //       [
-  //         {
-  //           label: 'Search',
-  //           name: 'kind',
-  //           options: searchOptions,
-  //           onChange: handleChangeKind,
-  //         },
-  //       ],
-  //       [{ label: 'Results', headline: true }],
-  //     ] as Schema<Entry>,
-  //   },
-  //   2: {
-  //     columns: [
-  //       { name: 'Address' },
-  //       { name: 'Subdivision' },
-  //       { name: 'Owner' },
-  //     ],
-  //     schema: [
-  //       [{ label: 'Filter', headline: true }],
-  //       [
-  //         {
-  //           label: 'Search',
-  //           name: 'kind',
-  //           options: searchOptions,
-  //           onChange: handleChangeKind,
-  //         },
-  //         { label: 'Address', name: 'address', type: 'search' },
-  //         { label: 'Subdivision', name: 'subdivision', type: 'search' },
-  //         { label: 'City', name: 'city', type: 'search' },
-  //         { label: 'Zip Code', name: 'zip', type: 'search' },
-  //       ],
-  //       [
-  //         { label: 'Owner First Name', name: 'firstname', type: 'search' },
-  //         { label: 'Owner Last Name', name: 'lastname', type: 'search' },
-  //         { label: 'Owner Business Name', name: 'business', type: 'search' },
-  //         { label: 'Owner Primary Phone', name: 'phone', type: 'search' },
-  //         { label: 'Owner Email', name: 'email', type: 'search' },
-  //       ],
-  //       [{ label: 'Results', headline: true }],
-  //     ] as Schema<Entry>,
-  //   },
-  // };
   const data: Data = loading
     ? makeFakeRows()
     : entries!.map(entry => {
-        let newEntry = new User();
-        newEntry.setFirstname(entry.getFirstname());
-        console.log('New entry: ', newEntry);
-        console.log('Entry: ', entry);
         if (kind === 'Customers') {
           return [
             {
-              value: `${newEntry.getFirstname()} ${newEntry.getLastname()}`,
+              value: `${entry.getFirstname()} ${entry.getLastname()}`,
               onClick: () => handleSelect(entry),
             },
             {
-              value: newEntry.getBusinessname(),
+              value: entry.getBusinessname(),
               onClick: () => handleSelect(entry),
             },
             {
-              value: newEntry.getPhone(),
+              value: entry.getPhone(),
               onClick: () => handleSelect(entry),
             },
             {
-              value: newEntry.getEmail(),
+              value: entry.getEmail(),
               onClick: () => handleSelect(entry),
             },
           ];
@@ -319,7 +252,7 @@ export const Search: FC<Props> = ({
         if (kind === 'Properties') {
           return [
             {
-              value: `${newEntry.getAddress()}, ${newEntry.getCity()}, ${newEntry.getState()} ${newEntry.getZip()}`,
+              value: `${entry.getAddress()}, ${entry.getCity()}, ${entry.getState()} ${entry.getZip()}`,
               onClick: () => handleSelect(entry),
             },
             {
@@ -329,14 +262,14 @@ export const Search: FC<Props> = ({
             {
               value: (
                 <>
-                  {newEntry.getFirstname()} {newEntry.getLastname()}
-                  {newEntry.getBusinessname()
-                    ? `, ${newEntry.getBusinessname()}`
+                  {entry.getFirstname()} {entry.getLastname()}
+                  {entry.getBusinessname()
+                    ? `, ${entry.getBusinessname()}`
                     : ''}
-                  {(newEntry.getPhone() || newEntry.getEmail()) && <br />}
-                  {newEntry.getPhone()}
-                  {newEntry.getPhone() && newEntry.getEmail() && ', '}
-                  {newEntry.getEmail()}
+                  {(entry.getPhone() || entry.getEmail()) && <br />}
+                  {entry.getPhone()}
+                  {entry.getPhone() && entry.getEmail() && ', '}
+                  {entry.getEmail()}
                 </>
               ),
               onClick: () => handleSelect(entry),
@@ -346,7 +279,7 @@ export const Search: FC<Props> = ({
         return [];
       });
 
-  const FILTER_SCHEMA: Schema<{ kind: string }> = [
+  const FILTER_SCHEMA: Schema<{ kind: Kind }> = [
     [
       {
         label: 'Search',
@@ -357,22 +290,31 @@ export const Search: FC<Props> = ({
     ],
   ];
 
-  let schemaToUse = kind;
   return (
     <Modal open={open} onClose={onClose} fullScreen>
-      <PlainForm<User>
-        schema={USER_SCHEMA}
-        data={userSearch}
-        onChange={handleSetUserSearch}
+      <PlainForm
+        schema={FILTER_SCHEMA}
+        data={{ kind: kind }}
+        onChange={changed => handleSetKind(changed.kind)}
       />
-      <Form
+      <Form<User | Property>
         title="Search"
         submitLabel="Search"
         cancelLabel="Close"
         schema={schemasByName[kind]}
-        data={propertySearch}
+        data={kind === 'Customers' ? userSearch : propertySearch}
         onClose={onClose}
-        onSave={handlePropertySearch}
+        onSave={
+          kind === 'Customers'
+            ? (search: User | Property) => {
+                handleSetUserSearch(search as User);
+                handleUserSearch(search as User);
+              }
+            : (search: User | Property) => {
+                handleSetPropertySearch(search as Property);
+                handlePropertySearch(search as Property);
+              }
+        }
       >
         <InfoTable
           columns={columnsByName[kind]}
