@@ -86,7 +86,6 @@ export const Search: FC<Props> = ({
     label: kind,
     value: kindsByName[kind],
   }));
-  const [users, setUsers] = useState<{ [key: number]: User }>({});
   const [loading, setLoading] = useState<boolean>(false);
   const [propertySearch, setPropertySearch] = useState<Property>(
     new Property(),
@@ -97,8 +96,6 @@ export const Search: FC<Props> = ({
   const load = useCallback(
     async (searchInput: User | Property) => {
       setLoading(true);
-      console.log('user search: ', searchInput);
-      let newUsers = {};
       if (kind === 'Customers') {
         searchInput = makeSafeFormObject(searchInput, new User());
         let req = new User();
@@ -131,29 +128,10 @@ export const Search: FC<Props> = ({
           if (searchInput.getPhone()) req.setPhone(searchInput.getPhone());
           if (searchInput.getEmail()) req.setEmail(searchInput.getEmail());
           const res = await UserClientService.BatchGet(req);
-          newUsers = {
-            ...newUsers,
-            ...res
-              .getResultsList()
-              .reduce((aggr, item) => ({ ...aggr, [item.getId()]: item }), {}),
-          };
           const userIds = res
             .getResultsList()
             .map(e => e.getId())
             .filter(id => id !== excludeId);
-          const usersProperties = await Promise.all(
-            userIds.map(async userId => {
-              propertySearch.setUserId(userId);
-              try {
-                const res = await PropertyClientService.BatchGet(
-                  propertySearch as Property,
-                );
-                return res.getResultsList().map(item => ({ ...item, kind: 2 }));
-              } catch (e) {
-                return [];
-              }
-            }),
-          );
           setEntries(res.getResultsList());
         } else if (
           propertySearch.getAddress() ||
@@ -166,21 +144,18 @@ export const Search: FC<Props> = ({
           const propertyEntries = res
             .getResultsList()
             .filter(e => e.getId() !== excludeId);
-          const propertyUsers = await UserClientService.loadUsersByIds(
-            propertyEntries.map(property => property.getUserId()),
-          );
-          newUsers = { ...newUsers, ...propertyUsers };
           setEntries(propertyEntries);
         }
       }
-      setUsers({ ...users, ...newUsers });
       setLoading(false);
     },
-    [kind, users, propertySearch, excludeId],
+    [kind, propertySearch, excludeId],
   );
 
   const handleSetKind = useCallback(
-    (newKind: Kind) => setKind(newKind),
+    (newKind: Kind) => {
+      setKind(newKind);
+    },
     [setKind],
   );
   const handlePropertySearch = useCallback(
@@ -214,12 +189,10 @@ export const Search: FC<Props> = ({
 
   const handleChangeKind = useCallback(
     (newKind: Kind) => {
-      if (kind !== newKind) {
-        if (kind === 'Customers') handleUserSearch(userSearch);
-        if (kind === 'Properties') handlePropertySearch(propertySearch);
-      }
+      if (newKind === 'Customers') handleUserSearch(userSearch);
+      if (newKind === 'Properties') handlePropertySearch(propertySearch);
     },
-    [handlePropertySearch, handleUserSearch, kind, propertySearch, userSearch],
+    [handlePropertySearch, handleUserSearch, propertySearch, userSearch],
   );
 
   const handleSelect = useCallback((entry: User | Property) => {
@@ -285,7 +258,8 @@ export const Search: FC<Props> = ({
         label: 'Search',
         name: 'kind',
         options: searchOptions,
-        onChange: newKind => handleChangeKind(newKind as Kind),
+        onChange: newKind =>
+          handleChangeKind(newKind === 1 ? 'Customers' : 'Properties'), // TODO extend this to work with more options in the future
       },
     ],
   ];
@@ -295,7 +269,9 @@ export const Search: FC<Props> = ({
       <PlainForm
         schema={FILTER_SCHEMA}
         data={{ kind: kind }}
-        onChange={changed => handleSetKind(changed.kind)}
+        onChange={changed =>
+          handleSetKind(Number(changed.kind) == 1 ? 'Customers' : 'Properties')
+        }
       />
       <Form<User | Property>
         title="Search"
