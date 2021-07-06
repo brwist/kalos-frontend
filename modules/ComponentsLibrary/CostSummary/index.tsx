@@ -41,6 +41,7 @@ import { reducer } from './reducer';
 import { NULL_TIME_VALUE } from '../Timesheet/constants';
 import { NULL_TIME } from '@kalos-core/kalos-rpc/constants';
 import { fi } from 'date-fns/locale';
+import { act } from 'react-test-renderer';
 interface Props {
   userId: number;
   loggedUserId: number;
@@ -164,11 +165,10 @@ export const CostSummary: FC<Props> = ({
     return { totalDistance: distanceSubtotal, processed };
   }, [userId]);
   const getPerDiemTotals = useCallback(async () => {
-    const pdRes =
-      await PerDiemClientService.loadPerDiemByUserIdAndDateStartedAudited(
-        userId,
-        formatDateFns(endDay),
-      );
+    const pdRes = await PerDiemClientService.loadPerDiemByUserIdAndDateStartedAudited(
+      userId,
+      formatDateFns(endDay),
+    );
     //get PerDiems, set them
     const resultsList = pdRes.getResultsList();
     setPerDiems(resultsList);
@@ -320,12 +320,18 @@ export const CostSummary: FC<Props> = ({
       req.setPayrollProcessed(false);
       req.setExternalId(userId);
       if (spiffType === 'Spiff') {
+        /*
         const startDate = '0001-01-01';
         const endDayForSpiffs = format(addDays(startDay, 11), 'yyyy-MM-dd');
         req.setDateRangeList(['>=', startDate, '<', endDayForSpiffs]);
         req.setDateTargetList(['time_created', 'time_created']);
+      */
       }
       if (!notReady) {
+        const startDate = '0001-01-01';
+        const endDayForSpiffs = format(addDays(startDay, 11), 'yyyy-MM-dd');
+        action.setDateRangeList(['>=', startDate, '<', endDayForSpiffs]);
+        action.setDateTargetList(['time_created', 'time_created']);
         action.setStatus(1);
         req.setSearchAction(action);
         req.setFieldMaskList(['PayrollProcessed']);
