@@ -140,7 +140,6 @@ export const ToolLogs: FC<Props> = ({
             needsPayrollAction={role === 'Payroll' ? true : false}
             needsAuditAction={role === 'Auditor' ? true : false}
             role={role}
-            toggle={false}
             onClose={handleTogglePendingView(undefined)}
           />
         </Modal>
