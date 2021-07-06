@@ -411,221 +411,224 @@ export const Tasks: FC<Props> = ({
     },
     [taskEventEditing, pendingEdit, setTaskEventsLoading, loadTaskEvents],
   );
-  const SCHEMA_TASK: Schema<TaskEdit> = [
-    [{ name: 'id', type: 'hidden' }],
-    [
-      {
-        name: 'billableType',
-        label: 'Task type',
-        options: [OPTION_BLANK, ...billableTypes],
-      },
+  const SCHEMA_TASK: Schema<TaskEdit> = useMemo(
+    () => [
+      [{ name: 'id', type: 'hidden' }],
+      [
+        {
+          name: 'billableType',
+          label: 'Task type',
+          options: [OPTION_BLANK, ...billableTypes],
+        },
+      ],
+      [
+        {
+          name: 'billable',
+          label: 'Billable?',
+          type: 'checkbox',
+        },
+      ],
+      [
+        {
+          name: 'referenceNumber',
+          label:
+            pendingEdit && pendingEdit.getBillableType() === 'Parts Run'
+              ? 'Job / Reference #'
+              : 'Reference #',
+        },
+      ],
+      ...(pendingEdit &&
+      ['Spiff', 'Tool Purchase'].includes(pendingEdit.getBillableType() || '')
+        ? []
+        : [
+            [
+              {
+                name: 'getTimeDue',
+                label: 'Time Due',
+                type: 'datetime',
+              } as SchemaProps<TaskEdit>,
+            ],
+          ]),
+      ...(pendingEdit && pendingEdit.getBillableType() === 'Parts Run'
+        ? [
+            [
+              {
+                name: 'getAddress',
+                label: 'Destination',
+              } as SchemaProps<TaskEdit>,
+            ],
+            [
+              {
+                name: 'getOrderNum',
+                label: 'Order #',
+              } as SchemaProps<TaskEdit>,
+            ],
+          ]
+        : []),
+      [
+        {
+          name: 'briefDescription',
+          label: 'Brief Description',
+          multiline: true,
+        },
+      ],
+      ...(pendingEdit &&
+      ['Spiff', 'Tool Purchase'].includes(pendingEdit.getBillableType() || '')
+        ? []
+        : [
+            [
+              {
+                name: 'getDetails',
+                label: 'Details',
+                multiline: true,
+              } as SchemaProps<TaskEdit>,
+            ],
+            [
+              {
+                name: 'getNotes',
+                label: 'Notes',
+                multiline: true,
+              } as SchemaProps<TaskEdit>,
+            ],
+            [
+              {
+                name: 'getStatusId',
+                label: 'Status',
+                options: statusOptions,
+                required: true,
+              } as SchemaProps<TaskEdit>,
+            ],
+            [
+              {
+                name: 'getPriorityId',
+                label: 'Proprity',
+                options: priorityOptions,
+                required: true,
+              } as SchemaProps<TaskEdit>,
+            ],
+          ]),
+      ...(pendingEdit && pendingEdit.getBillableType() === 'Flat Rate'
+        ? [
+            [
+              {
+                name: 'getFlatRate',
+                label: 'Flat Rate',
+                startAdornment: '$',
+              } as SchemaProps<TaskEdit>,
+            ],
+          ]
+        : []),
+      ...(pendingEdit && pendingEdit.getBillableType() === 'Hourly'
+        ? [
+            [
+              {
+                name: 'getHourlyStart',
+                label: 'Time Start',
+                type: 'datetime',
+              } as SchemaProps<TaskEdit>,
+            ],
+            [
+              {
+                name: 'getHourlyEnd',
+                label: 'Time End',
+                type: 'datetime',
+              } as SchemaProps<TaskEdit>,
+            ],
+          ]
+        : []),
+      ...(pendingEdit &&
+      ['Spiff', 'Tool Purchase'].includes(pendingEdit.getBillableType() || '')
+        ? []
+        : [
+            [
+              {
+                name: 'assignedTechnicians',
+                label: 'Task Assignments(s)',
+                type: 'technicians',
+                required: true,
+              } as SchemaProps<TaskEdit>,
+            ],
+          ]),
+      ...(pendingEdit && pendingEdit.getBillableType() === 'Spiff'
+        ? [
+            [
+              {
+                name: 'getSpiffAmount',
+                label: 'Spiff Amount',
+                type: 'number',
+                startAdornment: '$',
+              } as SchemaProps<TaskEdit>,
+            ],
+            [
+              {
+                name: 'getSpiffJobNumber',
+                label: 'Job #',
+              } as SchemaProps<TaskEdit>,
+            ],
+            [
+              {
+                name: 'getDatePerformed',
+                label: 'Date Performed',
+                type: 'date',
+              } as SchemaProps<TaskEdit>,
+            ],
+            [
+              {
+                name: 'getSpiffTypeId',
+                label: 'Spiff Type',
+                options: SPIFF_TYPES_OPTIONS,
+              } as SchemaProps<TaskEdit>,
+            ],
+            [
+              {
+                name: 'getSpiffAddress',
+                label: 'Address',
+                multiline: true,
+              } as SchemaProps<TaskEdit>,
+            ],
+          ]
+        : []),
+      ...(pendingEdit && pendingEdit.getBillableType() === 'Tool Purchase'
+        ? [
+            [
+              {
+                name: 'getToolpurchaseDate',
+                label: 'Purchase Date',
+                type: 'date',
+              } as SchemaProps<TaskEdit>,
+            ],
+            [
+              {
+                name: 'getToolpurchaseCost',
+                label: 'Tool Cost',
+                type: 'number',
+                startAdornment: '$',
+              } as SchemaProps<TaskEdit>,
+            ],
+          ]
+        : []),
     ],
-    [
-      {
-        name: 'billable',
-        label: 'Billable?',
-        type: 'checkbox',
-      },
-    ],
-    [
-      {
-        name: 'referenceNumber',
-        label:
-          pendingEdit && pendingEdit.billableType === 'Parts Run'
-            ? 'Job / Reference #'
-            : 'Reference #',
-      },
-    ],
-    ...(pendingEdit &&
-    ['Spiff', 'Tool Purchase'].includes(pendingEdit.billableType || '')
-      ? []
-      : [
-          [
-            {
-              name: 'timeDue',
-              label: 'Time Due',
-              type: 'datetime',
-            } as SchemaProps<TaskEdit>,
-          ],
-        ]),
-    ...(pendingEdit && pendingEdit.billableType === 'Parts Run'
-      ? [
-          [
-            {
-              name: 'address',
-              label: 'Destination',
-            } as SchemaProps<TaskEdit>,
-          ],
-          [
-            {
-              name: 'orderNum',
-              label: 'Order #',
-            } as SchemaProps<TaskEdit>,
-          ],
-        ]
-      : []),
-    [
-      {
-        name: 'briefDescription',
-        label: 'Brief Description',
-        multiline: true,
-      },
-    ],
-    ...(pendingEdit &&
-    ['Spiff', 'Tool Purchase'].includes(pendingEdit.billableType || '')
-      ? []
-      : [
-          [
-            {
-              name: 'details',
-              label: 'Details',
-              multiline: true,
-            } as SchemaProps<TaskEdit>,
-          ],
-          [
-            {
-              name: 'notes',
-              label: 'Notes',
-              multiline: true,
-            } as SchemaProps<TaskEdit>,
-          ],
-          [
-            {
-              name: 'statusId',
-              label: 'Status',
-              options: statusOptions,
-              required: true,
-            } as SchemaProps<TaskEdit>,
-          ],
-          [
-            {
-              name: 'priorityId',
-              label: 'Proprity',
-              options: priorityOptions,
-              required: true,
-            } as SchemaProps<TaskEdit>,
-          ],
-        ]),
-    ...(pendingEdit && pendingEdit.billableType === 'Flat Rate'
-      ? [
-          [
-            {
-              name: 'flatRate',
-              label: 'Flat Rate',
-              startAdornment: '$',
-            } as SchemaProps<TaskEdit>,
-          ],
-        ]
-      : []),
-    ...(pendingEdit && pendingEdit.billableType === 'Hourly'
-      ? [
-          [
-            {
-              name: 'hourlyStart',
-              label: 'Time Start',
-              type: 'datetime',
-            } as SchemaProps<TaskEdit>,
-          ],
-          [
-            {
-              name: 'hourlyEnd',
-              label: 'Time End',
-              type: 'datetime',
-            } as SchemaProps<TaskEdit>,
-          ],
-        ]
-      : []),
-    ...(pendingEdit &&
-    ['Spiff', 'Tool Purchase'].includes(pendingEdit.billableType || '')
-      ? []
-      : [
-          [
-            {
-              name: 'assignedTechnicians',
-              label: 'Task Assignments(s)',
-              type: 'technicians',
-              required: true,
-            } as SchemaProps<TaskEdit>,
-          ],
-        ]),
-    ...(pendingEdit && pendingEdit.billableType === 'Spiff'
-      ? [
-          [
-            {
-              name: 'spiffAmount',
-              label: 'Spiff Amount',
-              type: 'number',
-              startAdornment: '$',
-            } as SchemaProps<TaskEdit>,
-          ],
-          [
-            {
-              name: 'spiffJobNumber',
-              label: 'Job #',
-            } as SchemaProps<TaskEdit>,
-          ],
-          [
-            {
-              name: 'datePerformed',
-              label: 'Date Performed',
-              type: 'date',
-            } as SchemaProps<TaskEdit>,
-          ],
-          [
-            {
-              name: 'spiffTypeId',
-              label: 'Spiff Type',
-              options: SPIFF_TYPES_OPTIONS,
-            } as SchemaProps<TaskEdit>,
-          ],
-          [
-            {
-              name: 'spiffAddress',
-              label: 'Address',
-              multiline: true,
-            } as SchemaProps<TaskEdit>,
-          ],
-        ]
-      : []),
-    ...(pendingEdit && pendingEdit.billableType === 'Tool Purchase'
-      ? [
-          [
-            {
-              name: 'toolpurchaseDate',
-              label: 'Purchase Date',
-              type: 'date',
-            } as SchemaProps<TaskEdit>,
-          ],
-          [
-            {
-              name: 'toolpurchaseCost',
-              label: 'Tool Cost',
-              type: 'number',
-              startAdornment: '$',
-            } as SchemaProps<TaskEdit>,
-          ],
-        ]
-      : []),
-  ];
+    [],
+  );
   const SCHEMA_SEARCH: Schema<TaskEdit> = [
     [
       {
-        name: 'referenceNumber',
+        name: 'getReferenceNumber',
         label: 'Reference #',
         type: 'search',
       },
       {
-        name: 'priorityId',
+        name: 'getPriorityId',
         label: 'Proprity',
         options: [{ label: OPTION_ALL, value: 0 }, ...priorityOptions],
       },
       {
-        name: 'briefDescription',
+        name: 'getBriefDescription',
         label: 'Description',
         type: 'search',
       },
       {
-        name: 'statusId',
+        name: 'getStatusId',
         label: 'Status',
         options: [{ label: OPTION_ALL, value: 0 }, ...statusOptions],
         actions: [{ label: 'Search', onClick: handleSearch }],
