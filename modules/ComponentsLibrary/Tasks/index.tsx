@@ -413,24 +413,24 @@ export const Tasks: FC<Props> = ({
   );
   const SCHEMA_TASK: Schema<TaskEdit> = useMemo(
     () => [
-      [{ name: 'id', type: 'hidden' }],
+      [{ name: 'getId', type: 'hidden' }],
       [
         {
-          name: 'billableType',
+          name: 'getBillableType',
           label: 'Task type',
           options: [OPTION_BLANK, ...billableTypes],
         },
       ],
       [
         {
-          name: 'billable',
+          name: 'getBillable',
           label: 'Billable?',
           type: 'checkbox',
         },
       ],
       [
         {
-          name: 'referenceNumber',
+          name: 'getReferenceNumber',
           label:
             pendingEdit && pendingEdit.getBillableType() === 'Parts Run'
               ? 'Job / Reference #'
@@ -467,7 +467,7 @@ export const Tasks: FC<Props> = ({
         : []),
       [
         {
-          name: 'briefDescription',
+          name: 'getBriefDescription',
           label: 'Brief Description',
           multiline: true,
         },
@@ -608,7 +608,13 @@ export const Tasks: FC<Props> = ({
           ]
         : []),
     ],
-    [],
+    [
+      SPIFF_TYPES_OPTIONS,
+      billableTypes,
+      pendingEdit,
+      priorityOptions,
+      statusOptions,
+    ],
   );
   const SCHEMA_SEARCH: Schema<TaskEdit> = [
     [
