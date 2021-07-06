@@ -39,7 +39,6 @@ import {
   ENDPOINT,
   NULL_TIME,
 } from '../../../../constants';
-import { types } from '@babel/core';
 
 const TaskClientService = new TaskClient(ENDPOINT);
 
@@ -144,7 +143,6 @@ export const Spiffs: FC<Props> = ({
       console.log('saving spiff');
       const req = makeSafeFormObject(data, new Task());
       console.log(req.getExternalId());
-      const fieldMaskList = [];
       req.setTimeCreated(now);
       req.setTimeDue(now);
       req.setPriorityId(2);
@@ -152,7 +150,7 @@ export const Spiffs: FC<Props> = ({
       req.setCreatorUserId(loggedUserId);
       req.setBillableType('Spiff');
       req.setStatusId(1);
-      req.addFieldMask('AdminActionId');
+      //req.addFieldMask('AdminActionId');
       let tempEvent = await EventClientService.LoadEventByServiceCallID(
         parseInt(req.getSpiffJobNumber()),
       );
@@ -163,9 +161,16 @@ export const Spiffs: FC<Props> = ({
             : tempEvent.getCustomer()!.getAddress()
           : tempEvent.getProperty()!.getAddress(),
       );
+
       req.setSpiffJobNumber(tempEvent.getLogJobNumber());
-      console.log({ req });
-      await TaskClientService.Create(req);
+      req.setFieldMaskList([]);
+      const res = await TaskClientService.Create(req);
+      const id = res.getId();
+      const updateReq = new Task();
+      updateReq.setId(id);
+      updateReq.setFieldMaskList(['AdminActionId']);
+      updateReq.setAdminActionId(0);
+      await TaskClientService.Update(updateReq);
       setSaving(false);
       setPendingAdd(false);
       await load();

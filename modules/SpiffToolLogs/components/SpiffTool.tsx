@@ -204,7 +204,7 @@ export const SpiffTool: FC<Props> = ({
       req.setOrderDir('DESC');
       if (needsManagerAction) {
         //req.setAdminActionId(0);
-        req.addFieldMask('AdminActionId');
+        req.setFieldMaskList(['AdminActionId']);
       }
       if (needsPayrollAction && toggle == false) {
         console.log('we want to see things that are not processed');
@@ -956,10 +956,10 @@ export const SpiffTool: FC<Props> = ({
         actions={
           role === 'Manager' || role !== 'Payroll'
             ? [
-                {
-                  label: 'Add Spiff',
-                  onClick: handleSetEditing(makeNewTask()),
-                },
+                //{
+                //label: 'Add Spiff',
+                //onClick: handleSetEditing(makeNewTask()),
+                //},
                 // {
                 //   label: 'Process Payroll',
                 //   onClick: () => handleSetPayrollOpen(true),
