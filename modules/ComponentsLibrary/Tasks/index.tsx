@@ -184,18 +184,18 @@ export const Tasks: FC<Props> = ({
     }
   }, [loadInit, loadedInit, loaded, setLoaded, load]);
   const handleSave = useCallback(
-    async ({ assignedTechnicians, ...data }: TaskEdit) => {
+    async (taskEdit: TaskEdit) => {
       setSaving(true);
-      const saveData = { ...data, externalCode, externalId };
-      if (saveData.billableType === OPTION_BLANK) {
-        saveData.billableType = '';
+      const saveData = { ...taskEdit, externalCode, externalId };
+      if (saveData.getBillableType() === OPTION_BLANK) {
+        saveData.getBillableType() = '';
       }
       var hasPriorityIdProperty = Object.prototype.hasOwnProperty.call(
         saveData,
         'priorityId',
       );
       if (hasPriorityIdProperty) {
-        saveData.priorityId = 2;
+        saveData.getPriorityId() = 2;
       }
       const technicianIds = assignedTechnicians
         ? assignedTechnicians.split(',').map(id => +id)
@@ -213,10 +213,9 @@ export const Tasks: FC<Props> = ({
   );
   const handleDelete = useCallback(async () => {
     if (!pendingDelete) return;
-    const { id } = pendingDelete;
     setPendingDelete(undefined);
     setLoading(true);
-    await TaskClientService.deleteSpiffTool(id);
+    await TaskClientService.deleteSpiffTool(pendingDelete.getId());
     setLoaded(false);
   }, [pendingDelete, setPendingDelete, setLoading, setLoaded]);
   const handlePageChange = useCallback(
@@ -224,7 +223,7 @@ export const Tasks: FC<Props> = ({
       setPage(page);
       setLoaded(false);
     },
-    [setPage, setLoading],
+    [setPage],
   );
   const loadTaskEvents = useCallback(
     async (id: number) => {
@@ -241,14 +240,14 @@ export const Tasks: FC<Props> = ({
   const handleSetPendingEdit = useCallback(
     (pendingEdit?: TaskEdit) => async () => {
       setPendingEdit(pendingEdit);
-      if (pendingEdit && pendingEdit.id) {
-        loadTaskEvents(pendingEdit.id);
+      if (pendingEdit && pendingEdit.getId()) {
+        loadTaskEvents(pendingEdit.getId());
       }
     },
     [setPendingEdit, loadTaskEvents],
   );
   const handleSetPendingDelete = useCallback(
-    (pendingDelete?: TaskType) => () => setPendingDelete(pendingDelete),
+    (pendingDelete?: Task) => () => setPendingDelete(pendingDelete),
     [setPendingDelete],
   );
   const handleSearch = useCallback(() => setLoaded(false), [setLoaded]);
@@ -263,14 +262,14 @@ export const Tasks: FC<Props> = ({
   const handleDocumentUpload = useCallback(
     (onClose, onReload) =>
       async ({ filename, description }: DocumentUplodad) => {
-        if (!pendingEdit || !pendingEdit.id) return;
+        if (!pendingEdit || !pendingEdit.getId()) return;
         setUploadFailed(false);
         setUploading(true);
         const ext = filename.split('.').pop();
         const fileName =
           kebabCase(
             [
-              pendingEdit.id,
+              pendingEdit.getId(),
               timestamp(true).split('-').reverse(),
               description.trim() || filename.replace('.' + ext, ''),
             ].join(' '),
@@ -285,7 +284,7 @@ export const Tasks: FC<Props> = ({
         if (status === 'ok') {
           await DocumentClientService.createTaskDocument(
             fileName,
-            pendingEdit.id,
+            pendingEdit.getId(),
             loggedUserId,
             description,
           );
@@ -305,10 +304,12 @@ export const Tasks: FC<Props> = ({
   );
   const handleDocumentUpdate = useCallback(
     (onClose, onReload, { id }) =>
-      async (form: DocumentType) => {
+      async (form: Document) => {
         setDocumentSaving(true);
-        const { description } = form;
-        await DocumentClientService.updateDocumentDescription(id, description);
+        await DocumentClientService.updateDocumentDescription(
+          id,
+          form.getDescription(),
+        );
         setDocumentSaving(false);
         onClose();
         onReload();
@@ -317,16 +318,19 @@ export const Tasks: FC<Props> = ({
   );
   const SPIFF_TYPES_OPTIONS: Option[] = useMemo(
     () =>
-      spiffTypes.map(({ type, id: value }) => ({
-        label: escapeText(type),
-        value,
+      spiffTypes.map(spiffType => ({
+        label: escapeText(spiffType.getType()),
+        value: spiffType.getId(),
       })),
     [spiffTypes],
   );
   const statusesMap: { [key: number]: string } = useMemo(
     () =>
       statuses.reduce(
-        (aggr, { id, description }) => ({ ...aggr, [id]: description }),
+        (aggr, status) => ({
+          ...aggr,
+          [status.getId()]: status.getDescription(),
+        }),
         {},
       ),
     [statuses],
@@ -334,26 +338,29 @@ export const Tasks: FC<Props> = ({
   const prioritiesMap: { [key: number]: string } = useMemo(
     () =>
       priorities.reduce(
-        (aggr, { id, description }) => ({ ...aggr, [id]: description }),
+        (aggr, priority) => ({
+          ...aggr,
+          [priority.getId()]: priority.getDescription(),
+        }),
         {},
       ),
     [priorities],
   );
   const statusOptions = useMemo(
     () =>
-      statuses.map(({ id, description }) => ({
-        value: id,
-        label: description,
-        color: PROJECT_TASK_STATUS_COLORS[id],
+      statuses.map(status => ({
+        value: status.getId(),
+        label: status.getDescription(),
+        color: PROJECT_TASK_STATUS_COLORS[status.getId()],
       })),
     [statuses],
   );
   const priorityOptions = useMemo(
     () =>
-      priorities.map(({ id, description }) => ({
-        value: id,
-        label: description,
-        icon: PROJECT_TASK_PRIORITY_ICONS[id],
+      priorities.map(priority => ({
+        value: priority.getId(),
+        label: priority.getDescription(),
+        icon: PROJECT_TASK_PRIORITY_ICONS[priority.getId()],
       })),
     [priorities],
   );
@@ -364,16 +371,15 @@ export const Tasks: FC<Props> = ({
     return '';
   }, [externalCode]);
   const handleStartTaskAction = useCallback(async () => {
-    if (!pendingEdit || !pendingEdit.id) return;
-    const data: Partial<TaskEventType> = {
-      taskId: pendingEdit.id,
-      technicianUserId: loggedUserId,
-      timeStarted: timestamp(),
-      statusId: 2,
-    };
+    if (!pendingEdit || !pendingEdit.getId()) return;
+    const data = new TaskEvent();
+    data.setTaskId(pendingEdit.getId());
+    data.setTechnicianUserId(loggedUserId);
+    data.setTimeStarted(timestamp());
+    data.setStatusId(2);
     setTaskEventsLoading(true);
     await TaskEventClientService.upsertTaskEvent(data);
-    loadTaskEvents(pendingEdit.id);
+    loadTaskEvents(pendingEdit.getId());
   }, [pendingEdit, loggedUserId, setTaskEventsLoading, loadTaskEvents]);
   const handleSetTaskEventEditing = useCallback(
     (taskEventEditing?: TaskEventType) => () =>
