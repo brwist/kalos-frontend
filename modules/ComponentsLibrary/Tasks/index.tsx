@@ -382,39 +382,32 @@ export const Tasks: FC<Props> = ({
     loadTaskEvents(pendingEdit.getId());
   }, [pendingEdit, loggedUserId, setTaskEventsLoading, loadTaskEvents]);
   const handleSetTaskEventEditing = useCallback(
-    (taskEventEditing?: TaskEventType) => () =>
+    (taskEventEditing?: TaskEvent) => () =>
       setTaskEventEditing(taskEventEditing),
     [setTaskEventEditing],
   );
   const handleSetTaskEventDeleting = useCallback(
-    (taskEventDeleting?: TaskEventType) => () =>
+    (taskEventDeleting?: TaskEvent) => () =>
       setTaskEventDeleting(taskEventDeleting),
     [setTaskEventDeleting],
   );
   const handleDeleteTaskEvent = useCallback(async () => {
-    if (!taskEventDeleting || !pendingEdit || !pendingEdit.id) return;
-    const { id } = taskEventDeleting;
+    if (!taskEventDeleting || !pendingEdit || !pendingEdit.getId()) return;
     setTaskEventDeleting(undefined);
-    await TaskEventClientService.deleteTaskEvent(id);
-    loadTaskEvents(pendingEdit.id);
+    await TaskEventClientService.deleteTaskEvent(taskEventDeleting.getId());
+    loadTaskEvents(pendingEdit.getId());
   }, [taskEventDeleting, loadTaskEvents, pendingEdit]);
   const handleSaveTaskEvent = useCallback(
-    async (formData: Partial<TaskEventType>) => {
-      if (!taskEventEditing || !pendingEdit || !pendingEdit.id) return;
-      const data: Partial<TaskEventType> = {
-        id: taskEventEditing.id,
-        ...formData,
-        statusId: 4,
-        ...(taskEventEditing.timeFinished
-          ? {}
-          : {
-              timeFinished: timestamp(),
-            }),
-      };
+    async (formData: TaskEvent) => {
+      if (!taskEventEditing || !pendingEdit || !pendingEdit.getId()) return;
+      const data = formData;
+      data.setId(taskEventEditing.getId());
+      data.setStatusId(4);
+      data.setTimeFinished(taskEventEditing.getTimeFinished());
       setTaskEventEditing(undefined);
       setTaskEventsLoading(true);
       await TaskEventClientService.upsertTaskEvent(data);
-      loadTaskEvents(pendingEdit.id);
+      loadTaskEvents(pendingEdit.getId());
     },
     [taskEventEditing, pendingEdit, setTaskEventsLoading, loadTaskEvents],
   );
