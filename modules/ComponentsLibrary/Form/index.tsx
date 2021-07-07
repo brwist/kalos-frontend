@@ -4,6 +4,7 @@ import React, {
   useCallback,
   useState,
   forwardRef,
+  JSXElementConstructor,
 } from 'react';
 import { SectionBar, PaginationType } from '../SectionBar';
 import { Props as ButtonProps } from '../Button';
@@ -37,8 +38,10 @@ export interface Props<T> extends PlainFormProps<T> {
   inputFieldRefs?: any[];
 }
 
-//@ts-ignore
-export const Form: <T>(props: Props<T>) => ReactElement<Props<T>> = forwardRef(
+// ? The '| null' at the end of the type for the forward ref is simply there to ensure Typescript doesn't error
+export const Form: <T>(
+  props: Props<T>,
+) => ReactElement<any, string | JSXElementConstructor<any>> | null = forwardRef(
   (
     {
       title,

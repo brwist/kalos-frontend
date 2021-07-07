@@ -56,7 +56,6 @@ import { ClassCodePicker, DepartmentPicker } from '../Pickers';
 import { AdvancedSearch } from '../AdvancedSearch';
 import { Event } from '@kalos-core/kalos-rpc/Event';
 import './styles.less';
-import { Form, Schema } from '../Form';
 
 type SelectOption = {
   getId: () => number;
@@ -125,6 +124,7 @@ export const getDefaultValueByType = (type: Type) => {
   return '';
 };
 
+// ? The '| null' at the end of the type for the forward ref is simply there to ensure Typescript doesn't error
 export const Field: <T>(
   props: Props<T>,
 ) => ReactElement<any, string | JSXElementConstructor<any>> | null = forwardRef(
