@@ -186,21 +186,20 @@ export const Tasks: FC<Props> = ({
   const handleSave = useCallback(
     async (taskEdit: TaskEdit) => {
       setSaving(true);
-      const saveData = { ...taskEdit, externalCode, externalId };
-      if (saveData.getBillableType() === OPTION_BLANK) {
-        saveData.getBillableType() = '';
+      if (taskEdit.getBillableType() === OPTION_BLANK) {
+        taskEdit.setBillableType('');
       }
       var hasPriorityIdProperty = Object.prototype.hasOwnProperty.call(
-        saveData,
+        taskEdit,
         'priorityId',
       );
       if (hasPriorityIdProperty) {
-        saveData.getPriorityId() = 2;
+        taskEdit.setPriorityId(2);
       }
-      const technicianIds = assignedTechnicians
-        ? assignedTechnicians.split(',').map(id => +id)
+      const technicianIds = taskEdit.assignedTechnicians
+        ? taskEdit.assignedTechnicians.split(',').map(id => +id)
         : [];
-      const id = await TaskClientService.upsertTask(saveData);
+      const id = await TaskClientService.upsertTask(taskEdit);
       await TaskAssignmentClientService.upsertTaskAssignments(
         id,
         technicianIds,
@@ -257,7 +256,7 @@ export const Tasks: FC<Props> = ({
     req.setStatusId(1); // New
     req.setPriorityId(2); // Normal
     req.setBillableType(OPTION_BLANK);
-    return { ...req.toObject(), assignedTechnicians: '' };
+    return { ...req, assignedTechnicians: '' };
   }, []);
   const handleDocumentUpload = useCallback(
     (onClose, onReload) =>
@@ -666,7 +665,8 @@ export const Tasks: FC<Props> = ({
         .join('_'),
     [SCHEMA_TASK],
   );
-  const isLastTaskEventStarted = taskEvents[0] && taskEvents[0].statusId === 2;
+  const isLastTaskEventStarted =
+    taskEvents[0] && taskEvents[0].getStatusId() === 2;
   return (
     <>
       <div>
@@ -676,7 +676,7 @@ export const Tasks: FC<Props> = ({
             [
               {
                 label: 'Add Task',
-                onClick: handleSetPendingEdit(newTask),
+                onClick: handleSetPendingEdit(newTask as TaskEdit),
                 disabled: !loadedInit,
               },
               ...(onClose
@@ -698,64 +698,55 @@ export const Tasks: FC<Props> = ({
             loading || loadingInit
               ? makeFakeRows(7, 5)
               : tasks.map(task => {
-                  const {
-                    id,
-                    referenceNumber,
-                    priorityId,
-                    briefDescription,
-                    statusId,
-                    timeCreated,
-                    timeDue,
-                  } = task;
                   return [
                     {
-                      value: id,
+                      value: task.getId(),
                       onClick: handleSetPendingEdit({
                         ...task,
                         assignedTechnicians: '',
-                      }),
+                      } as TaskEdit),
                     },
                     {
-                      value: referenceNumber,
+                      value: task.getReferenceNumber(),
                       onClick: handleSetPendingEdit({
                         ...task,
                         assignedTechnicians: '',
-                      }),
+                      } as TaskEdit),
                     },
                     {
-                      value: prioritiesMap[priorityId],
+                      value: prioritiesMap[task.getPriorityId()],
                       onClick: handleSetPendingEdit({
                         ...task,
                         assignedTechnicians: '',
-                      }),
+                      } as TaskEdit),
                     },
                     {
-                      value: briefDescription,
+                      value: task.getBriefDescription(),
                       onClick: handleSetPendingEdit({
                         ...task,
                         assignedTechnicians: '',
-                      }),
+                      } as TaskEdit),
                     },
                     {
-                      value: statusesMap[statusId],
+                      value: statusesMap[task.getStatusId()],
                       onClick: handleSetPendingEdit({
                         ...task,
                         assignedTechnicians: '',
-                      }),
+                      } as TaskEdit),
                     },
                     {
-                      value: formatDateTime(timeCreated),
+                      value: formatDateTime(task.getTimeCreated()),
                       onClick: handleSetPendingEdit({
                         ...task,
                         assignedTechnicians: '',
-                      }),
+                      } as TaskEdit),
                     },
                     {
-                      value: formatDateTime(timeDue),
+                      value: formatDateTime(task.getTimeDue()),
                       onClick: handleSetPendingEdit({
                         ...task,
                         assignedTechnicians: '',
-                      }),
+                      } as TaskEdit),
                       actions: [
                         <IconButton
                           key="edit"
@@ -763,7 +754,7 @@ export const Tasks: FC<Props> = ({
                           onClick={handleSetPendingEdit({
                             ...task,
                             assignedTechnicians: '',
-                          })} // FIXME
+                          } as TaskEdit)} // FIXME
                         >
                           <EditIcon />
                         </IconButton>,
@@ -786,13 +777,15 @@ export const Tasks: FC<Props> = ({
         <Modal
           open
           onClose={handleSetPendingEdit()}
-          fullScreen={!!pendingEdit.id}
+          fullScreen={!!pendingEdit.getId()}
         >
           <div className="TasksEdit">
             <div className="TasksEditForm">
               <Form
                 key={formKey}
-                title={`${pendingEdit.id ? 'Edit' : 'Add'} ${typeTitle} Task`}
+                title={`${
+                  pendingEdit.getId() ? 'Edit' : 'Add'
+                } ${typeTitle} Task`}
                 onClose={handleSetPendingEdit()}
                 onSave={handleSave}
                 onChange={setPendingEdit}
@@ -801,7 +794,7 @@ export const Tasks: FC<Props> = ({
                 disabled={saving}
               />
             </div>
-            {!!pendingEdit.id && (
+            {!!pendingEdit.getId() && (
               <div className="TasksEditAside">
                 <SectionBar
                   title="Task Actions"
@@ -832,50 +825,49 @@ export const Tasks: FC<Props> = ({
                     taskEventsLoading
                       ? makeFakeRows(4, 3)
                       : taskEvents.map(taskEvent => {
-                          const {
-                            timeStarted,
-                            timeFinished,
-                            technicianName,
-                            actionTaken,
-                            actionNeeded,
-                            statusId,
-                          } = taskEvent;
                           return [
                             {
                               value: (
                                 <>
                                   <div>
-                                    {timeStarted
-                                      ? formatDateTime(timeStarted)
+                                    {taskEvent.getTimeStarted()
+                                      ? formatDateTime(
+                                          taskEvent.getTimeStarted(),
+                                        )
                                       : '-'}
                                   </div>
                                   <div>
-                                    {timeFinished
-                                      ? formatDateTime(timeFinished)
+                                    {taskEvent.getTimeFinished()
+                                      ? formatDateTime(
+                                          taskEvent.getTimeFinished(),
+                                        )
                                       : '-'}
                                   </div>
                                 </>
                               ),
                             },
-                            { value: actionTaken },
-                            { value: actionNeeded },
+                            { value: taskEvent.getActionTaken() },
+                            { value: taskEvent.getActionNeeded() },
                             {
                               value: (
                                 <>
-                                  <div>{technicianName}</div>
+                                  <div>{taskEvent.getTechnicianUserName()}</div>
                                   <div
                                     style={{
-                                      color: statusId === 2 ? 'red' : 'green',
+                                      color:
+                                        taskEvent.getStatusId() === 2
+                                          ? 'red'
+                                          : 'green',
                                     }}
                                   >
-                                    {statusId === 2
+                                    {taskEvent.getStatusId() === 2
                                       ? 'In Progress'
                                       : 'Completed'}
                                   </div>
                                 </>
                               ),
                               actions: [
-                                ...(statusId === 2
+                                ...(taskEvent.getStatusId() === 2
                                   ? []
                                   : [
                                       <IconButton
@@ -906,7 +898,7 @@ export const Tasks: FC<Props> = ({
                 />
                 <Documents
                   title="Documents"
-                  taskId={pendingEdit.id}
+                  taskId={pendingEdit.getId()}
                   withDownloadIcon
                   withDateCreated
                   renderAdding={(onClose, onReload) => (
@@ -938,7 +930,7 @@ export const Tasks: FC<Props> = ({
                     </Form>
                   )}
                   renderEditing={(onClose, onReload, document) => (
-                    <Form<DocumentType>
+                    <Form<Document>
                       title="Edit Document"
                       data={document}
                       schema={SCHEMA_DOCUMENT_EDIT}
@@ -958,7 +950,7 @@ export const Tasks: FC<Props> = ({
           open
           onClose={handleSetPendingDelete()}
           kind={`${typeTitle} Task`}
-          name={`${pendingDelete.id}`}
+          name={`${pendingDelete.getId()}`}
           onConfirm={handleDelete}
         />
       )}
@@ -967,7 +959,9 @@ export const Tasks: FC<Props> = ({
           open
           onClose={handleSetTaskEventDeleting()}
           kind="Task Action"
-          name={`started at ${formatDateTime(taskEventDeleting.timeStarted)}`}
+          name={`started at ${formatDateTime(
+            taskEventDeleting.getTimeStarted(),
+          )}`}
           onConfirm={handleDeleteTaskEvent}
         />
       )}
@@ -975,7 +969,7 @@ export const Tasks: FC<Props> = ({
         <Modal open onClose={handleSetTaskEventEditing()}>
           <Form
             title={`${
-              taskEventEditing.timeFinished ? 'Edit' : 'Complete'
+              taskEventEditing.getTimeFinished() ? 'Edit' : 'Complete'
             } Task Action`}
             schema={SCHEMA_TASK_EVENT}
             data={taskEventEditing}
