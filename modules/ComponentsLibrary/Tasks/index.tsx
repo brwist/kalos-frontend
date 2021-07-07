@@ -31,6 +31,7 @@ import {
   uploadFileToS3Bucket,
   DocumentClientService,
   TaskEventClientService,
+  makeSafeFormObject,
 } from '../../../helpers';
 import {
   ROWS_PER_PAGE,
@@ -162,6 +163,7 @@ export const Tasks: FC<Props> = ({
   const load = useCallback(async () => {
     setLoading(true);
     const req = new Task();
+    console.log('search: ', search);
     req.setReferenceNumber(search.getReferenceNumber());
     req.setPriorityId(search.getPriorityId());
     req.setBriefDescription(search.getBriefDescription());
@@ -208,7 +210,11 @@ export const Tasks: FC<Props> = ({
       setPendingEdit(undefined);
       setLoaded(false);
     },
-    [setSaving, externalCode, externalId],
+    [setSaving],
+  );
+  const handleSetSearch = useCallback(
+    (newSearch: TaskEdit) => setSearch(newSearch),
+    [setSearch],
   );
   const handleDelete = useCallback(async () => {
     if (!pendingDelete) return;
@@ -691,7 +697,15 @@ export const Tasks: FC<Props> = ({
             onChangePage: handlePageChange,
           }}
         />
-        <PlainForm schema={SCHEMA_SEARCH} data={search} onChange={setSearch} />
+        <PlainForm
+          schema={SCHEMA_SEARCH}
+          data={search}
+          onChange={output => {
+            handleSetSearch(
+              makeSafeFormObject(output as Task, new Task()) as TaskEdit,
+            );
+          }}
+        />
         <InfoTable
           columns={COLUMNS}
           data={
