@@ -25,7 +25,7 @@ import { Button } from '../Button';
 import './styles.less';
 import { JobSummary } from './components/JobSummary';
 import { CostReportForEmployee } from '../CostReportForEmployee';
-import { TripSummaryNew } from '../TripSummaryNew';
+import { Trips } from './components/Trips';
 import {
   PerDiemList,
   PerDiem as pd,
@@ -385,19 +385,17 @@ export const Payroll: FC<Props> = ({ userID }) => {
                       {
                         label: 'Trips',
                         content: (
-                          <TripSummaryNew
+                          <Trips
                             role={role}
                             loggedUserId={loggedUser ? loggedUser!.getId() : 0}
-                            userId={filter.employeeId}
-                            perDiemRowIds={loadedPerDiemIds}
+                            employeeId={filter.employeeId}
                             key={
                               loadedPerDiemIds.toString() +
                               filter.employeeId +
                               filter.departmentId +
                               loggedUser
                             }
-                            canProcessPayroll={role === 'Payroll'}
-                            canApprove={role === 'Manager'}
+                            week={filter.week}
                             departmentId={filter.departmentId}
                           />
                         ),

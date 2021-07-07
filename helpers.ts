@@ -66,6 +66,7 @@ import {
   randomize,
 } from './modules/ComponentsLibrary/helpers';
 import { Contract, ContractClient } from '@kalos-core/kalos-rpc/Contract';
+import { NULL_TIME } from '@kalos-core/kalos-rpc/constants';
 export type TaskEventType = TaskEvent.AsObject & { technicianName?: string };
 
 export type SimpleFile = {
@@ -914,7 +915,7 @@ export const loadActivityLogsByFilter = async ({
   filter: { activityDateStart, activityDateEnd, activityName, withUser },
   sort,
 }: LoadActivityLogsByFilter) => {
-  // TODO make this call faster 
+  // TODO make this call faster
   //FIXME move to activity log client
   const { orderBy, orderDir, orderByField } = sort;
   const req = new ActivityLog();
@@ -1112,6 +1113,7 @@ export const loadTripsByFilter = async ({
   const { orderDir, orderByField } = sort;
   req.setPage(page);
   req.setIsActive(true);
+  console.log(filter);
   for (const fieldName in filter) {
     const value = filter[fieldName as keyof TripsFilter];
 
@@ -1127,6 +1129,8 @@ export const loadTripsByFilter = async ({
   if (filter.payrollProcessed == true) {
     req.setPayrollProcessed(false);
     req.addNotEquals('PayrollProcessed');
+    //req.addNotEquals('AdminActionDate');
+    //req.setAdminActionDate(NULL_TIME);
   }
   if (filter.payrollProcessed === false) {
     req.setPayrollProcessed(true);
@@ -1139,9 +1143,11 @@ export const loadTripsByFilter = async ({
 
   if (filter.approved === true) {
     req.addNotEquals('Approved');
+    req.addNotEquals('AdminActionDate');
+    req.setAdminActionDate(NULL_TIME);
     req.setApproved(false);
   }
-
+  console.log(req);
   try {
     const response = await PerDiemClientService.BatchGetTrips(req);
     return {
