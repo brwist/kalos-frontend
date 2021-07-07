@@ -24,6 +24,7 @@ import { SpiffTool } from '../../../SpiffToolLogs/components/SpiffTool';
 import { Form, Schema } from '../../../ComponentsLibrary/Form';
 import { Option } from '../../../ComponentsLibrary/Field';
 import { Button } from '../../Button';
+import { User } from '@kalos-core/kalos-rpc/User';
 import {
   makeFakeRows,
   formatWeek,
@@ -78,13 +79,15 @@ export const Spiffs: FC<Props> = ({
     setSpiffTypes(spiffTypes);
   }, []);
   const load = useCallback(async () => {
-    setLoading(true);
+    setLoading(
+      true,
+    ); /*
     const filter: GetPendingSpiffConfig = {
       page,
       technicianUserID: employeeId,
       role,
       departmentId,
-      processed: toggleButton,
+      //processed: toggleButton === true ? true : undefined,
     };
 
     Object.assign(filter, {
@@ -97,8 +100,68 @@ export const Spiffs: FC<Props> = ({
         endDate: format(addDays(new Date(week), 7), 'yyyy-MM-dd'),
       });
     }
-    const results = await TaskClientService.loadPendingSpiffs(filter);
+   const results = await TaskClientService.loadPendingSpiffs(filter);
+    console.log(filter);*/
+
+    const req = new Task();
+    req.setPageNumber(page);
+    req.setIsActive(true);
+    req.setOrderBy('date_performed');
+    req.setOrderDir('DESC');
+    req.setGroupBy('external_id');
+    if (departmentId) {
+      const u = new User();
+      u.setEmployeeDepartmentId(departmentId);
+      req.setSearchUser(u);
+    }
+    if (role === 'Manager') {
+      //req.setAdminActionId(0);
+      req.setFieldMaskList(['AdminActionId']);
+    }
+    if (week) {
+      if (week != OPTION_ALL) {
+        req.setDateRangeList([
+          '>=',
+          week,
+          '<',
+          format(addDays(new Date(week), 7), 'yyyy-MM-dd'),
+        ]);
+        req.setDateTargetList(['date_performed']);
+      } else {
+        req.setDateRangeList([
+          '>=',
+          '0001-01-01',
+          '<',
+          format(endDay, 'yyyy-MM-dd'),
+        ]);
+        req.setDateTargetList(['date_performed']);
+      }
+    }
+
+    if (role === 'Payroll' && toggleButton == false) {
+      console.log('we want to see things that are not processed');
+      req.setAdminActionId(0);
+      req.setPayrollProcessed(true);
+      req.setNotEqualsList(['AdminActionId', 'PayrollProcessed']);
+    }
+    if (role === 'Payroll' && toggleButton == true) {
+      console.log('we want to see stuff we have done');
+      req.setPayrollProcessed(false);
+      req.setNotEqualsList(['PayrollProcessed']);
+    }
+    if (role === 'Auditor') {
+      req.setNotEqualsList(['AdminActionId']);
+      req.setFieldMaskList(['NeedsAuditing']);
+      req.setNeedsAuditing(true);
+    }
+    if (employeeId) {
+      req.setExternalId(employeeId);
+    }
+    req.setBillableType('Spiff');
+    console.log('req', req);
+    const results = await TaskClientService.BatchGet(req);
     const resultsList = results.getResultsList();
+    console.log(resultsList);
     const totalCount = results.getTotalCount();
     setSpiffs(resultsList);
     setCount(totalCount);
