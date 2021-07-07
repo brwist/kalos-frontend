@@ -163,7 +163,6 @@ export const Tasks: FC<Props> = ({
   const load = useCallback(async () => {
     setLoading(true);
     const req = new Task();
-    console.log('search: ', search);
     req.setReferenceNumber(search.getReferenceNumber());
     req.setPriorityId(search.getPriorityId());
     req.setBriefDescription(search.getBriefDescription());
@@ -243,7 +242,7 @@ export const Tasks: FC<Props> = ({
     [setTaskEventsLoading, setTaskEvents],
   );
   const handleSetPendingEdit = useCallback(
-    (pendingEdit?: TaskEdit) => async () => {
+    async (pendingEdit?: TaskEdit) => {
       setPendingEdit(pendingEdit);
       if (pendingEdit && pendingEdit.getId()) {
         loadTaskEvents(pendingEdit.getId());
@@ -682,7 +681,10 @@ export const Tasks: FC<Props> = ({
             [
               {
                 label: 'Add Task',
-                onClick: handleSetPendingEdit(newTask as TaskEdit),
+                onClick: async () => {
+                  let newTaskInside = new Task();
+                  await handleSetPendingEdit(newTaskInside as TaskEdit);
+                },
                 disabled: !loadedInit,
               },
               ...(onClose
@@ -715,67 +717,76 @@ export const Tasks: FC<Props> = ({
                   return [
                     {
                       value: task.getId(),
-                      onClick: handleSetPendingEdit({
-                        ...task,
-                        assignedTechnicians: '',
-                      } as TaskEdit),
+                      onClick: () =>
+                        handleSetPendingEdit({
+                          ...task,
+                          assignedTechnicians: '',
+                        } as TaskEdit),
                     },
                     {
                       value: task.getReferenceNumber(),
-                      onClick: handleSetPendingEdit({
-                        ...task,
-                        assignedTechnicians: '',
-                      } as TaskEdit),
+                      onClick: () =>
+                        handleSetPendingEdit({
+                          ...task,
+                          assignedTechnicians: '',
+                        } as TaskEdit),
                     },
                     {
                       value: prioritiesMap[task.getPriorityId()],
-                      onClick: handleSetPendingEdit({
-                        ...task,
-                        assignedTechnicians: '',
-                      } as TaskEdit),
+                      onClick: () =>
+                        handleSetPendingEdit({
+                          ...task,
+                          assignedTechnicians: '',
+                        } as TaskEdit),
                     },
                     {
                       value: task.getBriefDescription(),
-                      onClick: handleSetPendingEdit({
-                        ...task,
-                        assignedTechnicians: '',
-                      } as TaskEdit),
+                      onClick: () =>
+                        handleSetPendingEdit({
+                          ...task,
+                          assignedTechnicians: '',
+                        } as TaskEdit),
                     },
                     {
                       value: statusesMap[task.getStatusId()],
-                      onClick: handleSetPendingEdit({
-                        ...task,
-                        assignedTechnicians: '',
-                      } as TaskEdit),
+                      onClick: () =>
+                        handleSetPendingEdit({
+                          ...task,
+                          assignedTechnicians: '',
+                        } as TaskEdit),
                     },
                     {
                       value: formatDateTime(task.getTimeCreated()),
-                      onClick: handleSetPendingEdit({
-                        ...task,
-                        assignedTechnicians: '',
-                      } as TaskEdit),
+                      onClick: () =>
+                        handleSetPendingEdit({
+                          ...task,
+                          assignedTechnicians: '',
+                        } as TaskEdit),
                     },
                     {
                       value: formatDateTime(task.getTimeDue()),
-                      onClick: handleSetPendingEdit({
-                        ...task,
-                        assignedTechnicians: '',
-                      } as TaskEdit),
+                      onClick: () =>
+                        handleSetPendingEdit({
+                          ...task,
+                          assignedTechnicians: '',
+                        } as TaskEdit),
                       actions: [
                         <IconButton
                           key="edit"
                           size="small"
-                          onClick={handleSetPendingEdit({
-                            ...task,
-                            assignedTechnicians: '',
-                          } as TaskEdit)} // FIXME
+                          onClick={() =>
+                            handleSetPendingEdit({
+                              ...task,
+                              assignedTechnicians: '',
+                            } as TaskEdit)
+                          } // FIXME
                         >
                           <EditIcon />
                         </IconButton>,
                         <IconButton
                           key="delete"
                           size="small"
-                          onClick={handleSetPendingDelete(task)}
+                          onClick={() => handleSetPendingDelete(task)}
                         >
                           <DeleteIcon />
                         </IconButton>,
@@ -790,7 +801,7 @@ export const Tasks: FC<Props> = ({
       {pendingEdit && (
         <Modal
           open
-          onClose={handleSetPendingEdit()}
+          onClose={() => handleSetPendingEdit()}
           fullScreen={!!pendingEdit.getId()}
         >
           <div className="TasksEdit">
@@ -800,7 +811,7 @@ export const Tasks: FC<Props> = ({
                 title={`${
                   pendingEdit.getId() ? 'Edit' : 'Add'
                 } ${typeTitle} Task`}
-                onClose={handleSetPendingEdit()}
+                onClose={() => handleSetPendingEdit()}
                 onSave={handleSave}
                 onChange={setPendingEdit}
                 schema={SCHEMA_TASK}
