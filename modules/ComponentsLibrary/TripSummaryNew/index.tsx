@@ -102,8 +102,10 @@ export const TripSummaryNew: FC<Props> = ({
   const [pendingTripToDelete, setPendingTripToDelete] = useState<
     Trip | undefined
   >();
-  const [pendingTripToProcessPayroll, setPendingTripToProcessPayroll] =
-    useState<Trip | undefined>();
+  const [
+    pendingTripToProcessPayroll,
+    setPendingTripToProcessPayroll,
+  ] = useState<Trip | undefined>();
   const [pendingTripToApprove, setPendingTripToApprove] = useState<
     Trip | undefined
   >();
@@ -111,8 +113,9 @@ export const TripSummaryNew: FC<Props> = ({
   const [pendingTripToDeny, setPendingTripToDeny] = useState<
     Trip | undefined
   >();
-  const [toggleApproveOrProcess, setToggleApproveOrProcess] =
-    useState<boolean>(false);
+  const [toggleApproveOrProcess, setToggleApproveOrProcess] = useState<boolean>(
+    false,
+  );
   const [tripsLoaded, setTripsLoaded] = useState<Trip[] | undefined>([]);
   const [totalTripCount, setTotalTripCount] = useState<number>(0);
   const [tripToView, setTripToView] = useState<Trip | undefined>();
@@ -148,18 +151,16 @@ export const TripSummaryNew: FC<Props> = ({
     (tripToAdd: Trip | undefined) => setPendingTripToAdd(tripToAdd),
     [setPendingTripToAdd],
   );
-  const handleSetSearch = useCallback(
-    (newTrip: Trip) => setSearch(newTrip),
-    [setSearch],
-  );
+  const handleSetSearch = useCallback((newTrip: Trip) => setSearch(newTrip), [
+    setSearch,
+  ]);
   const handleSetCheckboxFilter = useCallback(
     (newFilter: Checkboxes) => setCheckboxFilter(newFilter),
     [setCheckboxFilter],
   );
-  const handleSetPage = useCallback(
-    (newPage: number) => setPage(newPage),
-    [setPage],
-  );
+  const handleSetPage = useCallback((newPage: number) => setPage(newPage), [
+    setPage,
+  ]);
   const handleSetToggleApproveOrProcess = useCallback(
     () => setToggleApproveOrProcess(!toggleApproveOrProcess),
     [toggleApproveOrProcess],
@@ -473,15 +474,16 @@ export const TripSummaryNew: FC<Props> = ({
     if (user) {
       // ! This is a patch for the departments.
       try {
-        department =
-          await TimesheetDepartmentClientService.getDepartmentByManagerID(
-            user.getManagedBy(),
-          );
+        department = user.getDepartment();
       } catch (err) {
         console.error('Error getting timesheet department: ', err);
       }
     }
-    if (department) trip.setDepartmentId(department.getId());
+    if (department) {
+      trip.setDepartmentId(department.getId());
+    } else if (user) {
+      trip.setDepartmentId(user?.getEmployeeDepartmentId());
+    }
     try {
       console.log(trip, '|', rowId, '|', userId);
       await PerDiemClientService.upsertTrip(trip, rowId!, userId);
@@ -554,6 +556,20 @@ export const TripSummaryNew: FC<Props> = ({
     onDeleteAllTrips,
     perDiemRowIds,
   ]);
+
+  const approveAllTrips = useCallback(async () => {
+    if (tripsLoaded) {
+      for (let i = 0; i < tripsLoaded?.length; i++)
+        if (
+          tripsLoaded[i].getApproved() === false &&
+          tripsLoaded[i].getAdminActionDate() === NULL_TIME
+        ) {
+          const id = tripsLoaded[i].getId();
+          await PerDiemClientService.updateTripApproved(id);
+        }
+    }
+    loadTrips();
+  }, [tripsLoaded, loadTrips]);
 
   const load = useCallback(async () => {
     setLoaded(false);
