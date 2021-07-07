@@ -1854,13 +1854,18 @@ const cleanFieldMaskField = (f: string) => {
 
 const makeSafeFormObject = function makeSafeFormObject<T>(data: T, result: T) {
   const keys = Object.keys(data);
+  console.log(data);
+  console.log(result);
   for (const key of keys) {
     if (key.startsWith('get')) {
       try {
         // @ts-ignore
-        result[key.replace('get', 'set')](data[key]);
-        // @ts-ignore
-        result.addFieldMask(key.slice(3));
+        if (typeof data[key] != 'function') {
+          // @ts-ignore
+          result[key.replace('get', 'set')](data[key]);
+          // @ts-ignore
+          result.addFieldMask(key.slice(3));
+        }
       } catch (err) {
         console.log('failed to set value on request object', err);
       }

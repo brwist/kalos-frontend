@@ -276,7 +276,6 @@ export const SpiffToolLogEdit: FC<Props> = ({
   const handleSaveStatus = useCallback(
     async (form: SpiffToolAdminAction) => {
       let temp = makeSafeFormObject(form, new SpiffToolAdminAction());
-
       if (statusEditing) {
         if (loggedUserId) {
           const userReq = new User();
@@ -301,7 +300,13 @@ export const SpiffToolLogEdit: FC<Props> = ({
           adminActionNew.setRevokedDate(timestampValue);
           adminActionNew.addFieldMask('RevokedDate');
         }
-        console.log(adminActionNew);
+        console.log('new action', adminActionNew);
+        if (
+          adminActionNew.getReason() === null ||
+          adminActionNew.getReason() === ''
+        ) {
+          adminActionNew.setReason('No Reason Given');
+        }
         let res = 0;
         if (adminActionNew.getId() == 0) {
           res = (
