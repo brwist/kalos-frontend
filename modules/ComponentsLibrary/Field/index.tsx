@@ -10,6 +10,7 @@ import React, {
   RefObject,
   ForwardedRef,
   forwardRef,
+  JSXElementConstructor,
 } from 'react';
 import clsx from 'clsx';
 import { SvgIconProps } from '@material-ui/core/SvgIcon';
@@ -124,8 +125,9 @@ export const getDefaultValueByType = (type: Type) => {
   return '';
 };
 
-// @ts-ignore
-export const Field: <T>(props: Props<T>) => ReactElement<Props<T>> = forwardRef(
+export const Field: <T>(
+  props: Props<T>,
+) => ReactElement<any, string | JSXElementConstructor<any>> | null = forwardRef(
   (
     {
       name,
@@ -531,7 +533,7 @@ export const Field: <T>(props: Props<T>) => ReactElement<Props<T>> = forwardRef(
           <DateTimePicker
             className={clsx('FieldInput', className, { compact, disabled })}
             label={inputLabel}
-            value={parseISO((props.value as unknown) as string)}
+            value={parseISO(props.value as unknown as string)}
             onChange={value =>
               handleChange({
                 target: {
@@ -553,7 +555,7 @@ export const Field: <T>(props: Props<T>) => ReactElement<Props<T>> = forwardRef(
           <DatePicker
             className={clsx('FieldInput', className, { compact, disabled })}
             label={inputLabel}
-            value={parseISO((props.value as unknown) as string)}
+            value={parseISO(props.value as unknown as string)}
             onChange={value =>
               handleChange({
                 target: {
@@ -574,7 +576,7 @@ export const Field: <T>(props: Props<T>) => ReactElement<Props<T>> = forwardRef(
           <TimePicker
             className={clsx('FieldInput', className, { compact, disabled })}
             label={inputLabel}
-            value={parseISO((props.value as unknown) as string)}
+            value={parseISO(props.value as unknown as string)}
             onChange={value =>
               handleChange({
                 target: {
@@ -853,7 +855,7 @@ export const Field: <T>(props: Props<T>) => ReactElement<Props<T>> = forwardRef(
             className={clsx('FieldInput', { compact, disabled })}
             withinForm
             renderItem={renderSelectOptions}
-            selected={(props.value as unknown) as number}
+            selected={props.value as unknown as number}
             onSelect={handleChange}
             disabled={disabled}
             required={required}
@@ -876,7 +878,7 @@ export const Field: <T>(props: Props<T>) => ReactElement<Props<T>> = forwardRef(
           className={clsx('FieldInput', className, { compact, disabled })}
           withinForm
           renderItem={renderSelectOptions}
-          selected={(props.value as unknown) as number}
+          selected={props.value as unknown as number}
           onSelect={handleChange}
           disabled={disabled}
           required={required}
