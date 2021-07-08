@@ -367,7 +367,7 @@ export const Documents: FC<Props> = ({
           count,
           page,
           rowsPerPage: ROWS_PER_PAGE,
-          onChangePage: handleChangePage,
+          onPageChange: handleChangePage,
         }}
         sticky={stickySectionBar}
       >

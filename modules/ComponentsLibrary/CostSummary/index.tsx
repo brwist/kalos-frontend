@@ -434,7 +434,6 @@ export const CostSummary: FC<Props> = ({
       }
       let spiffTotal = 0;
       let toolTotal = 0;
-      console.log(tempResults);
       for (let i = 0; i < results.length; i++) {
         if (spiffType == 'Spiff') {
           spiffTotal += results[i].getSpiffAmount();
@@ -521,7 +520,6 @@ export const CostSummary: FC<Props> = ({
     const tempSpiffs = spiffs;
     for (let i = 0; i < spiffs!.length; i++) {
       if (tempSpiffs![i].getId() == spiffTool.getId()) {
-        console.log('we found it');
         tempSpiffs![i].setPayrollProcessed(true);
       }
     }
@@ -553,19 +551,25 @@ export const CostSummary: FC<Props> = ({
     //setSpiffsWeekly(tempSpiffs);
   };
   const toggleProcessPerDiems = async (perDiems: PerDiem[]) => {
-    const tempPerDiem = totalPerDiem;
+    const tempPerDiem = {
+      totalMeals: totalPerDiem.totalMeals,
+      totalLodging: totalPerDiem.totalLodging,
+      totalMileage: totalPerDiem.totalMileage,
+      processed: 1,
+    };
     const tempTrips = tripsTotal;
-    console.log(tempTrips);
-    dispatch({ type: 'updateTripsTotalProcessed', data: tempTrips });
-    dispatch({ type: 'updatePerDiemTotalProcessed', data: tempPerDiem });
-    console.log('dispatching');
+    console.log('data we are sending', tempPerDiem);
+    dispatch({
+      type: 'updateTotalTripsPerDiemProcessed',
+      tripData: tempTrips,
+      perDiemData: tempPerDiem,
+    });
+
     tempPerDiem.processed = 1;
     tempTrips.processed = true;
     tempTrips.totalDistance = 0;
     tempPerDiem.totalLodging = 0;
     tempPerDiem.totalMeals = 0;
-    dispatch({ type: 'updateTripsTotal', data: tempTrips });
-    dispatch({ type: 'updatePerDiemTotal', data: tempPerDiem });
     for (let i = 0; i < perDiems.length; i++) {
       let req = new PerDiem();
       req.setId(perDiems[i].getId());
@@ -657,7 +661,7 @@ export const CostSummary: FC<Props> = ({
             resolve();
             const perDiemTotals = await getPerDiemTotalsProcessed();
             dispatch({
-              type: 'updatePerDiemTotalProcessed',
+              type: 'updateTotalPerDiemProcessed',
               data: perDiemTotals,
             });
             //setTotalPerDiemProcessed(perDiemTotals);
@@ -684,7 +688,7 @@ export const CostSummary: FC<Props> = ({
           try {
             const tripsDataProcessed = await getTripsProcessed();
             dispatch({
-              type: 'updateTripsTotalProcessed',
+              type: 'updateTotalTripsProcessed',
               data: tripsDataProcessed,
             });
             resolve();

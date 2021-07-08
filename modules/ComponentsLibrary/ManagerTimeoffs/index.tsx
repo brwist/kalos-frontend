@@ -215,7 +215,7 @@ export const ManagerTimeoffs: FC<Props> = ({ loggedUserId }) => {
           count,
           page,
           rowsPerPage: ROWS_PER_PAGE,
-          onChangePage: page => {
+          onPageChange: page => {
             setPage(page);
             setLoaded(false);
           },

@@ -297,7 +297,7 @@ export const Properties: FC<Props> = props => {
             ]}
             pagination={{
               count,
-              onChangePage: handlePageChange,
+              onPageChange: handlePageChange,
               page,
               rowsPerPage: ROWS_PER_PAGE,
             }}

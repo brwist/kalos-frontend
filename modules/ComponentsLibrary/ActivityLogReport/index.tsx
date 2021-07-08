@@ -111,19 +111,17 @@ export const ActivityLogReport: FC<Props> = ({
     await loadPrintEntries();
     setExportStatus('loaded');
   }, [loadPrintEntries, setExportStatus]);
-  const handleExported = useCallback(
-    () => setExportStatus('idle'),
-    [setExportStatus],
-  );
+  const handleExported = useCallback(() => setExportStatus('idle'), [
+    setExportStatus,
+  ]);
   const handlePrint = useCallback(async () => {
     setPrintStatus('loading');
     await loadPrintEntries();
     setPrintStatus('loaded');
   }, [loadPrintEntries, setPrintStatus]);
-  const handlePrinted = useCallback(
-    () => setPrintStatus('idle'),
-    [setPrintStatus],
-  );
+  const handlePrinted = useCallback(() => setPrintStatus('idle'), [
+    setPrintStatus,
+  ]);
   const handleSortChange = useCallback(
     (sort: ActivityLogsSort) => () => {
       setSort(sort);
@@ -226,7 +224,7 @@ export const ActivityLogReport: FC<Props> = ({
           page,
           count,
           rowsPerPage: ROWS_PER_PAGE,
-          onChangePage: handlePageChange,
+          onPageChange: handlePageChange,
         }}
         asideContent={
           <>

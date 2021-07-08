@@ -165,7 +165,7 @@ export const PerformanceMetrics: FC<Props> = ({
           page,
           count,
           rowsPerPage: ROWS_PER_PAGE,
-          onChangePage: handlePageChange,
+          onPageChange: handlePageChange,
         }}
         asideContent={
           <>

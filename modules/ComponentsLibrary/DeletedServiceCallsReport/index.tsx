@@ -115,10 +115,9 @@ export const DeletedServiceCallsReport: FC<Props> = ({
     await loadPrintEntries();
     setPrintStatus('loaded');
   }, [loadPrintEntries, setPrintStatus]);
-  const handlePrinted = useCallback(
-    () => setPrintStatus('idle'),
-    [setPrintStatus],
-  );
+  const handlePrinted = useCallback(() => setPrintStatus('idle'), [
+    setPrintStatus,
+  ]);
   const handleSearch = useCallback(() => setLoaded(false), []);
   const handleSetPendingEdit = useCallback(
     (pendingEdit?: Event) => () => setPendingEdit(pendingEdit),
@@ -228,7 +227,7 @@ export const DeletedServiceCallsReport: FC<Props> = ({
           page,
           count,
           rowsPerPage: ROWS_PER_PAGE,
-          onChangePage: handlePageChange,
+          onPageChange: handlePageChange,
         }}
         asideContent={
           <>

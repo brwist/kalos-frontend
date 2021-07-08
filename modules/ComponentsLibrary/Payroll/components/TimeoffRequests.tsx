@@ -176,7 +176,7 @@ export const TimeoffRequests: FC<Props> = ({
           count,
           page,
           rowsPerPage: ROWS_PER_PAGE,
-          onChangePage: setPage,
+          onPageChange: setPage,
         }}
       />
       {role === 'Payroll' && (

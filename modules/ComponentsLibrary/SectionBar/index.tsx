@@ -19,7 +19,7 @@ export type PaginationType = {
   count: number;
   page: number;
   rowsPerPage?: number;
-  onChangePage: (page: number) => void;
+  onPageChange: (page: number) => void;
 };
 
 interface Props {
@@ -72,7 +72,7 @@ export const SectionBar: FC<Props> = ({
   const handleChangePage = useCallback(
     (_, page) => {
       if (pagination) {
-        pagination.onChangePage(page);
+        pagination.onPageChange(page);
       }
     },
     [pagination],
@@ -146,7 +146,7 @@ export const SectionBar: FC<Props> = ({
                   rowsPerPageOptions={[]}
                   {...pagination}
                   rowsPerPage={pagination.rowsPerPage}
-                  onChangePage={handleChangePage}
+                  onPageChange={handleChangePage}
                   backIconButtonProps={{ size: 'small' }}
                   nextIconButtonProps={{ size: 'small' }}
                 />
@@ -154,7 +154,7 @@ export const SectionBar: FC<Props> = ({
                 <Pagination
                   count={pagination.count}
                   page={pagination.page + 1}
-                  onChange={(_, page) => pagination.onChangePage(page - 1)}
+                  onChange={(_, page) => pagination.onPageChange(page - 1)}
                   siblingCount={1}
                   boundaryCount={1}
                   variant="outlined"
