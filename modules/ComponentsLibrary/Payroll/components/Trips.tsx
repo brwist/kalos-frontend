@@ -63,6 +63,7 @@ export const Trips: FC<Props> = ({
   const load = useCallback(async () => {
     setLoading(true);
     const tripReq = new Trip();
+    tripReq.setGroupBy('user_id');
     if (departmentId) {
       tripReq.setDepartmentId(departmentId);
     }
@@ -78,8 +79,9 @@ export const Trips: FC<Props> = ({
       tripReq.addNotEquals('PayrollProcessed');
     }
     if (managerFilter) {
-      tripReq.addFieldMask('Approved');
+      tripReq.setAdminActionDate(NULL_TIME);
     }
+    console.log(tripReq);
     const trips = await PerDiemClientService.BatchGetTrips(tripReq);
     setTrips(trips.getResultsList());
     setCount(trips.getTotalCount());
@@ -190,7 +192,7 @@ export const Trips: FC<Props> = ({
             canApprove={role === 'Manager'}
             canProcessPayroll={role === 'Payroll'}
             userId={TripViewed.getUserId()}
-            checkboxes={true}
+            checkboxes={role === 'Payroll'}
           />
         </Modal>
       )}
