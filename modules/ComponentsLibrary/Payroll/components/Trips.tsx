@@ -131,8 +131,8 @@ export const Trips: FC<Props> = ({
         columns={[
           { name: 'Employee' },
           { name: 'Department' },
-          { name: 'Week' },
           { name: 'Date' },
+          { name: 'Week' },
         ]}
         data={
           loading
@@ -145,6 +145,10 @@ export const Trips: FC<Props> = ({
                   },
                   {
                     value: el.getDepartmentName(),
+                    onClick: handleTripViewedToggle(el),
+                  },
+                  {
+                    value: formatDate(el.getDate()),
                     onClick: handleTripViewedToggle(el),
                   },
                   {

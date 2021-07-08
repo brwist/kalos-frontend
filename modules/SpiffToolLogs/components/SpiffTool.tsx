@@ -205,6 +205,8 @@ export const SpiffTool: FC<Props> = ({
       if (needsManagerAction) {
         //req.setAdminActionId(0);
         req.setFieldMaskList(['AdminActionId']);
+        req.setPayrollProcessed(true);
+        req.setNotEqualsList(['PayrollProcessed']);
       }
       if (needsPayrollAction && toggle == false) {
         console.log('we want to see things that are not processed');
