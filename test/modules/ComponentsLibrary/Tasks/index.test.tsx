@@ -1,16 +1,23 @@
 /* eslint-disable react/jsx-key */
+
+const COMPONENTS_LIBRARY_PATH_FROM_TEST =
+  require('../../../test-constants/constants').COMPONENTS_LIBRARY_PATH_FROM_TEST;
+const SETUP_PATH_FROM_TEST =
+  require('../../../test-constants/constants').SETUP_PATH_FROM_TEST;
+
 // ! Disabled key errors in ESLint because they incorrectly label the elements within certain expectations as needing keys when they don't and will not work with keys
-const Tasks = require('../../../../modules/ComponentsLibrary/Tasks').Tasks;
+const Tasks = require(`${COMPONENTS_LIBRARY_PATH_FROM_TEST}/Tasks`).Tasks;
 const React = require('react');
 const shallow = require('enzyme').shallow;
 const SectionBar =
-  require('../../../../modules/ComponentsLibrary/SectionBar/index').SectionBar;
+  require(`${COMPONENTS_LIBRARY_PATH_FROM_TEST}/SectionBar/index`).SectionBar;
 const PlainForm =
-  require('../../../../modules/ComponentsLibrary/PlainForm/index').PlainForm;
+  require(`${COMPONENTS_LIBRARY_PATH_FROM_TEST}/PlainForm/index`).PlainForm;
 
-require('../../../test-setup/grpc-endpoint.js'); // ? Required to run tests with RPCs in Mocha (because Mocha runs in a Node environment)
-require('../../../test-setup/enzyme-setup.js'); // ? Required to run tests with Enzyme for React
-const expectImport = require('../../../test-setup/chai-setup.js').expectImport;
+require(`${SETUP_PATH_FROM_TEST}/grpc-endpoint.js`); // ? Required to run tests with RPCs in Mocha (because Mocha runs in a Node environment)
+require(`${SETUP_PATH_FROM_TEST}/enzyme-setup.js`); // ? Required to run tests with Enzyme for React
+const expectImport =
+  require(`${SETUP_PATH_FROM_TEST}/chai-setup.js`).expectImport;
 
 describe('ComponentsLibrary', () => {
   describe('Tasks', () => {
