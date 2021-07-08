@@ -13,7 +13,7 @@ import NotInterestedIcon from '@material-ui/icons/NotInterested';
 import AccountBalanceWalletIcon from '@material-ui/icons/AccountBalanceWallet';
 import { Visibility } from '@material-ui/icons';
 import { SlackMessageButton } from '../SlackMessageButton';
-
+import { Loader } from '../../Loader/main';
 import { SectionBar } from '../SectionBar';
 import {
   PerDiem,
@@ -98,6 +98,11 @@ export const TripSummaryNew: FC<Props> = ({
   onDeleteAllTrips,
 }) => {
   const [pendingDeleteAllTrips, setPendingDeleteAllTrips] = useState<boolean>();
+  const [
+    pendingApproveAllTrips,
+    setPendingApproveAllTrips,
+  ] = useState<boolean>();
+
   const [loaded, setLoaded] = useState<boolean>(false);
   const [pendingTripToDelete, setPendingTripToDelete] = useState<
     Trip | undefined
@@ -116,10 +121,12 @@ export const TripSummaryNew: FC<Props> = ({
   const [toggleApproveOrProcess, setToggleApproveOrProcess] = useState<boolean>(
     false,
   );
+
   const [tripsLoaded, setTripsLoaded] = useState<Trip[] | undefined>([]);
   const [totalTripCount, setTotalTripCount] = useState<number>(0);
   const [tripToView, setTripToView] = useState<Trip | undefined>();
   const [toggleButton, setToggleButton] = useState<boolean>();
+  const [approvingTrips, setApprovingTrips] = useState<boolean>();
   const [tripFilter, setFilter] = useState<TripFilter>({
     role,
     weekof: perDiemRowIds,
@@ -173,6 +180,10 @@ export const TripSummaryNew: FC<Props> = ({
     (pending: boolean) => setPendingDeleteAllTrips(pending),
     [setPendingDeleteAllTrips],
   );
+  const handleSetPendingApproveAllTrips = useCallback(
+    (pending: boolean) => setPendingApproveAllTrips(pending),
+    [setPendingApproveAllTrips],
+  );
   const handleSetPendingTripToDelete = useCallback(
     (tripToDelete: Trip | undefined) => setPendingTripToDelete(tripToDelete),
     [setPendingTripToDelete],
@@ -199,9 +210,9 @@ export const TripSummaryNew: FC<Props> = ({
     (tripToDeny: Trip | undefined) => setPendingTripToDeny(tripToDeny),
     [setPendingTripToDeny],
   );
-  let deleteActions: any[] = [];
-  if (canDeleteTrips)
-    deleteActions = [
+  let actions: any[] = [];
+  if (canDeleteTrips) {
+    actions = [
       {
         label: 'Delete All Trips',
         compact: compact ? true : false,
@@ -211,7 +222,19 @@ export const TripSummaryNew: FC<Props> = ({
         burgeronly: 1,
       },
     ];
-
+  }
+  if (canApprove) {
+    actions = [
+      {
+        label: 'Approve All Trips',
+        compact: compact ? true : false,
+        variant: 'outlined',
+        size: 'xsmall',
+        onClick: () => handleSetPendingApproveAllTrips(true),
+        burgeronly: 1,
+      },
+    ];
+  }
   const SCHEMA_TRIP_SEARCH: Schema<Trip> = [
     [
       {
@@ -558,7 +581,9 @@ export const TripSummaryNew: FC<Props> = ({
   ]);
 
   const approveAllTrips = useCallback(async () => {
+    handleSetPendingApproveAllTrips(false);
     if (tripsLoaded) {
+      setApprovingTrips(true);
       for (let i = 0; i < tripsLoaded?.length; i++)
         if (
           tripsLoaded[i].getApproved() === false &&
@@ -568,6 +593,7 @@ export const TripSummaryNew: FC<Props> = ({
           await PerDiemClientService.updateTripApproved(id);
         }
     }
+    setApprovingTrips(false);
     loadTrips();
   }, [tripsLoaded, loadTrips]);
 
@@ -749,7 +775,7 @@ export const TripSummaryNew: FC<Props> = ({
           },
           {
             name: 'Payroll Processed?',
-            actions: deleteActions,
+            actions: actions,
           },
           {
             name: ' ',
@@ -935,6 +961,19 @@ export const TripSummaryNew: FC<Props> = ({
           name="all of the trips in this week (this action cannot be undone)"
           onConfirm={() => deleteAllTrips()}
         />
+      )}
+      {approvingTrips && <Loader></Loader>}
+      {pendingApproveAllTrips && (
+        <Confirm
+          key="ApproveAllTrips"
+          title="Approve Trips"
+          open
+          onClose={() => handleSetPendingApproveAllTrips(false)}
+          submitLabel="Approve"
+          onConfirm={() => approveAllTrips()}
+        >
+          Are you sure you want to approve all Trips currently listed?
+        </Confirm>
       )}
     </>
   );

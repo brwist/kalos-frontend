@@ -1,5 +1,5 @@
 import React from 'react';
-import createMuiTheme from '@material-ui/core/styles/createMuiTheme';
+import createMuiTheme from '@material-ui/core/styles/createTheme';
 
 interface props {}
 
