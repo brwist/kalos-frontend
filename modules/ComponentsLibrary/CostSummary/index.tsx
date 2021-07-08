@@ -517,15 +517,33 @@ export const CostSummary: FC<Props> = ({
     }
     return total;
   }, [endDay, startDay, userId]);
-  const toggleProcessSpiffTool = async (req: Task) => {
+  const toggleProcessSpiffTool = async (spiffTool: Task) => {
+    const tempSpiffs = spiffs;
+    for (let i = 0; i < spiffs!.length; i++) {
+      if (tempSpiffs![i].getId() == spiffTool.getId()) {
+        console.log('we found it');
+        tempSpiffs![i].setPayrollProcessed(true);
+      }
+    }
+    dispatch({ type: 'updateSpiff', data: spiffTool });
+    dispatch({
+      type: 'updateTotalSpiffsProcessed',
+      value: spiffTool.getSpiffAmount(),
+    });
+
+    const id = spiffTool.getId();
+    const req = new Task();
+    req.setId(id);
     req.setFieldMaskList(['PayrollProcessed']);
     req.setPayrollProcessed(true);
     const adminReq = new SpiffToolAdminAction();
     await TaskClientService.Update(req);
-    if (req.getActionsList()) {
-      for (let i = 0; i < req.getActionsList().length; i++) {
-        if (req.getActionsList()[i].getDateProcessed() === NULL_TIME_VALUE) {
-          adminReq.setId(req.getActionsList()[i].getId());
+    if (spiffTool.getActionsList()) {
+      for (let i = 0; i < spiffTool.getActionsList().length; i++) {
+        if (
+          spiffTool.getActionsList()[i].getDateProcessed() === NULL_TIME_VALUE
+        ) {
+          adminReq.setId(spiffTool.getActionsList()[i].getId());
           adminReq.setDateProcessed(timestamp());
           adminReq.setFieldMaskList(['DateProcessed']);
           await SpiffToolAdminActionClientService.Update(adminReq);
