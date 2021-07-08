@@ -5,3 +5,4 @@ require:
 extension: 
   - 'ts'
   - 'tsx'
+timeout: 10000
