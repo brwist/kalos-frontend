@@ -175,6 +175,7 @@ export const SpiffToolLogEdit: FC<Props> = ({
   const [statusDeleting, setStatusDeleting] = useState<SpiffToolAdminAction>();
   const [uploading, setUploading] = useState<boolean>(false);
   const [uploadFailed, setUploadFailed] = useState<boolean>(false);
+  const [loggedUser, setLoggedUser] = useState<User>(new User());
   const [documentFile, setDocumentFile] = useState<string>('');
   const [documentSaving, setDocumentSaving] = useState<boolean>(false);
   const load = useCallback(async () => {
@@ -183,6 +184,9 @@ export const SpiffToolLogEdit: FC<Props> = ({
       const spiffTypes = await TaskClientService.loadSpiffTypes();
       setSpiffTypes(spiffTypes);
     }
+    const userReq = new User();
+    const userInfo = await UserClientService.Get(userReq);
+    setLoggedUser(userInfo);
     setLoading(false);
   }, [setLoading, type, setSpiffTypes, spiffTypes]);
   useEffect(() => {
@@ -280,9 +284,9 @@ export const SpiffToolLogEdit: FC<Props> = ({
         if (loggedUserId) {
           const userReq = new User();
           userReq.setId(loggedUserId);
-          const userInfo = await UserClientService.Get(userReq);
+
           const newReviewedBy =
-            userInfo.getFirstname() + ' ' + userInfo.getLastname();
+            loggedUser.getFirstname() + ' ' + loggedUser.getLastname();
           temp.setReviewedBy(newReviewedBy);
         }
         const timestampValue = timestamp().toString();
