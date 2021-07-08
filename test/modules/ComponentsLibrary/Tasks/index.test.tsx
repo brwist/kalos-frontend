@@ -8,9 +8,9 @@ const SectionBar =
 const PlainForm =
   require('../../../../modules/ComponentsLibrary/PlainForm/index').PlainForm;
 
-require('../../../grpc-endpoint.js'); // ? Required to run tests with RPCs in Mocha (because Mocha runs in a Node environment)
-require('../../../enzyme-setup.js'); // ? Required to run tests with Enzyme for React
-const expectImport = require('../../../chai-setup.js').expectImport;
+require('../../../test-setup/grpc-endpoint.js'); // ? Required to run tests with RPCs in Mocha (because Mocha runs in a Node environment)
+require('../../../test-setup/enzyme-setup.js'); // ? Required to run tests with Enzyme for React
+const expectImport = require('../../../test-setup/chai-setup.js').expectImport;
 
 describe('ComponentsLibrary', () => {
   describe('Tasks', () => {
