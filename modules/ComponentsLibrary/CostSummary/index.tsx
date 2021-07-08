@@ -326,12 +326,10 @@ export const CostSummary: FC<Props> = ({
         req.setDateRangeList(['>=', startDate, '<', endDayForSpiffs]);
         req.setDateTargetList(['time_created', 'time_created']);
       */
-      }
-      if (!notReady) {
         const startDate = '0001-01-01';
         const endDayForSpiffs = format(addDays(startDay, 11), 'yyyy-MM-dd');
         action.setDateRangeList(['>=', startDate, '<', endDayForSpiffs]);
-        action.setDateTargetList(['time_created', 'time_created']);
+        action.setDateTargetList(['created_date', 'created_date']);
         action.setStatus(1);
         req.setSearchAction(action);
         req.setFieldMaskList(['PayrollProcessed']);
