@@ -722,7 +722,7 @@ export const TripSummaryNew: FC<Props> = ({
             count: loaded ? totalTripCount : 0,
             page: page,
             rowsPerPage: 25,
-            onChangePage: newPage => handleSetPage(newPage),
+            onPageChange: newPage => handleSetPage(newPage),
           }}
           footer={
             displayTripDistance

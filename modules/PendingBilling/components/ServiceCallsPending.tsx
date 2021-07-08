@@ -291,7 +291,7 @@ export const ServiceCallsPending: FC<Props> = ({ loggedUserId }) => {
         pagination={{
           page,
           count,
-          onChangePage: handlePageChange,
+          onPageChange: handlePageChange,
           rowsPerPage: ROWS_PER_PAGE,
         }}
       />

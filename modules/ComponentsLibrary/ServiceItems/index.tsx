@@ -520,14 +520,13 @@ export const ServiceItems: FC<Props> = props => {
   );
 
   const handleDeleteRepair = useCallback(
-    ({ id }: Repair) =>
-      () => {
-        const newRepairs = repairs.filter(item => item.id !== id);
-        setRepairs(newRepairs);
-        if (onRepairsChange) {
-          onRepairsChange(newRepairs);
-        }
-      },
+    ({ id }: Repair) => () => {
+      const newRepairs = repairs.filter(item => item.id !== id);
+      setRepairs(newRepairs);
+      if (onRepairsChange) {
+        onRepairsChange(newRepairs);
+      }
+    },
     [repairs, onRepairsChange],
   );
 
@@ -720,7 +719,7 @@ export const ServiceItems: FC<Props> = props => {
           count,
           page,
           rowsPerPage: ROWS_PER_PAGE,
-          onChangePage: handleChangePage,
+          onPageChange: handleChangePage,
         }}
         asideContent={asideContent}
         asideContentFirst

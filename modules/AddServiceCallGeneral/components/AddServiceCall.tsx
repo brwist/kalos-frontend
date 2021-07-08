@@ -84,10 +84,9 @@ export const AddServiceCall: FC<Props> = props => {
     (addCustomer: boolean) => () => setAddCustomer(addCustomer),
     [setAddCustomer],
   );
-  const handlePropertyClose = useCallback(
-    () => setPropertyOpened(undefined),
-    [setPropertyOpened],
-  );
+  const handlePropertyClose = useCallback(() => setPropertyOpened(undefined), [
+    setPropertyOpened,
+  ]);
   const handleServiceCallClose = useCallback(
     () => setServiceCallOpened(undefined),
     [setServiceCallOpened],
@@ -96,10 +95,9 @@ export const AddServiceCall: FC<Props> = props => {
     (customerOpened?: User) => setCustomerOpened(customerOpened),
     [setCustomerOpened],
   );
-  const handleCustomerClose = useCallback(
-    () => setCustomerOpened(undefined),
-    [setCustomerOpened],
-  );
+  const handleCustomerClose = useCallback(() => setCustomerOpened(undefined), [
+    setCustomerOpened,
+  ]);
   const handleCustomerSave = useCallback(
     (data: User) => {
       setAddCustomer(false);
@@ -131,7 +129,7 @@ export const AddServiceCall: FC<Props> = props => {
         pagination={{
           count,
           rowsPerPage: ROWS_PER_PAGE,
-          onChangePage: handlePageChange,
+          onPageChange: handlePageChange,
           page,
         }}
         actions={onClose ? [{ label: 'Close', onClick: onClose }] : []}

@@ -695,62 +695,59 @@ export class TripSummary extends React.PureComponent<Props, State> {
     this.setState({ tripToView: trip });
   };
   getColumns = () => {
-
-    return (
-      this.props.canDeleteTrips
-        ? [
-            { name: 'Origin' },
-            { name: 'Destination' },
-            { name: 'Name' },
-            { name: 'Day of' },
-            { name: 'Miles / Cost' },
-            {
-              name: 'Approved?',
-            },
-            {
-              name: 'Department Name',
-            },
-            {
-              name: 'Payroll Processed?',
-              actions: [
-                {
-                  label: 'Delete All Trips',
-                  compact: this.props.compact ? true : false,
-                  variant: 'outlined',
-                  size: 'xsmall',
-                  onClick: () => {
-                    this.setStateToNew({
-                      pendingDeleteAllTrips: true,
-                    });
-                  },
-                  burgeronly: 1,
+    return (this.props.canDeleteTrips
+      ? [
+          { name: 'Origin' },
+          { name: 'Destination' },
+          { name: 'Name' },
+          { name: 'Day of' },
+          { name: 'Miles / Cost' },
+          {
+            name: 'Approved?',
+          },
+          {
+            name: 'Department Name',
+          },
+          {
+            name: 'Payroll Processed?',
+            actions: [
+              {
+                label: 'Delete All Trips',
+                compact: this.props.compact ? true : false,
+                variant: 'outlined',
+                size: 'xsmall',
+                onClick: () => {
+                  this.setStateToNew({
+                    pendingDeleteAllTrips: true,
+                  });
                 },
-              ],
-            },
-            {
-              name: '',
-            },
-          ]
-        : [
-            { name: 'Origin' },
-            { name: 'Destination' },
-            { name: 'Name' },
-            { name: 'Day Of' },
-            { name: 'Miles / Cost' },
-            {
-              name: 'Approved?',
-            },
-            {
-              name: 'Department Name',
-            },
-            {
-              name: 'Payroll Processed?',
-            },
-            {
-              name: '',
-            },
-          ]
-    ) as Columns;
+                burgeronly: 1,
+              },
+            ],
+          },
+          {
+            name: '',
+          },
+        ]
+      : [
+          { name: 'Origin' },
+          { name: 'Destination' },
+          { name: 'Name' },
+          { name: 'Day Of' },
+          { name: 'Miles / Cost' },
+          {
+            name: 'Approved?',
+          },
+          {
+            name: 'Department Name',
+          },
+          {
+            name: 'Payroll Processed?',
+          },
+          {
+            name: '',
+          },
+        ]) as Columns;
   };
   setFilter = async (checkboxFilter: CheckboxesFilterType) => {
     this.setState({ filter: checkboxFilter });
@@ -810,10 +807,9 @@ export class TripSummary extends React.PureComponent<Props, State> {
     }
     if (user) {
       try {
-        department =
-          await TimesheetDepartmentClientService.getDepartmentByManagerID(
-            user.getManagedBy(),
-          );
+        department = await TimesheetDepartmentClientService.getDepartmentByManagerID(
+          user.getManagedBy(),
+        );
       } catch (err) {
         console.error('Error getting timesheet department: ', err);
       }
@@ -984,7 +980,7 @@ export class TripSummary extends React.PureComponent<Props, State> {
             count: this.state.totalTrips,
             page: this.state.page,
             rowsPerPage: this.resultsPerPage,
-            onChangePage: this.handleChangePage,
+            onPageChange: this.handleChangePage,
           }}
           footer={
             this.props.displayTripDistance

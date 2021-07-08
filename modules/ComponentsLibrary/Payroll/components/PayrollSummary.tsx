@@ -144,7 +144,7 @@ export const PayrollSummary: FC<Props> = ({
           count,
           page: count - 1,
           rowsPerPage: 1,
-          onChangePage: setPage,
+          onPageChange: setPage,
         }}
       />
       <InfoTable

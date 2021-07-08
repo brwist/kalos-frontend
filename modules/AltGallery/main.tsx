@@ -326,7 +326,7 @@ export class AltGallery extends React.PureComponent<props, state> {
             pagination={{
               count: fileList.length,
               page: activeImage,
-              onChangePage: this.changeImage,
+              onPageChange: this.changeImage,
             }}
             sticky={false}
             className="AltGalleryFooter"

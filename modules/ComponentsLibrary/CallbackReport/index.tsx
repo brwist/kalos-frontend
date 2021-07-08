@@ -159,7 +159,7 @@ export const CallbackReport: FC<Props> = ({ dateStart, dateEnd, onClose }) => {
           page,
           count,
           rowsPerPage: ROWS_PER_PAGE,
-          onChangePage: handlePageChange,
+          onPageChange: handlePageChange,
         }}
         asideContent={
           <>

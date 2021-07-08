@@ -30,7 +30,7 @@ const Examples = ({
       />
       <hr />
       <SectionBar
-        pagination={{ count: 11, onChangePage: console.log, page: 1 }}
+        pagination={{ count: 11, onPageChange: console.log, page: 1 }}
       />
       <hr />
       <SectionBar
@@ -67,7 +67,7 @@ const Examples = ({
           count: 35,
           rowsPerPage: 10,
           page,
-          onChangePage: setPage,
+          onPageChange: setPage,
         }}
       />
       <hr />

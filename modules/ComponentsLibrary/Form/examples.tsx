@@ -71,7 +71,7 @@ export default () => {
           count: 35,
           page: 2,
           rowsPerPage: 6,
-          onChangePage: () => {},
+          onPageChange: () => {},
         }}
       />
     </>

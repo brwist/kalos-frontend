@@ -2497,7 +2497,7 @@ export const AdvancedSearch: FC<Props> = ({
                 count,
                 page,
                 rowsPerPage: ROWS_PER_PAGE,
-                onChangePage: handleChangePage,
+                onPageChange: handleChangePage,
               }
         }
         loading={loading || loadingDicts}

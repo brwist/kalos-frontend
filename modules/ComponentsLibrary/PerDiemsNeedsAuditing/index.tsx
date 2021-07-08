@@ -455,7 +455,7 @@ export const PerDiemsNeedsAuditing: FC<Props> = ({ loggedUserId }) => {
           count,
           page,
           rowsPerPage: ROWS_PER_PAGE,
-          onChangePage: handleChangePage,
+          onPageChange: handleChangePage,
         }}
         actions={[{ label: 'Print', onClick: handleTogglePrinting(true) }]}
         fixedActions

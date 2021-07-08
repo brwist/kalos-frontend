@@ -189,7 +189,7 @@ export const Spiffs: FC<Props> = ({
           count,
           page,
           rowsPerPage: ROWS_PER_PAGE,
-          onChangePage: handlePageChange,
+          onPageChange: handlePageChange,
         }}
       />
       <InfoTable columns={COLUMNS} data={data} loading={loading} />

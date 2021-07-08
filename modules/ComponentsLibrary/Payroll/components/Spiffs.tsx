@@ -292,7 +292,7 @@ export const Spiffs: FC<Props> = ({
           count,
           page,
           rowsPerPage: ROWS_PER_PAGE,
-          onChangePage: setPage,
+          onPageChange: setPage,
         }}
         actions={
           role === 'Manager'

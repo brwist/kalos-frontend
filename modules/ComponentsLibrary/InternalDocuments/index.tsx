@@ -370,7 +370,7 @@ export const InternalDocuments: FC = () => {
           count,
           rowsPerPage: ROWS_PER_PAGE,
           page,
-          onChangePage: handleChangePage,
+          onPageChange: handleChangePage,
         }}
       />
       <PlainForm

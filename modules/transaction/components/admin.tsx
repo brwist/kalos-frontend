@@ -700,7 +700,7 @@ export class TransactionAdminView extends React.Component<props, state> {
             count: this.state.count,
             rowsPerPage: 50,
             page: this.state.page,
-            onChangePage: this.altChangePage,
+            onPageChange: this.altChangePage,
           }}
           actions={[
             {

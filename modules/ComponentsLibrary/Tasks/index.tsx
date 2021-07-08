@@ -272,60 +272,60 @@ export const Tasks: FC<Props> = ({
     return { ...req, assignedTechnicians: '' };
   }, []);
   const handleDocumentUpload = useCallback(
-    (onClose, onReload) =>
-      async ({ filename, description }: DocumentUplodad) => {
-        if (!pendingEdit || !pendingEdit.getId()) return;
-        setUploadFailed(false);
-        setUploading(true);
-        const ext = filename.split('.').pop();
-        const fileName =
-          kebabCase(
-            [
-              pendingEdit.getId(),
-              timestamp(true).split('-').reverse(),
-              description.trim() || filename.replace('.' + ext, ''),
-            ].join(' '),
-          ) +
-          '.' +
-          ext;
-        const status = await uploadFileToS3Bucket(
-          fileName,
-          documentFile,
-          'testbuckethelios', // FIXME is it correct bucket name for those docs?
-        );
-        if (status === 'ok') {
-          await DocumentClientService.createTaskDocument(
-            fileName,
+    (onClose, onReload) => async ({
+      filename,
+      description,
+    }: DocumentUplodad) => {
+      if (!pendingEdit || !pendingEdit.getId()) return;
+      setUploadFailed(false);
+      setUploading(true);
+      const ext = filename.split('.').pop();
+      const fileName =
+        kebabCase(
+          [
             pendingEdit.getId(),
-            loggedUserId,
-            description,
-          );
-          onClose();
-          onReload();
-          setUploading(false);
-        } else {
-          setUploadFailed(true);
-          setUploading(false);
-        }
-      },
-    [documentFile, loggedUserId, pendingEdit, setUploadFailed, setUploading],
-  );
-  const handleFileLoad = useCallback(
-    file => setDocumentFile(file),
-    [setDocumentFile],
-  );
-  const handleDocumentUpdate = useCallback(
-    (onClose, onReload, { id }) =>
-      async (form: Document) => {
-        setDocumentSaving(true);
-        await DocumentClientService.updateDocumentDescription(
-          id,
-          form.getDescription(),
+            timestamp(true).split('-').reverse(),
+            description.trim() || filename.replace('.' + ext, ''),
+          ].join(' '),
+        ) +
+        '.' +
+        ext;
+      const status = await uploadFileToS3Bucket(
+        fileName,
+        documentFile,
+        'testbuckethelios', // FIXME is it correct bucket name for those docs?
+      );
+      if (status === 'ok') {
+        await DocumentClientService.createTaskDocument(
+          fileName,
+          pendingEdit.getId(),
+          loggedUserId,
+          description,
         );
-        setDocumentSaving(false);
         onClose();
         onReload();
-      },
+        setUploading(false);
+      } else {
+        setUploadFailed(true);
+        setUploading(false);
+      }
+    },
+    [documentFile, loggedUserId, pendingEdit, setUploadFailed, setUploading],
+  );
+  const handleFileLoad = useCallback(file => setDocumentFile(file), [
+    setDocumentFile,
+  ]);
+  const handleDocumentUpdate = useCallback(
+    (onClose, onReload, { id }) => async (form: Document) => {
+      setDocumentSaving(true);
+      await DocumentClientService.updateDocumentDescription(
+        id,
+        form.getDescription(),
+      );
+      setDocumentSaving(false);
+      onClose();
+      onReload();
+    },
     [setDocumentSaving],
   );
   const SPIFF_TYPES_OPTIONS: Option[] = useMemo(
@@ -721,7 +721,7 @@ export const Tasks: FC<Props> = ({
             count,
             rowsPerPage: ROWS_PER_PAGE,
             page,
-            onChangePage: handlePageChange,
+            onPageChange: handlePageChange,
           }}
         />
         <PlainForm

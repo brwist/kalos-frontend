@@ -1,5 +1,5 @@
 import { TaskClient, Task } from '@kalos-core/kalos-rpc/Task';
-import { Spiffs } from '../ServiceCall/components/Spiffs';
+import { StarRateTwoTone } from '@material-ui/icons';
 
 export type PerDiemSum = {
   totalMeals: number;
@@ -27,9 +27,13 @@ export type Action =
   | { type: 'updateTotalSpiffsProcessed'; value: number }
   | { type: 'updateTripsTotal'; data: TripSum }
   | { type: 'updatePerDiemTotal'; data: PerDiemSum }
-  | { type: 'updatePerDiemTotalProcessed'; data: PerDiemSum }
-  | { type: 'updateTripsTotalProcessed'; data: TripSum };
-
+  | { type: 'updateTotalPerDiemProcessed'; data: PerDiemSum }
+  | { type: 'updateTotalTripsProcessed'; data: TripSum }
+  | {
+      type: 'updateTotalTripsPerDiemProcessed';
+      tripData: TripSum;
+      perDiemData: PerDiemSum;
+    };
 export const reducer = (state: State, action: Action) => {
   switch (action.type) {
     case 'updateSpiff': {
@@ -63,17 +67,29 @@ export const reducer = (state: State, action: Action) => {
         totalPerDiem: action.data,
       };
     }
-    case 'updatePerDiemTotalProcessed': {
-      return {
-        ...state,
-        totalPerDiemProcessed: action.data,
-      };
-    }
-    case 'updateTripsTotalProcessed': {
+    case 'updateTotalPerDiemProcessed': {
       console.log(action.data);
+      if (action.data.totalLodging == 0 && action.data.totalMeals === 0) {
+        const temp = state.totalPerDiemProcessed;
+        temp.totalLodging += state.totalPerDiem.totalLodging;
+        temp.totalMeals += state.totalPerDiem.totalMeals;
+        return {
+          ...state,
+          totalPerDiemProcessed: temp,
+        };
+      } else {
+        return {
+          ...state,
+          totalPerDiemProcessed: action.data,
+        };
+      }
+    }
+    case 'updateTotalTripsProcessed': {
+      const temp = state.totalTripsProcessed;
+      temp.totalDistance += action.data.totalDistance;
       return {
         ...state,
-        totalTripsProcessed: action.data,
+        totalTripsProcessed: temp,
       };
     }
     case 'updateTotalSpiffsProcessed': {
@@ -81,6 +97,28 @@ export const reducer = (state: State, action: Action) => {
       return {
         ...state,
         totalSpiffsProcessed: temp,
+      };
+    }
+    case 'updateTotalTripsPerDiemProcessed': {
+      const tempTrip = state.totalTripsProcessed;
+      const tempPerDiem = state.totalPerDiemProcessed;
+      tempTrip.totalDistance += action.tripData.totalDistance;
+      tempPerDiem.totalLodging += action.perDiemData.totalLodging;
+      tempPerDiem.totalMeals += action.perDiemData.totalMeals;
+      const newCurrentPerDiems = state.totalPerDiem;
+      const newCurrentTrips = state.tripsTotal;
+      newCurrentTrips.totalDistance -= action.tripData.totalDistance;
+      newCurrentTrips.processed = true;
+      newCurrentPerDiems.totalLodging -= action.perDiemData.totalLodging;
+      newCurrentPerDiems.totalMeals -= action.perDiemData.totalMeals;
+      newCurrentPerDiems.processed = 1;
+
+      return {
+        ...state,
+        totalTripsProcessed: tempTrip,
+        totalPerDiemProcessed: tempPerDiem,
+        totalPerDiems: newCurrentPerDiems,
+        totalTrips: newCurrentTrips,
       };
     }
     default:

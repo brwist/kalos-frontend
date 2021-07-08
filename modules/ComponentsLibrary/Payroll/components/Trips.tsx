@@ -116,7 +116,7 @@ export const Trips: FC<Props> = ({
           page,
           count,
           rowsPerPage: ROWS_PER_PAGE,
-          onChangePage: setPage,
+          onPageChange: setPage,
         }}
       />
       {role === 'Payroll' && (

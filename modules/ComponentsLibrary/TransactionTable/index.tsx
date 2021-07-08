@@ -112,15 +112,18 @@ export const TransactionTable: FC<Props> = ({
 
   const acceptOverride = ![1734, 9646, 8418].includes(loggedUserId);
   const [transactions, setTransactions] = useState<SelectorParams[]>();
-  const [transactionToEdit, setTransactionToEdit] =
-    useState<Transaction | undefined>();
+  const [transactionToEdit, setTransactionToEdit] = useState<
+    Transaction | undefined
+  >();
   const [loading, setLoading] = useState<boolean>(true);
   const [creatingTransaction, setCreatingTransaction] = useState<boolean>(); // for when a transaction is being made, pops up the popup
   const [mergingTransaction, setMergingTransaction] = useState<boolean>(); // When a txn is being merged with another one, effectively allowing full
   // editorial control for Dani
   const [role, setRole] = useState<RoleType>();
-  const [assigningUser, setAssigningUser] =
-    useState<{ isAssigning: boolean; transactionId: number }>(); // sets open an employee picker in a modal
+  const [assigningUser, setAssigningUser] = useState<{
+    isAssigning: boolean;
+    transactionId: number;
+  }>(); // sets open an employee picker in a modal
   const [employees, setEmployees] = useState<User[]>([]);
   const [departments, setDepartments] = useState<TimesheetDepartment[]>([]);
   const [selectedTransactions, setSelectedTransactions] = useState<
@@ -381,8 +384,7 @@ export const TransactionTable: FC<Props> = ({
     );
     setEmployees(sortedEmployeeList);
 
-    const departments =
-      await TimesheetDepartmentClientService.loadTimeSheetDepartments();
+    const departments = await TimesheetDepartmentClientService.loadTimeSheetDepartments();
     setDepartments(departments);
 
     await resetTransactions();
@@ -776,7 +778,7 @@ export const TransactionTable: FC<Props> = ({
               : 0,
           rowsPerPage: 50,
           page: pageNumber,
-          onChangePage: handleChangePage,
+          onPageChange: handleChangePage,
         }}
         actions={
           hasActions
