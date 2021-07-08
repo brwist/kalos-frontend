@@ -1,4 +1,3 @@
-const expectImport = require('chai').expect;
 const getMimeType = require('../helpers.ts').getMimeType;
 const perDiemTripMilesToUsd = require('../helpers.ts').perDiemTripMilesToUsd;
 const loadActivityLogsByFilter =
@@ -11,7 +10,7 @@ const EventType = require('@kalos-core/kalos-rpc/Event/index.ts').Event; // ! Th
 const EventClientService = require('../helpers.ts').EventClientService;
 const Setup = require('./setup.js'); // ? Sets the auth token up in a one-liner
 require('./grpc-endpoint.js'); // ? Required to run tests with RPCs in Mocha (because Mocha runs in a Node environment)
-
+export const expectImport = require('./chai-setup.js').expectImport;
 describe('helpers', () => {
   describe('#getMimeType', () => {
     it('should return image/png when "test.png" is provided as argument', () => {
