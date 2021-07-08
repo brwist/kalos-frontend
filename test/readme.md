@@ -27,3 +27,12 @@ For most of the test files, you should be using Require instead of Import due to
 # Why "expectImport" instead of "expect"?
 
 For now, it conflicts with Jest and I am honestly not sure why. It'll hopefully be fixed very soon.
+
+# Style Conventions
+
+Describe and It should be used as per Mocha's guides. When testing methods and functions,
+
+- "#" should prefix instance methods and properties
+- "." should prefix static methods and properties
+
+The structure of folders inside of the test folder should mimic the project's layout as closely as possible.
