@@ -31,6 +31,7 @@ import {
   uploadFileToS3Bucket,
   DocumentClientService,
   TaskEventClientService,
+  makeSafeFormObject,
 } from '../../../helpers';
 import {
   ROWS_PER_PAGE,
@@ -186,29 +187,40 @@ export const Tasks: FC<Props> = ({
   const handleSave = useCallback(
     async (taskEdit: TaskEdit) => {
       setSaving(true);
-      if (taskEdit.getBillableType() === OPTION_BLANK) {
-        taskEdit.setBillableType('');
+      let safeTaskEdit = makeSafeFormObject(taskEdit as Task, new Task());
+      if (safeTaskEdit.getBillableType() === OPTION_BLANK) {
+        safeTaskEdit.setBillableType('');
       }
-      var hasPriorityIdProperty = Object.prototype.hasOwnProperty.call(
-        taskEdit,
-        'priorityId',
-      );
-      if (hasPriorityIdProperty) {
-        taskEdit.setPriorityId(2);
-      }
+
+      safeTaskEdit.setPriorityId(2);
       const technicianIds = taskEdit.assignedTechnicians
         ? taskEdit.assignedTechnicians.split(',').map(id => +id)
         : [];
-      const id = await TaskClientService.upsertTask(taskEdit);
-      await TaskAssignmentClientService.upsertTaskAssignments(
-        id,
-        technicianIds,
-      ); // FIXME resolve when task will return TaskAssigment[]
+      let id = 0;
+      try {
+        id = await TaskClientService.upsertTask(safeTaskEdit);
+      } catch (err) {
+        console.error(`An error occurred while upserting a task: ${err}`);
+      }
+      try {
+        await TaskAssignmentClientService.upsertTaskAssignments(
+          id,
+          technicianIds,
+        ); // FIXME resolve when task will return TaskAssigment[]
+      } catch (err) {
+        console.error(
+          `An error occurred while upserting task assignments: ${err}`,
+        );
+      }
       setSaving(false);
       setPendingEdit(undefined);
       setLoaded(false);
     },
-    [setSaving, externalCode, externalId],
+    [setSaving, setPendingEdit],
+  );
+  const handleSetSearch = useCallback(
+    (newSearch: TaskEdit) => setSearch(newSearch),
+    [setSearch],
   );
   const handleDelete = useCallback(async () => {
     if (!pendingDelete) return;
@@ -237,10 +249,11 @@ export const Tasks: FC<Props> = ({
     [setTaskEventsLoading, setTaskEvents],
   );
   const handleSetPendingEdit = useCallback(
-    (pendingEdit?: TaskEdit) => async () => {
+    async (pendingEdit?: TaskEdit) => {
       setPendingEdit(pendingEdit);
-      if (pendingEdit && pendingEdit.getId()) {
-        loadTaskEvents(pendingEdit.getId());
+      let safePendingEdit = makeSafeFormObject(pendingEdit as Task, new Task());
+      if (pendingEdit && safePendingEdit.getId()) {
+        loadTaskEvents(safePendingEdit.getId());
       }
     },
     [setPendingEdit, loadTaskEvents],
@@ -410,8 +423,12 @@ export const Tasks: FC<Props> = ({
     },
     [taskEventEditing, pendingEdit, setTaskEventsLoading, loadTaskEvents],
   );
-  const SCHEMA_TASK: Schema<TaskEdit> = useMemo(
-    () => [
+  const SCHEMA_TASK: Schema<TaskEdit> = useMemo(() => {
+    let pendingEditSafeObject = pendingEdit
+      ? makeSafeFormObject(pendingEdit as Task, new Task())
+      : pendingEdit;
+
+    return [
       [{ name: 'getId', type: 'hidden' }],
       [
         {
@@ -431,13 +448,16 @@ export const Tasks: FC<Props> = ({
         {
           name: 'getReferenceNumber',
           label:
-            pendingEdit && pendingEdit.getBillableType() === 'Parts Run'
+            pendingEdit &&
+            (pendingEditSafeObject as Task).getBillableType() === 'Parts Run'
               ? 'Job / Reference #'
               : 'Reference #',
         },
       ],
       ...(pendingEdit &&
-      ['Spiff', 'Tool Purchase'].includes(pendingEdit.getBillableType() || '')
+      ['Spiff', 'Tool Purchase'].includes(
+        (pendingEditSafeObject as Task).getBillableType() || '',
+      )
         ? []
         : [
             [
@@ -448,7 +468,8 @@ export const Tasks: FC<Props> = ({
               } as SchemaProps<TaskEdit>,
             ],
           ]),
-      ...(pendingEdit && pendingEdit.getBillableType() === 'Parts Run'
+      ...(pendingEdit &&
+      (pendingEditSafeObject as Task).getBillableType() === 'Parts Run'
         ? [
             [
               {
@@ -472,7 +493,9 @@ export const Tasks: FC<Props> = ({
         },
       ],
       ...(pendingEdit &&
-      ['Spiff', 'Tool Purchase'].includes(pendingEdit.getBillableType() || '')
+      ['Spiff', 'Tool Purchase'].includes(
+        (pendingEditSafeObject as Task).getBillableType() || '',
+      )
         ? []
         : [
             [
@@ -506,7 +529,8 @@ export const Tasks: FC<Props> = ({
               } as SchemaProps<TaskEdit>,
             ],
           ]),
-      ...(pendingEdit && pendingEdit.getBillableType() === 'Flat Rate'
+      ...(pendingEdit &&
+      (pendingEditSafeObject as Task).getBillableType() === 'Flat Rate'
         ? [
             [
               {
@@ -517,7 +541,8 @@ export const Tasks: FC<Props> = ({
             ],
           ]
         : []),
-      ...(pendingEdit && pendingEdit.getBillableType() === 'Hourly'
+      ...(pendingEdit &&
+      (pendingEditSafeObject as Task).getBillableType() === 'Hourly'
         ? [
             [
               {
@@ -536,7 +561,9 @@ export const Tasks: FC<Props> = ({
           ]
         : []),
       ...(pendingEdit &&
-      ['Spiff', 'Tool Purchase'].includes(pendingEdit.getBillableType() || '')
+      ['Spiff', 'Tool Purchase'].includes(
+        (pendingEditSafeObject as Task).getBillableType() || '',
+      )
         ? []
         : [
             [
@@ -548,7 +575,8 @@ export const Tasks: FC<Props> = ({
               } as SchemaProps<TaskEdit>,
             ],
           ]),
-      ...(pendingEdit && pendingEdit.getBillableType() === 'Spiff'
+      ...(pendingEdit &&
+      (pendingEditSafeObject as Task).getBillableType() === 'Spiff'
         ? [
             [
               {
@@ -587,7 +615,8 @@ export const Tasks: FC<Props> = ({
             ],
           ]
         : []),
-      ...(pendingEdit && pendingEdit.getBillableType() === 'Tool Purchase'
+      ...(pendingEdit &&
+      (pendingEditSafeObject as Task).getBillableType() === 'Tool Purchase'
         ? [
             [
               {
@@ -606,15 +635,14 @@ export const Tasks: FC<Props> = ({
             ],
           ]
         : []),
-    ],
-    [
-      SPIFF_TYPES_OPTIONS,
-      billableTypes,
-      pendingEdit,
-      priorityOptions,
-      statusOptions,
-    ],
-  );
+    ];
+  }, [
+    SPIFF_TYPES_OPTIONS,
+    billableTypes,
+    pendingEdit,
+    priorityOptions,
+    statusOptions,
+  ]);
   const SCHEMA_SEARCH: Schema<TaskEdit> = [
     [
       {
@@ -667,6 +695,9 @@ export const Tasks: FC<Props> = ({
   );
   const isLastTaskEventStarted =
     taskEvents[0] && taskEvents[0].getStatusId() === 2;
+  let safePendingEdit = pendingEdit
+    ? makeSafeFormObject(pendingEdit as Task, new Task())
+    : pendingEdit;
   return (
     <>
       <div>
@@ -676,7 +707,9 @@ export const Tasks: FC<Props> = ({
             [
               {
                 label: 'Add Task',
-                onClick: handleSetPendingEdit(newTask as TaskEdit),
+                onClick: async () => {
+                  await handleSetPendingEdit(newTask as TaskEdit);
+                },
                 disabled: !loadedInit,
               },
               ...(onClose
@@ -691,7 +724,15 @@ export const Tasks: FC<Props> = ({
             onChangePage: handlePageChange,
           }}
         />
-        <PlainForm schema={SCHEMA_SEARCH} data={search} onChange={setSearch} />
+        <PlainForm
+          schema={SCHEMA_SEARCH}
+          data={search}
+          onChange={output => {
+            handleSetSearch(
+              makeSafeFormObject(output as Task, new Task()) as TaskEdit,
+            );
+          }}
+        />
         <InfoTable
           columns={COLUMNS}
           data={
@@ -701,67 +742,76 @@ export const Tasks: FC<Props> = ({
                   return [
                     {
                       value: task.getId(),
-                      onClick: handleSetPendingEdit({
-                        ...task,
-                        assignedTechnicians: '',
-                      } as TaskEdit),
+                      onClick: () =>
+                        handleSetPendingEdit({
+                          ...task,
+                          assignedTechnicians: '',
+                        } as TaskEdit),
                     },
                     {
                       value: task.getReferenceNumber(),
-                      onClick: handleSetPendingEdit({
-                        ...task,
-                        assignedTechnicians: '',
-                      } as TaskEdit),
+                      onClick: () =>
+                        handleSetPendingEdit({
+                          ...task,
+                          assignedTechnicians: '',
+                        } as TaskEdit),
                     },
                     {
                       value: prioritiesMap[task.getPriorityId()],
-                      onClick: handleSetPendingEdit({
-                        ...task,
-                        assignedTechnicians: '',
-                      } as TaskEdit),
+                      onClick: () =>
+                        handleSetPendingEdit({
+                          ...task,
+                          assignedTechnicians: '',
+                        } as TaskEdit),
                     },
                     {
                       value: task.getBriefDescription(),
-                      onClick: handleSetPendingEdit({
-                        ...task,
-                        assignedTechnicians: '',
-                      } as TaskEdit),
+                      onClick: () =>
+                        handleSetPendingEdit({
+                          ...task,
+                          assignedTechnicians: '',
+                        } as TaskEdit),
                     },
                     {
                       value: statusesMap[task.getStatusId()],
-                      onClick: handleSetPendingEdit({
-                        ...task,
-                        assignedTechnicians: '',
-                      } as TaskEdit),
+                      onClick: () =>
+                        handleSetPendingEdit({
+                          ...task,
+                          assignedTechnicians: '',
+                        } as TaskEdit),
                     },
                     {
                       value: formatDateTime(task.getTimeCreated()),
-                      onClick: handleSetPendingEdit({
-                        ...task,
-                        assignedTechnicians: '',
-                      } as TaskEdit),
+                      onClick: () =>
+                        handleSetPendingEdit({
+                          ...task,
+                          assignedTechnicians: '',
+                        } as TaskEdit),
                     },
                     {
                       value: formatDateTime(task.getTimeDue()),
-                      onClick: handleSetPendingEdit({
-                        ...task,
-                        assignedTechnicians: '',
-                      } as TaskEdit),
+                      onClick: () =>
+                        handleSetPendingEdit({
+                          ...task,
+                          assignedTechnicians: '',
+                        } as TaskEdit),
                       actions: [
                         <IconButton
                           key="edit"
                           size="small"
-                          onClick={handleSetPendingEdit({
-                            ...task,
-                            assignedTechnicians: '',
-                          } as TaskEdit)} // FIXME
+                          onClick={() =>
+                            handleSetPendingEdit({
+                              ...task,
+                              assignedTechnicians: '',
+                            } as TaskEdit)
+                          } // FIXME
                         >
                           <EditIcon />
                         </IconButton>,
                         <IconButton
                           key="delete"
                           size="small"
-                          onClick={handleSetPendingDelete(task)}
+                          onClick={() => handleSetPendingDelete(task)}
                         >
                           <DeleteIcon />
                         </IconButton>,
@@ -776,17 +826,17 @@ export const Tasks: FC<Props> = ({
       {pendingEdit && (
         <Modal
           open
-          onClose={handleSetPendingEdit()}
-          fullScreen={!!pendingEdit.getId()}
+          onClose={() => handleSetPendingEdit()}
+          fullScreen={!!(safePendingEdit as Task).getId()}
         >
           <div className="TasksEdit">
             <div className="TasksEditForm">
               <Form
                 key={formKey}
                 title={`${
-                  pendingEdit.getId() ? 'Edit' : 'Add'
+                  (safePendingEdit as Task).getId() ? 'Edit' : 'Add'
                 } ${typeTitle} Task`}
-                onClose={handleSetPendingEdit()}
+                onClose={() => handleSetPendingEdit()}
                 onSave={handleSave}
                 onChange={setPendingEdit}
                 schema={SCHEMA_TASK}
@@ -794,7 +844,7 @@ export const Tasks: FC<Props> = ({
                 disabled={saving}
               />
             </div>
-            {!!pendingEdit.getId() && (
+            {!!(safePendingEdit as Task).getId() && (
               <div className="TasksEditAside">
                 <SectionBar
                   title="Task Actions"
@@ -898,7 +948,7 @@ export const Tasks: FC<Props> = ({
                 />
                 <Documents
                   title="Documents"
-                  taskId={pendingEdit.getId()}
+                  taskId={(safePendingEdit as Task).getId()}
                   withDownloadIcon
                   withDateCreated
                   renderAdding={(onClose, onReload) => (
