@@ -2,15 +2,13 @@ const getMimeType = require('../helpers.ts').getMimeType;
 const perDiemTripMilesToUsd = require('../helpers.ts').perDiemTripMilesToUsd;
 const loadActivityLogsByFilter =
   require('../helpers.ts').loadActivityLogsByFilter;
-const LoadActivityLogsByFilter =
-  require('../helpers.ts').LoadActivityLogsByFilter;
-const milesFactor = require('../constants.ts').IRS_SUGGESTED_MILES_FACTOR;
-const EventType = require('@kalos-core/kalos-rpc/Event/index.ts').Event; // ! These have to be "require" not "import" because Mocha runs in a Node environment
+const EventType = require('@kalos-core/kalos-rpc/Event/index.ts').Event; // ! These have to be "require" not "import" because Chai runs in a Node environment
 // ! but are otherwise the same. This is named "EventType" instead of Event because of a name conflict with JS Event, you can keep the name the same for other types
 const EventClientService = require('../helpers.ts').EventClientService;
 const Setup = require('./setup.js'); // ? Sets the auth token up in a one-liner
 require('./grpc-endpoint.js'); // ? Required to run tests with RPCs in Mocha (because Mocha runs in a Node environment)
 export const expectImport = require('./chai-setup.js').expectImport;
+
 describe('helpers', () => {
   describe('#getMimeType', () => {
     it('should return image/png when "test.png" is provided as argument', () => {
