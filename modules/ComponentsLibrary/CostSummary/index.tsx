@@ -553,6 +553,19 @@ export const CostSummary: FC<Props> = ({
     //setSpiffsWeekly(tempSpiffs);
   };
   const toggleProcessPerDiems = async (perDiems: PerDiem[]) => {
+    const tempPerDiem = totalPerDiem;
+    const tempTrips = tripsTotal;
+    console.log(tempTrips);
+    dispatch({ type: 'updateTripsTotalProcessed', data: tempTrips });
+    dispatch({ type: 'updatePerDiemTotalProcessed', data: tempPerDiem });
+    console.log('dispatching');
+    tempPerDiem.processed = 1;
+    tempTrips.processed = true;
+    tempTrips.totalDistance = 0;
+    tempPerDiem.totalLodging = 0;
+    tempPerDiem.totalMeals = 0;
+    dispatch({ type: 'updateTripsTotal', data: tempTrips });
+    dispatch({ type: 'updatePerDiemTotal', data: tempPerDiem });
     for (let i = 0; i < perDiems.length; i++) {
       let req = new PerDiem();
       req.setId(perDiems[i].getId());
@@ -674,7 +687,6 @@ export const CostSummary: FC<Props> = ({
               type: 'updateTripsTotalProcessed',
               data: tripsDataProcessed,
             });
-            console.log(tripsDataProcessed);
             resolve();
           } catch (err) {
             console.log('error getting trips', err);

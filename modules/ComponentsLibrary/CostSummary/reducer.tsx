@@ -70,6 +70,7 @@ export const reducer = (state: State, action: Action) => {
       };
     }
     case 'updateTripsTotalProcessed': {
+      console.log(action.data);
       return {
         ...state,
         totalTripsProcessed: action.data,
