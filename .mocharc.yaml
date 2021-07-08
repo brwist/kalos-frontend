@@ -4,3 +4,4 @@ require:
   - '@babel/register'
 extension: 
   - 'ts'
+  - 'tsx'

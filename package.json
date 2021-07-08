@@ -14,8 +14,8 @@
     "bust": "gulp -LL bust",
     "less": "lessc styles/index.less styles/main.css",
     "upload": "gulp -LL upload",
-    "test": "ts-mocha -r esm -r ./test/babel-helper.js -r mock-local-storage",
-    "test-watch": "ts-mocha -r esm -r ./test/babel-helper.js -w"
+    "test": "ts-mocha --recursive -r esm -r ignore-styles -r ./test/babel-helper.js -r mock-local-storage",
+    "test-watch": "ts-mocha --recursive -r esm -r ignore-styles -r ./test/babel-helper.js -w"
   },
   "author": "Robert Milejczak <robbie@kalosflorida.com>",
   "license": "MIT",
@@ -56,9 +56,11 @@
     "chai": "^4.3.4",
     "core-js": "^3.15.2",
     "cssnano": "^4.1.10",
+    "enzyme": "^3.11.0",
     "eslint": "^6.5.1",
     "eslint-plugin-react": "^7.20.0",
     "gulp": "^4.0.2",
+    "ignore-styles": "^5.0.1",
     "less": "^3.10.3",
     "mock-local-storage": "^1.1.17",
     "react-test-renderer": "^17.0.1",
