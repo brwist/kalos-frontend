@@ -171,6 +171,7 @@ export const Tasks: FC<Props> = ({
     req.setExternalCode(externalCode);
     req.setExternalId(externalId);
     const res = await TaskClientService.loadTasks(req);
+    console.log('Results list: ', res.getResultsList());
     setTasks(res.getResultsList());
     setCount(res.getTotalCount());
     setLoading(false);
@@ -193,6 +194,8 @@ export const Tasks: FC<Props> = ({
       }
 
       safeTaskEdit.setPriorityId(2);
+      safeTaskEdit.setExternalCode(externalCode);
+      safeTaskEdit.setExternalId(externalId);
       const technicianIds = taskEdit.assignedTechnicians
         ? taskEdit.assignedTechnicians.split(',').map(id => +id)
         : [];
@@ -216,7 +219,7 @@ export const Tasks: FC<Props> = ({
       setPendingEdit(undefined);
       setLoaded(false);
     },
-    [setSaving, setPendingEdit],
+    [externalCode, externalId],
   );
   const handleSetSearch = useCallback(
     (newSearch: TaskEdit) => setSearch(newSearch),
@@ -272,60 +275,60 @@ export const Tasks: FC<Props> = ({
     return { ...req, assignedTechnicians: '' };
   }, []);
   const handleDocumentUpload = useCallback(
-    (onClose, onReload) => async ({
-      filename,
-      description,
-    }: DocumentUplodad) => {
-      if (!pendingEdit || !pendingEdit.getId()) return;
-      setUploadFailed(false);
-      setUploading(true);
-      const ext = filename.split('.').pop();
-      const fileName =
-        kebabCase(
-          [
-            pendingEdit.getId(),
-            timestamp(true).split('-').reverse(),
-            description.trim() || filename.replace('.' + ext, ''),
-          ].join(' '),
-        ) +
-        '.' +
-        ext;
-      const status = await uploadFileToS3Bucket(
-        fileName,
-        documentFile,
-        'testbuckethelios', // FIXME is it correct bucket name for those docs?
-      );
-      if (status === 'ok') {
-        await DocumentClientService.createTaskDocument(
+    (onClose, onReload) =>
+      async ({ filename, description }: DocumentUplodad) => {
+        if (!pendingEdit || !pendingEdit.getId()) return;
+        setUploadFailed(false);
+        setUploading(true);
+        const ext = filename.split('.').pop();
+        const fileName =
+          kebabCase(
+            [
+              pendingEdit.getId(),
+              timestamp(true).split('-').reverse(),
+              description.trim() || filename.replace('.' + ext, ''),
+            ].join(' '),
+          ) +
+          '.' +
+          ext;
+        const status = await uploadFileToS3Bucket(
           fileName,
-          pendingEdit.getId(),
-          loggedUserId,
-          description,
+          documentFile,
+          'testbuckethelios', // FIXME is it correct bucket name for those docs?
         );
-        onClose();
-        onReload();
-        setUploading(false);
-      } else {
-        setUploadFailed(true);
-        setUploading(false);
-      }
-    },
+        if (status === 'ok') {
+          await DocumentClientService.createTaskDocument(
+            fileName,
+            pendingEdit.getId(),
+            loggedUserId,
+            description,
+          );
+          onClose();
+          onReload();
+          setUploading(false);
+        } else {
+          setUploadFailed(true);
+          setUploading(false);
+        }
+      },
     [documentFile, loggedUserId, pendingEdit, setUploadFailed, setUploading],
   );
-  const handleFileLoad = useCallback(file => setDocumentFile(file), [
-    setDocumentFile,
-  ]);
+  const handleFileLoad = useCallback(
+    file => setDocumentFile(file),
+    [setDocumentFile],
+  );
   const handleDocumentUpdate = useCallback(
-    (onClose, onReload, { id }) => async (form: Document) => {
-      setDocumentSaving(true);
-      await DocumentClientService.updateDocumentDescription(
-        id,
-        form.getDescription(),
-      );
-      setDocumentSaving(false);
-      onClose();
-      onReload();
-    },
+    (onClose, onReload, { id }) =>
+      async (form: Document) => {
+        setDocumentSaving(true);
+        await DocumentClientService.updateDocumentDescription(
+          id,
+          form.getDescription(),
+        );
+        setDocumentSaving(false);
+        onClose();
+        onReload();
+      },
     [setDocumentSaving],
   );
   const SPIFF_TYPES_OPTIONS: Option[] = useMemo(
