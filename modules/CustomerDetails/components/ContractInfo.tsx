@@ -302,22 +302,22 @@ export const ContractInfo: FC<Props> = props => {
     [
       {
         label: 'Start Date',
-        name: 'dateStarted',
+        name: 'getDateStarted',
         required: true,
         type: 'date',
       },
-      { label: 'End Date', name: 'dateEnded', required: true, type: 'date' },
+      { label: 'End Date', name: 'getDateEnded', required: true, type: 'date' },
     ],
     [
       {
         label: 'Frequency',
-        name: 'frequency',
+        name: 'getFrequency',
         required: true,
         options: frequencyOptions,
       },
       {
         label: 'Billing',
-        name: 'groupBilling',
+        name: 'getGroupBilling',
         required: true,
         options: BILLING_OPTIONS,
       },
@@ -325,22 +325,22 @@ export const ContractInfo: FC<Props> = props => {
     [
       {
         label: 'Payment Type',
-        name: 'paymentType',
+        name: 'getPaymentType',
         required: true,
         options: PAYMENT_TYPE_OPTIONS,
       },
       {
         label: 'Payment Status',
-        name: 'paymentStatus',
+        name: 'getPaymentStatus',
         required: true,
         options: PAYMENT_STATUS_OPTIONS,
       },
     ],
-    [{ label: 'Notes', name: 'notes', multiline: true }],
+    [{ label: 'Notes', name: 'getNotes', multiline: true }],
     [
       {
         content: (
-          <PlainForm<InvoiceType>
+          <PlainForm<Invoice>
             schema={INVOICE_SCHEMA}
             data={invoice}
             onChange={setInvoice}
@@ -350,67 +350,56 @@ export const ContractInfo: FC<Props> = props => {
       },
     ],
   ];
-  const {
-    id,
-    number,
-    groupBilling,
-    dateStarted,
-    dateEnded,
-    paymentType,
-    paymentStatus,
-    frequency,
-    notes,
-    paymentTerms,
-  } = entry;
   const data: Data = [
     [
-      { label: 'Contract Number', value: number },
-      { label: 'Billing', value: groupBilling === 1 ? 'Group' : 'Site' },
-    ],
-    [
-      { label: 'Start Date', value: formatDate(dateStarted) },
-      { label: 'Payment Type', value: paymentType },
-    ],
-    [
-      { label: 'End Date', value: formatDate(dateEnded) },
-      { label: 'Payment Status', value: paymentStatus },
-    ],
-    [
-      { label: 'Frequency', value: getFrequencyById(frequency) },
-      { label: 'Payment Terms', value: paymentTerms },
-    ],
-    [{ label: 'Notes', value: notes }],
-  ];
-  const propertiesData: Data = properties.map(
-    ({ id, address, city, state, zip }, idx) => [
+      { label: 'Contract Number', value: entry.getNumber() },
       {
-        value: (
-          <Field
-            name={`property-${id}`}
-            label={`${address}, ${city}, ${state} ${zip}`}
-            type="checkbox"
-            value={propertiesIds.includes(id)}
-            onChange={handleChangePropertiesIds(id)}
-            className="ContractInfoProperty"
-            disabled={saving}
-          />
-        ),
-        actions: propertiesIds.includes(id)
-          ? [
-              // TODO: PM's count
-              <span key={0} className="ContractInfoPropertyPM">
-                PMs: 1 <AddCircleIcon className="ContractInfoPropertyAdd" />
-              </span>,
-            ]
-          : [],
+        label: 'Billing',
+        value: entry.getGroupBilling() === 1 ? 'Group' : 'Site',
       },
     ],
-  );
+    [
+      { label: 'Start Date', value: formatDate(entry.getDateStarted()) },
+      { label: 'Payment Type', value: entry.getPaymentType() },
+    ],
+    [
+      { label: 'End Date', value: formatDate(entry.getDateEnded()) },
+      { label: 'Payment Status', value: entry.getPaymentStatus() },
+    ],
+    [
+      { label: 'Frequency', value: getFrequencyById(entry.getFrequency()) },
+      { label: 'Payment Terms', value: entry.getPaymentTerms() },
+    ],
+    [{ label: 'Notes', value: entry.getNotes() }],
+  ];
+  const propertiesData: Data = properties.map(property => [
+    {
+      value: (
+        <Field
+          name={`property-${property.getId()}`}
+          label={`${property.getAddress()}, ${property.getCity()}, ${property.getState()} ${property.getZip()}`}
+          type="checkbox"
+          value={propertiesIds.includes(property.getId())}
+          onChange={handleChangePropertiesIds(property.getId())}
+          className="ContractInfoProperty"
+          disabled={saving}
+        />
+      ),
+      actions: propertiesIds.includes(property.getId())
+        ? [
+            // TODO: PM's count
+            <span key={0} className="ContractInfoPropertyPM">
+              PMs: 1 <AddCircleIcon className="ContractInfoPropertyAdd" />
+            </span>,
+          ]
+        : [],
+    },
+  ]);
   return (
     <>
       <div className="ContractInfo">
         <div className="ContractInfoPanel">
-          {entry.id === 0 ? (
+          {entry.getId() === 0 ? (
             <SectionBar
               title="Contract Info"
               actions={
@@ -438,7 +427,7 @@ export const ContractInfo: FC<Props> = props => {
                   // onClick: handleToggleEditing, // TODO: finish edit form
                   url: [
                     getCFAppUrl('admin:contracts.edit'),
-                    `contract_id=${id}`,
+                    `contract_id=${entry.getId()}`,
                     'p=1',
                   ].join('&'),
                 },
@@ -446,14 +435,14 @@ export const ContractInfo: FC<Props> = props => {
                   label: 'Materials',
                   url: [
                     getCFAppUrl('admin:contracts.materials'),
-                    `contract_id=${id}`,
+                    `contract_id=${entry.getId()}`,
                   ].join('&'),
                 },
                 {
                   label: 'Summary',
                   url: [
                     getCFAppUrl('admin:contracts.summary'),
-                    `contract_id=${id}`,
+                    `contract_id=${entry.getId()}`,
                     'refpage=1',
                   ].join('&'),
                 },
@@ -477,15 +466,17 @@ export const ContractInfo: FC<Props> = props => {
           {children}
         </div>
         <div className="ContractInfoAsidePanel">
-          <ContractDocuments contractID={entry.id} {...props} />
+          <ContractDocuments contractID={entry.getId()} {...props} />
         </div>
       </div>
       <Modal open={editing} onClose={handleToggleEditing}>
         <div className="ContractInfoForm">
-          <Form<Entry>
-            title={`Customer: ${customer.firstname} ${customer.lastname}`}
+          <Form<Contract>
+            title={`Customer: ${customer.getFirstname()} ${customer.getLastname()}`}
             subtitle={
-              entry.id === 0 ? 'New contract' : `Edit contract: ${number}`
+              entry.getId() === 0
+                ? 'New contract'
+                : `Edit contract: ${entry.getNumber()}`
             }
             schema={SCHEMA}
             data={entry}
@@ -504,7 +495,7 @@ export const ContractInfo: FC<Props> = props => {
         onClose={handleSetDeleting(false)}
         onConfirm={handleDelete}
         kind="Contract"
-        name={`${number}`}
+        name={`${entry.getNumber()}`}
       />
       <Confirm
         title="Confirm New Contract"
