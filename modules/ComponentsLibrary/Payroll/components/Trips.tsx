@@ -2,35 +2,22 @@ import React, { FC, useCallback, useEffect, useState } from 'react';
 import { format } from 'date-fns';
 import { parseISO } from 'date-fns/esm';
 import IconButton from '@material-ui/core/IconButton';
-import FlashOff from '@material-ui/icons/FlashOff';
 import Visibility from '@material-ui/icons/Visibility';
-import {
-  Trip,
-  TripList,
-} from '@kalos-core/kalos-rpc/compiled-protos/perdiem_pb';
-import CheckCircleOutlineIcon from '@material-ui/icons/CheckCircleOutline';
-import AccountBalanceWalletIcon from '@material-ui/icons/AccountBalanceWallet';
+import { Trip } from '@kalos-core/kalos-rpc/compiled-protos/perdiem_pb';
 import { Modal } from '../../Modal';
 import { SectionBar } from '../../SectionBar';
 import { InfoTable } from '../../InfoTable';
-import { PlainForm, Schema } from '../../PlainForm';
 import { TripSummaryNew } from '../../TripSummaryNew';
-import NotInterestedIcon from '@material-ui/icons/NotInterested';
 import { Tooltip } from '../../Tooltip';
-import { Confirm } from '../../Confirm';
 import { Button } from '../../Button';
 import {
   makeFakeRows,
   formatDate,
   PerDiemClientService,
-  getSlackID,
-  slackNotify,
-  UserClientService,
 } from '../../../../helpers';
 import { NULL_TIME, OPTION_ALL, ROWS_PER_PAGE } from '../../../../constants';
 import { RoleType } from '../index';
-import { getDepartmentName } from '@kalos-core/kalos-rpc/Common';
-
+import { startOfWeek, subDays, addDays } from 'date-fns';
 interface Props {
   loggedUserId: number;
   departmentId: number;
@@ -43,6 +30,7 @@ const formatWeek = (date: string) => {
   const d = parseISO(date);
   return `Week of ${format(d, 'MMMM')}, ${format(d, 'do')}`;
 };
+const formatDateFns = (date: Date) => format(date, 'yyyy-MM-dd');
 
 export const Trips: FC<Props> = ({
   loggedUserId,
@@ -60,6 +48,9 @@ export const Trips: FC<Props> = ({
   const managerFilter = role === 'Manager';
   const auditorFilter = role == 'Auditor';
   const payrollFilter = role == 'Payroll';
+  const today = new Date();
+  const startDay = startOfWeek(subDays(today, 7), { weekStartsOn: 6 });
+  const endDay = addDays(startDay, 7);
   const load = useCallback(async () => {
     setLoading(true);
     const tripReq = new Trip();
@@ -78,8 +69,15 @@ export const Trips: FC<Props> = ({
       tripReq.setPayrollProcessed(false);
       tripReq.addNotEquals('PayrollProcessed');
     }
-    if (managerFilter) {
+    if (managerFilter && week == OPTION_ALL) {
       tripReq.setAdminActionDate(NULL_TIME);
+      tripReq.setDateRangeList([
+        '>=',
+        '0001-01-01',
+        '<',
+        formatDateFns(endDay),
+      ]);
+      tripReq.setDateTargetList(['date']);
     }
     console.log(tripReq);
     const trips = await PerDiemClientService.BatchGetTrips(tripReq);
@@ -193,6 +191,7 @@ export const Trips: FC<Props> = ({
             canProcessPayroll={role === 'Payroll'}
             userId={TripViewed.getUserId()}
             checkboxes={role === 'Payroll'}
+            managerView={role === 'Manager'}
           />
         </Modal>
       )}

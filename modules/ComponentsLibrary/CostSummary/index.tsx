@@ -40,8 +40,6 @@ import {
 import { reducer } from './reducer';
 import { NULL_TIME_VALUE } from '../Timesheet/constants';
 import { NULL_TIME } from '@kalos-core/kalos-rpc/constants';
-import { fi } from 'date-fns/locale';
-import { act } from 'react-test-renderer';
 interface Props {
   userId: number;
   loggedUserId: number;
