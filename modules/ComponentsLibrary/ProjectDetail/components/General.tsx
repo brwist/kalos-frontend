@@ -2,12 +2,12 @@ import { getDepartmentName } from '@kalos-core/kalos-rpc/Common';
 import { TimesheetDepartment } from '@kalos-core/kalos-rpc/TimesheetDepartment';
 import { format } from 'date-fns';
 import React, { FC, forwardRef } from 'react';
-import { EventType } from '../../../../helpers';
+import { Event } from '@kalos-core/kalos-rpc/Event';
 import { Data, InfoTable } from '../../InfoTable';
 
 interface Props {
-  project: EventType;
-  projectDepartment: TimesheetDepartment.AsObject;
+  project: Event;
+  projectDepartment: TimesheetDepartment;
 }
 
 export const General: FC<Props> = forwardRef(
@@ -15,38 +15,38 @@ export const General: FC<Props> = forwardRef(
     const deptName = getDepartmentName(projectDepartment);
     const data_project = [
       [
-        { label: 'Id', value: project.id },
-        { label: 'Name', value: project.name },
+        { label: 'Id', value: project.getId() },
+        { label: 'Name', value: project.getName() },
         {
           label: 'Is Active?',
-          value: project.isActive == 1 ? 'True' : 'False',
+          value: project.getIsActive() == 1 ? 'True' : 'False',
         },
       ],
       [
         {
           label: 'Notes',
-          value: project.notes,
+          value: project.getNotes(),
         },
-        { label: 'Description', value: project.description },
+        { label: 'Description', value: project.getDescription() },
       ],
       [
         {
           label: 'Date Started',
-          value: format(new Date(project.dateStarted), 'yyyy-MM-dd'),
+          value: format(new Date(project.getDateStarted()), 'yyyy-MM-dd'),
         },
         {
           label: 'Time Started',
-          value: format(new Date(project.dateStarted), 'hh:mm:ss'),
+          value: format(new Date(project.getDateStarted()), 'hh:mm:ss'),
         },
       ],
       [
         {
           label: 'Date Ended',
-          value: format(new Date(project.dateEnded), 'yyyy-MM-dd'),
+          value: format(new Date(project.getDateEnded()), 'yyyy-MM-dd'),
         },
         {
           label: 'Time Ended',
-          value: format(new Date(project.dateEnded), 'hh:mm:ss'),
+          value: format(new Date(project.getDateEnded()), 'hh:mm:ss'),
         },
       ],
       [
@@ -56,37 +56,37 @@ export const General: FC<Props> = forwardRef(
         },
         {
           label: 'Property ID',
-          value: project.propertyId,
+          value: project.getPropertyId(),
         },
       ],
       [
         {
           label: 'Date Updated',
-          value: format(new Date(project.dateUpdated), 'yyyy-MM-dd'),
+          value: format(new Date(project.getDateUpdated()), 'yyyy-MM-dd'),
         },
         {
           label: 'Date Created',
-          value: format(new Date(project.dateCreated), 'yyyy-MM-dd'),
+          value: format(new Date(project.getDateCreated()), 'yyyy-MM-dd'),
         },
       ],
       [
         {
           label: 'All Day?',
-          value: project.isAllDay == 1 ? 'True' : 'False',
+          value: project.getIsAllDay() == 1 ? 'True' : 'False',
         },
         {
           label: 'Is LMPC?',
-          value: project.isLmpc == 1 ? 'True' : 'False',
+          value: project.getIsLmpc() == 1 ? 'True' : 'False',
         },
       ],
       [
         {
           label: 'Is Residential?',
-          value: project.isResidential,
+          value: project.getIsResidential(),
         },
         {
           label: 'Parent ID',
-          value: project.parentId,
+          value: project.getParentId(),
         },
       ],
     ] as Data;
