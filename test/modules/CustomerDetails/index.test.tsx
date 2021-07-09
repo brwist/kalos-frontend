@@ -8,8 +8,8 @@ let MODULES_PATH_FROM_TEST =
 let SETUP_PATH_FROM_TEST_MODULES =
   require('../../test-constants/constants').SETUP_PATH_FROM_TEST_MODULES;
 
-const SectionBar =
-  require(`../../../modules/ComponentsLibrary/SectionBar/index`).SectionBar;
+const ContractInfo =
+  require(`${MODULES_PATH_FROM_TEST}/CustomerDetails/components/ContractInfo`).ContractInfo;
 
 let CustomerDetails =
   require(`${MODULES_PATH_FROM_TEST}/CustomerDetails/components/CustomerDetails`).CustomerDetails;
@@ -26,11 +26,9 @@ describe('CustomerDetails', () => {
     it('renders with a section bar and a plain form', () => {
       const wrapper = shallow(
         <CustomerDetails userID={2573} loggedUserId={101253} withHeader />,
-      );
+      ).dive();
 
-      expectImport(
-        wrapper.containsAllMatchingElements([<SectionBar></SectionBar>]),
-      ).to.equal(true);
+      expectImport(wrapper.find('div.CustomerInformation')).to.have.lengthOf(1);
     });
   });
 });
