@@ -1,5 +1,5 @@
 // This is the module that allows for users to add logs with photos, etc uploaded with them
-
+// this files ts-ignore lines have been checked
 import { ActivityLog } from '@kalos-core/kalos-rpc/ActivityLog';
 import { Typography } from '@material-ui/core';
 import React, { FC, useCallback, useState } from 'react';
@@ -8,6 +8,7 @@ import {
   ActivityLogClientService,
   getS3LogImageFileName,
   S3ClientService,
+  keyToMethodName,
 } from '../../../helpers';
 import { Loader } from '../../Loader/main';
 import { Alert } from '../Alert';
@@ -209,7 +210,7 @@ export const AddLog: FC<Props> = ({
               continue;
             }
             // @ts-ignore
-            saved[getRPCFields(field).methodName](savedLog[field]);
+            saved[keyToMethodName(set, field)](savedLog[field]);
           }
           handleSaveLog(saved);
         }}

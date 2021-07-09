@@ -1,3 +1,4 @@
+// this files ts-ignore lines have been checked
 import React from 'react';
 import InputLabel from '@material-ui/core/InputLabel';
 import FormHelperText from '@material-ui/core/FormHelperText';
@@ -19,7 +20,7 @@ interface state<T> {
 
 export class Picker<
   T extends { id: number; description: string },
-  C extends BaseClient
+  C extends BaseClient,
 > extends React.PureComponent<props<T, C>, state<T>> {
   Client: C;
   constructor(props: props<T, C>) {

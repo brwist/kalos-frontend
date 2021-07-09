@@ -1,3 +1,4 @@
+// this files ts-ignore lines have been checked
 import React from 'react';
 import ReactPDF from '@react-pdf/renderer';
 import { QuoteLine } from '@kalos-core/kalos-rpc/QuoteLine';
