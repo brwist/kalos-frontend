@@ -170,8 +170,8 @@ export const Tasks: FC<Props> = ({
     req.setPageNumber(page);
     req.setExternalCode(externalCode);
     req.setExternalId(externalId);
+    req.setIsActive(true);
     const res = await TaskClientService.loadTasks(req);
-    console.log('Results list: ', res.getResultsList());
     setTasks(res.getResultsList());
     setCount(res.getTotalCount());
     setLoading(false);
@@ -226,10 +226,22 @@ export const Tasks: FC<Props> = ({
     [setSearch],
   );
   const handleDelete = useCallback(async () => {
-    if (!pendingDelete) return;
+    if (!pendingDelete) {
+      console.error(
+        'handleDelete was called with no pendingDelete variable set. This is a no-op.',
+      );
+      return;
+    }
+
+    try {
+      await TaskClientService.deleteSpiffTool(pendingDelete!.getId());
+    } catch (err) {
+      console.error(
+        `An error occurred while deleting a spiff tool entry: ${err}`,
+      );
+    }
     setPendingDelete(undefined);
     setLoading(true);
-    await TaskClientService.deleteSpiffTool(pendingDelete.getId());
     setLoaded(false);
   }, [pendingDelete, setPendingDelete, setLoading, setLoaded]);
   const handlePageChange = useCallback(
@@ -262,7 +274,7 @@ export const Tasks: FC<Props> = ({
     [setPendingEdit, loadTaskEvents],
   );
   const handleSetPendingDelete = useCallback(
-    (pendingDelete?: Task) => () => setPendingDelete(pendingDelete),
+    (pendingDelete?: Task) => setPendingDelete(pendingDelete),
     [setPendingDelete],
   );
   const handleSearch = useCallback(() => setLoaded(false), [setLoaded]);
@@ -397,13 +409,11 @@ export const Tasks: FC<Props> = ({
     loadTaskEvents(pendingEdit.getId());
   }, [pendingEdit, loggedUserId, setTaskEventsLoading, loadTaskEvents]);
   const handleSetTaskEventEditing = useCallback(
-    (taskEventEditing?: TaskEvent) => () =>
-      setTaskEventEditing(taskEventEditing),
+    (taskEventEditing?: TaskEvent) => setTaskEventEditing(taskEventEditing),
     [setTaskEventEditing],
   );
   const handleSetTaskEventDeleting = useCallback(
-    (taskEventDeleting?: TaskEvent) => () =>
-      setTaskEventDeleting(taskEventDeleting),
+    (taskEventDeleting?: TaskEvent) => setTaskEventDeleting(taskEventDeleting),
     [setTaskEventDeleting],
   );
   const handleDeleteTaskEvent = useCallback(async () => {
@@ -860,7 +870,7 @@ export const Tasks: FC<Props> = ({
                               ? 'Completed'
                               : 'Start',
                             onClick: isLastTaskEventStarted
-                              ? handleSetTaskEventEditing(taskEvents[0])
+                              ? () => handleSetTaskEventEditing(taskEvents[0])
                               : handleStartTaskAction,
                           },
                         ]
@@ -926,9 +936,9 @@ export const Tasks: FC<Props> = ({
                                       <IconButton
                                         key="edit"
                                         size="small"
-                                        onClick={handleSetTaskEventEditing(
-                                          taskEvent,
-                                        )}
+                                        onClick={() =>
+                                          handleSetTaskEventEditing(taskEvent)
+                                        }
                                       >
                                         <EditIcon />
                                       </IconButton>,
@@ -936,9 +946,9 @@ export const Tasks: FC<Props> = ({
                                 <IconButton
                                   key="delete"
                                   size="small"
-                                  onClick={handleSetTaskEventDeleting(
-                                    taskEvent,
-                                  )}
+                                  onClick={() =>
+                                    handleSetTaskEventDeleting(taskEvent)
+                                  }
                                 >
                                   <DeleteIcon />
                                 </IconButton>,
@@ -1001,16 +1011,16 @@ export const Tasks: FC<Props> = ({
       {pendingDelete && (
         <ConfirmDelete
           open
-          onClose={handleSetPendingDelete()}
+          onClose={() => handleSetPendingDelete()}
           kind={`${typeTitle} Task`}
           name={`${pendingDelete.getId()}`}
-          onConfirm={handleDelete}
+          onConfirm={() => handleDelete()}
         />
       )}
       {taskEventDeleting && (
         <ConfirmDelete
           open
-          onClose={handleSetTaskEventDeleting()}
+          onClose={() => handleSetTaskEventDeleting()}
           kind="Task Action"
           name={`started at ${formatDateTime(
             taskEventDeleting.getTimeStarted(),
@@ -1019,14 +1029,14 @@ export const Tasks: FC<Props> = ({
         />
       )}
       {taskEventEditing && (
-        <Modal open onClose={handleSetTaskEventEditing()}>
+        <Modal open onClose={() => handleSetTaskEventEditing()}>
           <Form
             title={`${
               taskEventEditing.getTimeFinished() ? 'Edit' : 'Complete'
             } Task Action`}
             schema={SCHEMA_TASK_EVENT}
             data={taskEventEditing}
-            onClose={handleSetTaskEventEditing()}
+            onClose={() => handleSetTaskEventEditing()}
             onSave={handleSaveTaskEvent}
           />
         </Modal>
