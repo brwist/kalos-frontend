@@ -1,3 +1,4 @@
+// this files ts-ignore lines have been checked
 import React, { FC } from 'react';
 import clsx from 'clsx';
 import Container from '@material-ui/core/Container';

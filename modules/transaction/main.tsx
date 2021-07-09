@@ -1,3 +1,4 @@
+// this files ts-ignore lines have been checked
 import * as React from 'react';
 import { UserClient, User } from '@kalos-core/kalos-rpc/User';
 import { TransactionAdminView } from './components/admin';

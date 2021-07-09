@@ -181,7 +181,7 @@ export const Form: <T>(
         </PlainForm>
         {!title && (
           <button
-            //@ts-ignore
+            // @ts-ignore
             ref={functionRef}
             onClick={handleSave}
             style={{ display: 'none' }}

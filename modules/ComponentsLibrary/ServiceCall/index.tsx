@@ -107,9 +107,8 @@ export const ServiceCall: FC<Props> = props => {
     useState<boolean>(false);
   const [projects, setProjects] = useState<Event[]>([]);
   const [parentId, setParentId] = useState<number | null>(null);
-  const [confirmedParentId, setConfirmedParentId] = useState<number | null>(
-    null,
-  );
+  const [confirmedParentId, setConfirmedParentId] =
+    useState<number | null>(null);
   const [projectData, setProjectData] = useState<Event>(new Event());
   const loadEntry = useCallback(
     async (_serviceCallId = serviceCallId) => {
@@ -295,20 +294,7 @@ export const ServiceCall: FC<Props> = props => {
       res = await EventClientService.Create(req);
       console.log('creating new one');
     }
-    /*
-    requestFields.forEach(fieldName => {
-      //@ts-ignore
-      if (fieldName === 'id' || typeof entry[fieldName] === 'object') return;
-      const { upperCaseProp, methodName } = getRPCFields(fieldName);
-      //@ts-ignore
-      req[methodName](entry[fieldName]);
-      fieldMaskList.push(upperCaseProp);
-    });
-    req.setFieldMaskList(fieldMaskList);
-    const res = await EventClientService[serviceCallId ? 'Update' : 'Create'](
-      req,
-    );
-    */
+
     setEntry(res);
     setSaving(false);
     if (!serviceCallId) {

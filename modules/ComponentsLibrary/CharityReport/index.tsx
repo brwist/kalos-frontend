@@ -14,16 +14,30 @@ interface Props {
   onClose?: () => void;
 }
 
+interface CharityReport {
+  residentialServiceTotal: number;
+  residentialAorTotal: number;
+  items: {
+    technician: string;
+    contribution: number;
+    averageHourly: number;
+  }[];
+}
+
 export const CharityReport: FC<Props> = ({ month, onClose }) => {
   const [loaded, setLoaded] = useState<boolean>(false);
   const [loading, setLoading] = useState<boolean>(true);
-  const [data, setData] = useState<any>({ items: [] });
+  const [data, setData] = useState<CharityReport>({
+    residentialAorTotal: 0,
+    residentialServiceTotal: 0,
+    items: [],
+  });
   const load = useCallback(async () => {
     setLoading(true);
     const data = await loadCharityReport(month);
     setData(data);
     setLoading(false);
-  }, [setLoading, setData]);
+  }, [setLoading, setData, month]);
   useEffect(() => {
     if (!loaded) {
       setLoaded(true);
@@ -80,7 +94,6 @@ export const CharityReport: FC<Props> = ({ month, onClose }) => {
                       { title: 'Average Hourly', align: 'right' },
                     ]}
                     data={data.items.map(
-                      //@ts-ignore
                       ({ technician, contribution, averageHourly }) => [
                         technician,
                         usd(contribution),
@@ -119,9 +132,7 @@ export const CharityReport: FC<Props> = ({ month, onClose }) => {
               { name: 'Contribution' },
               { name: 'Average Hourly' },
             ]}
-            //@ts-ignore
             data={data.items.map(
-              //@ts-ignore
               ({ technician, contribution, averageHourly }) => [
                 { value: technician },
                 { value: usd(contribution) },

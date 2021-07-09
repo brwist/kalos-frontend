@@ -9,8 +9,6 @@ import { ServicesRendered } from '@kalos-core/kalos-rpc/ServicesRendered';
 import {
   getRPCFields,
   makeFakeRows,
-  UserType,
-  PropertyType,
   PropertyClientService,
   JobTypeClientService,
   JobSubtypeClientService,
@@ -18,8 +16,9 @@ import {
   JobTypeSubtypeClientService,
   ServicesRenderedClientService,
   TimesheetDepartmentClientService,
+  makeSafeFormObject,
 } from '../../../helpers';
-import { ENDPOINT, OPTION_BLANK } from '../../../constants';
+import { ENDPOINT } from '../../../constants';
 import { Modal } from '../Modal';
 import { SectionBar } from '../SectionBar';
 import { InfoTable, Data } from '../InfoTable';
@@ -40,11 +39,11 @@ import { RoleType } from '../Payroll';
 const EventClientService = new EventClient(ENDPOINT);
 const UserClientService = new UserClient(ENDPOINT);
 
-export type EventType = Event.AsObject;
-type JobTypeType = JobType.AsObject;
-type JobSubtypeType = JobSubtype.AsObject;
-export type JobTypeSubtypeType = JobTypeSubtype.AsObject;
-export type ServicesRenderedType = ServicesRendered.AsObject;
+export type EventType = Event;
+type JobTypeType = JobType;
+type JobSubtypeType = JobSubtype;
+export type JobTypeSubtypeType = JobTypeSubtype;
+export type ServicesRenderedType = ServicesRendered;
 
 export interface Props {
   userID: number;
@@ -55,11 +54,11 @@ export interface Props {
   onSave?: () => void;
 }
 
-const SCHEMA_PROPERTY_NOTIFICATION: Schema<UserType> = [
+const SCHEMA_PROPERTY_NOTIFICATION: Schema<User> = [
   [
     {
       label: 'Notification',
-      name: 'notification',
+      name: 'getNotification',
       required: true,
       multiline: true,
     },
@@ -79,11 +78,9 @@ export const ProjectDetail: FC<Props> = props => {
   const [tabIdx, setTabIdx] = useState<number>(0);
   const [pendingSave, setPendingSave] = useState<boolean>(false);
   const [serviceCallId, setServiceCallId] = useState<number>(eventId || 0);
-  const [entry, setEntry] = useState<EventType>(new Event().toObject());
-  const [property, setProperty] = useState<PropertyType>(
-    new Property().toObject(),
-  );
-  const [customer, setCustomer] = useState<UserType>(new User().toObject());
+  const [entry, setEntry] = useState<Event>(new Event());
+  const [property, setProperty] = useState<Property>(new Property());
+  const [customer, setCustomer] = useState<User>(new User());
   const [loaded, setLoaded] = useState<boolean>(false);
   const [loading, setLoading] = useState<boolean>(true);
   const [saving, setSaving] = useState<boolean>(false);
@@ -97,9 +94,9 @@ export const ProjectDetail: FC<Props> = props => {
   const [parentId, setParentId] = useState<number | null>(null);
   const [confirmedParentId, setConfirmedParentId] =
     useState<number | null>(null);
-  const [project, setProject] = useState<Event.AsObject>();
+  const [project, setProject] = useState<Event>();
   const [timesheetDepartment, setTimesheetDepartment] =
-    useState<TimesheetDepartment.AsObject>();
+    useState<TimesheetDepartment>();
   const loadEntry = useCallback(
     async (_serviceCallId = serviceCallId) => {
       if (_serviceCallId) {
@@ -122,11 +119,11 @@ export const ProjectDetail: FC<Props> = props => {
         new Promise<void>(async resolve => {
           try {
             const loggedUser = await UserClientService.loadUserById(userID);
-            if (loggedUser.permissionGroupsList) {
-              const roleGotten = loggedUser.permissionGroupsList.find(
-                p => p.type === 'role',
-              );
-              if (roleGotten) setRole(roleGotten.name as RoleType);
+            if (loggedUser.getPermissionGroupsList()) {
+              const roleGotten = loggedUser
+                .getPermissionGroupsList()
+                .find(p => p.getType() === 'role');
+              if (roleGotten) setRole(roleGotten.getName() as RoleType);
             }
             resolve();
           } catch (err) {
@@ -144,7 +141,6 @@ export const ProjectDetail: FC<Props> = props => {
             let req = new Event();
             req.setId(serviceCallId);
             const response = await EventClientService.Get(req);
-            projectGotten = response;
             setProject(response);
             resolve();
           } catch (err) {
@@ -250,8 +246,8 @@ export const ProjectDetail: FC<Props> = props => {
     setEntry(res);
     setSaving(false);
     if (!serviceCallId) {
-      setServiceCallId(res.id);
-      await loadEntry(res.id);
+      setServiceCallId(res.getId());
+      await loadEntry(res.getId());
     }
     if (onSave) {
       onSave();
@@ -260,7 +256,7 @@ export const ProjectDetail: FC<Props> = props => {
   const saveProject = useCallback(
     async (data: EventType) => {
       setSaving(true);
-      if (confirmedParentId) data.parentId = confirmedParentId;
+      if (confirmedParentId) data.setParentId(confirmedParentId);
       await EventClientService.upsertEvent(data);
       setSaving(false);
       if (onSave) {
@@ -277,7 +273,7 @@ export const ProjectDetail: FC<Props> = props => {
       load();
       setLoaded(true);
     }
-    if (entry && entry.customer && entry.customer.notification !== '') {
+    if (entry && entry.getCustomer()?.getNotification() !== '') {
       setNotificationViewing(true);
     }
     if (pendingSave && tabIdx === 0 && requestRef.current) {
@@ -310,7 +306,7 @@ export const ProjectDetail: FC<Props> = props => {
   );
 
   const handleSaveCustomer = useCallback(
-    async (data: UserType) => {
+    async (data: User) => {
       setSaving(true);
       const entry = new User();
       entry.setId(userID);
@@ -330,47 +326,38 @@ export const ProjectDetail: FC<Props> = props => {
     [setSaving, userID, handleSetNotificationEditing, loadEntry],
   );
 
-  const { logJobNumber, contractNumber } = entry;
-  const {
-    firstname,
-    lastname,
-    businessname,
-    phone,
-    altphone,
-    cellphone,
-    fax,
-    email,
-    billingTerms,
-    notification,
-  } = customer;
-  const { address, city, state, zip } = property;
-
   const data: Data = [
     [
-      { label: 'Customer', value: `${firstname} ${lastname}` },
-      { label: 'Business Name', value: businessname },
+      {
+        label: 'Customer',
+        value: `${customer.getFirstname()} ${customer.getLastname()}`,
+      },
+      { label: 'Business Name', value: customer.getBusinessname() },
     ],
     [
-      { label: 'Primary Phone', value: phone, href: 'tel' },
-      { label: 'Alternate Phone', value: altphone, href: 'tel' },
+      { label: 'Primary Phone', value: customer.getPhone(), href: 'tel' },
+      { label: 'Alternate Phone', value: customer.getAltphone(), href: 'tel' },
     ],
     [
-      { label: 'Cell Phone', value: cellphone, href: 'tel' },
-      { label: 'Fax', value: fax, href: 'tel' },
+      { label: 'Cell Phone', value: customer.getCellphone(), href: 'tel' },
+      { label: 'Fax', value: customer.getFax(), href: 'tel' },
     ],
     [
-      { label: 'Billing Terms', value: billingTerms },
-      { label: 'Email', value: email, href: 'mailto' },
+      { label: 'Billing Terms', value: customer.getBillingTerms() },
+      { label: 'Email', value: customer.getEmail(), href: 'mailto' },
     ],
     [
-      { label: 'Property', value: address },
-      { label: 'City, State, Zip', value: `${city}, ${state} ${zip}` },
+      { label: 'Property', value: property.getAddress() },
+      {
+        label: 'City, State, Zip',
+        value: `${property.getCity()}, ${property.getState()} ${property.getZip()}`,
+      },
     ],
     ...(serviceCallId
       ? [
           [
-            { label: 'Job Number', value: logJobNumber },
-            { label: 'Contract Number', value: contractNumber },
+            { label: 'Job Number', value: entry.getLogJobNumber() },
+            { label: 'Contract Number', value: entry.getContractNumber() },
           ],
         ]
       : []),
@@ -379,25 +366,25 @@ export const ProjectDetail: FC<Props> = props => {
   const SCHEMA_PROJECT: Schema<EventType> = [
     [
       {
-        name: 'dateStarted',
+        name: 'getDateStarted',
         label: 'Start Date',
         type: 'date',
         required: true,
       },
       {
-        name: 'dateEnded',
+        name: 'getDateEnded',
         label: 'End Date',
         type: 'date',
         required: true,
       },
       {
-        name: 'timeStarted',
+        name: 'getTimeStarted',
         label: 'Time Started',
         type: 'time',
         required: true,
       },
       {
-        name: 'timeEnded',
+        name: 'getTimeEnded',
         label: 'Time Ended',
         type: 'time',
         required: true,
@@ -405,49 +392,49 @@ export const ProjectDetail: FC<Props> = props => {
     ],
     [
       {
-        name: 'departmentId',
+        name: 'getDepartmentId',
         label: 'Department',
         type: 'department',
         required: true,
       },
       {
-        name: 'description',
+        name: 'getDescription',
         label: 'Description',
         multiline: true,
       },
     ],
     [
       {
-        name: 'isAllDay',
+        name: 'getIsAllDay',
         label: 'Is all-day?',
         type: 'checkbox',
       },
       {
-        name: 'isLmpc',
+        name: 'getIsLmpc',
         label: 'Is LMPC?',
         type: 'checkbox',
       },
       {
-        name: 'highPriority',
+        name: 'getHighPriority',
         label: 'High priority?',
         type: 'checkbox',
       },
       {
-        name: 'isResidential',
+        name: 'getIsResidential',
         label: 'Is residential?',
         type: 'checkbox',
       },
     ],
     [
       {
-        name: 'color',
+        name: 'getColor',
         label: 'Color',
         type: 'color',
       },
     ],
     [
       {
-        name: 'propertyId',
+        name: 'getPropertyId',
         type: 'hidden',
       },
     ],
@@ -527,45 +514,44 @@ export const ProjectDetail: FC<Props> = props => {
                     <Form
                       title="Create Project"
                       schema={SCHEMA_PROJECT}
-                      data={{ ...new Event().toObject(), propertyId }}
+                      data={(() => {
+                        const res = new Event();
+                        res.setPropertyId(propertyId);
+                        return res;
+                      })()}
                       onClose={onClose || (() => {})}
-                      onSave={(data: EventType) =>
-                        saveProject({
-                          ...data,
-                          departmentId: Number(data.departmentId),
-                        })
-                      }
+                      onSave={(data: EventType) => {
+                        const project = makeSafeFormObject(data, new Event());
+                        project.setDepartmentId(data.getDepartmentId());
+                        saveProject(project);
+                      }}
                     />
                     {loaded && projects.length > 0 ? (
                       <GanttChart
                         events={projects.map(task => {
-                          const {
-                            id,
-                            description,
-                            dateStarted: dateStart,
-                            dateEnded: dateEnd,
-                            color,
-                          } = task;
-                          const [startDate, startHour] = dateStart.split(' ');
-                          const [endDate, endHour] = dateEnd.split(' ');
+                          const [startDate, startHour] = task
+                            .getDateStarted()
+                            .split(' ');
+                          const [endDate, endHour] = task
+                            .getDateEnded()
+                            .split(' ');
                           return {
-                            id,
+                            id: task.getId(),
                             startDate,
                             endDate,
                             startHour,
                             endHour,
-                            notes: description,
-                            statusColor: '#' + color,
+                            notes: task.getDescription(),
+                            statusColor: `#${task.getColor()}`,
                             onClick: () => {
-                              handleSetParentId(id);
+                              handleSetParentId(task.getId());
                             },
                           };
                         })}
-                        startDate={projects[0].dateStarted.substr(0, 10)}
-                        endDate={projects[projects.length - 1].dateEnded.substr(
-                          0,
-                          10,
-                        )}
+                        startDate={projects[0].getDateStarted().substr(0, 10)}
+                        endDate={projects[projects.length - 1]
+                          .getDateEnded()
+                          .substr(0, 10)}
                         loading={loading}
                       />
                     ) : (
@@ -586,12 +572,12 @@ export const ProjectDetail: FC<Props> = props => {
             handleSetNotificationEditing(false)();
           }}
         >
-          <Form<UserType>
+          <Form<User>
             title={
               notificationViewing
                 ? 'Customer Notification'
                 : `${
-                    notification === '' ? 'Add' : 'Edit'
+                    customer.getNotification() === '' ? 'Add' : 'Edit'
                   } Customer Notification`
             }
             schema={SCHEMA_PROPERTY_NOTIFICATION}
@@ -619,7 +605,7 @@ export const ProjectDetail: FC<Props> = props => {
                       variant: 'outlined',
                       onClick: () => {
                         handleSetNotificationViewing(false)();
-                        handleSaveCustomer({ notification: '' } as UserType);
+                        //handleSaveCustomer({ notification: '' } as User);
                       },
                     },
                   ]
