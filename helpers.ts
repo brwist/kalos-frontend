@@ -1,3 +1,4 @@
+// this files ts-ignore lines have been checked
 import { parseISO } from 'date-fns/esm';
 import { format, addMonths, addDays } from 'date-fns';
 import {
@@ -408,15 +409,17 @@ function formatDate(date: string) {
  * @returns format Day (ie. Tue)
  */
 function formatDay(datetime: string) {
-  return ({
-    0: 'Sun',
-    1: 'Mon',
-    2: 'Tue',
-    3: 'Wed',
-    4: 'Thu',
-    5: 'Fri',
-    6: 'Sat',
-  } as { [key: number]: string })[new Date(datetime.substr(0, 10)).getDay()];
+  return (
+    {
+      0: 'Sun',
+      1: 'Mon',
+      2: 'Tue',
+      3: 'Wed',
+      4: 'Thu',
+      5: 'Fri',
+      6: 'Sat',
+    } as { [key: number]: string }
+  )[new Date(datetime.substr(0, 10)).getDay()];
 }
 
 /**
@@ -1044,7 +1047,7 @@ export const loadPropertiesByFilter = async ({
   for (const fieldName in filter) {
     const value = filter[fieldName as keyof PropertiesFilter];
     if (value) {
-      const { methodName } = getRPCFields(fieldName);
+      const methodName = keyToMethodName('set', fieldName);
       //@ts-ignore
       req[methodName](typeof value === 'string' ? `%${value}%` : value);
     }
@@ -1084,7 +1087,7 @@ export const loadContractsByFilter = async ({
     const value = filter[fieldName as keyof ContractsFilter];
 
     if (value) {
-      const { methodName } = getRPCFields(fieldName);
+      const methodName = keyToMethodName('set', fieldName);
 
       //@ts-ignore
       req[methodName](typeof value === 'string' ? `%${value}%` : value);
@@ -1117,7 +1120,7 @@ export const loadTripsByFilter = async ({
   for (const fieldName in filter) {
     const value = filter[fieldName as keyof TripsFilter];
 
-    const { methodName } = getRPCFields(fieldName);
+    const methodName = keyToMethodName('set', fieldName);
 
     // @ts-ignore
     if (!req[methodName]) continue;
@@ -1852,6 +1855,16 @@ const cleanFieldMaskField = (f: string) => {
   }
 };
 
+/* MIGRATION HELPERS */
+
+/**
+ *
+ * @param data the output object of a Form component (see components library)
+ * @param result a proper request object compatible with kalos-rpc (instantiate with new)
+ * @returns the provided request object with all the form data applied
+ *
+ * note this may need debugging
+ */
 const makeSafeFormObject = function makeSafeFormObject<T>(data: T, result: T) {
   const keys = Object.keys(data);
   console.log(data);
@@ -1873,16 +1886,33 @@ const makeSafeFormObject = function makeSafeFormObject<T>(data: T, result: T) {
   }
   return result;
 };
+
+/**
+ *
+ * @param type
+ * @param key any Proto.AsObject key
+ * @returns method name for a setter or getter compatible with protos
+ */
+const keyToMethodName = function keyToMethodName(
+  type: 'get' | 'set',
+  key: string,
+): string {
+  return `${type}${key[0].toUpperCase()}${key.slice(1)}`;
+};
+
+/**
+ *
+ * @param data a JSON stringified Proto.AsObject
+ * @param result a protobuffer input
+ * @returns the input protobuffer with all data applied
+ */
 const JSONToType = function JSONToType<T>(data: Object, result: T) {
   const keys = Object.keys(data);
   //so data should be the result.asObject
   for (const key of keys) {
     try {
       // @ts-ignore
-      const functionName = `set${key[0].toUpperCase()}${key.substring(
-        1,
-        key.length,
-      )}`;
+      const functionName = keyToMethodName('set', key);
       // @ts-ignore
       result[functionName](data[key]);
     } catch (err) {
@@ -1891,6 +1921,7 @@ const JSONToType = function JSONToType<T>(data: Object, result: T) {
   }
   return result;
 };
+
 export {
   SUBJECT_TAGS,
   SUBJECT_TAGS_TRANSACTIONS,
@@ -1926,4 +1957,5 @@ export {
   cleanFieldMaskField,
   makeSafeFormObject,
   JSONToType,
+  keyToMethodName,
 };
