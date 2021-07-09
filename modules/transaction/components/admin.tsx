@@ -420,7 +420,6 @@ export class TransactionAdminView extends React.Component<props, state> {
         }
         console.log('request', reqObj);
         const asObject = res.toObject();
-        console.log(asObject);
         this.setState({
           transactions: res.getResultsList(),
           count: res.getTotalCount(),

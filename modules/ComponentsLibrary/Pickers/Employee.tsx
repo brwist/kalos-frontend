@@ -128,7 +128,6 @@ export class EmployeePicker extends React.PureComponent<props, state> {
   }
 
   render() {
-    console.log(this.state.list);
     const list = this.state.list.sort((a, b) =>
       `${a.getLastname()} ${a.getFirstname()}`
         .toLowerCase()

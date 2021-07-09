@@ -1,7 +1,6 @@
 // This is the module that allows for users to add logs with photos, etc uploaded with them
 
 import { ActivityLog } from '@kalos-core/kalos-rpc/ActivityLog';
-import { getRPCFields } from '@kalos-core/kalos-rpc/Common';
 import { Typography } from '@material-ui/core';
 import React, { FC, useCallback, useState } from 'react';
 import { LOG_IMAGE_BUCKET } from '../../../constants';
@@ -39,13 +38,13 @@ export const AddLog: FC<Props> = ({
   const [error, setError] = useState<string>('');
   const [saving, setSaving] = useState<boolean>();
   const [confirmed, setConfirmed] = useState<boolean>(); // For if the image is confirmed to be uploaded as well
-  const [fileData, setFileData] =
-    useState<{ fileData: string; fileName: string } | undefined>();
+  const [fileData, setFileData] = useState<
+    { fileData: string; fileName: string } | undefined
+  >();
 
-  const handleSetError = useCallback(
-    (err: string) => setError(err),
-    [setError],
-  );
+  const handleSetError = useCallback((err: string) => setError(err), [
+    setError,
+  ]);
 
   const handleSetFileData = useCallback(
     (fileData: string, fileName: string) => setFileData({ fileData, fileName }),
@@ -101,7 +100,7 @@ export const AddLog: FC<Props> = ({
         handleSubmitFileToS3(
           fileData!.fileData,
           fileData!.fileName,
-          response.id,
+          response.getId(),
         );
       } catch (err) {
         console.error(
