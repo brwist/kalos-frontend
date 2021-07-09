@@ -1021,6 +1021,7 @@ export type TripsFilter = {
   dateProcessed?: string | undefined;
   isActive?: boolean;
   adminActionDate?: string;
+  dateRange?: string[];
 };
 /**
  * Returns Properties by filter
@@ -1113,7 +1114,6 @@ export const loadTripsByFilter = async ({
   const { orderDir, orderByField } = sort;
   req.setPage(page);
   req.setIsActive(true);
-  console.log(filter);
   for (const fieldName in filter) {
     const value = filter[fieldName as keyof TripsFilter];
 
@@ -1125,7 +1125,10 @@ export const loadTripsByFilter = async ({
     //@ts-ignore
     req[methodName](typeof value === 'string' ? `%${value}%` : value);
   }
-
+  if (filter.dateRange) {
+    req.setDateRangeList(filter.dateRange);
+    req.setDateTargetList(['date']);
+  }
   if (filter.payrollProcessed == true) {
     req.setPayrollProcessed(false);
     req.addNotEquals('PayrollProcessed');
