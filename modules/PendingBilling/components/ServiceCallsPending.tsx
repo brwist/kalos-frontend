@@ -9,11 +9,12 @@ import { PlainForm, Schema } from '../../ComponentsLibrary/PlainForm';
 import { InfoTable, Data, Columns } from '../../ComponentsLibrary/InfoTable';
 import { ServiceCall } from '../../ComponentsLibrary/ServiceCall';
 import { getPropertyAddress } from '@kalos-core/kalos-rpc/Property';
+import { Event, EventClient } from '@kalos-core/kalos-rpc/Event';
+import { ENDPOINT } from '@kalos-core/kalos-rpc/constants';
 import { AddServiceCall } from '../../AddServiceCallGeneral/components/AddServiceCall';
 import {
   getCFAppUrl,
   loadEventsByFilter,
-  EventType,
   makeFakeRows,
   formatDate,
   EventsFilter,
@@ -30,25 +31,42 @@ export interface Props {
 }
 
 export const ServiceCallsPending: FC<Props> = ({ loggedUserId }) => {
-  window.location.href =
-    'https://app.kalosflorida.com/index.cfm?action=admin:service.callsPending_old';
+  //window.location.href =
+  //  'https://app.kalosflorida.com/index.cfm?action=admin:service.callsPending_old';
   const [loading, setLoading] = useState<boolean>(false);
   const [loaded, setLoaded] = useState<boolean>(false);
   const [page, setPage] = useState<number>(0);
   const [count, setCount] = useState<number>(0);
-  const [events, setEvents] = useState<EventType[]>([]);
+  const [events, setEvents] = useState<Event[]>([]);
   const [formKey, setFormKey] = useState<number>(0);
-  const [pendingDelete, setPendingDelete] = useState<EventType>();
-  const [pendingEdit, setPendingEdit] = useState<EventType>();
+  const [pendingDelete, setPendingDelete] = useState<Event>();
+  const [pendingEdit, setPendingEdit] = useState<Event>();
   const [pendingCreate, setPendingCreate] = useState<boolean>(false);
   const [filter, setFilter] = useState<EventsFilter>({});
   const [sort, setSort] = useState<EventsSort>({
-    orderByField: 'logDateCompleted',
-    orderBy: 'log_dateCompleted',
+    orderByField: 'getLogDateCompleted',
+    orderBy: 'LogDatecompleted',
     orderDir: 'DESC',
   });
   const load = useCallback(async () => {
     setLoading(true);
+    const tempFilter = filter;
+    const req = new Event();
+    tempFilter.logDateCompleted = filter.logDateCompleted
+      ? filter.logDateCompleted
+      : NULL_TIME;
+    tempFilter.notEqualsList = filter.logDateCompleted
+      ? []
+      : ['LogDateCompleted'];
+    const client = new EventClient(ENDPOINT);
+    const results = await loadEventsByFilter({
+      page,
+      filter: tempFilter,
+      sort,
+      pendingBilling: true,
+      req,
+    });
+    /*
     const { resultsList, totalCount } = await loadEventsByFilter({
       page,
       sort,
@@ -61,8 +79,9 @@ export const ServiceCallsPending: FC<Props> = ({ loggedUserId }) => {
       },
       pendingBilling: true,
     });
-    setEvents(resultsList);
-    setCount(totalCount);
+    */
+    setEvents(results.resultsList);
+    setCount(results.totalCount);
     setLoading(false);
   }, [setEvents, setCount, setLoading, filter, page, sort]);
   useEffect(() => {
@@ -77,11 +96,11 @@ export const ServiceCallsPending: FC<Props> = ({ loggedUserId }) => {
     setLoaded(false);
   }, [setFilter, formKey, setFormKey, setLoaded]);
   const handleTogglePendingDelete = useCallback(
-    (pendingDelete?: EventType) => () => setPendingDelete(pendingDelete),
+    (pendingDelete?: Event) => () => setPendingDelete(pendingDelete),
     [],
   );
   const handleTogglePendingEdit = useCallback(
-    (pendingEdit?: EventType) => () => setPendingEdit(pendingEdit),
+    (pendingEdit?: Event) => () => setPendingEdit(pendingEdit),
     [],
   );
   const handleTogglePendingCreate = useCallback(
@@ -90,10 +109,10 @@ export const ServiceCallsPending: FC<Props> = ({ loggedUserId }) => {
   );
   const handleDeleteServiceCall = useCallback(async () => {
     if (pendingDelete) {
-      const { id } = pendingDelete;
+      const id = pendingDelete;
       setPendingDelete(undefined);
       setLoading(true);
-      await EventClientService.deleteEventById(id);
+      await EventClientService.deleteEventById(id.getId());
       load();
     }
   }, [pendingDelete, setLoading, setPendingDelete, load]);
@@ -182,27 +201,27 @@ export const ServiceCallsPending: FC<Props> = ({ loggedUserId }) => {
     },
     {
       name: 'Job #',
-      ...(sort.orderByField === 'logJobNumber'
+      ...(sort.orderByField === 'getLogJobNumber'
         ? {
             dir: sort.orderDir,
           }
         : {}),
       onClick: handleSortChange({
-        orderByField: 'logJobNumber',
+        orderByField: 'getLogJobNumber',
         orderBy: 'log_jobNumber',
         orderDir: sort.orderDir === 'ASC' ? 'DESC' : 'ASC',
       }),
     },
     {
       name: 'Date Completed',
-      ...(sort.orderByField === 'logDateCompleted'
+      ...(sort.orderByField === 'getLogDateCompleted'
         ? {
             dir: sort.orderDir,
           }
         : {}),
       onClick: handleSortChange({
-        orderByField: 'logDateCompleted',
-        orderBy: 'log_dateCompleted',
+        orderByField: 'getLogDateCompleted',
+        orderBy: 'LogDatecompleted',
         orderDir: sort.orderDir === 'ASC' ? 'DESC' : 'ASC',
       }),
     },
@@ -213,13 +232,18 @@ export const ServiceCallsPending: FC<Props> = ({ loggedUserId }) => {
   const data: Data = loading
     ? makeFakeRows(5, 3)
     : events.map(event => {
-        const { customer, property, logJobNumber, logDateCompleted } = event;
-        const openEditServiceCall = (event: EventType) => {
+        const customer = event.getCustomer();
+        const property = event.getProperty();
+        const logJobNumber = event.getLogJobNumber();
+        const logDateCompleted = event.getLogDateCompleted();
+        const openEditServiceCall = (event: Event) => {
           return () => {
             window.open(
               cfURL(
                 'admin:service.editServiceCall',
-                `&id=${event.id}&user_id=${event.property?.userId}&property_id=${event.propertyId}`,
+                `&id=${event.getId()}&user_id=${event
+                  .getProperty()
+                  ?.getUserId()}&property_id=${event.getPropertyId()}`,
               ),
               '_blank',
             );
@@ -310,16 +334,16 @@ export const ServiceCallsPending: FC<Props> = ({ loggedUserId }) => {
           onConfirm={handleDeleteServiceCall}
           onClose={handleTogglePendingDelete(undefined)}
           kind="Service Call"
-          name={`with Job Number ${pendingDelete.logJobNumber}`}
+          name={`with Job Number ${pendingDelete.getLogJobNumber()}`}
         />
       )}
-      {pendingEdit && pendingEdit.property && pendingEdit.customer && (
+      {pendingEdit && pendingEdit.getProperty() && pendingEdit.getCustomer() && (
         <Modal open onClose={handleTogglePendingEdit(undefined)} fullScreen>
           <ServiceCall
             loggedUserId={loggedUserId}
-            propertyId={pendingEdit.property.id}
-            userID={pendingEdit.customer.id}
-            serviceCallId={pendingEdit.id}
+            propertyId={pendingEdit.getProperty()!.getId()}
+            userID={pendingEdit.getCustomer()!.getId()}
+            serviceCallId={pendingEdit.getId()}
             onClose={handleTogglePendingEdit(undefined)}
           />
         </Modal>

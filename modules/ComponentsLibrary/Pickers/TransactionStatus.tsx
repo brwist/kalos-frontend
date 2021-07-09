@@ -18,7 +18,7 @@ interface props {
 }
 
 interface state {
-  list: TransactionStatus.AsObject[];
+  list: TransactionStatus[];
 }
 
 export class TxnStatusPicker extends React.PureComponent<props, state> {
@@ -44,8 +44,8 @@ export class TxnStatusPicker extends React.PureComponent<props, state> {
     }
   }
 
-  addToList(item: TransactionStatus.AsObject) {
-    this.setState((prevState) => ({
+  addToList(item: TransactionStatus) {
+    this.setState(prevState => ({
       list: prevState.list.concat(item),
     }));
   }
@@ -72,9 +72,12 @@ export class TxnStatusPicker extends React.PureComponent<props, state> {
           inputProps={{ id: 'txn-status-picker' }}
         >
           <option value={0}>Select Status</option>
-          {this.state.list.map((item) => (
-            <option value={item.id} key={`${item.description}-${item.id}`}>
-              {item.description}
+          {this.state.list.map(item => (
+            <option
+              value={item.getId()}
+              key={`${item.getDescription()}-${item.getId()}`}
+            >
+              {item.getDescription()}
             </option>
           ))}
           <option value={7}>Not Audited</option>
