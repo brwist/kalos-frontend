@@ -115,16 +115,14 @@ export const ContractInfo: FC<Props> = props => {
 
   const loadFrequencies = useCallback(async () => {
     const entry = new ContractFrequency();
-    const { resultsList } = (
-      await ContractFrequencyClientService.BatchGet(entry)
-    ).toObject();
-    setFrequencies(resultsList);
+    const results = await ContractFrequencyClientService.BatchGet(entry);
+    setFrequencies(results.getResultsList());
   }, [setFrequencies]);
 
   const loadInvoice = useCallback(
-    async (contract: Entry) => {
+    async (contract: Contract) => {
       const entry = new Invoice();
-      entry.setContractId(contract.id);
+      entry.setContractId(contract.getId());
       try {
         const invoice = await InvoiceClientService.Get(entry);
         setInvoiceInitial(invoice);
@@ -140,10 +138,9 @@ export const ContractInfo: FC<Props> = props => {
     const req = new Property();
     req.setUserId(userID);
     req.setIsActive(1);
-    const { resultsList } = (
-      await PropertyClientService.BatchGet(req)
-    ).toObject();
-    setProperties(resultsList);
+    const results = await PropertyClientService.BatchGet(req);
+
+    setProperties(results.getResultsList());
   }, [userID, setProperties]);
 
   const load = useCallback(async () => {
@@ -159,7 +156,12 @@ export const ContractInfo: FC<Props> = props => {
       await loadFrequencies();
       const contract = await ContractClientService.Get(entry);
       if (contract) {
-        setPropertiesIds(contract.properties.split(',').map(id => +id));
+        setPropertiesIds(
+          contract
+            .getProperties()
+            .split(',')
+            .map(id => +id),
+        );
         await loadInvoice(contract);
         setEntry(contract);
       }
@@ -169,7 +171,7 @@ export const ContractInfo: FC<Props> = props => {
       setError(true);
       setLoading(false);
     }
-  }, [userID, setEntry, setError, setLoaded, setLoading, setPropertiesIds]);
+  }, [userID, loadProperties, loadFrequencies, loadInvoice]);
 
   const handleToggleEditing = useCallback(() => {
     setEditing(!editing);
@@ -193,13 +195,13 @@ export const ContractInfo: FC<Props> = props => {
   );
 
   const saveInvoice = useCallback(
-    async (invoice: InvoiceType, entry: Entry) => {
+    async (invoice: Invoice, entry: Contract) => {
       const req = new Invoice();
-      req.setContractId(entry.id);
+      req.setContractId(entry.getId());
       req.setUserId(userID);
       const fieldMaskList = ['UserId', 'ContractId'];
-      if (invoice.id !== 0) {
-        req.setId(invoice.id);
+      if (invoice.getId() !== 0) {
+        req.setId(invoice.getId());
       }
       for (const fieldName in invoice) {
         if (fieldName === 'id') continue;
@@ -211,7 +213,7 @@ export const ContractInfo: FC<Props> = props => {
       req.setFieldMaskList(fieldMaskList);
       // FIXME: Create sql fails
       const res = await InvoiceClientService[
-        invoice.id === 0 ? 'Create' : 'Update'
+        invoice.getId() === 0 ? 'Create' : 'Update'
       ](req);
       setInvoice(res);
       setInvoiceInitial(res);
@@ -220,14 +222,14 @@ export const ContractInfo: FC<Props> = props => {
   );
 
   const handleSave = useCallback(
-    async (data: Entry) => {
+    async (data: Contract) => {
       setSaving(true);
       const fieldMaskList = ['UserId', 'Properties'];
       const req = new Contract();
       req.setUserId(userID);
       req.setProperties(propertiesIds.join(','));
-      if (entry.id !== 0) {
-        req.setId(entry.id);
+      if (entry.getId() !== 0) {
+        req.setId(entry.getId());
         fieldMaskList.push('Id');
       }
       for (const fieldName in data) {
@@ -238,12 +240,12 @@ export const ContractInfo: FC<Props> = props => {
       }
       req.setFieldMaskList(fieldMaskList);
       let res = await ContractClientService[
-        entry.id === 0 ? 'Create' : 'Update'
+        entry.getId() === 0 ? 'Create' : 'Update'
       ](req);
-      if (entry.id === 0) {
+      if (entry.getId() === 0) {
         const req2 = new Contract();
-        req2.setId(res.id);
-        req2.setNumber(makeContractNumber(res.id));
+        req2.setId(res.getId());
+        req2.setNumber(makeContractNumber(res.getId()));
         req2.setFieldMaskList(['Number']);
         res = await ContractClientService.Update(req2);
       }
@@ -252,15 +254,15 @@ export const ContractInfo: FC<Props> = props => {
       setSaving(false);
       setEditing(false);
     },
-    [entry, userID, invoice, setSaving, setEntry, setEditing, propertiesIds],
+    [userID, propertiesIds, entry, saveInvoice, invoice],
   );
 
   const handleDelete = useCallback(async () => {
     const req = new Contract();
-    req.setId(entry.id);
+    req.setId(entry.getId());
     await ContractClientService.Delete(req);
     setDeleting(false);
-    setEntry(new Contract().toObject());
+    setEntry(new Contract());
   }, [entry, setDeleting]);
 
   useEffect(() => {
@@ -272,9 +274,11 @@ export const ContractInfo: FC<Props> = props => {
   const getFrequencyById = useMemo(
     () => (frequencyId: number) => {
       if (frequencyId === 0) return '';
-      const frequency = frequencies.find(({ id }) => id === frequencyId);
+      const frequency = frequencies.find(
+        frequency => frequency.getId() === frequencyId,
+      );
       if (!frequency) return '';
-      return frequency.name;
+      return frequency.getName();
     },
     [frequencies],
   );
@@ -288,12 +292,12 @@ export const ContractInfo: FC<Props> = props => {
     () =>
       (document.location.href = [
         getCFAppUrl('admin:contracts.contractnew'),
-        `contract_id=${entry.id}`,
+        `contract_id=${entry.getId()}`,
       ].join('&')),
     [entry],
   );
 
-  const SCHEMA: Schema<Entry> = [
+  const SCHEMA: Schema<Contract> = [
     [{ label: 'Contract Details', headline: true }],
     [
       {
