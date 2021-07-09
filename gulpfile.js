@@ -5,7 +5,6 @@ const readline = require('readline');
 const fs = require('fs');
 const rollup = require('rollup');
 const typescript = require('@rollup/plugin-typescript');
-const scss = require('rollup-plugin-scss');
 const resolve = require('@rollup/plugin-node-resolve');
 const commonjs = require('@rollup/plugin-commonjs');
 const peerDependencies = require('rollup-plugin-peer-deps-external');
@@ -307,7 +306,6 @@ async function releaseBuild(target) {
           module: 'commonjs',
           noEmitOnError: false,
         }),
-        scss(),
         less({
           output: `build/modules/${target}Less.css`,
         }),
@@ -357,7 +355,6 @@ async function releaseBuild(target) {
           module: 'commonjs',
           noEmitOnError: false,
         }),
-        scss(),
         image(),
         jsonPlugin(),
         peerDependencies(),
@@ -431,7 +428,6 @@ async function rollupBuild(t) {
         module: 'ES2015',
         noEmitOnError: false,
       }),
-      scss(),
       less({
         output: `build/modules/${target}Less.css`,
       }),
@@ -696,6 +692,7 @@ const NAMED_EXPORTS = {
     'EventList',
     'Quotable',
     'QuotableList',
+    'CalendarDay',
     'QuotableRead',
     'CostReportInfo',
   ],
