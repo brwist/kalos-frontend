@@ -1845,9 +1845,9 @@
   integrity sha512-ekGvFhFgrc2zYQoX4JeZPmVzZxw6Dtllga7iGHzfbYIYkAMUx/sAFP2GdFpLff+vdHXu5fl7WX9AT+TtqYcsyw==
 
 "@types/node@*":
-  version "16.0.1"
-  resolved "https://registry.yarnpkg.com/@types/node/-/node-16.0.1.tgz#70cedfda26af7a2ca073fdcc9beb2fff4aa693f8"
-  integrity sha512-hBOx4SUlEPKwRi6PrXuTGw1z6lz0fjsibcWCM378YxsSu/6+C30L6CR49zIBKHiwNWCYIcOLjg4OHKZaFeLAug==
+  version "16.3.0"
+  resolved "https://registry.yarnpkg.com/@types/node/-/node-16.3.0.tgz#1836664e4fad13b51b07eb6e882a53925e6543c4"
+  integrity sha512-OydMCocGMGqw/1BnWbhtK+AtwyWTOigtrQlRe57OQmTNcI3HKlVI5FGlh+c4mSqInMPLynFrTlYjfajPu9O/eQ==
 
 "@types/node@^12.7.8":
   version "12.20.16"
@@ -1920,25 +1920,25 @@
   integrity sha512-Ku5+GPFa12S3W26Uwtw+xyrtIpaZsGYHH6zxNbZlstmlvMYSZRzOwzwsXbxlVUbHyUucctSyuFtu6bNxwYomIw==
 
 "@types/rollup-plugin-node-builtins@^2.1.1":
-  version "2.1.1"
-  resolved "https://registry.yarnpkg.com/@types/rollup-plugin-node-builtins/-/rollup-plugin-node-builtins-2.1.1.tgz#91bcd184e0d9c0b259bfad09f48186156fdabf90"
-  integrity sha512-1LlOG2TMdv2fP+OVkqUk1mdGwEPfWBLv9BlGu8dkaSiJtMMkCY0C4FAa70m2+BipmtTYs5N9JAef2aCzatNp0w==
+  version "2.1.2"
+  resolved "https://registry.yarnpkg.com/@types/rollup-plugin-node-builtins/-/rollup-plugin-node-builtins-2.1.2.tgz#d702de68f4aa7ab072845ab65e51fd7f1c0b4786"
+  integrity sha512-R6dkiJk0JaRavDddmE4zddXOkFjCmSXv8RwqIgkX/1MvQ0SjDfo326+yAHy8HL++JWVNa48yB4EjPYyZeISzGQ==
   dependencies:
     "@types/node" "*"
     rollup "^0.63.4"
 
 "@types/rollup-plugin-node-globals@^1.4.0":
-  version "1.4.0"
-  resolved "https://registry.yarnpkg.com/@types/rollup-plugin-node-globals/-/rollup-plugin-node-globals-1.4.0.tgz#5ddf59ed32fe0b89a32428357dbb5d57c0251cf8"
-  integrity sha512-C/M+PCe+Up1nrdo8PTa2tGr6ppOVLWkKni2haYU55kWDBybwMupptV9MeghQLzu262aKsuWdzMjsfduSZt6A2w==
+  version "1.4.1"
+  resolved "https://registry.yarnpkg.com/@types/rollup-plugin-node-globals/-/rollup-plugin-node-globals-1.4.1.tgz#11df84679eaf08115469daabb5d3d92d4d42d7b2"
+  integrity sha512-kLbxjzMzyBFG+fBj5YmQ2JvS6kt7shwEthkyh5Zx7w2k6Zi2l/QeQMy4nAAa0MjsAFiJijs22+Wy3HU71GMwBw==
   dependencies:
     "@types/node" "*"
     rollup "^0.63.4"
 
 "@types/rollup-plugin-peer-deps-external@^2.2.0":
-  version "2.2.0"
-  resolved "https://registry.yarnpkg.com/@types/rollup-plugin-peer-deps-external/-/rollup-plugin-peer-deps-external-2.2.0.tgz#eae7d8b9d27fa037f5bcaded24e389f85b81973c"
-  integrity sha512-BiztED+KYJPBI3ihLSOuuZSzy836WAOpC9UrMtDqk3+VeByR8A5pJJ9pCVnq/dfB4wyCeiFL+FlyJnqZuP3pxg==
+  version "2.2.1"
+  resolved "https://registry.yarnpkg.com/@types/rollup-plugin-peer-deps-external/-/rollup-plugin-peer-deps-external-2.2.1.tgz#7711fe77727c2ec920d3e096fa4e61d02734a23d"
+  integrity sha512-CUK4Mi3M3A/0coRUeo4McvUFOxR5H6UYd6Wt3D+K4c4fJupolMSoIxsZaBG1g/BJQOaujf78Pf7KhgfhrX1FZA==
   dependencies:
     "@types/node" "*"
     rollup "^0.63.4"
