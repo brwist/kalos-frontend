@@ -86,12 +86,17 @@ export class EmployeePicker extends React.PureComponent<props, state> {
     ) {
       const cacheList = localStorage.getItem('EMPLOYEE_LIST');
       if (!cacheList) {
-        localStorage.setItem('EMPLOYEE_LIST', JSON.stringify(this.state.list));
+        let newList = [];
+        for (let i = 0; i < this.state.list.length; i++) {
+          newList.push(this.state.list[i].toObject());
+        }
+        localStorage.setItem('EMPLOYEE_LIST', JSON.stringify(newList));
       }
     }
   }
-  createUsers(userList: User.AsObject[]) {
+  createUsers(userList: User[]) {
     let newUserList = [];
+
     for (let i = 0; i < userList.length; i++) {
       let tempUser = JSONToType(userList[i], new User());
 
@@ -108,9 +113,9 @@ export class EmployeePicker extends React.PureComponent<props, state> {
     const cacheListStr = localStorage.getItem('EMPLOYEE_LIST');
     if (cacheListStr) {
       const cacheList = JSON.parse(cacheListStr);
+
       if (cacheList && cacheList.length !== 0) {
         const tempList = this.createUsers(cacheList);
-        console.log(tempList);
         this.setState({
           list: tempList,
         });
