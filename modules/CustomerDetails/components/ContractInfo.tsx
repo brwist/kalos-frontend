@@ -16,24 +16,15 @@ import { ConfirmDelete } from '../../ComponentsLibrary/ConfirmDelete';
 import { Confirm } from '../../ComponentsLibrary/Confirm';
 import { PlainForm } from '../../ComponentsLibrary/PlainForm';
 import { Field, Value } from '../../ComponentsLibrary/Field';
-import {
-  getRPCFields,
-  formatDate,
-  UserType,
-  getCFAppUrl,
-} from '../../../helpers';
+import { getRPCFields, formatDate, getCFAppUrl } from '../../../helpers';
 import { ContractDocuments } from './ContractDocuments';
 import './contractInfo.less';
+import { User } from '@kalos-core/kalos-rpc/User';
 
 const ContractClientService = new ContractClient(ENDPOINT);
 const ContractFrequencyClientService = new ContractFrequencyClient(ENDPOINT);
 const InvoiceClientService = new InvoiceClient(ENDPOINT);
 const PropertyClientService = new PropertyClient(ENDPOINT);
-
-type Entry = Contract.AsObject;
-type ContractFrequencyType = ContractFrequency.AsObject;
-type InvoiceType = Invoice.AsObject;
-type PropertyType = Property.AsObject;
 
 const BILLING_OPTIONS: Options = [
   { label: 'Site', value: 0 },
@@ -63,27 +54,27 @@ const PAYMENT_STATUS_OPTIONS: Options = [
   'Paid',
 ];
 
-const INVOICE_SCHEMA: Schema<InvoiceType> = [
-  [{ name: 'id', type: 'hidden' }],
+const INVOICE_SCHEMA: Schema<Invoice> = [
+  [{ name: 'getId', type: 'hidden' }],
   [{ label: 'Invoice Data', headline: true }],
-  [{ label: 'Terms', name: 'terms', multiline: true }],
+  [{ label: 'Terms', name: 'getTerms', multiline: true }],
   [
-    { label: 'Services Performed (1)', name: 'servicesperformedrow1' },
-    { label: 'Total Amount (1)', name: 'totalamountrow1' },
+    { label: 'Services Performed (1)', name: 'getServicesperformedrow1' },
+    { label: 'Total Amount (1)', name: 'getTotalamountrow1' },
   ],
   [
-    { label: 'Services Performed (2)', name: 'servicesperformedrow2' },
-    { label: 'Total Amount (2)', name: 'totalamountrow2' },
+    { label: 'Services Performed (2)', name: 'getServicesperformedrow2' },
+    { label: 'Total Amount (2)', name: 'getTotalamountrow2' },
   ],
   [
-    { label: 'Services Performed (3)', name: 'servicesperformedrow3' },
-    { label: 'Total Amount (3)', name: 'totalamountrow3' },
+    { label: 'Services Performed (3)', name: 'getServicesperformedrow3' },
+    { label: 'Total Amount (3)', name: 'getTotalamountrow3' },
   ],
   [
-    { label: 'Services Performed (4)', name: 'servicesperformedrow4' },
-    { label: 'Total Amount (4)', name: 'totalamountrow4' },
+    { label: 'Services Performed (4)', name: 'getServicesperformedrow4' },
+    { label: 'Total Amount (4)', name: 'getTotalamountrow4' },
   ],
-  [{ label: 'Grand Total', name: 'totalamounttotal' }],
+  [{ label: 'Grand Total', name: 'getTotalamounttotal' }],
 ];
 
 const makeContractNumber = (id: number) =>
@@ -94,18 +85,16 @@ const makeContractNumber = (id: number) =>
 
 interface Props {
   userID: number;
-  customer: UserType;
+  customer: User;
 }
 
 export const ContractInfo: FC<Props> = props => {
   const { userID, children, customer } = props;
-  const [entry, setEntry] = useState<Entry>(new Contract().toObject());
-  const [frequencies, setFrequencies] = useState<ContractFrequencyType[]>([]);
-  const [invoice, setInvoice] = useState<InvoiceType>(new Invoice().toObject());
-  const [invoiceInitial, setInvoiceInitial] = useState<InvoiceType>(
-    new Invoice().toObject(),
-  );
-  const [properties, setProperties] = useState<PropertyType[]>([]);
+  const [entry, setEntry] = useState<Contract>(new Contract());
+  const [frequencies, setFrequencies] = useState<ContractFrequency[]>([]);
+  const [invoice, setInvoice] = useState<Invoice>(new Invoice());
+  const [invoiceInitial, setInvoiceInitial] = useState<Invoice>(new Invoice());
+  const [properties, setProperties] = useState<Property[]>([]);
   const [propertiesIds, setPropertiesIds] = useState<number[]>([]);
   const [loaded, setLoaded] = useState<boolean>(false);
   const [loading, setLoading] = useState<boolean>(false);
@@ -116,7 +105,11 @@ export const ContractInfo: FC<Props> = props => {
   const [confirmNew, setConfirmNew] = useState<boolean>(false);
 
   const frequencyOptions: Options = useMemo(
-    () => frequencies.map(({ id: value, name: label }) => ({ label, value })),
+    () =>
+      frequencies.map(frequency => ({
+        label: frequency.getName(),
+        value: frequency.getId(),
+      })),
     [frequencies],
   );
 
