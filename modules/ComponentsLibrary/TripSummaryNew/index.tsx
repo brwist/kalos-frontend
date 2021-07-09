@@ -45,7 +45,7 @@ import { PlaceAutocompleteAddressForm } from '../PlaceAutocompleteAddressForm';
 import { SCHEMA_GOOGLE_MAP_INPUT_FORM } from '../TripInfoTable';
 import { Alert } from '../Alert';
 import { RoleType } from '../Payroll';
-
+import { subDays, addDays, startOfWeek, format } from 'date-fns';
 type CheckboxesFilterType = {
   approved: number;
   payrollProcessed: number;
@@ -71,6 +71,7 @@ interface Props {
   viewingOwn?: boolean;
   checkboxes?: boolean;
   searchable?: boolean;
+  managerView?: boolean;
   onSaveTrip?: (savedTrip?: Trip) => any;
   onDeleteTrip?: (deletedTrip?: Trip) => any;
   onDeleteAllTrips?: (deletedTrips?: Trip[]) => any;
@@ -90,6 +91,7 @@ export const TripSummaryNew: FC<Props> = ({
   role,
   viewingOwn,
   checkboxes,
+  managerView,
   searchable,
   canAddTrips,
   onSaveTrip,
@@ -97,11 +99,15 @@ export const TripSummaryNew: FC<Props> = ({
   onDeleteTrip,
   onDeleteAllTrips,
 }) => {
+  const today = new Date();
+  const startDay = startOfWeek(subDays(today, 7), { weekStartsOn: 6 });
+  const endDay = addDays(startDay, 7);
   const [pendingDeleteAllTrips, setPendingDeleteAllTrips] = useState<boolean>();
   const [
     pendingApproveAllTrips,
     setPendingApproveAllTrips,
   ] = useState<boolean>();
+  const formatDateFns = (date: Date) => format(date, 'yyyy-MM-dd');
 
   const [loaded, setLoaded] = useState<boolean>(false);
   const [pendingTripToDelete, setPendingTripToDelete] = useState<
@@ -363,14 +369,16 @@ export const TripSummaryNew: FC<Props> = ({
         originAddress: search.getOriginAddress()
           ? search.getOriginAddress()
           : tripFilter.originAddress,
-
+        dateRange: managerView
+          ? ['>=', '0001-01-01', '<', formatDateFns(endDay)]
+          : undefined,
         approved: checkboxFilter.approved ? true : tripFilter.approved,
         payrollProcessed: checkboxFilter.payrollProcessed
           ? true
           : tripFilter.payrollProcessed,
       },
     };
-
+    console.log(criteria.filter);
     try {
       const results = await loadTripsByFilter(criteria);
       setTripsLoaded(results.results);
@@ -595,7 +603,7 @@ export const TripSummaryNew: FC<Props> = ({
     }
     setApprovingTrips(false);
     loadTrips();
-  }, [tripsLoaded, loadTrips]);
+  }, [tripsLoaded, handleSetPendingApproveAllTrips, loadTrips]);
 
   const load = useCallback(async () => {
     setLoaded(false);
