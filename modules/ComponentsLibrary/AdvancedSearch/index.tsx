@@ -1,3 +1,4 @@
+// this files ts-ignore lines have been checked
 import React, { FC, useState, useCallback, useEffect, useMemo } from 'react';
 import clsx from 'clsx';
 import {
@@ -194,42 +195,29 @@ export const AdvancedSearch: FC<Props> = ({
   const [pendingEventAdding, setPendingEventAdding] = useState<boolean>(false);
   const [pendingEventEditing, setPendingEventEditing] = useState<Event>();
   const [pendingEventDeleting, setPendingEventDeleting] = useState<Event>();
-  const [employeeUploadedPhoto, setEmployeeUploadedPhoto] = useState<string>(
-    '',
-  );
+  const [employeeUploadedPhoto, setEmployeeUploadedPhoto] =
+    useState<string>('');
   const [employeeFormKey, setEmployeeFormKey] = useState<number>(0);
   const [pendingEmployeeViewing, setPendingEmployeeViewing] = useState<User>();
   const [pendingEmployeeEditing, setPendingEmployeeEditing] = useState<User>();
-  const [
-    pendingEmployeeDeleting,
-    setPendingEmployeeDeleting,
-  ] = useState<User>();
+  const [pendingEmployeeDeleting, setPendingEmployeeDeleting] =
+    useState<User>();
   const [pendingCustomerViewing, setPendingCustomerViewing] = useState<User>();
   const [pendingCustomerEditing, setPendingCustomerEditing] = useState<User>();
-  const [
-    pendingCustomerDeleting,
-    setPendingCustomerDeleting,
-  ] = useState<User>();
-  const [
-    pendingPropertyViewing,
-    setPendingPropertyViewing,
-  ] = useState<Property>();
-  const [
-    pendingPropertyEditing,
-    setPendingPropertyEditing,
-  ] = useState<Property>();
-  const [
-    pendingPropertyDeleting,
-    setPendingPropertyDeleting,
-  ] = useState<Property>();
+  const [pendingCustomerDeleting, setPendingCustomerDeleting] =
+    useState<User>();
+  const [pendingPropertyViewing, setPendingPropertyViewing] =
+    useState<Property>();
+  const [pendingPropertyEditing, setPendingPropertyEditing] =
+    useState<Property>();
+  const [pendingPropertyDeleting, setPendingPropertyDeleting] =
+    useState<Property>();
   const [departments, setDepartments] = useState<TimesheetDepartment[]>([]);
   const [employeeFunctions, setEmployeeFunctions] = useState<
     EmployeeFunction[]
   >([]);
-  const [
-    employeeDepartmentsOpen,
-    setEmployeeDepartmentsOpen,
-  ] = useState<boolean>(false);
+  const [employeeDepartmentsOpen, setEmployeeDepartmentsOpen] =
+    useState<boolean>(false);
   const [pendingAddProperty, setPendingAddProperty] = useState<boolean>(false);
   const handleTogglePendingAddProperty = useCallback(
     (pendingAddProperty: boolean) => () =>
@@ -244,9 +232,11 @@ export const AdvancedSearch: FC<Props> = ({
     setJobSubtypes(jobSubtypes);
     setLoadingDicts(false);
     if (kinds.includes('employees')) {
-      const departments = await TimesheetDepartmentClientService.loadTimeSheetDepartments();
+      const departments =
+        await TimesheetDepartmentClientService.loadTimeSheetDepartments();
       setDepartments(departments);
-      const employeeFunctions = await EmployeeFunctionClientService.loadEmployeeFunctions();
+      const employeeFunctions =
+        await EmployeeFunctionClientService.loadEmployeeFunctions();
       setEmployeeFunctions(employeeFunctions);
       const userReq = new User();
       userReq.setId(loggedUserId);
@@ -304,10 +294,8 @@ export const AdvancedSearch: FC<Props> = ({
       }
       let userResults = [new User()];
       if (kind === 'customers') {
-        const {
-          results,
-          totalCount,
-        } = await UserClientService.loadUsersByFilter(criteria);
+        const { results, totalCount } =
+          await UserClientService.loadUsersByFilter(criteria);
         setUsers(results);
         setCount(totalCount);
       } else {
@@ -625,10 +613,10 @@ export const AdvancedSearch: FC<Props> = ({
       setPendingPropertyDeleting(pendingPropertyDeleting),
     [setPendingPropertyDeleting],
   );
-  const handleAccountingToggle = useCallback(() => setAccounting(!accounting), [
-    accounting,
-    setAccounting,
-  ]);
+  const handleAccountingToggle = useCallback(
+    () => setAccounting(!accounting),
+    [accounting, setAccounting],
+  );
   const handleSelectEvent = useCallback(
     (event: Event) => () => {
       if (accounting) {

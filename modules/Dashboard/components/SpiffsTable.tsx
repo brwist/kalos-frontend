@@ -8,7 +8,7 @@ import { makeFakeRows, formatDate, usd } from '../../../helpers';
 import { parseISO } from 'date-fns';
 
 interface SpiffProps {
-  spiffs: Spiff.AsObject[];
+  spiffs: Spiff[];
   isLoading: boolean;
 }
 
@@ -40,41 +40,30 @@ export const Spiffs = ({ spiffs, isLoading }: SpiffProps) => {
               ? makeFakeRows(7, 5)
               : spiffs
                   .sort((a, b) => {
-                    const dateA = parseISO(a.timeCreated.split(' ')[0]);
-                    const dateB = parseISO(b.timeCreated.split(' ')[0]);
+                    const dateA = parseISO(a.getTimeCreated().split(' ')[0]);
+                    const dateB = parseISO(b.getTimeCreated().split(' ')[0]);
                     return dateB.valueOf() - dateA.valueOf();
                   })
-                  .map(
-                    ({
-                      timeCreated,
-                      briefDescription,
-                      spiffAmount,
-                      spiffType,
-                      spiffJobnumber,
-                      status,
-                      reason,
-                      reviewedBy,
-                    }) => [
-                      { value: formatDate(timeCreated) },
-                      { value: briefDescription },
-                      { value: usd(spiffAmount) },
-                      { value: spiffType },
-                      { value: spiffJobnumber },
-                      {
-                        value:
-                          status === 'Rejected' ? (
-                            <Tooltip placement="bottom" content={reason}>
-                              <span>{status}</span>
-                            </Tooltip>
-                          ) : status === 'New' ? (
-                            'Pending'
-                          ) : (
-                            status
-                          ),
-                      },
-                      { value: reviewedBy },
-                    ],
-                  )
+                  .map(s => [
+                    { value: formatDate(s.getTimeCreated()) },
+                    { value: s.getBriefDescription() },
+                    { value: usd(s.getSpiffAmount()) },
+                    { value: s.getSpiffType() },
+                    { value: s.getSpiffJobnumber() },
+                    {
+                      value:
+                        status === 'Rejected' ? (
+                          <Tooltip placement="bottom" content={s.getReason()}>
+                            <span>{status}</span>
+                          </Tooltip>
+                        ) : status === 'New' ? (
+                          'Pending'
+                        ) : (
+                          status
+                        ),
+                    },
+                    { value: s.getReviewedBy() },
+                  ])
           }
           loading={isLoading}
         />

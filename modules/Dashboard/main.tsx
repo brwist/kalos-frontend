@@ -15,13 +15,7 @@ import { Spiffs } from './components/SpiffsTable';
 import { User, UserClient } from '@kalos-core/kalos-rpc/User';
 import { SearchIndex } from '../SearchIndex/main';
 import { ENDPOINT } from '../../constants';
-import {
-  usd,
-  makeFakeRows,
-  UserClientService,
-  EventType,
-  UserType,
-} from '../../helpers';
+import { usd, makeFakeRows, UserClientService } from '../../helpers';
 import { InfoTable } from '../ComponentsLibrary/InfoTable';
 import { Button } from '../ComponentsLibrary/Button';
 import { SectionBar } from '../ComponentsLibrary/SectionBar';
@@ -40,13 +34,13 @@ interface state {
   callbacks: number;
   revenue: number;
   receiptCount: number;
-  recentEvents: EventType[];
-  todaysEvents: EventType[];
+  recentEvents: Event[];
+  todaysEvents: Event[];
   toolFundBalance: number;
   availablePTO: number;
   isLoading: boolean;
-  currentUser: UserType;
-  spiffs: Spiff.AsObject[];
+  currentUser: User;
+  spiffs: Spiff[];
 }
 
 export class Dashboard extends React.PureComponent<props, state> {
@@ -69,8 +63,8 @@ export class Dashboard extends React.PureComponent<props, state> {
       toolFundBalance: 0,
       availablePTO: 0,
       isLoading: false,
-      currentUser: new User().toObject(),
-      spiffs: [new Spiff().toObject()],
+      currentUser: new User(),
+      spiffs: [new Spiff()],
     };
 
     this.MetricsClient = new MetricsClient(ENDPOINT);
@@ -111,7 +105,7 @@ export class Dashboard extends React.PureComponent<props, state> {
     event.setIsActive(1);
     const res = await this.EventClient.BatchGet(event);
     this.setState({
-      recentEvents: res.toObject().resultsList,
+      recentEvents: res.getResultsList(),
     });
   }
   async getIdentity() {
@@ -124,10 +118,10 @@ export class Dashboard extends React.PureComponent<props, state> {
   }
 
   async getBillable() {
-    if (this.state.currentUser.isHvacTech === 1) {
+    if (this.state.currentUser.getIsHvacTech() === 1) {
       const res = await this.MetricsClient.GetBillable(this.props.userId);
       this.setState({
-        billable: parseInt(res.value.toFixed(2)),
+        billable: parseInt(res.getValue().toFixed(2)),
       });
     } else {
       return false;
@@ -135,10 +129,10 @@ export class Dashboard extends React.PureComponent<props, state> {
   }
 
   async getAvgTicket() {
-    if (this.state.currentUser.isHvacTech === 1) {
+    if (this.state.currentUser.getIsHvacTech() === 1) {
       const res = await this.MetricsClient.GetAvgTicket(this.props.userId);
       this.setState({
-        avgTicket: parseInt(res.value.toFixed(2)),
+        avgTicket: parseInt(res.getValue().toFixed(2)),
       });
     } else {
       return false;
@@ -146,10 +140,10 @@ export class Dashboard extends React.PureComponent<props, state> {
   }
 
   async getCallbackCount() {
-    if (this.state.currentUser.isHvacTech === 1) {
+    if (this.state.currentUser.getIsHvacTech() === 1) {
       const res = await this.MetricsClient.GetCallbacks(this.props.userId);
       this.setState({
-        callbacks: res.value,
+        callbacks: res.getValue(),
       });
     } else {
       return false;
@@ -157,10 +151,10 @@ export class Dashboard extends React.PureComponent<props, state> {
   }
 
   async getRevenue() {
-    if (this.state.currentUser.isHvacTech === 1) {
+    if (this.state.currentUser.getIsHvacTech() === 1) {
       const res = await this.MetricsClient.GetRevenue(this.props.userId);
       this.setState({
-        revenue: parseInt(res.value.toFixed(2)),
+        revenue: parseInt(res.getValue().toFixed(2)),
       });
     } else {
       return false;
@@ -168,7 +162,7 @@ export class Dashboard extends React.PureComponent<props, state> {
   }
 
   async getToolfundBalance() {
-    if (this.state.currentUser.toolFund > 0) {
+    if (this.state.currentUser.getToolFund() > 0) {
       const res = await this.TaskClient.GetToolFundBalanceByID(
         this.props.userId,
       );
@@ -190,8 +184,7 @@ export class Dashboard extends React.PureComponent<props, state> {
   async getSpiffList() {
     const res = await this.TaskClient.GetAppliedSpiffs(this.props.userId);
     this.setState({
-      //@ts-ignore
-      spiffs: res.resultsListList,
+      spiffs: res.getResultsListList(),
     });
   }
 
@@ -218,11 +211,11 @@ export class Dashboard extends React.PureComponent<props, state> {
       availablePTO,
       receiptCount,
       toolFundBalance,
-      currentUser: { toolFund },
+      currentUser,
     } = this.state;
     return (
       <PageWrapper {...this.props} userID={this.props.userId}>
-        {this.state.currentUser.isEmployee ? (
+        {currentUser.getIsEmployee() ? (
           <div
             style={{
               textAlign: 'center',
@@ -230,7 +223,7 @@ export class Dashboard extends React.PureComponent<props, state> {
               alignSelf: 'center',
             }}
           >
-            <strong>Employee Badge ID:{this.state.currentUser.id}</strong>
+            <strong>Employee Badge ID:{currentUser.getId()}</strong>
           </div>
         ) : (
           []
@@ -240,11 +233,13 @@ export class Dashboard extends React.PureComponent<props, state> {
             { name: '', align: 'center' },
             { name: '', align: 'center' },
             { name: '', align: 'center' },
-            ...(toolFund > 0 ? [{ name: '', align: 'center' as const }] : []),
+            ...(currentUser.getToolFund() > 0
+              ? [{ name: '', align: 'center' as const }]
+              : []),
           ]}
           data={
             isLoading
-              ? makeFakeRows(toolFund > 0 ? 3 : 2, 1)
+              ? makeFakeRows(currentUser.getToolFund() > 0 ? 3 : 2, 1)
               : [
                   [
                     {
@@ -286,9 +281,9 @@ export class Dashboard extends React.PureComponent<props, state> {
                         </>
                       ),
                     },
-                    ...(this.state.currentUser.permissionGroupsList.find(
-                      p => p.type === 'role',
-                    )
+                    ...(this.state.currentUser
+                      .getPermissionGroupsList()
+                      .find(p => p.getType() === 'role')
                       ? [
                           {
                             value: (
@@ -308,7 +303,7 @@ export class Dashboard extends React.PureComponent<props, state> {
                           },
                         ]
                       : []),
-                    ...(toolFund > 0
+                    ...(currentUser.getToolFund() > 0
                       ? [
                           {
                             value: (
@@ -339,7 +334,7 @@ export class Dashboard extends React.PureComponent<props, state> {
           }
           loading={isLoading}
         />
-        {this.state.currentUser.isHvacTech === 1 && (
+        {this.state.currentUser.getIsHvacTech() === 1 && (
           <>
             <SectionBar title="30 Day Stats" sticky={false} />
             <InfoTable
@@ -437,7 +432,7 @@ export class Dashboard extends React.PureComponent<props, state> {
           }}
         >
           <ManagerTimeoffs loggedUserId={this.props.userId} />
-          {this.state.currentUser.isEmployee === 1 && (
+          {this.state.currentUser.getIsEmployee() === 1 && (
             <Paper
               elevation={7}
               style={{
@@ -456,7 +451,7 @@ export class Dashboard extends React.PureComponent<props, state> {
               isLoading={this.state.isLoading}
             />
           )}
-          {this.state.currentUser.isHvacTech === 1 && (
+          {this.state.currentUser.getIsHvacTech() === 1 && (
             <Assignments
               events={this.state.recentEvents}
               isLoading={this.state.isLoading}

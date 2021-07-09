@@ -172,7 +172,6 @@ const Column = ({
 
       return Object.keys(calendarDay).reduce(
         (acc: CallsList, key) => {
-          // @ts-ignore
           let calls = calendarDay[key];
           acc[key] = calls.filter((call: Event) => {
             const techIdsFilterArr = compact((techIdsFilter || '0').split(','))
@@ -300,7 +299,6 @@ const Column = ({
       </Box>
     );
   }
-  // @ts-ignore
 
   const calendarDay = datesMap?.get(date);
   const filteredCalendarDay = new CalendarDay();
@@ -312,11 +310,8 @@ const Column = ({
   filteredCalendarDay.setCompletedServiceCallsList(
     calendarDay!.getCompletedServiceCallsList(),
   );
-  const {
-    completedServiceCallsList,
-    remindersList,
-    serviceCallsList,
-  } = filterCalls(filteredCalendarDay);
+  const { completedServiceCallsList, remindersList, serviceCallsList } =
+    filterCalls(filteredCalendarDay);
   const timeoffRequestsList = calendarDay!.getTimeoffRequestsList();
   /*
   const {

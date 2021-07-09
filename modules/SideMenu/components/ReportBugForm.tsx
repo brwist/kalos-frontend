@@ -1,3 +1,4 @@
+// this files ts-ignore lines have been checked
 import React, { FC, useCallback, useState } from 'react';
 import { EditorState } from 'draft-js';
 // @ts-ignore

@@ -9,8 +9,6 @@ import { ServicesRendered } from '@kalos-core/kalos-rpc/ServicesRendered';
 import {
   getRPCFields,
   makeFakeRows,
-  UserType,
-  PropertyType,
   PropertyClientService,
   JobTypeClientService,
   JobSubtypeClientService,
@@ -55,11 +53,11 @@ export interface Props {
   onSave?: () => void;
 }
 
-const SCHEMA_PROPERTY_NOTIFICATION: Schema<UserType> = [
+const SCHEMA_PROPERTY_NOTIFICATION: Schema<User> = [
   [
     {
       label: 'Notification',
-      name: 'notification',
+      name: 'getNotification',
       required: true,
       multiline: true,
     },
@@ -79,11 +77,9 @@ export const ProjectDetail: FC<Props> = props => {
   const [tabIdx, setTabIdx] = useState<number>(0);
   const [pendingSave, setPendingSave] = useState<boolean>(false);
   const [serviceCallId, setServiceCallId] = useState<number>(eventId || 0);
-  const [entry, setEntry] = useState<EventType>(new Event().toObject());
-  const [property, setProperty] = useState<PropertyType>(
-    new Property().toObject(),
-  );
-  const [customer, setCustomer] = useState<UserType>(new User().toObject());
+  const [entry, setEntry] = useState<Event>(new Event());
+  const [property, setProperty] = useState<Property>(new Property());
+  const [customer, setCustomer] = useState<User>(new User());
   const [loaded, setLoaded] = useState<boolean>(false);
   const [loading, setLoading] = useState<boolean>(true);
   const [saving, setSaving] = useState<boolean>(false);
@@ -99,7 +95,7 @@ export const ProjectDetail: FC<Props> = props => {
     useState<number | null>(null);
   const [project, setProject] = useState<Event.AsObject>();
   const [timesheetDepartment, setTimesheetDepartment] =
-    useState<TimesheetDepartment.AsObject>();
+    useState<TimesheetDepartment>();
   const loadEntry = useCallback(
     async (_serviceCallId = serviceCallId) => {
       if (_serviceCallId) {
@@ -122,11 +118,11 @@ export const ProjectDetail: FC<Props> = props => {
         new Promise<void>(async resolve => {
           try {
             const loggedUser = await UserClientService.loadUserById(userID);
-            if (loggedUser.permissionGroupsList) {
-              const roleGotten = loggedUser.permissionGroupsList.find(
-                p => p.type === 'role',
-              );
-              if (roleGotten) setRole(roleGotten.name as RoleType);
+            if (loggedUser.getPermissionGroupsList()) {
+              const roleGotten = loggedUser
+                .getPermissionGroupsList()
+                .find(p => p.getType() === 'role');
+              if (roleGotten) setRole(roleGotten.getName() as RoleType);
             }
             resolve();
           } catch (err) {

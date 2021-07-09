@@ -1,3 +1,4 @@
+// this files ts-ignore lines have been checked
 import React, { useRef, FC } from 'react';
 import Box from '@material-ui/core/Box';
 import FormControlLabel from '@material-ui/core/FormControlLabel';

@@ -1,3 +1,4 @@
+// this files ts-ignore lines have been checked
 import React, { ChangeEvent, ReactNode } from 'react';
 import { Event, EventClient } from '@kalos-core/kalos-rpc/Event';
 import Grid from '@material-ui/core/Grid';
@@ -29,6 +30,7 @@ import {
   ENDPOINT,
 } from '../../constants';
 import { PageWrapper, PageWrapperProps } from '../PageWrapper/main';
+import { keyToMethodName } from '../../helpers';
 
 interface props extends PageWrapperProps {
   eventID: number;
@@ -104,8 +106,8 @@ export class ServiceCallDetail extends React.PureComponent<props, state> {
   updateEvent<K extends keyof Event.AsObject>(prop: K) {
     return async (value: Event.AsObject[K]) => {
       const event = new Event();
+      const methodName = keyToMethodName('set', prop);
       const upperCaseProp = `${prop[0].toUpperCase()}${prop.slice(1)}`;
-      const methodName = `set${upperCaseProp}`;
       event.setId(this.state.event.getId());
       //@ts-ignore
       event[methodName](value);
