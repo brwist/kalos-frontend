@@ -49,13 +49,6 @@ export const Properties: FC<Props> = props => {
   const [formKey, setFormKey] = useState<number>(0);
   const [loading, setLoading] = useState<boolean>(false);
   const [editing, setEditing] = useState<Property>();
-  const [geolocation, setGeolocation] = useState<
-    | {
-        geolocationLat: number;
-        geolocationLng: number;
-      }
-    | undefined
-  >();
   const [saving, setSaving] = useState<boolean>(false);
   const [error, setError] = useState<boolean>(false);
   const [deleting, setDeleting] = useState<Property>();
@@ -147,7 +140,6 @@ export const Properties: FC<Props> = props => {
       );
       if (geo) {
         setEditing(editing);
-        setGeolocation(geo);
         setFormKey(formKey + 1);
       }
     }
