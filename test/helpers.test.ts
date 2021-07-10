@@ -28,30 +28,33 @@ describe('helpers', () => {
         .not.to.be.null;
     });
   });
-});
 
-describe('rpc', () => {
-  before(async () => {
-    // Before any test that has an RPC in it, use this to set up the authentication token
-    await Setup.u.GetToken('test', 'test');
-  });
-  describe('EventClientService', () => {
-    describe('#Get()', () => {
-      it('should get the event with ID 1', async () => {
-        let res;
-        try {
-          let req = new EventType();
-          req.setId(1);
-          res = await EventClientService.Get(req);
-        } catch (err) {
-          console.error(
-            `The EventClientService ran into an issue while getting the event: ${err}`,
-          );
-          expectImport.fail(
-            `The EventClientService ran into an issue while getting the event: ${err}`,
-          );
-        }
-        expectImport(res.getName()).to.equal('blank event');
+  // ? Grepped to prevent execution with test-watch (so the server isn't spammed)
+  describe('RPC', () => {
+    before(async () => {
+      // Before any test that has an RPC in it, use this to set up the authentication token
+      await Setup.u.GetToken('test', 'test');
+    });
+    describe('Client Services', () => {
+      describe('EventClientService', () => {
+        describe('#Get()', () => {
+          it('should get the event with ID 1', async () => {
+            let res;
+            try {
+              let req = new EventType();
+              req.setId(1);
+              res = await EventClientService.Get(req);
+            } catch (err) {
+              console.error(
+                `The EventClientService ran into an issue while getting the event: ${err}`,
+              );
+              expectImport.fail(
+                `The EventClientService ran into an issue while getting the event: ${err}`,
+              );
+            }
+            expectImport(res.getName()).to.equal('blank event');
+          });
+        });
       });
     });
   });
