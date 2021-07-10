@@ -16,7 +16,6 @@ import { getPropertyAddress } from '@kalos-core/kalos-rpc/Property';
 import {
   makeFakeRows,
   loadEventsByFilter,
-  EventType,
   formatDate,
   UserClientService,
   EventsSort,
@@ -25,6 +24,7 @@ import {
   getCurrDate,
 } from '../../../helpers';
 import { ROWS_PER_PAGE } from '../../../constants';
+import { Event } from '@kalos-core/kalos-rpc/Event';
 
 type Props = {
   kind: 'jobStatus' | 'paymentStatus';
@@ -41,18 +41,18 @@ export const EventsReport: FC<Props> = ({
 }) => {
   const [loading, setLoading] = useState<boolean>(false);
   const [loaded, setLoaded] = useState<boolean>(false);
-  const [entries, setEntries] = useState<EventType[]>([]);
-  const [printEntries, setPrintEntries] = useState<EventType[]>([]);
+  const [entries, setEntries] = useState<Event[]>([]);
+  const [printEntries, setPrintEntries] = useState<Event[]>([]);
   const [printStatus, setPrintStatus] = useState<Status>('idle');
   const [exportStatus, setExportStatus] = useState<Status>('idle');
   const [page, setPage] = useState<number>(0);
   const [count, setCount] = useState<number>(0);
   const [sort, setSort] = useState<EventsSort>({
     orderBy: 'date_started',
-    orderByField: 'dateStarted',
+    orderByField: 'getDateStarted',
     orderDir: 'DESC',
   });
-  const [pendingEdit, setPendingEdit] = useState<EventType>();
+  const [pendingEdit, setPendingEdit] = useState<Event>();
   const load = useCallback(async () => {
     setLoading(true);
     const filter: EventsFilter = {
@@ -69,6 +69,7 @@ export const EventsReport: FC<Props> = ({
       page,
       filter,
       sort,
+      req: new Event(),
     });
     setEntries(resultsList);
     setCount(totalCount);
@@ -107,11 +108,11 @@ export const EventsReport: FC<Props> = ({
     [setSort, reload],
   );
   const handlePendingEditToggle = useCallback(
-    (pendingEdit?: EventType) => () => setPendingEdit(pendingEdit),
+    (pendingEdit?: Event) => () => setPendingEdit(pendingEdit),
     [setPendingEdit],
   );
   const handleOpenTasks = useCallback(
-    (entry: EventType) => () => {
+    (entry: Event) => () => {
       // TODO Replace with react Tasks module, once it's built
       window.open(
         [
@@ -148,78 +149,80 @@ export const EventsReport: FC<Props> = ({
     await loadPrintEntries();
     setExportStatus('loaded');
   }, [loadPrintEntries, setExportStatus]);
-  const handleExported = useCallback(() => setExportStatus('idle'), [
-    setExportStatus,
-  ]);
+  const handleExported = useCallback(
+    () => setExportStatus('idle'),
+    [setExportStatus],
+  );
   const handlePrint = useCallback(async () => {
     setPrintStatus('loading');
     await loadPrintEntries();
     setPrintStatus('loaded');
   }, [loadPrintEntries, setPrintStatus]);
-  const handlePrinted = useCallback(() => setPrintStatus('idle'), [
-    setPrintStatus,
-  ]);
+  const handlePrinted = useCallback(
+    () => setPrintStatus('idle'),
+    [setPrintStatus],
+  );
   const COLUMNS: Columns = [
     {
       name: 'Property',
-      ...(sort.orderByField === 'address'
+      ...(sort.orderByField === 'getAddress'
         ? {
             dir: sort.orderDir,
           }
         : {}),
       onClick: handleSortChange({
-        orderByField: 'address',
+        orderByField: 'getAddress',
         orderBy: 'property_address',
         orderDir:
-          sort.orderByField === 'address' && sort.orderDir === 'ASC'
+          sort.orderByField === 'getAddress' && sort.orderDir === 'ASC'
             ? 'DESC'
             : 'ASC',
       }),
     },
     {
       name: 'Customer Name',
-      ...(sort.orderByField === 'lastname'
+      ...(sort.orderByField === 'getLastname'
         ? {
             dir: sort.orderDir,
           }
         : {}),
       onClick: handleSortChange({
-        orderByField: 'lastname',
+        orderByField: 'getLastname',
         orderBy: 'user_lastname', // FIXME: RPC doesn't sort properly
         orderDir:
-          sort.orderByField === 'lastname' && sort.orderDir === 'ASC'
+          sort.orderByField === 'getLastname' && sort.orderDir === 'ASC'
             ? 'DESC'
             : 'ASC',
       }),
     },
     {
       name: 'Job #',
-      ...(sort.orderByField === 'logJobNumber'
+      ...(sort.orderByField === 'getLogJobNumber'
         ? {
             dir: sort.orderDir,
           }
         : {}),
       onClick: handleSortChange({
-        orderByField: 'logJobNumber',
+        orderByField: 'getLogJobNumber',
         orderBy: 'log_jobNumber',
         orderDir:
-          sort.orderByField === 'logJobNumber' && sort.orderDir === 'ASC'
+          sort.orderByField === 'getLogJobNumber' && sort.orderDir === 'ASC'
             ? 'DESC'
             : 'ASC',
       }),
     },
     {
       name: 'Date',
-      ...(sort.orderByField === 'dateStarted'
+      ...(sort.orderByField === 'getDateStarted'
         ? {
             dir: sort.orderDir,
           }
         : {}),
       onClick: handleSortChange({
-        orderByField: 'dateStarted',
+        orderByField: 'getDateStarted',
         orderBy: 'date_started',
         orderDir:
-          sort.orderByField === 'dateStarted' && sort.orderDir === 'ASC'
+          sort.orderByField === 'getDateStarted' && sort.orderDir === 'ASC'
             ? 'DESC'
             : 'ASC',
       }),
@@ -228,16 +231,17 @@ export const EventsReport: FC<Props> = ({
       ? [
           {
             name: 'Job Status',
-            ...(sort.orderByField === 'logJobStatus'
+            ...(sort.orderByField === 'getLogJobStatus'
               ? {
                   dir: sort.orderDir,
                 }
               : {}),
             onClick: handleSortChange({
-              orderByField: 'logJobStatus',
+              orderByField: 'getLogJobStatus',
               orderBy: 'log_jobStatus', // FIXME: RPC doesn't sort properly
               orderDir:
-                sort.orderByField === 'logJobStatus' && sort.orderDir === 'ASC'
+                sort.orderByField === 'getLogJobStatus' &&
+                sort.orderDir === 'ASC'
                   ? 'DESC'
                   : 'ASC',
             }),
@@ -248,16 +252,16 @@ export const EventsReport: FC<Props> = ({
       ? [
           {
             name: 'Payment Status',
-            ...(sort.orderByField === 'logPaymentStatus'
+            ...(sort.orderByField === 'getLogPaymentStatus'
               ? {
                   dir: sort.orderDir,
                 }
               : {}),
             onClick: handleSortChange({
-              orderByField: 'logPaymentStatus',
-              orderBy: 'log_paymentStatus', // FIXME: RPC doesn't sort properly
+              orderByField: 'getLogPaymentStatus',
+              orderBy: 'getLog_paymentStatus', // FIXME: RPC doesn't sort properly
               orderDir:
-                sort.orderByField === 'logPaymentStatus' &&
+                sort.orderByField === 'getLogPaymentStatus' &&
                 sort.orderDir === 'ASC'
                   ? 'DESC'
                   : 'ASC',
@@ -266,7 +270,7 @@ export const EventsReport: FC<Props> = ({
         ]
       : []),
   ];
-  const getData = (entries: EventType[]): Data =>
+  const getData = (entries: Event[]): Data =>
     loading
       ? makeFakeRows(5, 5)
       : entries.map(entry => {
