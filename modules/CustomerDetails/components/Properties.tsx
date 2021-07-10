@@ -16,7 +16,6 @@ import { Form, Schema } from '../../ComponentsLibrary/Form';
 import { SectionBar } from '../../ComponentsLibrary/SectionBar';
 import { ConfirmDelete } from '../../ComponentsLibrary/ConfirmDelete';
 import {
-  PropertyType,
   loadPropertiesByFilter,
   PropertiesFilter,
   PropertyClientService,
@@ -24,8 +23,6 @@ import {
   MapClientService,
 } from '../../../helpers';
 import './properties.less';
-import { MapServiceClient } from '@kalos-core/kalos-rpc/compiled-protos/kalosmaps_pb_service';
-import { MapClient } from '@kalos-core/kalos-rpc/Maps';
 
 const PROP_LEVEL = 'Used for property-level billing only';
 
@@ -42,26 +39,33 @@ interface Props {
 
 export const Properties: FC<Props> = props => {
   const { userID } = props;
-  const [entries, setEntries] = useState<PropertyType[]>([]);
+  const [entries, setEntries] = useState<Property[]>([]);
   const [count, setCount] = useState<number>(0);
   const [page, setPage] = useState<number>(0);
   const [filter, setFilter] = useState<PropertiesFilter>({});
   const [loaded, setLoaded] = useState<boolean>(false);
   const [formKey, setFormKey] = useState<number>(0);
   const [loading, setLoading] = useState<boolean>(false);
-  const [editing, setEditing] = useState<PropertyType>();
+  const [editing, setEditing] = useState<Property>();
+  const [geolocation, setGeolocation] = useState<
+    | {
+        geolocationLat: number;
+        geolocationLng: number;
+      }
+    | undefined
+  >();
   const [saving, setSaving] = useState<boolean>(false);
   const [error, setError] = useState<boolean>(false);
-  const [deleting, setDeleting] = useState<PropertyType>();
+  const [deleting, setDeleting] = useState<Property>();
   const [pendingDelete, setPendingDelete] = useState<boolean>(false);
 
   const handleSetEditing = useCallback(
-    (editing?: PropertyType) => () => setEditing(editing),
+    (editing?: Property) => () => setEditing(editing),
     [setEditing],
   );
 
   const handleSetDeleting = useCallback(
-    (deleting?: PropertyType) => () => {
+    (deleting?: Property) => () => {
       setDeleting(deleting);
       setPendingDelete(!!deleting);
     },
@@ -80,9 +84,10 @@ export const Properties: FC<Props> = props => {
         },
         sort: {
           orderBy: 'property_address',
-          orderByField: 'address',
+          orderByField: 'getAddress',
           orderDir: 'ASC',
         },
+        req: new Property(),
       });
       setEntries(results);
       setCount(totalCount);
@@ -102,21 +107,20 @@ export const Properties: FC<Props> = props => {
   }, [loaded, load]);
 
   const handleSave = useCallback(
-    async (data: PropertyType) => {
+    async (data: Property) => {
       if (editing) {
         setSaving(true);
-        const { address, city, state: addressState, zip } = data;
         const geo = await MapClientService.loadGeoLocationByAddress(
-          `${address}, ${city}, ${addressState} ${zip}`,
+          `${data.getAddress()}, ${data.getCity()}, ${data.getState()} ${data.getZip()}`,
         );
         if (geo) {
-          data.geolocationLat = geo.geolocationLat;
-          data.geolocationLng = geo.geolocationLng;
+          data.setGeolocationLat(geo.geolocationLat);
+          data.setGeolocationLng(geo.geolocationLng);
         }
         await PropertyClientService.saveProperty(
           data,
           userID,
-          editing.id === 0 ? undefined : editing.id,
+          editing.getId() === 0 ? undefined : editing.getId(),
         );
         setSaving(false);
         handleSetEditing()();
@@ -128,7 +132,7 @@ export const Properties: FC<Props> = props => {
 
   const handleDelete = useCallback(async () => {
     if (deleting) {
-      await PropertyClientService.deletePropertyById(deleting.id);
+      await PropertyClientService.deletePropertyById(deleting.getId());
       handleSetDeleting()();
       load();
     }
@@ -136,12 +140,12 @@ export const Properties: FC<Props> = props => {
 
   const handleCheckLocation = useCallback(async () => {
     if (editing) {
-      const { address, city, state: addressState, zip } = editing;
-      const geo = await loadGeoLocationByAddress(
-        `${address}, ${city}, ${addressState} ${zip}`,
+      const geo = await MapClientService.loadGeoLocationByAddress(
+        `${editing.getAddress()}, ${editing.getCity()}, ${editing.getState()} ${editing.getZip()}`,
       );
       if (geo) {
-        setEditing({ ...editing, ...geo });
+        setEditing(editing);
+        setGeolocation(geo);
         setFormKey(formKey + 1);
       }
     }
@@ -173,30 +177,30 @@ export const Properties: FC<Props> = props => {
     setLoaded(false);
   }, [setPage, setLoaded]);
 
-  const SCHEMA_PROPERTY_INFORMATION: Schema<PropertyType> = [
+  const SCHEMA_PROPERTY_INFORMATION: Schema<Property> = [
     [{ label: 'Personal Details', headline: true, description: PROP_LEVEL }],
     [
-      { label: 'First Name', name: 'firstname' },
-      { label: 'Last Name', name: 'lastname' },
-      { label: 'Business Name', name: 'businessname' },
+      { label: 'First Name', name: 'getFirstname' },
+      { label: 'Last Name', name: 'getLastname' },
+      { label: 'Business Name', name: 'getBusinessname' },
     ],
     [{ label: 'Contact Details', headline: true, description: PROP_LEVEL }],
     [
-      { label: 'Primary Phone', name: 'phone' },
-      { label: 'Alternate Phone', name: 'altphone' },
-      { label: 'Email', name: 'email' },
+      { label: 'Primary Phone', name: 'getPhone' },
+      { label: 'Alternate Phone', name: 'getAltphone' },
+      { label: 'Email', name: 'getEmail' },
     ],
     [{ label: 'Address Details', headline: true }],
     [
-      { label: 'Address', name: 'address', required: true, multiline: true },
-      { label: 'City', name: 'city', required: true },
+      { label: 'Address', name: 'getAddress', required: true, multiline: true },
+      { label: 'City', name: 'getCity', required: true },
       {
         label: 'State',
-        name: 'state',
+        name: 'getState',
         options: USA_STATES_OPTIONS,
         required: true,
       },
-      { label: 'Zip Code', name: 'zip', required: true },
+      { label: 'Zip Code', name: 'getZip', required: true },
     ],
     [
       {
@@ -215,16 +219,20 @@ export const Properties: FC<Props> = props => {
       },
     ],
     [
-      { label: 'Directions', name: 'directions', multiline: true },
-      { label: 'Subdivision', name: 'subdivision' },
+      { label: 'Directions', name: 'getDirections', multiline: true },
+      { label: 'Subdivision', name: 'getSubdivision' },
     ],
     [
-      { label: 'Zoning', name: 'isResidential', options: RESIDENTIAL_OPTIONS },
-      { label: 'Latitude', name: 'geolocationLat', type: 'number' },
-      { label: 'Longitude', name: 'geolocationLng', type: 'number' },
+      {
+        label: 'Zoning',
+        name: 'getIsResidential',
+        options: RESIDENTIAL_OPTIONS,
+      },
+      { label: 'Latitude', name: 'getGeolocationLat', type: 'number' },
+      { label: 'Longitude', name: 'getGeolocationLng', type: 'number' },
     ],
     [{ label: 'Notes', headline: true }],
-    [{ label: 'Notes', name: 'notes', multiline: true }],
+    [{ label: 'Notes', name: 'getNotes', multiline: true }],
   ];
 
   const SCHEMA_FILTER: Schema<PropertiesFilter> = [
@@ -243,28 +251,27 @@ export const Properties: FC<Props> = props => {
   ];
 
   const data: Data = entries.map(entry => {
-    const { id, address, city, state, zip, subdivision } = entry;
     return [
       {
-        value: address,
-        onClick: handleViewEntry(id, entry.userId),
+        value: entry.getAddress(),
+        onClick: handleViewEntry(entry.getId(), entry.getUserId()),
       },
       {
-        value: subdivision,
-        onClick: handleViewEntry(id, entry.userId),
+        value: entry.getSubdivision(),
+        onClick: handleViewEntry(entry.getId(), entry.getUserId()),
       },
       {
-        value: `${city}, ${state}`,
-        onClick: handleViewEntry(id, entry.userId),
+        value: `${entry.getCity()}, ${entry.getState()}`,
+        onClick: handleViewEntry(entry.getId(), entry.getUserId()),
       },
       {
-        value: zip,
-        onClick: handleViewEntry(id, entry.userId),
+        value: entry.getZip(),
+        onClick: handleViewEntry(entry.getId(), entry.getUserId()),
         actions: [
           <IconButton
             key="view"
             size="small"
-            onClick={handleViewEntry(id, entry.userId)}
+            onClick={handleViewEntry(entry.getId(), entry.getUserId())}
           >
             <InfoIcon />
           </IconButton>,
@@ -292,7 +299,7 @@ export const Properties: FC<Props> = props => {
             actions={[
               {
                 label: 'Add',
-                onClick: handleSetEditing(new Property().toObject()),
+                onClick: handleSetEditing(new Property()),
               },
             ]}
             pagination={{
@@ -318,9 +325,11 @@ export const Properties: FC<Props> = props => {
       </div>
       {editing && (
         <Modal open onClose={handleSetEditing()}>
-          <Form<PropertyType>
+          <Form<Property>
             key={formKey}
-            title={`${editing.id === 0 ? 'Add' : 'Edit'} Property Information`}
+            title={`${
+              editing.getId() === 0 ? 'Add' : 'Edit'
+            } Property Information`}
             schema={SCHEMA_PROPERTY_INFORMATION}
             data={editing}
             onSave={handleSave}
