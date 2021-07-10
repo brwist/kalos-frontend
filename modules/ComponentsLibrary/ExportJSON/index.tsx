@@ -33,7 +33,7 @@ export const ExportJSON: FC<Props> = ({
   const handleExport = useCallback(() => {
     const csv = parse(json, { fields });
     downloadCSV(filename, csv);
-  }, [json, filename]);
+  }, [json, fields, filename]);
   useEffect(() => {
     if (status === 'loaded') {
       handleExport();
@@ -46,16 +46,12 @@ export const ExportJSON: FC<Props> = ({
     <Button
       label="Export to Excel"
       onClick={onExport || handleExport}
-      children={
-        status === 'loading' && (
-          <CircularProgress
-            style={{ color: '#FFF', marginRight: 8 }}
-            size={16}
-          />
-        )
-      }
       disabled={status === 'loading'}
       {...buttonProps}
-    />
+    >
+      {status === 'loading' && (
+        <CircularProgress style={{ color: '#FFF', marginRight: 8 }} size={16} />
+      )}
+    </Button>
   );
 };
