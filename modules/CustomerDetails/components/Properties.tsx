@@ -123,7 +123,7 @@ export const Properties: FC<Props> = props => {
         load();
       }
     },
-    [editing, setSaving, userID, handleSetEditing],
+    [editing, userID, handleSetEditing, load],
   );
 
   const handleDelete = useCallback(async () => {
@@ -132,7 +132,7 @@ export const Properties: FC<Props> = props => {
       handleSetDeleting()();
       load();
     }
-  }, [deleting, handleSetDeleting]);
+  }, [deleting, handleSetDeleting, load]);
 
   const handleCheckLocation = useCallback(async () => {
     if (editing) {
@@ -157,7 +157,7 @@ export const Properties: FC<Props> = props => {
         ].join('&'),
       );
     },
-    [userID],
+    [],
   );
 
   const handlePageChange = useCallback(

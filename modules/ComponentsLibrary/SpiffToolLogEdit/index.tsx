@@ -343,7 +343,7 @@ export const SpiffToolLogEdit: FC<Props> = ({
         onStatusChange();
       }
     },
-    [data, setStatusEditing, statusEditing, onStatusChange, loggedUserId],
+    [statusEditing, loggedUserId, data, onStatusChange, loggedUser],
   );
   const handleDeleteStatus = useCallback(async () => {
     if (statusDeleting) {
