@@ -21,6 +21,8 @@ import {
   PropertyClientService,
   getCFAppUrl,
   MapClientService,
+  PropertiesSort,
+  makeSafeFormObject,
 } from '../../../helpers';
 import './properties.less';
 
@@ -86,7 +88,7 @@ export const Properties: FC<Props> = props => {
           orderBy: 'property_address',
           orderByField: 'getAddress',
           orderDir: 'ASC',
-        },
+        } as PropertiesSort,
         req: new Property(),
       });
       setEntries(results);
@@ -332,8 +334,10 @@ export const Properties: FC<Props> = props => {
             } Property Information`}
             schema={SCHEMA_PROPERTY_INFORMATION}
             data={editing}
-            onSave={handleSave}
-            onClose={handleSetEditing()}
+            onSave={saved => {
+              handleSave(makeSafeFormObject(saved, new Property()));
+            }}
+            onClose={() => handleSetEditing()}
             disabled={saving}
           />
         </Modal>
