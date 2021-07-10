@@ -323,9 +323,8 @@ export const AdvancedSearch: FC<Props> = ({
               ),
             })),
         );
-        console.log(images);
+        console.log(images); 
 
-        // TODO fix type error
         setEmployeeImages(
           images.reduce(
             (aggr, { image, url }) => ({ ...aggr, [image]: url }),
