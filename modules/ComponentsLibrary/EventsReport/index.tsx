@@ -274,30 +274,31 @@ export const EventsReport: FC<Props> = ({
     loading
       ? makeFakeRows(5, 5)
       : entries.map(entry => {
-          const {
-            property,
-            customer,
-            logJobNumber,
-            dateStarted,
-            logJobStatus,
-            logPaymentStatus,
-          } = entry;
           return [
             {
-              value: getPropertyAddress(property),
+              value: getPropertyAddress(entry.getProperty()),
               onClick: handlePendingEditToggle(entry),
             },
             {
-              value: UserClientService.getCustomerName(customer!, true),
-              onClick: handlePendingEditToggle(entry),
-            },
-            { value: logJobNumber, onClick: handlePendingEditToggle(entry) },
-            {
-              value: formatDate(dateStarted),
+              value: UserClientService.getCustomerName(
+                entry.getCustomer()!,
+                true,
+              ),
               onClick: handlePendingEditToggle(entry),
             },
             {
-              value: kind === 'jobStatus' ? logJobStatus : logPaymentStatus,
+              value: entry.getLogJobNumber(),
+              onClick: handlePendingEditToggle(entry),
+            },
+            {
+              value: formatDate(entry.getDateStarted()),
+              onClick: handlePendingEditToggle(entry),
+            },
+            {
+              value:
+                kind === 'jobStatus'
+                  ? entry.getLogJobStatus()
+                  : entry.getLogPaymentStatus(),
               onClick: handlePendingEditToggle(entry),
               actions: [
                 <IconButton
@@ -357,23 +358,18 @@ export const EventsReport: FC<Props> = ({
         asideContent={
           <>
             <ExportJSON
-              json={(allPrintData ? entries : printEntries).map(
-                ({
-                  property,
-                  customer,
-                  logJobNumber,
-                  dateStarted,
-                  logJobStatus,
-                  logPaymentStatus,
-                }) => ({
-                  property: getPropertyAddress(property),
-                  customer: UserClientService.getCustomerName(customer!),
-                  jobNumber: logJobNumber,
-                  date: formatDate(dateStarted),
-                  status:
-                    kind === 'jobStatus' ? logJobStatus : logPaymentStatus,
-                }),
-              )}
+              json={(allPrintData ? entries : printEntries).map(data => ({
+                property: getPropertyAddress(data.getProperty()),
+                customer: UserClientService.getCustomerName(
+                  data.getCustomer()!,
+                ),
+                jobNumber: data.getLogJobNumber(),
+                date: formatDate(data.getDateStarted()),
+                status:
+                  kind === 'jobStatus'
+                    ? data.getLogJobStatus()
+                    : data.getLogPaymentStatus(),
+              }))}
               fields={EXPORT_COLUMNS}
               filename={`${
                 kind === 'jobStatus' ? 'Job' : 'Billing'
@@ -415,14 +411,14 @@ export const EventsReport: FC<Props> = ({
         }
       />
       <InfoTable columns={COLUMNS} data={getData(entries)} loading={loading} />
-      {pendingEdit && pendingEdit.property && pendingEdit.customer && (
+      {pendingEdit && pendingEdit.getProperty() && pendingEdit.getCustomer() && (
         <Modal open onClose={handlePendingEditToggle(undefined)} fullScreen>
           <ServiceCall
             loggedUserId={loggedUserId}
             onClose={handlePendingEditToggle(undefined)}
-            propertyId={pendingEdit.property.id}
-            userID={pendingEdit.customer.id}
-            serviceCallId={pendingEdit.id}
+            propertyId={pendingEdit.getProperty()!.getId()}
+            userID={pendingEdit.getCustomer()!.getId()}
+            serviceCallId={pendingEdit.getId()}
             onSave={reload}
           />
         </Modal>
