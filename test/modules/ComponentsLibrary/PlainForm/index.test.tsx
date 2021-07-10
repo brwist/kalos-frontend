@@ -266,6 +266,34 @@ describe('ComponentsLibrary', () => {
           wrapper.find({ label: 'Last Name' }).props()['value'],
         ).to.equal('Doe');
       });
+
+      it('displays the correct gender', () => {
+        const wrapper = shallow(
+          <PlainForm<Model>
+            schema={SCHEMA_2}
+            data={model}
+            onChange={(data: any) => console.log(data)}
+          />,
+        );
+
+        expectImport(
+          wrapper.find({ label: 'Gender' }).props()['value'],
+        ).to.equal('Male');
+      });
+
+      it('displays the correct favorite numbers', () => {
+        const wrapper = shallow(
+          <PlainForm<Model>
+            schema={SCHEMA_2}
+            data={model}
+            onChange={(data: any) => console.log(data)}
+          />,
+        );
+
+        expectImport(
+          wrapper.find({ label: 'Favorite Numbers' }).props()['value'],
+        ).to.deep.equal([1, 4, 6]);
+      });
     });
   });
 });
