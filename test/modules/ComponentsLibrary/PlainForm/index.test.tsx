@@ -45,7 +45,7 @@ export type Model = {
 export const model: Model = {
   id: 123,
   firstName: 'John',
-  lastName: '',
+  lastName: 'Doe',
   gender: GENDERS[0],
   numbers: [1, 4, 6],
   colors: ['red', 'green'],
@@ -239,7 +239,7 @@ export const SCHEMA_2: any = [
 describe('ComponentsLibrary', () => {
   describe('PlainForm', () => {
     describe('<PlainForm<Model> schema={SCHEMA_2} data={model} onChange={data => console.log(data)}/>', () => {
-      it('renders correctly', () => {
+      it('displays the correct first name', () => {
         const wrapper = shallow(
           <PlainForm<Model>
             schema={SCHEMA_2}
@@ -251,6 +251,20 @@ describe('ComponentsLibrary', () => {
         expectImport(
           wrapper.find({ label: 'First Name' }).props()['value'],
         ).to.equal('John');
+      });
+
+      it('displays the correct last name', () => {
+        const wrapper = shallow(
+          <PlainForm<Model>
+            schema={SCHEMA_2}
+            data={model}
+            onChange={(data: any) => console.log(data)}
+          />,
+        );
+
+        expectImport(
+          wrapper.find({ label: 'Last Name' }).props()['value'],
+        ).to.equal('Doe');
       });
     });
   });
