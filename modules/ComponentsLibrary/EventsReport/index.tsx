@@ -349,7 +349,8 @@ export const EventsReport: FC<Props> = ({
     <>
       <SectionBar
         title={title}
-        actions={[{ label: 'Tasks' }]}
+        // actions={[{ label: 'Tasks', onClick: () => handleOpenTasks(entry) }]}
+        // TODO integrate the new Tasks with events report
         pagination={{
           page,
           count,
