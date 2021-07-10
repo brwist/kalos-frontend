@@ -112,7 +112,6 @@ export const AddLog: FC<Props> = ({
     [fileData, handleSubmitFileToS3, loggedUserId, onSave],
   );
 
-  // TODO This is set as an AsObject until the Form and Schema can handle non-AsObject forms
   const SCHEMA: Schema<ActivityLog & { fileData: string }> = [
     [
       {
