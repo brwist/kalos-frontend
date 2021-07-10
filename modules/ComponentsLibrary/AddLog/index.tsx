@@ -9,6 +9,7 @@ import {
   getS3LogImageFileName,
   S3ClientService,
   keyToMethodName,
+  makeSafeFormObject,
 } from '../../../helpers';
 import { Loader } from '../../Loader/main';
 import { Alert } from '../Alert';
@@ -23,19 +24,13 @@ interface Props {
   eventId?: number; // Will pre-fill event id when adding log
 }
 
-interface FileLog extends ActivityLog.AsObject {
-  fileData: string;
-}
-
 export const AddLog: FC<Props> = ({
   onClose,
   onSave,
   loggedUserId,
   eventId,
 }) => {
-  const [log] = useState<FileLog>({
-    eventId: eventId,
-  } as FileLog);
+  const [activityLog] = useState<ActivityLog>(new ActivityLog());
   const [error, setError] = useState<string>('');
   const [saving, setSaving] = useState<boolean>();
   const [confirmed, setConfirmed] = useState<boolean>(); // For if the image is confirmed to be uploaded as well
@@ -43,9 +38,10 @@ export const AddLog: FC<Props> = ({
     { fileData: string; fileName: string } | undefined
   >();
 
-  const handleSetError = useCallback((err: string) => setError(err), [
-    setError,
-  ]);
+  const handleSetError = useCallback(
+    (err: string) => setError(err),
+    [setError],
+  );
 
   const handleSetFileData = useCallback(
     (fileData: string, fileName: string) => setFileData({ fileData, fileName }),
@@ -117,58 +113,58 @@ export const AddLog: FC<Props> = ({
   );
 
   // TODO This is set as an AsObject until the Form and Schema can handle non-AsObject forms
-  const SCHEMA: Schema<FileLog> = [
+  const SCHEMA: Schema<ActivityLog & { fileData: string }> = [
     [
       {
-        name: 'activityName',
+        name: 'getActivityName',
         label: 'Description',
       },
       {
-        name: 'activityDate',
+        name: 'getActivityDate',
         label: 'Date',
         type: 'mui-datetime',
       },
     ],
     [
       {
-        name: 'propertyId',
+        name: 'getPropertyId',
         label: 'Property ID',
         type: 'number',
       },
       {
-        name: 'contractId',
+        name: 'getContractId',
         label: 'Contract ID',
         type: 'number',
       },
       {
-        name: 'customerId',
+        name: 'getCustomerId',
         label: 'Customer ID',
         type: 'number',
       },
       {
-        name: 'taskId',
+        name: 'getTaskId',
         label: 'Task ID',
         type: 'number',
       },
       {
-        name: 'timesheetLineId',
+        name: 'getTimesheetLineId',
         label: 'Timesheet ID',
         type: 'number',
       },
       {
-        name: 'eventId',
+        name: 'getEventId',
         label: 'Event / Project ID',
         type: 'number',
       },
     ],
     [
       {
-        name: 'geolocationLat',
+        name: 'getGeolocationLat',
         label: 'Latitude',
         type: 'number',
       },
       {
-        name: 'geolocationLng',
+        name: 'getGeolocationLng',
         label: 'Longitude',
         type: 'number',
       },
@@ -201,22 +197,14 @@ export const AddLog: FC<Props> = ({
           <Typography>{error}</Typography>{' '}
         </Alert>
       )}
-      <Form
+      <Form<ActivityLog & { fileData: string }>
         title="Log Details"
-        onSave={(savedLog: FileLog) => {
-          let saved = new ActivityLog();
-          for (const field in savedLog) {
-            if (field == 'fileData') {
-              continue;
-            }
-            // @ts-ignore
-            saved[keyToMethodName(set, field)](savedLog[field]);
-          }
-          handleSaveLog(saved);
+        onSave={(savedLog: ActivityLog & { fileData: string }) => {
+          handleSaveLog(makeSafeFormObject(savedLog, new ActivityLog()));
         }}
         onClose={() => onClose()}
         schema={SCHEMA}
-        data={log}
+        data={activityLog as ActivityLog & { fileData: string }}
         submitLabel="Save"
         cancelLabel="Close"
       />
