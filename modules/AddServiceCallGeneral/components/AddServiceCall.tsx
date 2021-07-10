@@ -11,11 +11,7 @@ import { SearchForm } from './SearchForm';
 import { CustomerItem, Props as CustomerItemProps } from './CustomerItem';
 import { ROWS_PER_PAGE } from '../../../constants';
 import './addServiceCall.less';
-import {
-  LoadUsersByFilter,
-  User,
-  UsersFilter,
-} from '@kalos-core/kalos-rpc/User';
+import { User, UsersFilter } from '@kalos-core/kalos-rpc/User';
 import { Property } from '@kalos-core/kalos-rpc/Property';
 export type Props = Pick<CustomerItemProps, 'loggedUserId'> & {
   onClose?: () => void;
@@ -23,8 +19,6 @@ export type Props = Pick<CustomerItemProps, 'loggedUserId'> & {
   asProject?: boolean;
   projectParentId?: number;
 };
-
-// TODO do not release yet, still has issues with the Search capability.
 
 export const AddServiceCall: FC<Props> = props => {
   const { loggedUserId, onClose, onSave, asProject = false } = props;
@@ -40,21 +34,37 @@ export const AddServiceCall: FC<Props> = props => {
   const [entries, setEntries] = useState<User[]>([]);
   const load = useCallback(async () => {
     setLoading(true);
-    const criteria: LoadUsersByFilter = {
-      page,
-      filter: search,
-      sort: {
-        orderByField: 'getFirstname',
-        orderBy: 'user_firstname',
-        orderDir: 'ASC',
-      },
-      withProperties: true,
+    // ? Just a very stripped-down version of the loadUsersByFilter function that takes the parameters into account
+    const req = new User();
+    if (search.firstname) req.setFirstname(search.firstname);
+    if (search.lastname) req.setLastname(search.lastname);
+    if (search.businessname) req.setBusinessname(search.businessname);
+    if (search.email) req.setEmail(search.email);
+    if (search.phone) req.setPhone(search.phone);
+    req.setOrderBy('user_firstname');
+    req.setOrderDir('ASC');
+    req.setIsEmployee(0);
+    req.setIsActive(1);
+    if (page === -1) {
+      req.setOverrideLimit(true);
+    } else {
+      req.setPageNumber(page);
+    }
+    req.setWithProperties(true);
+
+    const data = await UserClientService.BatchGet(req);
+    let results = {
+      results: data.getResultsList().sort((a, b) => {
+        const A = (a.getOrderBy() || '').toString().toLowerCase();
+        const B = (b.getOrderBy() || '').toString().toLowerCase();
+        if (A < B) return -1;
+        if (A > B) return 1;
+        return 0;
+      }),
+      totalCount: data.getTotalCount(),
     };
-    const { results, totalCount } = await UserClientService.loadUsersByFilter(
-      criteria,
-    );
-    setEntries(results);
-    setCount(totalCount);
+    setEntries(results.results);
+    setCount(data.getTotalCount());
     setLoading(false);
   }, [page, search]);
   useEffect(() => {
@@ -84,9 +94,10 @@ export const AddServiceCall: FC<Props> = props => {
     (addCustomer: boolean) => () => setAddCustomer(addCustomer),
     [setAddCustomer],
   );
-  const handlePropertyClose = useCallback(() => setPropertyOpened(undefined), [
-    setPropertyOpened,
-  ]);
+  const handlePropertyClose = useCallback(
+    () => setPropertyOpened(undefined),
+    [setPropertyOpened],
+  );
   const handleServiceCallClose = useCallback(
     () => setServiceCallOpened(undefined),
     [setServiceCallOpened],
@@ -95,9 +106,10 @@ export const AddServiceCall: FC<Props> = props => {
     (customerOpened?: User) => setCustomerOpened(customerOpened),
     [setCustomerOpened],
   );
-  const handleCustomerClose = useCallback(() => setCustomerOpened(undefined), [
-    setCustomerOpened,
-  ]);
+  const handleCustomerClose = useCallback(
+    () => setCustomerOpened(undefined),
+    [setCustomerOpened],
+  );
   const handleCustomerSave = useCallback(
     (data: User) => {
       setAddCustomer(false);
