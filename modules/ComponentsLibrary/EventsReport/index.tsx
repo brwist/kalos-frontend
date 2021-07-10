@@ -118,7 +118,7 @@ export const EventsReport: FC<Props> = ({
         [
           getCFAppUrl('admin:tasks.list'),
           'code=servicecall',
-          `id=${entry.id}`,
+          `id=${entry.getId()}`,
         ].join('&'),
       );
     },
@@ -141,6 +141,7 @@ export const EventsReport: FC<Props> = ({
       page: -1,
       filter,
       sort,
+      req: new Event(),
     });
     setPrintEntries(resultsList);
   }, [status, startDate, endDate, sort, kind, printEntries, count]);
