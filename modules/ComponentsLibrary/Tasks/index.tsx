@@ -43,7 +43,7 @@ import './Tasks.less';
 import { Document } from '@kalos-core/kalos-rpc/Document';
 import { TaskEvent } from '@kalos-core/kalos-rpc/TaskEvent';
 
-type ExternalCode = 'customers' | 'employee' | 'properties';
+type ExternalCode = 'customers' | 'employee' | 'properties' | 'servicecalls';
 interface Props {
   loggedUserId: number;
   externalCode: ExternalCode;
@@ -395,6 +395,7 @@ export const Tasks: FC<Props> = ({
     if (externalCode === 'customers') return 'Customer';
     if (externalCode === 'employee') return 'Employee';
     if (externalCode === 'properties') return 'Property';
+    if (externalCode === 'servicecalls') return 'Service Calls';
     return '';
   }, [externalCode]);
   const handleStartTaskAction = useCallback(async () => {
