@@ -16,11 +16,11 @@ import {
   makeFakeRows,
   formatDate,
   UserClientService,
-  getCFAppUrl,
   loadEventsByFilterDeleted,
 } from '../../../helpers';
 import { ROWS_PER_PAGE } from '../../../constants';
 import { Event } from '@kalos-core/kalos-rpc/Event';
+import { Tasks } from '../Tasks';
 
 interface Props {
   loggedUserId: number;
@@ -55,6 +55,7 @@ export const DeletedServiceCallsReport: FC<Props> = ({
   const [printEntries, setPrintEntries] = useState<Event[]>([]);
   const [page, setPage] = useState<number>(0);
   const [count, setCount] = useState<number>(0);
+  const [tasksEvent, setTasksEvent] = useState<Event | undefined>();
   const [form, setForm] = useState<FilterForm>({
     dateStarted,
     dateEnded,
@@ -115,26 +116,28 @@ export const DeletedServiceCallsReport: FC<Props> = ({
     await loadPrintEntries();
     setPrintStatus('loaded');
   }, [loadPrintEntries, setPrintStatus]);
-  const handlePrinted = useCallback(() => setPrintStatus('idle'), [
-    setPrintStatus,
-  ]);
+  const handlePrinted = useCallback(
+    () => setPrintStatus('idle'),
+    [setPrintStatus],
+  );
   const handleSearch = useCallback(() => setLoaded(false), []);
   const handleSetPendingEdit = useCallback(
     (pendingEdit?: Event) => () => setPendingEdit(pendingEdit),
     [setPendingEdit],
   );
   const handleOpenTasks = useCallback(
-    (entry: Event) => () => {
-      // TODO Replace with react Tasks module, once it's built
-      window.open(
-        [
-          getCFAppUrl('admin:tasks.list'),
-          'code=servicecall',
-          `id=${entry.getId()}`,
-        ].join('&'),
-      );
+    (entry: Event | undefined) => {
+      setTasksEvent(entry);
+      // ? Keeping this around in case we need to revert back to this version of Tasks
+      // window.open(
+      //   [
+      //     getCFAppUrl('admin:tasks.list'),
+      //     'code=servicecall',
+      //     `id=${entry.getId()}`,
+      //   ].join('&'),
+      // );
     },
-    [],
+    [setTasksEvent],
   );
   const SCHEMA: Schema<FilterForm> = [
     [
@@ -192,7 +195,7 @@ export const DeletedServiceCallsReport: FC<Props> = ({
                 <IconButton
                   key="tasks"
                   size="small"
-                  onClick={handleOpenTasks(entry)}
+                  onClick={() => handleOpenTasks(entry)}
                 >
                   <AssignmentIcon />
                 </IconButton>,
@@ -221,6 +224,26 @@ export const DeletedServiceCallsReport: FC<Props> = ({
   );
   return (
     <div>
+      {tasksEvent && (
+        <Modal
+          key={tasksEvent.toString()}
+          open={true}
+          onClose={() => handleOpenTasks(undefined)}
+        >
+          <>
+            <SectionBar
+              actions={[
+                { label: 'CLOSE ', onClick: () => handleOpenTasks(undefined) },
+              ]}
+            />
+            <Tasks
+              loggedUserId={loggedUserId}
+              externalCode="servicecalls"
+              externalId={Number(tasksEvent.getLogTechnicianAssigned())}
+            />
+          </>
+        </Modal>
+      )}
       <SectionBar
         title="Deleted Service Calls Report"
         pagination={{
