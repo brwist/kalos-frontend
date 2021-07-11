@@ -98,29 +98,32 @@ export const Chart: FC<Props> = ({
       ),
     [roles],
   );
-  const initCollapsedRoles = useCallback((loggedUserRole?: string) =>
-    roles.reduce(
-      (aggr, key) => ({
-        ...aggr,
-        [key]: loggedUserRole ? (loggedUserRole === key ? 0 : 1) : 0,
-      }),
-      {},
-    ), [roles]);
-  const initSelectedData = useCallback((
-    loggedUserRole?: string,
-    defaultChecked: number = 1,
-  ) =>
-    data.reduce(
-      (aggr, { id, role }) => ({
-        ...aggr,
-        [id]: loggedUserRole
-          ? loggedUserRole === role
-            ? 1
-            : 0
-          : defaultChecked,
-      }),
-      {},
-    ), [data]);
+  const initCollapsedRoles = useCallback(
+    (loggedUserRole?: string) =>
+      roles.reduce(
+        (aggr, key) => ({
+          ...aggr,
+          [key]: loggedUserRole ? (loggedUserRole === key ? 0 : 1) : 0,
+        }),
+        {},
+      ),
+    [roles],
+  );
+  const initSelectedData = useCallback(
+    (loggedUserRole?: string, defaultChecked: number = 1) =>
+      data.reduce(
+        (aggr, { id, role }) => ({
+          ...aggr,
+          [id]: loggedUserRole
+            ? loggedUserRole === role
+              ? 1
+              : 0
+            : defaultChecked,
+        }),
+        {},
+      ),
+    [data],
+  );
   const [filterOpen, setFilterOpen] = useState<boolean>(false);
   const [initialized, setInitialized] = useState<boolean>(false);
   const [selectedRoles, setSelectedRoles] = useState<{ [key: string]: number }>(
