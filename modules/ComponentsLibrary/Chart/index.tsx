@@ -83,30 +83,30 @@ export const Chart: FC<Props> = ({
   const roles = uniq(data.map(({ role }) => role));
   const loggedUser = data.find(({ id }) => id === loggedUserId);
   const loggedUserRole = loggedUser ? loggedUser.role : undefined;
-  const initSelectedRoles = (
-    loggedUserRole?: string,
-    defaultChecked: number = 1,
-  ) =>
-    roles.reduce(
-      (aggr, key) => ({
-        ...aggr,
-        [key]: loggedUserRole
-          ? loggedUserRole === key
-            ? 1
-            : 0
-          : defaultChecked,
-      }),
-      {},
-    );
-  const initCollapsedRoles = (loggedUserRole?: string) =>
+  const initSelectedRoles = useCallback(
+    (loggedUserRole?: string, defaultChecked: number = 1) =>
+      roles.reduce(
+        (aggr, key) => ({
+          ...aggr,
+          [key]: loggedUserRole
+            ? loggedUserRole === key
+              ? 1
+              : 0
+            : defaultChecked,
+        }),
+        {},
+      ),
+    [roles],
+  );
+  const initCollapsedRoles = useCallback((loggedUserRole?: string) =>
     roles.reduce(
       (aggr, key) => ({
         ...aggr,
         [key]: loggedUserRole ? (loggedUserRole === key ? 0 : 1) : 0,
       }),
       {},
-    );
-  const initSelectedData = (
+    ), [roles]);
+  const initSelectedData = useCallback((
     loggedUserRole?: string,
     defaultChecked: number = 1,
   ) =>
@@ -120,7 +120,7 @@ export const Chart: FC<Props> = ({
           : defaultChecked,
       }),
       {},
-    );
+    ), [data]);
   const [filterOpen, setFilterOpen] = useState<boolean>(false);
   const [initialized, setInitialized] = useState<boolean>(false);
   const [selectedRoles, setSelectedRoles] = useState<{ [key: string]: number }>(
@@ -142,38 +142,31 @@ export const Chart: FC<Props> = ({
     [setWidth],
   );
   const printRef = useRef<HTMLDivElement>(null);
-  const resize = useCallback(() => wrapperRef(printRef.current), [
-    wrapperRef,
-    printRef,
-  ]);
+  const resize = useCallback(
+    () => wrapperRef(printRef.current),
+    [wrapperRef, printRef],
+  );
   const initializeStates = useCallback(() => {
     setSelectedRoles(initSelectedRoles(loggedUserRole));
     setCollapsedRoles(initCollapsedRoles(loggedUserRole));
     setSelectedData(initSelectedData(loggedUserRole));
-  }, [
-    setSelectedRoles,
-    initSelectedRoles,
-    setCollapsedRoles,
-    initCollapsedRoles,
-    setSelectedData,
-    initSelectedData,
-  ]);
+  }, [initSelectedRoles, loggedUserRole, initCollapsedRoles, initSelectedData]);
   useEffect(() => {
     if (!loading && !initialized) {
       setInitialized(true);
       initializeStates();
     }
     window.addEventListener('resize', resize); // TODO removeEventListener
-  }, [loading, initialized, setInitialized, initializeStates]);
+  }, [loading, initialized, setInitialized, initializeStates, resize]);
   const [chartFormData, setChartFormData] = useState<ChartForm>({
     orderBy: bars[0]!.dataKey,
     ratio: 0,
     groupBy: dataKey,
   });
-  const handleFilterOpenToggle = useCallback(() => setFilterOpen(!filterOpen), [
-    filterOpen,
-    setFilterOpen,
-  ]);
+  const handleFilterOpenToggle = useCallback(
+    () => setFilterOpen(!filterOpen),
+    [filterOpen, setFilterOpen],
+  );
   const handleChangeData = useCallback(
     (id: number, role: string) => (checked: Value) => {
       const newSelectedData = { ...selectedData, [id]: +checked };
@@ -190,7 +183,7 @@ export const Chart: FC<Props> = ({
         }
       }
     },
-    [selectedData, setSelectedData, selectedRoles, setSelectedRoles],
+    [selectedData, selectedRoles, data],
   );
   const handleChangeRole = useCallback(
     (role: string) => (checked: Value) => {
