@@ -18,6 +18,7 @@ import {
 import { NULL_TIME, OPTION_ALL, ROWS_PER_PAGE } from '../../../../constants';
 import { RoleType } from '../index';
 import { startOfWeek, subDays, addDays } from 'date-fns';
+import { truncate } from 'lodash';
 interface Props {
   loggedUserId: number;
   departmentId: number;
@@ -55,6 +56,7 @@ export const Trips: FC<Props> = ({
     setLoading(true);
     const tripReq = new Trip();
     tripReq.setGroupBy('user_id');
+    tripReq.setIsActive(true);
     if (departmentId) {
       tripReq.setDepartmentId(departmentId);
     }
@@ -89,6 +91,7 @@ export const Trips: FC<Props> = ({
     employeeId,
     week,
     page,
+    endDay,
     managerFilter,
     payrollFilter,
     auditorFilter,

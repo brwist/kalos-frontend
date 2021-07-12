@@ -5,7 +5,6 @@ import { Confirm } from '../Confirm';
 import { ConfirmDelete } from '../ConfirmDelete';
 import { Button } from '../Button';
 import {
-  FileType,
   FileClientService,
   makeFakeRows,
   formatDateTime,
@@ -13,13 +12,14 @@ import {
   getMimeType,
 } from '../../../helpers';
 import './styles.less';
+import { File } from '@kalos-core/kalos-rpc/File';
 
 interface Props {
   loggedUserId: number;
   title: string;
   bucket: string;
   onClose: () => void;
-  onAdd: ({ file, url }: { file: FileType; url: string }) => void;
+  onAdd: ({ file, url }: { file: File; url: string }) => void;
   removeFileOnAdd: boolean;
   inputFile?: { filename: string; fileurl: string } | null;
   onlyDisplayInputFile?: boolean;
@@ -47,24 +47,27 @@ export const FileGallery: FC<Props> = ({
 }) => {
   const [loading, setLoading] = useState<boolean>(false);
   const [loaded, setLoaded] = useState<boolean>(false);
-  const [files, setFiles] = useState<FileType[]>([]);
-  const [adding, setAdding] = useState<FileType>();
-  const [deleting, setDeleting] = useState<FileType>();
+  const [files, setFiles] = useState<File[]>([]);
+  const [adding, setAdding] = useState<File>();
+  const [deleting, setDeleting] = useState<File>();
   const [confirming, setConfirming] = useState<boolean>(false);
   const [images, setImages] = useState<{
     [key: string]: string;
   }>({});
   const load = useCallback(async () => {
     setLoading(true);
-    const { resultsList } = await FileClientService.loadFiles({
-      bucket,
-      ownerId: loggedUserId,
-    });
-    setFiles(resultsList);
+    const fileReq = new File();
+    fileReq.setBucket(bucket);
+    fileReq.setOwnerId(loggedUserId);
+    const resultsList = await FileClientService.loadFiles(fileReq);
+    setFiles(resultsList.getResultsList());
     let images = await Promise.all(
-      resultsList.map(async ({ name, bucket }) => ({
-        name,
-        url: await S3ClientService.getFileS3BucketUrl(name, bucket),
+      resultsList.getResultsList().map(async file => ({
+        name: file.getName(),
+        url: await S3ClientService.getFileS3BucketUrl(
+          file.getName(),
+          file.getBucket(),
+        ),
       })),
     );
     if (inputFile != null) {
@@ -82,7 +85,7 @@ export const FileGallery: FC<Props> = ({
     }
   }, [loaded, setLoaded, load]);
   const handleSetAdding = useCallback(
-    (adding?: FileType) => () => setAdding(adding),
+    (adding?: File) => () => setAdding(adding),
     [setAdding],
   );
 
@@ -92,16 +95,18 @@ export const FileGallery: FC<Props> = ({
   );
 
   const handleSetDeleting = useCallback(
-    (deleting?: FileType) => () => setDeleting(deleting),
+    (deleting?: File) => () => setDeleting(deleting),
     [setDeleting],
   );
   const deleteFile = useCallback(async () => {
     if (!deleting) return;
-    const { name, bucket, id } = deleting;
     setDeleting(undefined);
     setLoading(true);
-    await S3ClientService.deleteFileFromS3Buckets(name, bucket);
-    await FileClientService.deleteFileById(deleting.id);
+    await S3ClientService.deleteFileFromS3Buckets(
+      deleting.getName(),
+      deleting.getBucket(),
+    );
+    await FileClientService.deleteFileById(deleting.getId());
     setLoaded(false);
   }, [deleting, setLoading, setLoaded, setDeleting]);
 
@@ -115,12 +120,12 @@ export const FileGallery: FC<Props> = ({
     if (!adding) return;
     onAdd({
       file: adding,
-      url: images[adding.name],
+      url: images[adding.getName()],
     });
     setAdding(undefined);
     if (removeFileOnAdd) {
       setLoading(true);
-      await FileClientService.deleteFileById(adding.id);
+      await FileClientService.deleteFileById(adding.getId());
       setLoaded(false);
     }
   }, [adding, images, onAdd, removeFileOnAdd]);
@@ -176,7 +181,7 @@ export const FileGallery: FC<Props> = ({
             open
             onClose={handleSetDeleting()}
             kind="Receipt"
-            name={getFileName(deleting.name)}
+            name={getFileName(deleting.getName())}
             onConfirm={deleteFile}
           />
         )}
@@ -200,13 +205,12 @@ export const FileGallery: FC<Props> = ({
             loading
               ? makeFakeRows()
               : files.map(file => {
-                  let { name, createTime } = file;
-                  const fileName = getFileName(name);
+                  const fileName = getFileName(file.getName());
                   return [
                     {
                       value: (
                         <img
-                          src={`${images[name]}`}
+                          src={`${images[file.getName()]}`}
                           className="FileGalleryImg"
                           id="SingleUploadImgPreview"
                           style={{
@@ -222,7 +226,7 @@ export const FileGallery: FC<Props> = ({
                       onClick: handleSetAdding(file),
                     },
                     {
-                      value: formatDateTime(createTime),
+                      value: formatDateTime(file.getCreateTime()),
                       onClick: handleSetAdding(file),
                       actions: [
                         <Button
@@ -250,12 +254,12 @@ export const FileGallery: FC<Props> = ({
             onConfirm={handleAdd}
           >
             Are you sure you want to add the receipt{' '}
-            <strong>{getFileName(adding.name)}</strong>?
+            <strong>{getFileName(adding.getName())}</strong>?
             <br />
             <br />
             <div
               className="FileGalleryImg"
-              style={{ backgroundImage: `url(${images[adding.name]})` }}
+              style={{ backgroundImage: `url(${images[adding.getName()]})` }}
             />
           </Confirm>
         )}
@@ -264,7 +268,7 @@ export const FileGallery: FC<Props> = ({
             open
             onClose={handleSetDeleting()}
             kind="Receipt"
-            name={getFileName(deleting.name)}
+            name={getFileName(deleting.getName())}
             onConfirm={deleteFile}
           />
         )}
