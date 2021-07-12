@@ -140,15 +140,23 @@ export class AltGallery extends React.PureComponent<props, state> {
     });
   }
 
-  changeImage = (activeImage: number) =>
+  changeImage = (newImageIndex: number) => {
     this.setState(
-      { activeImage, rotation: 0, imageWidth: 1, imageHeight: 1 },
+      {
+        activeImage: newImageIndex,
+        rotation: 0,
+        imageWidth: 1,
+        imageHeight: 1,
+      },
       this.fetch,
     );
+    console.log(this.state.activeImage);
+  };
 
   delete() {
     this.setState({ isLoading: true, deleting: false }, async () => {
       const { activeImage, fileList } = this.state;
+      console.log('we are deleting:', activeImage);
       const data = fileList[activeImage];
       try {
         await this.DocClient.deleteByName(data.key, data.bucket);

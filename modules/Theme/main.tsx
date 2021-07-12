@@ -1,5 +1,5 @@
 // this files ts-ignore lines have been checked
-import { createMuiTheme } from '@material-ui/core';
+import { createTheme } from '@material-ui/core';
 import React from 'react';
 
 interface props {}
@@ -15,7 +15,7 @@ export class Theme extends React.PureComponent<props, state> {
   }
 }
 /*
-const customTheme = createMuiTheme({
+const customTheme = createTheme({
   shape: {
     borderRadius: 4,
   },
@@ -44,7 +44,7 @@ const customTheme = createMuiTheme({
   },
 });*/
 
-const darkTheme = createMuiTheme({
+const darkTheme = createTheme({
   breakpoints: {
     keys: ['xs', 'sm', 'md', 'lg', 'xl'],
     values: { xs: 0, lg: 1280, sm: 600, xl: 1920, md: 960 },
@@ -270,7 +270,7 @@ const darkTheme = createMuiTheme({
   },
 });
 
-const lightTheme = createMuiTheme({
+const lightTheme = createTheme({
   breakpoints: {
     keys: ['xs', 'sm', 'md', 'lg', 'xl'],
     values: { xs: 0, lg: 1280, sm: 600, xl: 1920, md: 960 },
