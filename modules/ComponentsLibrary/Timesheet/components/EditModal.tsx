@@ -197,16 +197,17 @@ const EditTimesheetModal: FC<Props> = ({
   const handleCreate = useCallback(
     async (data: EntryWithDate) => {
       setSaving(true);
+      const newDate = data.date;
       data = makeSafeFormObject(data, new TimesheetLine());
       data.setTimeStarted(
         `${format(
-          data.date ? parseISO(data.date) : new Date(),
+          newDate ? parseISO(newDate) : new Date(),
           'yyyy-MM-dd',
         )} ${format(parseISO(data.getTimeStarted()), 'HH:mm')}`,
       );
       data.setTimeFinished(
         `${format(
-          data.date ? parseISO(data.date) : new Date(),
+          newDate ? parseISO(newDate) : new Date(),
           'yyyy-MM-dd',
         )} ${format(parseISO(data.getTimeFinished()), 'HH:mm')}`,
       );
