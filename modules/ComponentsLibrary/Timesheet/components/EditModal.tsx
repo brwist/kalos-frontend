@@ -199,6 +199,10 @@ const EditTimesheetModal: FC<Props> = ({
       setSaving(true);
       const newDate = data.date;
       data = makeSafeFormObject(data, new TimesheetLine());
+      console.log(data);
+      if (data.getReferenceNumber()) {
+        data.setReferenceNumber(data.getReferenceNumber().toString());
+      }
       data.setTimeStarted(
         `${format(
           newDate ? parseISO(newDate) : new Date(),
@@ -213,9 +217,6 @@ const EditTimesheetModal: FC<Props> = ({
       );
       delete data.date;
       data.setTechnicianUserId(timesheetOwnerId);
-      if (data.jobId) {
-        data.setReferenceNumber(data.jobId.toString());
-      }
 
       data.setFieldMaskList([
         'ReferenceNumber',

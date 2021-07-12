@@ -34,6 +34,7 @@ import {
   getFileExt,
   FileClientService,
   TransactionDocumentClientService,
+  TransactionClientService,
 } from '../../../helpers';
 import { File } from '@kalos-core/kalos-rpc/File';
 import { ENDPOINT } from '../../../constants';
@@ -67,8 +68,19 @@ interface state {
 }
 
 const hardcodedList = [
-  1, 2, 601002, 674002, 674001, 673002, 61700, 681001, 601001, 51500, 68500,
-  62600, 643002,
+  1,
+  2,
+  601002,
+  674002,
+  674001,
+  673002,
+  61700,
+  681001,
+  601001,
+  51500,
+  68500,
+  62600,
+  643002,
 ];
 
 export class TxnCard extends React.PureComponent<props, state> {
@@ -216,9 +228,9 @@ export class TxnCard extends React.PureComponent<props, state> {
               txn,
             )} transaction has been reported by ${txn.getOwnerName()} (${txn.getCardUsed()}).
               Amount $${txn.getAmount()} Vendor: ${txn.getVendor()} Post date: ${txn.getTimestamp()}
-              Department: ${txn.getDepartment()?.getClassification()} ${txn
-              .getDepartment()
-              ?.getDescription()}
+              Department: ${txn
+                .getDepartment()
+                ?.getClassification()} ${txn.getDepartment()?.getDescription()}
               ${txn.getNotes() != '' ? `Notes: ${txn.getNotes()}` : ''}</p>
               <a href="https://app.kalosflorida.com/index.cfm?action=admin:reports.transactions">Click here to view receipts</a>
               </body></html>
@@ -292,7 +304,7 @@ export class TxnCard extends React.PureComponent<props, state> {
       },
       {
         key: `${id}-${file.getName()}`,
-        bucket,
+        bucket: bucket,
       },
     );
     if (status === 'nok') {
@@ -304,6 +316,7 @@ export class TxnCard extends React.PureComponent<props, state> {
     const fileReq = new File();
     fileReq.setId(file.getId());
     fileReq.setBucket(bucket);
+    fileReq.setName(`${id}-${file.getName()}`);
     fileReq.setOwnerId(0);
     await FileClientService.upsertFile(fileReq);
     const txnDocReq = new TransactionDocument();
@@ -336,6 +349,7 @@ export class TxnCard extends React.PureComponent<props, state> {
     const fileReq = new File();
     fileReq.setId(file.getId());
     fileReq.setBucket(bucket);
+    fileReq.setName(`${id}-${file.getName()}`);
     fileReq.setOwnerId(0);
     await FileClientService.upsertFile(fileReq);
     const txnDocReq = new TransactionDocument();
@@ -347,7 +361,9 @@ export class TxnCard extends React.PureComponent<props, state> {
     alert('Upload complete');
   };
 
-  deriveCallout(txn: Transaction): {
+  deriveCallout(
+    txn: Transaction,
+  ): {
     severity: 'error' | 'success';
     text: string;
   } {
@@ -724,8 +740,18 @@ function costCenterSortByPopularity(
 }
 
 const ALLOWED_ACCOUNT_IDS = [
-  601002, 673002, 673001, 51400, 643002, 643003, 601001, 51500, 601004, 1,
-  68500, 66600,
+  601002,
+  673002,
+  673001,
+  51400,
+  643002,
+  643003,
+  601001,
+  51500,
+  601004,
+  1,
+  68500,
+  66600,
 ];
 
 function getGalleryData(txn: Transaction): GalleryData[] {
