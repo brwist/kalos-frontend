@@ -41,6 +41,7 @@ export const Trips: FC<Props> = ({
   role,
 }) => {
   const [loading, setLoading] = useState<boolean>(false);
+  const [loaded, setLoaded] = useState<boolean>(false);
   const [Trips, setTrips] = useState<Trip[]>([]);
   const [page, setPage] = useState<number>(0);
   const [count, setCount] = useState<number>(0);
@@ -86,20 +87,22 @@ export const Trips: FC<Props> = ({
     setTrips(trips.getResultsList());
     setCount(trips.getTotalCount());
     setLoading(false);
+    setLoaded(true);
   }, [
     departmentId,
     employeeId,
     week,
     page,
-    endDay,
     managerFilter,
     payrollFilter,
-    auditorFilter,
     toggleButton,
   ]);
+
   useEffect(() => {
-    load();
-  }, [load]);
+    if (!loaded) {
+      load();
+    }
+  }, [load, loaded]);
   const handleTripViewedToggle = useCallback(
     (Trip?: Trip) => () => setTripViewed(Trip),
     [setTripViewed],
@@ -112,7 +115,7 @@ export const Trips: FC<Props> = ({
   return (
     <div>
       <SectionBar
-        title="Per Diems"
+        title="Trips"
         pagination={{
           page,
           count,
