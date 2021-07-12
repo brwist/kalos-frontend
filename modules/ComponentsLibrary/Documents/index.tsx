@@ -11,6 +11,7 @@ import DeleteIcon from '@material-ui/icons/Delete';
 import EditIcon from '@material-ui/icons/Edit';
 import OpenIcon from '@material-ui/icons/OpenInNew';
 import MailIcon from '@material-ui/icons/Mail';
+import { Tooltip } from '../Tooltip/index';
 import DownloadIcon from '@material-ui/icons/CloudDownload';
 import { Prompt } from '../../Prompt/main';
 import { DocumentClient, Document } from '@kalos-core/kalos-rpc/Document';
@@ -145,35 +146,36 @@ export const Documents: FC<Props> = ({
 
   const handleDownload = useCallback(
     (
-      filename: string,
-      type: number,
-      docId: number,
-      realDownload: boolean = false,
-    ) => async (
-      event: React.MouseEvent<
-        HTMLButtonElement | HTMLAnchorElement,
-        MouseEvent
-      >,
-    ) => {
-      event.preventDefault();
-      const res = filename.match(/\d{2}-(\d{3,})[A-z]?-/);
-      if (filename.toLowerCase().startsWith('maintenance') && res) {
-        window.open(
-          `https://app.kalosflorida.com/index.cfm?action=admin:properties.showMaintenanceSheet&event_id=${res[1]}&user_id=${userId}&document_id=${docId}&property_id=${propertyId}`,
-        );
-      } else {
-        const S3 = new S3Client(ENDPOINT);
-        const url = new URLObject();
-        url.setKey(filename);
-        url.setBucket(type === 5 ? 'testbuckethelios' : 'kalosdocs-prod');
-        const dlURL = await S3.GetDownloadURL(url);
-        if (realDownload) {
-          window.open(dlURL.getUrl(), '_blank'); // TODO: implement real download, instead of opening in new tab
+        filename: string,
+        type: number,
+        docId: number,
+        realDownload: boolean = false,
+      ) =>
+      async (
+        event: React.MouseEvent<
+          HTMLButtonElement | HTMLAnchorElement,
+          MouseEvent
+        >,
+      ) => {
+        event.preventDefault();
+        const res = filename.match(/\d{2}-(\d{3,})[A-z]?-/);
+        if (filename.toLowerCase().startsWith('maintenance') && res) {
+          window.open(
+            `https://app.kalosflorida.com/index.cfm?action=admin:properties.showMaintenanceSheet&event_id=${res[1]}&user_id=${userId}&document_id=${docId}&property_id=${propertyId}`,
+          );
         } else {
-          window.open(dlURL.getUrl(), '_blank');
+          const S3 = new S3Client(ENDPOINT);
+          const url = new URLObject();
+          url.setKey(filename);
+          url.setBucket(type === 5 ? 'testbuckethelios' : 'kalosdocs-prod');
+          const dlURL = await S3.GetDownloadURL(url);
+          if (realDownload) {
+            window.open(dlURL.getUrl(), '_blank'); // TODO: implement real download, instead of opening in new tab
+          } else {
+            window.open(dlURL.getUrl(), '_blank');
+          }
         }
-      }
-    },
+      },
     [propertyId, userId],
   );
 
@@ -254,85 +256,94 @@ export const Documents: FC<Props> = ({
               </Link>
             ),
             actions: [
-              <IconButton
-                key="open"
-                style={{ marginLeft: 4 }}
-                size="small"
-                onClick={handleDownload(
-                  entry.getFilename(),
-                  entry.getType(),
-                  entry.getId(),
-                )}
-              >
-                <OpenIcon />
-              </IconButton>,
+              <Tooltip key="open" content="Open in New Tab">
+                <IconButton
+                  style={{ marginLeft: 4 }}
+                  size="small"
+                  onClick={handleDownload(
+                    entry.getFilename(),
+                    entry.getType(),
+                    entry.getId(),
+                  )}
+                >
+                  <OpenIcon />
+                </IconButton>
+              </Tooltip>,
               ...actions(entry),
-              <IconButton
-                key="mail"
-                style={{ marginLeft: 4 }}
-                size="small"
-                onClick={() => {
-                  const URL = cfURL(
-                    !ignoreUserId
-                      ? 'contracts.docemail&'
-                      : 'properties.docemail&',
-                    !ignoreUserId
-                      ? [
-                          `user_id=${userId}`,
-                          `document_id=${entry.getId()}`,
-                          `p=1`,
-                        ].join('&')
-                      : [
-                          `user_id=${userId}`,
-                          `document_id=${entry.getId()}`,
-                          `property_id=${propertyId}`,
-                          `p=2`,
-                        ].join('&'),
-                  );
-                  document.location.href = URL;
-                }}
-              >
-                <MailIcon />
-              </IconButton>,
+              <Tooltip key="mail" content="Mail">
+                <IconButton
+                  key="mail"
+                  style={{ marginLeft: 4 }}
+                  size="small"
+                  onClick={() => {
+                    const URL = cfURL(
+                      !ignoreUserId
+                        ? 'contracts.docemail&'
+                        : 'properties.docemail&',
+                      !ignoreUserId
+                        ? [
+                            `user_id=${userId}`,
+                            `document_id=${entry.getId()}`,
+                            `p=1`,
+                          ].join('&')
+                        : [
+                            `user_id=${userId}`,
+                            `document_id=${entry.getId()}`,
+                            `property_id=${propertyId}`,
+                            `p=2`,
+                          ].join('&'),
+                    );
+                    document.location.href = URL;
+                  }}
+                >
+                  <MailIcon />
+                </IconButton>
+              </Tooltip>,
               ...(withDownloadIcon
                 ? [
-                    <IconButton
-                      key="download"
-                      style={{ marginLeft: 4 }}
-                      size="small"
-                      onClick={handleDownload(
-                        entry.getFilename(),
-                        entry.getType(),
-                        entry.getId(),
-                        true,
-                      )}
-                    >
-                      <DownloadIcon />
-                    </IconButton>,
+                    <Tooltip key="download" content="Download">
+                      <IconButton
+                        key="download"
+                        style={{ marginLeft: 4 }}
+                        size="small"
+                        onClick={handleDownload(
+                          entry.getFilename(),
+                          entry.getType(),
+                          entry.getId(),
+                          true,
+                        )}
+                      >
+                        <DownloadIcon />
+                      </IconButton>
+                    </Tooltip>,
                   ]
                 : []),
               ...(renderEditing
                 ? [
-                    <IconButton
-                      key="edit"
-                      style={{ marginLeft: 4 }}
-                      size="small"
-                      onClick={handleToggleEditing(entry)}
-                    >
-                      <EditIcon />
-                    </IconButton>,
+                    <Tooltip key="edit" content="Edit">
+                      <IconButton
+                        key="edit"
+                        style={{ marginLeft: 4 }}
+                        size="small"
+                        onClick={handleToggleEditing(entry)}
+                      >
+                        <EditIcon />
+                      </IconButton>
+                    </Tooltip>,
                   ]
                 : []),
               ...(deletable
                 ? [
-                    <IconButton
-                      key="delete"
-                      style={{ marginLeft: 4 }}
-                      size="small"
-                      onClick={handleSetDeleting(entry)}
-                    >
-                      <DeleteIcon />
-                    </IconButton>,
+                    <Tooltip key="delete" content="Delete">
+                      <IconButton
+                        key="delete"
+                        style={{ marginLeft: 4 }}
+                        size="small"
+                        onClick={handleSetDeleting(entry)}
+                      >
+                        <DeleteIcon />
+                      </IconButton>
+                    </Tooltip>,
                   ]
                 : []),
               <Prompt
