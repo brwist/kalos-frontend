@@ -27,6 +27,7 @@ import {
   formatDateTime,
   cfURL,
   cleanOrderByField,
+  S3ClientService,
 } from '../../../helpers';
 
 const DocumentClientService = new DocumentClient(ENDPOINT);
@@ -63,6 +64,7 @@ interface Props {
   displayInAscendingOrder?: boolean;
   orderBy?: OrderByDirective;
   ignoreUserId?: boolean;
+  onDownload?: (file: Uint8Array) => void;
 }
 
 export const Documents: FC<Props> = ({
@@ -84,6 +86,7 @@ export const Documents: FC<Props> = ({
   stickySectionBar = true,
   orderBy = 'document_date_created',
   ignoreUserId,
+  onDownload,
 }) => {
   const [entries, setEntries] = useState<DocumentType[]>([]);
   const [loaded, setLoaded] = useState<boolean>(false);
@@ -145,6 +148,56 @@ export const Documents: FC<Props> = ({
   };
 
   const handleDownload = useCallback(
+    async (filename: string, type: number, docId: number) => {
+      const url = new URLObject();
+      url.setKey(filename);
+      console.log('Type: ', type);
+      url.setBucket(type === 5 ? 'testbuckethelios' : 'kalosdocs-prod');
+      let dlURL;
+      try {
+        dlURL = await S3ClientService.GetDownloadURL(url);
+      } catch (err) {
+        console.error(
+          `An error occurred while getting the download URL: ${err}`,
+        );
+      }
+
+      if (dlURL) {
+        let file;
+        try {
+          file = await fetch(dlURL.getUrl());
+        } catch (err) {
+          console.error(
+            `An error occurred while fetching the document: ${err}`,
+          );
+        }
+
+        if (!file) {
+          console.error('File was not successfully fetched. Aborting.');
+          return;
+        }
+
+        const blob = await file.blob();
+        const fr = new FileReader();
+        fr.onload = () => {
+          if (onDownload) {
+            onDownload(new Uint8Array(fr.result as ArrayBuffer));
+          } else {
+            const el = document.createElement('a');
+            el.download = filename;
+            el.href = URL.createObjectURL(blob);
+            el.target = '_blank';
+            el.click();
+            el.remove();
+          }
+        };
+        fr.readAsArrayBuffer(blob);
+      }
+    },
+    [onDownload],
+  );
+
+  const handleOpenInNewTab = useCallback(
     (
         filename: string,
         type: number,
@@ -164,11 +217,10 @@ export const Documents: FC<Props> = ({
             `https://app.kalosflorida.com/index.cfm?action=admin:properties.showMaintenanceSheet&event_id=${res[1]}&user_id=${userId}&document_id=${docId}&property_id=${propertyId}`,
           );
         } else {
-          const S3 = new S3Client(ENDPOINT);
           const url = new URLObject();
           url.setKey(filename);
           url.setBucket(type === 5 ? 'testbuckethelios' : 'kalosdocs-prod');
-          const dlURL = await S3.GetDownloadURL(url);
+          const dlURL = await S3ClientService.GetDownloadURL(url);
           if (realDownload) {
             window.open(dlURL.getUrl(), '_blank'); // TODO: implement real download, instead of opening in new tab
           } else {
@@ -246,7 +298,7 @@ export const Documents: FC<Props> = ({
           {
             value: (
               <Link
-                onClick={handleDownload(
+                onClick={handleOpenInNewTab(
                   entry.getFilename(),
                   entry.getType(),
                   entry.getId(),
@@ -260,7 +312,7 @@ export const Documents: FC<Props> = ({
                 <IconButton
                   style={{ marginLeft: 4 }}
                   size="small"
-                  onClick={handleDownload(
+                  onClick={handleOpenInNewTab(
                     entry.getFilename(),
                     entry.getType(),
                     entry.getId(),
@@ -306,12 +358,13 @@ export const Documents: FC<Props> = ({
                         key="download"
                         style={{ marginLeft: 4 }}
                         size="small"
-                        onClick={handleDownload(
-                          entry.getFilename(),
-                          entry.getType(),
-                          entry.getId(),
-                          true,
-                        )}
+                        onClick={() =>
+                          handleDownload(
+                            entry.getFilename(),
+                            entry.getType(),
+                            entry.getId(),
+                          )
+                        }
                       >
                         <DownloadIcon />
                       </IconButton>
