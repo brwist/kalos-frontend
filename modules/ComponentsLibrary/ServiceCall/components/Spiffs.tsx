@@ -124,6 +124,7 @@ export const Spiffs: FC<Props> = ({
           { value: entry.getOwnerName() },
           { value: <SpiffActionsList actionsList={entry.getActionsList()} /> },
           { value: usd(entry.getSpiffAmount()) },
+          /*
           {
             value: '',
             actions: [
@@ -179,6 +180,7 @@ export const Spiffs: FC<Props> = ({
               </IconButton>,
             ],
           },
+          */
         ];
       });
   return (
