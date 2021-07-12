@@ -69,7 +69,6 @@ export class AltGallery extends React.PureComponent<props, state> {
       imageWidth: 1,
       imageHeight: 1,
     };
-
     this.S3Client = new S3Client(ENDPOINT);
     this.DocClient = new TransactionDocumentClient(ENDPOINT);
     this.toggleOpen = this.toggleOpen.bind(this);
@@ -98,23 +97,28 @@ export class AltGallery extends React.PureComponent<props, state> {
 
   fetchData() {
     return new Promise(async resolve => {
+      console.log('fetch');
       const docs = await this.DocClient.byTransactionID(
         this.props.transactionID,
       );
-      const galleryData = docs.map(d => {
+      const reverseDoc = docs.reverse();
+      const galleryData = reverseDoc.map(d => {
         return {
           key: `${this.props.transactionID}-${d.getReference()}`,
           bucket: 'kalos-transactions',
         };
       });
 
-      const documentList = docs.map(d => ({
+      const documentList = reverseDoc.map(d => ({
         reference: d.getReference(),
         id: d.getTransactionId(),
       }));
-      documentList.reverse();
-      this.setState({ fileList: galleryData, documentList }, () =>
-        resolve(docs),
+      this.setState(
+        {
+          fileList: galleryData,
+          documentList: documentList,
+        },
+        () => resolve(reverseDoc),
       );
     });
   }
@@ -150,13 +154,11 @@ export class AltGallery extends React.PureComponent<props, state> {
       },
       this.fetch,
     );
-    console.log(this.state.activeImage);
   };
 
   delete() {
     this.setState({ isLoading: true, deleting: false }, async () => {
       const { activeImage, fileList } = this.state;
-      console.log('we are deleting:', activeImage);
       const data = fileList[activeImage];
       try {
         await this.DocClient.deleteByName(data.key, data.bucket);
