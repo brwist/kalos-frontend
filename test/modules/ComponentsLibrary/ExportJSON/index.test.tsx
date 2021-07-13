@@ -14,8 +14,7 @@ const ExportJSON =
   require(`${COMPONENTS_LIBRARY_PATH_FROM_TEST}/ExportJSON/index`).ExportJSON;
 
 require(`${SETUP_PATH_FROM_TEST}/enzyme-setup.js`); // ? Required to run tests with Enzyme for React
-const expectImport =
-  require(`${SETUP_PATH_FROM_TEST}/chai-setup.js`).expectImport;
+const expect = require('chai').expect;
 
 const DATA = [...Array(40)].map(() => ({
   firstname: 'John',
@@ -42,7 +41,7 @@ describe('ComponentsLibrary', () => {
           <ExportJSON filename="example" json={DATA} fields={FIELDS} />,
         ).dive();
 
-        expectImport(wrapper.find('.ButtonWrapper').text()).to.be.eql(
+        expect(wrapper.find('.ButtonWrapper').text()).to.be.eql(
           'Export to Excel',
         );
       });

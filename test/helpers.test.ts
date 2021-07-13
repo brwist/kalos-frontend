@@ -1,4 +1,6 @@
-export const expectImport = require('./test-setup/chai-setup.js').expectImport;
+export {};
+
+const expect = require('chai').expect;
 
 const getMimeType = require('../helpers.ts').getMimeType;
 const perDiemTripMilesToUsd = require('../helpers.ts').perDiemTripMilesToUsd;
@@ -9,23 +11,21 @@ const EventType = require('@kalos-core/kalos-rpc/Event/index.ts').Event; // ! Th
 const EventClientService = require('../helpers.ts').EventClientService;
 const Setup = require('./test-setup/endpoint-setup.js'); // ? Sets the auth token up in a one-liner
 
-// require('./test-setup/grpc-endpoint.js'); // ? Required to run tests with RPCs in Mocha (because Mocha runs in a Node environment)
-
 describe('helpers', () => {
   describe('.getMimeType()', () => {
     it('should return image/png when "test.png" is provided as argument', () => {
-      expectImport(getMimeType('test.png')).to.equal('image/png');
+      expect(getMimeType('test.png')).to.equal('image/png');
     });
   });
   describe('.perDiemTripMilesToUsd()', () => {
     it('should return $ 33.60 when given 60 miles', () => {
-      expectImport(perDiemTripMilesToUsd(60)).to.equal('$ 33.60');
+      expect(perDiemTripMilesToUsd(60)).to.equal('$ 33.60');
     });
   });
   describe('.loadActivityLogsByFilter()', () => {
     it('should not be null if given proper arguments', () => {
-      expectImport(loadActivityLogsByFilter({ page: 0, filter: {}, sort: {} }))
-        .not.to.be.null;
+      expect(loadActivityLogsByFilter({ page: 0, filter: {}, sort: {} })).not.to
+        .be.null;
     });
   });
 
@@ -48,11 +48,11 @@ describe('helpers', () => {
               console.error(
                 `The EventClientService ran into an issue while getting the event: ${err}`,
               );
-              expectImport.fail(
+              expect.fail(
                 `The EventClientService ran into an issue while getting the event: ${err}`,
               );
             }
-            expectImport(res.getName()).to.equal('blank event');
+            expect(res.getName()).to.equal('blank event');
           });
         });
       });

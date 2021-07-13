@@ -24,10 +24,6 @@ For most of the test files, you should be using Require instead of Import due to
 - Paths should be the same for Require as they are in Import
   - "import { SectionBar } from '../../../../modules/ComponentsLibrary/SectionBar/index'" is equivalent to "require('../../../../modules/ComponentsLibrary/SectionBar/index').SectionBar"
 
-# Why "expectImport" instead of "expect"?
-
-For now, it conflicts with Jest and I am honestly not sure why. It'll hopefully be fixed very soon.
-
 # Style Conventions
 
 Describe and It should be used as per Mocha's guides. When testing methods and functions,

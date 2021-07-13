@@ -14,8 +14,7 @@ const PlainForm =
   require(`${COMPONENTS_LIBRARY_PATH_FROM_TEST}/PlainForm/index`).PlainForm;
 
 require(`${SETUP_PATH_FROM_TEST}/enzyme-setup.js`); // ? Required to run tests with Enzyme for React
-const expectImport =
-  require(`${SETUP_PATH_FROM_TEST}/chai-setup.js`).expectImport;
+const expect = require('chai').expect;
 
 const GENDERS = ['Male', 'Female', 'Other'];
 
@@ -248,9 +247,9 @@ describe('ComponentsLibrary', () => {
           />,
         );
 
-        expectImport(
-          wrapper.find({ label: 'First Name' }).props()['value'],
-        ).to.equal('John');
+        expect(wrapper.find({ label: 'First Name' }).props()['value']).to.equal(
+          'John',
+        );
       });
 
       it('displays the correct last name', () => {
@@ -263,9 +262,9 @@ describe('ComponentsLibrary', () => {
           />,
         );
 
-        expectImport(
-          wrapper.find({ label: 'Last Name' }).props()['value'],
-        ).to.equal('Doe');
+        expect(wrapper.find({ label: 'Last Name' }).props()['value']).to.equal(
+          'Doe',
+        );
       });
 
       it('displays the correct gender', () => {
@@ -278,9 +277,9 @@ describe('ComponentsLibrary', () => {
           />,
         );
 
-        expectImport(
-          wrapper.find({ label: 'Gender' }).props()['value'],
-        ).to.equal('Male');
+        expect(wrapper.find({ label: 'Gender' }).props()['value']).to.equal(
+          'Male',
+        );
       });
 
       it('displays the correct favorite numbers', () => {
@@ -293,7 +292,7 @@ describe('ComponentsLibrary', () => {
           />,
         );
 
-        expectImport(
+        expect(
           wrapper.find({ label: 'Favorite Numbers' }).props()['value'],
         ).to.deep.equal([1, 4, 6]);
       });

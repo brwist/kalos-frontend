@@ -17,8 +17,7 @@ const PlainForm =
   require(`${COMPONENTS_LIBRARY_PATH_FROM_TEST}/PlainForm/index`).PlainForm;
 
 require(`${SETUP_PATH_FROM_TEST}/enzyme-setup.js`); // ? Required to run tests with Enzyme for React
-const expectImport =
-  require(`${SETUP_PATH_FROM_TEST}/chai-setup.js`).expectImport;
+const expect = require('chai').expect;
 
 describe('ComponentsLibrary', () => {
   describe('Tasks', () => {
@@ -33,7 +32,7 @@ describe('ComponentsLibrary', () => {
           />,
         );
 
-        expectImport(
+        expect(
           wrapper.containsAllMatchingElements([
             <SectionBar></SectionBar>,
             <PlainForm></PlainForm>,

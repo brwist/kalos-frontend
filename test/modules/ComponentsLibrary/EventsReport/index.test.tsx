@@ -13,8 +13,7 @@ const EventsReport =
 const React = require('react');
 const mount = require('enzyme').mount;
 
-const expectImport =
-  require(`${SETUP_PATH_FROM_TEST}/chai-setup.js`).expectImport;
+const expect = require('chai').expect;
 
 describe('ComponentsLibrary', () => {
   describe('EventsReport', () => {
@@ -35,9 +34,9 @@ describe('ComponentsLibrary', () => {
         );
 
         // ! Print page and section bar title both have Job Status Report
-        expectImport(
-          wrapper.find({ title: 'Job Status Report' }),
-        ).to.have.lengthOf(2);
+        expect(wrapper.find({ title: 'Job Status Report' })).to.have.lengthOf(
+          2,
+        );
       });
     });
   });

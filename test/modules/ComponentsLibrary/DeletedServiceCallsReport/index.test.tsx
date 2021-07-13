@@ -14,8 +14,7 @@ const React = require('react');
 const shallow = require('enzyme').shallow;
 
 require(`${SETUP_PATH_FROM_TEST}/enzyme-setup.js`); // ? Required to run tests with Enzyme for React
-const expectImport =
-  require(`${SETUP_PATH_FROM_TEST}/chai-setup.js`).expectImport;
+const expect = require('chai').expect;
 
 describe('ComponentsLibrary', () => {
   describe('DeletedServiceCallsReport', () => {
@@ -31,7 +30,7 @@ describe('ComponentsLibrary', () => {
           />,
         );
 
-        expectImport(
+        expect(
           wrapper.find({ title: 'Deleted Service Calls Report' }),
         ).to.have.lengthOf(1);
       });
