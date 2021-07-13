@@ -25,6 +25,7 @@ describe('ComponentsLibrary', () => {
   describe('AddLog', () => {
     describe('<AddLog onClose={() => alert("Would close")} loggedUserId={101253} />', () => {
       it('has a Log Details title', () => {
+        // FIXME write out a more extensive "mount" test when possible now that we have mount working
         const wrapper = shallow(
           <AddLog onClose={() => alert('Would close')} loggedUserId={101253} />,
         )

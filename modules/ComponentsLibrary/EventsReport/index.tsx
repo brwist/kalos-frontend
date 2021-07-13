@@ -25,6 +25,7 @@ import {
 } from '../../../helpers';
 import { ROWS_PER_PAGE } from '../../../constants';
 import { Event } from '@kalos-core/kalos-rpc/Event';
+import { Tasks } from '../Tasks';
 
 type Props = {
   kind: 'jobStatus' | 'paymentStatus';
@@ -53,6 +54,13 @@ export const EventsReport: FC<Props> = ({
     orderDir: 'DESC',
   });
   const [pendingEdit, setPendingEdit] = useState<Event>();
+  const [tasksOpenEvent, setTasksOpenEvent] = useState<Event | undefined>(
+    undefined,
+  );
+  const handleSetTasksOpenEvent = useCallback(
+    (event: Event | undefined) => setTasksOpenEvent(event),
+    [setTasksOpenEvent],
+  );
   const load = useCallback(async () => {
     setLoading(true);
     const filter: EventsFilter = {
@@ -100,7 +108,7 @@ export const EventsReport: FC<Props> = ({
     [setPage, reload],
   );
   const handleSortChange = useCallback(
-    (sort: EventsSort) => () => {
+    (sort: EventsSort) => {
       setSort(sort);
       setPage(0);
       reload();
@@ -108,21 +116,23 @@ export const EventsReport: FC<Props> = ({
     [setSort, reload],
   );
   const handlePendingEditToggle = useCallback(
-    (pendingEdit?: Event) => () => setPendingEdit(pendingEdit),
+    (pendingEdit?: Event) => setPendingEdit(pendingEdit),
     [setPendingEdit],
   );
   const handleOpenTasks = useCallback(
-    (entry: Event) => () => {
-      // TODO Replace with react Tasks module, once it's built
-      window.open(
-        [
-          getCFAppUrl('admin:tasks.list'),
-          'code=servicecall',
-          `id=${entry.getId()}`,
-        ].join('&'),
-      );
+    (entry: Event) => {
+      handleSetTasksOpenEvent(entry);
+      // ? Keeping this around in case we need to revert
+      //  Replace with react Tasks module, once it's built
+      // window.open(
+      //   [
+      //     getCFAppUrl('admin:tasks.list'),
+      //     'code=servicecall',
+      //     `id=${entry.getId()}`,
+      //   ].join('&'),
+      // );
     },
-    [],
+    [handleSetTasksOpenEvent],
   );
   const loadPrintEntries = useCallback(async () => {
     if (printEntries.length === count) return;
@@ -171,14 +181,15 @@ export const EventsReport: FC<Props> = ({
             dir: sort.orderDir,
           }
         : {}),
-      onClick: handleSortChange({
-        orderByField: 'getAddress',
-        orderBy: 'property_address',
-        orderDir:
-          sort.orderByField === 'getAddress' && sort.orderDir === 'ASC'
-            ? 'DESC'
-            : 'ASC',
-      }),
+      onClick: () =>
+        handleSortChange({
+          orderByField: 'getAddress',
+          orderBy: 'property_address',
+          orderDir:
+            sort.orderByField === 'getAddress' && sort.orderDir === 'ASC'
+              ? 'DESC'
+              : 'ASC',
+        }),
     },
     {
       name: 'Customer Name',
@@ -187,14 +198,15 @@ export const EventsReport: FC<Props> = ({
             dir: sort.orderDir,
           }
         : {}),
-      onClick: handleSortChange({
-        orderByField: 'getLastname',
-        orderBy: 'user_lastname', // FIXME: RPC doesn't sort properly
-        orderDir:
-          sort.orderByField === 'getLastname' && sort.orderDir === 'ASC'
-            ? 'DESC'
-            : 'ASC',
-      }),
+      onClick: () =>
+        handleSortChange({
+          orderByField: 'getLastname',
+          orderBy: 'user_lastname',
+          orderDir:
+            sort.orderByField === 'getLastname' && sort.orderDir === 'ASC'
+              ? 'DESC'
+              : 'ASC',
+        }),
     },
     {
       name: 'Job #',
@@ -203,14 +215,15 @@ export const EventsReport: FC<Props> = ({
             dir: sort.orderDir,
           }
         : {}),
-      onClick: handleSortChange({
-        orderByField: 'getLogJobNumber',
-        orderBy: 'log_jobNumber',
-        orderDir:
-          sort.orderByField === 'getLogJobNumber' && sort.orderDir === 'ASC'
-            ? 'DESC'
-            : 'ASC',
-      }),
+      onClick: () =>
+        handleSortChange({
+          orderByField: 'getLogJobNumber',
+          orderBy: 'log_jobNumber',
+          orderDir:
+            sort.orderByField === 'getLogJobNumber' && sort.orderDir === 'ASC'
+              ? 'DESC'
+              : 'ASC',
+        }),
     },
     {
       name: 'Date',
@@ -219,14 +232,15 @@ export const EventsReport: FC<Props> = ({
             dir: sort.orderDir,
           }
         : {}),
-      onClick: handleSortChange({
-        orderByField: 'getDateStarted',
-        orderBy: 'date_started',
-        orderDir:
-          sort.orderByField === 'getDateStarted' && sort.orderDir === 'ASC'
-            ? 'DESC'
-            : 'ASC',
-      }),
+      onClick: () =>
+        handleSortChange({
+          orderByField: 'getDateStarted',
+          orderBy: 'date_started',
+          orderDir:
+            sort.orderByField === 'getDateStarted' && sort.orderDir === 'ASC'
+              ? 'DESC'
+              : 'ASC',
+        }),
     },
     ...(kind === 'jobStatus'
       ? [
@@ -237,15 +251,16 @@ export const EventsReport: FC<Props> = ({
                   dir: sort.orderDir,
                 }
               : {}),
-            onClick: handleSortChange({
-              orderByField: 'getLogJobStatus',
-              orderBy: 'log_jobStatus', // FIXME: RPC doesn't sort properly
-              orderDir:
-                sort.orderByField === 'getLogJobStatus' &&
-                sort.orderDir === 'ASC'
-                  ? 'DESC'
-                  : 'ASC',
-            }),
+            onClick: () =>
+              handleSortChange({
+                orderByField: 'getLogJobStatus',
+                orderBy: 'log_jobStatus', // FIXME: RPC doesn't sort properly
+                orderDir:
+                  sort.orderByField === 'getLogJobStatus' &&
+                  sort.orderDir === 'ASC'
+                    ? 'DESC'
+                    : 'ASC',
+              }),
           },
         ]
       : []),
@@ -258,15 +273,16 @@ export const EventsReport: FC<Props> = ({
                   dir: sort.orderDir,
                 }
               : {}),
-            onClick: handleSortChange({
-              orderByField: 'getLogPaymentStatus',
-              orderBy: 'getLog_paymentStatus', // FIXME: RPC doesn't sort properly
-              orderDir:
-                sort.orderByField === 'getLogPaymentStatus' &&
-                sort.orderDir === 'ASC'
-                  ? 'DESC'
-                  : 'ASC',
-            }),
+            onClick: () =>
+              handleSortChange({
+                orderByField: 'getLogPaymentStatus',
+                orderBy: 'getLog_paymentStatus', // FIXME: RPC doesn't sort properly
+                orderDir:
+                  sort.orderByField === 'getLogPaymentStatus' &&
+                  sort.orderDir === 'ASC'
+                    ? 'DESC'
+                    : 'ASC',
+              }),
           },
         ]
       : []),
@@ -278,41 +294,41 @@ export const EventsReport: FC<Props> = ({
           return [
             {
               value: getPropertyAddress(entry.getProperty()),
-              onClick: handlePendingEditToggle(entry),
+              onClick: () => handlePendingEditToggle(entry),
             },
             {
               value: UserClientService.getCustomerName(
                 entry.getCustomer()!,
                 true,
               ),
-              onClick: handlePendingEditToggle(entry),
+              onClick: () => handlePendingEditToggle(entry),
             },
             {
               value: entry.getLogJobNumber(),
-              onClick: handlePendingEditToggle(entry),
+              onClick: () => handlePendingEditToggle(entry),
             },
             {
               value: formatDate(entry.getDateStarted()),
-              onClick: handlePendingEditToggle(entry),
+              onClick: () => handlePendingEditToggle(entry),
             },
             {
               value:
                 kind === 'jobStatus'
                   ? entry.getLogJobStatus()
                   : entry.getLogPaymentStatus(),
-              onClick: handlePendingEditToggle(entry),
+              onClick: () => handlePendingEditToggle(entry),
               actions: [
                 <IconButton
                   key="edit"
                   size="small"
-                  onClick={handlePendingEditToggle(entry)}
+                  onClick={() => handlePendingEditToggle(entry)}
                 >
                   <EditIcon />
                 </IconButton>,
                 <IconButton
                   key="tasks"
                   size="small"
-                  onClick={handleOpenTasks(entry)}
+                  onClick={() => handleOpenTasks(entry)}
                 >
                   <AssignmentIcon />
                 </IconButton>,
@@ -347,6 +363,29 @@ export const EventsReport: FC<Props> = ({
   );
   return (
     <>
+      {tasksOpenEvent && (
+        <Modal
+          key={tasksOpenEvent.toString()}
+          open={true}
+          onClose={() => handleSetTasksOpenEvent(undefined)}
+        >
+          <>
+            <SectionBar
+              actions={[
+                {
+                  label: 'CLOSE ',
+                  onClick: () => handleSetTasksOpenEvent(undefined),
+                },
+              ]}
+            />
+            <Tasks
+              loggedUserId={loggedUserId}
+              externalCode="servicecalls"
+              externalId={Number(tasksOpenEvent.getLogTechnicianAssigned())}
+            />
+          </>
+        </Modal>
+      )}
       <SectionBar
         title={title}
         // actions={[{ label: 'Tasks', onClick: () => handleOpenTasks(entry) }]}
@@ -414,10 +453,14 @@ export const EventsReport: FC<Props> = ({
       />
       <InfoTable columns={COLUMNS} data={getData(entries)} loading={loading} />
       {pendingEdit && pendingEdit.getProperty() && pendingEdit.getCustomer() && (
-        <Modal open onClose={handlePendingEditToggle(undefined)} fullScreen>
+        <Modal
+          open
+          onClose={() => handlePendingEditToggle(undefined)}
+          fullScreen
+        >
           <ServiceCall
             loggedUserId={loggedUserId}
-            onClose={handlePendingEditToggle(undefined)}
+            onClose={() => handlePendingEditToggle(undefined)}
             propertyId={pendingEdit.getProperty()!.getId()}
             userID={pendingEdit.getCustomer()!.getId()}
             serviceCallId={pendingEdit.getId()}

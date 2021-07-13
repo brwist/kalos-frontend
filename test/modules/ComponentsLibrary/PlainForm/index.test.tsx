@@ -240,6 +240,7 @@ describe('ComponentsLibrary', () => {
   describe('PlainForm', () => {
     describe('<PlainForm<Model> schema={SCHEMA_2} data={model} onChange={data => console.log(data)}/>', () => {
       it('displays the correct first name', () => {
+        // FIXME write out a more extensive "mount" test when possible now that we have mount working
         const wrapper = shallow(
           <PlainForm<Model>
             schema={SCHEMA_2}
@@ -254,6 +255,7 @@ describe('ComponentsLibrary', () => {
       });
 
       it('displays the correct last name', () => {
+        // FIXME write out a more extensive "mount" test when possible now that we have mount working
         const wrapper = shallow(
           <PlainForm<Model>
             schema={SCHEMA_2}
@@ -268,6 +270,7 @@ describe('ComponentsLibrary', () => {
       });
 
       it('displays the correct gender', () => {
+        // FIXME write out a more extensive "mount" test when possible now that we have mount working
         const wrapper = shallow(
           <PlainForm<Model>
             schema={SCHEMA_2}
@@ -282,6 +285,7 @@ describe('ComponentsLibrary', () => {
       });
 
       it('displays the correct favorite numbers', () => {
+        // FIXME write out a more extensive "mount" test when possible now that we have mount working
         const wrapper = shallow(
           <PlainForm<Model>
             schema={SCHEMA_2}

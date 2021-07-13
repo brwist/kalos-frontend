@@ -79,9 +79,7 @@ export const Spiffs: FC<Props> = ({
     setSpiffTypes(spiffTypes);
   }, []);
   const load = useCallback(async () => {
-    setLoading(
-      true,
-    ); /*
+    setLoading(true); /*
     const filter: GetPendingSpiffConfig = {
       page,
       technicianUserID: employeeId,
@@ -178,9 +176,10 @@ export const Spiffs: FC<Props> = ({
     (pendingView?: Task) => () => setPendingView(pendingView),
     [],
   );
-  const handleToggleAdd = useCallback(() => setPendingAdd(!pendingAdd), [
-    pendingAdd,
-  ]);
+  const handleToggleAdd = useCallback(
+    () => setPendingAdd(!pendingAdd),
+    [pendingAdd],
+  );
   const handleToggleButton = useCallback(() => {
     setToggleButton(!toggleButton);
     setPage(0);
@@ -214,9 +213,23 @@ export const Spiffs: FC<Props> = ({
       req.setBillableType('Spiff');
       req.setStatusId(1);
       //req.addFieldMask('AdminActionId');
-      let tempEvent = await EventClientService.LoadEventByServiceCallID(
-        parseInt(req.getSpiffJobNumber()),
-      );
+      let tempEvent;
+      try {
+        tempEvent = await EventClientService.LoadEventByServiceCallID(
+          parseInt(req.getSpiffJobNumber()),
+        );
+      } catch (err) {
+        console.error(
+          `An error occurred while loading event by server: ${err}`,
+        );
+        return;
+      }
+      if (!tempEvent) {
+        console.error(
+          `No tempEvent variable was set to set spiff address with, aborting save.`,
+        );
+        return;
+      }
       req.setSpiffAddress(
         tempEvent.getProperty()?.getAddress() === undefined
           ? tempEvent.getCustomer()?.getAddress() === undefined
