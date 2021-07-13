@@ -23,7 +23,7 @@ const setUpDomEnvironment = () => {
     userAgent: 'node.js',
   };
   global.console = {
-    log: () => {}, // We don't need to see a bajillion console.log() calls from our mounted components.
+    log: console.log, // In case we need fine-grained control over this, we can have it later
     error: console.error,
     warn: console.warn,
     info: console.info,
