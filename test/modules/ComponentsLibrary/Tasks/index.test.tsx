@@ -3,23 +3,18 @@ export {};
 /* eslint-disable react/jsx-key */
 // ! Disabled key errors in ESLint because they incorrectly label the elements within certain expectations as needing keys when they don't and will not work with keys
 
-const COMPONENTS_LIBRARY_PATH_FROM_TEST =
-  require('../../../test-constants/constants').COMPONENTS_LIBRARY_PATH_FROM_TEST;
-const SETUP_PATH_FROM_TEST =
-  require('../../../test-constants/constants').SETUP_PATH_FROM_TEST;
+const GetPathFromName =
+  require('../../../test-constants/constants').GetPathFromName;
 
-const Tasks = require(`${COMPONENTS_LIBRARY_PATH_FROM_TEST}/Tasks`).Tasks;
+const Tasks = require(GetPathFromName('Tasks', 'ComponentsLibrary')).Tasks;
 const React = require('react');
 const shallow = require('enzyme').shallow;
 const SectionBar =
-  require(`${COMPONENTS_LIBRARY_PATH_FROM_TEST}/SectionBar/index`).SectionBar;
+  require(GetPathFromName('SectionBar', 'ComponentsLibrary', true)).SectionBar;
 const PlainForm =
-  require(`${COMPONENTS_LIBRARY_PATH_FROM_TEST}/PlainForm/index`).PlainForm;
+  require(GetPathFromName('PlainForm', 'ComponentsLibrary', true)).PlainForm;
 
-require(`${SETUP_PATH_FROM_TEST}/grpc-endpoint.js`); // ? Required to run tests with RPCs in Mocha (because Mocha runs in a Node environment)
-require(`${SETUP_PATH_FROM_TEST}/enzyme-setup.js`); // ? Required to run tests with Enzyme for React
-const expectImport =
-  require(`${SETUP_PATH_FROM_TEST}/chai-setup.js`).expectImport;
+const expect = require('chai').expect;
 
 describe('ComponentsLibrary', () => {
   describe('Tasks', () => {
@@ -34,7 +29,7 @@ describe('ComponentsLibrary', () => {
           />,
         );
 
-        expectImport(
+        expect(
           wrapper.containsAllMatchingElements([
             <SectionBar></SectionBar>,
             <PlainForm></PlainForm>,
