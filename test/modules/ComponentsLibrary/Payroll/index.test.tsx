@@ -10,12 +10,6 @@ const TimesheetDepartmentClientService =
   require('../../../../helpers.ts').TimesheetDepartmentClientService;
 const UserClientService = require('../../../../helpers.ts').UserClientService;
 
-const RoleType = require(`${GetPathFromName(
-  'Payroll',
-  'ComponentsLibrary',
-  true,
-)}`).RoleType;
-
 const {
   TimesheetDepartment,
 } = require('@kalos-core/kalos-rpc/TimesheetDepartment');
@@ -96,16 +90,31 @@ describe('ComponentsLibrary', () => {
         it('renders timesheet with a timesheet title', async () => {
           expect(wrapper.find({ title: 'Timesheet' })).to.have.lengthOf(1);
         });
+
+        it('renders timesheet with a Department title in the info table', async () => {
+          let contained = false;
+          wrapper.find('.InfoTableDir').forEach((result: any) => {
+            if (result.text().trim() === 'Department') contained = true;
+          });
+          expect(contained).to.equal(true);
+        });
+
+        it('renders timesheet with a Employee title in the info table', async () => {
+          let contained = false;
+          wrapper.find('.InfoTableDir').forEach((result: any) => {
+            if (result.text().trim() === 'Employee') contained = true;
+          });
+          expect(contained).to.equal(true);
+        });
+
+        it('renders timesheet with a Week Approved title in the info table', async () => {
+          let contained = false;
+          wrapper.find('.InfoTableDir').forEach((result: any) => {
+            if (result.text().trim() === 'Week Approved') contained = true;
+          });
+          expect(contained).to.equal(true);
+        });
       });
     });
-    /* 
-interface Props {
-  departmentId: number;
-  employeeId: number;
-  week: string;
-  type: RoleType;
-  loggedUser: number;
-}
-    */
   });
 });
