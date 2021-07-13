@@ -116,7 +116,7 @@ export const EventsReport: FC<Props> = ({
     [setSort, reload],
   );
   const handlePendingEditToggle = useCallback(
-    (pendingEdit?: Event) => () => setPendingEdit(pendingEdit),
+    (pendingEdit?: Event) => setPendingEdit(pendingEdit),
     [setPendingEdit],
   );
   const handleOpenTasks = useCallback(
@@ -447,10 +447,14 @@ export const EventsReport: FC<Props> = ({
       />
       <InfoTable columns={COLUMNS} data={getData(entries)} loading={loading} />
       {pendingEdit && pendingEdit.getProperty() && pendingEdit.getCustomer() && (
-        <Modal open onClose={handlePendingEditToggle(undefined)} fullScreen>
+        <Modal
+          open
+          onClose={() => handlePendingEditToggle(undefined)}
+          fullScreen
+        >
           <ServiceCall
             loggedUserId={loggedUserId}
-            onClose={handlePendingEditToggle(undefined)}
+            onClose={() => handlePendingEditToggle(undefined)}
             propertyId={pendingEdit.getProperty()!.getId()}
             userID={pendingEdit.getCustomer()!.getId()}
             serviceCallId={pendingEdit.getId()}
