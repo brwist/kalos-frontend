@@ -10,7 +10,7 @@
     "bundle": "gulp -LL bundle",
     "make": "gulp -LL create",
     "release": "gulp -LL release",
-    "distribute": "gulp -LL distribute", 
+    "distribute": "gulp -LL distribute",
     "bust": "gulp -LL bust",
     "less": "lessc styles/index.less styles/main.css",
     "upload": "gulp -LL upload",
@@ -84,6 +84,7 @@
     "rollup-plugin-typescript2": "^0.24.3",
     "sass": "^1.35.2",
     "shelljs": "^0.8.3",
+    "sinon": "^11.1.1",
     "ts-mocha": "^8.0.0",
     "ts-node": "^10.0.0",
     "typescript": "^3.7.0-beta"

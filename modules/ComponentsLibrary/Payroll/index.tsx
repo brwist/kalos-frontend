@@ -126,7 +126,6 @@ export const Payroll: FC<Props> = ({ userID }) => {
     const departments = await (
       await TimesheetDepartmentClientService.BatchGet(depReq)
     ).getResultsList();
-    console.log(departments);
     setDepartments(departments);
     const employees = await UserClientService.loadTechnicians();
     let sortedEmployeeList = employees.sort((a, b) =>
@@ -145,11 +144,6 @@ export const Payroll: FC<Props> = ({ userID }) => {
     setInitiated(true);
   }, [handleSelectNewWeek, userID]);
 
-  useEffect(() => {
-    if (!initiated) {
-      init();
-    }
-  }, [initiated, init]);
   const getDepartmentOptions = () => {
     return [
       { label: OPTION_ALL, value: 0 },
@@ -170,7 +164,6 @@ export const Payroll: FC<Props> = ({ userID }) => {
         (aggr, item) => [...aggr, +JSON.parse(item.getFilterData()).value],
         [] as number[],
       );
-    console.log(departments);
     if (departments.length > 0) {
       departmentOptions = departmentOptions.filter(p =>
         departments.includes(+p.value),
@@ -182,13 +175,16 @@ export const Payroll: FC<Props> = ({ userID }) => {
     }
   }
   useEffect(() => {
+    if (!initiated) {
+      init();
+    }
     if (!initiatedRole && role !== '') {
       setInitiatedRole(true);
       if (departmentOptions[0]) {
         setFilter({ ...filter, departmentId: +departmentOptions[0].value });
       }
     }
-  }, [departmentOptions, filter, initiatedRole, role]);
+  }, [departmentOptions, filter, init, initiated, initiatedRole, role]);
   const SCHEMA: Schema<FilterData> = [
     [
       {
