@@ -22,6 +22,7 @@ describe('ComponentsLibrary', () => {
   describe('DeletedServiceCallsReport', () => {
     describe('<DeletedServiceCallsReport loggedUserId={101253} dateStart="2018-05-25" dateEnd="2018-05-25" onClose={() => console.log("CLOSE")} />', () => {
       it('renders with a "Deleted Service Calls Report" title', () => {
+        // FIXME write out a more extensive "mount" test when possible now that we have mount working
         const wrapper = shallow(
           <DeletedServiceCallsReport
             loggedUserId={101253}
