@@ -3,24 +3,17 @@ export {};
 /* eslint-disable react/jsx-key */
 // ! Disabled key errors in ESLint because they incorrectly label the elements within certain expectations as needing keys when they don't and will not work with keys
 
-let MODULES_PATH_FROM_TEST =
-  require('../../test-constants/constants').MODULES_PATH_FROM_TEST;
-let SETUP_PATH_FROM_TEST_MODULES =
-  require('../../test-constants/constants').SETUP_PATH_FROM_TEST_MODULES;
+const GetPathFromName =
+  require('../../test-constants/constants').GetPathFromName;
 
-const ContractInfo =
-  require(`${MODULES_PATH_FROM_TEST}/CustomerDetails/components/ContractInfo`).ContractInfo;
-const SectionBar =
-  require(`${MODULES_PATH_FROM_TEST}/ComponentsLibrary/SectionBar/index`).SectionBar;
-let CustomerDetails =
-  require(`${MODULES_PATH_FROM_TEST}/CustomerDetails/components/CustomerDetails`).CustomerDetails;
-let React = require('react');
-let shallow = require('enzyme').shallow;
+const CustomerDetails = require(`${GetPathFromName(
+  'CustomerDetails',
+  'Modules',
+)}/components/CustomerDetails`).CustomerDetails;
+const React = require('react');
+const shallow = require('enzyme').shallow;
 
-require(`${SETUP_PATH_FROM_TEST_MODULES}/grpc-endpoint.js`); // ? Required to run tests with RPCs in Mocha (because Mocha runs in a Node environment)
-require(`${SETUP_PATH_FROM_TEST_MODULES}/enzyme-setup.js`); // ? Required to run tests with Enzyme for React
-let expectImport =
-  require(`${SETUP_PATH_FROM_TEST_MODULES}/chai-setup.js`).expectImport;
+const expect = require('chai').expect;
 
 describe('CustomerDetails', () => {
   describe('<CustomerDetails userID={2573} loggedUserId={101253} withHeader />', () => {
@@ -29,15 +22,15 @@ describe('CustomerDetails', () => {
       const wrapper = shallow(
         <CustomerDetails userID={2573} loggedUserId={101253} withHeader />,
       ).dive();
-      expectImport(wrapper.find('div.CustomerInformation')).to.have.lengthOf(1);
+      expect(wrapper.find('div.CustomerInformation')).to.have.lengthOf(1);
     });
     it('renders a component with the title "Customer Information"', () => {
       const wrapper = shallow(
         <CustomerDetails userID={2573} loggedUserId={101253} withHeader />,
       ).dive();
-      expectImport(
-        wrapper.find({ title: 'Customer Information' }),
-      ).to.have.lengthOf(1);
+      expect(wrapper.find({ title: 'Customer Information' })).to.have.lengthOf(
+        1,
+      );
     });
   });
 });

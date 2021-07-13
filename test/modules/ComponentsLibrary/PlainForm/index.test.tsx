@@ -3,20 +3,17 @@ export {};
 /* eslint-disable react/jsx-key */
 // ! Disabled key errors in ESLint because they incorrectly label the elements within certain expectations as needing keys when they don't and will not work with keys
 
-const COMPONENTS_LIBRARY_PATH_FROM_TEST =
-  require('../../../test-constants/constants').COMPONENTS_LIBRARY_PATH_FROM_TEST;
-const SETUP_PATH_FROM_TEST =
-  require('../../../test-constants/constants').SETUP_PATH_FROM_TEST;
+const GetPathFromName =
+  require('../../../test-constants/constants').GetPathFromName;
 
 const React = require('react');
 const shallow = require('enzyme').shallow;
-const PlainForm =
-  require(`${COMPONENTS_LIBRARY_PATH_FROM_TEST}/PlainForm/index`).PlainForm;
+const PlainForm = require(GetPathFromName(
+  'PlainForm',
+  'ComponentsLibrary',
+)).PlainForm;
 
-require(`${SETUP_PATH_FROM_TEST}/grpc-endpoint.js`); // ? Required to run tests with RPCs in Mocha (because Mocha runs in a Node environment)
-require(`${SETUP_PATH_FROM_TEST}/enzyme-setup.js`); // ? Required to run tests with Enzyme for React
-const expectImport =
-  require(`${SETUP_PATH_FROM_TEST}/chai-setup.js`).expectImport;
+const expect = require('chai').expect;
 
 const GENDERS = ['Male', 'Female', 'Other'];
 
@@ -249,9 +246,9 @@ describe('ComponentsLibrary', () => {
           />,
         );
 
-        expectImport(
-          wrapper.find({ label: 'First Name' }).props()['value'],
-        ).to.equal('John');
+        expect(wrapper.find({ label: 'First Name' }).props()['value']).to.equal(
+          'John',
+        );
       });
 
       it('displays the correct last name', () => {
@@ -264,9 +261,9 @@ describe('ComponentsLibrary', () => {
           />,
         );
 
-        expectImport(
-          wrapper.find({ label: 'Last Name' }).props()['value'],
-        ).to.equal('Doe');
+        expect(wrapper.find({ label: 'Last Name' }).props()['value']).to.equal(
+          'Doe',
+        );
       });
 
       it('displays the correct gender', () => {
@@ -279,9 +276,9 @@ describe('ComponentsLibrary', () => {
           />,
         );
 
-        expectImport(
-          wrapper.find({ label: 'Gender' }).props()['value'],
-        ).to.equal('Male');
+        expect(wrapper.find({ label: 'Gender' }).props()['value']).to.equal(
+          'Male',
+        );
       });
 
       it('displays the correct favorite numbers', () => {
@@ -294,7 +291,7 @@ describe('ComponentsLibrary', () => {
           />,
         );
 
-        expectImport(
+        expect(
           wrapper.find({ label: 'Favorite Numbers' }).props()['value'],
         ).to.deep.equal([1, 4, 6]);
       });

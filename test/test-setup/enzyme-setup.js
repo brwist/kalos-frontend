@@ -1,31 +1,35 @@
-import Enzyme from 'enzyme'
+import Enzyme from 'enzyme';
 import Adapter from '@wojtekmaj/enzyme-adapter-react-17';
-import jsdom from 'jsdom'
-import Storage from 'dom-storage'
+import jsdom from 'jsdom';
+import Storage from 'dom-storage';
 
-global.localStorage = new Storage(null, {strict: true})
-global.sessionStorage = new Storage(null, { strict: true });
+const copyProps = (src, target) => {
+  const props = Object.getOwnPropertyNames(src)
+    .filter(prop => typeof target[prop] === 'undefined')
+    .map(prop => Object.getOwnPropertyDescriptor(src, prop));
+  Object.defineProperties(target, props);
+};
 
-function setUpDomEnvironment() {
-    const { JSDOM } = jsdom;
-    const dom = new JSDOM('<!doctype html><html><body></body></html>', {url: 'http://localhost/'});
-    const { window } = dom;
+const setUpDomEnvironment = () => {
+  const { JSDOM } = jsdom;
+  const dom = new JSDOM('<!doctype html><html><body></body></html>', {
+    url: 'http://localhost/',
+  });
+  const { window } = dom;
 
-    global.window = window;
-    global.document = window.document;
-    global.navigator = {
-        userAgent: 'node.js',
-    };
-    copyProps(window, global);
-}
+  global.window = window;
+  global.document = window.document;
+  global.navigator = {
+    userAgent: 'node.js',
+  };
+  copyProps(window, global);
+};
 
-function copyProps(src, target) {
-    const props = Object.getOwnPropertyNames(src)
-        .filter(prop => typeof target[prop] === 'undefined')
-        .map(prop => Object.getOwnPropertyDescriptor(src, prop));
-    Object.defineProperties(target, props);
-}
+export default () => {
+  global.localStorage = new Storage(null, { strict: true });
+  global.sessionStorage = new Storage(null, { strict: true });
 
-setUpDomEnvironment();
+  setUpDomEnvironment();
 
-Enzyme.configure({ adapter: new Adapter() });
+  Enzyme.configure({ adapter: new Adapter() });
+};

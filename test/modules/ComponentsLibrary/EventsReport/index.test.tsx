@@ -3,19 +3,15 @@ export {};
 /* eslint-disable react/jsx-key */
 // ! Disabled key errors in ESLint because they incorrectly label the elements within certain expectations as needing keys when they don't and will not work with keys
 
-const COMPONENTS_LIBRARY_PATH_FROM_TEST =
-  require('../../../test-constants/constants').COMPONENTS_LIBRARY_PATH_FROM_TEST;
-const SETUP_PATH_FROM_TEST =
-  require('../../../test-constants/constants').SETUP_PATH_FROM_TEST;
+const GetPathFromName =
+  require('../../../test-constants/constants').GetPathFromName;
 
 const EventsReport =
-  require(`${COMPONENTS_LIBRARY_PATH_FROM_TEST}/EventsReport`).EventsReport;
+  require(GetPathFromName('EventsReport', 'ComponentsLibrary')).EventsReport;
 const React = require('react');
 const mount = require('enzyme').mount;
 
-require(`${SETUP_PATH_FROM_TEST}/grpc-endpoint.js`); // ? Required to run tests with RPCs in Mocha (because Mocha runs in a Node environment)
-const expectImport =
-  require(`${SETUP_PATH_FROM_TEST}/chai-setup.js`).expectImport;
+const expect = require('chai').expect;
 
 describe('ComponentsLibrary', () => {
   describe('EventsReport', () => {
@@ -36,9 +32,9 @@ describe('ComponentsLibrary', () => {
         );
 
         // ! Print page and section bar title both have Job Status Report
-        expectImport(
-          wrapper.find({ title: 'Job Status Report' }),
-        ).to.have.lengthOf(2);
+        expect(wrapper.find({ title: 'Job Status Report' })).to.have.lengthOf(
+          2,
+        );
       });
     });
   });
