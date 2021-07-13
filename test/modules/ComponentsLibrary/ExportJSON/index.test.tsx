@@ -38,6 +38,7 @@ describe('ComponentsLibrary', () => {
   describe('ExportJSON', () => {
     describe('<ExportJSON filename="example" json={DATA} fields={FIELDS} />', () => {
       it('renders a button that says "Export to Excel"', () => {
+        // FIXME write out a more extensive "mount" test when possible now that we have mount working
         const wrapper = shallow(
           <ExportJSON filename="example" json={DATA} fields={FIELDS} />,
         ).dive();

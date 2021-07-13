@@ -1,6 +1,10 @@
 import Enzyme from 'enzyme'
 import Adapter from '@wojtekmaj/enzyme-adapter-react-17';
 import jsdom from 'jsdom'
+import Storage from 'dom-storage'
+
+global.localStorage = new Storage(null, {strict: true})
+global.sessionStorage = new Storage(null, { strict: true });
 
 function setUpDomEnvironment() {
     const { JSDOM } = jsdom;
