@@ -185,10 +185,11 @@ export const SpiffToolLogEdit: FC<Props> = ({
       setSpiffTypes(spiffTypes);
     }
     const userReq = new User();
+    userReq.setId(loggedUserId);
     const userInfo = await UserClientService.Get(userReq);
     setLoggedUser(userInfo);
     setLoading(false);
-  }, [setLoading, type, setSpiffTypes, spiffTypes]);
+  }, [setLoading, type, loggedUserId, setSpiffTypes, spiffTypes]);
   useEffect(() => {
     if (!loaded) {
       setLoaded(true);
@@ -281,25 +282,19 @@ export const SpiffToolLogEdit: FC<Props> = ({
     async (form: SpiffToolAdminAction) => {
       let temp = makeSafeFormObject(form, new SpiffToolAdminAction());
       if (statusEditing) {
-        if (loggedUserId) {
-          const userReq = new User();
-          userReq.setId(loggedUserId);
-
-          const newReviewedBy =
-            loggedUser.getFirstname() + ' ' + loggedUser.getLastname();
-          temp.setReviewedBy(newReviewedBy);
-        }
+        const newReviewedBy =
+          loggedUser.getFirstname() + ' ' + loggedUser.getLastname();
         const timestampValue = timestamp().toString();
         let adminActionNew = temp;
-
+        adminActionNew.setReviewedBy(newReviewedBy);
         adminActionNew.setId(statusEditing.getId());
         adminActionNew.setTaskId(data.getId());
-        if (temp.getStatus() === 1) {
+        if (adminActionNew.getStatus() === 1) {
           adminActionNew.setGrantedDate(timestampValue);
           console.log('granted');
           adminActionNew.addFieldMask('GrantedDate');
         }
-        if (temp.getStatus() === 3) {
+        if (adminActionNew.getStatus() === 3) {
           console.log('revoked');
           adminActionNew.setRevokedDate(timestampValue);
           adminActionNew.addFieldMask('RevokedDate');
