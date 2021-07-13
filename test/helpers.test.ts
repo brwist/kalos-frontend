@@ -9,7 +9,7 @@ const EventType = require('@kalos-core/kalos-rpc/Event/index.ts').Event; // ! Th
 const EventClientService = require('../helpers.ts').EventClientService;
 const Setup = require('./test-setup/endpoint-setup.js'); // ? Sets the auth token up in a one-liner
 
-require('./test-setup/grpc-endpoint.js'); // ? Required to run tests with RPCs in Mocha (because Mocha runs in a Node environment)
+// require('./test-setup/grpc-endpoint.js'); // ? Required to run tests with RPCs in Mocha (because Mocha runs in a Node environment)
 
 describe('helpers', () => {
   describe('.getMimeType()', () => {

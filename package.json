@@ -14,7 +14,7 @@
     "bust": "gulp -LL bust",
     "less": "lessc styles/index.less styles/main.css",
     "upload": "gulp -LL upload",
-    "test": "ts-mocha --recursive -r ./test/test-setup/enzyme-setup.js -r esm -r ignore-styles -r ./test/test-setup/babel-helper.js -r mock-local-storage",
+    "test": "ts-mocha --recursive -r ./test/test-setup/grpc-endpoint.js -r ./test/test-setup/enzyme-setup.js -r esm -r ignore-styles -r ./test/test-setup/babel-helper.js -r mock-local-storage",
     "test-watch": "ts-mocha --grep RPC --invert --recursive -r ./test/test-setup/enzyme-setup.js -r esm -r ignore-styles -r ./test/test-setup/babel-helper.js  -r mock-local-storage -w"
   },
   "author": "Robert Milejczak <robbie@kalosflorida.com>",
