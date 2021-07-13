@@ -25,6 +25,7 @@ describe('ComponentsLibrary', () => {
   describe('Tasks', () => {
     describe('<Tasks externalCode="customers" externalId={2573} loggedUserId={101253}/>', () => {
       it('renders with a section bar and a plain form', () => {
+        // FIXME write out a more extensive "mount" test when possible now that we have mount working
         const wrapper = shallow(
           <Tasks
             externalCode="customers"

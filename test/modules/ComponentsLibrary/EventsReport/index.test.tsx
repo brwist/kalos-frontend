@@ -21,6 +21,7 @@ describe('ComponentsLibrary', () => {
   describe('EventsReport', () => {
     describe('<EventsReport loggedUserId={101253} kind="jobStatus"filter={{ status: "Completed", startDate: "2019-10-01", endDate: "2019-10-03" }} onClose={() => console.log("CLOSE")} />', () => {
       it('renders with a "Job Status Report" title', () => {
+        // FIXME make this test more thorough, it uses mount but only basically checks that the entire thing renders
         const wrapper = mount(
           <EventsReport
             loggedUserId={101253}

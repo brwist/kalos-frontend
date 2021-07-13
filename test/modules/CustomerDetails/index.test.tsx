@@ -25,6 +25,7 @@ let expectImport =
 describe('CustomerDetails', () => {
   describe('<CustomerDetails userID={2573} loggedUserId={101253} withHeader />', () => {
     it('renders a customer information div', () => {
+      // FIXME write out a more extensive "mount" test when possible now that we have mount working
       const wrapper = shallow(
         <CustomerDetails userID={2573} loggedUserId={101253} withHeader />,
       ).dive();
