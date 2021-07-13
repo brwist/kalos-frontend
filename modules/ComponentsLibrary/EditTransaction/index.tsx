@@ -17,58 +17,7 @@ export const EditTransaction: FC<Props> = ({
   onClose,
   onChange,
 }) => {
-  // TODO: Remake this into a function that auto-generates it instead.
-  // Would have not made it this way with the AsObject figuring we were phasing out of it, but atm Form
-  // is difficult to use without AsObject because Transaction would just use getJobId for example, but
-  // that isn't called so the form is blank with that.
   const [transaction] = useState<Transaction>(transactionInput);
-
-  const convertTransactionAsObjectToTransaction = (
-    asObject: Transaction.AsObject,
-  ) => {
-    let txn = new Transaction();
-    txn.setJobId(asObject.jobId);
-    txn.setDepartmentId(asObject.departmentId);
-    txn.setOwnerId(asObject.ownerId);
-    txn.setVendor(asObject.vendor);
-    txn.setCostCenterId(asObject.costCenterId);
-    txn.setDescription(asObject.description);
-    txn.setAmount(asObject.amount);
-    txn.setTimestamp(asObject.timestamp);
-    txn.setNotes(asObject.notes);
-    txn.setIsActive(asObject.isActive);
-    txn.setStatusId(asObject.statusId);
-    txn.setStatus(asObject.status);
-    txn.setOwnerName(asObject.ownerName);
-    txn.setCardUsed(asObject.cardUsed);
-    txn.setIsAudited(asObject.isAudited);
-    txn.setIsRecorded(asObject.isRecorded);
-    txn.setVendorCategory(asObject.vendorCategory);
-    txn.setAssignedEmployeeId(asObject.assignedEmployeeId);
-    txn.setAssignedEmployeeName(asObject.assignedEmployeeName);
-    txn.setFieldMaskList([
-      'JobId',
-      'DepartmentId',
-      'OwnerId',
-      'Vendor',
-      'CostCenterId',
-      'Description',
-      'Amount',
-      'Timestamp',
-      'Notes',
-      'IsActive',
-      'StatusId',
-      'Status',
-      'OwnerName',
-      'CardUsed',
-      'IsAudited',
-      'IsRecorded',
-      'VendorCategory',
-      'AssignedEmployeeId',
-      'AssignedEmployeeName',
-    ]);
-    return txn;
-  };
 
   const SCHEMA: Schema<Transaction> = [
     [
