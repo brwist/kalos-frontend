@@ -5,18 +5,11 @@ export {};
 
 const COMPONENTS_LIBRARY_PATH_FROM_TEST =
   require('../../../test-constants/constants').COMPONENTS_LIBRARY_PATH_FROM_TEST;
-const SETUP_PATH_FROM_TEST =
-  require('../../../test-constants/constants').SETUP_PATH_FROM_TEST;
 
 const AddLog = require(`${COMPONENTS_LIBRARY_PATH_FROM_TEST}/AddLog`).AddLog;
 const React = require('react');
 const shallow = require('enzyme').shallow;
-const SectionBar =
-  require(`${COMPONENTS_LIBRARY_PATH_FROM_TEST}/SectionBar/index`).SectionBar;
-const PlainForm =
-  require(`${COMPONENTS_LIBRARY_PATH_FROM_TEST}/PlainForm/index`).PlainForm;
 
-require(`${SETUP_PATH_FROM_TEST}/enzyme-setup.js`); // ? Required to run tests with Enzyme for React
 const expect = require('chai').expect;
 
 describe('ComponentsLibrary', () => {
@@ -30,9 +23,7 @@ describe('ComponentsLibrary', () => {
           .childAt(0)
           .dive();
 
-        expect(wrapper.find({ title: 'Log Details' })).to.have.lengthOf(
-          1,
-        );
+        expect(wrapper.find({ title: 'Log Details' })).to.have.lengthOf(1);
       });
     });
   });

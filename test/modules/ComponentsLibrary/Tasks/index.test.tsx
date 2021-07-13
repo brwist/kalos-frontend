@@ -5,8 +5,6 @@ export {};
 
 const COMPONENTS_LIBRARY_PATH_FROM_TEST =
   require('../../../test-constants/constants').COMPONENTS_LIBRARY_PATH_FROM_TEST;
-const SETUP_PATH_FROM_TEST =
-  require('../../../test-constants/constants').SETUP_PATH_FROM_TEST;
 
 const Tasks = require(`${COMPONENTS_LIBRARY_PATH_FROM_TEST}/Tasks`).Tasks;
 const React = require('react');
@@ -16,7 +14,6 @@ const SectionBar =
 const PlainForm =
   require(`${COMPONENTS_LIBRARY_PATH_FROM_TEST}/PlainForm/index`).PlainForm;
 
-require(`${SETUP_PATH_FROM_TEST}/enzyme-setup.js`); // ? Required to run tests with Enzyme for React
 const expect = require('chai').expect;
 
 describe('ComponentsLibrary', () => {
