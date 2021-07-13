@@ -22,6 +22,13 @@ const setUpDomEnvironment = () => {
   global.navigator = {
     userAgent: 'node.js',
   };
+  global.console = {
+    log: () => {}, // We don't need to see a bajillion console.log() calls from our mounted components.
+    error: console.error,
+    warn: console.warn,
+    info: console.info,
+    debug: console.debug,
+  };
   copyProps(window, global);
 };
 
