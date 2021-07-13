@@ -3,11 +3,13 @@ export {};
 /* eslint-disable react/jsx-key */
 // ! Disabled key errors in ESLint because they incorrectly label the elements within certain expectations as needing keys when they don't and will not work with keys
 
-const COMPONENTS_LIBRARY_PATH_FROM_TEST =
-  require('../../../test-constants/constants').COMPONENTS_LIBRARY_PATH_FROM_TEST;
+const GetPathFromName =
+  require('../../../test-constants/constants').GetPathFromName;
 
-const DeletedServiceCallsReport =
-  require(`${COMPONENTS_LIBRARY_PATH_FROM_TEST}/DeletedServiceCallsReport`).DeletedServiceCallsReport;
+const DeletedServiceCallsReport = require(GetPathFromName(
+  'DeletedServiceCallsReport',
+  'ComponentsLibrary',
+)).DeletedServiceCallsReport;
 const React = require('react');
 const shallow = require('enzyme').shallow;
 

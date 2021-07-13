@@ -3,11 +3,11 @@ export {};
 /* eslint-disable react/jsx-key */
 // ! Disabled key errors in ESLint because they incorrectly label the elements within certain expectations as needing keys when they don't and will not work with keys
 
-const COMPONENTS_LIBRARY_PATH_FROM_TEST =
-  require('../../../test-constants/constants').COMPONENTS_LIBRARY_PATH_FROM_TEST;
+const GetPathFromName =
+  require('../../../test-constants/constants').GetPathFromName;
 
 const EventsReport =
-  require(`${COMPONENTS_LIBRARY_PATH_FROM_TEST}/EventsReport`).EventsReport;
+  require(GetPathFromName('EventsReport', 'ComponentsLibrary')).EventsReport;
 const React = require('react');
 const mount = require('enzyme').mount;
 
