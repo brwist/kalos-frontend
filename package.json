@@ -10,12 +10,12 @@
     "bundle": "gulp -LL bundle",
     "make": "gulp -LL create",
     "release": "gulp -LL release",
-    "distribute": "gulp -LL distribute",
+    "distribute": "gulp -LL distribute", 
     "bust": "gulp -LL bust",
     "less": "lessc styles/index.less styles/main.css",
     "upload": "gulp -LL upload",
-    "test": "ts-mocha --recursive -r ./test/test-setup/grpc-endpoint.js -r ./test/test-setup/enzyme-setup.js -r esm -r ignore-styles -r ./test/test-setup/babel-helper.js -r mock-local-storage",
-    "test-watch": "ts-mocha --grep RPC --invert --recursive -r ./test/test-setup/enzyme-setup.js -r esm -r ignore-styles -r ./test/test-setup/babel-helper.js  -r mock-local-storage -w"
+    "test": "ts-mocha --recursive -r ./test/test-setup/setup.js -r esm -r ignore-styles -r mock-local-storage",
+    "test-watch": "ts-mocha --grep RPC --invert --recursive -r ./test/test-setup/setup.js -r esm -r ignore-styles  -r mock-local-storage -w"
   },
   "author": "Robert Milejczak <robbie@kalosflorida.com>",
   "license": "MIT",
