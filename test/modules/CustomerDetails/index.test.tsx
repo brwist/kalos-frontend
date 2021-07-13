@@ -14,8 +14,7 @@ let React = require('react');
 let shallow = require('enzyme').shallow;
 
 require(`${SETUP_PATH_FROM_TEST_MODULES}/enzyme-setup.js`); // ? Required to run tests with Enzyme for React
-let expectImport =
-  require(`${SETUP_PATH_FROM_TEST_MODULES}/chai-setup.js`).expectImport;
+const expect = require('chai').expect;
 
 describe('CustomerDetails', () => {
   describe('<CustomerDetails userID={2573} loggedUserId={101253} withHeader />', () => {
@@ -24,15 +23,15 @@ describe('CustomerDetails', () => {
       const wrapper = shallow(
         <CustomerDetails userID={2573} loggedUserId={101253} withHeader />,
       ).dive();
-      expectImport(wrapper.find('div.CustomerInformation')).to.have.lengthOf(1);
+      expect(wrapper.find('div.CustomerInformation')).to.have.lengthOf(1);
     });
     it('renders a component with the title "Customer Information"', () => {
       const wrapper = shallow(
         <CustomerDetails userID={2573} loggedUserId={101253} withHeader />,
       ).dive();
-      expectImport(
-        wrapper.find({ title: 'Customer Information' }),
-      ).to.have.lengthOf(1);
+      expect(wrapper.find({ title: 'Customer Information' })).to.have.lengthOf(
+        1,
+      );
     });
   });
 });
