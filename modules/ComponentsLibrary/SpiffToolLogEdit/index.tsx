@@ -288,7 +288,12 @@ export const SpiffToolLogEdit: FC<Props> = ({
         let adminActionNew = temp;
         adminActionNew.setReviewedBy(newReviewedBy);
         adminActionNew.setId(statusEditing.getId());
+        console.log('status:', adminActionNew.getStatus());
         adminActionNew.setTaskId(data.getId());
+        if (adminActionNew.getStatus() === 0) {
+          adminActionNew.setStatus(1);
+          //because of the safe form object, we are not getting the default status, so in this instance 0===1
+        }
         if (adminActionNew.getStatus() === 1) {
           adminActionNew.setGrantedDate(timestampValue);
           console.log('granted');
