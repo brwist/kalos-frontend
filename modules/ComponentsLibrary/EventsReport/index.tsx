@@ -108,7 +108,7 @@ export const EventsReport: FC<Props> = ({
     [setPage, reload],
   );
   const handleSortChange = useCallback(
-    (sort: EventsSort) => () => {
+    (sort: EventsSort) => {
       setSort(sort);
       setPage(0);
       reload();
@@ -181,14 +181,15 @@ export const EventsReport: FC<Props> = ({
             dir: sort.orderDir,
           }
         : {}),
-      onClick: handleSortChange({
-        orderByField: 'getAddress',
-        orderBy: 'property_address',
-        orderDir:
-          sort.orderByField === 'getAddress' && sort.orderDir === 'ASC'
-            ? 'DESC'
-            : 'ASC',
-      }),
+      onClick: () =>
+        handleSortChange({
+          orderByField: 'getAddress',
+          orderBy: 'property_address',
+          orderDir:
+            sort.orderByField === 'getAddress' && sort.orderDir === 'ASC'
+              ? 'DESC'
+              : 'ASC',
+        }),
     },
     {
       name: 'Customer Name',
@@ -197,14 +198,15 @@ export const EventsReport: FC<Props> = ({
             dir: sort.orderDir,
           }
         : {}),
-      onClick: handleSortChange({
-        orderByField: 'getLastname',
-        orderBy: 'user_lastname', // FIXME: RPC doesn't sort properly
-        orderDir:
-          sort.orderByField === 'getLastname' && sort.orderDir === 'ASC'
-            ? 'DESC'
-            : 'ASC',
-      }),
+      onClick: () =>
+        handleSortChange({
+          orderByField: 'getLastname',
+          orderBy: 'user_lastname',
+          orderDir:
+            sort.orderByField === 'getLastname' && sort.orderDir === 'ASC'
+              ? 'DESC'
+              : 'ASC',
+        }),
     },
     {
       name: 'Job #',
@@ -213,14 +215,15 @@ export const EventsReport: FC<Props> = ({
             dir: sort.orderDir,
           }
         : {}),
-      onClick: handleSortChange({
-        orderByField: 'getLogJobNumber',
-        orderBy: 'log_jobNumber',
-        orderDir:
-          sort.orderByField === 'getLogJobNumber' && sort.orderDir === 'ASC'
-            ? 'DESC'
-            : 'ASC',
-      }),
+      onClick: () =>
+        handleSortChange({
+          orderByField: 'getLogJobNumber',
+          orderBy: 'log_jobNumber',
+          orderDir:
+            sort.orderByField === 'getLogJobNumber' && sort.orderDir === 'ASC'
+              ? 'DESC'
+              : 'ASC',
+        }),
     },
     {
       name: 'Date',
@@ -229,14 +232,15 @@ export const EventsReport: FC<Props> = ({
             dir: sort.orderDir,
           }
         : {}),
-      onClick: handleSortChange({
-        orderByField: 'getDateStarted',
-        orderBy: 'date_started',
-        orderDir:
-          sort.orderByField === 'getDateStarted' && sort.orderDir === 'ASC'
-            ? 'DESC'
-            : 'ASC',
-      }),
+      onClick: () =>
+        handleSortChange({
+          orderByField: 'getDateStarted',
+          orderBy: 'date_started',
+          orderDir:
+            sort.orderByField === 'getDateStarted' && sort.orderDir === 'ASC'
+              ? 'DESC'
+              : 'ASC',
+        }),
     },
     ...(kind === 'jobStatus'
       ? [
@@ -247,15 +251,16 @@ export const EventsReport: FC<Props> = ({
                   dir: sort.orderDir,
                 }
               : {}),
-            onClick: handleSortChange({
-              orderByField: 'getLogJobStatus',
-              orderBy: 'log_jobStatus', // FIXME: RPC doesn't sort properly
-              orderDir:
-                sort.orderByField === 'getLogJobStatus' &&
-                sort.orderDir === 'ASC'
-                  ? 'DESC'
-                  : 'ASC',
-            }),
+            onClick: () =>
+              handleSortChange({
+                orderByField: 'getLogJobStatus',
+                orderBy: 'log_jobStatus', // FIXME: RPC doesn't sort properly
+                orderDir:
+                  sort.orderByField === 'getLogJobStatus' &&
+                  sort.orderDir === 'ASC'
+                    ? 'DESC'
+                    : 'ASC',
+              }),
           },
         ]
       : []),
@@ -268,15 +273,16 @@ export const EventsReport: FC<Props> = ({
                   dir: sort.orderDir,
                 }
               : {}),
-            onClick: handleSortChange({
-              orderByField: 'getLogPaymentStatus',
-              orderBy: 'getLog_paymentStatus', // FIXME: RPC doesn't sort properly
-              orderDir:
-                sort.orderByField === 'getLogPaymentStatus' &&
-                sort.orderDir === 'ASC'
-                  ? 'DESC'
-                  : 'ASC',
-            }),
+            onClick: () =>
+              handleSortChange({
+                orderByField: 'getLogPaymentStatus',
+                orderBy: 'getLog_paymentStatus', // FIXME: RPC doesn't sort properly
+                orderDir:
+                  sort.orderByField === 'getLogPaymentStatus' &&
+                  sort.orderDir === 'ASC'
+                    ? 'DESC'
+                    : 'ASC',
+              }),
           },
         ]
       : []),
