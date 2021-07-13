@@ -1,6 +1,5 @@
 import React from 'react';
 import IconButton from '@material-ui/core/IconButton';
-import MailIcon from '@material-ui/icons/Mail';
 import CloseIcon from '@material-ui/icons/CloseRounded';
 import { Documents } from './';
 import { LoremIpsumList } from '../helpers';

@@ -147,63 +147,19 @@ export const Documents: FC<Props> = ({
     load();
   };
 
-  const handleDownload = useCallback(
-    async (filename: string, type: number, docId: number) => {
-      const url = new URLObject();
-      url.setKey(filename);
-      console.log('Type: ', type);
-      url.setBucket(type === 5 ? 'testbuckethelios' : 'kalosdocs-prod');
-      let dlURL;
-      try {
-        dlURL = await S3ClientService.GetDownloadURL(url);
-      } catch (err) {
-        console.error(
-          `An error occurred while getting the download URL: ${err}`,
-        );
-      }
-
-      if (dlURL) {
-        let file;
-        try {
-          file = await fetch(dlURL.getUrl());
-        } catch (err) {
-          console.error(
-            `An error occurred while fetching the document: ${err}`,
-          );
-        }
-
-        if (!file) {
-          console.error('File was not successfully fetched. Aborting.');
-          return;
-        }
-
-        const blob = await file.blob();
-        const fr = new FileReader();
-        fr.onload = () => {
-          if (onDownload) {
-            onDownload(new Uint8Array(fr.result as ArrayBuffer));
-          } else {
-            const el = document.createElement('a');
-            el.download = filename;
-            el.href = URL.createObjectURL(blob);
-            el.target = '_blank';
-            el.click();
-            el.remove();
-          }
-        };
-        fr.readAsArrayBuffer(blob);
-      }
-    },
-    [onDownload],
-  );
+  const handleDownload = useCallback(async (filename: string, type: number) => {
+    try {
+      await S3ClientService.download(
+        filename,
+        type === 5 ? 'testbuckethelios' : 'kalosdocs-prod',
+      );
+    } catch (err) {
+      console.error(`An error occurred while getting the download URL: ${err}`);
+    }
+  }, []);
 
   const handleOpenInNewTab = useCallback(
-    (
-        filename: string,
-        type: number,
-        docId: number,
-        realDownload: boolean = false,
-      ) =>
+    (filename: string, type: number, docId: number) =>
       async (
         event: React.MouseEvent<
           HTMLButtonElement | HTMLAnchorElement,
@@ -221,11 +177,7 @@ export const Documents: FC<Props> = ({
           url.setKey(filename);
           url.setBucket(type === 5 ? 'testbuckethelios' : 'kalosdocs-prod');
           const dlURL = await S3ClientService.GetDownloadURL(url);
-          if (realDownload) {
-            window.open(dlURL.getUrl(), '_blank'); // TODO: implement real download, instead of opening in new tab
-          } else {
-            window.open(dlURL.getUrl(), '_blank');
-          }
+          window.open(dlURL.getUrl(), '_blank');
         }
       },
     [propertyId, userId],
@@ -359,11 +311,7 @@ export const Documents: FC<Props> = ({
                         style={{ marginLeft: 4 }}
                         size="small"
                         onClick={() =>
-                          handleDownload(
-                            entry.getFilename(),
-                            entry.getType(),
-                            entry.getId(),
-                          )
+                          handleDownload(entry.getFilename(), entry.getType())
                         }
                       >
                         <DownloadIcon />
