@@ -25,6 +25,7 @@ import {
 } from '../../../helpers';
 import { ROWS_PER_PAGE } from '../../../constants';
 import { Event } from '@kalos-core/kalos-rpc/Event';
+import { Tasks } from '../Tasks';
 
 type Props = {
   kind: 'jobStatus' | 'paymentStatus';
@@ -53,6 +54,13 @@ export const EventsReport: FC<Props> = ({
     orderDir: 'DESC',
   });
   const [pendingEdit, setPendingEdit] = useState<Event>();
+  const [tasksOpenEvent, setTasksOpenEvent] = useState<Event | undefined>(
+    undefined,
+  );
+  const handleSetTasksOpenEvent = useCallback(
+    (event: Event | undefined) => setTasksOpenEvent(event),
+    [setTasksOpenEvent],
+  );
   const load = useCallback(async () => {
     setLoading(true);
     const filter: EventsFilter = {
@@ -112,17 +120,19 @@ export const EventsReport: FC<Props> = ({
     [setPendingEdit],
   );
   const handleOpenTasks = useCallback(
-    (entry: Event) => () => {
-      // TODO Replace with react Tasks module, once it's built
-      window.open(
-        [
-          getCFAppUrl('admin:tasks.list'),
-          'code=servicecall',
-          `id=${entry.getId()}`,
-        ].join('&'),
-      );
+    (entry: Event) => {
+      handleSetTasksOpenEvent(entry);
+      // ? Keeping this around in case we need to revert
+      //  Replace with react Tasks module, once it's built
+      // window.open(
+      //   [
+      //     getCFAppUrl('admin:tasks.list'),
+      //     'code=servicecall',
+      //     `id=${entry.getId()}`,
+      //   ].join('&'),
+      // );
     },
-    [],
+    [handleSetTasksOpenEvent],
   );
   const loadPrintEntries = useCallback(async () => {
     if (printEntries.length === count) return;
@@ -278,41 +288,41 @@ export const EventsReport: FC<Props> = ({
           return [
             {
               value: getPropertyAddress(entry.getProperty()),
-              onClick: handlePendingEditToggle(entry),
+              onClick: () => handlePendingEditToggle(entry),
             },
             {
               value: UserClientService.getCustomerName(
                 entry.getCustomer()!,
                 true,
               ),
-              onClick: handlePendingEditToggle(entry),
+              onClick: () => handlePendingEditToggle(entry),
             },
             {
               value: entry.getLogJobNumber(),
-              onClick: handlePendingEditToggle(entry),
+              onClick: () => handlePendingEditToggle(entry),
             },
             {
               value: formatDate(entry.getDateStarted()),
-              onClick: handlePendingEditToggle(entry),
+              onClick: () => handlePendingEditToggle(entry),
             },
             {
               value:
                 kind === 'jobStatus'
                   ? entry.getLogJobStatus()
                   : entry.getLogPaymentStatus(),
-              onClick: handlePendingEditToggle(entry),
+              onClick: () => handlePendingEditToggle(entry),
               actions: [
                 <IconButton
                   key="edit"
                   size="small"
-                  onClick={handlePendingEditToggle(entry)}
+                  onClick={() => handlePendingEditToggle(entry)}
                 >
                   <EditIcon />
                 </IconButton>,
                 <IconButton
                   key="tasks"
                   size="small"
-                  onClick={handleOpenTasks(entry)}
+                  onClick={() => handleOpenTasks(entry)}
                 >
                   <AssignmentIcon />
                 </IconButton>,
@@ -347,6 +357,29 @@ export const EventsReport: FC<Props> = ({
   );
   return (
     <>
+      {tasksOpenEvent && (
+        <Modal
+          key={tasksOpenEvent.toString()}
+          open={true}
+          onClose={() => handleSetTasksOpenEvent(undefined)}
+        >
+          <>
+            <SectionBar
+              actions={[
+                {
+                  label: 'CLOSE ',
+                  onClick: () => handleSetTasksOpenEvent(undefined),
+                },
+              ]}
+            />
+            <Tasks
+              loggedUserId={loggedUserId}
+              externalCode="servicecalls"
+              externalId={Number(tasksOpenEvent.getLogTechnicianAssigned())}
+            />
+          </>
+        </Modal>
+      )}
       <SectionBar
         title={title}
         // actions={[{ label: 'Tasks', onClick: () => handleOpenTasks(entry) }]}

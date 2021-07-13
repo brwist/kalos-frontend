@@ -171,9 +171,14 @@ export const Tasks: FC<Props> = ({
     req.setExternalCode(externalCode);
     req.setExternalId(externalId);
     req.setIsActive(true);
-    const res = await TaskClientService.loadTasks(req);
-    setTasks(res.getResultsList());
-    setCount(res.getTotalCount());
+    try {
+      const res = await TaskClientService.loadTasks(req);
+      setTasks(res.getResultsList());
+      setCount(res.getTotalCount());
+    } catch (err) {
+      console.error(`An error occurred while loading tasks: ${err}`);
+    }
+
     setLoading(false);
   }, [setLoading, setTasks, setCount, externalId, externalCode, page, search]);
   useEffect(() => {
