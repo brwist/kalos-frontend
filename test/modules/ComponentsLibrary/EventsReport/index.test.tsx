@@ -5,8 +5,6 @@ export {};
 
 const COMPONENTS_LIBRARY_PATH_FROM_TEST =
   require('../../../test-constants/constants').COMPONENTS_LIBRARY_PATH_FROM_TEST;
-const SETUP_PATH_FROM_TEST =
-  require('../../../test-constants/constants').SETUP_PATH_FROM_TEST;
 
 const EventsReport =
   require(`${COMPONENTS_LIBRARY_PATH_FROM_TEST}/EventsReport`).EventsReport;

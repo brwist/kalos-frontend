@@ -5,15 +5,12 @@ export {};
 
 let MODULES_PATH_FROM_TEST =
   require('../../test-constants/constants').MODULES_PATH_FROM_TEST;
-let SETUP_PATH_FROM_TEST_MODULES =
-  require('../../test-constants/constants').SETUP_PATH_FROM_TEST_MODULES;
 
 let CustomerDetails =
   require(`${MODULES_PATH_FROM_TEST}/CustomerDetails/components/CustomerDetails`).CustomerDetails;
 let React = require('react');
 let shallow = require('enzyme').shallow;
 
-require(`${SETUP_PATH_FROM_TEST_MODULES}/enzyme-setup.js`); // ? Required to run tests with Enzyme for React
 const expect = require('chai').expect;
 
 describe('CustomerDetails', () => {
