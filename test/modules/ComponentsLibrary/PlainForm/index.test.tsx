@@ -13,7 +13,6 @@ const shallow = require('enzyme').shallow;
 const PlainForm =
   require(`${COMPONENTS_LIBRARY_PATH_FROM_TEST}/PlainForm/index`).PlainForm;
 
-require(`${SETUP_PATH_FROM_TEST}/grpc-endpoint.js`); // ? Required to run tests with RPCs in Mocha (because Mocha runs in a Node environment)
 require(`${SETUP_PATH_FROM_TEST}/enzyme-setup.js`); // ? Required to run tests with Enzyme for React
 const expectImport =
   require(`${SETUP_PATH_FROM_TEST}/chai-setup.js`).expectImport;

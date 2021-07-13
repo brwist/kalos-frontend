@@ -8,16 +8,11 @@ let MODULES_PATH_FROM_TEST =
 let SETUP_PATH_FROM_TEST_MODULES =
   require('../../test-constants/constants').SETUP_PATH_FROM_TEST_MODULES;
 
-const ContractInfo =
-  require(`${MODULES_PATH_FROM_TEST}/CustomerDetails/components/ContractInfo`).ContractInfo;
-const SectionBar =
-  require(`${MODULES_PATH_FROM_TEST}/ComponentsLibrary/SectionBar/index`).SectionBar;
 let CustomerDetails =
   require(`${MODULES_PATH_FROM_TEST}/CustomerDetails/components/CustomerDetails`).CustomerDetails;
 let React = require('react');
 let shallow = require('enzyme').shallow;
 
-require(`${SETUP_PATH_FROM_TEST_MODULES}/grpc-endpoint.js`); // ? Required to run tests with RPCs in Mocha (because Mocha runs in a Node environment)
 require(`${SETUP_PATH_FROM_TEST_MODULES}/enzyme-setup.js`); // ? Required to run tests with Enzyme for React
 let expectImport =
   require(`${SETUP_PATH_FROM_TEST_MODULES}/chai-setup.js`).expectImport;

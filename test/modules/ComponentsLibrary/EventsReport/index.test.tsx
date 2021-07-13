@@ -13,7 +13,6 @@ const EventsReport =
 const React = require('react');
 const mount = require('enzyme').mount;
 
-require(`${SETUP_PATH_FROM_TEST}/grpc-endpoint.js`); // ? Required to run tests with RPCs in Mocha (because Mocha runs in a Node environment)
 const expectImport =
   require(`${SETUP_PATH_FROM_TEST}/chai-setup.js`).expectImport;
 
