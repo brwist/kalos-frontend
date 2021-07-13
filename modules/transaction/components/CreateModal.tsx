@@ -55,6 +55,7 @@ const CreateModal: FC<Props> = ({ show, entry, onClose, onSave }) => {
             onSelect={costCenterID => {
               if (typeof costCenterID === 'number') {
                 setCostCenterId(costCenterID);
+                console.log(costCenterId);
               }
             }}
             sort={(a, b) =>
@@ -74,13 +75,20 @@ const CreateModal: FC<Props> = ({ show, entry, onClose, onSave }) => {
   const handleCreate = useCallback(
     async (data: EntryWithDate) => {
       setSaving(true);
+      const newDate = data.date;
       data = makeSafeFormObject(data, new Transaction());
+      if (newDate) {
+        data.setTimestamp(newDate);
+      }
+      if (data.getDepartmentId()) {
+        const temp = data.getDepartmentId().toString();
+        data.setDepartmentId(parseInt(temp));
+      }
       data.setCostCenterId(costCenterId);
-      const req = new Transaction();
-      const result = await transactionClient.Create(req);
+      const result = await transactionClient.Create(data);
       onSave(result);
     },
-    [setSaving],
+    [setSaving, costCenterId, onSave],
   );
 
   return (
