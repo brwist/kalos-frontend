@@ -1438,9 +1438,9 @@
     chalk "^4.0.0"
 
 "@kalos-core/kalos-rpc@^3.1.2":
-  version "3.1.5"
-  resolved "https://registry.yarnpkg.com/@kalos-core/kalos-rpc/-/kalos-rpc-3.1.5.tgz#ffb855c3221df9fb6eeec0bdc70eb339055b559a"
-  integrity sha512-apRVrWgDQx5elRRJ6AoKIQ2OIqnX9lv4XWrO9U8JmdCPIG64Q27nJHKDePjgPBMSoVp+8qSYquNtEIeUE7Rz4Q==
+  version "3.1.6"
+  resolved "https://registry.yarnpkg.com/@kalos-core/kalos-rpc/-/kalos-rpc-3.1.6.tgz#d6ef347f09ac28301a19c6e2f13dc63d8897e64e"
+  integrity sha512-sowfDY2ihFrjFa9q5PFlXXjyb7bI0cdYSwLedzePf7H8MBYDPOLKeAb6SaqXrWyLz90usZ8a+31WbPD9bMy2Ug==
   dependencies:
     "@improbable-eng/grpc-web" "^0.9.6"
     "@types/pako" "^1.0.1"
@@ -9330,9 +9330,9 @@ ts-node@7.0.1:
     yn "^2.0.0"
 
 ts-node@^10.0.0:
-  version "10.0.0"
-  resolved "https://registry.yarnpkg.com/ts-node/-/ts-node-10.0.0.tgz#05f10b9a716b0b624129ad44f0ea05dac84ba3be"
-  integrity sha512-ROWeOIUvfFbPZkoDis0L/55Fk+6gFQNZwwKPLinacRl6tsxstTF1DbAcLKkovwnpKMVvOMHP1TIbnwXwtLg1gg==
+  version "10.1.0"
+  resolved "https://registry.yarnpkg.com/ts-node/-/ts-node-10.1.0.tgz#e656d8ad3b61106938a867f69c39a8ba6efc966e"
+  integrity sha512-6szn3+J9WyG2hE+5W8e0ruZrzyk1uFLYye6IGMBadnOzDh8aP7t8CbFpsfCiEx2+wMixAhjFt7lOZC4+l+WbEA==
   dependencies:
     "@tsconfig/node10" "^1.0.7"
     "@tsconfig/node12" "^1.0.7"

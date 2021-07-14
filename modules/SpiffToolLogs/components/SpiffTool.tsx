@@ -46,6 +46,7 @@ import {
 } from '../../../helpers';
 import { ENDPOINT, ROWS_PER_PAGE, OPTION_ALL } from '../../../constants';
 import './spiffTool.less';
+import { Event } from '@kalos-core/kalos-rpc/Event';
 import { Payroll, RoleType } from '../../ComponentsLibrary/Payroll';
 import { PropLinkServiceClient } from '@kalos-core/kalos-rpc/compiled-protos/prop_link_pb_service';
 import { PermissionGroup } from '@kalos-core/kalos-rpc/compiled-protos/user_pb';
@@ -506,6 +507,21 @@ export const SpiffTool: FC<Props> = ({
     },
     [setServiceCallEditing],
   );
+  const handleOpenServiceCallOld = (entry: Task) => (
+    e: React.MouseEvent<HTMLAnchorElement, MouseEvent>,
+  ) => {
+    e.preventDefault();
+    const taskEvent = entry.getEvent();
+    console.log('we called the window');
+    if (taskEvent) {
+      const url = `https://app.kalosflorida.com/index.cfm?action=admin:service.editServiceCall&id=${taskEvent.getId()}&user_id=${
+        taskEvent?.getCustomerId() ? taskEvent.getCustomerId() : 0
+      }&property_id=${taskEvent?.getPropertyId()}`;
+      console.log(url);
+      window.open(url);
+    }
+  };
+
   const handleUnsetServiceCallEditing = useCallback(
     () => setServiceCallEditing(undefined),
     [setServiceCallEditing],
@@ -797,7 +813,7 @@ export const SpiffTool: FC<Props> = ({
             value:
               type === 'Spiff' ? (
                 entry.getEvent() && entry.getEvent()!.getId() ? (
-                  <Link onClick={handleOpenServiceCall(entry)}>
+                  <Link onClick={handleOpenServiceCallOld(entry)}>
                     {entry.getSpiffJobNumber()}
                   </Link>
                 ) : (
