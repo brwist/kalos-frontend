@@ -223,9 +223,8 @@ const createTimesheetFetchFunction = (
   const req = new TimesheetLine();
   req.setGroupBy('technician_user_id');
   req.setIsActive(1);
-  if (config.type === 'Payroll') {
-    req.setWithoutLimit(true);
-  }
+  req.setWithoutLimit(true);
+
   if (config.type != 'Payroll' && config.page) {
     req.setPageNumber(config.page);
   }
