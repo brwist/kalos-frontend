@@ -19,6 +19,8 @@ const Payroll = require(GetPathFromName(
   'ComponentsLibrary',
 )).Payroll;
 
+const Loader = require(`../../../../modules/Loader/main`).Loader;
+
 const Timesheet = require(`${GetPathFromName(
   'Payroll',
   'ComponentsLibrary',
@@ -63,6 +65,12 @@ describe('ComponentsLibrary', () => {
       });
       it('has a Payroll title', () => {
         expect(wrapper.find({ title: 'Payroll' })).to.have.lengthOf(1);
+      });
+      it('has a loader when loading', () => {
+        console.log(wrapper.debug());
+        expect(wrapper.containsAllMatchingElements([<Loader />])).to.equal(
+          true,
+        );
       });
     });
 
