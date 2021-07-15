@@ -70,8 +70,8 @@ export const TimesheetLineCard: FC<TimesheetLineProps> = ({
   let status;
   useEffect(() => {
     async function getLink() {
-      const token = await getURL(referenceNumber);
-      setURL(token);
+      const link = await getURL(referenceNumber);
+      setURL(link);
     }
     if (loading) {
       setLoading(false);

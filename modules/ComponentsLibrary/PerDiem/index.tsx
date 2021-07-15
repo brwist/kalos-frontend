@@ -31,6 +31,7 @@ import {
   MapClientService,
   TimesheetDepartmentClientService,
   makeSafeFormObject,
+  TimesheetLineClientService,
 } from '../../../helpers';
 import { User } from '@kalos-core/kalos-rpc/User';
 import { JOB_STATUS_COLORS, MEALS_RATE, OPTION_ALL } from '../../../constants';
@@ -177,6 +178,8 @@ export const PerDiemComponent: FC<Props> = ({
   const [initialized, setInitialized] = useState<boolean>(false);
   const [initializing, setInitializing] = useState<boolean>(false);
   const [user, setUser] = useState<User>();
+  const [owner, setOwner] = useState<User>();
+
   const [perDiems, setPerDiems] = useState<PerDiem[]>([]);
   const [managerPerDiems, setManagerPerDiems] = useState<PerDiem[]>([]);
   const [checkLodging, setCheckLodging] = useState<boolean>(false);
@@ -187,8 +190,10 @@ export const PerDiemComponent: FC<Props> = ({
     [],
   );
   const [role, setRole] = useState<RoleType>();
-  const [managerFilterDepartmentId, setManagerFilterDepartmentId] =
-    useState<number>(0);
+  const [
+    managerFilterDepartmentId,
+    setManagerFilterDepartmentId,
+  ] = useState<number>(0);
   const [govPerDiems, setGovPerDiems] = useState<{
     [key: string]: {
       meals: number;
@@ -199,8 +204,16 @@ export const PerDiemComponent: FC<Props> = ({
   const [pendingPerDiemApprove, setPendingPerDiemApprove] = useState<PerDiem>();
   const [pendingPerDiemEdit, setPendingPerDiemEdit] = useState<PerDiem>();
   const [pendingPerDiemDelete, setPendingPerDiemDelete] = useState<PerDiem>();
-  const [pendingPerDiemRowDelete, setPendingPerDiemRowDelete] =
-    useState<boolean>(false);
+  const [
+    pendingPerDiemRowDelete,
+    setPendingPerDiemRowDelete,
+  ] = useState<boolean>(false);
+
+  type RowURLs = {
+    key: number;
+    url: string;
+  };
+  const [jobLinkList, setJobLinkList] = useState<RowURLs[]>([]);
   const [departments, setDepartments] = useState<TimesheetDepartment[]>([]);
   const [dateStarted, setDateStarted] = useState<Date>(
     addDays(
@@ -210,10 +223,14 @@ export const PerDiemComponent: FC<Props> = ({
       -0,
     ),
   );
-  const [pendingPerDiemRowEdit, setPendingPerDiemRowEdit] =
-    useState<PerDiemRow>();
-  const [pendingPerDiemEditDuplicated, setPendingPerDiemEditDuplicated] =
-    useState<boolean>(false);
+  const [
+    pendingPerDiemRowEdit,
+    setPendingPerDiemRowEdit,
+  ] = useState<PerDiemRow>();
+  const [
+    pendingPerDiemEditDuplicated,
+    setPendingPerDiemEditDuplicated,
+  ] = useState<boolean>(false);
   const initialize = useCallback(async () => {
     if (perDiem) {
       const year = +format(dateStarted, 'yyyy');
@@ -227,11 +244,24 @@ export const PerDiemComponent: FC<Props> = ({
         month,
       );
       setGovPerDiems(govPerDiems);
+
+      const rows = perDiem.getRowsList();
+      const test = jobLinkList;
+      for (let j = 0; j < rows.length; j++) {
+        const url = await TimesheetLineClientService.getReferenceURL(
+          rows[j].getServiceCallId(),
+        );
+        const newObject = { key: rows[j].getId(), url };
+        test.push(newObject);
+      }
+      console.log(test);
     }
     if (loggedUserId) {
       setInitializing(true);
       const user = await UserClientService.loadUserById(loggedUserId);
       setUser(user);
+      const owner = await UserClientService.loadUserById(loggedUserId);
+      setOwner(owner);
       //const depeartments = await TimesheetDepartmentClientService.loadTimeSheetDepartments() For some reason, this isn't loading data
       const client = new TimesheetDepartmentClient(ENDPOINT);
       const departmentReq = new TimesheetDepartment();
@@ -276,26 +306,25 @@ export const PerDiemComponent: FC<Props> = ({
   const load = useCallback(async () => {
     if (!loggedUserId) return;
     setLoading(true);
-    const resultsList = await (
+    const resultsList = (
       await PerDiemClientService.loadPerDiemByUserIdAndDateStarted(
         loggedUserId,
         formatDateFns(dateStarted),
       )
     ).getResultsList();
+
     let managerPerDiemsList = [] as PerDiem[];
     let managerPerDiemsOther = {};
     if (managerDepartmentIds.length > 0) {
-      const managerPerDiems =
-        await PerDiemClientService.loadPerDiemByDepartmentIdsAndDateStarted(
-          managerDepartmentIds,
-          formatDateFns(dateStarted),
-        );
+      const managerPerDiems = await PerDiemClientService.loadPerDiemByDepartmentIdsAndDateStarted(
+        managerDepartmentIds,
+        formatDateFns(dateStarted),
+      );
       managerPerDiemsList = managerPerDiems;
-      managerPerDiemsOther =
-        await PerDiemClientService.loadPerDiemByUserIdsAndDateStarted(
-          managerPerDiemsList.map(user => user.getUserId()),
-          formatDateFns(dateStarted),
-        );
+      managerPerDiemsOther = await PerDiemClientService.loadPerDiemByUserIdsAndDateStarted(
+        managerPerDiemsList.map(user => user.getUserId()),
+        formatDateFns(dateStarted),
+      );
     }
     const year = +format(dateStarted, 'yyyy');
     const month = +format(dateStarted, 'M');
@@ -636,6 +665,7 @@ export const PerDiemComponent: FC<Props> = ({
         return managerFilterDepartmentId === departmentId.getDepartmentId();
       })
     : perDiems;
+
   const allRowsList = filteredPerDiems.reduce(
     (aggr, pd) => [...aggr, ...pd.getRowsList()],
     [] as PerDiemRow[],
@@ -650,7 +680,6 @@ export const PerDiemComponent: FC<Props> = ({
       (pdr.getMealsOnly() ? 0 : govPerDiemByZipCode(pdr.getZipCode()).lodging),
     0,
   );
-
   return (
     <div>
       {loggedUserId > 0 && (
@@ -690,10 +719,9 @@ export const PerDiemComponent: FC<Props> = ({
                   ...managerDepartmentIds.map(id => {
                     const department = departments.find(d => d.getId() === id)!;
                     return {
-                      label:
-                        TimesheetDepartmentClientService.getDepartmentName(
-                          department,
-                        ),
+                      label: TimesheetDepartmentClientService.getDepartmentName(
+                        department,
+                      ),
                       value: department.getId(),
                     };
                   }),
@@ -790,6 +818,20 @@ export const PerDiemComponent: FC<Props> = ({
                   <>
                     <div>Total Meals: {usd(totalMeals)}</div>
                     <div>Total Lodging: {usd(totalLodging)}</div>
+                    <strong>
+                      {' '}
+                      Employee Address:
+                      {owner?.getAddress()
+                        ? ` ${owner!.getAddress()} `
+                        : ' No Address '}
+                      {owner?.getCity() ? ` ${owner!.getCity()} ` : ' No City '}
+                      {owner?.getState()
+                        ? ` ${owner!.getState()} `
+                        : ' No State '}
+                      {owner?.getZip()
+                        ? ` ${owner!.getZip()} `
+                        : ' No ZipCode '}
+                    </strong>
                     {entry
                       .getRowsList()
                       .reduce((total: any, current, index, arr) => {
@@ -920,6 +962,9 @@ export const PerDiemComponent: FC<Props> = ({
                             />
                           )}
                         {rows.map(entry => {
+                          const url = TimesheetLineClientService.getReferenceURL(
+                            entry.getServiceCallId(),
+                          );
                           return (
                             <CalendarCard
                               key={entry.getId()}
@@ -937,7 +982,22 @@ export const PerDiemComponent: FC<Props> = ({
                                 <strong>Zip Code: </strong>
                                 {entry.getZipCode()}
                               </div>
-                              <div className="PerDiemRow">
+                              <div
+                                className="PerDiemRow"
+                                onClick={event => {
+                                  event.stopPropagation();
+                                  event.preventDefault();
+                                  jobLinkList.length > 0
+                                    ? window.open(
+                                        jobLinkList[
+                                          jobLinkList.findIndex(
+                                            i => i.key === entry.getId(),
+                                          )
+                                        ].url,
+                                      )
+                                    : null;
+                                }}
+                              >
                                 <strong>Service Call Id: </strong>
                                 {entry.getServiceCallId()}
                               </div>
