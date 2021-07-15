@@ -146,6 +146,7 @@ export class TxnCard extends React.PureComponent<props, state> {
   updateTransaction<K extends keyof Transaction>(prop: K) {
     return async (value: Transaction[K]) => {
       try {
+        console.log(this.state.txn.getStatus());
         const reqObj = new Transaction();
         const fieldMaskItem = `${prop.slice(3)}`;
         console.log('fieldmaskItem', fieldMaskItem);
@@ -155,10 +156,15 @@ export class TxnCard extends React.PureComponent<props, state> {
         console.log('fetchmethod', fetchMethod);
         //@ts-ignore
         const oldValue = this.state.txn[fetchMethod]();
+
         console.log('old value', oldValue);
         reqObj.setId(this.state.txn.getId());
-        //@ts-ignore
-        reqObj[methodName](value());
+        if (methodName === 'setStatusId') {
+          reqObj.setStatusId(oldValue);
+        } else {
+          //@ts-ignore
+          reqObj[methodName](value());
+        }
         reqObj.setFieldMaskList([fieldMaskItem]);
         console.log('req', reqObj);
         const updatedTxn = await this.TxnClient.Update(reqObj);
