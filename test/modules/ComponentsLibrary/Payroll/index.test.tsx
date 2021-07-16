@@ -187,12 +187,54 @@ describe('ComponentsLibrary', () => {
           expect(wrapper.find({ label: 'Employee Report' })).to.be.lengthOf(0);
         });
 
-        it('can switch to the "Timeoff Requests" tab', async () => {
-          await new Promise(res => setTimeout(res, 1)); // ! Updates the wrapper after the time has passed to "load"
-          wrapper.update();
-          wrapper.find({ label: 'Timeoff Requests' }).first().simulate('click');
-          wrapper.update();
-          expect(wrapper.find({ title: 'Timeoff Requests' })).to.be.lengthOf(1);
+        describe('switching tab', () => {
+          it('can switch to the "Timeoff Requests" tab', async () => {
+            await new Promise(res => setTimeout(res, 1)); // ! Updates the wrapper after the time has passed to "load"
+            wrapper.update();
+            wrapper
+              .find({ label: 'Timeoff Requests' })
+              .first()
+              .simulate('click');
+            wrapper.update();
+            expect(wrapper.find({ title: 'Timeoff Requests' })).to.be.lengthOf(
+              1,
+            );
+          });
+
+          it('can switch to the "Spiff/Bonus/Commission" tab', async () => {
+            await new Promise(res => setTimeout(res, 1)); // ! Updates the wrapper after the time has passed to "load"
+            wrapper.update();
+            wrapper
+              .find({ label: 'Spiff/Bonus/Commission' })
+              .first()
+              .simulate('click');
+            wrapper.update();
+            expect(wrapper.find({ title: 'Spiffs' })).to.be.lengthOf(1);
+          });
+
+          it('can switch to the "Tool Logs" tab', async () => {
+            await new Promise(res => setTimeout(res, 1)); // ! Updates the wrapper after the time has passed to "load"
+            wrapper.update();
+            wrapper.find({ label: 'Tool Logs' }).first().simulate('click');
+            wrapper.update();
+            expect(wrapper.find({ title: 'Tool Logs' })).to.be.lengthOf(1);
+          });
+
+          it('can switch to the "Per Diem" tab', async () => {
+            await new Promise(res => setTimeout(res, 1)); // ! Updates the wrapper after the time has passed to "load"
+            wrapper.update();
+            wrapper.find({ label: 'Per Diem' }).first().simulate('click');
+            wrapper.update();
+            expect(wrapper.find({ title: 'Per Diems' })).to.be.lengthOf(1);
+          });
+
+          it('can switch to the "Trips" tab', async () => {
+            await new Promise(res => setTimeout(res, 1)); // ! Updates the wrapper after the time has passed to "load"
+            wrapper.update();
+            wrapper.find({ label: 'Trips' }).first().simulate('click');
+            wrapper.update();
+            expect(wrapper.find({ title: 'Trips' })).to.be.lengthOf(1);
+          });
         });
       });
 
