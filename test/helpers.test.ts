@@ -9,7 +9,7 @@ const loadActivityLogsByFilter =
 const EventType = require('@kalos-core/kalos-rpc/Event/index.ts').Event; // ! These have to be "require" not "import" because Chai runs in a Node environment
 // ! but are otherwise the same. This is named "EventType" instead of Event because of a name conflict with JS Event, you can keep the name the same for other types
 const EventClientService = require('../helpers.ts').EventClientService;
-const Setup = require('./test-setup/endpoint-setup.js'); // ? Sets the auth token up in a one-liner
+const Setup = require('./test-setup/endpoint-setup'); // ? Sets the auth token up in a one-liner
 
 describe('helpers', () => {
   describe('.getMimeType()', () => {

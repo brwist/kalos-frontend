@@ -31,7 +31,7 @@ const OPTION_ALL = require('../../../../constants').OPTION_ALL;
 
 const expect = require('chai').expect;
 
-const Setup = require('../../../test-setup/endpoint-setup.js'); // ? Sets the auth token up in a one-liner
+const Setup = require('../../../test-setup/endpoint-setup'); // ? Sets the auth token up in a one-liner
 
 const getDepartmentId = async () => {
   const depReq = new TimesheetDepartment();
