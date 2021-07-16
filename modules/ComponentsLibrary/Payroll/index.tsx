@@ -128,6 +128,7 @@ export const Payroll: FC<Props> = ({ userID }) => {
     ).getResultsList();
     setDepartments(departments);
     const employees = await UserClientService.loadTechnicians();
+    console.log('LOADED TECHNICIANS AS: ', employees);
     let sortedEmployeeList = employees.sort((a, b) =>
       a.getLastname() > b.getLastname() ? 1 : -1,
     );

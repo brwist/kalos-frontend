@@ -15,6 +15,8 @@ const {
   TimesheetDepartmentList,
 } = require('@kalos-core/kalos-rpc/TimesheetDepartment');
 
+const { User } = require('@kalos-core/kalos-rpc/User');
+
 const Payroll = require(GetPathFromName(
   'Payroll',
   'ComponentsLibrary',
@@ -60,6 +62,23 @@ describe('ComponentsLibrary', () => {
     let newTDList = new TimesheetDepartmentList();
     newTDList.setResultsList([]); // ? Could set up the results here
     Stubs.setupStubs('TimesheetDepartmentClientService', 'BatchGet', newTDList);
+
+    // Maybe when this is a little more fleshed out, we can pull db data and use JSON.Parse on that for this data?
+    let maryOrr = new User();
+    maryOrr.setId(3);
+    maryOrr.setFirstname('Mary');
+    maryOrr.setLastname('Orr');
+    maryOrr.setEmail('Mary@Kalosflorida.com');
+
+    let robertOrr = new User();
+    robertOrr.setId(68);
+    robertOrr.setFirstname('Robert');
+    robertOrr.setLastname('Orr');
+    robertOrr.setEmail('Robert@Kalosflorida.com');
+
+    let newTechnicianList = [robertOrr, maryOrr];
+
+    Stubs.setupStubs('UserClientService', 'loadTechnicians', newTechnicianList);
   });
   after(() => {
     Stubs.restoreStubs();
