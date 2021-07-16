@@ -116,8 +116,17 @@ describe('ComponentsLibrary', () => {
           true,
         );
       });
+      it('loads correctly with no loader remaining', async () => {
+        await new Promise(res => setTimeout(res, 1)); // ! Updates the wrapper after the time has passed to "load"
+        wrapper.update();
+        console.log(wrapper.debug());
+        expect(wrapper.containsAllMatchingElements([<Loader />])).to.equal(
+          false,
+        );
+      });
     });
 
+    // NOTE These are now technically Integration Tests so I'm gonna keep them around for now, they don't run in watch mode after all so no harm no foul
     describe('RPC', () => {
       // ? Uses RPCs to load the dependencies as the Timesheet tab does
       before(async () => {
