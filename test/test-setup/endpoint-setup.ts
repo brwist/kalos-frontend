@@ -20,6 +20,4 @@ const setupStubs = () => {
   Sinon.stub(TimesheetDepartmentClientService, 'BatchGet').resolves(newTDList);
 };
 
-setupStubs();
-
 export { u, setupStubs };

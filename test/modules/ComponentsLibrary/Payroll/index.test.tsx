@@ -54,6 +54,9 @@ const getRole = async () => {
 };
 
 describe('ComponentsLibrary', () => {
+  before(() => {
+    Setup.setupStubs();
+  });
   describe('Payroll', () => {
     describe('<Payroll userID={101253} />', () => {
       let wrapper: any;
