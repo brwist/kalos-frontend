@@ -24,6 +24,9 @@ const Payroll = require(GetPathFromName(
 
 const Loader = require(`../../../../modules/Loader/main`).Loader;
 
+const PermissionGroup =
+  require(`@kalos-core/kalos-rpc/compiled-protos/user_pb`).PermissionGroup;
+
 const Timesheet = require(`${GetPathFromName(
   'Payroll',
   'ComponentsLibrary',
@@ -79,6 +82,18 @@ describe('ComponentsLibrary', () => {
     let newTechnicianList = [robertOrr, maryOrr];
 
     Stubs.setupStubs('UserClientService', 'loadTechnicians', newTechnicianList);
+
+    let olbinski = new User();
+    olbinski.setId(101253);
+    olbinski.setFirstname('Krzysztof'); // So glad I had the database open with his name there
+    olbinski.setLastname('Olbinski');
+
+    let newPG = new PermissionGroup();
+    newPG.setType('role');
+    newPG.setName('Payroll');
+    olbinski.setPermissionGroupsList([newPG]);
+
+    Stubs.setupStubs('UserClientService', 'loadUserById', olbinski, 101253);
   });
   after(() => {
     Stubs.restoreStubs();
