@@ -22,4 +22,4 @@ const setupStubs = () => {
 
 setupStubs();
 
-export { u };
+export { u, setupStubs };

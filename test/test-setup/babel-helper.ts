@@ -1,5 +1,5 @@
 export default () => {
-  global.self = global;
+  global.self = global as any;
   module.exports = global;
 
   require('@babel/register')({
