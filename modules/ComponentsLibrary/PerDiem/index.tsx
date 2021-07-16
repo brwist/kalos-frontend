@@ -203,6 +203,10 @@ export const PerDiemComponent: FC<Props> = ({
   const [pendingPerDiemSubmit, setPendingPerDiemSubmit] = useState<PerDiem>();
   const [pendingPerDiemApprove, setPendingPerDiemApprove] = useState<PerDiem>();
   const [pendingPerDiemEdit, setPendingPerDiemEdit] = useState<PerDiem>();
+  const [loadedPerDiem, setLoadedPerDiem] = useState<PerDiem | undefined>(
+    perDiem ? perDiem : undefined,
+  );
+
   const [pendingPerDiemDelete, setPendingPerDiemDelete] = useState<PerDiem>();
   const [
     pendingPerDiemRowDelete,
@@ -217,9 +221,12 @@ export const PerDiemComponent: FC<Props> = ({
   const [departments, setDepartments] = useState<TimesheetDepartment[]>([]);
   const [dateStarted, setDateStarted] = useState<Date>(
     addDays(
-      startOfWeek(perDiem ? parseISO(perDiem.getDateStarted()) : new Date(), {
-        weekStartsOn: 6,
-      }),
+      startOfWeek(
+        loadedPerDiem ? parseISO(loadedPerDiem.getDateStarted()) : new Date(),
+        {
+          weekStartsOn: 6,
+        },
+      ),
       -0,
     ),
   );
@@ -232,10 +239,10 @@ export const PerDiemComponent: FC<Props> = ({
     setPendingPerDiemEditDuplicated,
   ] = useState<boolean>(false);
   const initialize = useCallback(async () => {
-    if (perDiem) {
+    if (loadedPerDiem) {
       const year = +format(dateStarted, 'yyyy');
       const month = +format(dateStarted, 'M');
-      const zipCodes = [perDiem]
+      const zipCodes = [loadedPerDiem]
         .reduce((aggr: PerDiemRow[], pd) => [...aggr, ...pd.getRowsList()], [])
         .map(pd => pd.getZipCode());
       const govPerDiems = await PerDiemClientService.loadGovPerDiem(
@@ -244,9 +251,9 @@ export const PerDiemComponent: FC<Props> = ({
         month,
       );
       setGovPerDiems(govPerDiems);
-
-      const rows = perDiem.getRowsList();
-      const test = jobLinkList;
+      console.log('we got called');
+      const rows = loadedPerDiem.getRowsList();
+      const test = [];
       for (let j = 0; j < rows.length; j++) {
         const url = await TimesheetLineClientService.getReferenceURL(
           rows[j].getServiceCallId(),
@@ -254,7 +261,7 @@ export const PerDiemComponent: FC<Props> = ({
         const newObject = { key: rows[j].getId(), url };
         test.push(newObject);
       }
-      console.log(test);
+      setJobLinkList(test);
     }
     if (loggedUserId) {
       setInitializing(true);
@@ -302,7 +309,7 @@ export const PerDiemComponent: FC<Props> = ({
       setInitializing(false);
     }
     setInitialized(true);
-  }, [dateStarted, loggedUserId, perDiem]);
+  }, [dateStarted, loggedUserId, loadedPerDiem]);
   const load = useCallback(async () => {
     if (!loggedUserId) return;
     setLoading(true);
@@ -336,7 +343,7 @@ export const PerDiemComponent: FC<Props> = ({
       year,
       month,
     );
-    if (!perDiem) {
+    if (!loadedPerDiem) {
       setGovPerDiems(govPerDiems);
     }
     setPerDiems(resultsList);
@@ -347,7 +354,7 @@ export const PerDiemComponent: FC<Props> = ({
     loggedUserId,
     setLoading,
     setPerDiems,
-    perDiem,
+    loadedPerDiem,
     dateStarted,
     managerDepartmentIds,
     setManagerPerDiems,
@@ -394,9 +401,9 @@ export const PerDiemComponent: FC<Props> = ({
       setPendingPerDiemEditDuplicated(false);
       if (
         managerPerDiems.find(
-          perDiem =>
-            perDiem.getUserId() === data.getUserId() &&
-            perDiem.getDepartmentId() === data.getDepartmentId(),
+          loadedPerDiem =>
+            loadedPerDiem.getUserId() === data.getUserId() &&
+            loadedPerDiem.getDepartmentId() === data.getDepartmentId(),
         )
       ) {
         setPendingPerDiemEditDuplicated(true);
@@ -405,8 +412,11 @@ export const PerDiemComponent: FC<Props> = ({
       setSaving(true);
       const temp = makeSafeFormObject(data, new PerDiem());
       await PerDiemClientService.upsertPerDiem(temp);
+      setLoadedPerDiem(temp);
+
       setPendingPerDiemEdit(undefined);
       setSaving(false);
+      setInitialized(false);
       setLoaded(false);
     },
     [
@@ -427,11 +437,21 @@ export const PerDiemComponent: FC<Props> = ({
       } else {
         await PerDiemClientService.UpdateRow(temp);
       }
+      const tempPerDiem = loadedPerDiem;
+      for (let i = 0; i < tempPerDiem!.getRowsList().length; i++) {
+        if (tempPerDiem?.getRowsList()[i].getId() === temp.getId()) {
+          const newRowList = tempPerDiem.getRowsList();
+          newRowList[i] = temp;
+          tempPerDiem.setRowsList(newRowList);
+        }
+      }
+      setLoadedPerDiem(tempPerDiem);
       setPendingPerDiemRowEdit(undefined);
+      setInitialized(false);
       setSaving(false);
       setLoaded(false);
     },
-    [setSaving, setPendingPerDiemRowEdit, setLoaded],
+    [setSaving, loadedPerDiem, setPendingPerDiemRowEdit, setLoaded],
   );
   const handlePendingPerDiemDeleteToggle = useCallback(
     (pendingPerDiemDelete?: PerDiem) => () =>
@@ -657,8 +677,8 @@ export const PerDiemComponent: FC<Props> = ({
     [],
   );
   if (initializing) return <Loader />;
-  const filteredPerDiems = perDiem
-    ? [perDiem]
+  const filteredPerDiems = loadedPerDiem
+    ? [loadedPerDiem]
     : isAnyManager
     ? managerPerDiems.filter(departmentId => {
         if (managerFilterDepartmentId === 0) return true;
@@ -686,7 +706,7 @@ export const PerDiemComponent: FC<Props> = ({
         <CalendarHeader
           onDateChange={handleSetDateStarted}
           onSubmit={
-            role === 'Manager' && isOwner == false && perDiem
+            role === 'Manager' && isOwner == false && loadedPerDiem
               ? handlePendingPerDiemApproveToggle(perDiem)
               : handlePendingPerDiemEditToggle(makeNewPerDiem())
           }
@@ -694,7 +714,7 @@ export const PerDiemComponent: FC<Props> = ({
           title={UserClientService.getCustomerName(user!)}
           weekStartsOn={6}
           submitLabel={
-            role === 'Manager' && isOwner == false && perDiem
+            role === 'Manager' && isOwner == false && loadedPerDiem
               ? 'Approve Per Diem'
               : 'Add Per Diem'
           }

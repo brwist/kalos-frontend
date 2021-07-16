@@ -6,7 +6,11 @@ import Visibility from '@material-ui/icons/Visibility';
 import { SectionBar } from '../../../ComponentsLibrary/SectionBar';
 import { InfoTable } from '../../../ComponentsLibrary/InfoTable';
 import { Modal } from '../../../ComponentsLibrary/Modal';
-import { makeFakeRows, TimesheetLineClientService } from '../../../../helpers';
+import {
+  makeFakeRows,
+  TimesheetLineClientService,
+  roundNumber,
+} from '../../../../helpers';
 import { OPTION_ALL } from '../../../../constants';
 import {
   TimesheetLine,
@@ -17,6 +21,7 @@ import { ENDPOINT } from '../../../../constants';
 import { RoleType } from '../index';
 import { NULL_TIME_VALUE } from '../../Timesheet/constants';
 import { CostSummary } from '../../CostSummary';
+import { differenceInMinutes } from 'date-fns';
 interface Props {
   departmentId: number;
   employeeId: number;
@@ -32,7 +37,10 @@ const formatWeek = (date: string) => {
     'do',
   )}`;
 };
-
+type EmployeeHourSum = {
+  id: number;
+  hours: number;
+};
 export const PayrollSummary: FC<Props> = ({
   employeeId,
   departmentId,
@@ -42,6 +50,7 @@ export const PayrollSummary: FC<Props> = ({
 }) => {
   const [loading, setLoading] = useState<boolean>(true);
   const [timesheets, setTimesheets] = useState<TimesheetLine[]>([]);
+  const [processedHours, setProcessedHours] = useState<EmployeeHourSum[]>([]);
   const [idList, setIDList] = useState<number[]>([]);
   const [page, setPage] = useState<number>(0);
   const [count, setCount] = useState<number>(0);
@@ -58,6 +67,7 @@ export const PayrollSummary: FC<Props> = ({
       toggle,
       startDate: format(startDay, 'yyyy-MM-dd'),
       endDate: format(endDay, 'yyyy-MM-dd'),
+      groupBy: true,
     };
     if (week !== OPTION_ALL) {
       Object.assign(filter, {
@@ -67,6 +77,40 @@ export const PayrollSummary: FC<Props> = ({
     }
 
     const getTimesheets = createTimesheetFetchFunction(filter);
+    filter.groupBy = false;
+    const getFullTimesheets = createTimesheetFetchFunction(filter);
+    const fullResult = (await getFullTimesheets()).getResultsList();
+    let tempList = [];
+    for (let i = 0; i < fullResult.length; i++) {
+      let found = false;
+      for (let j = 0; j < tempList.length; j++) {
+        if (tempList[j].id === fullResult[i].getTechnicianUserId()) {
+          const timeFinished = fullResult[i].getTimeFinished();
+          const timeStarted = fullResult[i].getTimeStarted();
+          const subtotal = roundNumber(
+            differenceInMinutes(parseISO(timeFinished), parseISO(timeStarted)) /
+              60,
+          );
+          found = true;
+          tempList[j].hours += subtotal;
+          break;
+        }
+      }
+      if (found === false) {
+        const timeFinished = fullResult[i].getTimeFinished();
+        const timeStarted = fullResult[i].getTimeStarted();
+        const subtotal = roundNumber(
+          differenceInMinutes(parseISO(timeFinished), parseISO(timeStarted)) /
+            60,
+        );
+
+        tempList.push({
+          id: fullResult[i].getTechnicianUserId(),
+          hours: subtotal,
+        });
+      }
+    }
+
     const result = await getTimesheets();
     const resultsList = result.getResultsList();
     const totalCount = result.getTotalCount();
@@ -85,6 +129,7 @@ export const PayrollSummary: FC<Props> = ({
     const sortedResultsList = resultsList.sort(compare);
 
     setTimesheets(sortedResultsList);
+    setProcessedHours(tempList);
     setCount(totalCount);
     setLoading(false);
   }, [page, employeeId, week, type, toggle, departmentId, endDay, startDay]);
@@ -150,6 +195,7 @@ export const PayrollSummary: FC<Props> = ({
       <InfoTable
         columns={[
           { name: 'Employee' },
+          { name: 'Processed Hours' },
           { name: 'Department' },
           { name: 'Admin Approval Date' },
         ]}
@@ -161,6 +207,15 @@ export const PayrollSummary: FC<Props> = ({
                 return [
                   {
                     value: e.getTechnicianUserName(),
+                    onClick: handleTogglePendingView(e),
+                  },
+                  {
+                    value:
+                      processedHours[
+                        processedHours.findIndex(
+                          i => i.id === e.getTechnicianUserId(),
+                        )
+                      ].hours,
                     onClick: handleTogglePendingView(e),
                   },
                   {
@@ -220,13 +275,16 @@ interface GetTimesheetConfig {
   startDate?: string;
   endDate?: string;
   toggle: boolean;
+  groupBy?: boolean;
 }
 
 const createTimesheetFetchFunction = (config: GetTimesheetConfig) => {
   const req = new TimesheetLine();
   req.setPageNumber(config.page || 0);
   req.setOrderBy('time_started');
-  req.setGroupBy('technician_user_id');
+  if (config.groupBy) {
+    req.setGroupBy('technician_user_id');
+  }
   req.setIsActive(1);
   req.setWithoutLimit(true);
   const client = new TimesheetLineClient(ENDPOINT);
