@@ -126,7 +126,6 @@ export const Payroll: FC<Props> = ({ userID }) => {
     const departments = await (
       await TimesheetDepartmentClientService.BatchGet(depReq)
     ).getResultsList();
-    console.log('GOT THE RESULTS LIST: ', departments);
     setDepartments(departments);
     const employees = await UserClientService.loadTechnicians();
     let sortedEmployeeList = employees.sort((a, b) =>
