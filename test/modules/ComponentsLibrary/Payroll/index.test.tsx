@@ -186,6 +186,14 @@ describe('ComponentsLibrary', () => {
           wrapper.update();
           expect(wrapper.find({ label: 'Employee Report' })).to.be.lengthOf(0);
         });
+
+        it('can switch to the "Timeoff Requests" tab', async () => {
+          await new Promise(res => setTimeout(res, 1)); // ! Updates the wrapper after the time has passed to "load"
+          wrapper.update();
+          wrapper.find({ label: 'Timeoff Requests' }).first().simulate('click');
+          wrapper.update();
+          expect(wrapper.find({ title: 'Timeoff Requests' })).to.be.lengthOf(1);
+        });
       });
 
       // NOTE These are now technically Integration Tests so I'm gonna keep them around for now, they don't run in watch mode after all so no harm no foul
