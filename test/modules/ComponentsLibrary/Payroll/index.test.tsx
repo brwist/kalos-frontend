@@ -12,6 +12,7 @@ const UserClientService = require('../../../../helpers.ts').UserClientService;
 
 const {
   TimesheetDepartment,
+  TimesheetDepartmentList,
 } = require('@kalos-core/kalos-rpc/TimesheetDepartment');
 
 const Payroll = require(GetPathFromName(
@@ -32,6 +33,7 @@ const OPTION_ALL = require('../../../../constants').OPTION_ALL;
 const expect = require('chai').expect;
 
 const Setup = require('../../../test-setup/endpoint-setup'); // ? Sets the auth token up in a one-liner
+const Stubs = require('../../../test-setup/stubs'); // ? Sets the auth token up in a one-liner
 
 const getDepartmentId = async () => {
   const depReq = new TimesheetDepartment();
@@ -55,7 +57,12 @@ const getRole = async () => {
 
 describe('ComponentsLibrary', () => {
   before(() => {
-    Setup.setupStubs();
+    let newTDList = new TimesheetDepartmentList();
+    newTDList.setResultsList([]); // ? Could set up the results here
+    Stubs.setupStubs('TimesheetDepartmentClientService', 'BatchGet', newTDList);
+  });
+  after(() => {
+    Stubs.restoreStubs();
   });
   describe('Payroll', () => {
     describe('<Payroll userID={101253} />', () => {
