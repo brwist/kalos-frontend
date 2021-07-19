@@ -114,7 +114,7 @@ const Transaction: FC<Props> = props => {
             >
               <UploadPhotoTransaction
                 loggedUserId={props.userID}
-                bucket="kalos-pre-transactions"
+                bucket="kalos-transactions"
                 onClose={() => handleSetUploadPhotoTransactionOpen(false)}
                 costCenters={
                   costCenters ? costCenters : new TransactionAccountList()
