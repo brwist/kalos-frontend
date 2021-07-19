@@ -136,16 +136,14 @@ export const UploadPhotoTransaction: FC<Props> = ({
           fReq.setName(name);
           fReq.setMimeType(data.file);
           fReq.setOwnerId(loggedUserId);
-          const uploadFile = await FileClientService.upsertFile(fReq);
+          const uploadFile = await FileClientService.Create(fReq);
 
           const tDoc = new TransactionDocument();
           tDoc.setTransactionId(insert.getId());
           tDoc.setReference(nameWithoutId);
           tDoc.setFileId(uploadFile.getId());
           tDoc.setTypeId(1);
-          await TransactionDocumentClientService.upsertTransactionDocument(
-            tDoc,
-          );
+          await TransactionDocumentClientService.Create(tDoc);
           setSaving(false);
           setSaved(true);
           setFormKey(formKey + 1);
