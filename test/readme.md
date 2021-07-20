@@ -10,6 +10,10 @@ Chai is an assertion library and is the reason you must use Require in most case
 
 Enzyme is a Javascript testing utility for React which helps validate components are rendering correctly, etc.
 
+# Writing Tests
+
+When writing the tests out, ensure that you wrap all tests in a decent Describe block (or multiple of them). This helps ensure the CLI output is clean and well-kempt.
+
 # RPCs and Testing
 
 Because of the way our server is set up, there are a few gotchas which need to be kept in mind when testing out functionality that makes calls to the server (IE, testing Helper functions).
