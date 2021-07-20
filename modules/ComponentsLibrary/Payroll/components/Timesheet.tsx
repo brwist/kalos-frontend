@@ -181,6 +181,10 @@ export const Timesheet: FC<Props> = ({
         ? 1
         : -1,
     );
+    const salariedIds = await UserClientService.GetUserIdsInPermissionGroup(41);
+    sortedResultsLists = sortedResultsLists.filter(
+      i => salariedIds.findIndex(j => j === i.getTechnicianUserId()) == -1,
+    );
     setTimesheets(sortedResultsLists);
     setCount(sortedResultsLists.length);
     setLoading(false);
