@@ -40,6 +40,8 @@ const expect = require('chai').expect;
 const Setup = require('../../../test-setup/endpoint-setup'); // ? Sets the auth token up in a one-liner
 const Stubs = require('../../../test-setup/stubs'); // ? Sets the auth token up in a one-liner
 
+import constants = require('../../../test-constants/constants');
+
 const getDepartmentId = async () => {
   const depReq = new TimesheetDepartment();
   depReq.setIsActive(1);
@@ -186,59 +188,110 @@ describe('ComponentsLibrary', () => {
           wrapper.update();
           expect(wrapper.find({ label: 'Employee Report' })).to.be.lengthOf(0);
         });
+
+        describe('switching tab', () => {
+          it('can switch to the "Timeoff Requests" tab', async () => {
+            await new Promise(res => setTimeout(res, 1)); // ! Updates the wrapper after the time has passed to "load"
+            wrapper.update();
+            wrapper
+              .find({ label: 'Timeoff Requests' })
+              .first()
+              .simulate('click');
+            wrapper.update();
+            expect(wrapper.find({ title: 'Timeoff Requests' })).to.be.lengthOf(
+              1,
+            );
+          });
+
+          it('can switch to the "Spiff/Bonus/Commission" tab', async () => {
+            await new Promise(res => setTimeout(res, 1)); // ! Updates the wrapper after the time has passed to "load"
+            wrapper.update();
+            wrapper
+              .find({ label: 'Spiff/Bonus/Commission' })
+              .first()
+              .simulate('click');
+            wrapper.update();
+            expect(wrapper.find({ title: 'Spiffs' })).to.be.lengthOf(1);
+          });
+
+          it('can switch to the "Tool Logs" tab', async () => {
+            await new Promise(res => setTimeout(res, 1)); // ! Updates the wrapper after the time has passed to "load"
+            wrapper.update();
+            wrapper.find({ label: 'Tool Logs' }).first().simulate('click');
+            wrapper.update();
+            expect(wrapper.find({ title: 'Tool Logs' })).to.be.lengthOf(1);
+          });
+
+          it('can switch to the "Per Diem" tab', async () => {
+            await new Promise(res => setTimeout(res, 1)); // ! Updates the wrapper after the time has passed to "load"
+            wrapper.update();
+            wrapper.find({ label: 'Per Diem' }).first().simulate('click');
+            wrapper.update();
+            expect(wrapper.find({ title: 'Per Diems' })).to.be.lengthOf(1);
+          });
+
+          it('can switch to the "Trips" tab', async () => {
+            await new Promise(res => setTimeout(res, 1)); // ! Updates the wrapper after the time has passed to "load"
+            wrapper.update();
+            wrapper.find({ label: 'Trips' }).first().simulate('click');
+            wrapper.update();
+            //constants.Log('TESTING OUTPUT ACTUALLY WORKS');
+            expect(wrapper.find({ title: 'Trips' })).to.be.lengthOf(1);
+          });
+        });
       });
 
       // NOTE These are now technically Integration Tests so I'm gonna keep them around for now, they don't run in watch mode after all so no harm no foul
-      describe('RPC', () => {
-        // ? Uses RPCs to load the dependencies as the Timesheet tab does
-        before(async () => {
-          await Setup.u.GetToken('test', 'test');
-        });
+      // describe('RPC', () => {
+      //   // ? Uses RPCs to load the dependencies as the Timesheet tab does
+      //   before(async () => {
+      //     await Setup.u.GetToken('test', 'test');
+      //   });
 
-        describe('Timesheet tab', () => {
-          let wrapper: any;
-          beforeEach(async () => {
-            const deptId = await getDepartmentId();
-            const role = await getRole();
-            wrapper = await mount(
-              <Timesheet
-                departmentId={deptId}
-                employeeId={0}
-                week={OPTION_ALL}
-                type={role}
-                loggedUser={1550}
-              />,
-            );
-          });
-          it('renders timesheet with a timesheet title', async () => {
-            expect(wrapper.find({ title: 'Timesheet' })).to.have.lengthOf(1);
-          });
+      //   describe('Timesheet tab', () => {
+      //     let wrapper: any;
+      //     beforeEach(async () => {
+      //       const deptId = await getDepartmentId();
+      //       const role = await getRole();
+      //       wrapper = await mount(
+      //         <Timesheet
+      //           departmentId={deptId}
+      //           employeeId={0}
+      //           week={OPTION_ALL}
+      //           type={role}
+      //           loggedUser={1550}
+      //         />,
+      //       );
+      //     });
+      //     it('renders timesheet with a timesheet title', async () => {
+      //       expect(wrapper.find({ title: 'Timesheet' })).to.have.lengthOf(1);
+      //     });
 
-          it('renders timesheet with a Department title in the info table', async () => {
-            let contained = false;
-            wrapper.find('.InfoTableDir').forEach((result: any) => {
-              if (result.text().trim() === 'Department') contained = true;
-            });
-            expect(contained).to.equal(true);
-          });
+      //     it('renders timesheet with a Department title in the info table', async () => {
+      //       let contained = false;
+      //       wrapper.find('.InfoTableDir').forEach((result: any) => {
+      //         if (result.text().trim() === 'Department') contained = true;
+      //       });
+      //       expect(contained).to.equal(true);
+      //     });
 
-          it('renders timesheet with a Employee title in the info table', async () => {
-            let contained = false;
-            wrapper.find('.InfoTableDir').forEach((result: any) => {
-              if (result.text().trim() === 'Employee') contained = true;
-            });
-            expect(contained).to.equal(true);
-          });
+      //     it('renders timesheet with a Employee title in the info table', async () => {
+      //       let contained = false;
+      //       wrapper.find('.InfoTableDir').forEach((result: any) => {
+      //         if (result.text().trim() === 'Employee') contained = true;
+      //       });
+      //       expect(contained).to.equal(true);
+      //     });
 
-          it('renders timesheet with a Week Approved title in the info table', async () => {
-            let contained = false;
-            wrapper.find('.InfoTableDir').forEach((result: any) => {
-              if (result.text().trim() === 'Week Approved') contained = true;
-            });
-            expect(contained).to.equal(true);
-          });
-        });
-      });
+      //     it('renders timesheet with a Week Approved title in the info table', async () => {
+      //       let contained = false;
+      //       wrapper.find('.InfoTableDir').forEach((result: any) => {
+      //         if (result.text().trim() === 'Week Approved') contained = true;
+      //       });
+      //       expect(contained).to.equal(true);
+      //     });
+      //   });
+      // });
     });
   });
 });

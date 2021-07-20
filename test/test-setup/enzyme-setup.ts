@@ -11,6 +11,8 @@ const copyProps = (src: any, target: any) => {
   Object.defineProperties(target, props as any);
 };
 
+const oldLog = console.log;
+
 const setUpDomEnvironment = () => {
   const { JSDOM } = jsdom;
   const dom = new JSDOM('<!doctype html><html><body></body></html>', {
@@ -24,7 +26,13 @@ const setUpDomEnvironment = () => {
     userAgent: 'node.js',
   } as Navigator;
   global.console = {
-    log: console.log, // In case we need fine-grained control over this, we can have it later
+    log: (output: any) => {
+      let out = output.replace('<TestLog>', '');
+      out = out.replace('</TestLog>', '');
+      output.startsWith('<TestLog>') && output.endsWith('</TestLog>')
+        ? oldLog(out)
+        : undefined;
+    }, // In case we need fine-grained control over this, we can have it later
     error: console.error,
     warn: console.warn,
     info: console.info,
