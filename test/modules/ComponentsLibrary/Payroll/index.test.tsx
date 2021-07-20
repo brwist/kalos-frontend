@@ -40,6 +40,8 @@ const expect = require('chai').expect;
 const Setup = require('../../../test-setup/endpoint-setup'); // ? Sets the auth token up in a one-liner
 const Stubs = require('../../../test-setup/stubs'); // ? Sets the auth token up in a one-liner
 
+import constants = require('../../../test-constants/constants');
+
 const getDepartmentId = async () => {
   const depReq = new TimesheetDepartment();
   depReq.setIsActive(1);
@@ -233,62 +235,63 @@ describe('ComponentsLibrary', () => {
             wrapper.update();
             wrapper.find({ label: 'Trips' }).first().simulate('click');
             wrapper.update();
+            //constants.Log('TESTING OUTPUT ACTUALLY WORKS');
             expect(wrapper.find({ title: 'Trips' })).to.be.lengthOf(1);
           });
         });
       });
 
       // NOTE These are now technically Integration Tests so I'm gonna keep them around for now, they don't run in watch mode after all so no harm no foul
-      describe('RPC', () => {
-        // ? Uses RPCs to load the dependencies as the Timesheet tab does
-        before(async () => {
-          await Setup.u.GetToken('test', 'test');
-        });
+      // describe('RPC', () => {
+      //   // ? Uses RPCs to load the dependencies as the Timesheet tab does
+      //   before(async () => {
+      //     await Setup.u.GetToken('test', 'test');
+      //   });
 
-        describe('Timesheet tab', () => {
-          let wrapper: any;
-          beforeEach(async () => {
-            const deptId = await getDepartmentId();
-            const role = await getRole();
-            wrapper = await mount(
-              <Timesheet
-                departmentId={deptId}
-                employeeId={0}
-                week={OPTION_ALL}
-                type={role}
-                loggedUser={1550}
-              />,
-            );
-          });
-          it('renders timesheet with a timesheet title', async () => {
-            expect(wrapper.find({ title: 'Timesheet' })).to.have.lengthOf(1);
-          });
+      //   describe('Timesheet tab', () => {
+      //     let wrapper: any;
+      //     beforeEach(async () => {
+      //       const deptId = await getDepartmentId();
+      //       const role = await getRole();
+      //       wrapper = await mount(
+      //         <Timesheet
+      //           departmentId={deptId}
+      //           employeeId={0}
+      //           week={OPTION_ALL}
+      //           type={role}
+      //           loggedUser={1550}
+      //         />,
+      //       );
+      //     });
+      //     it('renders timesheet with a timesheet title', async () => {
+      //       expect(wrapper.find({ title: 'Timesheet' })).to.have.lengthOf(1);
+      //     });
 
-          it('renders timesheet with a Department title in the info table', async () => {
-            let contained = false;
-            wrapper.find('.InfoTableDir').forEach((result: any) => {
-              if (result.text().trim() === 'Department') contained = true;
-            });
-            expect(contained).to.equal(true);
-          });
+      //     it('renders timesheet with a Department title in the info table', async () => {
+      //       let contained = false;
+      //       wrapper.find('.InfoTableDir').forEach((result: any) => {
+      //         if (result.text().trim() === 'Department') contained = true;
+      //       });
+      //       expect(contained).to.equal(true);
+      //     });
 
-          it('renders timesheet with a Employee title in the info table', async () => {
-            let contained = false;
-            wrapper.find('.InfoTableDir').forEach((result: any) => {
-              if (result.text().trim() === 'Employee') contained = true;
-            });
-            expect(contained).to.equal(true);
-          });
+      //     it('renders timesheet with a Employee title in the info table', async () => {
+      //       let contained = false;
+      //       wrapper.find('.InfoTableDir').forEach((result: any) => {
+      //         if (result.text().trim() === 'Employee') contained = true;
+      //       });
+      //       expect(contained).to.equal(true);
+      //     });
 
-          it('renders timesheet with a Week Approved title in the info table', async () => {
-            let contained = false;
-            wrapper.find('.InfoTableDir').forEach((result: any) => {
-              if (result.text().trim() === 'Week Approved') contained = true;
-            });
-            expect(contained).to.equal(true);
-          });
-        });
-      });
+      //     it('renders timesheet with a Week Approved title in the info table', async () => {
+      //       let contained = false;
+      //       wrapper.find('.InfoTableDir').forEach((result: any) => {
+      //         if (result.text().trim() === 'Week Approved') contained = true;
+      //       });
+      //       expect(contained).to.equal(true);
+      //     });
+      //   });
+      // });
     });
   });
 });
