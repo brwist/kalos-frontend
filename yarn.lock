@@ -1438,9 +1438,9 @@
     chalk "^4.0.0"
 
 "@kalos-core/kalos-rpc@^3.1.2":
-  version "3.1.6"
-  resolved "https://registry.yarnpkg.com/@kalos-core/kalos-rpc/-/kalos-rpc-3.1.6.tgz#d6ef347f09ac28301a19c6e2f13dc63d8897e64e"
-  integrity sha512-sowfDY2ihFrjFa9q5PFlXXjyb7bI0cdYSwLedzePf7H8MBYDPOLKeAb6SaqXrWyLz90usZ8a+31WbPD9bMy2Ug==
+  version "3.1.10"
+  resolved "https://registry.yarnpkg.com/@kalos-core/kalos-rpc/-/kalos-rpc-3.1.10.tgz#e759198a5b056ea2657351a0c4b753a7578afe9b"
+  integrity sha512-rTpXv3XgHMsKtCyYKzAtlKieoZYuLJ8wPic/iXJvM5gBnAmxiOEnNsZ+g7R8JWU6pQN8DkCqiQZhEGEOMqtC/g==
   dependencies:
     "@improbable-eng/grpc-web" "^0.9.6"
     "@types/pako" "^1.0.1"
@@ -1449,9 +1449,9 @@
     pako "^1.0.10"
 
 "@material-ui/core@^4.5.1":
-  version "4.12.1"
-  resolved "https://registry.yarnpkg.com/@material-ui/core/-/core-4.12.1.tgz#ac8f081498047aa02bb6ee70b77c5dad6a2a6e73"
-  integrity sha512-C6hYsjkWCTfBx9FaqxhCZCITBagh7fyCKFtHyvO3tTOcBw6NJaktdhNZ2n82jQdQdgfFvg6OOxi7OOzsAdAcBQ==
+  version "4.12.2"
+  resolved "https://registry.yarnpkg.com/@material-ui/core/-/core-4.12.2.tgz#59a8b19f16b8c218d912f37f5ae70473c3c82c73"
+  integrity sha512-Q1npB8V73IC+eV2X6as+g71MpEGQwqKHUI2iujY62npk35V8nMx/bUXAHjv5kKG1BZ8s8XUWoG6s/VkjYPjjQA==
   dependencies:
     "@babel/runtime" "^7.4.4"
     "@material-ui/styles" "^4.11.4"

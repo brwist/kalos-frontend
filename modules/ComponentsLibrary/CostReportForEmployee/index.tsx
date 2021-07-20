@@ -11,14 +11,7 @@ import { SectionBar } from '../SectionBar';
 import { ENDPOINT } from '../../../constants';
 import { NULL_TIME } from '../../../constants';
 import { TaskClient, Task } from '@kalos-core/kalos-rpc/Task';
-import {
-  differenceInMinutes,
-  parseISO,
-  subDays,
-  addDays,
-  startOfWeek,
-  format,
-} from 'date-fns';
+import { differenceInMinutes, parseISO, addDays, format } from 'date-fns';
 import {
   Trip,
   PerDiemList,
@@ -110,8 +103,8 @@ export const CostReportForEmployee: FC<Props> = ({ userId, week }) => {
     let pending = 0;
     for (let i = 0; i < results.length; i++) {
       {
-        const timeFinished = results[i].toObject().timeFinished;
-        const timeStarted = results[i].toObject().timeStarted;
+        const timeFinished = results[i].getTimeFinished();
+        const timeStarted = results[i].getTimeStarted();
         const subtotal = roundNumber(
           differenceInMinutes(parseISO(timeFinished), parseISO(timeStarted)) /
             60,
@@ -251,18 +244,23 @@ export const CostReportForEmployee: FC<Props> = ({ userId, week }) => {
                           : 'No Action Taken',
                     },
                     {
-                      value: formatDate(spiff.toObject().timeCreated),
+                      value: formatDate(spiff.getTimeCreated()),
                     },
                     {
-                      value: usd(spiff.toObject().spiffAmount),
+                      value: usd(spiff.getSpiffAmount()),
                     },
                     {
-                      value: spiff.toObject().spiffJobNumber,
+                      value: spiff.getSpiffJobNumber(),
                     },
                     {
                       value:
-                        spiff.toObject().payrollProcessed === true
-                          ? 'Processed'
+                        spiff.getPayrollProcessed() === true
+                          ? spiff.getActionsList()[0].getDateProcessed() !=
+                            NULL_TIME_VALUE
+                            ? formatDate(
+                                spiff.getActionsList()[0].getDateProcessed(),
+                              )
+                            : 'Processed, but no Processed Date'
                           : 'Not Processed',
                     },
                   ];

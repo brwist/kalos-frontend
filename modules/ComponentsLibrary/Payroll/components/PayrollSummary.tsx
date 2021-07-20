@@ -10,6 +10,7 @@ import {
   makeFakeRows,
   TimesheetLineClientService,
   roundNumber,
+  UserClientService,
 } from '../../../../helpers';
 import { OPTION_ALL } from '../../../../constants';
 import {
@@ -78,6 +79,11 @@ export const PayrollSummary: FC<Props> = ({
 
     const getTimesheets = createTimesheetFetchFunction(filter);
     filter.groupBy = false;
+    const salariedIds = await UserClientService.GetUserIdsInPermissionGroup(41);
+    const salariedUsers = (
+      await UserClientService.loadUsersByIds(salariedIds)
+    ).getResultsList();
+
     const getFullTimesheets = createTimesheetFetchFunction(filter);
     const fullResult = (await getFullTimesheets()).getResultsList();
     let tempList = [];
@@ -113,7 +119,36 @@ export const PayrollSummary: FC<Props> = ({
 
     const result = await getTimesheets();
     const resultsList = result.getResultsList();
+
     const totalCount = result.getTotalCount();
+
+    for (let i = 0; i < salariedUsers.length; i++) {
+      let found = false;
+      for (let j = 0; j < resultsList.length; j++) {
+        if (salariedUsers[i].getId() === resultsList[j].getId()) {
+          console.log('we found one');
+          found = true;
+          break;
+        }
+      }
+      if (found === false) {
+        let tempTimesheet = new TimesheetLine();
+        tempTimesheet.setAdminApprovalDatetime(NULL_TIME_VALUE);
+        tempTimesheet.setUserApprovalDatetime(NULL_TIME_VALUE);
+        tempTimesheet.setTechnicianUserId(salariedUsers[i].getId());
+        tempTimesheet.setReferenceNumber('auto');
+        tempTimesheet.setDepartmentName(
+          salariedUsers[i].getDepartment()!.getDescription(),
+        );
+        tempTimesheet.setTechnicianUserName(
+          `${salariedUsers[i].getFirstname()}  ${salariedUsers[
+            i
+          ].getLastname()}`,
+        );
+        resultsList.push(tempTimesheet);
+      }
+    }
+
     const compare = (a: TimesheetLine, b: TimesheetLine) => {
       const splitA = a.getTechnicianUserName().split(' ');
       const splitB = b.getTechnicianUserName().split(' ');
@@ -130,7 +165,7 @@ export const PayrollSummary: FC<Props> = ({
 
     setTimesheets(sortedResultsList);
     setProcessedHours(tempList);
-    setCount(totalCount);
+    setCount(sortedResultsList.length);
     setLoading(false);
   }, [page, employeeId, week, type, toggle, departmentId, endDay, startDay]);
   useEffect(() => {
@@ -210,12 +245,17 @@ export const PayrollSummary: FC<Props> = ({
                     onClick: handleTogglePendingView(e),
                   },
                   {
-                    value:
-                      processedHours[
-                        processedHours.findIndex(
-                          i => i.id === e.getTechnicianUserId(),
-                        )
-                      ].hours,
+                    value: processedHours[
+                      processedHours.findIndex(
+                        i => i.id === e.getTechnicianUserId(),
+                      )
+                    ]
+                      ? processedHours[
+                          processedHours.findIndex(
+                            i => i.id === e.getTechnicianUserId(),
+                          )
+                        ].hours
+                      : 'No Hours Processed',
                     onClick: handleTogglePendingView(e),
                   },
                   {
