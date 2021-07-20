@@ -1,7 +1,6 @@
 import React, { FC, useCallback, useState } from 'react';
 import debounce from 'lodash/debounce';
 import { ServiceItems, Entry, Repair } from '../../ServiceItems';
-import { UserType, PropertyType } from '../../../../helpers';
 import { EventType } from '../';
 import { ProposalPrint } from './ProposalPrint';
 import './equipment.less';
@@ -10,9 +9,9 @@ interface Props {
   userID: number;
   loggedUserId: number;
   propertyId: number;
-  property: PropertyType;
-  serviceItem: EventType;
-  customer: UserType;
+  property: Property;
+  serviceItem: Event;
+  customer: User;
 }
 
 type Form = {
@@ -27,26 +26,33 @@ export const Equipment: FC<Props> = ({
   property,
   ...props
 }) => {
-  const { notes, logJobNumber, id } = serviceItem;
-  const localStorageKey = `SERVICE_CALL_EQUIPMENT_${id}`;
-  const localStorageSelectedKey = `SERVICE_CALL_EQUIPMENT_SELECTED_${id}`;
+  const localStorageKey = `SERVICE_CALL_EQUIPMENT_${serviceItem.getId()}`;
+  const localStorageSelectedKey = `SERVICE_CALL_EQUIPMENT_SELECTED_${serviceItem.getId()}`;
   let repairsInitial = [];
   let selectedInitial = [];
   try {
     repairsInitial = JSON.parse(localStorage.getItem(localStorageKey) || '[]');
-  } catch (e) {}
+  } catch (e) {
+    console.error(
+      `An error occurred while parsing JSON from localStorage: ${e}`,
+    );
+  }
   try {
     selectedInitial = JSON.parse(
       localStorage.getItem(localStorageSelectedKey) || '[]',
     );
-  } catch (e) {}
+  } catch (e) {
+    console.error(
+      `An error occurred while parsing JSON from localStorage: ${e}`,
+    );
+  }
   const customerName = `${customer?.firstname} ${customer?.lastname}`;
   const [selected, setSelected] = useState<Entry[]>(selectedInitial);
   const [repairs, setRepairs] = useState<Repair[]>(repairsInitial);
   const [data, setData] = useState<Form>({
     displayName: customerName,
     withJobNotes: 0,
-    jobNotes: notes,
+    jobNotes: serviceItem.getNotes(),
   });
   const handleSetRepair = useCallback(
     (repairs: Repair[]) => {
