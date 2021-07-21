@@ -459,7 +459,7 @@ export const ServiceItems: FC<Props> = props => {
     (entry: ServiceItem) => () => {
       const newSelected: ServiceItem[] = [
         ...selected.filter(item => {
-          let safe = makeSafeFormObject(item, new ServiceItem()); 
+          let safe = makeSafeFormObject(item, new ServiceItem());
           return safe.getId() !== entry.getId();
         }),
       ];
@@ -595,10 +595,11 @@ export const ServiceItems: FC<Props> = props => {
                   type="checkbox"
                   value={
                     !!selected.find(item => {
-                      if (!item.getId) {
-                        console.error('Item with no ID: ', item);
+                      let safe = makeSafeFormObject(item, new ServiceItem());
+                      if (!safe.getId) {
+                        console.error('Item with no ID: ', safe);
                       } else {
-                        return item.getId() === id;
+                        return safe.getId() === id;
                       }
                     })
                   }

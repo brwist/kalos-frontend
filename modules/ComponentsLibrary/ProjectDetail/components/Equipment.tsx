@@ -44,9 +44,12 @@ export const Equipment: FC<Props> = ({
     );
   }
   try {
-    selectedInitial = JSON.parse(
+    let selectedInitialRead = JSON.parse(
       localStorage.getItem(localStorageSelectedKey) || '[]',
     );
+    selectedInitial = selectedInitialRead.map((selected: any) => {
+      return makeSafeFormObject(selected, new ServiceItem());
+    });
   } catch (e) {
     console.error(
       `An error occurred while parsing JSON from localStorage: ${e}`,
@@ -71,7 +74,11 @@ export const Equipment: FC<Props> = ({
   );
   const handleSetSelected = useCallback(
     (selected: ServiceItem[]) => {
-      setSelected(selected);
+      let newSelected: ServiceItem[] = [];
+      selected.forEach(selectedItem => {
+        newSelected.push(makeSafeFormObject(selectedItem, new ServiceItem()));
+      });
+      setSelected(newSelected);
       const localStorageKey = `SERVICE_CALL_EQUIPMENT_SELECTED_${serviceItem.getId()}`;
       localStorage.setItem(localStorageKey, JSON.stringify(selected));
     },
@@ -98,9 +105,7 @@ export const Equipment: FC<Props> = ({
       repair
       disableRepair={true}
       repairs={repairs}
-      onSelect={(selected: ServiceItem[]) => {
-        handleSetSelected(selected);
-      }}
+      onSelect={debounce(handleSetSelected, 1000)}
       selected={selected}
       onRepairsChange={debounce(handleSetRepair, 1000)}
       asideContent={
