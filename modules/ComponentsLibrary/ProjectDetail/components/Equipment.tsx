@@ -1,9 +1,11 @@
 import React, { FC, useCallback, useState } from 'react';
 import debounce from 'lodash/debounce';
 import { ServiceItems, Entry, Repair } from '../../ServiceItems';
-import { EventType } from '../';
 import { ProposalPrint } from './ProposalPrint';
 import './equipment.less';
+import { Property } from '@kalos-core/kalos-rpc/Property';
+import { User } from '@kalos-core/kalos-rpc/User';
+import { Event } from '@kalos-core/kalos-rpc/Event';
 
 interface Props {
   userID: number;
@@ -46,7 +48,7 @@ export const Equipment: FC<Props> = ({
       `An error occurred while parsing JSON from localStorage: ${e}`,
     );
   }
-  const customerName = `${customer?.firstname} ${customer?.lastname}`;
+  const customerName = `${customer?.getFirstname()} ${customer?.getLastname()}`;
   const [selected, setSelected] = useState<Entry[]>(selectedInitial);
   const [repairs, setRepairs] = useState<Repair[]>(repairsInitial);
   const [data, setData] = useState<Form>({
@@ -64,8 +66,7 @@ export const Equipment: FC<Props> = ({
   const handleSetSelected = useCallback(
     (selected: Entry[]) => {
       setSelected(selected);
-      const { id } = serviceItem;
-      const localStorageKey = `SERVICE_CALL_EQUIPMENT_SELECTED_${id}`;
+      const localStorageKey = `SERVICE_CALL_EQUIPMENT_SELECTED_${serviceItem.getId()}`;
       localStorage.setItem(localStorageKey, JSON.stringify(selected));
     },
     [setSelected, serviceItem],
@@ -89,7 +90,7 @@ export const Equipment: FC<Props> = ({
       ]}
       selectable
       repair
-      disableRepair={!id}
+      disableRepair={true}
       repairs={repairs}
       onSelect={debounce(handleSetSelected, 1000)}
       selected={selected}
@@ -98,7 +99,7 @@ export const Equipment: FC<Props> = ({
         <ProposalPrint
           displayName={data.displayName}
           notes={data.withJobNotes ? data.jobNotes : undefined}
-          logJobNumber={logJobNumber}
+          logJobNumber={serviceItem.getLogJobNumber()}
           property={property}
           entries={repairs}
           withDiagnosis
