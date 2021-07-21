@@ -43,8 +43,6 @@ const MaintenanceQuestionClientService = new MaintenanceQuestionClient(
 );
 const MaterialClientService = new MaterialClient(ENDPOINT);
 
-export type Entry = ServiceItem;
-
 const SYSTEM_READINGS_TYPE_OPTIONS: Options = [
   { label: 'Straight-cool AC w/ heatstrips', value: '1' },
   { label: 'Heat-pump AC', value: '2' },
@@ -84,8 +82,8 @@ interface Props {
   title?: string;
   loading?: boolean;
   selectable?: boolean;
-  onSelect?: (entries: Entry[]) => void;
-  selected?: Entry[];
+  onSelect?: (entries: ServiceItem[]) => void;
+  selected?: ServiceItem[];
   repair?: boolean;
   disableRepair?: boolean;
   repairs?: Repair[];
@@ -103,7 +101,7 @@ const REPAIR_SCHEMA: Schema<Repair> = [
   ],
 ];
 
-const sort = (a: Entry, b: Entry) => {
+const sort = (a: ServiceItem, b: ServiceItem) => {
   if (a.getSortOrder() < b.getSortOrder()) return -1;
   if (a.getSortOrder() > b.getSortOrder()) return 1;
   return 0;
@@ -127,7 +125,7 @@ export const ServiceItems: FC<Props> = props => {
     asideContent,
     viewedAsCustomer = false,
   } = props;
-  const [entries, setEntries] = useState<Entry[]>([]);
+  const [entries, setEntries] = useState<ServiceItem[]>([]);
   const [repairs, setRepairs] = useState<Repair[]>(repairsInitial);
   const [materials, setMaterials] = useState<Material[]>([]);
   const [materialsIds, setMaterialsIds] = useState<number[]>([]);
@@ -148,7 +146,6 @@ export const ServiceItems: FC<Props> = props => {
   const handleMaterialChange = useCallback(
     (idx: number) => (data: Material) => {
       const temp = makeSafeFormObject(data, new Material());
-      console.log(temp);
       const newMaterials = [...materials];
       newMaterials[idx] = temp;
       setMaterials(newMaterials);
@@ -172,7 +169,7 @@ export const ServiceItems: FC<Props> = props => {
 
   const MATERIALS_SCHEMA = materials
     .map(
-      (_, idx): Schema<Entry> => [
+      (_, idx): Schema<ServiceItem> => [
         [
           {
             label: `#${idx + 1}`,
@@ -370,7 +367,6 @@ export const ServiceItems: FC<Props> = props => {
     async (data: ServiceItem) => {
       if (editing) {
         setSaving(true);
-        console.log(editing);
 
         //onst entry = editing;
 
@@ -392,7 +388,6 @@ export const ServiceItems: FC<Props> = props => {
           entry.setSortOrder(sortOrder);
           entry.addFieldMask('SortOrder');
         }
-        console.log(entry);
         const id = await ServiceItemClientService[isNew ? 'Create' : 'Update'](
           entry,
         );
@@ -461,11 +456,17 @@ export const ServiceItems: FC<Props> = props => {
   ]);
 
   const handleSelectedChange = useCallback(
-    (entry: Entry) => () => {
-      const newSelected: Entry[] = [
-        ...selected.filter(item => item.getId() !== entry.getId()),
+    (entry: ServiceItem) => () => {
+      const newSelected: ServiceItem[] = [
+        ...selected.filter(item => {
+          let safe = makeSafeFormObject(item, new ServiceItem()); 
+          return safe.getId() !== entry.getId();
+        }),
       ];
-      const isSelected = selected.find(item => item.getId() === entry.getId());
+      const isSelected = selected.find(item => {
+        let safe = makeSafeFormObject(item, new ServiceItem());
+        return safe.getId() === entry.getId();
+      });
       if (!isSelected) {
         newSelected.push(entry);
       }
@@ -501,7 +502,7 @@ export const ServiceItems: FC<Props> = props => {
   );
 
   const handleAddRepair = useCallback(
-    (entry: Entry) => () => {
+    (entry: ServiceItem) => () => {
       const id = entry.getId();
       const repair: Repair = {
         id: uniqueId(),
@@ -553,7 +554,7 @@ export const ServiceItems: FC<Props> = props => {
   );
 
   const handleEditing = useCallback(
-    (editing?: Entry) => async () => {
+    (editing?: ServiceItem) => async () => {
       setEditing(editing);
       if (editing && editing.getId()) {
         const entry = new Material();
@@ -569,13 +570,12 @@ export const ServiceItems: FC<Props> = props => {
         setMaterials([]);
         setMaterialsIds([]);
       }
-      console.log('we are editing');
     },
     [setEditing, setMaterials],
   );
 
   const setDeleting = useCallback(
-    (deletingEntry?: Entry) => () => setDeletingEntry(deletingEntry),
+    (deletingEntry?: ServiceItem) => () => setDeletingEntry(deletingEntry),
     [setDeletingEntry],
   );
 
@@ -596,9 +596,7 @@ export const ServiceItems: FC<Props> = props => {
                   value={
                     !!selected.find(item => {
                       if (!item.getId) {
-                        console.error(
-                          `Item with no ID: ${item} | ${item.getId}`,
-                        );
+                        console.error('Item with no ID: ', item);
                       } else {
                         return item.getId() === id;
                       }
@@ -758,7 +756,7 @@ export const ServiceItems: FC<Props> = props => {
       {editing && (
         <Modal open onClose={handleEditing()} fullScreen={!viewedAsCustomer}>
           <div className="ServiceItemsModal">
-            <Form<Entry>
+            <Form<ServiceItem>
               title={`${
                 editing.getId() ? (viewedAsCustomer ? 'View' : 'Edit') : 'Add'
               } Service Item`}
