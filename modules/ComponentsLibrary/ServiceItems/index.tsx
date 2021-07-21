@@ -421,11 +421,11 @@ export const ServiceItems: FC<Props> = props => {
       const reading = new Reading();
       reading.setServiceItemId(deletingEntry.getId());
       const response = await ReadingClientService.BatchGet(reading);
-      const readingIds = response.toObject().resultsList.map(({ id }) => id);
+      const readingIds = response.getResultsList().map(res => res.getId());
       await Promise.all(
-        readingIds.map(async id => {
+        readingIds.map(async (readingId: number) => {
           const maintenanceQuestion = new MaintenanceQuestion();
-          maintenanceQuestion.setReadingId(id);
+          maintenanceQuestion.setReadingId(readingId);
           return await MaintenanceQuestionClientService.Delete(
             maintenanceQuestion,
           );
@@ -520,13 +520,14 @@ export const ServiceItems: FC<Props> = props => {
   );
 
   const handleDeleteRepair = useCallback(
-    ({ id }: Repair) => () => {
-      const newRepairs = repairs.filter(item => item.id !== id);
-      setRepairs(newRepairs);
-      if (onRepairsChange) {
-        onRepairsChange(newRepairs);
-      }
-    },
+    ({ id }: Repair) =>
+      () => {
+        const newRepairs = repairs.filter(item => item.id !== id);
+        setRepairs(newRepairs);
+        if (onRepairsChange) {
+          onRepairsChange(newRepairs);
+        }
+      },
     [repairs, onRepairsChange],
   );
 
@@ -592,7 +593,17 @@ export const ServiceItems: FC<Props> = props => {
                 <Field
                   name="name"
                   type="checkbox"
-                  value={!!selected.find(item => item.getId() === id)}
+                  value={
+                    !!selected.find(item => {
+                      if (!item.getId) {
+                        console.error(
+                          `Item with no ID: ${item} | ${item.getId}`,
+                        );
+                      } else {
+                        return item.getId() === id;
+                      }
+                    })
+                  }
                   onChange={handleSelectedChange(entry)}
                   className="ServiceItemsCheckbox"
                 />
