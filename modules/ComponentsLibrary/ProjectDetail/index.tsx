@@ -40,8 +40,6 @@ const EventClientService = new EventClient(ENDPOINT);
 const UserClientService = new UserClient(ENDPOINT);
 
 export type EventType = Event;
-type JobTypeType = JobType;
-type JobSubtypeType = JobSubtype;
 export type JobTypeSubtypeType = JobTypeSubtype;
 export type ServicesRenderedType = ServicesRendered;
 
@@ -127,7 +125,7 @@ export const ProjectDetail: FC<Props> = props => {
     try {
       let promises = [];
 
-      let projectGotten: Event.AsObject;
+      let projectGotten: Event;
 
       promises.push(
         new Promise<void>(async resolve => {
@@ -200,7 +198,7 @@ export const ProjectDetail: FC<Props> = props => {
       Promise.all(promises).then(async () => {
         try {
           let req = new TimesheetDepartment();
-          req.setId(projectGotten!.departmentId);
+          req.setId(projectGotten!.getDepartmentId());
           const timesheetDepartment =
             await TimesheetDepartmentClientService.Get(req);
           setTimesheetDepartment(timesheetDepartment);

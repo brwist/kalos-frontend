@@ -1,12 +1,16 @@
 import React, { FC, useCallback, useState } from 'react';
 import debounce from 'lodash/debounce';
-import { ServiceItems, Entry, Repair } from '../../ServiceItems';
+import { ServiceItems, Repair } from '../../ServiceItems';
 import { ProposalPrint } from './ProposalPrint';
 import './equipment.less';
 import { Property } from '@kalos-core/kalos-rpc/Property';
 import { User } from '@kalos-core/kalos-rpc/User';
 import { Event } from '@kalos-core/kalos-rpc/Event';
-
+import { makeSafeFormObject } from '../../../../helpers';
+import {
+  ServiceItemClient,
+  ServiceItem,
+} from '@kalos-core/kalos-rpc/ServiceItem';
 interface Props {
   userID: number;
   loggedUserId: number;
@@ -31,7 +35,7 @@ export const Equipment: FC<Props> = ({
   const localStorageKey = `SERVICE_CALL_EQUIPMENT_${serviceItem.getId()}`;
   const localStorageSelectedKey = `SERVICE_CALL_EQUIPMENT_SELECTED_${serviceItem.getId()}`;
   let repairsInitial = [];
-  let selectedInitial = [];
+  let selectedInitial: ServiceItem[] = [];
   try {
     repairsInitial = JSON.parse(localStorage.getItem(localStorageKey) || '[]');
   } catch (e) {
@@ -49,7 +53,9 @@ export const Equipment: FC<Props> = ({
     );
   }
   const customerName = `${customer?.getFirstname()} ${customer?.getLastname()}`;
-  const [selected, setSelected] = useState<Entry[]>(selectedInitial);
+  const [selected, setSelected] = useState<ServiceItem[]>(
+    selectedInitial as ServiceItem[],
+  );
   const [repairs, setRepairs] = useState<Repair[]>(repairsInitial);
   const [data, setData] = useState<Form>({
     displayName: customerName,
@@ -64,7 +70,7 @@ export const Equipment: FC<Props> = ({
     [setRepairs, localStorageKey],
   );
   const handleSetSelected = useCallback(
-    (selected: Entry[]) => {
+    (selected: ServiceItem[]) => {
       setSelected(selected);
       const localStorageKey = `SERVICE_CALL_EQUIPMENT_SELECTED_${serviceItem.getId()}`;
       localStorage.setItem(localStorageKey, JSON.stringify(selected));
@@ -92,7 +98,9 @@ export const Equipment: FC<Props> = ({
       repair
       disableRepair={true}
       repairs={repairs}
-      onSelect={debounce(handleSetSelected, 1000)}
+      onSelect={(selected: ServiceItem[]) => {
+        handleSetSelected(selected);
+      }}
       selected={selected}
       onRepairsChange={debounce(handleSetRepair, 1000)}
       asideContent={
