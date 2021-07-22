@@ -1869,9 +1869,7 @@ const cleanFieldMaskField = (f: string) => {
  * note this may need debugging
  */
 const makeSafeFormObject = function makeSafeFormObject<T>(data: T, result: T) {
-  const keys = Object.keys(data);
-  console.log(data);
-  console.log(result);
+  const keys = Object.keys(data); 
   for (const key of keys) {
     if (key.startsWith('get')) {
       try {

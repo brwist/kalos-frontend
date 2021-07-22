@@ -445,7 +445,7 @@ export const Field: <T>(
             type="date"
             label={label}
             onChange={date => handleDateTimeChange(date, valHour)}
-            required={required} // FIXME
+            required={required}
           />
           <Field
             value={valHour}

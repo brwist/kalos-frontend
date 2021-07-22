@@ -40,8 +40,6 @@ const EventClientService = new EventClient(ENDPOINT);
 const UserClientService = new UserClient(ENDPOINT);
 
 export type EventType = Event;
-type JobTypeType = JobType;
-type JobSubtypeType = JobSubtype;
 export type JobTypeSubtypeType = JobTypeSubtype;
 export type ServicesRenderedType = ServicesRendered;
 
@@ -92,8 +90,9 @@ export const ProjectDetail: FC<Props> = props => {
     useState<boolean>(false);
   const [projects, setProjects] = useState<EventType[]>([]);
   const [parentId, setParentId] = useState<number | null>(null);
-  const [confirmedParentId, setConfirmedParentId] =
-    useState<number | null>(null);
+  const [confirmedParentId, setConfirmedParentId] = useState<number | null>(
+    null,
+  );
   const [project, setProject] = useState<Event>();
   const [timesheetDepartment, setTimesheetDepartment] =
     useState<TimesheetDepartment>();
@@ -102,7 +101,20 @@ export const ProjectDetail: FC<Props> = props => {
       if (_serviceCallId) {
         const req = new Event();
         req.setId(_serviceCallId);
-        const entry = await EventClientService.Get(req);
+        let entry;
+        try {
+          entry = await EventClientService.Get(req);
+        } catch (err) {
+          console.error(
+            `An error occurred while getting an event with the service call id ${_serviceCallId}: ${err}`,
+          );
+        }
+        if (!entry) {
+          console.error(
+            `Could not set entry as there was no response from EventClientService.Get. Returning.`,
+          );
+          return;
+        }
         setEntry(entry);
       }
     },
@@ -113,7 +125,7 @@ export const ProjectDetail: FC<Props> = props => {
     try {
       let promises = [];
 
-      let projectGotten: Event.AsObject;
+      let projectGotten: Event;
 
       promises.push(
         new Promise<void>(async resolve => {
@@ -186,7 +198,7 @@ export const ProjectDetail: FC<Props> = props => {
       Promise.all(promises).then(async () => {
         try {
           let req = new TimesheetDepartment();
-          req.setId(projectGotten!.departmentId);
+          req.setId(projectGotten!.getDepartmentId());
           const timesheetDepartment =
             await TimesheetDepartmentClientService.Get(req);
           setTimesheetDepartment(timesheetDepartment);
@@ -240,9 +252,20 @@ export const ProjectDetail: FC<Props> = props => {
       setLoading(true);
     }
     req.setFieldMaskList(fieldMaskList);
-    const res = await EventClientService[serviceCallId ? 'Update' : 'Create'](
-      req,
-    );
+    let res;
+    try {
+      res = await EventClientService[serviceCallId ? 'Update' : 'Create'](req);
+    } catch (err) {
+      console.error(`An error occurred while saving a service call: ${err}`);
+    }
+
+    if (!res) {
+      console.error(
+        'Failed to continue saving service call - no result was provided from the event client service after save. ',
+      );
+      return;
+    }
+
     setEntry(res);
     setSaving(false);
     if (!serviceCallId) {
@@ -479,16 +502,17 @@ export const ProjectDetail: FC<Props> = props => {
               },
               {
                 label: 'Equipment',
-                content: loading ? (
-                  <InfoTable data={makeFakeRows(4, 4)} loading />
-                ) : (
-                  <Equipment
-                    {...props}
-                    serviceItem={entry}
-                    customer={customer}
-                    property={property}
-                  />
-                ),
+                content:
+                  loading || !loaded ? (
+                    <InfoTable data={makeFakeRows(4, 4)} loading />
+                  ) : (
+                    <Equipment
+                      {...props}
+                      serviceItem={entry}
+                      customer={customer}
+                      property={property}
+                    />
+                  ),
               },
               {
                 label: 'Billing',
