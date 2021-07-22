@@ -13,6 +13,7 @@ import {
 } from '../../helpers';
 import { Loader } from '../Loader/main';
 import { SectionBar } from '../ComponentsLibrary/SectionBar';
+import { Vehicle } from '@kalos-core/kalos-rpc/compiled-protos/user_pb';
 
 interface props extends PageWrapperProps {
   userId: number;

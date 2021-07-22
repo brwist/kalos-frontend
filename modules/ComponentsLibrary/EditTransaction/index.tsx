@@ -1,8 +1,6 @@
 import { Transaction } from '@kalos-core/kalos-rpc/Transaction';
-import { Typography } from '@material-ui/core';
 import React, { FC, useState } from 'react';
 import { Form, Schema } from '../Form';
-import { PlainForm } from '../PlainForm';
 
 interface Props {
   transactionInput: Transaction;

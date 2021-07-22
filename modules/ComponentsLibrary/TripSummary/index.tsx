@@ -27,7 +27,7 @@ import { ConfirmDelete } from '../ConfirmDelete';
 import { Form, Schema } from '../Form';
 import { Tooltip } from '../Tooltip';
 import { Confirm } from '../Confirm';
-import { Typography } from '@material-ui/core';
+import Typography from '@material-ui/core/Typography';
 import { PlainForm } from '../PlainForm';
 import CheckCircleOutlineIcon from '@material-ui/icons/CheckCircleOutline';
 import MessageIcon from '@material-ui/icons/Message';
@@ -695,59 +695,61 @@ export class TripSummary extends React.PureComponent<Props, State> {
     this.setState({ tripToView: trip });
   };
   getColumns = () => {
-    return (this.props.canDeleteTrips
-      ? [
-          { name: 'Origin' },
-          { name: 'Destination' },
-          { name: 'Name' },
-          { name: 'Day of' },
-          { name: 'Miles / Cost' },
-          {
-            name: 'Approved?',
-          },
-          {
-            name: 'Department Name',
-          },
-          {
-            name: 'Payroll Processed?',
-            actions: [
-              {
-                label: 'Delete All Trips',
-                compact: this.props.compact ? true : false,
-                variant: 'outlined',
-                size: 'xsmall',
-                onClick: () => {
-                  this.setStateToNew({
-                    pendingDeleteAllTrips: true,
-                  });
+    return (
+      this.props.canDeleteTrips
+        ? [
+            { name: 'Origin' },
+            { name: 'Destination' },
+            { name: 'Name' },
+            { name: 'Day of' },
+            { name: 'Miles / Cost' },
+            {
+              name: 'Approved?',
+            },
+            {
+              name: 'Department Name',
+            },
+            {
+              name: 'Payroll Processed?',
+              actions: [
+                {
+                  label: 'Delete All Trips',
+                  compact: this.props.compact ? true : false,
+                  variant: 'outlined',
+                  size: 'xsmall',
+                  onClick: () => {
+                    this.setStateToNew({
+                      pendingDeleteAllTrips: true,
+                    });
+                  },
+                  burgeronly: 1,
                 },
-                burgeronly: 1,
-              },
-            ],
-          },
-          {
-            name: '',
-          },
-        ]
-      : [
-          { name: 'Origin' },
-          { name: 'Destination' },
-          { name: 'Name' },
-          { name: 'Day Of' },
-          { name: 'Miles / Cost' },
-          {
-            name: 'Approved?',
-          },
-          {
-            name: 'Department Name',
-          },
-          {
-            name: 'Payroll Processed?',
-          },
-          {
-            name: '',
-          },
-        ]) as Columns;
+              ],
+            },
+            {
+              name: '',
+            },
+          ]
+        : [
+            { name: 'Origin' },
+            { name: 'Destination' },
+            { name: 'Name' },
+            { name: 'Day Of' },
+            { name: 'Miles / Cost' },
+            {
+              name: 'Approved?',
+            },
+            {
+              name: 'Department Name',
+            },
+            {
+              name: 'Payroll Processed?',
+            },
+            {
+              name: '',
+            },
+          ]
+    ) as Columns;
   };
   setFilter = async (checkboxFilter: CheckboxesFilterType) => {
     this.setState({ filter: checkboxFilter });
@@ -807,9 +809,10 @@ export class TripSummary extends React.PureComponent<Props, State> {
     }
     if (user) {
       try {
-        department = await TimesheetDepartmentClientService.getDepartmentByManagerID(
-          user.getManagedBy(),
-        );
+        department =
+          await TimesheetDepartmentClientService.getDepartmentByManagerID(
+            user.getManagedBy(),
+          );
       } catch (err) {
         console.error('Error getting timesheet department: ', err);
       }

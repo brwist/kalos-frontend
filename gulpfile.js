@@ -167,30 +167,22 @@ function mainTemplate(title) {
   title = titleCase(title);
 
   return `
-import React from "react";
-import ThemeProvider from '@material-ui/styles/ThemeProvider';
-import customTheme from '../Theme/main';
+import React from 'react';
+import { PageWrapper } from '../PageWrapper/main';
 
 // add any prop types here
 interface props {
   userID: number;
 }
 
-// map your state here
-interface state {}
-
-export class ${title} extends React.PureComponent<props, state> {
-  constructor(props: props) {
-    super(props);
-  }
-  render() {
-    return (
-      <ThemeProvider theme={customTheme.lightTheme}>
-        <h1>${title}!</h1>
-      </ThemeProvider>
-    );
-  }
-}`.replace('\n', '');
+export const ${title}: React.FC<props> = function ${title}({ userID }) {
+  return (
+    <PageWrapper userID={userID}>
+      <h1>${title}!</h1>
+    </PageWrapper>
+  );
+};
+`.replace('\n', '');
 }
 
 function indexTemplate(title) {

@@ -1,6 +1,6 @@
 import React, { FC, useState, useCallback } from 'react';
 import clsx from 'clsx';
-import { useTheme } from '@material-ui/core/styles';
+import useTheme from '@material-ui/core/styles/useTheme';
 import useMediaQuery from '@material-ui/core/useMediaQuery';
 import MenuIcon from '@material-ui/icons/Menu';
 import Menu from '@material-ui/core/Menu';

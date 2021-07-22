@@ -1,24 +1,24 @@
 import { TimesheetLine } from '@kalos-core/kalos-rpc/TimesheetLine';
-import { Typography } from '@material-ui/core';
+import Typography from '@material-ui/core/Typography';
 import { Variant } from '@material-ui/core/styles/createTypography';
 import { format } from 'date-fns';
 import React, { FC, useCallback, useEffect, useState } from 'react';
 import { MEALS_RATE, NULL_TIME } from '../../../../constants';
 import {
   EventClientService,
-  EventType,
   formatDate,
   PerDiemClientService,
-  PerDiemType,
   TimesheetDepartmentClientService,
   TimesheetLineClientService,
   TransactionClientService,
-  TransactionType,
   usd,
 } from '../../../../helpers';
 import { Loader } from '../../../Loader/main';
 import { InfoTable } from '../../InfoTable';
 import { SectionBar } from '../../SectionBar';
+import { Event } from '@kalos-core/kalos-rpc/Event';
+import { Transaction } from '@kalos-core/kalos-rpc/Transaction';
+import { PerDiem } from '@kalos-core/kalos-rpc/PerDiem';
 
 export interface Props {
   serviceCallId: number;
@@ -27,10 +27,10 @@ export interface Props {
 export const BillingTab: FC<Props> = ({ serviceCallId }) => {
   const sizeOfText: Variant = 'subtitle1';
 
-  const [event, setEvent] = useState<EventType>();
-  const [transactions, setTransactions] = useState<TransactionType[]>([]);
-  const [perDiems, setPerDiems] = useState<PerDiemType[]>([]);
-  const [timesheets, setTimesheets] = useState<TimesheetLine.AsObject[]>();
+  const [event, setEvent] = useState<Event>();
+  const [transactions, setTransactions] = useState<Transaction[]>([]);
+  const [perDiems, setPerDiems] = useState<PerDiem[]>([]);
+  const [timesheets, setTimesheets] = useState<TimesheetLine[]>();
   const [lodgings, setLodgings] = useState<{ [key: number]: number }>({});
 
   const [totalHoursWorked, setTotalHoursWorked] = useState<number>();
@@ -48,9 +48,9 @@ export const BillingTab: FC<Props> = ({ serviceCallId }) => {
   }, [setEvent, setLoadingEvent, serviceCallId]);
 
   const loadPrintData = useCallback(async () => {
-    const { resultsList } = await PerDiemClientService.loadPerDiemsByEventId(
-      serviceCallId,
-    );
+    const resultsList = (
+      await PerDiemClientService.loadPerDiemsByEventId(serviceCallId)
+    ).getResultsList();
     const lodgings = await PerDiemClientService.loadPerDiemsLodging(
       resultsList,
     ); // first # is per diem id
@@ -62,7 +62,7 @@ export const BillingTab: FC<Props> = ({ serviceCallId }) => {
       );
     setTransactions(transactions);
     setTotalTransactions(
-      transactions.reduce((aggr, { amount }) => aggr + amount, 0),
+      transactions.reduce((aggr, t) => aggr + t.getAmount(), 0),
     );
     setPerDiems(resultsList);
   }, [
@@ -79,9 +79,7 @@ export const BillingTab: FC<Props> = ({ serviceCallId }) => {
       req.setEventId(serviceCallId);
 
       setTimesheets(
-        (await TimesheetLineClientService.BatchGet(req))
-          .getResultsList()
-          .map(line => line.toObject()),
+        (await TimesheetLineClientService.BatchGet(req)).getResultsList(),
       );
     } catch (err) {
       console.error(
@@ -89,24 +87,26 @@ export const BillingTab: FC<Props> = ({ serviceCallId }) => {
         err,
       );
     }
-  }, [setTimesheets]);
+  }, [setTimesheets, serviceCallId]);
 
   const calculateTotalHoursWorked = useCallback(() => {
     let total = 0;
-    timesheets?.forEach(timesheet => (total = total + timesheet.hoursWorked));
+    timesheets?.forEach(
+      timesheet => (total = total + timesheet.getHoursWorked()),
+    );
     setTotalHoursWorked(total);
-  }, [timesheets, setTotalHoursWorked]);
+  }, [timesheets]);
 
   const load = useCallback(() => {
     loadEvent();
     loadTimesheets();
     calculateTotalHoursWorked();
     loadPrintData();
-  }, []);
+  }, [loadEvent, loadTimesheets, calculateTotalHoursWorked, loadPrintData]);
 
   useEffect(() => {
     load();
-  }, []);
+  }, [load]);
 
   return loadingEvent ? (
     <Loader />
@@ -114,167 +114,160 @@ export const BillingTab: FC<Props> = ({ serviceCallId }) => {
     <>
       <SectionBar title="Project Details">
         <Typography variant={sizeOfText}>
-          {event?.property ? `Address: ${event.property.address}` : ''}
-        </Typography>
-        <Typography variant={sizeOfText}>
-          {event?.dateStarted
-            ? `Start Date: ${format(new Date(event.dateStarted), 'yyyy-MM-dd')}`
+          {event?.getProperty()
+            ? `Address: ${event.getProperty()?.getAddress()}`
             : ''}
         </Typography>
         <Typography variant={sizeOfText}>
-          {event?.dateEnded
-            ? `End Date: ${format(new Date(event.dateEnded), 'yyyy-MM-dd')}`
+          {event?.getDateStarted()
+            ? `Start Date: ${format(
+                new Date(event.getDateStarted()),
+                'yyyy-MM-dd',
+              )}`
             : ''}
         </Typography>
         <Typography variant={sizeOfText}>
-          {event?.logJobNumber ? `Job Number: ${event.logJobNumber}` : ''}
+          {event?.getDateEnded()
+            ? `End Date: ${format(
+                new Date(event.getDateEnded()),
+                'yyyy-MM-dd',
+              )}`
+            : ''}
+        </Typography>
+        <Typography variant={sizeOfText}>
+          {event?.getLogJobNumber()
+            ? `Job Number: ${event.getLogJobNumber()}`
+            : ''}
         </Typography>
       </SectionBar>
 
-      <SectionBar title="Summary Info" >
-      <InfoTable
-        columns={[
-          { name: 'Type', align: 'left' },
-          { name: 'Total', align: 'right' },
-        ]}
-        data={[
-          [
-            {
-              value: 'Total Hours Worked: ',
-            },
-            {
-              value:
-                // If totalHoursWorked is set and the totalHoursWorked > 1, displays "totalHoursWorked hrs"
-                // else if totalHoursWorked is 0 then
-                // "None"
-                // Otherwise it must be 1, so display "totalHoursWorked hr"
-                // If it is undefined, then simply display an empty character
-                // I really hope that cleared this up
-                totalHoursWorked !== undefined
-                  ? totalHoursWorked > 1
-                    ? `${totalHoursWorked} hrs`
-                    : totalHoursWorked == 0
-                    ? 'None'
-                    : `${totalHoursWorked} hr`
-                  : '',
-            },
-          ],
-        ]}
-      />
+      <SectionBar title="Summary Info">
+        <InfoTable
+          columns={[
+            { name: 'Type', align: 'left' },
+            { name: 'Total', align: 'right' },
+          ]}
+          data={[
+            [
+              {
+                value: 'Total Hours Worked: ',
+              },
+              {
+                value:
+                  // If totalHoursWorked is set and the totalHoursWorked > 1, displays "totalHoursWorked hrs"
+                  // else if totalHoursWorked is 0 then
+                  // "None"
+                  // Otherwise it must be 1, so display "totalHoursWorked hr"
+                  // If it is undefined, then simply display an empty character
+                  // I really hope that cleared this up
+                  totalHoursWorked !== undefined
+                    ? totalHoursWorked > 1
+                      ? `${totalHoursWorked} hrs`
+                      : totalHoursWorked == 0
+                      ? 'None'
+                      : `${totalHoursWorked} hr`
+                    : '',
+              },
+            ],
+          ]}
+        />
       </SectionBar>
 
-      <SectionBar title="Costs" > 
-      <InfoTable
-        columns={[
-          { name: 'Type', align: 'left' },
-          { name: 'Cost', align: 'right' },
-        ]}
-        data={[
-          [
-            {
-              value: 'Transactions',
-            },
-            {
-              value: totalTransactions ? usd(totalTransactions) : usd(0),
-            },
-          ],
-        ]}
-      />
+      <SectionBar title="Costs">
+        <InfoTable
+          columns={[
+            { name: 'Type', align: 'left' },
+            { name: 'Cost', align: 'right' },
+          ]}
+          data={[
+            [
+              {
+                value: 'Transactions',
+              },
+              {
+                value: totalTransactions ? usd(totalTransactions) : usd(0),
+              },
+            ],
+          ]}
+        />
       </SectionBar>
 
-      <SectionBar title="Transactions" >
-      <InfoTable
-        columns={[
-          {
-            name: 'Department',
-            align: 'left',
-          },
-          {
-            name: 'Owner',
-            align: 'left',
-          },
-          {
-            name: 'Cost Center / Vendor',
-            align: 'left',
-          },
-          {
-            name: 'Date',
-            align: 'left',
-          },
-          {
-            name: 'Amount',
-            align: 'left',
-          },
-          {
-            name: 'Notes',
-            align: 'right',
-          },
-        ]}
-        data={transactions.map(
-          ({
-            department,
-            ownerName,
-            amount,
-            notes,
-            costCenter,
-            timestamp,
-            vendor,
-          }) => {
+      <SectionBar title="Transactions">
+        <InfoTable
+          columns={[
+            {
+              name: 'Department',
+              align: 'left',
+            },
+            {
+              name: 'Owner',
+              align: 'left',
+            },
+            {
+              name: 'Cost Center / Vendor',
+              align: 'left',
+            },
+            {
+              name: 'Date',
+              align: 'left',
+            },
+            {
+              name: 'Amount',
+              align: 'left',
+            },
+            {
+              name: 'Notes',
+              align: 'right',
+            },
+          ]}
+          data={transactions.map(t => {
             return [
               {
-                value: department ? (
+                value: t.getDepartment() ? (
                   <>
-                    {department.classification} - {department.description}
+                    {t.getDepartment()?.getClassification()} -{' '}
+                    {t.getDepartment()?.getDescription()}
                   </>
                 ) : (
                   '-'
                 ),
               },
               {
-                value: ownerName,
+                value: t.getOwnerName(),
               },
               {
                 value: (
                   <>
-                    {`${costCenter?.description}` + ' - '}
+                    {`${t.getCostCenter()?.getDescription()}` + ' - '}
                     <br />
-                    {vendor}
+                    {t.getVendor()}
                   </>
                 ),
               },
               {
-                value: formatDate(timestamp),
+                value: formatDate(t.getTimestamp()),
               },
               {
-                value: usd(amount),
+                value: usd(t.getAmount()),
               },
               {
-                value: notes,
+                value: t.getNotes(),
               },
             ];
-          },
-        )}
-      />
+          })}
+        />
       </SectionBar>
 
-      <SectionBar title="Per Diems" >
-      {perDiems
-        .sort((a, b) => (a.dateSubmitted > b.dateSubmitted ? -1 : 1))
-        .map(
-          ({
-            id,
-            department,
-            ownerName,
-            dateSubmitted,
-            approvedByName,
-            dateApproved,
-            notes,
-            rowsList,
-          }) => {
+      <SectionBar title="Per Diems">
+        {perDiems
+          .sort((a, b) =>
+            a.getDateSubmitted() > b.getDateSubmitted() ? -1 : 1,
+          )
+          .map(pd => {
+            const rowsList = pd.getRowsList();
             const totalMeals = MEALS_RATE * rowsList.length;
             const totalLodging = rowsList.reduce(
-              (aggr, { id, mealsOnly }) =>
-                aggr + (mealsOnly ? 0 : lodgings[id]),
+              (aggr, r) => aggr + (r.getMealsOnly() ? 0 : lodgings[r.getId()]),
               0,
             );
             if (totalMeals == 0 && totalLodging == 0) {
@@ -282,12 +275,12 @@ export const BillingTab: FC<Props> = ({ serviceCallId }) => {
             }
             let perDiemString =
               `Per Diem ${
-                dateSubmitted.split(' ')[0] != NULL_TIME.split(' ')[0]
-                  ? `- ${dateSubmitted.split(' ')[0]}`
-                  : '' 
-              }` + `${ownerName ? ` - ${ownerName}` : ''}`;
+                pd.getDateSubmitted().split(' ')[0] != NULL_TIME.split(' ')[0]
+                  ? `- ${pd.getDateSubmitted().split(' ')[0]}`
+                  : ''
+              }` + `${pd.getOwnerName() ? ` - ${pd.getOwnerName()}` : ''}`;
             return (
-              <div key={id}>
+              <div key={pd.getId()}>
                 <SectionBar title={perDiemString} small />
                 <InfoTable
                   columns={[
@@ -329,25 +322,25 @@ export const BillingTab: FC<Props> = ({ serviceCallId }) => {
                       {
                         value:
                           TimesheetDepartmentClientService.getDepartmentName(
-                            department!,
+                            pd.getDepartment()!,
                           ),
                       },
                       {
-                        value: ownerName,
+                        value: pd.getOwnerName(),
                       },
                       {
                         value:
-                          dateSubmitted != NULL_TIME
-                            ? formatDate(dateSubmitted)
+                          pd.getDateSubmitted() != NULL_TIME
+                            ? formatDate(pd.getDateSubmitted())
                             : '-' || '-',
                       },
                       {
-                        value: approvedByName || '-',
+                        value: pd.getApprovedByName() || '-',
                       },
                       {
                         value:
-                          dateApproved != NULL_TIME
-                            ? formatDate(dateApproved)
+                          pd.getDateApproved() != NULL_TIME
+                            ? formatDate(pd.getDateApproved())
                             : '-' || '-',
                       },
                       {
@@ -357,7 +350,7 @@ export const BillingTab: FC<Props> = ({ serviceCallId }) => {
                         value: totalLodging != 0 ? usd(totalLodging) : '-',
                       },
                       {
-                        value: notes,
+                        value: pd.getNotes(),
                       },
                     ],
                   ]}
@@ -390,59 +383,39 @@ export const BillingTab: FC<Props> = ({ serviceCallId }) => {
                       align: 'right',
                     },
                   ]}
-                  data={rowsList.map(
-                    ({
-                      id,
-                      dateString,
-                      zipCode,
-                      mealsOnly,
-                      notes,
-                      perDiemId,
-                    }) => {
-                      return [
-                        {
-                          value: formatDate(dateString),
-                        },
-                        {
-                          value: zipCode,
-                        },
-                        {
-                          value: mealsOnly ? 'Yes' : 'No',
-                        },
-                        {
-                          value: usd(MEALS_RATE),
-                        },
-                        {
-                          value: lodgings[id] ? usd(lodgings[id]) : '-',
-                        },
-                        {
-                          value: notes,
-                        },
-                      ];
-                    },
-                  )}
+                  data={rowsList.map(r => {
+                    return [
+                      {
+                        value: formatDate(r.getDateString()),
+                      },
+                      {
+                        value: r.getZipCode(),
+                      },
+                      {
+                        value: r.getMealsOnly() ? 'Yes' : 'No',
+                      },
+                      {
+                        value: usd(MEALS_RATE),
+                      },
+                      {
+                        value: lodgings[r.getId()]
+                          ? usd(lodgings[r.getId()])
+                          : '-',
+                      },
+                      {
+                        value: r.getNotes(),
+                      },
+                    ];
+                  })}
                 />
               </div>
             );
-          },
-        )}
-        </SectionBar>
-      <SectionBar title="Timesheet Lines" >
-      {timesheets?.map(
-        ({
-          id,
-          departmentName,
-          timeStarted,
-          timeFinished,
-          adminApprovalUserName,
-          notes,
-          briefDescription,
-          technicianUserName,
-          technicianUserId,
-          hoursWorked,
-        }) => {
+          })}
+      </SectionBar>
+      <SectionBar title="Timesheet Lines">
+        {timesheets?.map(tl => {
           return (
-            <div key={id}>
+            <div key={tl.getId()}>
               <InfoTable
                 columns={[
                   {
@@ -481,42 +454,41 @@ export const BillingTab: FC<Props> = ({ serviceCallId }) => {
                 data={[
                   [
                     {
-                      value: technicianUserName + ` (${technicianUserId})`,
+                      value: tl.getTechnicianUserName(),
                     },
                     {
-                      value: departmentName,
+                      value: tl.getDepartmentName(),
                     },
                     {
-                      value: adminApprovalUserName,
+                      value: tl.getAdminApprovalUserName(),
                     },
                     {
-                      value: formatDate(timeStarted) || '-',
+                      value: formatDate(tl.getTimeStarted()) || '-',
                     },
                     {
-                      value: formatDate(timeFinished) || '-',
+                      value: formatDate(tl.getTimeFinished()) || '-',
                     },
                     {
-                      value: briefDescription,
+                      value: tl.getBriefDescription(),
                     },
                     {
                       value:
-                        hoursWorked != 0
-                          ? hoursWorked > 1
-                            ? `${hoursWorked} hrs`
-                            : `${hoursWorked} hr`
+                        tl.getHoursWorked() != 0
+                          ? tl.getHoursWorked() > 1
+                            ? `${tl.getHoursWorked()} hrs`
+                            : `${tl.getHoursWorked()} hr`
                           : '-',
                     },
                     {
-                      value: notes,
+                      value: tl.getNotes(),
                     },
                   ],
                 ]}
               />
             </div>
           );
-        },
-      )}
-      </SectionBar> 
+        })}
+      </SectionBar>
     </>
   );
 };

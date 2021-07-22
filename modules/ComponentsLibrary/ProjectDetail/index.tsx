@@ -30,7 +30,7 @@ import { Equipment } from './components/Equipment';
 import { Confirm } from '../Confirm';
 import { GanttChart } from '../GanttChart';
 import { Loader } from '../../Loader/main';
-import { Typography } from '@material-ui/core';
+import Typography from '@material-ui/core/Typography';
 import { BillingTab } from './components/Billing';
 import { LogsTab } from './components/Logs';
 import { TimesheetDepartment } from '@kalos-core/kalos-rpc/TimesheetDepartment';
@@ -90,9 +90,8 @@ export const ProjectDetail: FC<Props> = props => {
     useState<boolean>(false);
   const [projects, setProjects] = useState<EventType[]>([]);
   const [parentId, setParentId] = useState<number | null>(null);
-  const [confirmedParentId, setConfirmedParentId] = useState<number | null>(
-    null,
-  );
+  const [confirmedParentId, setConfirmedParentId] =
+    useState<number | null>(null);
   const [project, setProject] = useState<Event>();
   const [timesheetDepartment, setTimesheetDepartment] =
     useState<TimesheetDepartment>();

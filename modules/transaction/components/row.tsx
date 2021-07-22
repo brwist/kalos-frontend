@@ -144,7 +144,7 @@ export function TransactionRow({
     );
     const email: EmailConfig = {
       type: 'receipts',
-      recipient: user.getEmail(),
+      recipient: /*user.getEmail()*/ 'robbie@kalosflorida.com',
       subject: 'Receipts',
       from: sendingUser.getEmail(),
       body,
@@ -153,10 +153,11 @@ export function TransactionRow({
     try {
       await clients.email.sendMail(email);
     } catch (err) {
+      console.log(err);
       alert('An error occurred, user was not notified via email');
     }
     try {
-      const id = await getSlackID(txn.getOwnerName());
+      /*const id = await getSlackID(txn.getOwnerName());
       await slackNotify(
         id,
         `A receipt you submitted has been rejected | ${txn.getDescription()} | $${prettyMoney(
@@ -166,7 +167,7 @@ export function TransactionRow({
       await slackNotify(
         id,
         `https://app.kalosflorida.com?action=admin:reports.transactions`,
-      );
+      );*/
     } catch (err) {
       console.log(err);
       alert('An error occurred, user was not notified via slack');
@@ -208,9 +209,9 @@ export function TransactionRow({
           )}
         />
       ) : txn.getCostCenter() ? (
-        `${txn
+        `${txn.getCostCenter()!.getDescription()} (${txn
           .getCostCenter()!
-          .getDescription()} (${txn.getCostCenter()!.getId()})`
+          .getId()})`
       ) : (
         ''
       ),
@@ -222,9 +223,9 @@ export function TransactionRow({
     },
     {
       value: txn.getDepartment()
-        ? `${txn
+        ? `${txn.getDepartment()!.getDescription()} (${txn
             .getDepartment()!
-            .getDescription()} (${txn.getDepartment()!.getClassification()})`
+            .getClassification()})`
         : '',
     },
     {

@@ -8,7 +8,7 @@ import {
 import { Modal } from '../Modal';
 import { MergeTable, SelectedChoice } from '../MergeTable';
 import { Alert } from '../Alert';
-import { Typography } from '@material-ui/core';
+import Typography from '@material-ui/core/Typography';
 import { Loader } from '../../Loader/main';
 import { ActivityLog } from '@kalos-core/kalos-rpc/ActivityLog';
 import { format } from 'date-fns';
