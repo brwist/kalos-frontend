@@ -1,6 +1,6 @@
 import React, { ReactElement, ReactNode, CSSProperties } from 'react';
 import clsx from 'clsx';
-import { useTheme } from '@material-ui/core/styles';
+import useTheme from '@material-ui/core/styles/useTheme';
 import useMediaQuery from '@material-ui/core/useMediaQuery';
 import ArrowDropUpIcon from '@material-ui/icons/ArrowDropUp';
 import ArrowDropDownIcon from '@material-ui/icons/ArrowDropDown';

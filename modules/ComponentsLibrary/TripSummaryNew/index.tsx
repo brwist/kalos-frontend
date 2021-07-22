@@ -7,7 +7,7 @@ import {
   perDiemTripMilesToUsd,
 } from '../../../helpers';
 import { Tooltip } from '../Tooltip';
-import { IconButton } from '@material-ui/core';
+import IconButton from '@material-ui/core/IconButton';
 import DeleteIcon from '@material-ui/icons/Delete';
 import NotInterestedIcon from '@material-ui/icons/NotInterested';
 import AccountBalanceWalletIcon from '@material-ui/icons/AccountBalanceWallet';
@@ -33,7 +33,7 @@ import { AddressPair } from '../PlaceAutocompleteAddressForm/Address';
 import { ConfirmDelete } from '../ConfirmDelete';
 import { Form, Schema } from '../Form';
 import { Confirm } from '../Confirm';
-import { Typography } from '@material-ui/core';
+import Typography from '@material-ui/core/Typography';
 import { PlainForm } from '../PlainForm';
 import CheckCircleOutlineIcon from '@material-ui/icons/CheckCircleOutline';
 import MessageIcon from '@material-ui/icons/Message';
@@ -103,30 +103,22 @@ export const TripSummaryNew: FC<Props> = ({
   const startDay = startOfWeek(subDays(today, 7), { weekStartsOn: 6 });
   const endDay = addDays(startDay, 7);
   const [pendingDeleteAllTrips, setPendingDeleteAllTrips] = useState<boolean>();
-  const [
-    pendingApproveAllTrips,
-    setPendingApproveAllTrips,
-  ] = useState<boolean>();
+  const [pendingApproveAllTrips, setPendingApproveAllTrips] =
+    useState<boolean>();
   const formatDateFns = (date: Date) => format(date, 'yyyy-MM-dd');
 
   const [loaded, setLoaded] = useState<boolean>(false);
-  const [pendingTripToDelete, setPendingTripToDelete] = useState<
-    Trip | undefined
-  >();
-  const [
-    pendingTripToProcessPayroll,
-    setPendingTripToProcessPayroll,
-  ] = useState<Trip | undefined>();
-  const [pendingTripToApprove, setPendingTripToApprove] = useState<
-    Trip | undefined
-  >();
+  const [pendingTripToDelete, setPendingTripToDelete] =
+    useState<Trip | undefined>();
+  const [pendingTripToProcessPayroll, setPendingTripToProcessPayroll] =
+    useState<Trip | undefined>();
+  const [pendingTripToApprove, setPendingTripToApprove] =
+    useState<Trip | undefined>();
   const [pendingTripToAdd, setPendingTripToAdd] = useState<Trip | undefined>();
-  const [pendingTripToDeny, setPendingTripToDeny] = useState<
-    Trip | undefined
-  >();
-  const [toggleApproveOrProcess, setToggleApproveOrProcess] = useState<boolean>(
-    false,
-  );
+  const [pendingTripToDeny, setPendingTripToDeny] =
+    useState<Trip | undefined>();
+  const [toggleApproveOrProcess, setToggleApproveOrProcess] =
+    useState<boolean>(false);
 
   const [tripsLoaded, setTripsLoaded] = useState<Trip[] | undefined>([]);
   const [totalTripCount, setTotalTripCount] = useState<number>(0);
@@ -164,16 +156,18 @@ export const TripSummaryNew: FC<Props> = ({
     (tripToAdd: Trip | undefined) => setPendingTripToAdd(tripToAdd),
     [setPendingTripToAdd],
   );
-  const handleSetSearch = useCallback((newTrip: Trip) => setSearch(newTrip), [
-    setSearch,
-  ]);
+  const handleSetSearch = useCallback(
+    (newTrip: Trip) => setSearch(newTrip),
+    [setSearch],
+  );
   const handleSetCheckboxFilter = useCallback(
     (newFilter: Checkboxes) => setCheckboxFilter(newFilter),
     [setCheckboxFilter],
   );
-  const handleSetPage = useCallback((newPage: number) => setPage(newPage), [
-    setPage,
-  ]);
+  const handleSetPage = useCallback(
+    (newPage: number) => setPage(newPage),
+    [setPage],
+  );
   const handleSetToggleApproveOrProcess = useCallback(
     () => setToggleApproveOrProcess(!toggleApproveOrProcess),
     [toggleApproveOrProcess],

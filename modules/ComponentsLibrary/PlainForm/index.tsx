@@ -10,7 +10,7 @@ import React, {
 } from 'react';
 import clsx from 'clsx';
 import Typography from '@material-ui/core/Typography';
-import { useTheme } from '@material-ui/core/styles';
+import useTheme from '@material-ui/core/styles/useTheme';
 import useMediaQuery from '@material-ui/core/useMediaQuery';
 import { Props as ButtonProps } from '../Button';
 import {
@@ -78,7 +78,7 @@ interface Props<T> extends PlainFormProps<T> {
 }
 
 export const PlainForm: <T>(
-  props: Props<T>, 
+  props: Props<T>,
 ) => ReactElement<any, string | JSXElementConstructor<any>> | null = forwardRef(
   (
     {

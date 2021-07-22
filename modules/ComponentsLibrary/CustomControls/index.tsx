@@ -4,12 +4,12 @@ import {
   DatePicker as MuiDatePicker,
   DatePickerProps,
 } from '@material-ui/pickers';
+import { TextField as MuiTextField } from '@material-ui/core';
 import {
-  TextField as MuiTextField,
-  StandardTextFieldProps,
-  FilledTextFieldProps,
   OutlinedTextFieldProps,
-} from '@material-ui/core';
+  FilledTextFieldProps,
+  StandardTextFieldProps,
+} from '@material-ui/core/TextField';
 import './styles.less';
 
 interface DPProps extends DatePickerProps {

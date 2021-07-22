@@ -9,7 +9,7 @@
 // There is a "View Merged Transaction" feature that can be toggled on and off in the props that is bound to specifically
 // transactions, however.
 
-import { Typography } from '@material-ui/core';
+import Typography from '@material-ui/core/Typography';
 import React, { FC, ReactNode, useCallback, useEffect, useState } from 'react';
 import { Alert } from '../Alert';
 import { Button } from '../Button';
