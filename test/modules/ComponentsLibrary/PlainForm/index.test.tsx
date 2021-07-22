@@ -3,21 +3,15 @@ export {};
 /* eslint-disable react/jsx-key */
 // ! Disabled key errors in ESLint because they incorrectly label the elements within certain expectations as needing keys when they don't and will not work with keys
 
-const GetPathFromName =
-  require('../../../test-constants/constants').GetPathFromName;
+import React = require('react');
+import Enzyme = require('enzyme');
+import PlainFormModule = require('../../../../modules/ComponentsLibrary/PlainForm/index');
 
-const React = require('react');
-const shallow = require('enzyme').shallow;
-const PlainForm = require(GetPathFromName(
-  'PlainForm',
-  'ComponentsLibrary',
-)).PlainForm;
-
-const expect = require('chai').expect;
+import Chai = require('chai');
 
 const GENDERS = ['Male', 'Female', 'Other'];
 
-export type Model = {
+type Model = {
   id: number;
   firstName: string;
   lastName: string;
@@ -39,7 +33,7 @@ export type Model = {
   start: string;
 };
 
-export const model: Model = {
+const model: Model = {
   id: 123,
   firstName: 'John',
   lastName: 'Doe',
@@ -63,7 +57,7 @@ export const model: Model = {
   start: '2020-04-24 19:30:00',
 };
 
-export const SCHEMA_2: any = [
+const SCHEMA_2: any = [
   [
     {
       label: 'Personal detail',
@@ -238,60 +232,60 @@ describe('ComponentsLibrary', () => {
     describe('<PlainForm<Model> schema={SCHEMA_2} data={model} onChange={data => console.log(data)}/>', () => {
       it('displays the correct first name', () => {
         // FIXME write out a more extensive "mount" test when possible now that we have mount working
-        const wrapper = shallow(
-          <PlainForm<Model>
+        const wrapper = Enzyme.shallow(
+          <PlainFormModule.PlainForm<Model>
             schema={SCHEMA_2}
             data={model}
             onChange={(data: any) => console.log(data)}
           />,
         );
 
-        expect(wrapper.find({ label: 'First Name' }).props()['value']).to.equal(
-          'John',
-        );
+        Chai.expect(
+          wrapper.find({ label: 'First Name' }).props()['value'],
+        ).to.equal('John');
       });
 
       it('displays the correct last name', () => {
         // FIXME write out a more extensive "mount" test when possible now that we have mount working
-        const wrapper = shallow(
-          <PlainForm<Model>
+        const wrapper = Enzyme.shallow(
+          <PlainFormModule.PlainForm<Model>
             schema={SCHEMA_2}
             data={model}
             onChange={(data: any) => console.log(data)}
           />,
         );
 
-        expect(wrapper.find({ label: 'Last Name' }).props()['value']).to.equal(
-          'Doe',
-        );
+        Chai.expect(
+          wrapper.find({ label: 'Last Name' }).props()['value'],
+        ).to.equal('Doe');
       });
 
       it('displays the correct gender', () => {
         // FIXME write out a more extensive "mount" test when possible now that we have mount working
-        const wrapper = shallow(
-          <PlainForm<Model>
+        const wrapper = Enzyme.shallow(
+          <PlainFormModule.PlainForm<Model>
             schema={SCHEMA_2}
             data={model}
             onChange={(data: any) => console.log(data)}
           />,
         );
 
-        expect(wrapper.find({ label: 'Gender' }).props()['value']).to.equal(
-          'Male',
-        );
+        Chai.expect(
+          wrapper.find({ label: 'Gender' }).props()['value'],
+        ).to.equal('Male');
       });
 
       it('displays the correct favorite numbers', () => {
         // FIXME write out a more extensive "mount" test when possible now that we have mount working
-        const wrapper = shallow(
-          <PlainForm<Model>
+        const wrapper = Enzyme.shallow(
+          <PlainFormModule.PlainForm<Model>
             schema={SCHEMA_2}
             data={model}
             onChange={(data: any) => console.log(data)}
           />,
         );
 
-        expect(
+        Chai.expect(
           wrapper.find({ label: 'Favorite Numbers' }).props()['value'],
         ).to.deep.equal([1, 4, 6]);
       });
