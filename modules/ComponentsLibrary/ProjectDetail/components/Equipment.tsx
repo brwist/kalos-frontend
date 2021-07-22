@@ -1,18 +1,19 @@
 import React, { FC, useCallback, useState } from 'react';
 import debounce from 'lodash/debounce';
-import { ServiceItems, Entry, Repair } from '../../ServiceItems';
-import { UserType, PropertyType } from '../../../../helpers';
-import { EventType } from '../';
+import { ServiceItems, Repair } from '../../ServiceItems';
 import { ProposalPrint } from './ProposalPrint';
 import './equipment.less';
-
+import { Property } from '@kalos-core/kalos-rpc/Property';
+import { User } from '@kalos-core/kalos-rpc/User';
+import { Event } from '@kalos-core/kalos-rpc/Event';
+import { ServiceItem } from '@kalos-core/kalos-rpc/ServiceItem';
 interface Props {
   userID: number;
   loggedUserId: number;
   propertyId: number;
-  property: PropertyType;
-  serviceItem: EventType;
-  customer: UserType;
+  property: Property;
+  serviceItem: Event;
+  customer: User;
 }
 
 type Form = {
@@ -27,26 +28,39 @@ export const Equipment: FC<Props> = ({
   property,
   ...props
 }) => {
-  const { notes, logJobNumber, id } = serviceItem;
-  const localStorageKey = `SERVICE_CALL_EQUIPMENT_${id}`;
-  const localStorageSelectedKey = `SERVICE_CALL_EQUIPMENT_SELECTED_${id}`;
+  const localStorageKey = `SERVICE_CALL_EQUIPMENT_${serviceItem.getId()}`;
+  const localStorageSelectedKey = `SERVICE_CALL_EQUIPMENT_SELECTED_${serviceItem.getId()}`;
   let repairsInitial = [];
-  let selectedInitial = [];
+  let selectedInitial: ServiceItem[] = [];
   try {
     repairsInitial = JSON.parse(localStorage.getItem(localStorageKey) || '[]');
-  } catch (e) {}
+  } catch (e) {
+    console.error(
+      `An error occurred while parsing JSON from localStorage: ${e}`,
+    );
+  }
   try {
-    selectedInitial = JSON.parse(
+    let selectedInitialRead = JSON.parse(
       localStorage.getItem(localStorageSelectedKey) || '[]',
     );
-  } catch (e) {}
-  const customerName = `${customer?.firstname} ${customer?.lastname}`;
-  const [selected, setSelected] = useState<Entry[]>(selectedInitial);
+
+    selectedInitial = selectedInitialRead.map((selected: any) =>
+      Object.setPrototypeOf(selected, ServiceItem.prototype),
+    );
+  } catch (e) {
+    console.error(
+      `An error occurred while parsing JSON from localStorage: ${e}`,
+    );
+  }
+  const customerName = `${customer?.getFirstname()} ${customer?.getLastname()}`;
+  const [selected, setSelected] = useState<ServiceItem[]>(
+    selectedInitial as ServiceItem[],
+  );
   const [repairs, setRepairs] = useState<Repair[]>(repairsInitial);
   const [data, setData] = useState<Form>({
     displayName: customerName,
     withJobNotes: 0,
-    jobNotes: notes,
+    jobNotes: serviceItem.getNotes(),
   });
   const handleSetRepair = useCallback(
     (repairs: Repair[]) => {
@@ -56,10 +70,9 @@ export const Equipment: FC<Props> = ({
     [setRepairs, localStorageKey],
   );
   const handleSetSelected = useCallback(
-    (selected: Entry[]) => {
+    (selected: ServiceItem[]) => {
       setSelected(selected);
-      const { id } = serviceItem;
-      const localStorageKey = `SERVICE_CALL_EQUIPMENT_SELECTED_${id}`;
+      const localStorageKey = `SERVICE_CALL_EQUIPMENT_SELECTED_${serviceItem.getId()}`;
       localStorage.setItem(localStorageKey, JSON.stringify(selected));
     },
     [setSelected, serviceItem],
@@ -83,7 +96,7 @@ export const Equipment: FC<Props> = ({
       ]}
       selectable
       repair
-      disableRepair={!id}
+      disableRepair={true}
       repairs={repairs}
       onSelect={debounce(handleSetSelected, 1000)}
       selected={selected}
@@ -92,7 +105,7 @@ export const Equipment: FC<Props> = ({
         <ProposalPrint
           displayName={data.displayName}
           notes={data.withJobNotes ? data.jobNotes : undefined}
-          logJobNumber={logJobNumber}
+          logJobNumber={serviceItem.getLogJobNumber()}
           property={property}
           entries={repairs}
           withDiagnosis
