@@ -17,6 +17,8 @@ import {
   ServicesRenderedClientService,
   TimesheetDepartmentClientService,
   makeSafeFormObject,
+  UserClientService,
+  EventClientService,
 } from '../../../helpers';
 import { ENDPOINT } from '../../../constants';
 import { Modal } from '../Modal';
@@ -35,9 +37,6 @@ import { BillingTab } from './components/Billing';
 import { LogsTab } from './components/Logs';
 import { TimesheetDepartment } from '@kalos-core/kalos-rpc/TimesheetDepartment';
 import { RoleType } from '../Payroll';
-
-const EventClientService = new EventClient(ENDPOINT);
-const UserClientService = new UserClient(ENDPOINT);
 
 export type EventType = Event;
 export type JobTypeSubtypeType = JobTypeSubtype;
@@ -90,8 +89,9 @@ export const ProjectDetail: FC<Props> = props => {
     useState<boolean>(false);
   const [projects, setProjects] = useState<EventType[]>([]);
   const [parentId, setParentId] = useState<number | null>(null);
-  const [confirmedParentId, setConfirmedParentId] =
-    useState<number | null>(null);
+  const [confirmedParentId, setConfirmedParentId] = useState<number | null>(
+    null,
+  );
   const [project, setProject] = useState<Event>();
   const [timesheetDepartment, setTimesheetDepartment] =
     useState<TimesheetDepartment>();
@@ -129,6 +129,7 @@ export const ProjectDetail: FC<Props> = props => {
       promises.push(
         new Promise<void>(async resolve => {
           try {
+            console.log(`Loading user by id`);
             const loggedUser = await UserClientService.loadUserById(userID);
             if (loggedUser.getPermissionGroupsList()) {
               const roleGotten = loggedUser
@@ -172,9 +173,26 @@ export const ProjectDetail: FC<Props> = props => {
       );
 
       promises.push(
-        new Promise<void>(async resolve => {
-          const customer = await UserClientService.loadUserById(userID);
-          setCustomer(customer);
+        new Promise<void>(async (resolve, reject) => {
+          let customer;
+          try {
+            console.log(`Loading user by id`);
+            customer = await UserClientService.loadUserById(userID);
+            console.log('CUSTOMER GOTTEN: ', customer);
+          } catch (err) {
+            console.error(
+              `An error occurred while getting the customer: ${err}`,
+            );
+          }
+          if (!customer) {
+            console.error(
+              'Unable to set customer - no customer returned from user client service. Rejecting.',
+            );
+            reject(
+              'Unable to set customer - no customer returned from user client service.',
+            );
+          }
+          if (customer) setCustomer(customer);
           resolve();
         }),
       );
