@@ -1,8 +1,6 @@
 import React, { FC, useState, useEffect, useCallback, useRef } from 'react';
-import { EventClient, Event } from '@kalos-core/kalos-rpc/Event';
-import { UserClient, User } from '@kalos-core/kalos-rpc/User';
-import { JobType } from '@kalos-core/kalos-rpc/JobType';
-import { JobSubtype } from '@kalos-core/kalos-rpc/JobSubtype';
+import { Event } from '@kalos-core/kalos-rpc/Event';
+import { User } from '@kalos-core/kalos-rpc/User';
 import { JobTypeSubtype } from '@kalos-core/kalos-rpc/JobTypeSubtype';
 import { Property } from '@kalos-core/kalos-rpc/Property';
 import { ServicesRendered } from '@kalos-core/kalos-rpc/ServicesRendered';
@@ -10,22 +8,16 @@ import {
   getRPCFields,
   makeFakeRows,
   PropertyClientService,
-  JobTypeClientService,
-  JobSubtypeClientService,
   loadProjects,
-  JobTypeSubtypeClientService,
-  ServicesRenderedClientService,
   TimesheetDepartmentClientService,
   makeSafeFormObject,
   UserClientService,
   EventClientService,
 } from '../../../helpers';
-import { ENDPOINT } from '../../../constants';
 import { Modal } from '../Modal';
 import { SectionBar } from '../SectionBar';
 import { InfoTable, Data } from '../InfoTable';
 import { Tabs } from '../Tabs';
-import { Option } from '../Field';
 import { Form, Schema } from '../Form';
 import { General } from './components/General';
 import { Equipment } from './components/Equipment';
@@ -129,7 +121,6 @@ export const ProjectDetail: FC<Props> = props => {
       promises.push(
         new Promise<void>(async resolve => {
           try {
-            console.log(`Loading user by id`);
             const loggedUser = await UserClientService.loadUserById(userID);
             if (loggedUser.getPermissionGroupsList()) {
               const roleGotten = loggedUser
@@ -176,9 +167,7 @@ export const ProjectDetail: FC<Props> = props => {
         new Promise<void>(async (resolve, reject) => {
           let customer;
           try {
-            console.log(`Loading user by id`);
             customer = await UserClientService.loadUserById(userID);
-            console.log('CUSTOMER GOTTEN: ', customer);
           } catch (err) {
             console.error(
               `An error occurred while getting the customer: ${err}`,

@@ -25,8 +25,10 @@ Because of the way our server is set up, there are a few gotchas which need to b
 
 For most of the test files, you should be using Require instead of Import due to Chai running in a NodeJS environment. The only exception to this is in various setup files where variables MUST be imported. For these cases, simply use an import in a file and then "require" that file (see grpc-endpoint.js as an example and its corresponding "require" call in helpers.test.ts).
 
+The style "import ModuleName = require('module_path')" should be STRONGLY preferred. This allows for Intellisense to work.
+
 - Paths should be the same for Require as they are in Import
-  - "import { SectionBar } from '../../../../modules/ComponentsLibrary/SectionBar/index'" is equivalent to "require('../../../../modules/ComponentsLibrary/SectionBar/index').SectionBar"
+  - "import { SectionBar } from '../../../../modules/ComponentsLibrary/SectionBar/index'" is equivalent to "SectionBar.SectionBar" from "import SectionBar = require('../../../../modules/ComponentsLibrary/SectionBar/index')"
 
 # Style Conventions
 
