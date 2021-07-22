@@ -174,10 +174,10 @@ export const TimeOff: FC<Props> = ({
       init();
     }
   }, [initiated, init]);
-  const toggleDeleting = useCallback(() => setDeleting(!deleting), [
-    deleting,
-    setDeleting,
-  ]);
+  const toggleDeleting = useCallback(
+    () => setDeleting(!deleting),
+    [deleting, setDeleting],
+  );
   const handleSubmit = useCallback(
     async (formData: TimeoffRequest) => {
       setError('');
@@ -235,7 +235,7 @@ export const TimeOff: FC<Props> = ({
           recipient: manager.getEmail(),
         };
 
-        //await emailClient.sendMail(config);
+        await emailClient.sendMail(config);
       } catch (err) {
         console.log(err);
       }
@@ -264,6 +264,7 @@ export const TimeOff: FC<Props> = ({
       setFormKey,
       formKey,
       loggedUserId,
+      data
     ],
   );
 

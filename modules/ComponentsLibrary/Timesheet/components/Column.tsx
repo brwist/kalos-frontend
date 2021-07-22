@@ -8,7 +8,7 @@ import Typography from '@material-ui/core/Typography';
 import Tooltip from '@material-ui/core/Tooltip';
 import IconButton from '@material-ui/core/IconButton';
 import ViewDayIcon from '@material-ui/icons/ViewDay';
-import { useTheme } from '@material-ui/core/styles';
+import useTheme from '@material-ui/core/styles/useTheme';
 import useMediaQuery from '@material-ui/core/useMediaQuery';
 import { TimeoffCard } from '../../../ServiceCalendar/components/CallCard';
 import { TimesheetLineCard, ServicesRenderedCard } from './TimesheetCard';

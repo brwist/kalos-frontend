@@ -17,7 +17,7 @@ import Collapse from '@material-ui/core/Collapse';
 import IconButton from '@material-ui/core/IconButton';
 import BackIcon from '@material-ui/icons/ArrowBack';
 import ViewDayIcon from '@material-ui/icons/ViewDay';
-import { useTheme } from '@material-ui/core/styles';
+import useTheme from '@material-ui/core/styles/useTheme';
 import useMediaQuery from '@material-ui/core/useMediaQuery';
 import { useCalendarData } from '../hooks';
 import { CallCard, TimeoffCard } from './CallCard';
@@ -27,7 +27,6 @@ import { TimeoffRequestTypes } from '../../../helpers';
 import { CalendarDay } from '@kalos-core/kalos-rpc/compiled-protos/event_pb';
 import { TimeoffRequest } from '@kalos-core/kalos-rpc/compiled-protos/timeoff_request_pb';
 import './column.less';
-import { ContractServiceClient } from '@kalos-core/kalos-rpc/compiled-protos/contract_pb_service';
 
 type Props = {
   date: string;
