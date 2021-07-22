@@ -595,11 +595,10 @@ export const ServiceItems: FC<Props> = props => {
                   type="checkbox"
                   value={
                     !!selected.find(item => {
-                      let safe = makeSafeFormObject(item, new ServiceItem());
-                      if (!safe.getId) {
-                        console.error('Item with no ID: ', safe);
+                      if (!item.getId) {
+                        return (item as any)['array']['id'] === id; // Fall back in case old local storage is present
                       } else {
-                        return safe.getId() === id;
+                        return item.getId() === id;
                       }
                     })
                   }
