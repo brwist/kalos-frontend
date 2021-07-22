@@ -23,7 +23,7 @@ import { Tooltip } from '../ComponentsLibrary/Tooltip';
 import { PageWrapper, PageWrapperProps } from '../PageWrapper/main';
 import { ManagerTimeoffs } from '../ComponentsLibrary/ManagerTimeoffs';
 import './styles.less';
-
+import { SpiffTool } from '../SpiffToolLogs/components/SpiffTool';
 interface props extends PageWrapperProps {
   userId: number;
 }
@@ -423,7 +423,7 @@ export class Dashboard extends React.PureComponent<props, state> {
         <Grid
           container
           direction="column"
-          justify="flex-start"
+          justifyContent="flex-start"
           alignItems="center"
           style={{
             height: '100%',
@@ -456,6 +456,24 @@ export class Dashboard extends React.PureComponent<props, state> {
               events={this.state.recentEvents}
               isLoading={this.state.isLoading}
             />
+          )}
+          {this.state.currentUser.getToolFund() > 0 && (
+            <Paper
+              elevation={7}
+              style={{
+                width: '90%',
+                maxHeight: 650,
+                overflowY: 'scroll',
+                marginBottom: 20,
+              }}
+            >
+              <SpiffTool
+                loggedUserId={currentUser.getId()}
+                ownerId={currentUser.getId()}
+                disableActions={true}
+                type="Tool"
+              />
+            </Paper>
           )}
         </Grid>
       </PageWrapper>

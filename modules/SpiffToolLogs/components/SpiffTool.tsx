@@ -87,9 +87,10 @@ export interface Props {
   needsManagerAction?: boolean;
   needsPayrollAction?: boolean;
   needsAuditAction?: boolean;
+  disableActions?: boolean;
   option?: string;
   role?: string;
-  toggle: boolean;
+  toggle?: boolean;
   onClose?: () => void;
 }
 
@@ -103,6 +104,7 @@ export const SpiffTool: FC<Props> = ({
   needsManagerAction,
   needsPayrollAction,
   needsAuditAction,
+  disableActions,
   role,
   toggle,
   onClose,
@@ -177,6 +179,7 @@ export const SpiffTool: FC<Props> = ({
     if (tempDepartments) {
       setDepartments(tempDepartments);
     }
+
     setLoggedInUser(loggedInUser);
     setSearchFormKey(searchFormKey + 1);
   }, [
@@ -443,6 +446,7 @@ export const SpiffTool: FC<Props> = ({
                 ? MONTHS_OPTIONS[0]
                 : WEEK_OPTIONS[0]
               ).value as string,
+              technician: ownerId ? ownerId : loggedUserId,
             }
           : {}),
       });
@@ -450,7 +454,15 @@ export const SpiffTool: FC<Props> = ({
         setSearchFormKey(searchFormKey + 1);
       }
     },
-    [searchForm, setSearchFormKey, searchFormKey, MONTHS_OPTIONS, WEEK_OPTIONS],
+    [
+      searchForm,
+      setSearchFormKey,
+      loggedUserId,
+      ownerId,
+      searchFormKey,
+      MONTHS_OPTIONS,
+      WEEK_OPTIONS,
+    ],
   );
   const handleMakeSearch = useCallback(() => setLoaded(false), [setLoaded]);
   const handleResetSearch = useCallback(() => {
@@ -706,88 +718,96 @@ export const SpiffTool: FC<Props> = ({
             {entry.getOwnerName()}
           </Link>
         );
-        const actions = isAdmin
-          ? [
-              needsManagerAction ? (
+        let actions =
+          isAdmin && !disableActions
+            ? [
+                needsManagerAction ? (
+                  <IconButton
+                    key={2}
+                    size="small"
+                    onClick={handleClickAddStatus(entry)}
+                    disabled={
+                      entry.getActionsList()[0] &&
+                      entry.getActionsList()[0].getStatus() === 1
+                    }
+                  >
+                    <ThumbsUpDownIcon />
+                  </IconButton>
+                ) : (
+                  <React.Fragment />
+                ),
                 <IconButton
-                  key={2}
+                  key={0}
                   size="small"
-                  onClick={handleClickAddStatus(entry)}
-                  disabled={
-                    entry.getActionsList()[0] &&
-                    entry.getActionsList()[0].getStatus() === 1
-                  }
+                  onClick={handleSetExtendedEditing(entry)}
                 >
-                  <ThumbsUpDownIcon />
-                </IconButton>
-              ) : (
-                <React.Fragment />
-              ),
-              <IconButton
-                key={0}
-                size="small"
-                onClick={handleSetExtendedEditing(entry)}
-              >
-                <EditIcon />
-              </IconButton>,
-              needsPayrollAction ? (
-                <IconButton
-                  key={3}
-                  size="small"
-                  onClick={handlePendingPayrollToggle(entry)}
-                >
-                  <AccountBalanceWalletIcon />
-                </IconButton>
-              ) : (
-                <React.Fragment />
-              ),
-              needsPayrollAction ? (
-                <IconButton
-                  key={3}
-                  size="small"
-                  onClick={handlePendingPayrollToggleReject(entry)}
-                >
-                  <NotInterestedIcon />
-                </IconButton>
-              ) : (
-                <React.Fragment />
-              ),
-              needsAuditAction ? (
-                <IconButton
-                  key={3}
-                  size="small"
-                  onClick={handlePendingAuditToggle(entry)}
-                >
-                  <RateReviewIcon />
-                </IconButton>
-              ) : (
-                <React.Fragment />
-              ),
-              role != 'Payroll' && role != 'Auditor' ? (
-                <IconButton
-                  key={1}
-                  size="small"
-                  onClick={handleSetDeleting(entry)}
-                >
-                  <DeleteIcon />
-                </IconButton>
-              ) : (
-                <React.Fragment />
-              ),
-            ]
-          : [
-              <IconButton key={0} size="small">
-                <SearchIcon />
-              </IconButton>,
-            ];
+                  <EditIcon />
+                </IconButton>,
+                needsPayrollAction ? (
+                  <IconButton
+                    key={3}
+                    size="small"
+                    onClick={handlePendingPayrollToggle(entry)}
+                  >
+                    <AccountBalanceWalletIcon />
+                  </IconButton>
+                ) : (
+                  <React.Fragment />
+                ),
+                needsPayrollAction ? (
+                  <IconButton
+                    key={3}
+                    size="small"
+                    onClick={handlePendingPayrollToggleReject(entry)}
+                  >
+                    <NotInterestedIcon />
+                  </IconButton>
+                ) : (
+                  <React.Fragment />
+                ),
+                needsAuditAction ? (
+                  <IconButton
+                    key={3}
+                    size="small"
+                    onClick={handlePendingAuditToggle(entry)}
+                  >
+                    <RateReviewIcon />
+                  </IconButton>
+                ) : (
+                  <React.Fragment />
+                ),
+                role != 'Payroll' && role != 'Auditor' ? (
+                  <IconButton
+                    key={1}
+                    size="small"
+                    onClick={handleSetDeleting(entry)}
+                  >
+                    <DeleteIcon />
+                  </IconButton>
+                ) : (
+                  <React.Fragment />
+                ),
+              ]
+            : [
+                <IconButton key={0} size="small">
+                  <SearchIcon />
+                </IconButton>,
+              ];
+        if (disableActions) {
+          actions = [];
+        }
         return [
           {
             value: formatDate(entry.getTimeDue()),
-            onClick: handleSetExtendedEditing(entry),
+            onClick: disableActions
+              ? undefined
+              : handleSetExtendedEditing(entry),
           },
           {
             value: entry.getSpiffToolId(),
-            onClick: handleSetExtendedEditing(entry),
+            onClick: disableActions
+              ? undefined
+              : handleSetExtendedEditing(entry),
           },
           {
             value: `${
@@ -795,19 +815,25 @@ export const SpiffTool: FC<Props> = ({
                 ? `${SPIFF_EXT[entry.getSpiffTypeId()] || ''} `
                 : ''
             }${entry.getBriefDescription()}`,
-            onClick: handleSetExtendedEditing(entry),
+            onClick: disableActions
+              ? undefined
+              : handleSetExtendedEditing(entry),
           },
           ...(type === 'Spiff'
             ? [
                 {
                   value: formatDate(entry.getDatePerformed()),
-                  onClick: handleSetExtendedEditing(entry),
+                  onClick: disableActions
+                    ? undefined
+                    : handleSetExtendedEditing(entry),
                 },
               ]
             : []),
           {
             value: isAdmin ? technicianValue : entry.getOwnerName(),
-            onClick: handleSetExtendedEditing(entry),
+            onClick: disableActions
+              ? undefined
+              : handleSetExtendedEditing(entry),
           },
           {
             value:
@@ -831,7 +857,9 @@ export const SpiffTool: FC<Props> = ({
           },
           {
             value: renderActionsList(entry.getActionsList()),
-            onClick: handleSetExtendedEditing(entry),
+            onClick: disableActions
+              ? undefined
+              : handleSetExtendedEditing(entry),
           },
           {
             value:
@@ -851,7 +879,9 @@ export const SpiffTool: FC<Props> = ({
               (type === 'Spiff'
                 ? entry.getSpiffAmount()
                 : entry.getToolpurchaseCost()),
-            onClick: handleSetExtendedEditing(entry),
+            onClick: disableActions
+              ? undefined
+              : handleSetExtendedEditing(entry),
             actions: type === 'Spiff' ? [] : actions,
           },
           ...(type === 'Spiff'
