@@ -136,7 +136,7 @@ export function PopoverGallery_DEPRECATED({
           container
           direction="column"
           alignItems="center"
-          justify="flex-start"
+          justifyContent="flex-start"
           wrap="nowrap"
           style={{ height: 600, width: 600 }}
         >
@@ -145,7 +145,7 @@ export function PopoverGallery_DEPRECATED({
               item
               container
               direction="row"
-              justify="space-evenly"
+              justifyContent="space-evenly"
               alignItems="center"
             >
               <Typography>{title}</Typography>
@@ -155,7 +155,7 @@ export function PopoverGallery_DEPRECATED({
             item
             container
             direction="row"
-            justify="space-evenly"
+            justifyContent="space-evenly"
             alignItems="center"
           >
             <Tooltip title="Download current image" placement="top">
@@ -209,7 +209,7 @@ export function PopoverGallery_DEPRECATED({
             <Grid
               container
               direction="column"
-              justify="center"
+              justifyContent="center"
               alignItems="center"
               style={{ height: '100%', width: '100%' }}
             >

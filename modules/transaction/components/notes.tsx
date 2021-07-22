@@ -75,7 +75,7 @@ export function TxnNotes({ text, onOpen, iconButton, disabled, notes }: props) {
           container
           direction="column"
           alignItems="center"
-          justify="flex-start"
+          justifyContent="flex-start"
           wrap="nowrap"
           style={{ maxWidth: 600, padding: 30 }}
         >

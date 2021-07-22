@@ -251,7 +251,7 @@ export class ServiceCallDetail extends React.PureComponent<props, state> {
             <Grid
               container
               direction="row"
-              justify="space-evenly"
+              justifyContent="space-evenly"
               wrap="nowrap"
             >
               <Grid container direction="column" style={{ padding: 5 }}>
@@ -382,7 +382,7 @@ export class ServiceCallDetail extends React.PureComponent<props, state> {
               <Grid
                 container
                 direction="column"
-                justify="space-between"
+                justifyContent="space-between"
                 style={{ padding: 5 }}
               >
                 <MuiPickersUtilsProvider utils={DateFnsUtils}>
@@ -490,7 +490,7 @@ export class ServiceCallDetail extends React.PureComponent<props, state> {
               container
               direction="row"
               alignItems="center"
-              justify="space-evenly"
+              justifyContent="space-evenly"
               wrap="nowrap"
             >
               <TextField
