@@ -6,11 +6,7 @@ import './equipment.less';
 import { Property } from '@kalos-core/kalos-rpc/Property';
 import { User } from '@kalos-core/kalos-rpc/User';
 import { Event } from '@kalos-core/kalos-rpc/Event';
-import { makeSafeFormObject } from '../../../../helpers';
-import {
-  ServiceItemClient,
-  ServiceItem,
-} from '@kalos-core/kalos-rpc/ServiceItem';
+import { ServiceItem } from '@kalos-core/kalos-rpc/ServiceItem';
 interface Props {
   userID: number;
   loggedUserId: number;
@@ -47,9 +43,10 @@ export const Equipment: FC<Props> = ({
     let selectedInitialRead = JSON.parse(
       localStorage.getItem(localStorageSelectedKey) || '[]',
     );
-    selectedInitial = selectedInitialRead.map((selected: any) => {
-      return makeSafeFormObject(selected, new ServiceItem());
-    });
+
+    selectedInitial = selectedInitialRead.map((selected: any) =>
+      Object.setPrototypeOf(selected, ServiceItem.prototype),
+    );
   } catch (e) {
     console.error(
       `An error occurred while parsing JSON from localStorage: ${e}`,
@@ -74,11 +71,7 @@ export const Equipment: FC<Props> = ({
   );
   const handleSetSelected = useCallback(
     (selected: ServiceItem[]) => {
-      let newSelected: ServiceItem[] = [];
-      selected.forEach(selectedItem => {
-        newSelected.push(makeSafeFormObject(selectedItem, new ServiceItem()));
-      });
-      setSelected(newSelected);
+      setSelected(selected);
       const localStorageKey = `SERVICE_CALL_EQUIPMENT_SELECTED_${serviceItem.getId()}`;
       localStorage.setItem(localStorageKey, JSON.stringify(selected));
     },
