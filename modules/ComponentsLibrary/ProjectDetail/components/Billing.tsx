@@ -16,6 +16,9 @@ import {
 import { Loader } from '../../../Loader/main';
 import { InfoTable } from '../../InfoTable';
 import { SectionBar } from '../../SectionBar';
+import { Event } from '@kalos-core/kalos-rpc/Event';
+import { Transaction } from '@kalos-core/kalos-rpc/Transaction';
+import { PerDiem } from '@kalos-core/kalos-rpc/PerDiem';
 
 export interface Props {
   serviceCallId: number;
@@ -24,10 +27,10 @@ export interface Props {
 export const BillingTab: FC<Props> = ({ serviceCallId }) => {
   const sizeOfText: Variant = 'subtitle1';
 
-  const [event, setEvent] = useState<EventType>();
-  const [transactions, setTransactions] = useState<TransactionType[]>([]);
-  const [perDiems, setPerDiems] = useState<PerDiemType[]>([]);
-  const [timesheets, setTimesheets] = useState<TimesheetLine.AsObject[]>();
+  const [event, setEvent] = useState<Event>();
+  const [transactions, setTransactions] = useState<Transaction[]>([]);
+  const [perDiems, setPerDiems] = useState<PerDiem[]>([]);
+  const [timesheets, setTimesheets] = useState<TimesheetLine[]>();
   const [lodgings, setLodgings] = useState<{ [key: number]: number }>({});
 
   const [totalHoursWorked, setTotalHoursWorked] = useState<number>();
@@ -45,9 +48,9 @@ export const BillingTab: FC<Props> = ({ serviceCallId }) => {
   }, [setEvent, setLoadingEvent, serviceCallId]);
 
   const loadPrintData = useCallback(async () => {
-    const { resultsList } = await PerDiemClientService.loadPerDiemsByEventId(
-      serviceCallId,
-    );
+    const resultsList = (
+      await PerDiemClientService.loadPerDiemsByEventId(serviceCallId)
+    ).getResultsList();
     const lodgings = await PerDiemClientService.loadPerDiemsLodging(
       resultsList,
     ); // first # is per diem id
@@ -59,7 +62,7 @@ export const BillingTab: FC<Props> = ({ serviceCallId }) => {
       );
     setTransactions(transactions);
     setTotalTransactions(
-      transactions.reduce((aggr, { amount }) => aggr + amount, 0),
+      transactions.reduce((aggr, t) => aggr + t.getAmount(), 0),
     );
     setPerDiems(resultsList);
   }, [
@@ -76,9 +79,7 @@ export const BillingTab: FC<Props> = ({ serviceCallId }) => {
       req.setEventId(serviceCallId);
 
       setTimesheets(
-        (await TimesheetLineClientService.BatchGet(req))
-          .getResultsList()
-          .map(line => line.toObject()),
+        (await TimesheetLineClientService.BatchGet(req)).getResultsList(),
       );
     } catch (err) {
       console.error(
@@ -86,24 +87,26 @@ export const BillingTab: FC<Props> = ({ serviceCallId }) => {
         err,
       );
     }
-  }, [setTimesheets]);
+  }, [setTimesheets, serviceCallId]);
 
   const calculateTotalHoursWorked = useCallback(() => {
     let total = 0;
-    timesheets?.forEach(timesheet => (total = total + timesheet.hoursWorked));
+    timesheets?.forEach(
+      timesheet => (total = total + timesheet.getHoursWorked()),
+    );
     setTotalHoursWorked(total);
-  }, [timesheets, setTotalHoursWorked]);
+  }, [timesheets]);
 
   const load = useCallback(() => {
     loadEvent();
     loadTimesheets();
     calculateTotalHoursWorked();
     loadPrintData();
-  }, []);
+  }, [loadEvent, loadTimesheets, calculateTotalHoursWorked, loadPrintData]);
 
   useEffect(() => {
     load();
-  }, []);
+  }, [load]);
 
   return loadingEvent ? (
     <Loader />
@@ -111,20 +114,30 @@ export const BillingTab: FC<Props> = ({ serviceCallId }) => {
     <>
       <SectionBar title="Project Details">
         <Typography variant={sizeOfText}>
-          {event?.property ? `Address: ${event.property.address}` : ''}
-        </Typography>
-        <Typography variant={sizeOfText}>
-          {event?.dateStarted
-            ? `Start Date: ${format(new Date(event.dateStarted), 'yyyy-MM-dd')}`
+          {event?.getProperty()
+            ? `Address: ${event.getProperty()?.getAddress()}`
             : ''}
         </Typography>
         <Typography variant={sizeOfText}>
-          {event?.dateEnded
-            ? `End Date: ${format(new Date(event.dateEnded), 'yyyy-MM-dd')}`
+          {event?.getDateStarted()
+            ? `Start Date: ${format(
+                new Date(event.getDateStarted()),
+                'yyyy-MM-dd',
+              )}`
             : ''}
         </Typography>
         <Typography variant={sizeOfText}>
-          {event?.logJobNumber ? `Job Number: ${event.logJobNumber}` : ''}
+          {event?.getDateEnded()
+            ? `End Date: ${format(
+                new Date(event.getDateEnded()),
+                'yyyy-MM-dd',
+              )}`
+            : ''}
+        </Typography>
+        <Typography variant={sizeOfText}>
+          {event?.getLogJobNumber()
+            ? `Job Number: ${event.getLogJobNumber()}`
+            : ''}
         </Typography>
       </SectionBar>
 
@@ -207,247 +220,80 @@ export const BillingTab: FC<Props> = ({ serviceCallId }) => {
               align: 'right',
             },
           ]}
-          data={transactions.map(
-            ({
-              department,
-              ownerName,
-              amount,
-              notes,
-              costCenter,
-              timestamp,
-              vendor,
-            }) => {
-              return [
-                {
-                  value: department ? (
-                    <>
-                      {department.classification} - {department.description}
-                    </>
-                  ) : (
-                    '-'
-                  ),
-                },
-                {
-                  value: ownerName,
-                },
-                {
-                  value: (
-                    <>
-                      {`${costCenter?.description}` + ' - '}
-                      <br />
-                      {vendor}
-                    </>
-                  ),
-                },
-                {
-                  value: formatDate(timestamp),
-                },
-                {
-                  value: usd(amount),
-                },
-                {
-                  value: notes,
-                },
-              ];
-            },
-          )}
+          data={transactions.map(t => {
+            return [
+              {
+                value: t.getDepartment() ? (
+                  <>
+                    {t.getDepartment()?.getClassification()} -{' '}
+                    {t.getDepartment()?.getDescription()}
+                  </>
+                ) : (
+                  '-'
+                ),
+              },
+              {
+                value: t.getOwnerName(),
+              },
+              {
+                value: (
+                  <>
+                    {`${t.getCostCenter()?.getDescription()}` + ' - '}
+                    <br />
+                    {t.getVendor()}
+                  </>
+                ),
+              },
+              {
+                value: formatDate(t.getTimestamp()),
+              },
+              {
+                value: usd(t.getAmount()),
+              },
+              {
+                value: t.getNotes(),
+              },
+            ];
+          })}
         />
       </SectionBar>
 
       <SectionBar title="Per Diems">
         {perDiems
-          .sort((a, b) => (a.dateSubmitted > b.dateSubmitted ? -1 : 1))
-          .map(
-            ({
-              id,
-              department,
-              ownerName,
-              dateSubmitted,
-              approvedByName,
-              dateApproved,
-              notes,
-              rowsList,
-            }) => {
-              const totalMeals = MEALS_RATE * rowsList.length;
-              const totalLodging = rowsList.reduce(
-                (aggr, { id, mealsOnly }) =>
-                  aggr + (mealsOnly ? 0 : lodgings[id]),
-                0,
-              );
-              if (totalMeals == 0 && totalLodging == 0) {
-                return <></>; // Don't show it
-              }
-              let perDiemString =
-                `Per Diem ${
-                  dateSubmitted.split(' ')[0] != NULL_TIME.split(' ')[0]
-                    ? `- ${dateSubmitted.split(' ')[0]}`
-                    : ''
-                }` + `${ownerName ? ` - ${ownerName}` : ''}`;
-              return (
-                <div key={id}>
-                  <SectionBar title={perDiemString} small />
-                  <InfoTable
-                    columns={[
-                      {
-                        name: 'Department',
-                        align: 'left',
-                      },
-                      {
-                        name: 'Owner',
-                        align: 'left',
-                      },
-                      {
-                        name: 'Submitted At',
-                        align: 'left',
-                      },
-                      {
-                        name: 'Approved By',
-                        align: 'left',
-                      },
-                      {
-                        name: 'Approved At',
-                        align: 'left',
-                      },
-                      {
-                        name: 'Total Meals',
-                        align: 'left',
-                      },
-                      {
-                        name: 'Total Lodging',
-                        align: 'left',
-                      },
-                      {
-                        name: 'Notes',
-                        align: 'right',
-                      },
-                    ]}
-                    data={[
-                      [
-                        {
-                          value:
-                            TimesheetDepartmentClientService.getDepartmentName(
-                              department!,
-                            ),
-                        },
-                        {
-                          value: ownerName,
-                        },
-                        {
-                          value:
-                            dateSubmitted != NULL_TIME
-                              ? formatDate(dateSubmitted)
-                              : '-' || '-',
-                        },
-                        {
-                          value: approvedByName || '-',
-                        },
-                        {
-                          value:
-                            dateApproved != NULL_TIME
-                              ? formatDate(dateApproved)
-                              : '-' || '-',
-                        },
-                        {
-                          value: usd(totalMeals),
-                        },
-                        {
-                          value: totalLodging != 0 ? usd(totalLodging) : '-',
-                        },
-                        {
-                          value: notes,
-                        },
-                      ],
-                    ]}
-                  />
-                  <SectionBar title="Per Diem Days" small />
-                  <InfoTable
-                    columns={[
-                      {
-                        name: 'Date',
-                        align: 'left',
-                      },
-                      {
-                        name: 'Zip Code',
-                        align: 'left',
-                      },
-                      {
-                        name: 'Meals Only',
-                        align: 'left',
-                      },
-                      {
-                        name: 'Meals',
-                        align: 'left',
-                      },
-                      {
-                        name: 'Lodging',
-                        align: 'left',
-                      },
-                      {
-                        name: 'Notes',
-                        align: 'right',
-                      },
-                    ]}
-                    data={rowsList.map(
-                      ({
-                        id,
-                        dateString,
-                        zipCode,
-                        mealsOnly,
-                        notes,
-                        perDiemId,
-                      }) => {
-                        return [
-                          {
-                            value: formatDate(dateString),
-                          },
-                          {
-                            value: zipCode,
-                          },
-                          {
-                            value: mealsOnly ? 'Yes' : 'No',
-                          },
-                          {
-                            value: usd(MEALS_RATE),
-                          },
-                          {
-                            value: lodgings[id] ? usd(lodgings[id]) : '-',
-                          },
-                          {
-                            value: notes,
-                          },
-                        ];
-                      },
-                    )}
-                  />
-                </div>
-              );
-            },
-          )}
-      </SectionBar>
-      <SectionBar title="Timesheet Lines">
-        {timesheets?.map(
-          ({
-            id,
-            departmentName,
-            timeStarted,
-            timeFinished,
-            adminApprovalUserName,
-            notes,
-            briefDescription,
-            technicianUserName,
-            technicianUserId,
-            hoursWorked,
-          }) => {
+          .sort((a, b) =>
+            a.getDateSubmitted() > b.getDateSubmitted() ? -1 : 1,
+          )
+          .map(pd => {
+            const rowsList = pd.getRowsList();
+            const totalMeals = MEALS_RATE * rowsList.length;
+            const totalLodging = rowsList.reduce(
+              (aggr, r) => aggr + (r.getMealsOnly() ? 0 : lodgings[r.getId()]),
+              0,
+            );
+            if (totalMeals == 0 && totalLodging == 0) {
+              return <></>; // Don't show it
+            }
+            let perDiemString =
+              `Per Diem ${
+                pd.getDateSubmitted().split(' ')[0] != NULL_TIME.split(' ')[0]
+                  ? `- ${pd.getDateSubmitted().split(' ')[0]}`
+                  : ''
+              }` + `${pd.getOwnerName() ? ` - ${pd.getOwnerName()}` : ''}`;
             return (
-              <div key={id}>
+              <div key={pd.getId()}>
+                <SectionBar title={perDiemString} small />
                 <InfoTable
                   columns={[
                     {
-                      name: 'Technician',
+                      name: 'Department',
                       align: 'left',
                     },
                     {
-                      name: 'Department',
+                      name: 'Owner',
+                      align: 'left',
+                    },
+                    {
+                      name: 'Submitted At',
                       align: 'left',
                     },
                     {
@@ -455,19 +301,15 @@ export const BillingTab: FC<Props> = ({ serviceCallId }) => {
                       align: 'left',
                     },
                     {
-                      name: 'Time Started',
+                      name: 'Approved At',
                       align: 'left',
                     },
                     {
-                      name: 'Time Finished',
+                      name: 'Total Meals',
                       align: 'left',
                     },
                     {
-                      name: 'Brief Description',
-                      align: 'left',
-                    },
-                    {
-                      name: 'Hours Worked',
+                      name: 'Total Lodging',
                       align: 'left',
                     },
                     {
@@ -478,41 +320,174 @@ export const BillingTab: FC<Props> = ({ serviceCallId }) => {
                   data={[
                     [
                       {
-                        value: technicianUserName + ` (${technicianUserId})`,
+                        value:
+                          TimesheetDepartmentClientService.getDepartmentName(
+                            pd.getDepartment()!,
+                          ),
                       },
                       {
-                        value: departmentName,
-                      },
-                      {
-                        value: adminApprovalUserName,
-                      },
-                      {
-                        value: formatDate(timeStarted) || '-',
-                      },
-                      {
-                        value: formatDate(timeFinished) || '-',
-                      },
-                      {
-                        value: briefDescription,
+                        value: pd.getOwnerName(),
                       },
                       {
                         value:
-                          hoursWorked != 0
-                            ? hoursWorked > 1
-                              ? `${hoursWorked} hrs`
-                              : `${hoursWorked} hr`
-                            : '-',
+                          pd.getDateSubmitted() != NULL_TIME
+                            ? formatDate(pd.getDateSubmitted())
+                            : '-' || '-',
                       },
                       {
-                        value: notes,
+                        value: pd.getApprovedByName() || '-',
+                      },
+                      {
+                        value:
+                          pd.getDateApproved() != NULL_TIME
+                            ? formatDate(pd.getDateApproved())
+                            : '-' || '-',
+                      },
+                      {
+                        value: usd(totalMeals),
+                      },
+                      {
+                        value: totalLodging != 0 ? usd(totalLodging) : '-',
+                      },
+                      {
+                        value: pd.getNotes(),
                       },
                     ],
                   ]}
                 />
+                <SectionBar title="Per Diem Days" small />
+                <InfoTable
+                  columns={[
+                    {
+                      name: 'Date',
+                      align: 'left',
+                    },
+                    {
+                      name: 'Zip Code',
+                      align: 'left',
+                    },
+                    {
+                      name: 'Meals Only',
+                      align: 'left',
+                    },
+                    {
+                      name: 'Meals',
+                      align: 'left',
+                    },
+                    {
+                      name: 'Lodging',
+                      align: 'left',
+                    },
+                    {
+                      name: 'Notes',
+                      align: 'right',
+                    },
+                  ]}
+                  data={rowsList.map(r => {
+                    return [
+                      {
+                        value: formatDate(r.getDateString()),
+                      },
+                      {
+                        value: r.getZipCode(),
+                      },
+                      {
+                        value: r.getMealsOnly() ? 'Yes' : 'No',
+                      },
+                      {
+                        value: usd(MEALS_RATE),
+                      },
+                      {
+                        value: lodgings[r.getId()]
+                          ? usd(lodgings[r.getId()])
+                          : '-',
+                      },
+                      {
+                        value: r.getNotes(),
+                      },
+                    ];
+                  })}
+                />
               </div>
             );
-          },
-        )}
+          })}
+      </SectionBar>
+      <SectionBar title="Timesheet Lines">
+        {timesheets?.map(tl => {
+          return (
+            <div key={tl.getId()}>
+              <InfoTable
+                columns={[
+                  {
+                    name: 'Technician',
+                    align: 'left',
+                  },
+                  {
+                    name: 'Department',
+                    align: 'left',
+                  },
+                  {
+                    name: 'Approved By',
+                    align: 'left',
+                  },
+                  {
+                    name: 'Time Started',
+                    align: 'left',
+                  },
+                  {
+                    name: 'Time Finished',
+                    align: 'left',
+                  },
+                  {
+                    name: 'Brief Description',
+                    align: 'left',
+                  },
+                  {
+                    name: 'Hours Worked',
+                    align: 'left',
+                  },
+                  {
+                    name: 'Notes',
+                    align: 'right',
+                  },
+                ]}
+                data={[
+                  [
+                    {
+                      value: tl.getTechnicianUserName(),
+                    },
+                    {
+                      value: tl.getDepartmentName(),
+                    },
+                    {
+                      value: tl.getAdminApprovalUserName(),
+                    },
+                    {
+                      value: formatDate(tl.getTimeStarted()) || '-',
+                    },
+                    {
+                      value: formatDate(tl.getTimeFinished()) || '-',
+                    },
+                    {
+                      value: tl.getBriefDescription(),
+                    },
+                    {
+                      value:
+                        tl.getHoursWorked() != 0
+                          ? tl.getHoursWorked() > 1
+                            ? `${tl.getHoursWorked()} hrs`
+                            : `${tl.getHoursWorked()} hr`
+                          : '-',
+                    },
+                    {
+                      value: tl.getNotes(),
+                    },
+                  ],
+                ]}
+              />
+            </div>
+          );
+        })}
       </SectionBar>
     </>
   );
