@@ -34,7 +34,7 @@ import { Spiffs } from './components/Spiffs';
 import { Confirm } from '../Confirm';
 import { GanttChart } from '../GanttChart';
 import { Loader } from '../../Loader/main';
-import { Typography } from '@material-ui/core';
+import Typography from '@material-ui/core/Typography';
 import { Alert } from '../Alert';
 import { ActivityLog } from '@kalos-core/kalos-rpc/ActivityLog';
 import { format } from 'date-fns';

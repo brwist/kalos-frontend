@@ -6,16 +6,13 @@ import { Form, Schema } from '../Form';
 import { AddressPair } from './Address';
 import { Alert } from '../Alert';
 import Typography from '@material-ui/core/Typography';
-
 import './styles.less';
 import { Loader } from '../../Loader/main';
-import {
-  FormControl,
-  FormHelperText,
-  InputLabel,
-  MenuItem,
-  Select,
-} from '@material-ui/core';
+import FormControl from '@material-ui/core/FormControl';
+import FormHelperText from '@material-ui/core/FormHelperText';
+import InputLabel from '@material-ui/core/InputLabel';
+import MenuItem from '@material-ui/core/MenuItem';
+import Select from '@material-ui/core/Select';
 import { PerDiem } from '@kalos-core/kalos-rpc/compiled-protos/perdiem_pb';
 import { SectionBar } from '../SectionBar';
 interface Props {
@@ -448,7 +445,8 @@ export class PlaceAutocompleteAddressForm extends React.PureComponent<
                               value={key.getId() + ' | ' + idx}
                               key={key.getId() + ' | ' + idx}
                             >
-                              {key.getDepartment()?.getValue()} | {key.getNotes()}
+                              {key.getDepartment()?.getValue()} |{' '}
+                              {key.getNotes()}
                             </MenuItem>
                           );
                         })

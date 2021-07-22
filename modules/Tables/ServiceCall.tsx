@@ -1,13 +1,11 @@
 import React from 'react';
 import { Event, EventClient } from '@kalos-core/kalos-rpc/Event';
-import {
-  Table,
-  Paper,
-  TableHead,
-  TableRow,
-  TableCell,
-  TableBody,
-} from '@material-ui/core';
+import Table from '@material-ui/core/Table';
+import Paper from '@material-ui/core/Paper';
+import TableHead from '@material-ui/core/TableHead';
+import TableRow from '@material-ui/core/TableRow';
+import TableCell from '@material-ui/core/TableCell';
+import TableBody from '@material-ui/core/TableBody';
 import { ENDPOINT } from '../../constants';
 import { PageWrapper, PageWrapperProps } from '../PageWrapper/main';
 
@@ -43,7 +41,7 @@ export class ServiceCallTable extends React.PureComponent<props, state> {
   }
 
   fetchCalls() {
-    return new Promise(async resolve => {
+    return new Promise<void>(async resolve => {
       const dateStr = this.getDateString();
       const reqObj = new Event();
       reqObj.setDateStarted(`${dateStr}%`);
@@ -91,7 +89,7 @@ export class ServiceCallTable extends React.PureComponent<props, state> {
             </TableHead>
             <TableBody>
               {this.state.list.map(row => (
-                <TableRow>
+                <TableRow key={`table_row_${row.id}`}>
                   <TableCell>
                     {row.timeStarted} - {row.timeEnded}
                   </TableCell>

@@ -1,5 +1,5 @@
 import React, { useState, useCallback } from 'react';
-import { useTheme } from '@material-ui/core/styles';
+import useTheme from '@material-ui/core/styles/useTheme';
 import useMediaQuery from '@material-ui/core/useMediaQuery';
 import ReactDOM from 'react-dom';
 import { StyledPage } from '../PageWrapper/styled';

@@ -1,5 +1,5 @@
 // this files ts-ignore lines have been checked
-import { createTheme } from '@material-ui/core';
+import createTheme from '@material-ui/core/styles/createTheme';
 import React from 'react';
 
 interface props {}

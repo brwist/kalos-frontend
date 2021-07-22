@@ -1,7 +1,7 @@
 // This is the module that allows for users to add logs with photos, etc uploaded with them
 // this files ts-ignore lines have been checked
 import { ActivityLog } from '@kalos-core/kalos-rpc/ActivityLog';
-import { Typography } from '@material-ui/core';
+import Typography from '@material-ui/core/Typography';
 import React, { FC, useCallback, useState } from 'react';
 import { LOG_IMAGE_BUCKET } from '../../../constants';
 import {
@@ -34,9 +34,8 @@ export const AddLog: FC<Props> = ({
   const [error, setError] = useState<string>('');
   const [saving, setSaving] = useState<boolean>();
   const [confirmed, setConfirmed] = useState<boolean>(); // For if the image is confirmed to be uploaded as well
-  const [fileData, setFileData] = useState<
-    { fileData: string; fileName: string } | undefined
-  >();
+  const [fileData, setFileData] =
+    useState<{ fileData: string; fileName: string } | undefined>();
 
   const handleSetError = useCallback(
     (err: string) => setError(err),
