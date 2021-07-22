@@ -11,6 +11,7 @@ import CloseTwoTone from '@material-ui/icons/CloseTwoTone';
 import ImageSearchTwoTone from '@material-ui/icons/ImageSearchTwoTone';
 import CircularProgress from '@material-ui/core/CircularProgress';
 import { S3Client } from '@kalos-core/kalos-rpc/S3File';
+import { getMimeType } from '@kalos-core/kalos-rpc/Common';
 import { ENDPOINT } from '../../constants';
 
 interface props {
@@ -95,7 +96,7 @@ export function Gallery({
       if (img.uri) {
         return img.uri;
       } else {
-        const mimeType = S3.getMimeType(img.name);
+        const mimeType = getMimeType(img.name);
         return `data:${mimeType};base64,${img.data}`;
       }
     }
@@ -124,7 +125,7 @@ export function Gallery({
   const getHREF = () => {
     const img = fileList[activeImage];
     const blob = new Blob([img.data!], {
-      type: S3.getMimeType(img.name) || '.png',
+      type: getMimeType(img.name) || '.png',
     });
     console.log(img);
     return URL.createObjectURL(blob);
@@ -171,14 +172,14 @@ export function Gallery({
           container
           direction="column"
           alignItems="stretch"
-          justify="flex-start"
+          justifyContent="flex-start"
           wrap="nowrap"
         >
           <Grid
             container
             item
             direction="row"
-            justify="space-evenly"
+            justifyContent="space-evenly"
             alignItems="center"
           >
             {title && <Typography>{title}</Typography>}
@@ -214,7 +215,7 @@ export function Gallery({
               item
               container
               direction="column"
-              justify="center"
+              justifyContent="center"
               alignItems="stretch"
               style={{
                 overflow: 'scroll',
@@ -248,7 +249,7 @@ export function Gallery({
             <Grid
               container
               direction="column"
-              justify="center"
+              justifyContent="center"
               alignItems="center"
               style={{ height: imgHeight, width: '100%' }}
             >
@@ -259,7 +260,7 @@ export function Gallery({
             container
             item
             direction="row"
-            justify="center"
+            justifyContent="center"
             alignItems="center"
           >
             <Button

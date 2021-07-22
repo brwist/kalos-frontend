@@ -5,7 +5,7 @@ import customTheme from '../Theme/main';
 import './styles.less';
 
 export const StyledPage: FC = ({ children }) => (
-  <StylesProvider injectFirst>
+  <StylesProvider>
     <ThemeProvider theme={customTheme.lightTheme}>{children}</ThemeProvider>
   </StylesProvider>
 );
