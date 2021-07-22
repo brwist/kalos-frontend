@@ -59,11 +59,14 @@ export const CostSummary: FC<Props> = ({
   username,
 }) => {
   const [totalHoursProcessed, setTotalHoursProcessed] = useState<number>(0);
-
   const [totalSpiffsWeekly, setTotalSpiffsWeekly] = useState<number>(0);
-  const [spiffsWeekly, setSpiffsWeekly] = useState<Task[]>();
-  const [totalPTO, setTotalPTO] = useState<number>(0);
   const [perDiems, setPerDiems] = useState<PerDiem[]>([]);
+  const [govPerDiems, setGovPerDiems] = useState<{
+    [key: string]: {
+      meals: number;
+      lodging: number;
+    };
+  }>({});
   const [trips, setTrips] = useState<Trip[]>();
   const [loaded, setLoaded] = useState<boolean>(false);
   const today = new Date();
@@ -189,6 +192,7 @@ export const CostSummary: FC<Props> = ({
       year,
       month,
     );
+    setGovPerDiems(govPerDiemsTemp);
     let processed = 0;
     let filteredPerDiems = resultsList;
     if (resultsList.length > 0) {
@@ -446,45 +450,7 @@ export const CostSummary: FC<Props> = ({
       }
     },
     [userId],
-  ); /*
-  const getTimeoffTotals = useCallback(async () => {
-    const startDate = format(startDay, 'yyyy-MM-dd');
-    const endDate = format(endDay, 'yyyy-MM-dd');
-    const filter = {
-      technicianUserID: userId,
-      requestType: notReady ? 10 : 9,
-      startDate: startDate,
-      endDate: endDate,
-      payrollProcessed: true,
-    };
-    const results = (
-      await TimeoffRequestClientService.loadTimeoffRequests(filter)
-    ).resultsList;
-    let total = 0;
-    for (let i = 0; i < results.length; i++) {
-      if (results[i].allDayOff === 0) {
-        const timeFinished = results[i].timeFinished;
-        const timeStarted = results[i].timeStarted;
-        const subtotal = roundNumber(
-          differenceInMinutes(parseISO(timeFinished), parseISO(timeStarted)) /
-            60,
-        );
-
-        total += subtotal;
-      } else {
-        const timeFinished = results[i].timeFinished;
-        const timeStarted = results[i].timeStarted;
-        const numberOfDays =
-          differenceInCalendarDays(
-            parseISO(timeFinished),
-            parseISO(timeStarted),
-          ) + 1;
-        total += numberOfDays * 8;
-      }
-    }
-    return total;
-  }, [userId, notReady, endDay, startDay]);
-  */
+  );
   const getProcessedHoursTotals = useCallback(async () => {
     const timesheetReq = new TimesheetLine();
     timesheetReq.setTechnicianUserId(userId);
@@ -562,18 +528,49 @@ export const CostSummary: FC<Props> = ({
       tripData: tempTrips,
       perDiemData: tempPerDiem,
     });
-
+    function govPerDiemByZipCode(zipCode: string) {
+      const govPerDiem = govPerDiems[zipCode];
+      if (govPerDiem) return govPerDiem;
+      return {
+        meals: MEALS_RATE,
+        lodging: 0,
+      };
+    }
     tempPerDiem.processed = 1;
     tempTrips.processed = true;
     tempTrips.totalDistance = 0;
     tempPerDiem.totalLodging = 0;
     tempPerDiem.totalMeals = 0;
     for (let i = 0; i < perDiems.length; i++) {
+      let totalMeals = perDiems[i]
+        .getRowsList()
+        .reduce(
+          (aggr, pdr) => aggr + govPerDiemByZipCode(pdr.getZipCode()).meals,
+          0,
+        );
+      let totalLodging = perDiems[i]
+        .getRowsList()
+        .reduce(
+          (aggr, pdr) =>
+            aggr +
+            (pdr.getMealsOnly()
+              ? 0
+              : govPerDiemByZipCode(pdr.getZipCode()).lodging),
+          0,
+        );
       let req = new PerDiem();
       req.setId(perDiems[i].getId());
       req.setPayrollProcessed(true);
-      req.setFieldMaskList(['PayrollProcessed', 'DateProcessed']);
+      req.setAmountProcessedLodging(totalLodging);
+      req.setAmountProcessedMeals(totalMeals);
+      req.setFieldMaskList([
+        'PayrollProcessed',
+        'DateProcessed',
+        'AmountProcessedLodging',
+        'AmountProcessedMeals',
+      ]);
       req.setDateProcessed(timestamp());
+
       await PerDiemClientService.Update(req);
     }
     if (trips && trips.length > 0) {

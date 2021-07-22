@@ -208,7 +208,7 @@ export const Payroll: FC<Props> = ({ userID }) => {
             })),
         ],
       },
-      ...(role === 'Manager'
+      ...(role === 'Manager' || role === 'Payroll'
         ? [
             {
               name: 'week' as const,
@@ -225,7 +225,7 @@ export const Payroll: FC<Props> = ({ userID }) => {
   let isTimesheet = true;
   let isTimeoffRequests = true;
   let isSpiffs = true;
-  let isEmployeeReport = false;
+  let isEmployeeReport = true;
   let isToolLogs = true;
   let isPerDiem = true;
   let isTrips = true;
