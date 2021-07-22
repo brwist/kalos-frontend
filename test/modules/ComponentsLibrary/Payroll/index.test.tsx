@@ -175,7 +175,7 @@ describe('ComponentsLibrary', () => {
           wrapper.update();
           Chai.expect(
             wrapper.find({ label: 'Employee Report' }),
-          ).to.be.lengthOf(0);
+          ).to.be.lengthOf(2);
         });
 
         describe('switching tab', () => {
