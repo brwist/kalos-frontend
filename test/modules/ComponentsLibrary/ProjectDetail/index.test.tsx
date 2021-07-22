@@ -20,44 +20,45 @@ import Chai = require('chai');
 
 import Stubs = require('../../../test-setup/stubs'); // ? Sets the auth token up in a one-liner
 
-describe('ComponentsLibrary', () => {
-  describe('ProjectDetail', () => {
-    describe('<ProjectDetail userID={2573} loggedUserId={101253} propertyId={0} />', () => {
-      before(async () => {
-        let olbinski = new User.User();
-        olbinski.setId(2573);
-        olbinski.setFirstname('Krzysztof'); // So glad I had the database open with his name there
-        olbinski.setLastname('Olbinski');
-        let newPG = new UserProto.PermissionGroup();
-        newPG.setType('role');
-        newPG.setName('Payroll');
-        olbinski.setPermissionGroupsList([newPG]);
-        Stubs.setupStubs('UserClientService', 'loadUserById', olbinski, 2573);
-      });
-      after(() => {
-        Stubs.restoreStubs();
-      });
-      let wrapper: any;
-      beforeEach(() => {
-        console.log('Mounting');
-        wrapper = Enzyme.mount(
-          <ProjectDetailModule.ProjectDetail
-            userID={2573}
-            loggedUserId={101253}
-            propertyId={0}
-          />,
-        );
-        console.log('Done mounting');
-      });
-      afterEach(() => {
-        wrapper.unmount();
-      });
+// ? Commented because it isn't quite set up yet and does send requests to the dev server
+// describe('ComponentsLibrary', () => {
+//   describe('ProjectDetail', () => {
+//     describe('<ProjectDetail userID={2573} loggedUserId={101253} propertyId={0} />', () => {
+//       before(async () => {
+//         let olbinski = new User.User();
+//         olbinski.setId(2573);
+//         olbinski.setFirstname('Krzysztof'); // So glad I had the database open with his name there
+//         olbinski.setLastname('Olbinski');
+//         let newPG = new UserProto.PermissionGroup();
+//         newPG.setType('role');
+//         newPG.setName('Payroll');
+//         olbinski.setPermissionGroupsList([newPG]);
+//         Stubs.setupStubs('UserClientService', 'loadUserById', olbinski, 2573);
+//       });
+//       after(() => {
+//         Stubs.restoreStubs();
+//       });
+//       let wrapper: any;
+//       beforeEach(() => {
+//         console.log('Mounting');
+//         wrapper = Enzyme.mount(
+//           <ProjectDetailModule.ProjectDetail
+//             userID={2573}
+//             loggedUserId={101253}
+//             propertyId={0}
+//           />,
+//         );
+//         console.log('Done mounting');
+//       });
+//       afterEach(() => {
+//         wrapper.unmount();
+//       });
 
-      it('renders a "Customer / Property Details" title', () => {
-        Chai.expect(
-          wrapper.find({ title: 'Customer / Property Details' }),
-        ).to.be.lengthOf(1);
-      });
-    });
-  });
-});
+//       it('renders a "Customer / Property Details" title', () => {
+//         Chai.expect(
+//           wrapper.find({ title: 'Customer / Property Details' }),
+//         ).to.be.lengthOf(1);
+//       });
+//     });
+//   });
+// });
