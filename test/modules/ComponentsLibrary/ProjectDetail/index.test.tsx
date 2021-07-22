@@ -3,37 +3,32 @@ export {};
 /* eslint-disable react/jsx-key */
 // ! Disabled key errors in ESLint because they incorrectly label the elements within certain expectations as needing keys when they don't and will not work with keys
 
-const GetPathFromName =
-  require('../../../test-constants/constants').GetPathFromName;
+import Constants = require('../../../test-constants/constants');
 
-const { User } = require('@kalos-core/kalos-rpc/User');
+import User = require('@kalos-core/kalos-rpc/User');
 
-const ProjectDetail = require(GetPathFromName(
-  'ProjectDetail',
-  'ComponentsLibrary',
-)).ProjectDetail;
+import ProjectDetailModule = require('../../../../modules/ComponentsLibrary/ProjectDetail/index');
 
-const Loader = require(`../../../../modules/Loader/main`).Loader;
+import LoaderModule = require('../../../../modules/Loader/main');
 
-const PermissionGroup =
-  require(`@kalos-core/kalos-rpc/compiled-protos/user_pb`).PermissionGroup;
+import UserProto = require('@kalos-core/kalos-rpc/compiled-protos/user_pb');
 
-const React = require('react');
-const mount = require('enzyme').mount;
+import React = require('react');
+import Enzyme = require('enzyme');
 
-const expect = require('chai').expect;
+import Chai = require('chai');
 
-const Stubs = require('../../../test-setup/stubs'); // ? Sets the auth token up in a one-liner
+import Stubs = require('../../../test-setup/stubs'); // ? Sets the auth token up in a one-liner
 
 describe('ComponentsLibrary', () => {
   describe('ProjectDetail', () => {
     describe('<ProjectDetail userID={2573} loggedUserId={101253} propertyId={0} />', () => {
       before(async () => {
-        let olbinski = new User();
+        let olbinski = new User.User();
         olbinski.setId(2573);
         olbinski.setFirstname('Krzysztof'); // So glad I had the database open with his name there
         olbinski.setLastname('Olbinski');
-        let newPG = new PermissionGroup();
+        let newPG = new UserProto.PermissionGroup();
         newPG.setType('role');
         newPG.setName('Payroll');
         olbinski.setPermissionGroupsList([newPG]);
@@ -43,10 +38,14 @@ describe('ComponentsLibrary', () => {
         Stubs.restoreStubs();
       });
       let wrapper: any;
-      beforeEach(async () => {
+      beforeEach(() => {
         console.log('Mounting');
-        wrapper = await mount(
-          <ProjectDetail userID={2573} loggedUserId={101253} propertyId={0} />,
+        wrapper = Enzyme.mount(
+          <ProjectDetailModule.ProjectDetail
+            userID={2573}
+            loggedUserId={101253}
+            propertyId={0}
+          />,
         );
         console.log('Done mounting');
       });
@@ -55,7 +54,7 @@ describe('ComponentsLibrary', () => {
       });
 
       it.only('renders a "Customer / Property Details" title', () => {
-        expect(
+        Chai.expect(
           wrapper.find({ title: 'Customer / Property Details' }),
         ).to.be.lengthOf(1);
       });
