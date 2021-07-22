@@ -53,7 +53,7 @@ describe('ComponentsLibrary', () => {
         wrapper.unmount();
       });
 
-      it.only('renders a "Customer / Property Details" title', () => {
+      it('renders a "Customer / Property Details" title', () => {
         Chai.expect(
           wrapper.find({ title: 'Customer / Property Details' }),
         ).to.be.lengthOf(1);
