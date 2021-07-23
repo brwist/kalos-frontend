@@ -85,17 +85,12 @@ export const TimesheetSummary: FC<Props> = ({
     [setPendingPayrollReject],
   );
   const [mappedElements, setMappedElements] = useState<JSX.Element[]>();
-  const [
-    togglePendingApprovalAlert,
-    setTogglePendingApprovalAlert,
-  ] = useState<boolean>();
-  const [
-    togglePendingSubmitAlert,
-    setTogglePendingSubmitAlert,
-  ] = useState<boolean>();
-  const [mappedElementsNoJobs, setMappedElementsNoJobs] = useState<
-    JSX.Element[]
-  >();
+  const [togglePendingApprovalAlert, setTogglePendingApprovalAlert] =
+    useState<boolean>();
+  const [togglePendingSubmitAlert, setTogglePendingSubmitAlert] =
+    useState<boolean>();
+  const [mappedElementsNoJobs, setMappedElementsNoJobs] =
+    useState<JSX.Element[]>();
   const [today, setToday] = useState<Date>(new Date());
   const [startDay, setStartDay] = useState<Date>(
     startOfWeek(subDays(today, 7), { weekStartsOn: 6 }),
@@ -107,9 +102,8 @@ export const TimesheetSummary: FC<Props> = ({
     tempDayList.push([format(addDays(startDay, i), 'yyyy-MM-dd')]);
   }
   const [dayList, setDayList] = useState<string[][]>(tempDayList);
-  const [subTotalDayList, setSubTotalDayList] = useState<string[][]>(
-    tempDayList,
-  );
+  const [subTotalDayList, setSubTotalDayList] =
+    useState<string[][]>(tempDayList);
   const formatDateFns = (date: Date) => format(date, 'yyyy-MM-dd');
   const getTimeoff = useCallback(async () => {
     const startDate = format(startDay, 'yyyy-MM-dd');
@@ -370,7 +364,6 @@ export const TimesheetSummary: FC<Props> = ({
     let jobReports = [];
     let weekList = [];
     let tempJobs = await getTimesheetTotals();
-    console.log(tempJobs);
     let jobNumber = '0';
 
     if (tempJobs != undefined) {

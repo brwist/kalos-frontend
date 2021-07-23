@@ -44,3 +44,7 @@ The structure of folders inside of the test folder should mimic the project's la
 If importing a module, for example Event, try to name it "EventModule" (putting Module after the module name) unless importing from a protobuffer.
 
 If importing from a protobuffer, for example user_pb.d.ts, try to name it "UserProto" (putting Proto after the module name).
+
+# General Tips
+
+If you cannot stub a certain server call with Sinon and cannot figure out why, check to see if the call is try-catched in the relevant module. If it isn't, that may clue you in on issues (we should strive to have full try-catch error handling in our modules anyway).

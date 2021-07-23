@@ -7,6 +7,8 @@ import Constants = require('../../../test-constants/constants');
 
 import User = require('@kalos-core/kalos-rpc/User');
 
+import EventModule = require('@kalos-core/kalos-rpc/Event');
+
 import ProjectDetailModule = require('../../../../modules/ComponentsLibrary/ProjectDetail/index');
 
 import LoaderModule = require('../../../../modules/Loader/main');
@@ -34,6 +36,25 @@ describe('ComponentsLibrary', () => {
         newPG.setName('Payroll');
         olbinski.setPermissionGroupsList([newPG]);
         Stubs.setupStubs('UserClientService', 'loadUserById', olbinski, 2573);
+
+        let projectsReq = new EventModule.Event();
+        projectsReq.setNotEqualsList(['DepartmentId']);
+        projectsReq.setPageNumber(0);
+        projectsReq.setOrderBy('date_started');
+        projectsReq.setOrderDir('ASC');
+        projectsReq.setWithoutLimit(true);
+
+        let projectsRes = new EventModule.Event();
+        projectsRes.setId(86246);
+        projectsRes.setName('Test Event');
+        projectsRes.setDescription('Testing this out');
+        projectsRes.setDateStarted('2020-01-12 00:00:00');
+        projectsRes.setDateEnded('2021-08-01 00:00:00');
+
+        let projectsResList = new EventModule.EventList();
+        projectsResList.setResultsList([projectsRes]);
+
+        Stubs.setupStubs('EventClientService', 'BatchGet', projectsResList);
       });
       after(() => {
         Stubs.restoreStubs();
