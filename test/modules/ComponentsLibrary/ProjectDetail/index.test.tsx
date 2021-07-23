@@ -108,6 +108,11 @@ describe('ComponentsLibrary', () => {
           wrapper.containsAllMatchingElements([<LoaderModule.Loader />]),
         ).to.be.equal(true);
       });
+
+      it('renders a "General" tab', async () => {
+        await new Promise(res => setTimeout(res, 1));
+        Chai.expect(wrapper.find({ label: 'General' })).to.have.lengthOf(2);
+      });
     });
   });
 });
