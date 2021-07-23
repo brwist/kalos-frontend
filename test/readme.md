@@ -48,3 +48,7 @@ If importing from a protobuffer, for example user_pb.d.ts, try to name it "UserP
 # General Tips
 
 If you cannot stub a certain server call with Sinon and cannot figure out why, check to see if the call is try-catched in the relevant module. If it isn't, that may clue you in on issues (we should strive to have full try-catch error handling in our modules anyway).
+
+Sometimes module wrappers need to be updated over time, for that I have been using this one-liner inside of an "it" function: `await new Promise(res => setTimeout(res, 1));`. I will likely come up with a more elegant solution eventually.
+
+I will be utilizing Test Driven Development with future modules I produce, you should look into it! It may interest you and fit your style as well :)
