@@ -252,9 +252,8 @@ export const SpiffToolLogEdit: FC<Props> = ({
     </body>`;
       const email = new SQSEmail();
       email.setBody(body);
-      email.setSubject('Spiff Update');
+      email.setSubject(`Spiff ${data.getSpiffJobNumber()} Update`);
       email.setTo(taskUser.getEmail());
-      console.log(email);
       const emailClient = new EmailClient(ENDPOINT);
       await emailClient.SendSQSMail(email);
     },

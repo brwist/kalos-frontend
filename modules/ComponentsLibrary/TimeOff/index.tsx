@@ -28,6 +28,7 @@ import { OPTION_BLANK, ENDPOINT } from '../../../constants';
 import { EmailClient, EmailConfig } from '@kalos-core/kalos-rpc/Email';
 import { User } from '@kalos-core/kalos-rpc/User';
 import { PTO, TimeoffRequest } from '@kalos-core/kalos-rpc/TimeoffRequest';
+import { datePickerDefaultProps } from '@material-ui/pickers/constants/prop-types';
 
 export interface Props {
   loggedUserId: number;
@@ -174,10 +175,10 @@ export const TimeOff: FC<Props> = ({
       init();
     }
   }, [initiated, init]);
-  const toggleDeleting = useCallback(
-    () => setDeleting(!deleting),
-    [deleting, setDeleting],
-  );
+  const toggleDeleting = useCallback(() => setDeleting(!deleting), [
+    deleting,
+    setDeleting,
+  ]);
   const handleSubmit = useCallback(
     async (formData: TimeoffRequest) => {
       setError('');
@@ -186,6 +187,9 @@ export const TimeOff: FC<Props> = ({
       const requestType = temp.getRequestType();
       const timeStarted = temp.getTimeStarted();
       const timeFinished = temp.getTimeFinished();
+      if (temp.getAllDayOff() === null) {
+        temp.setAllDayOff(0);
+      }
       const userId = user?.getId();
       if (timeFinished < timeStarted) {
         setError('End Time cannot be before Start Time');
@@ -196,9 +200,13 @@ export const TimeOff: FC<Props> = ({
 
       temp.setUserApprovalDatetime(timestamp());
       let newData = new TimeoffRequest();
-      if (data.getId() === 0) {
+      console.log({ temp });
+      console.log({ data });
+      if (data.getId() === 0 || data.getId().toString() === '') {
+        console.log('create');
         newData = await TimeoffRequestClientService.Create(temp);
       } else {
+        console.log('update');
         newData = await TimeoffRequestClientService.Update(temp);
       }
       const typeName = typeOptions.find(
@@ -264,7 +272,7 @@ export const TimeOff: FC<Props> = ({
       setFormKey,
       formKey,
       loggedUserId,
-      data
+      data,
     ],
   );
 
@@ -286,16 +294,39 @@ export const TimeOff: FC<Props> = ({
     ]);
 
     let newData = new TimeoffRequest();
-    if (data.getId() === 0) {
+    if (data.getId() === 0 || data.getId().toString() === '') {
       newData = await TimeoffRequestClientService.Create(req);
     } else {
-      await TimeoffRequestClientService.Update(req);
+      newData = await TimeoffRequestClientService.Update(req);
+      const emailBody = getTimeoffRequestStatusEmail(
+        `${loggedUser!.getFirstname()} ${loggedUser!.getLastname()}`,
+        req.getAdminComments(),
+        req.getRequestStatus() === 1 ? 'Approved' : 'Not Approved',
+
+        `${data.getTimeStarted()} -${data.getTimeFinished()}`,
+      );
+      //@ts-ignore
+      const config: EmailConfig = {
+        type: 'timeoff',
+        subject: 'Timeoff Status Update',
+        body: emailBody,
+        recipient: user!.getEmail(),
+      };
+      await emailClient.sendMail(config);
     }
     setData(newData);
     if (onAdminSubmit) {
       onAdminSubmit(newData);
     }
-  }, [data, onAdminSubmit, setData, loggedUserId]);
+  }, [
+    data,
+    onAdminSubmit,
+    emailClient,
+    loggedUser,
+    user,
+    setData,
+    loggedUserId,
+  ]);
   const handleDelete = useCallback(async () => {
     if (requestOffId) {
       setSaving(true);
@@ -462,7 +493,7 @@ export const TimeOff: FC<Props> = ({
         disabled={!initiated || saving}
         submitLabel={data.getId() ? 'Delete' : 'Save'}
         cancelLabel={cancelLabel}
-        submitDisabled={submitDisabled || !!data.getAdminApprovalUserId()}
+        submitDisabled={submitDisabled}
         error={error}
       />
       {deleting && (
@@ -519,6 +550,36 @@ const getTimeoffRequestEmail = function getTimeoffRequestEmail(
       <tr>
         <a href="http://app.kalosflorida.com/index.cfm?action=admin:timesheet.addtimeoffrequest&rid=${requestID}">
         Click here to review the request
+        </a>
+      </tr>
+    </tbody>
+  </table>
+</body>`;
+};
+const getTimeoffRequestStatusEmail = function getTimeoffRequestStatusEmail(
+  adminUserName: string,
+  adminNotes: string,
+  status: string,
+  date: string,
+) {
+  return `
+<body>
+  <strong>${adminUserName} has approved a timeoff request</strong>
+  <table style="width:70%;">
+    <thead>
+      <tr>
+        <th style="text-align:left;">Date</th>
+        <th style="text-align:left;">Status/th>
+        ${adminNotes !== '' ? '<th style="text-align:left;">Notes</th>' : ''}
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td>${date}</td>
+        <td>${status}</td>
+        ${adminNotes !== '' ? `<td>${adminNotes}</td>` : ''}
+      </tr>
+      <tr>
         </a>
       </tr>
     </tbody>
