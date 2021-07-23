@@ -13,6 +13,7 @@ import ProjectDetailModule = require('../../../../modules/ComponentsLibrary/Proj
 import LoaderModule = require('../../../../modules/Loader/main');
 
 import UserProto = require('@kalos-core/kalos-rpc/compiled-protos/user_pb');
+import TimesheetDepartmentProto = require('@kalos-core/kalos-rpc/TimesheetDepartment');
 
 import React = require('react');
 import Enzyme = require('enzyme');
@@ -47,8 +48,16 @@ describe('ComponentsLibrary', () => {
         projectsRes.setId(86246);
         projectsRes.setName('Test Event');
         projectsRes.setDescription('Testing this out');
-        projectsRes.setDateStarted('2020-01-12 00:00:00');
-        projectsRes.setDateEnded('2021-08-01 00:00:00');
+        projectsRes.setDateStarted('2020-01-12 01:01:00');
+        projectsRes.setDateEnded('2021-08-01 12:01:00');
+        projectsRes.setIsActive(1);
+        projectsRes.setNotes('This is a test project');
+        projectsRes.setPropertyId(256);
+        projectsRes.setDateUpdated('2020-01-12 00:00:00');
+        projectsRes.setIsAllDay(0);
+        projectsRes.setIsLmpc(0);
+        projectsRes.setIsResidential(0);
+        projectsRes.setParentId(114);
 
         let projectsResList = new EventModule.EventList();
         projectsResList.setResultsList([projectsRes]);
@@ -77,8 +86,35 @@ describe('ComponentsLibrary', () => {
         let eventRes = new EventModule.Event();
         eventRes.setId(0);
         eventRes.setName('Testing project #1');
+        eventRes.setDepartmentId(100);
+        eventRes.setDescription('Testing this out');
+        eventRes.setDateStarted('2020-01-12 01:01:00');
+        eventRes.setDateEnded('2021-08-01 12:01:00');
+        eventRes.setIsActive(1);
+        eventRes.setNotes('This is a test project');
+        eventRes.setPropertyId(256);
+        eventRes.setDateUpdated('2020-01-12 00:00:00');
+        eventRes.setIsAllDay(0);
+        eventRes.setIsLmpc(0);
+        eventRes.setIsResidential(0);
+        eventRes.setParentId(114);
 
         Stubs.setupStubs('EventClientService', 'Get', eventRes, eventReq);
+
+        let tdReq = new TimesheetDepartmentProto.TimesheetDepartment();
+        tdReq.setId(100);
+
+        let tdRes = new TimesheetDepartmentProto.TimesheetDepartment();
+        tdRes.setId(100);
+        tdRes.setDescription('Test');
+        tdRes.setValue('A test timesheet department');
+
+        Stubs.setupStubs(
+          'TimesheetDepartmentClientService',
+          'Get',
+          tdReq,
+          tdRes,
+        );
       });
       after(() => {
         Stubs.restoreStubs();
@@ -132,6 +168,17 @@ describe('ComponentsLibrary', () => {
       it('renders a "Create" tab', async () => {
         await new Promise(res => setTimeout(res, 1));
         Chai.expect(wrapper.find({ label: 'Create' })).to.have.lengthOf(2);
+      });
+
+      describe('Customer / Property Details Info Table', async () => {
+        it('displays the proper customer name', async () => {
+          await new Promise(res => setTimeout(res, 1000));
+          wrapper.update();
+
+          Chai.expect(
+            wrapper.find('.InfoTableValueContent').first().text(),
+          ).to.be.equal('Krzysztof Olbinski');
+        });
       });
     });
   });

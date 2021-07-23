@@ -116,7 +116,7 @@ export const ProjectDetail: FC<Props> = props => {
     try {
       let promises = [];
 
-      let projectGotten: Event;
+      let projectGotten: Event | undefined;
 
       promises.push(
         new Promise<void>(async resolve => {
@@ -161,6 +161,7 @@ export const ProjectDetail: FC<Props> = props => {
               );
             }
 
+            projectGotten = response;
             setProject(response);
             resolve();
           } catch (err) {
@@ -497,7 +498,6 @@ export const ProjectDetail: FC<Props> = props => {
       },
     ],
   ];
-
   return (
     <div>
       <SectionBar title={'Customer / Property Details'} actions={[]}>
