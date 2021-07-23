@@ -201,7 +201,7 @@ export const customerItems = (toggleMenu: () => void): MenuItem[] => [
   {
     title: 'Contact Us',
     icon: <ContactPhoneIcon />,
-    href: 'http://www.kalosflorida.com/contacts/',
+    href: 'http://www.kalosflorida.com/contact/',
     target: '_blank',
   },
   logoutItem,
