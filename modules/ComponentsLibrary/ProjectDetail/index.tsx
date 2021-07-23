@@ -139,11 +139,28 @@ export const ProjectDetail: FC<Props> = props => {
       );
 
       promises.push(
-        new Promise<void>(async resolve => {
+        new Promise<void>(async (resolve, reject) => {
           try {
             let req = new Event();
             req.setId(serviceCallId);
-            const response = await EventClientService.Get(req);
+            let response: Event | undefined;
+            try {
+              response = await EventClientService.Get(req);
+            } catch (err) {
+              console.error(
+                `An error occurred while getting an event from the event client service: ${err}`,
+              );
+            }
+
+            if (!response) {
+              console.error(
+                'No response was given to the event client service, so no project is being set with SetProject. Rejecting.',
+              );
+              reject(
+                'No response was given to the event client service, so no project is being set with SetProject.',
+              );
+            }
+
             setProject(response);
             resolve();
           } catch (err) {
@@ -213,11 +230,13 @@ export const ProjectDetail: FC<Props> = props => {
 
       Promise.all(promises).then(async () => {
         try {
-          let req = new TimesheetDepartment();
-          req.setId(projectGotten!.getDepartmentId());
-          const timesheetDepartment =
-            await TimesheetDepartmentClientService.Get(req);
-          setTimesheetDepartment(timesheetDepartment);
+          if (projectGotten) {
+            let req = new TimesheetDepartment();
+            req.setId(projectGotten!.getDepartmentId());
+            const timesheetDepartment =
+              await TimesheetDepartmentClientService.Get(req);
+            setTimesheetDepartment(timesheetDepartment);
+          }
         } catch (err) {
           console.error(
             'An error occurred while getting the timesheet department: ',

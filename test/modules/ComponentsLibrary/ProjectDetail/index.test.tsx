@@ -3,8 +3,6 @@ export {};
 /* eslint-disable react/jsx-key */
 // ! Disabled key errors in ESLint because they incorrectly label the elements within certain expectations as needing keys when they don't and will not work with keys
 
-import Constants = require('../../../test-constants/constants');
-
 import User = require('@kalos-core/kalos-rpc/User');
 
 import EventModule = require('@kalos-core/kalos-rpc/Event');
@@ -72,6 +70,15 @@ describe('ComponentsLibrary', () => {
           propertyRes,
           propertyReq,
         );
+
+        let eventReq = new EventModule.Event();
+        eventReq.setId(0);
+
+        let eventRes = new EventModule.Event();
+        eventRes.setId(0);
+        eventRes.setName('Testing project #1');
+
+        Stubs.setupStubs('EventClientService', 'Get', eventRes, eventReq);
       });
       after(() => {
         Stubs.restoreStubs();
