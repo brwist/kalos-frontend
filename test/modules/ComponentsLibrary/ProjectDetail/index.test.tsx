@@ -113,6 +113,26 @@ describe('ComponentsLibrary', () => {
         await new Promise(res => setTimeout(res, 1));
         Chai.expect(wrapper.find({ label: 'General' })).to.have.lengthOf(2);
       });
+
+      it('renders a "Equipment" tab', async () => {
+        await new Promise(res => setTimeout(res, 1));
+        Chai.expect(wrapper.find({ label: 'Equipment' })).to.have.lengthOf(2);
+      });
+
+      it('renders a "Billing" tab', async () => {
+        await new Promise(res => setTimeout(res, 1));
+        Chai.expect(wrapper.find({ label: 'Billing' })).to.have.lengthOf(2);
+      });
+
+      it('renders a "Logs" tab', async () => {
+        await new Promise(res => setTimeout(res, 1));
+        Chai.expect(wrapper.find({ label: 'Logs' })).to.have.lengthOf(2);
+      });
+
+      it('renders a "Create" tab', async () => {
+        await new Promise(res => setTimeout(res, 1));
+        Chai.expect(wrapper.find({ label: 'Create' })).to.have.lengthOf(2);
+      });
     });
   });
 });
