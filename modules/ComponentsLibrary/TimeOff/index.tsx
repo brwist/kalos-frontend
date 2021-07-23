@@ -570,7 +570,9 @@ const getTimeoffRequestStatusEmail = function getTimeoffRequestStatusEmail(
       <tr>
         <th style="text-align:left;">Date</th>
         <th style="text-align:left;">Status/th>
-        ${adminNotes !== '' ? '<th style="text-align:left;">Notes</th>' : ''}
+        <th>'${
+          adminNotes !== '' ? '<th style="text-align:left;">Notes</th>' : ''
+        }
       </tr>
     </thead>
     <tbody>
