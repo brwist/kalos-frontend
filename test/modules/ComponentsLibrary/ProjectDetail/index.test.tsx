@@ -8,6 +8,7 @@ import Constants = require('../../../test-constants/constants');
 import User = require('@kalos-core/kalos-rpc/User');
 
 import EventModule = require('@kalos-core/kalos-rpc/Event');
+import PropertyModule = require('@kalos-core/kalos-rpc/Property');
 
 import ProjectDetailModule = require('../../../../modules/ComponentsLibrary/ProjectDetail/index');
 
@@ -55,6 +56,22 @@ describe('ComponentsLibrary', () => {
         projectsResList.setResultsList([projectsRes]);
 
         Stubs.setupStubs('EventClientService', 'BatchGet', projectsResList);
+
+        let propertyReq = new PropertyModule.Property();
+        propertyReq.setId(0);
+        propertyReq.setIsActive(1);
+
+        let propertyRes = new PropertyModule.Property();
+        propertyRes.setId(0);
+        propertyRes.setIsActive(1);
+        propertyRes.setAddress('Testing address!!!');
+
+        Stubs.setupStubs(
+          'PropertyClientService',
+          'Get',
+          propertyRes,
+          propertyReq,
+        );
       });
       after(() => {
         Stubs.restoreStubs();
