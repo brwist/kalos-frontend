@@ -26,13 +26,14 @@ const setUpDomEnvironment = () => {
     userAgent: 'node.js',
   } as Navigator;
   global.console = {
-    log: (output: any) => {
-      let out = output.replace('<TestLog>', '');
-      out = out.replace('</TestLog>', '');
-      output.startsWith('<TestLog>') && output.endsWith('</TestLog>')
-        ? oldLog(out)
-        : undefined;
-    }, // In case we need fine-grained control over this, we can have it later
+    // log: (output: any) => {
+    //   let out = output.replace('<TestLog>', '');
+    //   out = out.replace('</TestLog>', '');
+    //   output.startsWith('<TestLog>') && output.endsWith('</TestLog>')
+    //     ? oldLog(out)
+    //     : undefined;
+    // }, // In case we need fine-grained control over this, we can have it later
+    log: console.log,
     error: console.error,
     warn: console.warn,
     info: console.info,

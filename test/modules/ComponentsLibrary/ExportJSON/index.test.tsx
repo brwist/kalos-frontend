@@ -3,17 +3,11 @@ export {};
 /* eslint-disable react/jsx-key */
 // ! Disabled key errors in ESLint because they incorrectly label the elements within certain expectations as needing keys when they don't and will not work with keys
 
-const GetPathFromName =
-  require('../../../test-constants/constants').GetPathFromName;
+import React = require('react');
+import Enzyme = require('enzyme');
+import ExportJSONModule = require('../../../../modules/ComponentsLibrary/ExportJSON/index');
 
-const React = require('react');
-const shallow = require('enzyme').shallow;
-const ExportJSON = require(GetPathFromName(
-  'ExportJSON',
-  'ComponentsLibrary',
-)).ExportJSON;
-
-const expect = require('chai').expect;
+import Chai = require('chai');
 
 const DATA = [...Array(40)].map(() => ({
   firstname: 'John',
@@ -36,11 +30,15 @@ describe('ComponentsLibrary', () => {
     describe('<ExportJSON filename="example" json={DATA} fields={FIELDS} />', () => {
       it('renders a button that says "Export to Excel"', () => {
         // FIXME write out a more extensive "mount" test when possible now that we have mount working
-        const wrapper = shallow(
-          <ExportJSON filename="example" json={DATA} fields={FIELDS} />,
+        const wrapper = Enzyme.shallow(
+          <ExportJSONModule.ExportJSON
+            filename="example"
+            json={DATA}
+            fields={FIELDS}
+          />,
         ).dive();
 
-        expect(wrapper.find('.ButtonWrapper').text()).to.be.eql(
+        Chai.expect(wrapper.find('.ButtonWrapper').text()).to.be.eql(
           'Export to Excel',
         );
       });
