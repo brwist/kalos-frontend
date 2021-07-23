@@ -418,7 +418,6 @@ export class TransactionAdminView extends React.Component<props, state> {
         } else {
           res = await this.TxnClient.BatchGet(reqObj);
         }
-        console.log('request', reqObj);
         const asObject = res.toObject();
         this.setState({
           transactions: res.getResultsList(),

@@ -137,13 +137,11 @@ export const Spiffs: FC<Props> = ({
     }
 
     if (role === 'Payroll' && toggleButton == false) {
-      console.log('we want to see things that are not processed');
       req.setAdminActionId(0);
       req.setPayrollProcessed(true);
       req.setNotEqualsList(['AdminActionId', 'PayrollProcessed']);
     }
     if (role === 'Payroll' && toggleButton == true) {
-      console.log('we want to see stuff we have done');
       req.setPayrollProcessed(false);
       req.setNotEqualsList(['PayrollProcessed']);
     }
@@ -156,10 +154,8 @@ export const Spiffs: FC<Props> = ({
       req.setExternalId(employeeId);
     }
     req.setBillableType('Spiff');
-    console.log('req', req);
     const results = await TaskClientService.BatchGet(req);
     const resultsList = results.getResultsList();
-    console.log(resultsList);
     const totalCount = results.getTotalCount();
     setSpiffs(resultsList);
     setCount(totalCount);
@@ -202,9 +198,7 @@ export const Spiffs: FC<Props> = ({
     async (data: Task) => {
       setSaving(true);
       const now = timestamp();
-      console.log('saving spiff');
       const req = makeSafeFormObject(data, new Task());
-      console.log(req.getExternalId());
       req.setTimeCreated(now);
       req.setTimeDue(now);
       req.setPriorityId(2);

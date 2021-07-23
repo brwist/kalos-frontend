@@ -195,8 +195,13 @@ export const ProjectDetail: FC<Props> = props => {
 
       promises.push(
         new Promise<void>(async resolve => {
-          const projects = await loadProjects();
-          setProjects(projects);
+          let projects: Event[] = [];
+          try {
+            projects = await loadProjects();
+          } catch (err) {
+            console.error(`An error occurred while loading projects: ${err}`);
+          }
+          if (projects) setProjects(projects);
           resolve();
         }),
       );
