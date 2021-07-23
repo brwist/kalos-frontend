@@ -144,7 +144,7 @@ export function TransactionRow({
     );
     const email: EmailConfig = {
       type: 'receipts',
-      recipient: /*user.getEmail()*/ 'robbie@kalosflorida.com',
+      recipient: user.getEmail(),
       subject: 'Receipts',
       from: sendingUser.getEmail(),
       body,
@@ -209,9 +209,9 @@ export function TransactionRow({
           )}
         />
       ) : txn.getCostCenter() ? (
-        `${txn.getCostCenter()!.getDescription()} (${txn
+        `${txn
           .getCostCenter()!
-          .getId()})`
+          .getDescription()} (${txn.getCostCenter()!.getId()})`
       ) : (
         ''
       ),
@@ -223,9 +223,9 @@ export function TransactionRow({
     },
     {
       value: txn.getDepartment()
-        ? `${txn.getDepartment()!.getDescription()} (${txn
+        ? `${txn
             .getDepartment()!
-            .getClassification()})`
+            .getDescription()} (${txn.getDepartment()!.getClassification()})`
         : '',
     },
     {
