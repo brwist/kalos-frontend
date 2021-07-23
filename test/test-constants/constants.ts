@@ -7,7 +7,6 @@ export const MODULES_PATH_FROM_TOP_TEST = '../../modules';
 
 export const SETUP_PATH_FROM_TEST_MODULES = '../../test-setup';
 
-type Scope = ['ComponentsLibrary', 'Modules', 'TopLevel'];
 /**
  * @param  {string} name  The name of the module or component
  * @param  {keyofScope} scope  The scope which the call is being done in
@@ -17,7 +16,7 @@ type Scope = ['ComponentsLibrary', 'Modules', 'TopLevel'];
  */
 export const GetPathFromName = (
   name: string,
-  scope: keyof Scope,
+  scope: 'ComponentsLibrary' | 'Modules' | 'TopLevel',
   includeIndex?: boolean,
 ) => {
   switch (scope) {

@@ -82,7 +82,6 @@ export const Trips: FC<Props> = ({
       ]);
       tripReq.setDateTargetList(['date']);
     }
-    console.log(tripReq);
     const trips = await PerDiemClientService.BatchGetTrips(tripReq);
     setTrips(trips.getResultsList());
     setCount(trips.getTotalCount());
@@ -91,11 +90,11 @@ export const Trips: FC<Props> = ({
   }, [
     departmentId,
     employeeId,
-    week,
-    page,
-    managerFilter,
     payrollFilter,
     toggleButton,
+    managerFilter,
+    week,
+    endDay,
   ]);
 
   useEffect(() => {

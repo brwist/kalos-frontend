@@ -99,7 +99,6 @@
     "@react-pdf/renderer": "^1.6.8",
     "@types/draft-js": "^0.10.40",
     "@types/enzyme": "^3.10.9",
-    "@types/jest": "^26.0.23",
     "@types/jsdom": "^16.2.13",
     "@types/json2csv": "^5.0.1",
     "@types/lodash": "^4.14.149",

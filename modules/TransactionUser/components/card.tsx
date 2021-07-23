@@ -155,7 +155,6 @@ export class TxnCard extends React.PureComponent<props, state> {
           reqObj[methodName](value());
         }
         reqObj.setFieldMaskList([fieldMaskItem]);
-        console.log('req', reqObj);
         const updatedTxn = await this.TxnClient.Update(reqObj);
         this.setState(() => ({ txn: updatedTxn }));
         if (prop !== 'setNotes') {

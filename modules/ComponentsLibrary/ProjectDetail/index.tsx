@@ -1,8 +1,6 @@
 import React, { FC, useState, useEffect, useCallback, useRef } from 'react';
-import { EventClient, Event } from '@kalos-core/kalos-rpc/Event';
-import { UserClient, User } from '@kalos-core/kalos-rpc/User';
-import { JobType } from '@kalos-core/kalos-rpc/JobType';
-import { JobSubtype } from '@kalos-core/kalos-rpc/JobSubtype';
+import { Event } from '@kalos-core/kalos-rpc/Event';
+import { User } from '@kalos-core/kalos-rpc/User';
 import { JobTypeSubtype } from '@kalos-core/kalos-rpc/JobTypeSubtype';
 import { Property } from '@kalos-core/kalos-rpc/Property';
 import { ServicesRendered } from '@kalos-core/kalos-rpc/ServicesRendered';
@@ -10,20 +8,16 @@ import {
   getRPCFields,
   makeFakeRows,
   PropertyClientService,
-  JobTypeClientService,
-  JobSubtypeClientService,
   loadProjects,
-  JobTypeSubtypeClientService,
-  ServicesRenderedClientService,
   TimesheetDepartmentClientService,
   makeSafeFormObject,
+  UserClientService,
+  EventClientService,
 } from '../../../helpers';
-import { ENDPOINT } from '../../../constants';
 import { Modal } from '../Modal';
 import { SectionBar } from '../SectionBar';
 import { InfoTable, Data } from '../InfoTable';
 import { Tabs } from '../Tabs';
-import { Option } from '../Field';
 import { Form, Schema } from '../Form';
 import { General } from './components/General';
 import { Equipment } from './components/Equipment';
@@ -35,9 +29,6 @@ import { BillingTab } from './components/Billing';
 import { LogsTab } from './components/Logs';
 import { TimesheetDepartment } from '@kalos-core/kalos-rpc/TimesheetDepartment';
 import { RoleType } from '../Payroll';
-
-const EventClientService = new EventClient(ENDPOINT);
-const UserClientService = new UserClient(ENDPOINT);
 
 export type EventType = Event;
 export type JobTypeSubtypeType = JobTypeSubtype;
@@ -90,8 +81,9 @@ export const ProjectDetail: FC<Props> = props => {
     useState<boolean>(false);
   const [projects, setProjects] = useState<EventType[]>([]);
   const [parentId, setParentId] = useState<number | null>(null);
-  const [confirmedParentId, setConfirmedParentId] =
-    useState<number | null>(null);
+  const [confirmedParentId, setConfirmedParentId] = useState<number | null>(
+    null,
+  );
   const [project, setProject] = useState<Event>();
   const [timesheetDepartment, setTimesheetDepartment] =
     useState<TimesheetDepartment>();
@@ -124,7 +116,7 @@ export const ProjectDetail: FC<Props> = props => {
     try {
       let promises = [];
 
-      let projectGotten: Event;
+      let projectGotten: Event | undefined;
 
       promises.push(
         new Promise<void>(async resolve => {
@@ -147,11 +139,29 @@ export const ProjectDetail: FC<Props> = props => {
       );
 
       promises.push(
-        new Promise<void>(async resolve => {
+        new Promise<void>(async (resolve, reject) => {
           try {
             let req = new Event();
             req.setId(serviceCallId);
-            const response = await EventClientService.Get(req);
+            let response: Event | undefined;
+            try {
+              response = await EventClientService.Get(req);
+            } catch (err) {
+              console.error(
+                `An error occurred while getting an event from the event client service: ${err}`,
+              );
+            }
+
+            if (!response) {
+              console.error(
+                'No response was given to the event client service, so no project is being set with SetProject. Rejecting.',
+              );
+              reject(
+                'No response was given to the event client service, so no project is being set with SetProject.',
+              );
+            }
+
+            projectGotten = response;
             setProject(response);
             resolve();
           } catch (err) {
@@ -163,18 +173,38 @@ export const ProjectDetail: FC<Props> = props => {
 
       promises.push(
         new Promise<void>(async resolve => {
-          const property = await PropertyClientService.loadPropertyByID(
-            propertyId,
-          );
-          setProperty(property);
+          let property;
+          try {
+            property = await PropertyClientService.loadPropertyByID(propertyId);
+          } catch (err) {
+            console.error(
+              `An error occurred while attempting to load a property by ID: ${err}`,
+            );
+          }
+          if (property) setProperty(property);
           resolve();
         }),
       );
 
       promises.push(
-        new Promise<void>(async resolve => {
-          const customer = await UserClientService.loadUserById(userID);
-          setCustomer(customer);
+        new Promise<void>(async (resolve, reject) => {
+          let customer;
+          try {
+            customer = await UserClientService.loadUserById(userID);
+          } catch (err) {
+            console.error(
+              `An error occurred while getting the customer: ${err}`,
+            );
+          }
+          if (!customer) {
+            console.error(
+              'Unable to set customer - no customer returned from user client service. Rejecting.',
+            );
+            reject(
+              'Unable to set customer - no customer returned from user client service.',
+            );
+          }
+          if (customer) setCustomer(customer);
           resolve();
         }),
       );
@@ -188,19 +218,26 @@ export const ProjectDetail: FC<Props> = props => {
 
       promises.push(
         new Promise<void>(async resolve => {
-          const projects = await loadProjects();
-          setProjects(projects);
+          let projects: Event[] = [];
+          try {
+            projects = await loadProjects();
+          } catch (err) {
+            console.error(`An error occurred while loading projects: ${err}`);
+          }
+          if (projects) setProjects(projects);
           resolve();
         }),
       );
 
       Promise.all(promises).then(async () => {
         try {
-          let req = new TimesheetDepartment();
-          req.setId(projectGotten!.getDepartmentId());
-          const timesheetDepartment =
-            await TimesheetDepartmentClientService.Get(req);
-          setTimesheetDepartment(timesheetDepartment);
+          if (projectGotten) {
+            let req = new TimesheetDepartment();
+            req.setId(projectGotten!.getDepartmentId());
+            const timesheetDepartment =
+              await TimesheetDepartmentClientService.Get(req);
+            setTimesheetDepartment(timesheetDepartment);
+          }
         } catch (err) {
           console.error(
             'An error occurred while getting the timesheet department: ',
@@ -461,7 +498,6 @@ export const ProjectDetail: FC<Props> = props => {
       },
     ],
   ];
-
   return (
     <div>
       <SectionBar title={'Customer / Property Details'} actions={[]}>

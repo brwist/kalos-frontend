@@ -61,10 +61,8 @@ export const TimeoffRequests: FC<Props> = ({
   const [count, setCount] = useState<number>(0);
   const [pendingView, setPendingView] = useState<TimeoffRequest>();
   const [pendingPayroll, setPendingPayroll] = useState<TimeoffRequest>();
-  const [
-    pendingPayrollReject,
-    setPendingPayrollReject,
-  ] = useState<TimeoffRequest>();
+  const [pendingPayrollReject, setPendingPayrollReject] =
+    useState<TimeoffRequest>();
   const [toggleButton, setToggleButton] = useState<boolean>(true);
   const [pendingApproval, setPendingApproval] = useState<TimeoffRequest>();
   const load = useCallback(async () => {
@@ -80,7 +78,6 @@ export const TimeoffRequests: FC<Props> = ({
       technicianUserID: employeeId,
       requestType: role === 'Payroll' ? 9 : 0,
     };
-    console.log(filter);
     if (week !== OPTION_ALL) {
       Object.assign(filter, {
         startDate: week,

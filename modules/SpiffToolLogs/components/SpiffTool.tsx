@@ -213,7 +213,6 @@ export const SpiffTool: FC<Props> = ({
         req.setNotEqualsList(['PayrollProcessed']);
       }
       if (needsPayrollAction && toggle == false) {
-        console.log('we want to see things that are not processed');
         req.setAdminActionId(0);
         req.setPayrollProcessed(true);
         req.setNotEqualsList(['AdminActionId', 'PayrollProcessed']);
@@ -256,7 +255,6 @@ export const SpiffTool: FC<Props> = ({
         )}-${trailingZero(n.getDate())}`;
         req.setDateRangeList(['>=', month, '<', ltDate]);
       }
-      console.log('req', req);
       const res = await TaskClientService.BatchGet(req);
       const resultsList = res.getResultsList();
       const count = res.getTotalCount();
