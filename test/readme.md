@@ -23,9 +23,9 @@ Because of the way our server is set up, there are a few gotchas which need to b
 
 # Imports and Require
 
-For most of the test files, you should be using Require instead of Import due to Chai running in a NodeJS environment. The only exception to this is in various setup files where variables MUST be imported. For these cases, simply use an import in a file and then "require" that file (see grpc-endpoint.js as an example and its corresponding "require" call in helpers.test.ts).
+For most of the test files, you should be using Require with Import due to Chai running in a NodeJS environment. The only exception to this is in various setup files where variables MUST be imported the ES6 way. For these cases, simply use an import in a file and then "require" that file (see grpc-endpoint.js as an example and its corresponding "require" call in helpers.test.ts).
 
-The style "import ModuleName = require('module_path')" should be STRONGLY preferred. This allows for Intellisense to work.
+The style "import ModuleName = require('module_path')" should be STRONGLY preferred in actual tests. This allows for Intellisense to work (See any of the test files to see more examples of this in action).
 
 - Paths should be the same for Require as they are in Import
   - "import { SectionBar } from '../../../../modules/ComponentsLibrary/SectionBar/index'" is equivalent to "SectionBar.SectionBar" from "import SectionBar = require('../../../../modules/ComponentsLibrary/SectionBar/index')"
@@ -38,3 +38,9 @@ Describe and It should be used as per Mocha's guides. When testing methods and f
 - "." should prefix static methods and properties
 
 The structure of folders inside of the test folder should mimic the project's layout as closely as possible.
+
+# Style for Imports
+
+If importing a module, for example Event, try to name it "EventModule" (putting Module after the module name) unless importing from a protobuffer.
+
+If importing from a protobuffer, for example user_pb.d.ts, try to name it "UserProto" (putting Proto after the module name).
