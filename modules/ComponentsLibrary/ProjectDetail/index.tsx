@@ -155,10 +155,15 @@ export const ProjectDetail: FC<Props> = props => {
 
       promises.push(
         new Promise<void>(async resolve => {
-          const property = await PropertyClientService.loadPropertyByID(
-            propertyId,
-          );
-          setProperty(property);
+          let property;
+          try {
+            property = await PropertyClientService.loadPropertyByID(propertyId);
+          } catch (err) {
+            console.error(
+              `An error occurred while attempting to load a property by ID: ${err}`,
+            );
+          }
+          if (property) setProperty(property);
           resolve();
         }),
       );
