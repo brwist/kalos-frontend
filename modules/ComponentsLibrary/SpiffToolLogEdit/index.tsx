@@ -10,6 +10,7 @@ import { Tooltip } from '../Tooltip';
 import { Modal } from '../Modal';
 import { Form, Schema } from '../Form';
 import { Option } from '../Field';
+import { EmailClient, SQSEmail } from '@kalos-core/kalos-rpc/Email';
 import { User } from '@kalos-core/kalos-rpc/User';
 import { Task, TaskClient } from '@kalos-core/kalos-rpc/Task';
 import { Document } from '@kalos-core/kalos-rpc/Document';
@@ -28,9 +29,13 @@ import {
   SpiffToolAdminActionClientService,
   UserClientService,
   makeSafeFormObject,
+  usd,
 } from '../../../helpers';
 import './styles.less';
 import { stat } from 'fs';
+import { userInfo } from 'os';
+import { EmailServiceClient } from '@kalos-core/kalos-rpc/compiled-protos/email_pb_service';
+import { ENDPOINT } from '@kalos-core/kalos-rpc/constants';
 
 type DocumentUpload = {
   filename: '';
@@ -176,6 +181,7 @@ export const SpiffToolLogEdit: FC<Props> = ({
   const [uploading, setUploading] = useState<boolean>(false);
   const [uploadFailed, setUploadFailed] = useState<boolean>(false);
   const [loggedUser, setLoggedUser] = useState<User>(new User());
+  const [taskUser, setTaskUser] = useState<User>(new User());
   const [documentFile, setDocumentFile] = useState<string>('');
   const [documentSaving, setDocumentSaving] = useState<boolean>(false);
   const load = useCallback(async () => {
@@ -188,8 +194,13 @@ export const SpiffToolLogEdit: FC<Props> = ({
     userReq.setId(loggedUserId);
     const userInfo = await UserClientService.Get(userReq);
     setLoggedUser(userInfo);
+    const taskUserReq = new User();
+    taskUserReq.setId(data.getExternalId());
+    const taskUserInfo = await UserClientService.Get(taskUserReq);
+    setTaskUser(taskUserInfo);
+
     setLoading(false);
-  }, [setLoading, type, loggedUserId, setSpiffTypes, spiffTypes]);
+  }, [setLoading, type, loggedUserId, setSpiffTypes, data, spiffTypes]);
   useEffect(() => {
     if (!loaded) {
       setLoaded(true);
@@ -215,6 +226,40 @@ export const SpiffToolLogEdit: FC<Props> = ({
   const handleFileLoad = useCallback(file => setDocumentFile(file), [
     setDocumentFile,
   ]);
+  const createEmail = useCallback(
+    async (data: Task, newAction: SpiffToolAdminAction) => {
+      let emailStatus = 'Approved';
+      const status = newAction.getStatus();
+      if (status === 2) {
+        emailStatus = 'Declined';
+      }
+      if (status === 3) {
+        emailStatus = 'Revoked';
+      }
+      const body = `<body>
+      <table style="width:70%;">
+        <thead>
+          <th style="text-align:left;">Reason: ${newAction.getReason()}</th>
+          <th style="text-align:left;">Amount${usd(data.getSpiffAmount())}</th>
+        </thead>
+        <tbody>
+          <tr>
+            <td>Spiff Job Number: ${data.getSpiffJobNumber()}</td>
+            <td>Updated Spiff Status:${emailStatus}</td>
+          </tr>
+        </body>
+      </table>
+    </body>`;
+      const email = new SQSEmail();
+      email.setBody(body);
+      email.setSubject('Spiff Update');
+      email.setTo(taskUser.getEmail());
+      console.log(email);
+      const emailClient = new EmailClient(ENDPOINT);
+      await emailClient.SendSQSMail(email);
+    },
+    [taskUser],
+  );
   const handleDocumentUpload = useCallback(
     (onClose, onReload) => async ({
       filename,
@@ -290,6 +335,7 @@ export const SpiffToolLogEdit: FC<Props> = ({
         adminActionNew.setId(statusEditing.getId());
         console.log('status:', adminActionNew.getStatus());
         adminActionNew.setTaskId(data.getId());
+
         if (adminActionNew.getStatus() === 0) {
           adminActionNew.setStatus(1);
           //because of the safe form object, we are not getting the default status, so in this instance 0===1
@@ -321,6 +367,7 @@ export const SpiffToolLogEdit: FC<Props> = ({
             await SpiffToolAdminActionClientService.Update(adminActionNew)
           ).getId();
         }
+        createEmail(data, adminActionNew);
         const updateTask = new Task();
         const action = new SpiffToolAdminAction();
         action.setTaskId(data.getId());
