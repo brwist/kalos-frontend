@@ -125,7 +125,7 @@ export const PayrollSummary: FC<Props> = ({
     for (let i = 0; i < salariedUsers.length; i++) {
       let found = false;
       for (let j = 0; j < resultsList.length; j++) {
-        if (salariedUsers[i].getId() === resultsList[j].getId()) {
+        if (salariedUsers[i].getId() === resultsList[j].getTechnicianUserId()) {
           console.log('we found one');
           found = true;
           break;
