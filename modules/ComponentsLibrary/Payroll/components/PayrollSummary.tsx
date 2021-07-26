@@ -52,31 +52,22 @@ export const PayrollSummary: FC<Props> = ({
   const [loading, setLoading] = useState<boolean>(true);
   const [timesheets, setTimesheets] = useState<TimesheetLine[]>([]);
   const [processedHours, setProcessedHours] = useState<EmployeeHourSum[]>([]);
-  const [idList, setIDList] = useState<number[]>([]);
   const [page, setPage] = useState<number>(0);
   const [count, setCount] = useState<number>(0);
-  const toggle = false;
   const [pendingView, setPendingView] = useState<TimesheetLine>();
   const startDay = startOfWeek(subDays(new Date(), 7), { weekStartsOn: 6 });
   const endDay = addDays(startDay, 7);
   const load = useCallback(async () => {
     const filter = {
-      page,
       employeeId,
       departmentId,
       type: type,
-      toggle,
+      toggle: false,
       startDate: format(startDay, 'yyyy-MM-dd'),
       endDate: format(endDay, 'yyyy-MM-dd'),
       groupBy: true,
     };
-    if (week !== OPTION_ALL) {
-      Object.assign(filter, {
-        startDate: week,
-        endDate: format(addDays(new Date(week), 7), 'yyyy-MM-dd'),
-      });
-    }
-
+    console.log('got called to load');
     const getTimesheets = createTimesheetFetchFunction(filter);
     filter.groupBy = false;
     const salariedIds = await UserClientService.GetUserIdsInPermissionGroup(41);
@@ -126,9 +117,18 @@ export const PayrollSummary: FC<Props> = ({
       let found = false;
       for (let j = 0; j < resultsList.length; j++) {
         if (salariedUsers[i].getId() === resultsList[j].getTechnicianUserId()) {
-          console.log('we found one');
           found = true;
           break;
+        }
+      }
+      if (employeeId) {
+        if (salariedUsers[i].getId() != employeeId) {
+          found = true;
+        }
+      }
+      if (departmentId) {
+        if (salariedUsers[i].getEmployeeDepartmentId() != departmentId) {
+          found = true;
         }
       }
       if (found === false) {
@@ -167,10 +167,10 @@ export const PayrollSummary: FC<Props> = ({
     setProcessedHours(tempList);
     setCount(sortedResultsList.length);
     setLoading(false);
-  }, [page, employeeId, week, type, toggle, departmentId, endDay, startDay]);
+  }, [employeeId, departmentId]);
   useEffect(() => {
-    if (loading) load();
-  }, [load, loading]);
+    load();
+  }, [load]);
   const handleTogglePendingView = useCallback(
     (pendingView?: TimesheetLine) => () => {
       setPendingView(pendingView);
@@ -298,7 +298,7 @@ export const PayrollSummary: FC<Props> = ({
             username={pendingView.getTechnicianUserName()}
             onClose={handleTogglePendingView(undefined)}
             loggedUserId={loggedUser}
-            notReady={toggle}
+            notReady={false}
             onNext={() => handleNextEmployee()}
             onPrevious={() => handlePreviousEmployee()}
           ></CostSummary>
