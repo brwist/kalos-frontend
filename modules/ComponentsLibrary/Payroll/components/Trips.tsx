@@ -55,6 +55,9 @@ export const Trips: FC<Props> = ({
   const endDay = addDays(startDay, 7);
   const load = useCallback(async () => {
     setLoading(true);
+    const today = new Date();
+    const startDay = startOfWeek(subDays(today, 7), { weekStartsOn: 6 });
+    const endDay = addDays(startDay, 7);
     const tripReq = new Trip();
     tripReq.setGroupBy('user_id');
     tripReq.setIsActive(true);
@@ -83,6 +86,7 @@ export const Trips: FC<Props> = ({
       tripReq.setDateTargetList(['date']);
     }
     const trips = await PerDiemClientService.BatchGetTrips(tripReq);
+    console.log(trips.getResultsList());
     setTrips(trips.getResultsList());
     setCount(trips.getTotalCount());
     setLoading(false);
@@ -94,14 +98,11 @@ export const Trips: FC<Props> = ({
     toggleButton,
     managerFilter,
     week,
-    endDay,
   ]);
 
   useEffect(() => {
-    if (!loaded) {
-      load();
-    }
-  }, [load, loaded]);
+    load();
+  }, [load]);
   const handleTripViewedToggle = useCallback(
     (Trip?: Trip) => () => setTripViewed(Trip),
     [setTripViewed],
@@ -195,6 +196,7 @@ export const Trips: FC<Props> = ({
             canApprove={role === 'Manager'}
             canProcessPayroll={role === 'Payroll'}
             userId={TripViewed.getUserId()}
+            toggle={role === 'Payroll' ? toggleButton : undefined}
             checkboxes={role === 'Payroll'}
             managerView={role === 'Manager'}
           />
