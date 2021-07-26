@@ -72,6 +72,7 @@ interface Props {
   checkboxes?: boolean;
   searchable?: boolean;
   managerView?: boolean;
+  toggle?: boolean;
   onSaveTrip?: (savedTrip?: Trip) => any;
   onDeleteTrip?: (deletedTrip?: Trip) => any;
   onDeleteAllTrips?: (deletedTrips?: Trip[]) => any;
@@ -83,6 +84,7 @@ export const TripSummaryNew: FC<Props> = ({
   departmentId,
   perDiemRowIds,
   userId,
+  toggle,
   canDeleteTrips,
   compact,
   canSlackMessage,
@@ -103,34 +105,41 @@ export const TripSummaryNew: FC<Props> = ({
   const startDay = startOfWeek(subDays(today, 7), { weekStartsOn: 6 });
   const endDay = addDays(startDay, 7);
   const [pendingDeleteAllTrips, setPendingDeleteAllTrips] = useState<boolean>();
-  const [pendingApproveAllTrips, setPendingApproveAllTrips] =
-    useState<boolean>();
+  const [
+    pendingApproveAllTrips,
+    setPendingApproveAllTrips,
+  ] = useState<boolean>();
   const formatDateFns = (date: Date) => format(date, 'yyyy-MM-dd');
 
   const [loaded, setLoaded] = useState<boolean>(false);
-  const [pendingTripToDelete, setPendingTripToDelete] =
-    useState<Trip | undefined>();
-  const [pendingTripToProcessPayroll, setPendingTripToProcessPayroll] =
-    useState<Trip | undefined>();
-  const [pendingTripToApprove, setPendingTripToApprove] =
-    useState<Trip | undefined>();
+  const [pendingTripToDelete, setPendingTripToDelete] = useState<
+    Trip | undefined
+  >();
+  const [
+    pendingTripToProcessPayroll,
+    setPendingTripToProcessPayroll,
+  ] = useState<Trip | undefined>();
+  const [pendingTripToApprove, setPendingTripToApprove] = useState<
+    Trip | undefined
+  >();
   const [pendingTripToAdd, setPendingTripToAdd] = useState<Trip | undefined>();
-  const [pendingTripToDeny, setPendingTripToDeny] =
-    useState<Trip | undefined>();
-  const [toggleApproveOrProcess, setToggleApproveOrProcess] =
-    useState<boolean>(false);
+  const [pendingTripToDeny, setPendingTripToDeny] = useState<
+    Trip | undefined
+  >();
+  const [toggleApproveOrProcess, setToggleApproveOrProcess] = useState<boolean>(
+    false,
+  );
 
   const [tripsLoaded, setTripsLoaded] = useState<Trip[] | undefined>([]);
   const [totalTripCount, setTotalTripCount] = useState<number>(0);
   const [tripToView, setTripToView] = useState<Trip | undefined>();
-  const [toggleButton, setToggleButton] = useState<boolean>();
   const [approvingTrips, setApprovingTrips] = useState<boolean>();
   const [tripFilter, setFilter] = useState<TripFilter>({
     role,
     weekof: perDiemRowIds,
     userId,
     departmentId,
-    payrollProcessed: role == 'Payroll' ? !toggleButton : undefined,
+    payrollProcessed: toggle ? toggle : undefined,
     approved: role == 'Payroll' ? true : role == 'Manager' ? false : undefined,
     adminActionDate: NULL_TIME,
   } as TripFilter);
@@ -156,25 +165,19 @@ export const TripSummaryNew: FC<Props> = ({
     (tripToAdd: Trip | undefined) => setPendingTripToAdd(tripToAdd),
     [setPendingTripToAdd],
   );
-  const handleSetSearch = useCallback(
-    (newTrip: Trip) => setSearch(newTrip),
-    [setSearch],
-  );
+  const handleSetSearch = useCallback((newTrip: Trip) => setSearch(newTrip), [
+    setSearch,
+  ]);
   const handleSetCheckboxFilter = useCallback(
     (newFilter: Checkboxes) => setCheckboxFilter(newFilter),
     [setCheckboxFilter],
   );
-  const handleSetPage = useCallback(
-    (newPage: number) => setPage(newPage),
-    [setPage],
-  );
+  const handleSetPage = useCallback((newPage: number) => setPage(newPage), [
+    setPage,
+  ]);
   const handleSetToggleApproveOrProcess = useCallback(
     () => setToggleApproveOrProcess(!toggleApproveOrProcess),
     [toggleApproveOrProcess],
-  );
-  const handleSetToggleButton = useCallback(
-    (toggled: boolean) => setToggleButton(toggled),
-    [setToggleButton],
   );
   const handleSetPendingDeleteAllTrips = useCallback(
     (pending: boolean) => setPendingDeleteAllTrips(pending),
@@ -674,16 +677,6 @@ export const TripSummaryNew: FC<Props> = ({
           }}
           addressFields={2}
           schema={SCHEMA_GOOGLE_MAP_INPUT_FORM}
-        />
-      )}
-      {canProcessPayroll && (
-        <Button
-          label={
-            toggleButton === false
-              ? 'Show Unprocessed Records'
-              : 'Show Processed Records'
-          }
-          onClick={() => handleSetToggleButton(!toggleButton)}
         />
       )}
       {tripToView && (
