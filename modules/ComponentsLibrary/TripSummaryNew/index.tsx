@@ -139,7 +139,7 @@ export const TripSummaryNew: FC<Props> = ({
     weekof: perDiemRowIds,
     userId,
     departmentId,
-    payrollProcessed: toggle ? toggle : undefined,
+    payrollProcessed: toggle != undefined ? toggle : undefined,
     approved: role == 'Payroll' ? true : role == 'Manager' ? false : undefined,
     adminActionDate: NULL_TIME,
   } as TripFilter);
@@ -375,7 +375,6 @@ export const TripSummaryNew: FC<Props> = ({
           : tripFilter.payrollProcessed,
       },
     };
-    console.log(criteria.filter);
     try {
       const results = await loadTripsByFilter(criteria);
       setTripsLoaded(results.results);
