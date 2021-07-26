@@ -635,6 +635,7 @@ const NAMED_EXPORTS = {
   'node_modules/@kalos-core/kalos-rpc/compiled-protos/email_pb.js': [
     'Email',
     'EmailClient',
+    'SQSEmail',
   ],
   'node_modules/@kalos-core/kalos-rpc/compiled-protos/file_pb.js': [
     'File',

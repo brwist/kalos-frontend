@@ -1445,10 +1445,10 @@
   dependencies:
     browser-headers "^0.4.0"
 
-"@kalos-core/kalos-rpc@^3.1.2":
-  version "3.2.2"
-  resolved "https://registry.yarnpkg.com/@kalos-core/kalos-rpc/-/kalos-rpc-3.2.2.tgz#454f502f7b6633190d0e75ac17354d3312ab5b20"
-  integrity sha512-CYfQA7g7msGtGm3CvkvuCRui7TaqLcAoYOo6w9eZU+H04N2fmz77XvL8SLip+ckbM3pmRi7iwx+Mozy1qUaNsA==
+"@kalos-core/kalos-rpc@3.2.0":
+  version "3.2.0"
+  resolved "https://registry.yarnpkg.com/@kalos-core/kalos-rpc/-/kalos-rpc-3.2.0.tgz#99c4eb337509700d9babdaf6731301f1f9de22ff"
+  integrity sha512-yd/Vwdw6q0DNPyqMIEDsG80aXNTyCAgGY3WbWhm4asIr5F3+TuHMTw6gZeKKM8vgvA4ZyzIA87z77jS47hV2ZQ==
   dependencies:
     "@improbable-eng/grpc-web" "^0.9.6"
     "@types/pako" "^1.0.1"
