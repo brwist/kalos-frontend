@@ -553,16 +553,6 @@ async function upload(target = '') {
   );
 }
 
-async function cloneModule() {
-  let target;
-  try {
-    target = titleCase(process.argv[4].replace(/-/g, ''));
-  } catch (err) {
-    target = (await getBranch()).replace(/\n/g, '');
-  }
-  sh.cp(`modules`);
-}
-
 async function bustCache(controller = '', filename = '') {
   if (typeof controller !== 'string' || controller === '') {
     controller = process.argv[4].replace(/-/g, '');

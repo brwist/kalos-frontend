@@ -301,10 +301,8 @@ export const ServiceCalendar: FC<Props> = props => {
   ] = useReducer(reducer, initialState);
   const [customerOpened, setCustomerOpened] = useState<User>();
   const [timeoffOpen, setTimeoffOpen] = useState<boolean>(false);
-  const [
-    timeoffRequestTypes,
-    setTimeoffRequestTypes,
-  ] = useState<TimeoffRequestTypes>();
+  const [timeoffRequestTypes, setTimeoffRequestTypes] =
+    useState<TimeoffRequestTypes>();
 
   const fetchUser = useCallback(async () => {
     const req = new User();
@@ -332,7 +330,8 @@ export const ServiceCalendar: FC<Props> = props => {
   // );
 
   const fetchTimeoffRequestTypes = useCallback(async () => {
-    const timeoffRequestTypes = await TimeoffRequestClientService.getTimeoffRequestTypes();
+    const timeoffRequestTypes =
+      await TimeoffRequestClientService.getTimeoffRequestTypes();
     setTimeoffRequestTypes(
       timeoffRequestTypes.reduce(
         (aggr, item) => ({ ...aggr, [item.getId()]: item.getRequestType() }),
@@ -358,7 +357,8 @@ export const ServiceCalendar: FC<Props> = props => {
         req.setDateStarted(shownDates[0]);
         req.setDateEnded(shownDates[shownDates.length - 1]);
         req.setIsActive(1);
-
+        req.setOrderBy('time_started');
+        req.setOrderDir('asc');
         const data = await eventClient.GetCalendarData(req);
         dispatch({ type: 'fetchedCalendarData', data });
       })();
@@ -399,8 +399,7 @@ export const ServiceCalendar: FC<Props> = props => {
     {
       icon: <AddAlertIcon />,
       name: 'Reminder',
-      url:
-        'https://app.kalosflorida.com/index.cfm?action=admin:service.addReminder',
+      url: 'https://app.kalosflorida.com/index.cfm?action=admin:service.addReminder',
     },
     /*{
       icon: <EventIcon />,

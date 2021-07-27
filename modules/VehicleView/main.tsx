@@ -1,11 +1,10 @@
 import React from 'react';
 import { PageWrapper } from '../PageWrapper/main';
-import { User } from '@kalos-core/kalos-rpc/User';
 import { Vehicle } from '@kalos-core/kalos-rpc/compiled-protos/user_pb';
 import { UserClientService, makeSafeFormObject } from '../../helpers';
 import { Form, Schema } from '../ComponentsLibrary/Form';
-import { InfoTable } from '../ComponentsLibrary/InfoTable';
-import { Button } from '../ComponentsLibrary/Button';
+import { InfoTable, Columns } from '../ComponentsLibrary/InfoTable';
+
 // add any prop types here
 interface props {
   userID: number;
@@ -37,6 +36,20 @@ export const VehicleView: React.FC<props> = function VehicleView({ userID }) {
     );
   };
 
+  // TODO turn this into a form instead of a canned onClick function
+  const createVehicle = async function createVehicle() {
+    const v = new Vehicle();
+    v.setIsActive(1);
+    v.setOwnerId(8418);
+    try {
+      const id = await UserClientService.CreateVehicle(v);
+      console.log({ id });
+    } catch (err) {
+      console.log(err);
+    }
+    await fetchVehicles();
+  };
+
   React.useEffect(() => {
     fetchVehicles();
   }, []);
@@ -57,45 +70,46 @@ export const VehicleView: React.FC<props> = function VehicleView({ userID }) {
     } catch (err) {
       console.log(err);
     }
-
+    closeForm();
     await fetchVehicles();
   };
 
+  const vehicleToColumn = function vehicleToColumn(v: Vehicle) {
+    const setAsActive = makeSetActiveVehicle(v);
+    return [
+      { value: v.getMake(), onClick: setAsActive },
+      { value: v.getModel(), onClick: setAsActive },
+      { value: v.getYear(), onClick: setAsActive },
+      { value: v.getEngine(), onClick: setAsActive },
+      { value: v.getIdentificationNumber(), onClick: setAsActive },
+    ];
+  };
+
+  const tableColumns: Columns = [
+    { name: 'Make' },
+    { name: 'Model' },
+    { name: 'Year' },
+    { name: 'Engine' },
+    {
+      name: 'Identification Number',
+      actions: [{ label: 'New Vehicle', onClick: createVehicle }],
+    },
+  ];
+
   return (
     <PageWrapper userID={userID} withHeader>
-      {vehicles.map(v => {
-        if (v.getIsActive()) {
-          return (
-            <h1 key={`vehicle_${v.getId()}`}>
-              {v.getMake()} {v.getModel()} {v.getYear()}{' '}
-              {v.getIdentificationNumber()}
-            </h1>
-          );
-        }
-        if (v.getId() === activeVehicle.getId()) {
-          return (
-            <Form<Vehicle>
-              key={`vehicle_${activeVehicle.getId()}`}
-              schema={SCHEMA_VEHICLE}
-              onClose={closeForm}
-              data={activeVehicle}
-              onSave={updateVehicle}
-              submitLabel="Change"
-              cancelLabel="close"
-              title="This form component sucks why did I let it exist"
-            />
-          );
-        }
-        return (
-          <React.Fragment key={`vehicle_${v.getId()}`}>
-            <h1>{v.getId()} is not active</h1>
-            <Button
-              label="set as active vehicle"
-              onClick={makeSetActiveVehicle(v)}
-            />
-          </React.Fragment>
-        );
-      })}
+      {activeVehicle.getId() !== 0 && (
+        <Form<Vehicle>
+          schema={SCHEMA_VEHICLE}
+          onClose={closeForm}
+          data={activeVehicle}
+          onSave={updateVehicle}
+          submitLabel="Change"
+          cancelLabel="Close"
+          title="Edit Vehicle"
+        />
+      )}
+      <InfoTable data={vehicles.map(vehicleToColumn)} columns={tableColumns} />
     </PageWrapper>
   );
 };
