@@ -44,6 +44,7 @@ type Entry = {
   cost: number;
   costCenter: number;
   department: number;
+  orderNumber: string;
 };
 export type CostCenter = {
   value: number;
@@ -88,12 +89,15 @@ export const UploadPhotoTransaction: FC<Props> = ({
         value: '',
       }
     ).value,
+    orderNumber: '',
   });
   const [formKey, setFormKey] = useState<number>(0);
   const handleFileLoad = useCallback(
     (fileData: string) => setFileData(fileData),
     [setFileData],
   );
+  // TODO reminding myself to fix this in a bit, we don't need to switch between Entry and Transaction, we can just use Transaction
+  // ! Also no need to create a new Transaction client when we can reuse the one from Helpers
   const handleSubmit = useCallback(
     async (data: Entry) => {
       setSaved(false);
@@ -113,6 +117,7 @@ export const UploadPhotoTransaction: FC<Props> = ({
       newTransaction.setTimestamp(timestamp());
       newTransaction.setIsRecorded(true);
       newTransaction.setDepartmentId(data.department);
+      newTransaction.setOrderNumber(data.orderNumber);
       const insertRecord = new TransactionClient(ENDPOINT);
       const insert = await insertRecord.Create(newTransaction);
       if (data.file) {
@@ -200,6 +205,13 @@ export const UploadPhotoTransaction: FC<Props> = ({
         name: 'description',
         label: 'Description',
         required: role != 'Accounts_Payable',
+      },
+    ],
+    [
+      {
+        name: 'orderNumber',
+        label: 'Order #',
+        required: true,
       },
     ],
     [
