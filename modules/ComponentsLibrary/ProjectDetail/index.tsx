@@ -119,22 +119,33 @@ export const ProjectDetail: FC<Props> = props => {
       let projectGotten: Event | undefined;
 
       promises.push(
-        new Promise<void>(async resolve => {
+        new Promise<void>(async (resolve, reject) => {
+          let customer: User | undefined;
           try {
-            const loggedUser = await UserClientService.loadUserById(userID);
-            if (loggedUser.getPermissionGroupsList()) {
-              const roleGotten = loggedUser
-                .getPermissionGroupsList()
-                .find(p => p.getType() === 'role');
-              if (roleGotten) setRole(roleGotten.getName() as RoleType);
-            }
-            resolve();
+            customer = await UserClientService.loadUserById(userID);
+            console.log('Loaded user by id : ', userID);
           } catch (err) {
             console.error(
               `An error occurred while getting the logged user or role type: ${err}`,
             );
+            setError(true);
             resolve();
           }
+          if (customer) {
+            console.error(
+              'No customer to set customer with or check permission groups with. Rejecting.',
+            );
+            setError(true);
+            resolve();
+          }
+          setCustomer(customer!);
+          if (customer!.getPermissionGroupsList()) {
+            const roleGotten = customer!
+              .getPermissionGroupsList()
+              .find(p => p.getType() === 'role');
+            if (roleGotten) setRole(roleGotten.getName() as RoleType);
+          }
+          resolve();
         }),
       );
 
@@ -182,29 +193,6 @@ export const ProjectDetail: FC<Props> = props => {
             );
           }
           if (property) setProperty(property);
-          resolve();
-        }),
-      );
-
-      promises.push(
-        new Promise<void>(async (resolve, reject) => {
-          let customer;
-          try {
-            customer = await UserClientService.loadUserById(userID);
-          } catch (err) {
-            console.error(
-              `An error occurred while getting the customer: ${err}`,
-            );
-          }
-          if (!customer) {
-            console.error(
-              'Unable to set customer - no customer returned from user client service. Rejecting.',
-            );
-            reject(
-              'Unable to set customer - no customer returned from user client service.',
-            );
-          }
-          if (customer) setCustomer(customer);
           resolve();
         }),
       );
