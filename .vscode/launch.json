@@ -2,11 +2,19 @@
     "version": "0.2.0",
     "configurations": [
         {
-            "name": "Chrome",
+            "name": "Launch Chrome",
             "type": "chrome",
             "request": "launch",
             "url": "http://localhost:1234",
-            "webRoot": "${workspaceRoot}/src"
-        }
+            "webRoot": "${workspaceRoot}",
+            "userDataDir": false
+        },
+        {
+            "name": "Launch Chrome With Blank Profile",
+            "type": "chrome",
+            "request": "launch",
+            "url": "http://localhost:1234",
+            "webRoot": "${workspaceRoot}",
+        },
     ]
 }
