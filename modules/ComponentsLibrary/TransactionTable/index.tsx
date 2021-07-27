@@ -74,7 +74,8 @@ type SortString =
   | 'job_id'
   | 'amount'
   | 'vendor'
-  | 'description';
+  | 'description'
+  | 'order_number';
 
 type SelectorParams = {
   txn: Transaction;
@@ -112,18 +113,18 @@ export const TransactionTable: FC<Props> = ({
 
   const acceptOverride = ![1734, 9646, 8418].includes(loggedUserId);
   const [transactions, setTransactions] = useState<SelectorParams[]>();
-  const [transactionToEdit, setTransactionToEdit] =
-    useState<Transaction | undefined>();
+  const [transactionToEdit, setTransactionToEdit] = useState<
+    Transaction | undefined
+  >();
   const [loading, setLoading] = useState<boolean>(true);
   const [creatingTransaction, setCreatingTransaction] = useState<boolean>(); // for when a transaction is being made, pops up the popup
   const [mergingTransaction, setMergingTransaction] = useState<boolean>(); // When a txn is being merged with another one, effectively allowing full
   // editorial control for Dani
   const [role, setRole] = useState<RoleType>();
-  const [assigningUser, setAssigningUser] =
-    useState<{
-      isAssigning: boolean;
-      transactionId: number;
-    }>(); // sets open an employee picker in a modal
+  const [assigningUser, setAssigningUser] = useState<{
+    isAssigning: boolean;
+    transactionId: number;
+  }>(); // sets open an employee picker in a modal
   const [employees, setEmployees] = useState<User[]>([]);
   const [departments, setDepartments] = useState<TimesheetDepartment[]>([]);
   const [selectedTransactions, setSelectedTransactions] = useState<
@@ -829,6 +830,16 @@ export const TransactionTable: FC<Props> = ({
             onClick: () => handleChangeSort('timestamp'),
           },
           {
+            name: 'Order #',
+            dir:
+              sortBy == 'order_number'
+                ? sortDir != ' '
+                  ? sortDir
+                  : undefined
+                : undefined,
+            onClick: () => handleChangeSort('order_number'),
+          },
+          {
             name: 'Purchaser',
             dir:
               sortBy == 'owner_id'
@@ -916,6 +927,12 @@ export const TransactionTable: FC<Props> = ({
                             'yyyy-MM-dd',
                           )
                         : '-',
+                    onClick: isSelector
+                      ? () => setTransactionChecked(idx)
+                      : undefined,
+                  },
+                  {
+                    value: `${selectorParam.txn.getOrderNumber()}`,
                     onClick: isSelector
                       ? () => setTransactionChecked(idx)
                       : undefined,
