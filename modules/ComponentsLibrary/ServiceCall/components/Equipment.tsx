@@ -1,12 +1,13 @@
 import React, { FC, useCallback, useState } from 'react';
 import debounce from 'lodash/debounce';
-import { ServiceItems, Entry, Repair } from '../../ServiceItems';
+import { ServiceItems, Repair } from '../../ServiceItems';
 import { Property } from '@kalos-core/kalos-rpc/Property';
 import { User } from '@kalos-core/kalos-rpc/User';
 import { Event } from '@kalos-core/kalos-rpc/Event';
 
 import { ProposalPrint } from './ProposalPrint';
 import './equipment.less';
+import { ServiceItem } from '@kalos-core/kalos-rpc/ServiceItem';
 
 interface Props {
   userID: number;
@@ -54,7 +55,7 @@ export const Equipment: FC<Props> = ({
     );
   }
   const customerName = `${customer?.getFirstname()} ${customer?.getLastname()}`;
-  const [selected, setSelected] = useState<Entry[]>(selectedInitial);
+  const [selected, setSelected] = useState<ServiceItem[]>(selectedInitial);
   const [repairs, setRepairs] = useState<Repair[]>(repairsInitial);
   const [data, setData] = useState<Form>({
     displayName: customerName,
@@ -69,7 +70,7 @@ export const Equipment: FC<Props> = ({
     [setRepairs, localStorageKey],
   );
   const handleSetSelected = useCallback(
-    (selected: Entry[]) => {
+    (selected: ServiceItem[]) => {
       setSelected(selected);
       const id = serviceItem.getId();
       const localStorageKey = `SERVICE_CALL_EQUIPMENT_SELECTED_${id}`;
