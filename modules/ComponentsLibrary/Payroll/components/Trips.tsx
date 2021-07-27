@@ -19,6 +19,7 @@ import { NULL_TIME, OPTION_ALL, ROWS_PER_PAGE } from '../../../../constants';
 import { RoleType } from '../index';
 import { startOfWeek, subDays, addDays } from 'date-fns';
 import { truncate } from 'lodash';
+import { NULL_TIME_VALUE } from '../../Timesheet/constants';
 interface Props {
   loggedUserId: number;
   departmentId: number;
@@ -67,13 +68,17 @@ export const Trips: FC<Props> = ({
     if (employeeId) {
       tripReq.setUserId(employeeId);
     }
+    if (payrollFilter && !toggleButton) {
+      tripReq.addFieldMask('PayrollProcessed');
+      tripReq.setApproved(true);
+      tripReq.addNotEquals('AdminActionDate');
+      tripReq.setAdminActionDate(NULL_TIME_VALUE);
+    }
     if (payrollFilter && toggleButton) {
       tripReq.setPayrollProcessed(true);
-      tripReq.addNotEquals('PayrollProcessed');
-    }
-    if (payrollFilter && !toggleButton) {
-      tripReq.setPayrollProcessed(false);
-      tripReq.addNotEquals('PayrollProcessed');
+      tripReq.setApproved(true);
+      tripReq.addNotEquals('AdminActionDate');
+      tripReq.setAdminActionDate(NULL_TIME_VALUE);
     }
     if (managerFilter && week == OPTION_ALL) {
       tripReq.setAdminActionDate(NULL_TIME);
@@ -85,6 +90,7 @@ export const Trips: FC<Props> = ({
       ]);
       tripReq.setDateTargetList(['date']);
     }
+    console.log({ tripReq });
     const trips = await PerDiemClientService.BatchGetTrips(tripReq);
     console.log(trips.getResultsList());
     setTrips(trips.getResultsList());
