@@ -89,6 +89,7 @@ interface FilterType {
   vendor: string;
   isAccepted: boolean | undefined;
   isRejected: boolean | undefined;
+  amount: number | undefined;
 }
 
 let pageNumber = 0;
@@ -101,6 +102,7 @@ let filter: FilterType = {
   vendor: '',
   isAccepted: false,
   isRejected: false,
+  amount: undefined,
 };
 export const TransactionTable: FC<Props> = ({
   loggedUserId,
@@ -364,6 +366,7 @@ export const TransactionTable: FC<Props> = ({
     if (filter.vendor) req.setVendor(`%${filter.vendor}%`);
     if (filter.departmentId != 0) req.setDepartmentId(filter.departmentId);
     if (filter.employeeId != 0) req.setAssignedEmployeeId(filter.employeeId);
+    if (filter.amount) req.setAmount(filter.amount);
     let res = await TransactionClientService.BatchGet(req);
 
     setTransactions(
@@ -476,6 +479,7 @@ export const TransactionTable: FC<Props> = ({
     filter.vendor = d.vendor;
     filter.isAccepted = d.accepted ? d.accepted : undefined;
     filter.isRejected = d.rejected ? d.rejected : undefined;
+    filter.amount = d.amount;
   }, []);
 
   const handleChangePage = useCallback(
@@ -660,6 +664,12 @@ export const TransactionTable: FC<Props> = ({
         type: 'checkbox',
       },
       {
+        name: 'amount',
+        label: 'Search Amount',
+        type: 'text',
+        
+      },
+      {
         name: 'vendor',
         label: 'Search Vendor',
         type: 'search',
@@ -717,7 +727,7 @@ export const TransactionTable: FC<Props> = ({
                   ),
               },
             ]}
-          />
+          /> 
           <PlainForm
             data={filter}
             onChange={handleSetFilter}
