@@ -33,6 +33,12 @@ yarn make --ModuleName
 
 This will creates a new module and generates some boilerplate files. You can then run `yarn start --ModuleName` and visit `localhost:1234` in your browser. All changes will be reflected in the browser via hot module replacement.
 
+## Debugging
+
+Debugging can be done with the excellent extension [Debugger for Chrome](https://marketplace.visualstudio.com/items?itemName=msjsdiag.debugger-for-chrome). Simply quit all running instances of Chrome and press F5, and the project should load in your current Chrome profile with debugging enabled via the extension.
+
+Make sure that all instances of Chrome are actually closed and stopped first, otherwise it may fail to attach.
+
 ## Development Concerns
 
 ### Tree shaking
@@ -101,7 +107,7 @@ async function getUserByID(ID: number): User.AsObject {
 }
 ```
 
-The code above creates a new user client, which can handle the request for us. It then creates a new user called `req`, standing for "request". The new user has the ID set on it using the `req.setId(ID);` line. Lastly, with the ID specified, the client we made is used to do a `Get` request. The get request returns a response - 'res' - which is the rest of that user's information as gotten from the database. 
+The code above creates a new user client, which can handle the request for us. It then creates a new user called `req`, standing for "request". The new user has the ID set on it using the `req.setId(ID);` line. Lastly, with the ID specified, the client we made is used to do a `Get` request. The get request returns a response - 'res' - which is the rest of that user's information as gotten from the database.
 
 ### Fetching a list of users who are employees
 

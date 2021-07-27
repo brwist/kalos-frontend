@@ -34,7 +34,6 @@ interface props<R, T> {
     new (endpoint: string): Client<R, T>;
   };
   onSelect?(e: React.SyntheticEvent<HTMLSelectElement> | number): void;
-  test?(item: T): boolean;
   sort?(a: T, b: T): number;
   filter?(a: T): boolean;
   renderItem(item: T): JSX.Element;
@@ -87,7 +86,8 @@ class Picker<R, T> extends React.PureComponent<props<R, T>, state<T>> {
 
   async fetchData() {
     const res = await this.Client?.BatchGet(this.req!);
-    // console.log(res);
+    console.log({ res });
+
     return res!.getResultsList();
   }
 
@@ -110,13 +110,15 @@ class Picker<R, T> extends React.PureComponent<props<R, T>, state<T>> {
 
   render() {
     let list = this.state.list;
+    console.log({ list });
     if (this.props.sort) {
       list = this.state.list.sort(this.props.sort);
     }
-
+    console.log({ list });
     if (this.props.filter) {
       list = list.filter(this.props.filter);
     }
+    console.log({ list });
     return (
       <FormControl
         className={this.props.className}
@@ -569,12 +571,15 @@ export class ClassCodePicker extends Picker<ClassCode, ClassCode> {
 
 export class EmployeePicker extends Picker<User, User> {
   constructor(props: props<User, User>) {
-    super(props, 'Employee', 'EMPLOYEE_LIST_X', VersionNumber);
+    super(props, 'Employee', 'EMPLOYEE_LIST', VersionNumber);
     this.Client = new UserClient(ENDPOINT);
     this.req = new User();
     this.req.setIsEmployee(1);
-    this.req.setIsActive(1);
-    this.req.setIsHvacTech(1);
+
+    // isActive = 0 if prop.hideInactive = false
+    this.req.setIsActive(Number(!!props.hideInactive));
+    this.req.setOrderBy('user_lastname');
+    this.req.setOrderDir('asc');
     this.req.setOverrideLimit(true);
   }
 }

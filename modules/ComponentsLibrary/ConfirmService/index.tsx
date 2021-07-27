@@ -20,11 +20,10 @@ export const ConfirmServiceProvider = ({
 }: ProviderProps): JSX.Element => {
   const [ConfirmState, setConfirmState] = useState<ConfirmOptions | null>(null);
 
-  const awaitingPromiseRef =
-    useRef<{
-      resolve: () => void;
-      reject: () => void;
-    }>();
+  const awaitingPromiseRef = useRef<{
+    resolve: () => void;
+    reject: () => void;
+  }>();
 
   const openConfirm = (options: ConfirmOptions) => {
     setConfirmState(options);
@@ -51,7 +50,9 @@ export const ConfirmServiceProvider = ({
 
   return (
     <>
-      <ConfirmServiceContext.Provider value={openConfirm} children={children} />
+      <ConfirmServiceContext.Provider value={openConfirm}>
+        {children}
+      </ConfirmServiceContext.Provider>
 
       <Confirm
         open={Boolean(ConfirmState)}
