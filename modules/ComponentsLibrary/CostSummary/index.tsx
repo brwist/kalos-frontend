@@ -777,7 +777,7 @@ export const CostSummary: FC<Props> = ({
                         spiff.getActionsList()[
                           //eslint-disable-next-line
                           spiff.getActionsList().length - 1
-                        ].getDecisionDate(),
+                        ].getGrantedDate(),
                       ),
                     },
                     {
