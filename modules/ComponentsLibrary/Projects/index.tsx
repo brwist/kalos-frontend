@@ -12,12 +12,12 @@ import { Loader } from '../../Loader/main';
 import { AddServiceCall } from '../../AddServiceCallGeneral/components/AddServiceCall';
 import {
   loadEventsByFilter,
-  EventType,
   formatDate,
-  UserType,
   UserClientService,
 } from '../../../helpers';
 import { getPropertyAddress } from '@kalos-core/kalos-rpc/Property';
+import { Event } from '@kalos-core/kalos-rpc/Event';
+import { User } from '@kalos-core/kalos-rpc/User';
 
 export interface Props {
   loggedUserId: number;
@@ -43,7 +43,7 @@ export const Projects: FC<Props> = ({
   const [loaded, setLoaded] = useState<boolean>(false);
   const [loadingInit, setLoadingInit] = useState<boolean>(false);
   const [loadedInit, setLoadedInit] = useState<boolean>(false);
-  const [loggedInUser, setLoggedInUser] = useState<UserType>();
+  const [loggedInUser, setLoggedInUser] = useState<User>();
   const [pendingNew, setPendingNew] = useState<boolean>(false);
   const [tab, setTab] = useState<number>(0);
   const [filter, setFilter] = useState<Filter>({
@@ -54,14 +54,14 @@ export const Projects: FC<Props> = ({
   });
   const [filterKey, setFilterKey] = useState<number>(0);
   const [search, setSearch] = useState<Filter>(filter);
-  const [events, setEvents] = useState<EventType[]>([]);
-  const [openedEvent, setOpenedEvent] = useState<EventType>();
+  const [events, setEvents] = useState<Event[]>([]);
+  const [openedEvent, setOpenedEvent] = useState<Event>();
   const loadInit = useCallback(async () => {
     setLoadingInit(true);
     const loggedInUser = await UserClientService.loadUserById(loggedUserId);
     const newFilter = {
       ...filter,
-      departmentId: loggedInUser.employeeDepartmentId,
+      departmentId: loggedInUser.getEmployeeDepartmentId(),
     };
     setFilter(newFilter);
     setSearch(newFilter);
@@ -94,9 +94,10 @@ export const Projects: FC<Props> = ({
       },
       sort: {
         orderBy: 'date_started',
-        orderByField: 'dateStarted',
+        orderByField: 'getDateStarted',
         orderDir: 'ASC',
       },
+      req: new Event(),
     });
     setEvents(resultsList);
     setLoading(false);
@@ -112,7 +113,7 @@ export const Projects: FC<Props> = ({
   }, [loaded, setLoaded, load, loadedInit, setLoadedInit, loadInit]);
   const handleSearch = useCallback(() => setLoaded(false), [setLoaded]);
   const handleOpenEvent = useCallback(
-    (openedEvent?: EventType) => () => {
+    (openedEvent?: Event) => () => {
       setOpenedEvent(openedEvent);
       if (!openedEvent) load();
     },
@@ -192,54 +193,45 @@ export const Projects: FC<Props> = ({
             content: (
               <CalendarEvents
                 events={events.map(event => {
-                  const {
-                    id,
-                    logJobNumber,
-                    description,
-                    dateStarted: dateStart,
-                    dateEnded: dateEnd,
-                    property,
-                    departmentId,
-                    isActive,
-                  } = event;
-                  const [startDate] = dateStart.split(' ');
-                  const [endDate] = dateEnd.split(' ');
+                  const [startDate] = dateStarted.split(' ');
+                  const [endDate] = dateEnded.split(' ');
                   return {
-                    id,
-                    startDate,
-                    endDate,
-                    isActive,
-                    notes: description,
+                    id: event.getId(),
+                    startDate: event.getDateStarted(),
+                    endDate: event.getDateEnded(),
+                    isActive: event.getIsActive(),
+                    notes: event.getDescription(),
                     onClick: handleOpenEvent(event),
                     label: compact([
-                      logJobNumber,
-                      getPropertyAddress(property),
+                      event.getLogJobNumber(),
+                      getPropertyAddress(event.getProperty()),
                     ]).join(', '),
                     renderTooltip: (
                       <div className="ProjectsTooltip">
                         <div>
                           <strong>Address: </strong>
-                          {getPropertyAddress(property)}
+                          {getPropertyAddress(event.getProperty())}
                         </div>
                         <div>
                           <strong>Start Date: </strong>
-                          {formatDate(dateStart)}
+                          {formatDate(event.getDateStarted())}
                         </div>
                         <div>
                           <strong>End Date: </strong>
-                          {formatDate(dateEnd)}
+                          {formatDate(event.getDateEnded())}
                         </div>
                         <div>
                           <strong>Job Number: </strong>
-                          {logJobNumber}
+                          {event.getLogJobNumber()}
                         </div>
                         <div>
                           <strong>Description: </strong>
-                          {description}
+                          {event.getDescription()}
                         </div>
                         <div>
                           <strong>Department: </strong>
-                          {departmentId} {/* TODO: show department */}
+                          {event.getDepartmentId()}{' '}
+                          {/* TODO: show department */}
                         </div>
                       </div>
                     ),
@@ -257,52 +249,43 @@ export const Projects: FC<Props> = ({
             content: (
               <GanttChart
                 events={events.map(event => {
-                  const {
-                    id,
-                    logJobNumber,
-                    description,
-                    dateStarted: dateStart,
-                    dateEnded: dateEnd,
-                    property,
-                    departmentId,
-                    isActive,
-                  } = event;
-                  const [startDate] = dateStart.split(' ');
-                  const [endDate] = dateEnd.split(' ');
+                  const [startDate] = dateStarted.split(' ');
+                  const [endDate] = dateEnded.split(' ');
                   return {
-                    id,
-                    startDate,
-                    endDate,
-                    isActive,
-                    notes: description,
+                    id: event.getId(),
+                    startDate: event.getDateStarted(),
+                    endDate: event.getDateEnded(),
+                    isActive: event.getIsActive(),
+                    notes: event.getDescription(),
                     onClick: handleOpenEvent(event),
-                    label: logJobNumber,
-                    subtitle: getPropertyAddress(property),
+                    label: event.getLogJobNumber(),
+                    subtitle: getPropertyAddress(event.getProperty()),
                     renderDetails: (
                       <div>
                         <div>
                           <strong>Address: </strong>
-                          {getPropertyAddress(property)}
+                          {getPropertyAddress(event.getProperty())}
                         </div>
                         <div>
                           <strong>Start Date: </strong>
-                          {formatDate(dateStart)}
+                          {formatDate(event.getDateStarted())}
                         </div>
                         <div>
                           <strong>End Date: </strong>
-                          {formatDate(dateEnd)}
+                          {formatDate(event.getDateEnded())}
                         </div>
                         <div>
                           <strong>Job Number: </strong>
-                          {logJobNumber}
+                          {event.getLogJobNumber()}
                         </div>
                         <div>
                           <strong>Description: </strong>
-                          {description}
+                          {event.getDescription()}
                         </div>
                         <div>
                           <strong>Department: </strong>
-                          {departmentId} {/* TODO: show department */}
+                          {event.getDepartmentId()}{' '}
+                          {/* TODO: show department */}
                         </div>
                       </div>
                     ),
@@ -322,7 +305,7 @@ export const Projects: FC<Props> = ({
       {openedEvent && (
         <Modal open onClose={handleOpenEvent()} fullScreen>
           <EditProject
-            serviceCallId={openedEvent.id}
+            serviceCallId={openedEvent.getId()}
             loggedUserId={loggedUserId}
             onClose={handleOpenEvent()}
           />
