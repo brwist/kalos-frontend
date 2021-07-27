@@ -14,6 +14,7 @@
     "bust": "gulp -LL bust",
     "less": "lessc styles/index.less styles/main.css",
     "upload": "gulp -LL upload",
+    "test-coverage": "nyc ts-mocha --recursive -r ./test/test-setup/setup.ts -r esm -r ignore-styles -r mock-local-storage",
     "test": "ts-mocha --recursive -r ./test/test-setup/setup.ts -r esm -r ignore-styles -r mock-local-storage",
     "test-watch": "ts-mocha --grep RPC --invert --recursive -r ./test/test-setup/setup.ts -r esm -r ignore-styles  -r mock-local-storage -w"
   },
@@ -67,6 +68,7 @@
     "jsdom": "^16.6.0",
     "less": "^3.10.3",
     "mock-local-storage": "^1.1.17",
+    "nyc": "^15.1.0",
     "react-test-renderer": "^17.0.1",
     "regenerator-runtime": "^0.13.7",
     "rollup": "^1.22.0",

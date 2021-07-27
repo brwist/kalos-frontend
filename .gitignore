@@ -12,4 +12,4 @@ constants.js
 .DS_Store
 .circleci
 constants.js
- 
+.nyc_output
