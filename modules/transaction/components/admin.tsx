@@ -8,7 +8,7 @@ import {
   AccountPicker,
   DepartmentPicker,
 } from '../../ComponentsLibrary/Pickers';
-import { EmployeePicker } from '../../ComponentsLibrary/Pickers/Employee';
+import { EmployeePicker } from '../../ComponentsLibrary/Pickers';
 import { TxnStatusPicker } from '../../ComponentsLibrary/Pickers/TransactionStatus';
 import {
   TransactionActivityClient,
@@ -18,7 +18,11 @@ import { PropertyClient, Property } from '@kalos-core/kalos-rpc/Property';
 import { User } from '@kalos-core/kalos-rpc/User';
 import { EventClient, Event } from '@kalos-core/kalos-rpc/Event';
 import { ENDPOINT } from '../../../constants';
-import { makeFakeRows, makeMonthsOptions } from '../../../helpers';
+import {
+  makeFakeRows,
+  makeMonthsOptions,
+  sortUserByLastname,
+} from '../../../helpers';
 import {
   RecordPageReq,
   TransactionList,
@@ -90,6 +94,7 @@ export class TransactionAdminView extends React.Component<props, state> {
     super(props);
     this.state = {
       page: 0,
+      // TODO: REPLACE HARDCODED VALUES WITH AN ACCEPT OVERRIDE ROLE
       acceptOverride: ![1734, 9646, 8418].includes(props.userID),
       isLoading: false,
       departmentView: !props.isSU,
@@ -418,7 +423,6 @@ export class TransactionAdminView extends React.Component<props, state> {
         } else {
           res = await this.TxnClient.BatchGet(reqObj);
         }
-        const asObject = res.toObject();
         this.setState({
           transactions: res.getResultsList(),
           count: res.getTotalCount(),
@@ -853,9 +857,14 @@ export class TransactionAdminView extends React.Component<props, state> {
             <EmployeePicker
               disabled={this.state.isLoading}
               selected={this.state.filters.userID || 0}
-              onSelect={userID => this.setFilter('userID', userID)}
-              label="Filter by User"
-              test={employeeTest}
+              onSelect={userID => this.setFilter('userID', userID as number)}
+              filter={employeeTest}
+              sort={sortUserByLastname}
+              renderItem={i => (
+                <option value={i.getId()} key={`${i.getId()}-empployee-select`}>
+                  {i.getLastname()}, {i.getFirstname()}
+                </option>
+              )}
             />
           </div>
           <div
@@ -946,9 +955,8 @@ export class TransactionAdminView extends React.Component<props, state> {
                     updateCostCenter: this.makeUpdateCostCenter(txn.getId()),
                     updateDepartment: this.makeUpdateDepartment(txn.getId()),
                     toggleLoading: this.toggleLoading,
-                    editingCostCenter: this.state.editingCostCenter[
-                      txn.getId()
-                    ],
+                    editingCostCenter:
+                      this.state.editingCostCenter[txn.getId()],
                     toggleEditingCostCenter: () =>
                       this.toggleEditingCostCenter(txn.getId()),
                   }),

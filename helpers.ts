@@ -1923,6 +1923,17 @@ const JSONToType = function JSONToType<T>(data: Object, result: T) {
   return result;
 };
 
+const sortUserByLastname = function sortUserByLastname(
+  a: User,
+  b: User,
+): number {
+  const nameA = a.getLastname().toLocaleLowerCase();
+  const nameB = b.getLastname().toLocaleLowerCase();
+  if (nameA > nameB) return 1;
+  if (nameB > nameA) return -1;
+  return 0;
+};
+
 export {
   SUBJECT_TAGS,
   SUBJECT_TAGS_TRANSACTIONS,
@@ -1959,4 +1970,5 @@ export {
   makeSafeFormObject,
   JSONToType,
   keyToMethodName,
+  sortUserByLastname,
 };
