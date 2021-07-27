@@ -321,6 +321,8 @@ export const CostSummary: FC<Props> = ({
       const action = new SpiffToolAdminAction();
       req.setPayrollProcessed(false);
       req.setExternalId(userId);
+      const startDate = '0001-01-01';
+      const endDayForSpiffs = format(addDays(startDay, 11), 'yyyy-MM-dd');
       if (spiffType === 'Spiff') {
         /*
         const startDate = '0001-01-01';
@@ -333,6 +335,9 @@ export const CostSummary: FC<Props> = ({
         action.setDateRangeList(['>=', startDate, '<', endDayForSpiffs]);
         action.setDateTargetList(['created_date', 'created_date']);
         action.setStatus(1);
+        action.setDateTargetList(['decision_date']);
+        action.setDateRangeList(['>=', startDate, '<', endDayForSpiffs]);
+
         req.setSearchAction(action);
         req.setFieldMaskList(['PayrollProcessed']);
       }
