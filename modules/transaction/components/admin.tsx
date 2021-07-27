@@ -840,7 +840,7 @@ export class TransactionAdminView extends React.Component<props, state> {
               }
               renderItem={i => (
                 <option value={i.getId()} key={`${i.getId()}-account-select`}>
-                  {i.getDescription()} ({i.getId()})
+                  {i.getDescription()}
                 </option>
               )}
             />

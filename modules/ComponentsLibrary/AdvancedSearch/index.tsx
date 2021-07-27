@@ -290,7 +290,7 @@ export const AdvancedSearch: FC<Props> = ({
         kind === 'customers' ||
         (filterCriteria as UsersFilter).employeeDepartmentId! < 0
       ) {
-        delete criteria.filter.employeeDepartmentId;
+        criteria.filter.employeeDepartmentId = 0;
       }
       let userResults = [new User()];
       if (kind === 'customers') {
@@ -303,6 +303,7 @@ export const AdvancedSearch: FC<Props> = ({
         userReq.setOverrideLimit(true);
         userReq.setIsEmployee(1);
         userReq.setIsActive(1);
+        console.log(criteria.sort.orderBy, criteria.sort.orderDir);
         userReq.setOrderBy(criteria.sort.orderBy);
         userReq.setOrderDir(criteria.sort.orderDir);
         const userRes = await UserClientService.BatchGet(userReq);
@@ -323,7 +324,7 @@ export const AdvancedSearch: FC<Props> = ({
               ),
             })),
         );
-        console.log(images); 
+        console.log(images);
 
         setEmployeeImages(
           images.reduce(
@@ -880,6 +881,11 @@ export const AdvancedSearch: FC<Props> = ({
         {
           name: 'phone',
           label: 'Office',
+          type: 'search',
+        },
+        {
+          name: 'id',
+          label: 'Badge',
           type: 'search',
         },
         {
@@ -2080,6 +2086,8 @@ export const AdvancedSearch: FC<Props> = ({
                       .toLowerCase()
                       .includes(usersFilter.cellphone.toLowerCase())
                   : true;
+                const intId = usersFilter.id ? parseInt(usersFilter.id, 10) : 0;
+                const matchedId = intId > 0 ? u.getId() === intId : true;
                 const matchedDepartment =
                   usersFilter.employeeDepartmentId &&
                   usersFilter.employeeDepartmentId > 0
@@ -2094,7 +2102,8 @@ export const AdvancedSearch: FC<Props> = ({
                   matchedPhone &&
                   matchedExt &&
                   matchedCellphone &&
-                  matchedDepartment
+                  matchedDepartment &&
+                  matchedId
                 );
               })
               .map(entry => {
@@ -2564,6 +2573,7 @@ export const AdvancedSearch: FC<Props> = ({
                   'Email',
                   'Office, ext.',
                   { title: 'Cell', align: 'right' },
+                  'Id',
                 ]}
                 data={getData(true).map(rows => rows.map(row => row.value))}
                 noEntriesText="No employees matching criteria"

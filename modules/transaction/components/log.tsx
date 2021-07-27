@@ -54,6 +54,7 @@ export class TxnLog extends React.PureComponent<props, state> {
   }
 
   async addLog(log: TransactionActivity) {
+    console.log({ log });
     const user = new User();
     user.setId(log.getUserId());
     const res = await this.UserClient.Get(user);

@@ -770,7 +770,7 @@ export const TransactionTable: FC<Props> = ({
       />
       <SectionBar
         title="Transactions"
-        key={String(pageNumber)}
+        key={pageNumber.toString()}
         fixedActions
         pagination={{
           count:
@@ -799,7 +799,7 @@ export const TransactionTable: FC<Props> = ({
       <InfoTable
         key={
           transactions?.toString() +
-          String(creatingTransaction) +
+          (creatingTransaction ? creatingTransaction.toString() : '') +
           transactions?.values.toString() +
           selectedTransactions.toString()
         }
