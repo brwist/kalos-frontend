@@ -331,6 +331,8 @@ export const SpiffToolLogEdit: FC<Props> = ({
         const timestampValue = timestamp().toString();
         let adminActionNew = temp;
         adminActionNew.setReviewedBy(newReviewedBy);
+        adminActionNew.setDecisionDate(timestampValue);
+        adminActionNew.addFieldMask('DecisionDate');
         adminActionNew.setId(statusEditing.getId());
         console.log('status:', adminActionNew.getStatus());
         adminActionNew.setTaskId(data.getId());
@@ -349,7 +351,6 @@ export const SpiffToolLogEdit: FC<Props> = ({
           adminActionNew.setRevokedDate(timestampValue);
           adminActionNew.addFieldMask('RevokedDate');
         }
-        console.log('new action', adminActionNew);
         if (
           adminActionNew.getReason() === null ||
           adminActionNew.getReason() === ''
