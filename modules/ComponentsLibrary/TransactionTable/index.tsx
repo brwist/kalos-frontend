@@ -684,6 +684,22 @@ export const TransactionTable: FC<Props> = ({
     ],
     [
       {
+        content: (
+          <StatusPicker
+            key={status}
+            options={['Accepted / Rejected', 'Accepted', 'Rejected']}
+            selected={
+              status == 'Accepted / Rejected' ? 0 : status == 'Accepted' ? 1 : 2
+            }
+            onSelect={(
+              selected: 'Accepted' | 'Rejected' | 'Accepted / Rejected',
+            ) => {
+              handleSetFilterAcceptedRejected(selected);
+            }}
+          />
+        ),
+      },
+      {
         name: 'amount',
         label: 'Search Amount',
         type: 'text',
@@ -797,18 +813,6 @@ export const TransactionTable: FC<Props> = ({
         onChange={handleSetFilter}
         schema={SCHEMA}
         className="PayrollFilter"
-      />
-      <StatusPicker
-        key={status}
-        options={['Accepted / Rejected', 'Accepted', 'Rejected']}
-        selected={
-          status == 'Accepted / Rejected' ? 0 : status == 'Accepted' ? 1 : 2
-        }
-        onSelect={(
-          selected: 'Accepted' | 'Rejected' | 'Accepted / Rejected',
-        ) => {
-          handleSetFilterAcceptedRejected(selected);
-        }}
       />
       <SectionBar
         title="Transactions"
