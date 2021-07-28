@@ -50,6 +50,7 @@ export type FilterData = {
   vendor?: string;
   accepted?: boolean;
   rejected?: boolean;
+  amount?: number;
 };
 
 export const Payroll: FC<Props> = ({ userID }) => {
