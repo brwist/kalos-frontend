@@ -117,8 +117,8 @@ export const EditTransaction: FC<Props> = ({
       <Form<Transaction>
         schema={SCHEMA}
         data={transaction}
-        onChange={() => {
-          onChange;
+        onChange={newTxn => {
+          if (onChange) onChange(newTxn);
         }}
         onSave={saved => {
           onSave(saved);
