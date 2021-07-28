@@ -89,6 +89,7 @@ export const JobSummaryNew: FC<Props> = ({
   const [timesheetsJobs, setTimesheetsJobs] = useState<WeekForEmployee[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
   const [loaded, setLoaded] = useState<boolean>(false);
+  const [days, setDays] = useState<Day[]>();
   const weekOptions = useMemo(
     () => [
       { label: OPTION_ALL, value: OPTION_ALL },
@@ -144,7 +145,7 @@ export const JobSummaryNew: FC<Props> = ({
       console.log(results);
 
       let temp = [];
-      //let blankWeekData = { employeeId: 0, username: '', week: dayList };
+      let dayListFinal = [];
       for (let i = 0; i < results.length; i++) {
         let dayList = [];
         for (let j = 0; j < 7; j++) {
@@ -183,6 +184,8 @@ export const JobSummaryNew: FC<Props> = ({
         ].workHours = workTime;
 
         temp.push({ employeeId: id, username: name, week: tempDays });
+        dayListFinal = dayList;
+        setDays(dayListFinal);
       }
       //now lets clean up the dupes
       console.log(temp);
@@ -276,13 +279,13 @@ export const JobSummaryNew: FC<Props> = ({
       <InfoTable
         columns={[
           { name: 'Employee' },
-          { name: 'Saturday' },
-          { name: 'Sunday' },
-          { name: 'Monday' },
-          { name: 'Tuesday' },
-          { name: 'Wednesday' },
-          { name: 'Thursday' },
-          { name: 'Friday' },
+          { name: `Saturday${days ? days[0] : 'No Date Selected'}` },
+          { name: `Sunday${days ? days[1] : 'No Date Selected'}` },
+          { name: `Monday${days ? days[2] : 'No Date Selected'}` },
+          { name: `Tueday${days ? days[3] : 'No Date Selected'}` },
+          { name: `Wednesday${days ? days[4] : 'No Date Selected'}` },
+          { name: `Thursday${days ? days[5] : 'No Date Selected'}` },
+          { name: `Friday${days ? days[6] : 'No Date Selected'}` },
         ]}
         loading={loading}
         data={
