@@ -1054,34 +1054,7 @@ export const TransactionTable: FC<Props> = ({
                               style={{ display: 'none' }}
                             />
                           </IconButton>
-                        </Tooltip>,
-                        <Prompt
-                          key="updateJobNumber"
-                          confirmFn={newJobNumber => {
-                            try {
-                              addJobNumber(
-                                selectorParam.txn.getId(),
-                                newJobNumber,
-                              );
-                            } catch (err) {
-                              console.error('Failed to add job number: ', err);
-                            }
-                          }}
-                          text="Update Job Number"
-                          prompt="New Job Number: "
-                          Icon={KeyboardIcon}
-                        />,
-                        <Prompt
-                          key="editNotes"
-                          confirmFn={updated =>
-                            updateNotes(selectorParam.txn.getId(), updated)
-                          }
-                          text="Edit Notes"
-                          prompt="Update Txn Notes: "
-                          Icon={NotesIcon}
-                          defaultValue={selectorParam.txn.getNotes()}
-                          multiline
-                        />,
+                        </Tooltip>, 
                         <AltGallery
                           key="receiptPhotos"
                           title="Transaction Photos"
