@@ -428,8 +428,7 @@ export const Payroll: FC<Props> = ({ userID }) => {
                 onClose={() => setOpenReport(false)}
               >
                 <JobSummaryNew
-                  employees={employees}
-                  departments={departments}
+                  loggedUserId={userID}
                   onClose={() => setOpenReport(false)}
                 ></JobSummaryNew>
               </Modal>
