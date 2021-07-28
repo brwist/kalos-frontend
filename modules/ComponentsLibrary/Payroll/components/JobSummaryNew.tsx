@@ -19,7 +19,7 @@ import { TimesheetDepartment } from '@kalos-core/kalos-rpc/TimesheetDepartment';
 import { User } from '@kalos-core/kalos-rpc/User';
 import Alert from '@material-ui/lab/Alert';
 import { PlainForm, Schema, Option } from '../../PlainForm';
-
+import { CostReport } from '../../CostReport';
 import { format, differenceInMinutes, parseISO, addDays } from 'date-fns';
 import { OPTION_ALL } from '../../../../constants';
 import {
@@ -38,8 +38,7 @@ export type FilterData = {
   week: string;
 };
 interface Props {
-  employees: User[];
-  departments: TimesheetDepartment[];
+  loggedUserId: number;
   onClose: () => void;
 }
 export type Action = {
@@ -77,16 +76,13 @@ const reducer = (state: State, action: ActionType) => {
       return state;
   }
 };
-export const JobSummaryNew: FC<Props> = ({
-  employees,
-  departments,
-  onClose,
-}) => {
+export const JobSummaryNew: FC<Props> = ({ loggedUserId, onClose }) => {
   const [state, dispatch] = useReducer(reducer, {
     downloadButton: true,
   });
   const [timesheets, setTimesheets] = useState<TimesheetLine[]>();
   const [timesheetsJobs, setTimesheetsJobs] = useState<WeekForEmployee[]>([]);
+  const [openReport, setOpenReport] = useState<boolean>(false);
   const [loading, setLoading] = useState<boolean>(true);
   const [loaded, setLoaded] = useState<boolean>(false);
   const [days, setDays] = useState<Day[]>();
@@ -160,8 +156,8 @@ export const JobSummaryNew: FC<Props> = ({
         let workTime = 0;
         const time = roundNumber(
           differenceInMinutes(
-            parseISO(results[i].toObject().timeFinished),
-            parseISO(results[i].toObject().timeStarted),
+            parseISO(results[i].getTimeFinished()),
+            parseISO(results[i].getTimeStarted()),
           ) / 60,
         );
         if (results[i].getClassCodeId() === 37) {
@@ -375,11 +371,22 @@ export const JobSummaryNew: FC<Props> = ({
           <strong>No Timesheet Records Found</strong>
         </div>
       )}
+      {openReport && (
+        <CostReport
+          serviceCallId={filter.jobNumber}
+          loggedUserId={loggedUserId}
+        ></CostReport>
+      )}
       <Button label={'Close'} onClick={() => onClose()}></Button>
       <Button
         label={'Download'}
         disabled={state.downloadButton}
         onClick={() => downloadReport()}
+      ></Button>
+      <Button
+        label={'Full Job Report'}
+        disabled={state.downloadButton}
+        onClick={() => setOpenReport(true)}
       ></Button>
     </SectionBar>
   ) : (
