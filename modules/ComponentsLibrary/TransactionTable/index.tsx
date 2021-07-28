@@ -51,6 +51,7 @@ import { UploadPhotoTransaction } from '../UploadPhotoTransaction';
 import LineWeightIcon from '@material-ui/icons/LineWeight';
 import { EditTransaction } from '../EditTransaction';
 import { TimesheetDepartment } from '@kalos-core/kalos-rpc/TimesheetDepartment';
+import { StatusPicker } from './components/StatusPicker';
 export interface Props {
   loggedUserId: number;
   isSelector?: boolean; // Is this a selector table (checkboxes that return in on-change)?
@@ -89,6 +90,7 @@ interface FilterType {
   vendor: string;
   isAccepted: boolean | undefined;
   isRejected: boolean | undefined;
+  amount: number | undefined;
 }
 
 let pageNumber = 0;
@@ -101,6 +103,7 @@ let filter: FilterType = {
   vendor: '',
   isAccepted: false,
   isRejected: false,
+  amount: undefined,
 };
 export const TransactionTable: FC<Props> = ({
   loggedUserId,
@@ -130,6 +133,10 @@ export const TransactionTable: FC<Props> = ({
   const [selectedTransactions, setSelectedTransactions] = useState<
     Transaction[]
   >([]); // Transactions that are selected in the table if the isSelector prop is set
+
+  const [status, setStatus] = useState<
+    'Accepted' | 'Rejected' | 'Accepted / Rejected'
+  >('Accepted / Rejected');
 
   const handleSetTransactionToEdit = useCallback(
     (transaction: Transaction | undefined) => {
@@ -364,6 +371,7 @@ export const TransactionTable: FC<Props> = ({
     if (filter.vendor) req.setVendor(`%${filter.vendor}%`);
     if (filter.departmentId != 0) req.setDepartmentId(filter.departmentId);
     if (filter.employeeId != 0) req.setAssignedEmployeeId(filter.employeeId);
+    if (filter.amount) req.setAmount(filter.amount);
     let res = await TransactionClientService.BatchGet(req);
 
     setTransactions(
@@ -476,6 +484,7 @@ export const TransactionTable: FC<Props> = ({
     filter.vendor = d.vendor;
     filter.isAccepted = d.accepted ? d.accepted : undefined;
     filter.isRejected = d.rejected ? d.rejected : undefined;
+    filter.amount = d.amount;
   }, []);
 
   const handleChangePage = useCallback(
@@ -560,6 +569,31 @@ export const TransactionTable: FC<Props> = ({
   const openFileInput = () => {
     FileInput.current && FileInput.current.click();
   };
+
+  const handleSetFilterAcceptedRejected = useCallback(
+    (option: 'Accepted' | 'Rejected' | 'Accepted / Rejected') => {
+      setStatus(option);
+      switch (option) {
+        case 'Accepted':
+          filter.isAccepted = true;
+          break;
+        case 'Rejected':
+          filter.isRejected = true;
+          break;
+        case 'Accepted / Rejected':
+          filter.isAccepted = undefined;
+          filter.isRejected = undefined;
+
+          break;
+        default:
+          console.error(
+            'Unhandled string passed to handleSetFilterAcceptedRejected. ',
+          );
+          break;
+      }
+    },
+    [setStatus],
+  );
 
   const setTransactionChecked = useCallback(
     (idx: number) => {
@@ -650,14 +684,25 @@ export const TransactionTable: FC<Props> = ({
     ],
     [
       {
-        name: 'accepted',
-        label: 'Is Accepted?',
-        type: 'checkbox',
+        content: (
+          <StatusPicker
+            key={status}
+            options={['Accepted / Rejected', 'Accepted', 'Rejected']}
+            selected={
+              status == 'Accepted / Rejected' ? 0 : status == 'Accepted' ? 1 : 2
+            }
+            onSelect={(
+              selected: 'Accepted' | 'Rejected' | 'Accepted / Rejected',
+            ) => {
+              handleSetFilterAcceptedRejected(selected);
+            }}
+          />
+        ),
       },
       {
-        name: 'rejected',
-        label: 'Is Rejected?',
-        type: 'checkbox',
+        name: 'amount',
+        label: 'Search Amount',
+        type: 'text',
       },
       {
         name: 'vendor',
@@ -1009,34 +1054,7 @@ export const TransactionTable: FC<Props> = ({
                               style={{ display: 'none' }}
                             />
                           </IconButton>
-                        </Tooltip>,
-                        <Prompt
-                          key="updateJobNumber"
-                          confirmFn={newJobNumber => {
-                            try {
-                              addJobNumber(
-                                selectorParam.txn.getId(),
-                                newJobNumber,
-                              );
-                            } catch (err) {
-                              console.error('Failed to add job number: ', err);
-                            }
-                          }}
-                          text="Update Job Number"
-                          prompt="New Job Number: "
-                          Icon={KeyboardIcon}
-                        />,
-                        <Prompt
-                          key="editNotes"
-                          confirmFn={updated =>
-                            updateNotes(selectorParam.txn.getId(), updated)
-                          }
-                          text="Edit Notes"
-                          prompt="Update Txn Notes: "
-                          Icon={NotesIcon}
-                          defaultValue={selectorParam.txn.getNotes()}
-                          multiline
-                        />,
+                        </Tooltip>, 
                         <AltGallery
                           key="receiptPhotos"
                           title="Transaction Photos"

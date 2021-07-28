@@ -3,6 +3,17 @@ import Enzyme = require('enzyme');
 import Chai = require('chai');
 import Teams = require('../../../../modules/ComponentsLibrary/Teams/index');
 
+// TODO I need to do this during every try-catch:
+/* 
+
+I was thinking about writing future modules and things that we could possibly do better with it, and I thought of a pretty interesting idea. 
+What do you think of having an extra column on the ActivityLogs, just a boolean called is_error or something, and whenever a new crash happens
+and it’s caught it writes an activity log entry with that flag set and the exact error description and as much info as possible about it? Then 
+we could have a view called maybe LoggedErrors or something to display any issues that happened, giving us more info when someone has an issue 
+in #webtech? 
+
+*/
+
 describe.skip('ComponentsLibrary', () => {
   describe('Teams', () => {
     describe('<Teams />', () => {
