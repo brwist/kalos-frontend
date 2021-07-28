@@ -51,6 +51,7 @@ import { UploadPhotoTransaction } from '../UploadPhotoTransaction';
 import LineWeightIcon from '@material-ui/icons/LineWeight';
 import { EditTransaction } from '../EditTransaction';
 import { TimesheetDepartment } from '@kalos-core/kalos-rpc/TimesheetDepartment';
+import { StatusPicker } from './components/StatusPicker';
 export interface Props {
   loggedUserId: number;
   isSelector?: boolean; // Is this a selector table (checkboxes that return in on-change)?
@@ -132,6 +133,10 @@ export const TransactionTable: FC<Props> = ({
   const [selectedTransactions, setSelectedTransactions] = useState<
     Transaction[]
   >([]); // Transactions that are selected in the table if the isSelector prop is set
+
+  const [status, setStatus] = useState<
+    'Accepted' | 'Rejected' | 'Accepted / Rejected'
+  >('Accepted / Rejected');
 
   const handleSetTransactionToEdit = useCallback(
     (transaction: Transaction | undefined) => {
@@ -565,6 +570,31 @@ export const TransactionTable: FC<Props> = ({
     FileInput.current && FileInput.current.click();
   };
 
+  const handleSetFilterAcceptedRejected = useCallback(
+    (option: 'Accepted' | 'Rejected' | 'Accepted / Rejected') => {
+      setStatus(option);
+      switch (option) {
+        case 'Accepted':
+          filter.isAccepted = true;
+          break;
+        case 'Rejected':
+          filter.isRejected = true;
+          break;
+        case 'Accepted / Rejected':
+          filter.isAccepted = undefined;
+          filter.isRejected = undefined;
+
+          break;
+        default:
+          console.error(
+            'Unhandled string passed to handleSetFilterAcceptedRejected. ',
+          );
+          break;
+      }
+    },
+    [setStatus],
+  );
+
   const setTransactionChecked = useCallback(
     (idx: number) => {
       if (!transactions) {
@@ -654,20 +684,9 @@ export const TransactionTable: FC<Props> = ({
     ],
     [
       {
-        name: 'accepted',
-        label: 'Is Accepted?',
-        type: 'checkbox',
-      },
-      {
-        name: 'rejected',
-        label: 'Is Rejected?',
-        type: 'checkbox',
-      },
-      {
         name: 'amount',
         label: 'Search Amount',
         type: 'text',
-        
       },
       {
         name: 'vendor',
@@ -727,7 +746,7 @@ export const TransactionTable: FC<Props> = ({
                   ),
               },
             ]}
-          /> 
+          />
           <PlainForm
             data={filter}
             onChange={handleSetFilter}
@@ -778,6 +797,18 @@ export const TransactionTable: FC<Props> = ({
         onChange={handleSetFilter}
         schema={SCHEMA}
         className="PayrollFilter"
+      />
+      <StatusPicker
+        key={status}
+        options={['Accepted / Rejected', 'Accepted', 'Rejected']}
+        selected={
+          status == 'Accepted / Rejected' ? 0 : status == 'Accepted' ? 1 : 2
+        }
+        onSelect={(
+          selected: 'Accepted' | 'Rejected' | 'Accepted / Rejected',
+        ) => {
+          handleSetFilterAcceptedRejected(selected);
+        }}
       />
       <SectionBar
         title="Transactions"
