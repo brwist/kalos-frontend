@@ -23,7 +23,7 @@ import { Modal } from '../Modal';
 import { ToolLogs } from './components/ToolLogs';
 import { Button } from '../Button';
 import './styles.less';
-import { JobSummary } from './components/JobSummary';
+import { JobSummaryNew } from './components/JobSummaryNew';
 import { CostReportForEmployee } from '../CostReportForEmployee';
 import { Trips } from './components/Trips';
 import {
@@ -427,11 +427,11 @@ export const Payroll: FC<Props> = ({ userID }) => {
                 fullScreen={true}
                 onClose={() => setOpenReport(false)}
               >
-                <JobSummary
+                <JobSummaryNew
                   employees={employees}
                   departments={departments}
                   onClose={() => setOpenReport(false)}
-                ></JobSummary>
+                ></JobSummaryNew>
               </Modal>
             )}
           </>
