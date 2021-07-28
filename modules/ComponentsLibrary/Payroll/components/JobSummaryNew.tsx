@@ -229,21 +229,27 @@ export const JobSummaryNew: FC<Props> = ({
   }, [filter.jobNumber, filter.week]);
   const downloadReport = () => {
     if (timesheetsJobs) {
-      /*
-      let fullString = 'Employee,Hours,Job Number' + `\r\n`;
+      let fullString = `Employee , Sat ${days![0].date} ,Sun ${
+        days![1]!.date
+      },Mon ${days![2]!.date},Tue ${days![3]!.date},Wed ${days![4]!.date},Thu ${
+        days![5]!.date
+      },Fri ${days![6]!.date},\r\n`;
       for (let i = 0; i < timesheetsJobs.length; i++) {
-        let tempString =
-          timesheetsJobs[i].actions[0].userName +
-          ',' +
-          timesheetsJobs[i].actions[0].time +
-          ',' +
-          timesheetsJobs[i].jobId +
-          `\r\n`;
-        fullString = fullString + tempString;
+        let tempWeekString = timesheetsJobs[i].username;
+        for (let j = 0; j < timesheetsJobs[i].week.length; j++) {
+          if (
+            timesheetsJobs[i].week[j].travelHours > 0 ||
+            timesheetsJobs[i].week[j].workHours > 0
+          ) {
+            tempWeekString += `,Travel Hours ${timesheetsJobs[i].week[j].travelHours}: Work Hours ${timesheetsJobs[i].week[j].workHours}`;
+          } else {
+            tempWeekString += ',';
+          }
+        }
+        fullString = fullString + (tempWeekString + '\r\n');
       }
 
       downloadCSV(timestamp(), fullString);
-      */
     }
   };
   const load = useCallback(async () => {
@@ -279,13 +285,34 @@ export const JobSummaryNew: FC<Props> = ({
       <InfoTable
         columns={[
           { name: 'Employee' },
-          { name: `Saturday${days ? days[0] : 'No Date Selected'}` },
-          { name: `Sunday${days ? days[1] : 'No Date Selected'}` },
-          { name: `Monday${days ? days[2] : 'No Date Selected'}` },
-          { name: `Tueday${days ? days[3] : 'No Date Selected'}` },
-          { name: `Wednesday${days ? days[4] : 'No Date Selected'}` },
-          { name: `Thursday${days ? days[5] : 'No Date Selected'}` },
-          { name: `Friday${days ? days[6] : 'No Date Selected'}` },
+          {
+            name: `Sat
+          ${days ? days[0].date : 'No Date'}`,
+          },
+          {
+            name: `Sun
+          ${days ? days[1].date : 'No Date'}`,
+          },
+          {
+            name: `Mon
+          ${days ? days[2].date : 'No Date'}`,
+          },
+          {
+            name: `Tue
+          ${days ? days[3].date : 'No Date'}`,
+          },
+          {
+            name: `Wed
+          ${days ? days[4].date : 'No Date'}`,
+          },
+          {
+            name: `Thu
+          ${days ? days[5].date : 'No Date'}`,
+          },
+          {
+            name: `Fri
+          ${days ? days[6].date : 'No Date'}`,
+          },
         ]}
         loading={loading}
         data={
@@ -299,43 +326,43 @@ export const JobSummaryNew: FC<Props> = ({
                   {
                     value:
                       e.week[0].travelHours != 0 || e.week[0].workHours != 0
-                        ? `Travel Hours ${e.week[0].travelHours}, Work Hours ${e.week[0].workHours}`
+                        ? `Travel Hours ${e.week[0].travelHours}\n Work Hours ${e.week[0].workHours}`
                         : '',
                   },
                   {
                     value:
                       e.week[1].travelHours != 0 || e.week[1].workHours != 0
-                        ? `Travel Hours ${e.week[1].travelHours}, Work Hours ${e.week[1].workHours}`
+                        ? `Travel Hours ${e.week[1].travelHours}\n Work Hours ${e.week[1].workHours}`
                         : '',
                   },
                   {
                     value:
                       e.week[2].travelHours != 0 || e.week[2].workHours != 0
-                        ? `Travel Hours ${e.week[2].travelHours}, Work Hours ${e.week[2].workHours}`
+                        ? `Travel Hours ${e.week[2].travelHours}\n Work Hours ${e.week[2].workHours}`
                         : '',
                   },
                   {
                     value:
                       e.week[3].travelHours != 0 || e.week[3].workHours != 0
-                        ? `Travel Hours ${e.week[3].travelHours}, Work Hours ${e.week[3].workHours}`
+                        ? `Travel Hours ${e.week[3].travelHours}\n Work Hours ${e.week[3].workHours}`
                         : '',
                   },
                   {
                     value:
                       e.week[4].travelHours != 0 || e.week[4].workHours != 0
-                        ? `Travel Hours ${e.week[4].travelHours}, Work Hours ${e.week[4].workHours}`
+                        ? `Travel Hours ${e.week[4].travelHours}\n Work Hours ${e.week[4].workHours}`
                         : '',
                   },
                   {
                     value:
                       e.week[5].travelHours != 0 || e.week[5].workHours != 0
-                        ? `Travel Hours ${e.week[5].travelHours}, Work Hours ${e.week[5].workHours}`
+                        ? `Travel Hours ${e.week[5].travelHours}\n Work Hours ${e.week[5].workHours}`
                         : '',
                   },
                   {
                     value:
                       e.week[6].travelHours != 0 || e.week[6].workHours != 0
-                        ? `Travel Hours ${e.week[6].travelHours}, Work Hours ${e.week[6].workHours}`
+                        ? `Travel Hours ${e.week[6].travelHours}\n Work Hours ${e.week[6].workHours}`
                         : '',
                   },
                 ];
