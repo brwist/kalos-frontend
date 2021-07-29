@@ -321,8 +321,45 @@ export const AdvancedSearch: FC<Props> = ({
         userReq.setOrderDir(criteria.sort.orderDir);
         const userRes = await UserClientService.BatchGet(userReq);
         userResults = userRes.getResultsList();
+
+        const compare = (a: User, b: User) => {
+          const lastA = a.getLastname().toLowerCase();
+          const lastB = b.getLastname().toLowerCase();
+          const firstA = a.getFirstname().toLowerCase();
+          const firstB = b.getFirstname().toLowerCase();
+          if (
+            criteria.sort.orderDir === 'ASC' &&
+            criteria.sort.orderBy == 'user_lastname'
+          ) {
+            if (lastA + firstA < lastB + firstB) return -1;
+            if (lastA + firstA > lastB + firstB) return 1;
+          }
+          if (
+            criteria.sort.orderDir === 'DESC' &&
+            criteria.sort.orderBy == 'user_lastname'
+          ) {
+            if (lastA + firstA > lastB + firstB) return -1;
+            if (lastA + firstA < lastB + firstB) return 1;
+          }
+          if (
+            criteria.sort.orderDir === 'ASC' &&
+            criteria.sort.orderBy == 'user_firstname'
+          ) {
+            if (firstA + lastA > firstB + lastB) return -1;
+            if (firstA + lastA < firstB + lastB) return 1;
+          }
+          if (
+            criteria.sort.orderDir === 'DESC' &&
+            criteria.sort.orderBy == 'user_firstname'
+          ) {
+            if (firstA + lastA < firstB + lastB) return -1;
+            if (firstA + lastA > firstB + lastB) return 1;
+          }
+          return 0;
+        };
+        const sortedResultsList = userRes.getResultsList().sort(compare);
         setCount(userRes.getTotalCount());
-        setUsers(userRes.getResultsList());
+        setUsers(sortedResultsList);
       }
       if (kind === 'employees') {
         const images = await Promise.all(
