@@ -12,9 +12,7 @@ interface props {
   selected: number;
   disabled?: boolean;
   onSelect?(id: number): void;
-  test?(item: TransactionStatus.AsObject): boolean;
   label?: string;
-  useDevClient?: boolean;
 }
 
 interface state {
