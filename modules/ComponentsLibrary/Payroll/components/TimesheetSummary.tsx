@@ -9,7 +9,6 @@ import { Button } from '../../Button';
 import { SectionBar } from '../../../ComponentsLibrary/SectionBar';
 import { InfoTable } from '../../../ComponentsLibrary/InfoTable';
 import Alert from '@material-ui/lab/Alert';
-
 import {
   format,
   differenceInMinutes,
@@ -33,6 +32,11 @@ import { User } from '@kalos-core/kalos-rpc/User';
 import { Confirm } from '../../Confirm';
 
 import { TimeoffRequest } from '@kalos-core/kalos-rpc/TimeoffRequest';
+import {
+  BorderAllRounded,
+  BorderAllSharp,
+  BorderAllTwoTone,
+} from '@material-ui/icons';
 interface Props {
   userId: number;
   loggedUserId: number;
@@ -85,12 +89,17 @@ export const TimesheetSummary: FC<Props> = ({
     [setPendingPayrollReject],
   );
   const [mappedElements, setMappedElements] = useState<JSX.Element[]>();
-  const [togglePendingApprovalAlert, setTogglePendingApprovalAlert] =
-    useState<boolean>();
-  const [togglePendingSubmitAlert, setTogglePendingSubmitAlert] =
-    useState<boolean>();
-  const [mappedElementsNoJobs, setMappedElementsNoJobs] =
-    useState<JSX.Element[]>();
+  const [
+    togglePendingApprovalAlert,
+    setTogglePendingApprovalAlert,
+  ] = useState<boolean>();
+  const [
+    togglePendingSubmitAlert,
+    setTogglePendingSubmitAlert,
+  ] = useState<boolean>();
+  const [mappedElementsNoJobs, setMappedElementsNoJobs] = useState<
+    JSX.Element[]
+  >();
   const [today, setToday] = useState<Date>(new Date());
   const [startDay, setStartDay] = useState<Date>(
     startOfWeek(subDays(today, 7), { weekStartsOn: 6 }),
@@ -102,8 +111,9 @@ export const TimesheetSummary: FC<Props> = ({
     tempDayList.push([format(addDays(startDay, i), 'yyyy-MM-dd')]);
   }
   const [dayList, setDayList] = useState<string[][]>(tempDayList);
-  const [subTotalDayList, setSubTotalDayList] =
-    useState<string[][]>(tempDayList);
+  const [subTotalDayList, setSubTotalDayList] = useState<string[][]>(
+    tempDayList,
+  );
   const formatDateFns = (date: Date) => format(date, 'yyyy-MM-dd');
   const getTimeoff = useCallback(async () => {
     const startDate = format(startDay, 'yyyy-MM-dd');
@@ -243,64 +253,56 @@ export const TimesheetSummary: FC<Props> = ({
 
     let tempJobs = [];
     for (let i = 0; i < results.length; i++) {
-      if (
-        !results[i].toObject().referenceNumber.includes('PTO') &&
-        !results[i].toObject().briefDescription.includes('PTO')
-      ) {
-        let tempJob = {
-          jobId:
-            results[i].toObject().eventId === 0
-              ? results[i].toObject().referenceNumber === ''
-                ? 'None'
-                : results[i].toObject().referenceNumber
-              : results[i].toObject().eventId.toString(),
-          actions: [
-            {
-              time: roundNumber(
-                differenceInMinutes(
-                  parseISO(results[i].toObject().timeFinished),
-                  parseISO(results[i].toObject().timeStarted),
-                ) / 60,
-              ),
-              classCode:
-                results[i].toObject().departmentName.substr(0, 3) +
-                '-' +
-                results[i].toObject().classCode?.id,
-              billable: results[i].toObject().classCode!.billable,
-              day: format(
-                parseISO(results[i].toObject().timeStarted),
-                'yyyy-MM-dd',
-              ),
-              departmentCode: results[i].toObject().departmentName,
-            },
-          ],
-        };
-        let foundJob = false;
-        let foundCode = false;
-        for (let j = 0; j < tempJobs.length; j++) {
-          for (let l = 0; l < tempJobs[j].actions.length; l++) {
-            if (tempJobs[j].jobId === tempJob.jobId) {
-              foundJob = true;
-              if (
-                tempJob.actions[0].classCode ===
-                  tempJobs[j].actions[l].classCode &&
-                tempJob.actions[0].day === tempJobs[j].actions[l].day
-              ) {
-                tempJobs[j].actions[l].time += tempJob.actions[0].time;
-                foundCode = true;
-                break;
-              }
+      let tempJob = {
+        jobId:
+          results[i].getEventId() === 0
+            ? results[i].getReferenceNumber() === ''
+              ? 'None'
+              : results[i].getReferenceNumber()
+            : results[i].getEventId().toString(),
+        actions: [
+          {
+            time: roundNumber(
+              differenceInMinutes(
+                parseISO(results[i].getTimeFinished()),
+                parseISO(results[i].getTimeStarted()),
+              ) / 60,
+            ),
+            classCode:
+              results[i].getDepartmentName().substr(0, 3) +
+              '-' +
+              results[i].getClassCode()?.getId(),
+            billable: results[i].getClassCode()!.getBillable(),
+            day: format(parseISO(results[i].getTimeStarted()), 'yyyy-MM-dd'),
+            departmentCode: results[i].getDepartmentName(),
+          },
+        ],
+      };
+      let foundJob = false;
+      let foundCode = false;
+      for (let j = 0; j < tempJobs.length; j++) {
+        for (let l = 0; l < tempJobs[j].actions.length; l++) {
+          if (tempJobs[j].jobId === tempJob.jobId) {
+            foundJob = true;
+            if (
+              tempJob.actions[0].classCode ===
+                tempJobs[j].actions[l].classCode &&
+              tempJob.actions[0].day === tempJobs[j].actions[l].day
+            ) {
+              tempJobs[j].actions[l].time += tempJob.actions[0].time;
+              foundCode = true;
+              break;
             }
           }
-          if (foundJob === true && foundCode === false) {
-            tempJobs[j].actions.push(tempJob.actions[0]);
-            break;
-          }
         }
-        if (foundJob === false) {
-          tempJobs.push(tempJob);
-          continue;
+        if (foundJob === true && foundCode === false) {
+          tempJobs[j].actions.push(tempJob.actions[0]);
+          break;
         }
+      }
+      if (foundJob === false) {
+        tempJobs.push(tempJob);
+        continue;
       }
     }
     setTimesheets(results);
@@ -311,7 +313,7 @@ export const TimesheetSummary: FC<Props> = ({
     let ids = [];
     if (timesheets) {
       for (let i = 0; i < timesheets!.length; i++) {
-        ids.push(timesheets[i].toObject().id);
+        ids.push(timesheets[i].getId());
       }
       await tslClient.Process(ids, userId);
       onClose();
@@ -330,14 +332,12 @@ export const TimesheetSummary: FC<Props> = ({
     const tslClient = new TimesheetLineClient(ENDPOINT);
     let ids = [];
     if (timesheets) {
-      const slackID = await getSlackID(
-        timesheets[0].toObject().technicianUserName,
-      );
+      const slackID = await getSlackID(timesheets[0].getTechnicianUserName());
       if (slackID != '0') {
         slackNotify(
           slackID,
           `Your Timesheet for ${formatWeek(
-            timesheets[0].toObject().timeStarted,
+            timesheets[0].getTimeStarted(),
           )} was denied by Payroll for the following reason:` +
             rejectionMessage,
         );
@@ -345,7 +345,7 @@ export const TimesheetSummary: FC<Props> = ({
         console.log('We could not find the user, but we will still reject');
       }
       for (let i = 0; i < timesheets!.length; i++) {
-        ids.push(timesheets[i].toObject().id);
+        ids.push(timesheets[i].getId());
       }
       await tslClient.Reject(ids, userId);
       onClose();
@@ -388,7 +388,7 @@ export const TimesheetSummary: FC<Props> = ({
                 tempWeek.push([jobNumber]);
                 tempWeek[m].push(
                   tempJobs[i].actions[j].classCode +
-                    ',' +
+                    ' , ' +
                     (tempJobs[i].actions[j].time + ' Hrs'),
                 );
                 if (tempJobs[i].actions[j].time > 0) {
@@ -427,6 +427,16 @@ export const TimesheetSummary: FC<Props> = ({
       }
       let mapElements = (
         <InfoTable
+          styles={{
+            borderCollapse: 'collapse',
+            fontSize: '0.9em',
+            fontFamily: 'sans-serif',
+            minWidth: '400px',
+            boxShadow: '0 0 20px rgba(0, 0, 0, 0.15)',
+            backgroundColor: 'lightgray',
+          }}
+          hoverable={false}
+          skipPreLine={true}
           columns={[
             { name: 'Job Number (if any)' },
             {
@@ -503,6 +513,7 @@ export const TimesheetSummary: FC<Props> = ({
       );
       let subtotalReport = (
         <InfoTable
+          className="stickyHeader"
           key={'Day Subtotals'}
           data={[
             [
@@ -635,70 +646,80 @@ export const TimesheetSummary: FC<Props> = ({
     }
   }, [load, loading]);
   return loaded ? (
-    <SectionBar
-      key="title"
-      title={`Timesheet Summary for ${username}`}
-      uncollapsable={true}
-    >
-      {togglePendingApprovalAlert && (
-        <Alert key="pending" severity="warning">
-          {' '}
-          This User has Timesheet Entries that are still Pending Approval from a
-          Manager
-        </Alert>
-      )}
-      {togglePendingSubmitAlert && (
-        <Alert key="approve" severity="warning">
-          This User has Timesheet Entries that are still Pending Submission
-        </Alert>
-      )}
-      <Button key="close" label="Close" onClick={() => onClose()}></Button>
-      <Button
-        key="process"
-        label="Process All"
-        onClick={() => ProcessTimesheets()}
-        disabled={togglePendingSubmitAlert || togglePendingApprovalAlert}
-      ></Button>
-      <Button
-        key="reject"
-        label="Reject All"
-        onClick={() => handlePendingPayrollToggleReject(timesheets)}
-        disabled={togglePendingSubmitAlert || togglePendingApprovalAlert}
-      ></Button>
-      {timesheets?.length === 0 && (
-        <div key="No records">
-          <strong>No Timesheet Records Found</strong>
-        </div>
-      )}
-      {pendingPayrollReject && (
-        <Confirm
-          title="Confirm Rejection"
-          open
-          onClose={() => handlePendingPayrollToggleReject(undefined)}
-          onConfirm={() => RejectTimesheets()}
-        >
-          Are you sure you want to reject this Timesheet?
-          <br></br>
-          <label>
-            <strong>Reason:</strong>
-          </label>
-          <input
-            type="text"
-            value={rejectionMessage}
-            autoFocus
-            size={35}
-            placeholder="Enter a rejection reason"
-            onChange={e => setRejectionMessage(e.target.value)}
-          />
-        </Confirm>
-      )}
+    <div className="timesheetSummary">
       <SectionBar
-        key="week"
-        title={'Approved for of Week of ' + format(startDay, 'yyyy-MM-dd')}
+        key="title"
+        title={`Timesheet Summary for ${username}`}
+        uncollapsable={true}
       >
-        <div key="MappedList">{mappedElements}</div>
+        {togglePendingApprovalAlert && (
+          <Alert key="pending" severity="warning">
+            {' '}
+            This User has Timesheet Entries that are still Pending Approval from
+            a Manager
+          </Alert>
+        )}
+        {togglePendingSubmitAlert && (
+          <Alert key="approve" severity="warning">
+            This User has Timesheet Entries that are still Pending Submission
+          </Alert>
+        )}
+        <Button key="close" label="Close" onClick={() => onClose()}></Button>
+        <Button
+          key="process"
+          label="Process All"
+          onClick={() => ProcessTimesheets()}
+          disabled={togglePendingSubmitAlert || togglePendingApprovalAlert}
+        ></Button>
+        <Button
+          key="reject"
+          label="Reject All"
+          onClick={() => handlePendingPayrollToggleReject(timesheets)}
+          disabled={togglePendingSubmitAlert || togglePendingApprovalAlert}
+        ></Button>
+        {timesheets?.length === 0 && (
+          <div key="No records">
+            <strong>No Timesheet Records Found</strong>
+          </div>
+        )}
+        {pendingPayrollReject && (
+          <Confirm
+            title="Confirm Rejection"
+            open
+            onClose={() => handlePendingPayrollToggleReject(undefined)}
+            onConfirm={() => RejectTimesheets()}
+          >
+            Are you sure you want to reject this Timesheet?
+            <br></br>
+            <label>
+              <strong>Reason:</strong>
+            </label>
+            <input
+              type="text"
+              value={rejectionMessage}
+              autoFocus
+              size={35}
+              placeholder="Enter a rejection reason"
+              onChange={e => setRejectionMessage(e.target.value)}
+            />
+          </Confirm>
+        )}
+        <SectionBar
+          key="week"
+          title={'Approved for of Week of ' + format(startDay, 'yyyy-MM-dd')}
+        >
+          <style>{`
+  .InfoTableItem {
+      border-left:1px solid black;
+    }
+  .InfoTableValueContent {
+    text-align:center;
+  }
+  `}</style>
+          <div key="MappedList">{mappedElements}</div>
+        </SectionBar>
       </SectionBar>
-    </SectionBar>
+    </div>
   ) : (
     <Loader />
   );
