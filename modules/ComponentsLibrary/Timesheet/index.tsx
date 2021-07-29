@@ -196,7 +196,8 @@ export const Timesheet: FC<Props> = props => {
     {
       icon: <AddAlertIcon />,
       name: 'Reminder',
-      url: 'https://app.kalosflorida.com/index.cfm?action=admin:service.addReminder',
+      url:
+        'https://app.kalosflorida.com/index.cfm?action=admin:service.addReminder',
     },
     {
       icon: <AssignmentIndIcon />,
@@ -241,103 +242,110 @@ export const Timesheet: FC<Props> = props => {
     const [hasIssue, issueStr] = await txnClient.timesheetCheck(userId);
     if (hasIssue) {
       dispatch({ type: 'showReceiptsIssueDialog', value: true });
+
       return false;
+    } else {
+      return true;
     }
-    return true;
   }, [userId]);
 
   const handleSubmitTimesheet = useCallback(async () => {
     (async () => {
-      if (await !checkReceiptIssue()) return;
-      const ids: number[] = [];
-      let overlapped = false;
-      let sameTimeConflict = false; //Track if there was a same time conflict
-      for (let i = 0; i < shownDates.length; i++) {
-        let days = [...data[shownDates[i]].timesheetLineList]; //interate through each day
-        for (var val of days) {
-          //iterate through each card in the day, as long as it is defined
-          if (val != undefined) {
-            if (val.getTimeFinished() === val.getTimeStarted()) {
-              //if the Start and End time are the same, trip the flag
-              sameTimeConflict = true;
+      const problem = await checkReceiptIssue();
+      if (!problem) {
+        return;
+      } else {
+        const ids: number[] = [];
+        let overlapped = false;
+        let sameTimeConflict = false; //Track if there was a same time conflict
+        for (let i = 0; i < shownDates.length; i++) {
+          let days = [...data[shownDates[i]].timesheetLineList]; //interate through each day
+          for (var val of days) {
+            //iterate through each card in the day, as long as it is defined
+            if (val != undefined) {
+              if (val.getTimeFinished() === val.getTimeStarted()) {
+                //if the Start and End time are the same, trip the flag
+                sameTimeConflict = true;
+              }
             }
           }
         }
-      }
-      for (let i = 0; i < shownDates.length; i++) {
-        let dayList = [...data[shownDates[i]].timesheetLineList].sort(
-          (a, b) =>
-            parseISO(a.getTimeStarted()).getTime() -
-            parseISO(b.getTimeStarted()).getTime(),
-        );
-        let result = dayList.reduce(
-          (acc, current, idx, arr) => {
-            if (idx === 0) {
-              acc.idList.push(current.getId());
-              return acc;
-            }
-
-            let previous = arr[idx - 1];
-            let previousEnd = parseISO(previous.getTimeFinished()).getTime();
-            let currentStart = parseISO(current.getTimeStarted()).getTime();
-            let overlap = previousEnd > currentStart;
-            if (overlap) {
-              overlapped = true;
-            } else {
-              acc.ranges.push({
-                previous: previous,
-                current: current,
-              });
-              if (
-                !current.getAdminApprovalUserId() ||
-                current.getAdminApprovalUserId() === 0
-              ) {
+        for (let i = 0; i < shownDates.length; i++) {
+          let dayList = [...data[shownDates[i]].timesheetLineList].sort(
+            (a, b) =>
+              parseISO(a.getTimeStarted()).getTime() -
+              parseISO(b.getTimeStarted()).getTime(),
+          );
+          let result = dayList.reduce(
+            (acc, current, idx, arr) => {
+              if (idx === 0) {
                 acc.idList.push(current.getId());
+                return acc;
               }
-            }
-            return acc;
-          },
-          {
-            ranges: [] as {
-              previous: TimesheetLine;
-              current: TimesheetLine;
-            }[],
-            idList: [] as number[],
-          },
-        );
 
-        if (overlapped || sameTimeConflict) {
-          //Adding the sameTimeConflict check to here as well, since
-          //we would like to break if either one has been tripped
-          break;
-        } else {
-          ids.push(...result.idList);
-          console.log(ids);
+              let previous = arr[idx - 1];
+              let previousEnd = parseISO(previous.getTimeFinished()).getTime();
+              let currentStart = parseISO(current.getTimeStarted()).getTime();
+              let overlap = previousEnd > currentStart;
+              if (overlap) {
+                overlapped = true;
+              } else {
+                acc.ranges.push({
+                  previous: previous,
+                  current: current,
+                });
+                if (
+                  !current.getAdminApprovalUserId() ||
+                  current.getAdminApprovalUserId() === 0
+                ) {
+                  acc.idList.push(current.getId());
+                }
+              }
+              return acc;
+            },
+            {
+              ranges: [] as {
+                previous: TimesheetLine;
+                current: TimesheetLine;
+              }[],
+              idList: [] as number[],
+            },
+          );
+
+          if (overlapped || sameTimeConflict) {
+            //Adding the sameTimeConflict check to here as well, since
+            //we would like to break if either one has been tripped
+            break;
+          } else {
+            ids.push(...result.idList);
+            console.log(ids);
+          }
         }
-      }
-      if (overlapped) {
-        dispatch({ type: 'error', text: 'Timesheet lines are overlapping' });
-      } else if (sameTimeConflict && role != 'Payroll') {
-        dispatch({
-          type: 'error',
-          text: 'Timesheet contains value with same Start and End time.', // dispatch the error
-        });
-      } else {
-        let isManager = false;
-        if (user) {
-          isManager = !!user
-            .getPermissionGroupsList()
-            .find(p => p.getName() === 'Manager');
-        }
-        if (
-          (user?.getTimesheetAdministration() || isManager) &&
-          props.userId !== props.timesheetOwnerId
-        ) {
-          await tslClient.Approve(ids, userId);
-          dispatch({ type: 'approveTimesheet' });
+        if (overlapped) {
+          dispatch({ type: 'error', text: 'Timesheet lines are overlapping' });
+        } else if (sameTimeConflict && role != 'Payroll') {
+          dispatch({
+            type: 'error',
+            text: 'Timesheet contains value with same Start and End time.', // dispatch the error
+          });
         } else {
-          await tslClient.Submit(ids);
-          dispatch({ type: 'submitTimesheet' });
+          let isManager = false;
+          if (user) {
+            isManager = !!user
+              .getPermissionGroupsList()
+              .find(p => p.getName() === 'Manager');
+          }
+          if (
+            (user?.getTimesheetAdministration() || isManager) &&
+            props.userId !== props.timesheetOwnerId
+          ) {
+            await tslClient.Approve(ids, userId);
+            dispatch({ type: 'approveTimesheet' });
+          } else {
+            await tslClient.Submit(ids);
+
+            dispatch({ type: 'submitTimesheet' });
+          }
         }
       }
     })();
@@ -552,8 +560,7 @@ export const Timesheet: FC<Props> = props => {
   }, [timesheetOwnerId, userId]);
 
   const fetchTimeoffRequestTypes = useCallback(async () => {
-    const timeoffRequestTypes =
-      await TimeoffRequestClientService.getTimeoffRequestTypes();
+    const timeoffRequestTypes = await TimeoffRequestClientService.getTimeoffRequestTypes();
     setTimeoffRequestTypes(
       timeoffRequestTypes.reduce(
         (aggr, item) => ({ ...aggr, [item.getId()]: item.getRequestType() }),
@@ -613,8 +620,9 @@ export const Timesheet: FC<Props> = props => {
         ),
       ]);
       toReq.setDateTargetList(['time_started', 'time_started']);
-      const timeoffs =
-        await TimeoffRequestClientService.getTimeoffRequestByFilter(toReq);
+      const timeoffs = await TimeoffRequestClientService.getTimeoffRequestByFilter(
+        toReq,
+      );
       dispatch({
         type: 'fetchedTimesheetData',
         data: result,
