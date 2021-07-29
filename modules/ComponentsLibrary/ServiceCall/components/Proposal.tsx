@@ -15,6 +15,7 @@ import { ProposalPrint } from './ProposalPrint';
 import './proposal.less';
 import { User } from '@kalos-core/kalos-rpc/User';
 import { Property } from '@kalos-core/kalos-rpc/Property';
+import { makeSafeFormObject } from '../../../../helpers';
 interface Props {
   serviceItem: EventType;
   property: Property;
@@ -27,14 +28,6 @@ type Form = {
   notes: string;
 };
 
-type Entry = {
-  id: number;
-  remember: number;
-  description: string;
-  price: number;
-  predefined: boolean;
-};
-
 type Notes = {
   notes: string;
 };
@@ -44,14 +37,10 @@ type File = {
   fileDescription: string;
 };
 
-const SCHEMA_ENTRY: Schema<Entry> = [
-  [
-    { name: 'id', type: 'hidden' },
-    { name: 'remember', type: 'hidden' },
-    { name: 'predefined', type: 'hidden' },
-  ],
-  [{ label: 'Description', name: 'description', multiline: true }],
-  [{ label: 'Price', name: 'price', type: 'number', startAdornment: '$' }],
+const SCHEMA_ENTRY: Schema<StoredQuote> = [
+  [{ name: 'getId', type: 'hidden' }],
+  [{ label: 'Description', name: 'getDescription', multiline: true }],
+  [{ label: 'Price', name: 'getPrice', type: 'number', startAdornment: '$' }],
 ];
 const SCHEMA_FILE: Schema<File> = [
   [{ label: 'File', headline: true }],
@@ -72,7 +61,7 @@ const SCHEMA_FILE: Schema<File> = [
 ];
 
 export const Proposal: FC<Props> = ({ serviceItem, customer, property }) => {
-  const [editing, setEditing] = useState<Entry>();
+  const [editing, setEditing] = useState<StoredQuote>();
   const [file, setFile] = useState<File>({
     localCopyName: '',
     fileDescription: `${serviceItem.getId()}_pending_proposal_${
@@ -81,7 +70,7 @@ export const Proposal: FC<Props> = ({ serviceItem, customer, property }) => {
   });
   const [quickAddOpen, setQuickAddOpen] = useState<boolean>(false);
   const [preview, setPreview] = useState<boolean>(false);
-  const [table, setTable] = useState<Entry[]>([]);
+  const [table, setTable] = useState<StoredQuote[]>([]);
   const customerName = `${customer?.getFirstname()} ${customer?.getLastname()}`;
   const [form, setForm] = useState<Form>({
     displayName: customerName,
@@ -93,20 +82,20 @@ export const Proposal: FC<Props> = ({ serviceItem, customer, property }) => {
     [quickAddOpen, setQuickAddOpen],
   );
   const handleAddEntry = useCallback(
-    (entry?: Entry) => () => {
+    (entry?: StoredQuote) => {
       setEditing(entry);
     },
     [setEditing],
   );
   const handleDeleteEntry = useCallback(
-    (id: number) => () => setTable(table.filter(item => item.id !== id)),
+    (id: number) => setTable(table.filter(item => item.getId() !== id)),
     [table, setTable],
   );
   const handleSaveEntry = useCallback(
-    (entry: Entry) => {
+    (entry: StoredQuote) => {
       setTable(
-        table.map(({ id }) => id).includes(entry.id)
-          ? table.map(item => (item.id === entry.id ? entry : item))
+        table.map(map => map.getId()).includes(entry.getId())
+          ? table.map(item => (item.getId() === entry.getId() ? entry : item))
           : [...table, entry],
       );
       setEditing(undefined);
@@ -114,23 +103,14 @@ export const Proposal: FC<Props> = ({ serviceItem, customer, property }) => {
     [setTable, setEditing, table],
   );
   const handleQuickAdd = useCallback(
-    (entry: StoredQuote.AsObject) => {
-      handleSaveEntry({ ...entry, predefined: true, remember: 0 });
+    (entry: StoredQuote) => {
+      handleSaveEntry(entry);
     },
     [handleSaveEntry],
   );
   const handleSetRemember = useCallback(
     (id: number) => (value: Value) => {
-      setTable(
-        table.map(item =>
-          item.id === id
-            ? {
-                ...item,
-                remember: +value,
-              }
-            : item,
-        ),
-      );
+      setTable(table);
     },
     [table, setTable],
   );
@@ -159,13 +139,13 @@ export const Proposal: FC<Props> = ({ serviceItem, customer, property }) => {
         {
           label: 'Add',
           compact: true,
-          onClick: handleAddEntry({
-            id: Math.max(-1, ...table.map(({ id }) => id)) + 1,
-            remember: 0,
-            predefined: false,
-            description: '',
-            price: 0,
-          }),
+          onClick: () => {
+            let newEntry = new StoredQuote();
+            newEntry.setId(Math.max(-1, ...table.map(map => map.getId())) + 1);
+            newEntry.setDescription('');
+            newEntry.setPrice(0);
+            handleAddEntry(newEntry);
+          },
         },
       ],
       fixedActions: true,
@@ -191,31 +171,29 @@ export const Proposal: FC<Props> = ({ serviceItem, customer, property }) => {
       },
     ],
   ];
-  const data: Data = table.map(props => {
-    const { id, remember, description, price, predefined } = props;
+  const data: Data = table.map((props: StoredQuote) => {
     return [
-      { value: description },
+      { value: props.getDescription() },
       {
-        value: `$ ${price}`,
+        value: `$ ${props.getPrice()}`,
         actions: [
-          ...(predefined
-            ? []
-            : [
-                <Field
-                  key={0}
-                  className="ProposalCheckbox"
-                  name={`remember-${id}`}
-                  type="checkbox"
-                  label="Remember This Item"
-                  value={remember}
-                  onChange={handleSetRemember(id)}
-                />,
-              ]),
+          // ? Commented this because this feature appears to be incomplete and I have no idea what "remember" was supposed to remember or do
+          // ...[
+          //   <Field
+          //     key={0}
+          //     className="ProposalCheckbox"
+          //     name={`remember-${props.getId()}`}
+          //     type="checkbox"
+          //     label="Remember This Item"
+          //     value={props.getRemember()}
+          //     onChange={handleSetRemember(props.getId())}
+          //   />,
+          // ],
           <IconButton
             key={1}
             style={{ marginLeft: 4 }}
             size="small"
-            onClick={handleAddEntry(props)}
+            onClick={() => handleAddEntry(props)}
           >
             <EditIcon />
           </IconButton>,
@@ -223,7 +201,7 @@ export const Proposal: FC<Props> = ({ serviceItem, customer, property }) => {
             key={2}
             style={{ marginLeft: 4 }}
             size="small"
-            onClick={handleDeleteEntry(id)}
+            onClick={() => handleDeleteEntry(props.getId())}
           >
             <DeleteIcon />
           </IconButton>,
@@ -231,9 +209,9 @@ export const Proposal: FC<Props> = ({ serviceItem, customer, property }) => {
       },
     ];
   });
-  const dataPreview: Data = table.map(({ description, price }) => [
-    { value: description },
-    { value: `$ ${price}` },
+  const dataPreview: Data = table.map(props => [
+    { value: props.getDescription() },
+    { value: `$ ${props.getPrice()}` },
   ]);
   return (
     <>
@@ -244,9 +222,9 @@ export const Proposal: FC<Props> = ({ serviceItem, customer, property }) => {
             logJobNumber={serviceItem.getLogJobNumber()}
             property={property}
             notes={form.withJobNotes ? form.notes : undefined}
-            entries={table.map(({ description, price }) => ({
-              description,
-              price,
+            entries={table.map(props => ({
+              description: props.getDescription(),
+              price: props.getPrice(),
             }))}
           />
         }
@@ -263,13 +241,15 @@ export const Proposal: FC<Props> = ({ serviceItem, customer, property }) => {
         fixedActions
       />
       {editing && (
-        <Modal open onClose={handleAddEntry()}>
-          <Form<Entry>
+        <Modal open onClose={() => handleAddEntry()}>
+          <Form<StoredQuote>
             title="Edit"
             schema={SCHEMA_ENTRY}
-            onSave={handleSaveEntry}
+            onSave={quote => {
+              handleSaveEntry(makeSafeFormObject(quote, new StoredQuote()));
+            }}
             data={editing}
-            onClose={handleAddEntry()}
+            onClose={() => handleAddEntry()}
             submitLabel="Done"
           />
         </Modal>
@@ -316,7 +296,7 @@ export const Proposal: FC<Props> = ({ serviceItem, customer, property }) => {
         <StoredQuotes
           open
           onClose={handleToggleQuickAdd}
-          onSelect={out => handleQuickAdd(out.toObject())}
+          onSelect={out => handleQuickAdd(out)}
         />
       )}
     </>

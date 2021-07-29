@@ -10,7 +10,7 @@ import { InfoTable, Columns, Data } from '../InfoTable';
 import { PlainForm, Schema, Option } from '../PlainForm';
 import { Confirm } from '../Confirm';
 import { Modal } from '../Modal';
-import { PerDiem } from '@kalos-core/kalos-rpc/PerDiem';
+import { PerDiem, PerDiemList } from '@kalos-core/kalos-rpc/PerDiem';
 import { PrintPage, Status } from '../PrintPage';
 import { PrintTable } from '../PrintTable';
 import { PrintParagraph } from '../PrintParagraph';
@@ -46,8 +46,8 @@ const COLUMNS: Columns = [
 ];
 
 type FormData = Pick<
-  PerDiem.AsObject,
-  'dateStarted' | 'departmentId' | 'userId' | 'needsAuditing'
+  PerDiem,
+  'getDateStarted' | 'getDepartmentId' | 'getUserId' | 'getNeedsAuditing'
 >;
 
 type FormPrintData = {
@@ -67,12 +67,18 @@ type GovPerDiemsByYearMonth = {
   };
 };
 
-const initialFormData = {
-  needsAuditing: true,
-  dateStarted: OPTION_ALL,
-  departmentId: 0,
-  userId: 0,
-};
+// const initialFormData = {
+//   needsAuditing: true,
+//   dateStarted: OPTION_ALL,
+//   departmentId: 0,
+//   userId: 0,
+// };
+
+let initialFormData = new PerDiem();
+initialFormData.setDateStarted(OPTION_ALL);
+initialFormData.setNeedsAuditing(true);
+initialFormData.setDepartmentId(0);
+initialFormData.setUserId(0);
 
 const initialFormPrintData: FormPrintData = {
   departmentIds: [],
@@ -109,18 +115,25 @@ export const PerDiemsNeedsAuditing: FC<Props> = ({ loggedUserId }) => {
   const [pendingReject, setPendingReject] = useState<PerDiem>();
   const [printStatus, setPrintStatus] = useState<Status>('idle');
   const [formData, setFormData] = useState<FormData>(initialFormData);
-  const [formPrintData, setFormPrintData] = useState<FormPrintData>(
-    initialFormPrintData,
-  );
+  const [formPrintData, setFormPrintData] =
+    useState<FormPrintData>(initialFormPrintData);
   const [formKey, setFormKey] = useState<number>(0);
-  const [
-    govPerDiemsByYearMonth,
-    setGovPerDiemsByYearMonth,
-  ] = useState<GovPerDiemsByYearMonth>({});
+  const [govPerDiemsByYearMonth, setGovPerDiemsByYearMonth] =
+    useState<GovPerDiemsByYearMonth>({});
   const initialize = useCallback(async () => {
     const technicians = await UserClientService.loadTechnicians();
     setTechnicians(technicians);
-    const departments = await TimesheetDepartmentClientService.loadTimeSheetDepartments();
+    let departments: TimesheetDepartment[];
+    try {
+      departments =
+        await TimesheetDepartmentClientService.loadTimeSheetDepartments();
+    } catch (err) {
+      console.error(
+        `An error occurred while loading timesheet departments: ${err}`,
+      );
+      setInitialized(true);
+      return;
+    }
     setDepartments(
       sortBy(departments, TimesheetDepartmentClientService.getDepartmentName),
     );
@@ -128,15 +141,24 @@ export const PerDiemsNeedsAuditing: FC<Props> = ({ loggedUserId }) => {
   }, [setInitialized, setDepartments]);
   const load = useCallback(async () => {
     setLoading(true);
-    const { departmentId, userId, dateStarted, needsAuditing } = formData;
-    const response = await PerDiemClientService.loadPerDiemsNeedsAuditing(
-      page,
-      needsAuditing,
-      false,
-      departmentId ? departmentId : undefined,
-      userId ? userId : undefined,
-      dateStarted !== OPTION_ALL ? dateStarted : undefined,
-    );
+    let response: PerDiemList;
+    try {
+      response = await PerDiemClientService.loadPerDiemsNeedsAuditing(
+        page,
+        formData.getNeedsAuditing(),
+        false,
+        formData.getDepartmentId() ? formData.getDepartmentId() : undefined,
+        formData.getUserId() ? formData.getUserId() : undefined,
+        formData.getDateStarted() !== OPTION_ALL
+          ? formData.getDateStarted()
+          : undefined,
+      );
+    } catch (err) {
+      console.error(
+        `An error occurred while getting a per diem that needs auditing: ${err}`,
+      );
+      return;
+    }
 
     setPerDiems(response.getResultsList());
     setCount(response.getTotalCount());
@@ -296,9 +318,10 @@ export const PerDiemsNeedsAuditing: FC<Props> = ({ loggedUserId }) => {
     await loadPrintData();
     setPrintStatus('loaded');
   }, [setPrintStatus, loadPrintData]);
-  const handlePrinted = useCallback(() => setPrintStatus('idle'), [
-    setPrintStatus,
-  ]);
+  const handlePrinted = useCallback(
+    () => setPrintStatus('idle'),
+    [setPrintStatus],
+  );
   const handleTogglePrinting = useCallback(
     (printing: boolean) => () => setPrinting(printing),
     [setPrinting],
@@ -313,35 +336,34 @@ export const PerDiemsNeedsAuditing: FC<Props> = ({ loggedUserId }) => {
     ],
     [technicians],
   );
-  const departmentsOptions: Option[] = useMemo(
-    () => [
+  const departmentsOptions: Option[] = useMemo(() => {
+    return [
       { label: OPTION_ALL, value: 0 },
       ...departments.map(el => ({
         label: TimesheetDepartmentClientService.getDepartmentName(el),
         value: el.getId(),
       })),
-    ],
-    [departments],
-  );
+    ];
+  }, [departments]);
   const SCHEMA: Schema<FormData> = [
     [
       {
-        name: 'needsAuditing',
+        name: 'getNeedsAuditing',
         label: 'Needs Auditing',
         type: 'checkbox',
       },
       {
-        name: 'userId',
+        name: 'getUserId',
         label: 'Technician',
         options: techniciansOptions,
       },
       {
-        name: 'departmentId',
+        name: 'getDepartmentId',
         label: 'Department',
         options: departmentsOptions,
       },
       {
-        name: 'dateStarted',
+        name: 'getDateStarted',
         label: 'Week',
         options: weekOptions,
         actions: [
