@@ -147,7 +147,6 @@ export const EditTransaction: FC<Props> = ({
   return (
     <>
       <Form<Transaction>
-        key={transaction.toString()}
         schema={SCHEMA}
         data={transaction}
         onChange={newTxn => {
