@@ -206,11 +206,15 @@ export const SpiffTool: FC<Props> = ({
       req.setIsActive(true);
       req.setOrderBy(type === 'Spiff' ? 'date_performed' : 'time_due');
       req.setOrderDir('DESC');
-      if (needsManagerAction) {
+      if (needsManagerAction && toggle == false) {
         //req.setAdminActionId(0);
         req.setFieldMaskList(['AdminActionId']);
         req.setPayrollProcessed(true);
         req.setNotEqualsList(['PayrollProcessed']);
+      }
+      if (needsManagerAction && toggle == true) {
+        req.setAdminActionId(0);
+        req.addNotEquals('AdminActionId');
       }
       if (needsPayrollAction && toggle == false) {
         req.setAdminActionId(0);

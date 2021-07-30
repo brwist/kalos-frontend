@@ -68,7 +68,19 @@ export const CostReportForEmployee: FC<Props> = ({ userId, week }) => {
 
     return resultsList;
   }, [userId, endDay, startDay]);
-
+  const getSpiffStatus = (status: number) => {
+    if (status === 1) {
+      return 'Approved';
+    }
+    if (status === 2) {
+      return 'Rejected';
+    }
+    if (status === 3) {
+      return 'Revoked';
+    } else {
+      return 'No Admin Status';
+    }
+  };
   const getSpiffs = useCallback(async () => {
     const req = new Task();
     req.setExternalId(userId);
@@ -226,7 +238,8 @@ export const CostReportForEmployee: FC<Props> = ({ userId, week }) => {
             { name: 'Date Created' },
             { name: 'Amount' },
             { name: 'Job Number' },
-            { name: 'Processed' },
+            { name: 'Processed Date' },
+            { name: 'Spiff Status' },
           ]}
           data={
             spiffs
@@ -262,6 +275,16 @@ export const CostReportForEmployee: FC<Props> = ({ userId, week }) => {
                               )
                             : 'Processed, but no Processed Date'
                           : 'Not Processed',
+                    },
+                    {
+                      value:
+                        spiff.getActionsList().length > 0
+                          ? getSpiffStatus(
+                              spiff
+                                .getActionsList()
+                                [spiff.getActionsList().length - 1].getStatus(),
+                            )
+                          : 'No Status',
                     },
                   ];
                 })
