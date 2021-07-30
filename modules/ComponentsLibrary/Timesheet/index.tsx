@@ -251,8 +251,7 @@ export const Timesheet: FC<Props> = props => {
 
   const handleSubmitTimesheet = useCallback(async () => {
     (async () => {
-      const problem = await checkReceiptIssue();
-      if (!problem) {
+      if (!(await checkReceiptIssue())) {
         return;
       } else {
         const ids: number[] = [];

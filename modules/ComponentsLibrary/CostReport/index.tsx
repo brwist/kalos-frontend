@@ -73,7 +73,7 @@ export const CostReport: FC<Props> = ({ serviceCallId }) => {
     ).getResultsList();
 
     let arr: PerDiem[] = [];
-
+    console.log(resultsList);
     resultsList.forEach(result => {
       let isIncluded = false;
       arr.forEach(arrItem => {
@@ -83,7 +83,12 @@ export const CostReport: FC<Props> = ({ serviceCallId }) => {
         arr.push(result);
       }
     });
-
+    for (let i = 0; i < arr.length; i++) {
+      const tempRowList = arr[i]
+        .getRowsList()
+        .filter(row => row.getServiceCallId() === serviceCallId);
+      arr[i].setRowsList(tempRowList);
+    }
     let allTrips: Trip[] = [];
     arr.forEach(pd =>
       pd.getRowsList().forEach(row => {

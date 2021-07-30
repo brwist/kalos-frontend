@@ -435,8 +435,8 @@ export const TimesheetSummary: FC<Props> = ({
             boxShadow: '0 0 20px rgba(0, 0, 0, 0.15)',
             backgroundColor: 'lightgray',
           }}
-          hoverable={false}
           skipPreLine={true}
+          hoverable={false}
           columns={[
             { name: 'Job Number (if any)' },
             {
@@ -711,10 +711,8 @@ export const TimesheetSummary: FC<Props> = ({
           <style>{`
   .InfoTableItem {
       border-left:1px solid black;
+
     }
-  .InfoTableValueContent {
-    text-align:center;
-  }
   `}</style>
           <div key="MappedList">{mappedElements}</div>
         </SectionBar>
