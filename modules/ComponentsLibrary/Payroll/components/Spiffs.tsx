@@ -79,7 +79,9 @@ export const Spiffs: FC<Props> = ({
     setSpiffTypes(spiffTypes);
   }, []);
   const load = useCallback(async () => {
-    setLoading(true); /*
+    setLoading(
+      true,
+    ); /*
     const filter: GetPendingSpiffConfig = {
       page,
       technicianUserID: employeeId,
@@ -112,9 +114,13 @@ export const Spiffs: FC<Props> = ({
       u.setEmployeeDepartmentId(departmentId);
       req.setSearchUser(u);
     }
-    if (role === 'Manager') {
+    if (role === 'Manager' && toggleButton == false) {
       //req.setAdminActionId(0);
       req.setFieldMaskList(['AdminActionId']);
+    }
+    if (role === 'Manager' && toggleButton == true) {
+      req.setAdminActionId(0);
+      req.addNotEquals('AdminActionId');
     }
     if (week) {
       if (week != OPTION_ALL) {
@@ -172,10 +178,9 @@ export const Spiffs: FC<Props> = ({
     (pendingView?: Task) => () => setPendingView(pendingView),
     [],
   );
-  const handleToggleAdd = useCallback(
-    () => setPendingAdd(!pendingAdd),
-    [pendingAdd],
-  );
+  const handleToggleAdd = useCallback(() => setPendingAdd(!pendingAdd), [
+    pendingAdd,
+  ]);
   const handleToggleButton = useCallback(() => {
     setToggleButton(!toggleButton);
     setPage(0);
@@ -308,11 +313,15 @@ export const Spiffs: FC<Props> = ({
         }
         fixedActions
       />
-      {role === 'Payroll' && (
+      {role && (
         <Button
           label={
-            toggleButton === false
+            toggleButton === false && role == 'Payroll'
               ? 'Search For Processed Spiffs'
+              : toggleButton === false && role === 'Manager'
+              ? 'Search for Approved Spiffs'
+              : toggleButton === true && role === 'Manager'
+              ? 'Search for Unapproved Spiffs'
               : 'Search For Unprocessed'
           }
           onClick={() => handleToggleButton()}
