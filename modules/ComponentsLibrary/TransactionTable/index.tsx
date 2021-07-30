@@ -487,10 +487,7 @@ export const TransactionTable: FC<Props> = ({
   const handleUpdateTransaction = useCallback(
     async (transactionToSave: Transaction) => {
       try {
-        console.log('Transaction to save: ', transactionToSave);
-        const response = await TransactionClientService.Update(
-          transactionToSave,
-        );
+        await TransactionClientService.Update(transactionToSave);
         setTransactionToEdit(undefined);
         refresh();
       } catch (err) {
