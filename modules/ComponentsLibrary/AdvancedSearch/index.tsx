@@ -246,7 +246,12 @@ export const AdvancedSearch: FC<Props> = ({
     setJobSubtypes(jobSubtypes);
     setLoadingDicts(false);
     if (kinds.includes('employees')) {
-      const departments = await TimesheetDepartmentClientService.loadTimeSheetDepartments();
+      //const departments = await TimesheetDepartmentClientService.loadTimeSheetDepartments();
+      const departmentRequest = new TimesheetDepartment();
+      departmentRequest.setIsActive(1);
+      const departments = (
+        await TimesheetDepartmentClientService.BatchGet(departmentRequest)
+      ).getResultsList();
       setDepartments(departments);
       const employeeFunctions = await EmployeeFunctionClientService.loadEmployeeFunctions();
       setEmployeeFunctions(employeeFunctions);
@@ -891,6 +896,7 @@ export const AdvancedSearch: FC<Props> = ({
     ],
     [searchActions],
   );
+  console.log('departments', departments);
   const SCHEMA_EMPLOYEES: Schema<UsersFilter> = useMemo(
     () => [
       [
