@@ -1873,12 +1873,9 @@ const makeSafeFormObject = function makeSafeFormObject<T>(data: T, result: T) {
   for (const key of keys) {
     if (key.startsWith('get')) {
       try {
-        // @ts-ignore
-        if (typeof data[key] != 'function') {
-          // @ts-ignore
-          result[key.replace('get', 'set')](data[key]);
-          // @ts-ignore
-          result.addFieldMask(key.slice(3));
+        if (typeof (data as any)[key] != 'function') {
+          (result as any)[key.replace('get', 'set')]((data as any)[key]);
+          (result as any).addFieldMask(key.slice(3));
         }
       } catch (err) {
         console.log('failed to set value on request object', err);

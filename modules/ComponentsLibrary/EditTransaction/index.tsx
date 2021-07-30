@@ -1,5 +1,6 @@
 import { Transaction } from '@kalos-core/kalos-rpc/Transaction';
-import React, { FC, useState } from 'react';
+import React, { FC, useCallback, useState } from 'react';
+import { makeSafeFormObject } from '../../../helpers';
 import { Form, Schema } from '../Form';
 
 interface Props {
@@ -16,6 +17,12 @@ export const EditTransaction: FC<Props> = ({
   onChange,
 }) => {
   const [transaction] = useState<Transaction>(transactionInput);
+  const [changed, setChanged] = useState<boolean>(false);
+
+  const handleSetChanged = useCallback(
+    (changed: boolean) => setChanged(changed),
+    [setChanged],
+  );
 
   const SCHEMA: Schema<Transaction> = [
     [
@@ -25,9 +32,9 @@ export const EditTransaction: FC<Props> = ({
         type: 'number',
       },
       {
-        label: 'Department ID',
+        label: 'Department',
         name: 'getDepartmentId',
-        type: 'number',
+        type: 'department',
       },
     ],
     [
@@ -87,6 +94,11 @@ export const EditTransaction: FC<Props> = ({
         label: 'Vendor',
         name: 'getVendor',
       },
+      {
+        label: 'Order #',
+        name: 'getOrderNumber',
+        multiline: true,
+      },
     ],
     [
       {
@@ -115,13 +127,17 @@ export const EditTransaction: FC<Props> = ({
   return (
     <>
       <Form<Transaction>
+        submitDisabled={!changed}
         schema={SCHEMA}
         data={transaction}
         onChange={newTxn => {
-          if (onChange) onChange(newTxn);
+          handleSetChanged(true);
+          let safe = makeSafeFormObject(newTxn, new Transaction());
+          if (onChange) onChange(safe);
         }}
-        onSave={saved => {
-          onSave(saved);
+        onSave={txn => {
+          let safe = makeSafeFormObject(txn, new Transaction());
+          onSave(safe);
         }}
         onClose={onClose}
         submitLabel="Save"

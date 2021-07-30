@@ -66,17 +66,6 @@ export interface Props {
   hasActions?: boolean;
   key?: any;
 }
-// Date purchaser dept job # amt description actions assignment
-type SortString =
-  | 'timestamp'
-  | 'owner_id'
-  | 'assigned_employee_id'
-  | 'department_id'
-  | 'job_id'
-  | 'amount'
-  | 'vendor'
-  | 'description'
-  | 'order_number';
 
 type SelectorParams = {
   txn: Transaction;
@@ -94,8 +83,8 @@ interface FilterType {
 }
 
 let pageNumber = 0;
-let sortDir: OrderDir | ' ' | undefined = 'DESC'; // Because I can't figure out why this isn't updating with the state
-let sortBy: SortString | undefined = 'timestamp';
+let sortDir: OrderDir | ' ' | undefined = 'ASC'; // Because I can't figure out why this isn't updating with the state
+let sortBy: string | undefined = 'vendor, timestamp';
 let filter: FilterType = {
   departmentId: 0,
   employeeId: 0,
@@ -498,9 +487,7 @@ export const TransactionTable: FC<Props> = ({
   const handleUpdateTransaction = useCallback(
     async (transactionToSave: Transaction) => {
       try {
-        const response = await TransactionClientService.Update(
-          transactionToSave,
-        );
+        await TransactionClientService.Update(transactionToSave);
         setTransactionToEdit(undefined);
         refresh();
       } catch (err) {
@@ -511,7 +498,7 @@ export const TransactionTable: FC<Props> = ({
     [setTransactionToEdit, refresh],
   );
 
-  const handleChangeSort = (newSort: SortString) => {
+  const handleChangeSort = (newSort: string) => {
     let newSortDir: OrderDir | ' ' | undefined;
 
     if (newSort == sortBy) {
@@ -1054,7 +1041,7 @@ export const TransactionTable: FC<Props> = ({
                               style={{ display: 'none' }}
                             />
                           </IconButton>
-                        </Tooltip>, 
+                        </Tooltip>,
                         <AltGallery
                           key="receiptPhotos"
                           title="Transaction Photos"
