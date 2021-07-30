@@ -379,7 +379,7 @@ export const JobSummaryNew: FC<Props> = ({ loggedUserId, onClose }) => {
       )}
       <Button label={'Close'} onClick={() => onClose()}></Button>
       <Button
-        label={'Download'}
+        label={'Download Weekly Hourly Report'}
         disabled={state.downloadButton}
         onClick={() => downloadReport()}
       ></Button>
