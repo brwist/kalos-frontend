@@ -1,6 +1,8 @@
 import { Transaction } from '@kalos-core/kalos-rpc/Transaction';
-import React, { FC, useState } from 'react';
+import React, { FC, useCallback, useState } from 'react';
+import { makeSafeFormObject } from '../../../helpers';
 import { Form, Schema } from '../Form';
+import { DepartmentPicker } from '../Pickers';
 
 interface Props {
   transactionInput: Transaction;
@@ -15,7 +17,24 @@ export const EditTransaction: FC<Props> = ({
   onClose,
   onChange,
 }) => {
-  const [transaction] = useState<Transaction>(transactionInput);
+  console.log('Transaction input: ', transactionInput);
+  const [transaction, setTransaction] = useState<Transaction>(transactionInput);
+  const [departmentId, setDepartmentId] = useState<number>(0);
+
+  const handleSetDepartmentId = useCallback(
+    (departmentId: number) => {
+      let txn = transaction;
+      txn.setDepartmentId(departmentId);
+      setTransaction(txn);
+      setDepartmentId(departmentId);
+    },
+    [transaction, setTransaction, setDepartmentId],
+  );
+
+  const handleSetTransaction = useCallback(
+    (newTxn: Transaction) => setTransaction(newTxn),
+    [setTransaction],
+  );
 
   const SCHEMA: Schema<Transaction> = [
     [
@@ -25,9 +44,22 @@ export const EditTransaction: FC<Props> = ({
         type: 'number',
       },
       {
-        label: 'Department ID',
-        name: 'getDepartmentId',
-        type: 'number',
+        // At the moment, there's no dropdowns for Schemas so this is directly intermingled with state.
+        // The original transaction fed into the form below gets updated in handleSetDepartmentId because
+        // onChange is not fired when the department is chosen - this is to make sure department ID is
+        // actually synced.
+        // This dropdown was a request while making this module (in place of a prior "number" field)
+        content: (
+          <DepartmentPicker
+            selected={departmentId}
+            onSelect={selected => handleSetDepartmentId(selected as number)}
+            renderItem={i => (
+              <option value={i.getId()} key={`${i.getId()}-department-select`}>
+                {i.getDescription()} - {i.getValue()}
+              </option>
+            )}
+          />
+        ),
       },
     ],
     [
@@ -115,14 +147,17 @@ export const EditTransaction: FC<Props> = ({
   return (
     <>
       <Form<Transaction>
+        key={transaction.toString()}
         schema={SCHEMA}
         data={transaction}
         onChange={newTxn => {
-          if (onChange) onChange(newTxn);
+          let safe = makeSafeFormObject(newTxn, new Transaction());
+          safe.setDepartmentId(departmentId);
+          handleSetTransaction(safe); // Sets this on-change because the field isn't actually tracked in the schema above,
+          // it's kept in sync here. See the comment above for more info
+          if (onChange) onChange(safe);
         }}
-        onSave={saved => {
-          onSave(saved);
-        }}
+        onSave={() => onSave(transaction)}
         onClose={onClose}
         submitLabel="Save"
         cancelLabel="Cancel"

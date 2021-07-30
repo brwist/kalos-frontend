@@ -86,7 +86,6 @@ class Picker<R, T> extends React.PureComponent<props<R, T>, state<T>> {
 
   async fetchData() {
     const res = await this.Client?.BatchGet(this.req!);
-    console.log({ res });
 
     return res!.getResultsList();
   }
@@ -110,15 +109,12 @@ class Picker<R, T> extends React.PureComponent<props<R, T>, state<T>> {
 
   render() {
     let list = this.state.list;
-    console.log({ list });
     if (this.props.sort) {
       list = this.state.list.sort(this.props.sort);
     }
-    console.log({ list });
     if (this.props.filter) {
       list = list.filter(this.props.filter);
-    }
-    console.log({ list });
+    } 
     return (
       <FormControl
         className={this.props.className}
