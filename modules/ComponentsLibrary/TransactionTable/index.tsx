@@ -498,6 +498,7 @@ export const TransactionTable: FC<Props> = ({
   const handleUpdateTransaction = useCallback(
     async (transactionToSave: Transaction) => {
       try {
+        console.log('Transaction to save: ', transactionToSave);
         const response = await TransactionClientService.Update(
           transactionToSave,
         );
@@ -1054,7 +1055,7 @@ export const TransactionTable: FC<Props> = ({
                               style={{ display: 'none' }}
                             />
                           </IconButton>
-                        </Tooltip>, 
+                        </Tooltip>,
                         <AltGallery
                           key="receiptPhotos"
                           title="Transaction Photos"

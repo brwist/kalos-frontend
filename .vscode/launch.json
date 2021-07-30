@@ -7,7 +7,8 @@
             "request": "launch",
             "url": "http://localhost:1234",
             "webRoot": "${workspaceRoot}",
-            "userDataDir": false
+            "userDataDir": false,
+            "sourceMaps": true
         },
         {
             "name": "Launch Chrome With Blank Profile",
@@ -15,6 +16,7 @@
             "request": "launch",
             "url": "http://localhost:1234",
             "webRoot": "${workspaceRoot}",
+            "sourceMaps": true
         },
     ]
 }
