@@ -1,5 +1,6 @@
 import { Transaction } from '@kalos-core/kalos-rpc/Transaction';
 import React, { FC, useCallback, useState } from 'react';
+import { NULL_TIME } from '../../../constants';
 import { makeSafeFormObject } from '../../../helpers';
 import { Form, Schema } from '../Form';
 
@@ -35,6 +36,7 @@ export const EditTransaction: FC<Props> = ({
         label: 'Department',
         name: 'getDepartmentId',
         type: 'department',
+        required: true,
       },
     ],
     [
@@ -71,6 +73,7 @@ export const EditTransaction: FC<Props> = ({
         label: 'Timestamp',
         name: 'getTimestamp',
         type: 'mui-datetime',
+        required: true,
       },
       {
         label: 'Notes',
@@ -131,8 +134,19 @@ export const EditTransaction: FC<Props> = ({
         schema={SCHEMA}
         data={transaction}
         onChange={newTxn => {
-          handleSetChanged(true);
           let safe = makeSafeFormObject(newTxn, new Transaction());
+          try {
+            if (
+              safe.getTimestamp() != '0000-00-00 00:00:00' &&
+              safe.getTimestamp() != NULL_TIME
+            ) {
+              handleSetChanged(true);
+            }
+          } catch (err) {
+            console.error(
+              `An error occurred while using an if statement to call handleSetChanged() in EditTransaction: ${err}`,
+            );
+          }
           if (onChange) onChange(safe);
         }}
         onSave={txn => {
