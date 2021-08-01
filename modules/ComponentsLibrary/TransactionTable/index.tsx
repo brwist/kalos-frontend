@@ -953,7 +953,8 @@ export const TransactionTable: FC<Props> = ({
                   },
                   {
                     value:
-                      selectorParam.txn.getTimestamp() != NULL_TIME
+                      selectorParam.txn.getTimestamp() != NULL_TIME &&
+                      selectorParam.txn.getTimestamp() != '0000-00-00 00:00:00'
                         ? format(
                             new Date(selectorParam.txn.getTimestamp()),
                             'yyyy-MM-dd',
