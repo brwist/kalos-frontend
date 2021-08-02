@@ -8,13 +8,20 @@ import { PerDiem } from '@kalos-core/kalos-rpc/PerDiem';
 import { InfoTable } from '../InfoTable';
 import { Loader } from '../../Loader/main';
 import { SectionBar } from '../SectionBar';
-import { ENDPOINT } from '../../../constants';
-import { NULL_TIME } from '../../../constants';
+import { ENDPOINT, NULL_TIME, MEALS_RATE } from '../../../constants';
 import { TaskClient, Task } from '@kalos-core/kalos-rpc/Task';
-import { differenceInMinutes, parseISO, addDays, format } from 'date-fns';
+import {
+  differenceInMinutes,
+  parseISO,
+  addDays,
+  format,
+  startOfWeek,
+  subDays,
+} from 'date-fns';
 import {
   Trip,
   PerDiemList,
+  PerDiemRow,
 } from '@kalos-core/kalos-rpc/compiled-protos/perdiem_pb';
 import {
   roundNumber,
@@ -64,9 +71,82 @@ export const CostReportForEmployee: FC<Props> = ({ userId, week }) => {
     const resultsList = (
       await PerDiemClientService.BatchGet(req)
     ).getResultsList();
-    //get PerDiems, set them
 
-    return resultsList;
+    //get PerDiems, set them
+    const startDayPerDiem = startOfWeek(subDays(new Date(), 7), {
+      weekStartsOn: 6,
+    });
+    const results = resultsList;
+    const year = +format(startDayPerDiem, 'yyyy');
+    const month = +format(startDayPerDiem, 'M');
+    const zipCodesList = [];
+    for (let i = 0; i < results.length; i++) {
+      let zipCodes = [results[i]]
+        .reduce(
+          (aggr, pd) => [...aggr, ...pd.getRowsList()],
+          [] as PerDiemRow[],
+        )
+        .map(pdr => pdr.getZipCode());
+      for (let j = 0; j < zipCodes.length; j++) {
+        zipCodesList.push(zipCodes[j]);
+      }
+    }
+
+    const govPerDiemsTemp = await PerDiemClientService.loadGovPerDiem(
+      zipCodesList,
+      year,
+      month,
+    );
+
+    function govPerDiemByZipCode(zipCode: string) {
+      const govPerDiem = govPerDiemsTemp[zipCode];
+      if (govPerDiem) return govPerDiem;
+      return {
+        meals: MEALS_RATE,
+        lodging: 0,
+      };
+    }
+    for (let i = 0; i < results.length; i++) {
+      const year = +format(startDayPerDiem, 'yyyy');
+      const month = +format(startDayPerDiem, 'M');
+      const zipCodesList = [];
+      for (let i = 0; i < results.length; i++) {
+        let zipCodes = [results[i]]
+          .reduce(
+            (aggr, pd) => [...aggr, ...pd.getRowsList()],
+            [] as PerDiemRow[],
+          )
+          .map(pdr => pdr.getZipCode());
+        for (let j = 0; j < zipCodes.length; j++) {
+          zipCodesList.push(zipCodes[j]);
+        }
+      }
+      const govPerDiemsTemp = await PerDiemClientService.loadGovPerDiem(
+        zipCodesList,
+        year,
+        month,
+      );
+      let totalMeals = results[i]
+        .getRowsList()
+        .reduce(
+          (aggr, pdr) => aggr + govPerDiemByZipCode(pdr.getZipCode()).meals,
+          0,
+        );
+
+      let totalLodging = results[i]
+        .getRowsList()
+        .reduce(
+          (aggr, pdr) =>
+            aggr +
+            (pdr.getMealsOnly()
+              ? 0
+              : govPerDiemByZipCode(pdr.getZipCode()).lodging),
+          0,
+        );
+      results[i].setAmountProcessedLodging(totalLodging);
+      results[i].setAmountProcessedMeals(totalMeals);
+      return results;
+    }
   }, [userId, endDay, startDay]);
   const getSpiffStatus = (status: number) => {
     if (status === 1) {
@@ -297,6 +377,8 @@ export const CostReportForEmployee: FC<Props> = ({ userId, week }) => {
           columns={[
             { name: 'Date' },
             { name: 'ZipCode' },
+            { name: 'Lodging' },
+            { name: 'Meals' },
             { name: 'Approved By' },
             { name: 'Processed' },
           ]}
@@ -312,6 +394,12 @@ export const CostReportForEmployee: FC<Props> = ({ userId, week }) => {
                         perDiem.getRowsList().length > 0
                           ? perDiem.getRowsList()[0].getZipCode()
                           : 'No Days Found',
+                    },
+                    {
+                      value: usd(perDiem.getAmountProcessedLodging()),
+                    },
+                    {
+                      value: usd(perDiem.getAmountProcessedMeals()),
                     },
                     {
                       value:
