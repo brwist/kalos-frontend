@@ -129,7 +129,7 @@ export class TxnLog extends React.PureComponent<props, state> {
                 <TableRow>
                   <TableCell>Action Date</TableCell>
                   <TableCell>Description</TableCell>
-                  <TableCell>Actor</TableCell>
+                  <TableCell>User</TableCell>
                   <TableCell>Reason</TableCell>
                 </TableRow>
               </TableHead>
