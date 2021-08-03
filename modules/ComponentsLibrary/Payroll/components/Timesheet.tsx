@@ -57,16 +57,16 @@ export const Timesheet: FC<Props> = ({
     timesheetSummaryToggle,
     setTimesheetSummaryToggle,
   ] = useState<TimesheetLine>();
-  const [startDay, setStartDay] = useState<Date>(
-    startOfWeek(subDays(new Date(), 7), { weekStartsOn: 6 }),
-  );
-  const [endDay, setEndDay] = useState<Date>(addDays(startDay, 7));
+  const startDay = startOfWeek(subDays(new Date(), 7), { weekStartsOn: 6 });
+  const endDay = addDays(startDay, 7);
   const [pendingView, setPendingView] = useState<TimesheetLine>();
   const [
     pendingCreateEmptyTimesheetLine,
     setPendingCreateEmptyTimesheetLine,
   ] = useState<TimesheetLine>();
   const load = useCallback(async () => {
+    const startDay = startOfWeek(subDays(new Date(), 7), { weekStartsOn: 6 });
+    const endDay = addDays(startDay, 7);
     setLoading(true);
     const filter = {
       page,
@@ -188,7 +188,7 @@ export const Timesheet: FC<Props> = ({
     setTimesheets(sortedResultsLists);
     setCount(sortedResultsLists.length);
     setLoading(false);
-  }, [page, departmentId, employeeId, week, endDay, startDay, type]);
+  }, [page, departmentId, employeeId, week, type]);
   useEffect(() => {
     load();
   }, [load]);
