@@ -765,12 +765,15 @@ export const Timesheet: FC<Props> = props => {
           />*/}
           <TripSummaryNew
             key={'key' + perDiemRowId}
-            userId={props.userId}
+            userId={props.timesheetOwnerId}
             loggedUserId={props.userId}
             perDiemRowIds={perDiemRowId!}
-            canDeleteTrips
-            canAddTrips
-            viewingOwn
+            role={role}
+            toggle={role === 'Payroll' ? false : undefined}
+            checkboxes={role === 'Payroll'}
+            canDeleteTrips={props.userId === props.timesheetOwnerId}
+            canAddTrips={props.userId === props.timesheetOwnerId}
+            viewingOwn={props.userId === props.timesheetOwnerId}
             canApprove={role === 'Manager'}
             canProcessPayroll={role === 'Payroll'}
           ></TripSummaryNew>

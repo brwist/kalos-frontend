@@ -97,7 +97,7 @@ export const TimeoffCard = ({
   const userId = card.getUserId();
   const allDayOff = card.getAllDayOff();
   const requestClass = card.getRequestClass();
-  const requestTypeName = requestType;
+  const requestTypeName = card.getRequestClass();
   // if (adminApprovalUserId === 0) {
   //   return null;
   // }
