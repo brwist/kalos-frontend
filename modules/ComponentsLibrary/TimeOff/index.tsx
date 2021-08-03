@@ -564,7 +564,7 @@ const getTimeoffRequestStatusEmail = function getTimeoffRequestStatusEmail(
 ) {
   return `
 <body>
-  <strong>${adminUserName} has approved a timeoff request</strong>
+  <strong>${adminUserName} has ${status} a timeoff request</strong>
   <table style="width:70%;">
     <thead>
       <tr>
