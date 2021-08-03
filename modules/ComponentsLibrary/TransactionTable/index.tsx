@@ -300,8 +300,18 @@ export const TransactionTable: FC<Props> = ({
     txn.setId(id);
     txn.setStatusId(statusID);
     txn.setFieldMaskList(['StatusId']);
-    await transactionClient.Update(txn);
-    await makeLog(`${description} ${reason || ''}`, id);
+    txn.setIsRecorded(true);
+    console.log('make update status is called');
+    try {
+      await transactionClient.Update(txn);
+    } catch (err) {
+      console.error(`An error occurred while updating a transaction: ${err}`);
+    }
+    try {
+      await makeLog(`${description} ${reason || ''}`, id);
+    } catch (err) {
+      console.error(`An error occurred while making an activity log: ${err}`);
+    }
   };
 
   const forceAccept = async (txn: Transaction) => {
@@ -351,6 +361,7 @@ export const TransactionTable: FC<Props> = ({
     );
     req.setPageNumber(pageNumber);
     req.setIsActive(1);
+    req.setIsRecorded(true);
     req.setVendorCategory("'PickTicket','Receipt'");
     if (filter.isAccepted) {
       req.setStatusId(3);
@@ -362,6 +373,8 @@ export const TransactionTable: FC<Props> = ({
     if (filter.departmentId != 0) req.setDepartmentId(filter.departmentId);
     if (filter.employeeId != 0) req.setAssignedEmployeeId(filter.employeeId);
     if (filter.amount) req.setAmount(filter.amount);
+    req.setFieldMaskList(['IsRecorded']);
+    req.setNotEqualsList(['IsRecorded']);
     let res: TransactionList | null = null;
     try {
       res = await TransactionClientService.BatchGet(req);
@@ -370,7 +383,6 @@ export const TransactionTable: FC<Props> = ({
         `An error occurred while batch-getting transactions in TransactionTable: ${err}`,
       );
     }
-
     if (!res) {
       console.error('No transaction result was gotten. Returning.');
       return;
