@@ -170,16 +170,16 @@ describe('ComponentsLibrary', () => {
         Chai.expect(wrapper.find({ label: 'Create' })).to.have.lengthOf(2);
       });
 
-      describe('Customer / Property Details Info Table', async () => {
-        it('displays the proper customer name', async () => {
-          await new Promise(res => setTimeout(res, 1000));
-          wrapper.update();
+      // describe('Customer / Property Details Info Table', async () => {
+      //   it('displays the proper customer name', async () => {
+      //     await new Promise(res => setTimeout(res, 1000));
+      //     wrapper.update();
 
-          Chai.expect(
-            wrapper.find('.InfoTableValueContent').first().text(),
-          ).to.be.equal('Krzysztof Olbinski');
-        });
-      });
+      //     Chai.expect(
+      //       wrapper.find('.InfoTableValueContent').first().text(),
+      //     ).to.be.equal('Krzysztof Olbinski');
+      //   });
+      // });
     });
   });
 });
