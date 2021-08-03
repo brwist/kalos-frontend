@@ -1,7 +1,7 @@
 import React = require('react');
 import Enzyme = require('enzyme');
 import Chai = require('chai');
-import Teams = require('../../../../modules/ComponentsLibrary/Teams/index');
+import TeamsModule = require('../../../../modules/ComponentsLibrary/Teams/index');
 
 // TODO I need to do this during every try-catch:
 /* 
@@ -14,21 +14,30 @@ in #webtech?
 
 */
 
-describe.skip('ComponentsLibrary', () => {
+describe('ComponentsLibrary', () => {
+  let wrapper: Enzyme.ReactWrapper;
+  before(() => {
+    wrapper = Enzyme.mount(<TeamsModule.Teams />);
+  });
   describe('Teams', () => {
     describe('<Teams />', () => {
       it('renders a "Create New Team" button', () => {
-        throw new Error('Needs to be implemented');
+        Chai.expect(wrapper.find({ label: 'Create New Team' })).to.be.lengthOf(
+          1,
+        );
       });
 
       it('shows a loader while resources are loading', () => {
         throw new Error('Needs to be implemented');
       });
 
-      it('opens a "Create New Team" modal when the "Create New Team" button is clicked', () => {
-        throw new Error('Needs to be implemented');
+      it('opens a "Create New Team" modal when the "Create New Team" button is clicked', async () => {
+        await new Promise(res => setTimeout(res, 1)); // ! Updates the wrapper after the time has passed to "load"
+        wrapper.update();
+        wrapper.find({ label: 'Create New Team' }).simulate('click');
+        Chai.expect(wrapper.find({ title: 'New Team' })).to.be.lengthOf(2);
       });
-      describe('"View Team" component', () => {
+      describe.skip('"View Team" component', () => {
         describe('"Add Team Member" button', () => {
           it('has an "Add Team Member" button', () => {
             throw new Error('Needs to be implemented');
@@ -37,7 +46,7 @@ describe.skip('ComponentsLibrary', () => {
             throw new Error('Needs to be implemented');
           });
         });
-        describe('"Team Members" tab', () => {
+        describe.skip('"Team Members" tab', () => {
           describe('"Team Members" table', () => {
             it('shows all team members within a team', () => {
               throw new Error('Needs to be implemented');
@@ -78,7 +87,7 @@ describe.skip('ComponentsLibrary', () => {
             });
           });
         });
-        describe('"Team Member Recent Activity" tab', () => {
+        describe.skip('"Team Member Recent Activity" tab', () => {
           // ? The picture logs currently do not fetch and show the pictures that are associated with them
           // FIXME reminding myself for later
           it('displays the activity logs (the new ProjectDetail-type ones with picture data available) for the team members, preferably in real time', () => {
@@ -90,7 +99,7 @@ describe.skip('ComponentsLibrary', () => {
           });
         });
 
-        describe('"Team Member Spiffs" tab', () => {
+        describe.skip('"Team Member Spiffs" tab', () => {
           it('shows the spiffs that the team members have done', () => {
             throw new Error('Needs to be implemented');
           });
@@ -100,7 +109,7 @@ describe.skip('ComponentsLibrary', () => {
           });
         });
 
-        describe('"Team Member Pay" tab', () => {
+        describe.skip('"Team Member Pay" tab', () => {
           it('only shows for the Payroll role', () => {
             throw new Error('Needs to be implemented');
           });
@@ -114,13 +123,13 @@ describe.skip('ComponentsLibrary', () => {
           });
         });
 
-        describe('"Team Kanban" tab', () => {
+        describe.skip('"Team Kanban" tab', () => {
           it('displays the Kanban component with the relevant team information', () => {
             throw new Error('Needs to be implemented');
           });
         });
 
-        describe('"Team Tasks" tab', () => {
+        describe.skip('"Team Tasks" tab', () => {
           it('displays relevant tasks to the team', () => {
             throw new Error('Needs to be implemented');
           });
@@ -135,7 +144,7 @@ describe.skip('ComponentsLibrary', () => {
             });
           });
         });
-        describe('"Team Jobs" tab', () => {
+        describe.skip('"Team Jobs" tab', () => {
           it('shows all jobs relevant to the applicable team', () => {
             throw new Error('Needs to be implemented');
           });
@@ -175,7 +184,7 @@ describe.skip('ComponentsLibrary', () => {
         });
       });
 
-      describe('"Your Team / Teams" table', () => {
+      describe.skip('"Your Team / Teams" table', () => {
         describe('Team row', () => {
           it('allows you to add members if you are a manager', () => {
             throw new Error('Needs to be implemented');
@@ -200,7 +209,7 @@ describe.skip('ComponentsLibrary', () => {
         });
       });
 
-      describe('"Create New Teams" modal', () => {
+      describe.skip('"Create New Teams" modal', () => {
         it('has a search field to search for an existing team', () => {
           throw new Error('Needs to be implemented');
         });
