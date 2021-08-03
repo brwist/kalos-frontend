@@ -85,13 +85,25 @@ const handleGetTripDistance = async (origin: string, destination: string) => {
 export const getStatus = (
   dateApproved: string,
   dateSubmitted: string,
+  payrollProcessed: boolean,
   isManager: boolean,
 ): {
-  status: 'APPROVED' | 'PENDING_APPROVE' | 'PENDING_SUBMIT';
+  status:
+    | 'APPROVED'
+    | 'PENDING_APPROVE'
+    | 'PENDING_SUBMIT'
+    | 'PAYROLL_PROCESSED';
   button: string;
   text: string;
   color: string;
 } => {
+  if (payrollProcessed != false)
+    return {
+      status: 'PAYROLL_PROCESSED',
+      button: isManager ? 'Approve' : 'Submit',
+      text: 'Processed By Payroll',
+      color: '#' + JOB_STATUS_COLORS['Requested'],
+    };
   if (dateApproved != NULL_TIME)
     return {
       status: 'APPROVED',
@@ -190,8 +202,10 @@ export const PerDiemComponent: FC<Props> = ({
     [],
   );
   const [role, setRole] = useState<RoleType>();
-  const [managerFilterDepartmentId, setManagerFilterDepartmentId] =
-    useState<number>(0);
+  const [
+    managerFilterDepartmentId,
+    setManagerFilterDepartmentId,
+  ] = useState<number>(0);
   const [govPerDiems, setGovPerDiems] = useState<{
     [key: string]: {
       meals: number;
@@ -206,8 +220,10 @@ export const PerDiemComponent: FC<Props> = ({
   );
 
   const [pendingPerDiemDelete, setPendingPerDiemDelete] = useState<PerDiem>();
-  const [pendingPerDiemRowDelete, setPendingPerDiemRowDelete] =
-    useState<boolean>(false);
+  const [
+    pendingPerDiemRowDelete,
+    setPendingPerDiemRowDelete,
+  ] = useState<boolean>(false);
 
   type RowURLs = {
     key: number;
@@ -226,10 +242,14 @@ export const PerDiemComponent: FC<Props> = ({
       -0,
     ),
   );
-  const [pendingPerDiemRowEdit, setPendingPerDiemRowEdit] =
-    useState<PerDiemRow>();
-  const [pendingPerDiemEditDuplicated, setPendingPerDiemEditDuplicated] =
-    useState<boolean>(false);
+  const [
+    pendingPerDiemRowEdit,
+    setPendingPerDiemRowEdit,
+  ] = useState<PerDiemRow>();
+  const [
+    pendingPerDiemEditDuplicated,
+    setPendingPerDiemEditDuplicated,
+  ] = useState<boolean>(false);
   const initialize = useCallback(async () => {
     if (loadedPerDiem) {
       const year = +format(dateStarted, 'yyyy');
@@ -315,17 +335,15 @@ export const PerDiemComponent: FC<Props> = ({
     let managerPerDiemsList = [] as PerDiem[];
     let managerPerDiemsOther = {};
     if (managerDepartmentIds.length > 0) {
-      const managerPerDiems =
-        await PerDiemClientService.loadPerDiemByDepartmentIdsAndDateStarted(
-          managerDepartmentIds,
-          formatDateFns(dateStarted),
-        );
+      const managerPerDiems = await PerDiemClientService.loadPerDiemByDepartmentIdsAndDateStarted(
+        managerDepartmentIds,
+        formatDateFns(dateStarted),
+      );
       managerPerDiemsList = managerPerDiems;
-      managerPerDiemsOther =
-        await PerDiemClientService.loadPerDiemByUserIdsAndDateStarted(
-          managerPerDiemsList.map(user => user.getUserId()),
-          formatDateFns(dateStarted),
-        );
+      managerPerDiemsOther = await PerDiemClientService.loadPerDiemByUserIdsAndDateStarted(
+        managerPerDiemsList.map(user => user.getUserId()),
+        formatDateFns(dateStarted),
+      );
     }
     const year = +format(dateStarted, 'yyyy');
     const month = +format(dateStarted, 'M');
@@ -733,10 +751,9 @@ export const PerDiemComponent: FC<Props> = ({
                   ...managerDepartmentIds.map(id => {
                     const department = departments.find(d => d.getId() === id)!;
                     return {
-                      label:
-                        TimesheetDepartmentClientService.getDepartmentName(
-                          department,
-                        ),
+                      label: TimesheetDepartmentClientService.getDepartmentName(
+                        department,
+                      ),
                       value: department.getId(),
                     };
                   }),
@@ -792,6 +809,7 @@ export const PerDiemComponent: FC<Props> = ({
           const status = getStatus(
             entry.getDateApproved(),
             entry.getDateSubmitted(),
+            entry.getPayrollProcessed(),
             isManager,
           );
           const buttonDisabled =
@@ -977,10 +995,9 @@ export const PerDiemComponent: FC<Props> = ({
                             />
                           )}
                         {rows.map(entry => {
-                          const url =
-                            TimesheetLineClientService.getReferenceURL(
-                              entry.getServiceCallId(),
-                            );
+                          const url = TimesheetLineClientService.getReferenceURL(
+                            entry.getServiceCallId(),
+                          );
                           return (
                             <CalendarCard
                               key={entry.getId()}

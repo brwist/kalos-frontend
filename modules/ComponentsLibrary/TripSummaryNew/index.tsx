@@ -448,7 +448,11 @@ export const TripSummaryNew: FC<Props> = ({
   const getTripDistance = useCallback(
     async (origin: string, destination: string) => {
       try {
-        await MapClientService.getTripDistance(origin, destination);
+        const distance = await MapClientService.getTripDistance(
+          origin,
+          destination,
+        );
+        return distance;
       } catch (error: any) {
         console.error(
           'An error occurred while calculating the trip distance in the Trip Summary: ',
@@ -470,12 +474,20 @@ export const TripSummaryNew: FC<Props> = ({
     let trip = new Trip();
     trip.setOriginAddress(data.FullAddressOrigin);
     trip.setDestinationAddress(data.FullAddressDestination);
-
-    await getTripDistance(
-      String(data.FullAddressOrigin),
-      String(data.FullAddressDestination),
-    );
-
+    try {
+      const tripDistance = await getTripDistance(
+        String(data.FullAddressOrigin),
+        String(data.FullAddressDestination),
+      );
+      if (tripDistance != undefined) {
+        trip.setDistanceInMiles(tripDistance);
+      } else {
+        console.log('we should not create a trip with 0 distance');
+        return;
+      }
+    } catch (err) {
+      console.log('Error getting Trip Distance');
+    }
     if (rowId) {
       trip.setPerDiemRowId(rowId);
     } else {
@@ -489,7 +501,7 @@ export const TripSummaryNew: FC<Props> = ({
     trip.setNotes(data.Notes);
     trip.setHomeTravel(data.HomeTravel);
     trip.setDate(data.Date);
-
+    trip.setUserId(userId);
     let user;
     let department;
 
@@ -512,8 +524,12 @@ export const TripSummaryNew: FC<Props> = ({
       trip.setDepartmentId(user?.getEmployeeDepartmentId());
     }
     try {
+      trip.setPerDiemRowId(rowId);
       console.log(trip, '|', rowId, '|', userId);
-      await PerDiemClientService.upsertTrip(trip, rowId!, userId);
+      //await PerDiemClientService.upsertTrip(trip, rowId!, userId);
+      await PerDiemClientService.CreateTrip(trip);
+
+      console.log(trip);
     } catch (err) {
       console.error('An error occurred while upserting a trip: ', err);
     }
@@ -617,6 +633,7 @@ export const TripSummaryNew: FC<Props> = ({
         <PlainForm<Checkboxes>
           schema={CHECKBOXES_SCHEMA}
           data={checkboxFilter}
+          key="CheckBoxes"
           onChange={handleSetCheckboxFilter}
         />
       )}
