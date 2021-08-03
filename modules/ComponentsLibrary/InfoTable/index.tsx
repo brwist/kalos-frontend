@@ -26,6 +26,7 @@ export type Row = {
   actions?: ReactElement[];
   onClick?: () => void;
   actionsFullWidth?: boolean;
+  invisible?: boolean;
 }[];
 
 export type Data = Row[];
@@ -139,9 +140,11 @@ export const InfoTable = ({
                   actions,
                   onClick,
                   actionsFullWidth = false,
+                  invisible,
                 },
                 idx2,
               ) => {
+                if (invisible) return null;
                 const align =
                   columns && columns[idx2]
                     ? columns[idx2].align || 'left'
@@ -156,7 +159,9 @@ export const InfoTable = ({
                         ? '100%'
                         : columns && columns[idx2] && columns[idx2].width
                         ? columns[idx2].width
-                        : `${100 / items.length}%`,
+                        : `${
+                            100 / items.filter(item => !item.invisible).length
+                          }%`,
                       flexGrow:
                         md ||
                         (columns && columns[idx2] && columns[idx2].width === -1)

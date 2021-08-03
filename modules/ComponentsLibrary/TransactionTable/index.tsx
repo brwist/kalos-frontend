@@ -959,7 +959,11 @@ export const TransactionTable: FC<Props> = ({
                 let txnWithId = selectedTransactions.filter(
                   txn => txn.getId() === selectorParam.txn.getId(),
                 );
-                let returned = [
+                return [
+                  {
+                    value: txnWithId.length == 1 ? 'SELECTED' : '',
+                    invisible: !isSelector,
+                  },
                   {
                     value: selectorParam.txn.getVendorCategory(),
                     onClick: isSelector
@@ -1177,12 +1181,6 @@ export const TransactionTable: FC<Props> = ({
                     ],
                   },
                 ];
-                if (isSelector) {
-                  returned.unshift({
-                    value: txnWithId.length == 1 ? 'SELECTED' : '',
-                  } as any);
-                }
-                return returned;
               }) as Data)
         }
         loading={loading}
