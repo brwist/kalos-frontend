@@ -865,6 +865,7 @@ export const TransactionTable: FC<Props> = ({
         columns={[
           {
             name: isSelector ? 'Is selected?' : '',
+            invisible: true,
           },
           {
             name: 'Type',
@@ -958,18 +959,7 @@ export const TransactionTable: FC<Props> = ({
                 let txnWithId = selectedTransactions.filter(
                   txn => txn.getId() === selectorParam.txn.getId(),
                 );
-                let selectedCol;
-                if (isSelector) {
-                  selectedCol = {
-                    value: txnWithId.length == 1 ? 'SELECTED' : '',
-                  };
-                } else {
-                  selectedCol = {
-                    value: '',
-                  };
-                }
-                return [
-                  selectedCol,
+                let returned = [
                   {
                     value: selectorParam.txn.getVendorCategory(),
                     onClick: isSelector
@@ -1187,6 +1177,12 @@ export const TransactionTable: FC<Props> = ({
                     ],
                   },
                 ];
+                if (isSelector) {
+                  returned.unshift({
+                    value: txnWithId.length == 1 ? 'SELECTED' : '',
+                  } as any);
+                }
+                return returned;
               }) as Data)
         }
         loading={loading}
