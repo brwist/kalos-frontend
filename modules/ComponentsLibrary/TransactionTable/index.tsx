@@ -996,7 +996,7 @@ export const TransactionTable: FC<Props> = ({
                       : undefined,
                   },
                   {
-                    value: `${selectorParam.txn.getOwnerName()}`,
+                    value: `${selectorParam.txn.getOwnerName()} (${selectorParam.txn.getOwnerId()})`,
                     onClick: isSelector
                       ? () => setTransactionChecked(idx)
                       : undefined,
