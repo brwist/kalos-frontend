@@ -17,6 +17,7 @@ import ListIcon from '@material-ui/icons/ListSharp';
 import { UserClient, User } from '@kalos-core/kalos-rpc/User';
 import { ENDPOINT } from '../../../constants';
 import { Tooltip } from '../../ComponentsLibrary/Tooltip';
+import { Confirm } from '../../ComponentsLibrary/Confirm';
 
 interface props {
   txnID: number;
@@ -27,6 +28,7 @@ interface state {
   list: TransactionActivity[];
   actorMap: Map<number, string>;
   isOpen: boolean;
+  error: string | null;
 }
 
 export class TxnLog extends React.PureComponent<props, state> {
@@ -40,12 +42,14 @@ export class TxnLog extends React.PureComponent<props, state> {
       list: [],
       isOpen: false,
       actorMap: new Map<number, string>(),
+      error: null,
     };
 
     this.LogClient = new TransactionActivityClient(ENDPOINT);
     this.UserClient = new UserClient(ENDPOINT);
 
     this.toggleVisibility = this.toggleVisibility.bind(this);
+    this.handleSetError = this.handleSetError.bind(this);
     this.addLog = this.addLog.bind(this);
   }
 
@@ -57,18 +61,38 @@ export class TxnLog extends React.PureComponent<props, state> {
     console.log({ log });
     const user = new User();
     user.setId(log.getUserId());
-    const res = await this.UserClient.Get(user);
+    let res: User | null = null;
+    try {
+      res = await this.UserClient.Get(user);
+    } catch (err) {
+      console.error(`An error occurred while getting a user: ${err}`);
+    }
+
+    if (!res) {
+      console.error(
+        'No results gotten from the user client service. Returning and setting error.',
+      );
+      this.setState({
+        error: `Error: No results gotten from the User Client Service for user ${user.getId()}. Please report this to the web tech team.`,
+      });
+      return;
+    }
+
     this.setState(prevState => {
       const map = new Map(prevState.actorMap);
       map.set(
         log.getId(),
-        `${res.getFirstname()} ${res.getLastname()} ${res.getId()}`,
+        `${res!.getFirstname()} ${res!.getLastname()} ${res!.getId()}`,
       );
       return {
         list: prevState.list.concat(log),
         actorMap: map,
       };
     });
+  }
+
+  handleSetError(newError: string | null) {
+    this.setState({ error: newError });
   }
 
   componentDidUpdate(prevProps: props, prevState: state) {
@@ -107,6 +131,16 @@ export class TxnLog extends React.PureComponent<props, state> {
     );
     return (
       <>
+        {this.state.error && (
+          <Confirm
+            key={this.state.error}
+            open={this.state.error != null}
+            onClose={() => this.handleSetError(null)}
+            onConfirm={() => this.handleSetError(null)}
+          >
+            {this.state.error}
+          </Confirm>
+        )}
         {button}
         <Modal
           open={this.state.isOpen}
