@@ -3,6 +3,7 @@ import { S3Client } from '@kalos-core/kalos-rpc/S3File';
 import {
   Transaction,
   TransactionClient,
+  TransactionList,
 } from '@kalos-core/kalos-rpc/Transaction';
 import { TransactionAccountList } from '@kalos-core/kalos-rpc/TransactionAccount';
 import {
@@ -361,14 +362,26 @@ export const TransactionTable: FC<Props> = ({
     if (filter.departmentId != 0) req.setDepartmentId(filter.departmentId);
     if (filter.employeeId != 0) req.setAssignedEmployeeId(filter.employeeId);
     if (filter.amount) req.setAmount(filter.amount);
-    let res = await TransactionClientService.BatchGet(req);
+    let res: TransactionList | null = null;
+    try {
+      res = await TransactionClientService.BatchGet(req);
+    } catch (err) {
+      console.error(
+        `An error occurred while batch-getting transactions in TransactionTable: ${err}`,
+      );
+    }
+
+    if (!res) {
+      console.error('No transaction result was gotten. Returning.');
+      return;
+    }
 
     setTransactions(
       res.getResultsList().map(txn => {
         return {
           txn: txn,
           checked: false,
-          totalCount: res.getTotalCount(),
+          totalCount: res!.getTotalCount(),
         } as SelectorParams;
       }),
     );
