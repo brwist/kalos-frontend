@@ -407,9 +407,16 @@ export const TransactionTable: FC<Props> = ({
     );
     setEmployees(sortedEmployeeList);
 
-    const departments =
-      await TimesheetDepartmentClientService.loadTimeSheetDepartments();
-    setDepartments(departments);
+    let departments;
+    try {
+      departments =
+        await TimesheetDepartmentClientService.loadTimeSheetDepartments();
+      setDepartments(departments);
+    } catch (err) {
+      console.error(
+        `An error occurred while getting the timesheet departments: ${err}`,
+      );
+    }
 
     await resetTransactions();
     setLoading(true);
