@@ -26,6 +26,7 @@ export type Row = {
   actions?: ReactElement[];
   onClick?: () => void;
   actionsFullWidth?: boolean;
+  invisible?: boolean;
 }[];
 
 export type Data = Row[];
@@ -38,6 +39,7 @@ export type Columns = {
   actions?: ActionsProps;
   fixedActions?: boolean;
   align?: 'left' | 'center' | 'right';
+  invisible?: boolean;
 }[];
 
 interface Props extends Styles {
@@ -75,9 +77,11 @@ export const InfoTable = ({
                 fixedActions,
                 width,
                 align = 'left',
+                invisible,
               },
               idx,
             ) => {
+              if (invisible) return null;
               const ArrowIcon =
                 dir === 'DESC' ? ArrowDropDownIcon : ArrowDropUpIcon;
               return (
@@ -85,7 +89,13 @@ export const InfoTable = ({
                   key={idx}
                   className="InfoTableColumn"
                   style={{
-                    width: md ? '100%' : width || `${100 / columns.length}%`,
+                    width: md
+                      ? '100%'
+                      : width ||
+                        `${
+                          100 /
+                          columns.filter(column => !column.invisible).length
+                        }%`,
                     flexGrow: md || width === -1 ? 1 : 0,
                     flexShrink: width && width! > -1 ? 0 : 1,
                   }}
@@ -130,9 +140,11 @@ export const InfoTable = ({
                   actions,
                   onClick,
                   actionsFullWidth = false,
+                  invisible,
                 },
                 idx2,
               ) => {
+                if (invisible) return null;
                 const align =
                   columns && columns[idx2]
                     ? columns[idx2].align || 'left'
@@ -147,7 +159,9 @@ export const InfoTable = ({
                         ? '100%'
                         : columns && columns[idx2] && columns[idx2].width
                         ? columns[idx2].width
-                        : `${100 / items.length}%`,
+                        : `${
+                            100 / items.filter(item => !item.invisible).length
+                          }%`,
                       flexGrow:
                         md ||
                         (columns && columns[idx2] && columns[idx2].width === -1)
