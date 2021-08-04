@@ -58,25 +58,25 @@ export const Request: FC<Props> = forwardRef(
     const [resetId, setResetId] = useState<number>(0);
     const handleChange = useCallback(
       (data: Event) => {
-        /*
-        const { jobTypeId, jobSubtypeId, logJobStatus } = data;
-        const formData = data;
-        
-        const jobTypeId = formData.getJobTypeId();
-        const jobSubtypeId = formData.getJobSubtypeId();
-        const logJobStatus = formData.getLogJobStatus();
+        //const { jobTypeId, jobSubtypeId, logJobStatus } = data;
+        const tempData = makeSafeFormObject(data, new Event());
+        console.log(tempData);
 
-        formData.setJobType(
+        const jobTypeId = tempData.getJobTypeId();
+        const jobSubtypeId = tempData.getJobSubtypeId();
+        const logJobStatus = tempData.getLogJobStatus();
+
+        tempData.setJobType(
           jobTypeOptions.find(value => value.value === jobTypeId)?.label || '',
         );
-        formData.setJobSubtype(
+        tempData.setJobSubtype(
           jobSubtypeOptions.find(value => value.value === jobSubtypeId)
             ?.label || '',
         );
-        formData.setColor(JOB_STATUS_COLORS[logJobStatus]);
-        
+        tempData.setColor(JOB_STATUS_COLORS[logJobStatus]);
+
         const formData = {
-          jobTypeId:job
+          jobTypeId: tempData.getJobTypeId(),
           jobType:
             jobTypeOptions.find(({ value }) => value === jobTypeId)?.label ||
             '',
@@ -85,21 +85,29 @@ export const Request: FC<Props> = forwardRef(
               ?.label || '',
           color: JOB_STATUS_COLORS[logJobStatus],
         };
-        
-        if (formData.getJobTypeId() !== serviceItem.getJobTypeId()) {
-          formData.setJobSubtypeId(0);
-          formData.setJobSubtype('');
+
+        if (formData.jobTypeId !== serviceItem.getJobTypeId()) {
+          tempData.setJobSubtypeId(0);
+          tempData.getJobTypeId;
+          tempData.setJobSubtype('');
           setResetId(resetId + 1);
         }
-        if (!formData.getIsCallback() && serviceItem.getIsCallback()) {
-          formData.setCallbackOriginalId(0);
+        if (!tempData.getIsCallback() && serviceItem.getIsCallback()) {
+          tempData.setCallbackOriginalId(0);
           setResetId(resetId + 1);
         }
-        */
-        onChange(data);
+
+        onChange(tempData);
         onValid(false);
       },
-      [onChange, onValid],
+      [
+        onChange,
+        jobSubtypeOptions,
+        jobTypeOptions,
+        resetId,
+        serviceItem,
+        onValid,
+      ],
     );
     const handleSetValid = useCallback(() => onValid(true), [onValid]);
     const callbackOriginalOptions: Option[] = useMemo(

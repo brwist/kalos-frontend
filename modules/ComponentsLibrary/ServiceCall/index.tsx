@@ -96,19 +96,22 @@ export const ServiceCall: FC<Props> = props => {
   const [jobTypes, setJobTypes] = useState<JobType[]>([]);
   const [jobSubtypes, setJobSubtype] = useState<JobSubtype[]>([]);
   const [jobTypeSubtypes, setJobTypeSubtypes] = useState<JobTypeSubtype[]>([]);
-
+  const [jobSubTypeOptions, setJobSubTypeOptions] = useState<Option[]>([]);
   const [servicesRendered, setServicesRendered] = useState<ServicesRendered[]>(
     [],
   );
   const [loggedUser, setLoggedUser] = useState<User>();
-  const [notificationEditing, setNotificationEditing] =
-    useState<boolean>(false);
-  const [notificationViewing, setNotificationViewing] =
-    useState<boolean>(false);
+  const [notificationEditing, setNotificationEditing] = useState<boolean>(
+    false,
+  );
+  const [notificationViewing, setNotificationViewing] = useState<boolean>(
+    false,
+  );
   const [projects, setProjects] = useState<Event[]>([]);
   const [parentId, setParentId] = useState<number | null>(null);
-  const [confirmedParentId, setConfirmedParentId] =
-    useState<number | null>(null);
+  const [confirmedParentId, setConfirmedParentId] = useState<number | null>(
+    null,
+  );
   const [projectData, setProjectData] = useState<Event>(new Event());
   const loadEntry = useCallback(
     async (_serviceCallId = serviceCallId) => {
@@ -141,10 +144,9 @@ export const ServiceCall: FC<Props> = props => {
     [setServicesRendered, serviceCallId],
   );
 
-  const handleSetError = useCallback(
-    (error: boolean) => setError(error),
-    [setError],
-  );
+  const handleSetError = useCallback((error: boolean) => setError(error), [
+    setError,
+  ]);
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -174,8 +176,9 @@ export const ServiceCall: FC<Props> = props => {
 
       promises.push(
         new Promise<void>(async resolve => {
-          const propertyEvents =
-            await EventClientService.loadEventsByPropertyId(propertyId);
+          const propertyEvents = await EventClientService.loadEventsByPropertyId(
+            propertyId,
+          );
           setPropertyEvents(propertyEvents);
           resolve();
         }),
@@ -199,8 +202,7 @@ export const ServiceCall: FC<Props> = props => {
 
       promises.push(
         new Promise<void>(async resolve => {
-          const jobTypeSubtypes =
-            await JobTypeSubtypeClientService.loadJobTypeSubtypes();
+          const jobTypeSubtypes = await JobTypeSubtypeClientService.loadJobTypeSubtypes();
           setJobTypeSubtypes(jobTypeSubtypes);
           resolve();
         }),
@@ -376,12 +378,12 @@ export const ServiceCall: FC<Props> = props => {
 
   const handleChangeEntry = useCallback(
     (data: Event) => {
-      const temp = makeSafeFormObject(data, new Event());
-      const tempObject = Object.assign(entry, temp);
-      setEntry(tempObject);
+      //const temp = makeSafeFormObject(data, new Event());
+      //const tempObject = Object.assign(entry, temp);
+      setEntry(data);
       setPendingSave(false);
     },
-    [entry, setEntry, setPendingSave],
+    [setEntry, setPendingSave],
   );
 
   const handleSetNotificationEditing = useCallback(
@@ -440,10 +442,10 @@ export const ServiceCall: FC<Props> = props => {
     ...jobTypeSubtypes
       .filter(jobTypeId => jobTypeId.getJobTypeId() === entry.getJobTypeId())
       .map(jobSubtypeId => ({
-        value: jobSubtypeId.getId(),
+        value: jobSubtypeId.getJobSubtypeId(),
         label:
           jobSubtypes
-            .find(id => id.getId() === jobSubtypeId.getId())
+            .find(id => id.getId() === jobSubtypeId.getJobSubtypeId())
             ?.getName() || '',
       })),
   ];
