@@ -3,6 +3,7 @@ import { S3Client } from '@kalos-core/kalos-rpc/S3File';
 import {
   Transaction,
   TransactionClient,
+  TransactionList,
 } from '@kalos-core/kalos-rpc/Transaction';
 import { TransactionAccountList } from '@kalos-core/kalos-rpc/TransactionAccount';
 import {
@@ -299,8 +300,18 @@ export const TransactionTable: FC<Props> = ({
     txn.setId(id);
     txn.setStatusId(statusID);
     txn.setFieldMaskList(['StatusId']);
-    await transactionClient.Update(txn);
-    await makeLog(`${description} ${reason || ''}`, id);
+    txn.setIsRecorded(true);
+    console.log('make update status is called');
+    try {
+      await transactionClient.Update(txn);
+    } catch (err) {
+      console.error(`An error occurred while updating a transaction: ${err}`);
+    }
+    try {
+      await makeLog(`${description} ${reason || ''}`, id);
+    } catch (err) {
+      console.error(`An error occurred while making an activity log: ${err}`);
+    }
   };
 
   const forceAccept = async (txn: Transaction) => {
@@ -350,6 +361,7 @@ export const TransactionTable: FC<Props> = ({
     );
     req.setPageNumber(pageNumber);
     req.setIsActive(1);
+    req.setIsRecorded(true);
     req.setVendorCategory("'PickTicket','Receipt'");
     if (filter.isAccepted) {
       req.setStatusId(3);
@@ -361,14 +373,27 @@ export const TransactionTable: FC<Props> = ({
     if (filter.departmentId != 0) req.setDepartmentId(filter.departmentId);
     if (filter.employeeId != 0) req.setAssignedEmployeeId(filter.employeeId);
     if (filter.amount) req.setAmount(filter.amount);
-    let res = await TransactionClientService.BatchGet(req);
+    req.setFieldMaskList(['IsRecorded']);
+    req.setNotEqualsList(['IsRecorded']);
+    let res: TransactionList | null = null;
+    try {
+      res = await TransactionClientService.BatchGet(req);
+    } catch (err) {
+      console.error(
+        `An error occurred while batch-getting transactions in TransactionTable: ${err}`,
+      );
+    }
+    if (!res) {
+      console.error('No transaction result was gotten. Returning.');
+      return;
+    }
 
     setTransactions(
       res.getResultsList().map(txn => {
         return {
           txn: txn,
           checked: false,
-          totalCount: res.getTotalCount(),
+          totalCount: res!.getTotalCount(),
         } as SelectorParams;
       }),
     );
@@ -382,9 +407,16 @@ export const TransactionTable: FC<Props> = ({
     );
     setEmployees(sortedEmployeeList);
 
-    const departments =
-      await TimesheetDepartmentClientService.loadTimeSheetDepartments();
-    setDepartments(departments);
+    let departments;
+    try {
+      departments =
+        await TimesheetDepartmentClientService.loadTimeSheetDepartments();
+      setDepartments(departments);
+    } catch (err) {
+      console.error(
+        `An error occurred while getting the timesheet departments: ${err}`,
+      );
+    }
 
     await resetTransactions();
     setLoading(true);
@@ -840,6 +872,7 @@ export const TransactionTable: FC<Props> = ({
         columns={[
           {
             name: isSelector ? 'Is selected?' : '',
+            invisible: true,
           },
           {
             name: 'Type',
@@ -933,18 +966,11 @@ export const TransactionTable: FC<Props> = ({
                 let txnWithId = selectedTransactions.filter(
                   txn => txn.getId() === selectorParam.txn.getId(),
                 );
-                let selectedCol;
-                if (isSelector) {
-                  selectedCol = {
-                    value: txnWithId.length == 1 ? 'SELECTED' : '',
-                  };
-                } else {
-                  selectedCol = {
-                    value: '',
-                  };
-                }
                 return [
-                  selectedCol,
+                  {
+                    value: txnWithId.length == 1 ? 'SELECTED' : '',
+                    invisible: !isSelector,
+                  },
                   {
                     value: selectorParam.txn.getVendorCategory(),
                     onClick: isSelector
@@ -971,7 +997,7 @@ export const TransactionTable: FC<Props> = ({
                       : undefined,
                   },
                   {
-                    value: `${selectorParam.txn.getOwnerName()}`,
+                    value: `${selectorParam.txn.getOwnerName()} (${selectorParam.txn.getOwnerId()})`,
                     onClick: isSelector
                       ? () => setTransactionChecked(idx)
                       : undefined,
