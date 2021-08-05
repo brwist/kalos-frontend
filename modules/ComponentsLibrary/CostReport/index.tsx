@@ -89,6 +89,7 @@ export const CostReport: FC<Props> = ({ serviceCallId }) => {
         .filter(row => row.getServiceCallId() === serviceCallId);
       arr[i].setRowsList(tempRowList);
     }
+    /*
     let allTrips: Trip[] = [];
     arr.forEach(pd =>
       pd.getRowsList().forEach(row => {
@@ -97,6 +98,7 @@ export const CostReport: FC<Props> = ({ serviceCallId }) => {
     );
 
     setTrips(allTrips);
+    */
 
     const lodgings = await PerDiemClientService.loadPerDiemsLodging(arr); // first # is per diem id
     setLodgings(lodgings);
@@ -105,7 +107,7 @@ export const CostReport: FC<Props> = ({ serviceCallId }) => {
       true,
     );
     setTransactions(transactions);
-
+    /*
     let allTripsTotal = 0;
     arr.forEach(perDiem => {
       perDiem.getRowsList().forEach(row => {
@@ -121,9 +123,9 @@ export const CostReport: FC<Props> = ({ serviceCallId }) => {
     });
 
     setTripsTotal(allTripsTotal);
-
+*/
     setPerDiems(arr);
-  }, [serviceCallId, setPerDiems, setLodgings, setTripsTotal]);
+  }, [serviceCallId, setPerDiems, setLodgings]);
 
   const totalMeals =
     perDiems.reduce((aggr, pd) => aggr + pd.getRowsList().length, 0) *
@@ -329,7 +331,7 @@ export const CostReport: FC<Props> = ({ serviceCallId }) => {
           ['Meals', usd(totalMeals)],
           ['Lodging', usd(totalLodging)],
           ['Tasks Billable', usd(totalTasksBillable)],
-          ['Trips Total', usd(tripsTotal)],
+          // ['Trips Total', usd(tripsTotal)],
           [
             '',
             <strong key="stronk">
@@ -616,99 +618,100 @@ export const CostReport: FC<Props> = ({ serviceCallId }) => {
         );
       })}
       <PrintParagraph tag="h2">Related Trips</PrintParagraph>
-      {trips.map(trip => {
-        let included = false;
-        tripsRendered.forEach(tripRendered => {
-          if (tripRendered.getId() == trip.getId()) included = true;
-        });
-        if (included) return <> </>;
+      {trips &&
+        trips.map(trip => {
+          let included = false;
+          tripsRendered.forEach(tripRendered => {
+            if (tripRendered.getId() == trip.getId()) included = true;
+          });
+          if (included) return <> </>;
 
-        tripsRendered.push(trip);
-        return (
-          <div
-            key={trip.getId()}
-            style={{
-              breakInside: 'avoid',
-              display: 'inline-block',
-              width: '100%',
-            }}
-          >
-            <PrintTable
-              columns={[
-                {
-                  title: 'Date',
-                  align: 'left',
-                },
-                {
-                  title: 'Origin Address',
-                  align: 'left',
-                  widthPercentage: 20,
-                },
-                {
-                  title: 'Destination Address',
-                  align: 'left',
-                  widthPercentage: 20,
-                },
-                {
-                  title: 'Distance (Miles)',
-                  align: 'left',
-                  widthPercentage: 10,
-                },
-                {
-                  title: 'Notes',
-                  align: 'left',
-                  widthPercentage: 10,
-                },
-                {
-                  title: 'Home Travel',
-                  align: 'right',
-                  widthPercentage: 10,
-                },
-                {
-                  title: `Cost (${usd(IRS_SUGGESTED_MILE_FACTOR)}/mi)`,
-                  align: 'right',
-                  widthPercentage: 10,
-                },
-                {
-                  title: 'Per Diem Row ID',
-                  align: 'right',
-                  widthPercentage: 10,
-                },
-              ]}
-              data={[
-                [
-                  formatDate(trip.getDate()),
-                  trip.getOriginAddress(),
-                  trip.getDestinationAddress(),
-                  trip.getDistanceInMiles().toFixed(2),
-                  trip.getNotes(),
-                  trip.getHomeTravel(),
-                  `${usd(
-                    trip.getDistanceInMiles() > 30 && trip.getHomeTravel()
-                      ? Number(
-                          (
-                            (trip.getDistanceInMiles() - 30) *
-                            IRS_SUGGESTED_MILE_FACTOR
-                          ).toFixed(2),
-                        )
-                      : Number(
-                          (
-                            trip.getDistanceInMiles() *
-                            IRS_SUGGESTED_MILE_FACTOR
-                          ).toFixed(2),
-                        ),
-                  )} ${
-                    trip.getDistanceInMiles() > 30 && trip.getHomeTravel()
-                      ? '(30 miles docked for home travel)'
-                      : ''
-                  }`,
-                  trip.getPerDiemRowId(),
-                ],
-              ]}
-            />
-          </div>
-        );
-      })}
+          tripsRendered.push(trip);
+          return (
+            <div
+              key={trip.getId()}
+              style={{
+                breakInside: 'avoid',
+                display: 'inline-block',
+                width: '100%',
+              }}
+            >
+              <PrintTable
+                columns={[
+                  {
+                    title: 'Date',
+                    align: 'left',
+                  },
+                  {
+                    title: 'Origin Address',
+                    align: 'left',
+                    widthPercentage: 20,
+                  },
+                  {
+                    title: 'Destination Address',
+                    align: 'left',
+                    widthPercentage: 20,
+                  },
+                  {
+                    title: 'Distance (Miles)',
+                    align: 'left',
+                    widthPercentage: 10,
+                  },
+                  {
+                    title: 'Notes',
+                    align: 'left',
+                    widthPercentage: 10,
+                  },
+                  {
+                    title: 'Home Travel',
+                    align: 'right',
+                    widthPercentage: 10,
+                  },
+                  {
+                    title: `Cost (${usd(IRS_SUGGESTED_MILE_FACTOR)}/mi)`,
+                    align: 'right',
+                    widthPercentage: 10,
+                  },
+                  {
+                    title: 'Per Diem Row ID',
+                    align: 'right',
+                    widthPercentage: 10,
+                  },
+                ]}
+                data={[
+                  [
+                    formatDate(trip.getDate()),
+                    trip.getOriginAddress(),
+                    trip.getDestinationAddress(),
+                    trip.getDistanceInMiles().toFixed(2),
+                    trip.getNotes(),
+                    trip.getHomeTravel(),
+                    `${usd(
+                      trip.getDistanceInMiles() > 30 && trip.getHomeTravel()
+                        ? Number(
+                            (
+                              (trip.getDistanceInMiles() - 30) *
+                              IRS_SUGGESTED_MILE_FACTOR
+                            ).toFixed(2),
+                          )
+                        : Number(
+                            (
+                              trip.getDistanceInMiles() *
+                              IRS_SUGGESTED_MILE_FACTOR
+                            ).toFixed(2),
+                          ),
+                    )} ${
+                      trip.getDistanceInMiles() > 30 && trip.getHomeTravel()
+                        ? '(30 miles docked for home travel)'
+                        : ''
+                    }`,
+                    trip.getPerDiemRowId(),
+                  ],
+                ]}
+              />
+            </div>
+          );
+        })}
     </PrintPage>
   );
 };
