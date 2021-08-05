@@ -2,6 +2,9 @@ import React = require('react');
 import Enzyme = require('enzyme');
 import Chai = require('chai');
 import TeamsModule = require('../../../../modules/ComponentsLibrary/Teams/index');
+import TeamClient = require('@kalos-core/kalos-rpc/Team/index');
+import Loader = require('../../../../modules/Loader/main');
+import Stubs = require('../../../test-setup/stubs'); // ? Sets the auth token up in a one-liner
 
 // TODO I need to do this during every try-catch:
 /* 
@@ -18,6 +21,13 @@ describe('ComponentsLibrary', () => {
   let wrapper: Enzyme.ReactWrapper;
   before(() => {
     wrapper = Enzyme.mount(<TeamsModule.Teams />);
+    let teamList = new TeamClient.TeamList();
+    let team = new TeamClient.Team();
+    team.setColor('#FF0000');
+    team.setId(1);
+    team.setName('name');
+    teamList.setResultsList([team]);
+    Stubs.setupStubs('TeamClientService', 'BatchGet', teamList);
   });
   describe('Teams', () => {
     describe('<Teams />', () => {
@@ -28,7 +38,7 @@ describe('ComponentsLibrary', () => {
       });
 
       it('shows a loader while resources are loading', () => {
-        throw new Error('Needs to be implemented');
+        Chai.expect(wrapper.contains(<Loader.Loader />)).to.be.equal(true);
       });
 
       it('opens a "Create New Team" modal when the "Create New Team" button is clicked', async () => {
