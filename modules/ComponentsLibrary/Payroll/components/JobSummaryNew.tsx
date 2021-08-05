@@ -61,9 +61,12 @@ export type Day = {
 };
 type State = {
   downloadButton: boolean;
+  downloadFullButton: boolean;
 };
 
-type ActionType = { type: 'setDownloadButton'; value: boolean };
+type ActionType =
+  | { type: 'setDownloadButton'; value: boolean }
+  | { type: 'setDownloadFullButton'; value: boolean };
 
 const reducer = (state: State, action: ActionType) => {
   switch (action.type) {
@@ -72,6 +75,11 @@ const reducer = (state: State, action: ActionType) => {
         ...state,
         downloadButton: action.value,
       };
+    case 'setDownloadFullButton':
+      return {
+        ...state,
+        downloadFullButton: action.value,
+      };
     default:
       return state;
   }
@@ -79,6 +87,7 @@ const reducer = (state: State, action: ActionType) => {
 export const JobSummaryNew: FC<Props> = ({ loggedUserId, onClose }) => {
   const [state, dispatch] = useReducer(reducer, {
     downloadButton: true,
+    downloadFullButton: true,
   });
   const [timesheets, setTimesheets] = useState<TimesheetLine[]>();
   const [timesheetsJobs, setTimesheetsJobs] = useState<WeekForEmployee[]>([]);
@@ -118,6 +127,9 @@ export const JobSummaryNew: FC<Props> = ({ loggedUserId, onClose }) => {
   ];
 
   const getTimesheetTotals = useCallback(async () => {
+    if (filter.jobNumber != 0) {
+      dispatch({ type: 'setDownloadFullButton', value: false });
+    }
     if (filter.week != OPTION_ALL && filter.jobNumber != 0) {
       dispatch({ type: 'setDownloadButton', value: false });
       const timesheetReq = new TimesheetLine();
@@ -385,7 +397,7 @@ export const JobSummaryNew: FC<Props> = ({ loggedUserId, onClose }) => {
       ></Button>
       <Button
         label={'Full Job Report'}
-        disabled={state.downloadButton}
+        disabled={state.downloadFullButton}
         onClick={() => setOpenReport(true)}
       ></Button>
     </SectionBar>
