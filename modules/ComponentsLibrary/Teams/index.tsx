@@ -40,7 +40,10 @@ export const Teams: FC<Props> = () => {
       {loading && <Loader />}
       {createTeamModalOpen && (
         <Modal open={true} onClose={() => handleSetCreateTeamModalOpen(false)}>
-          <CreateNewTeam onClose={() => handleSetCreateTeamModalOpen(false)} />
+          <CreateNewTeam
+            onClose={() => handleSetCreateTeamModalOpen(false)}
+            onSave={() => handleSetCreateTeamModalOpen(false)}
+          />
         </Modal>
       )}
       <SectionBar
