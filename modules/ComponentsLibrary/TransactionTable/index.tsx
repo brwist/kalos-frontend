@@ -18,9 +18,7 @@ import CheckIcon from '@material-ui/icons/CheckCircleSharp';
 import CloseIcon from '@material-ui/icons/Close';
 import UploadIcon from '@material-ui/icons/CloudUploadSharp';
 import DoneIcon from '@material-ui/icons/Done';
-import NotesIcon from '@material-ui/icons/EditSharp';
 import CopyIcon from '@material-ui/icons/FileCopySharp';
-import KeyboardIcon from '@material-ui/icons/KeyboardSharp';
 import RejectIcon from '@material-ui/icons/ThumbDownSharp';
 import SubmitIcon from '@material-ui/icons/ThumbUpSharp';
 import { format, parseISO } from 'date-fns';
@@ -81,6 +79,7 @@ interface FilterType {
   isAccepted: boolean | undefined;
   isRejected: boolean | undefined;
   amount: number | undefined;
+  billingRecorded: boolean;
 }
 
 let pageNumber = 0;
@@ -94,6 +93,7 @@ let filter: FilterType = {
   isAccepted: false,
   isRejected: false,
   amount: undefined,
+  billingRecorded: false,
 };
 export const TransactionTable: FC<Props> = ({
   loggedUserId,
@@ -104,7 +104,6 @@ export const TransactionTable: FC<Props> = ({
 }) => {
   const FileInput = React.createRef<HTMLInputElement>();
 
-  const acceptOverride = ![1734, 9646, 8418].includes(loggedUserId);
   const [transactions, setTransactions] = useState<SelectorParams[]>();
   const [transactionToEdit, setTransactionToEdit] = useState<
     Transaction | undefined
@@ -178,18 +177,6 @@ export const TransactionTable: FC<Props> = ({
         bucket: 'kalos-transactions',
       };
     });
-  };
-
-  const makeRecordTransaction = (id: number) => {
-    return async () => {
-      const txn = new Transaction();
-      txn.setIsRecorded(true);
-      txn.setFieldMaskList(['IsRecorded']);
-      txn.setId(id);
-      await transactionClient.Update(txn);
-      await makeLog('Transaction recorded', id);
-      await refresh();
-    };
   };
 
   const makeAuditTransaction = async (id: number) => {
@@ -275,21 +262,6 @@ export const TransactionTable: FC<Props> = ({
     await refresh();
   };
 
-  const updateStatus = async (txn: Transaction) => {
-    const ok = confirm(
-      `Are you sure you want to mark this transaction as ${
-        acceptOverride ? 'accepted' : 'recorded'
-      }?`,
-    );
-    if (ok) {
-      const fn = acceptOverride
-        ? async () => makeUpdateStatus(txn.getId(), 3, 'accepted')
-        : async () => makeRecordTransaction(txn.getId());
-      await fn();
-      await refresh();
-    }
-  };
-
   const makeUpdateStatus = async (
     id: number,
     statusID: number,
@@ -313,6 +285,16 @@ export const TransactionTable: FC<Props> = ({
     }
   };
 
+  const updateStatus = async (txn: Transaction) => {
+    const ok = confirm(
+      `Are you sure you want to mark this transaction as accepted?`,
+    );
+    if (ok) {
+      await makeUpdateStatus(txn.getId(), 3, 'accepted');
+      await refresh();
+    }
+  };
+
   const forceAccept = async (txn: Transaction) => {
     const ok = confirm(
       `Are you sure you want to mark this transaction as accepted?`,
@@ -323,35 +305,6 @@ export const TransactionTable: FC<Props> = ({
     }
   };
 
-  const addJobNumber = async (id: number, newJobNumber: string) => {
-    try {
-      let jobNumber;
-      if (newJobNumber.includes('-')) {
-        jobNumber = parseInt(newJobNumber.split('-')[1]);
-      } else {
-        jobNumber = parseInt(newJobNumber);
-      }
-      const txn = new Transaction();
-      txn.setId(id);
-      txn.setJobId(jobNumber);
-      txn.setFieldMaskList(['JobId']);
-      await transactionClient.Update(txn);
-      await refresh();
-    } catch (err) {
-      alert('Job number could not be set');
-      console.error(err);
-    }
-  };
-
-  const updateNotes = async (id: number, updatedNotes: string) => {
-    const txn = new Transaction();
-    txn.setId(id);
-    txn.setNotes(updatedNotes);
-    txn.setFieldMaskList(['Notes']);
-    await transactionClient.Update(txn);
-    await refresh();
-  };
-
   const resetTransactions = useCallback(async () => {
     let req = new Transaction();
     req.setOrderBy(sortBy ? sortBy : 'timestamp');
@@ -360,7 +313,6 @@ export const TransactionTable: FC<Props> = ({
     );
     req.setPageNumber(pageNumber);
     req.setIsActive(1);
-    req.setIsBillingRecorded(true);
     req.setVendorCategory("'PickTicket','Receipt'");
     if (filter.isAccepted) {
       req.setStatusId(3);
@@ -372,8 +324,8 @@ export const TransactionTable: FC<Props> = ({
     if (filter.departmentId != 0) req.setDepartmentId(filter.departmentId);
     if (filter.employeeId != 0) req.setAssignedEmployeeId(filter.employeeId);
     if (filter.amount) req.setAmount(filter.amount);
+    req.setIsBillingRecorded(filter.billingRecorded);
     req.setFieldMaskList(['IsBillingRecorded']);
-    req.setNotEqualsList(['IsBillingRecorded']);
     let res: TransactionList | null = null;
     try {
       res = await TransactionClientService.BatchGet(req);
@@ -505,6 +457,7 @@ export const TransactionTable: FC<Props> = ({
     filter.isAccepted = d.accepted ? d.accepted : undefined;
     filter.isRejected = d.rejected ? d.rejected : undefined;
     filter.amount = d.amount;
+    filter.billingRecorded = d.billingRecorded;
   }, []);
 
   const handleChangePage = useCallback(
@@ -698,6 +651,11 @@ export const TransactionTable: FC<Props> = ({
               value: el.getId(),
             })),
         ],
+      },
+      {
+        name: 'billingRecorded',
+        label: 'Is already marked accepted or rejected?',
+        type: 'checkbox',
       },
     ],
     [
@@ -1116,14 +1074,7 @@ export const TransactionTable: FC<Props> = ({
                               </Tooltip>,
                             ]
                           : []),
-                        <Tooltip
-                          key="submit"
-                          content={
-                            acceptOverride
-                              ? 'Mark as accepted'
-                              : 'Mark as entered'
-                          }
-                        >
+                        <Tooltip key="submit" content={'Mark as accepted'}>
                           <IconButton
                             size="small"
                             onClick={() => updateStatus(selectorParam.txn)}
