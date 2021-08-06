@@ -889,6 +889,10 @@ const NAMED_EXPORTS = {
     'TaskEvent',
     'TaskEventList',
   ],
+  'node_modules/@kalos-core/kalos-rpc/compiled-protos/team_pb.js': [
+    'Team',
+    'TeamList',
+  ],
   'node_modules/@kalos-core/kalos-rpc/compiled-protos/technician_skills_pb.js':
     ['TechnicianSkills', 'TechnicianSkillsList'],
   'node_modules/@kalos-core/kalos-rpc/compiled-protos/timeoff_request_pb.js': [
