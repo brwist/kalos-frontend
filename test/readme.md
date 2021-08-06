@@ -12,9 +12,12 @@ Enzyme is a Javascript testing utility for React which helps validate components
 
 # Writing Tests
 
-When writing the tests out, ensure that you wrap all tests in a decent Describe block (or multiple of them). This helps ensure the CLI output is clean and well-kempt.
+When writing the tests out, ensure that you wrap all tests in a decent Describe block (or multiple of them). This helps ensure the CLI output is clean and legible.
+See more about Describe, It and the various hooks here: https://samwize.com/2014/02/08/a-guide-to-mochas-describe-it-and-setup-hooks/
 
 # RPCs and Testing
+
+For now, be careful with this functionality - it can take down the dev server and is more along the lines of integration testing.
 
 Because of the way our server is set up, there are a few gotchas which need to be kept in mind when testing out functionality that makes calls to the server (IE, testing Helper functions).
 
@@ -49,6 +52,34 @@ If importing from a protobuffer, for example user_pb.d.ts, try to name it "UserP
 
 If you cannot stub a certain server call with Sinon and cannot figure out why, check to see if the call is try-catched in the relevant module. If it isn't, that may clue you in on issues (we should strive to have full try-catch error handling in our modules anyway).
 
-Sometimes module wrappers need to be updated over time, for that I have been using this one-liner inside of an "it" function: `await new Promise(res => setTimeout(res, 1));`. I will likely come up with a more elegant solution eventually.
+Sometimes module wrappers need to be updated over time to resolve promises for mocked server calls (for example, a BatchGet call). For this, I have created a function in `test-constants/constants.ts` called `ReRenderAfterLoad`. All it does is wait for 1 millisecond for those promises to resolve, but it works (you have to `await` it)!
 
-I will be utilizing Test Driven Development with future modules I produce, you should look into it! It may interest you and fit your style as well :)
+I will be utilizing Behavior Driven Development with future modules I produce, you should look into it! It may interest you and fit your style as well :)
+
+# A Quick Note About Stubbing Client Service Calls with Sinon
+
+I have included a `SetupStubs` function inside of `test-setup/stubs.ts` that can mock out any calls to the dev server. However, for existing modules especially, it may require a little bit of modification of the module (only a little though!).
+
+Since stubs work by effectively replacing the function call with another one at test-time, they need to come from a single source of truth. I have made this single source of truth Helpers - inside Helpers, almost every client service is exported. These are stubbed inside `stubs.ts` when `SetupStubs` is called. As a result, if a module mocks a client itself and uses that to make calls to the server, the stub will not work properly (and to properly stub it, you need a reference to the function, therefore it would need to be exported).
+
+This would quickly become messy and break encapsulation, so I instead suggest that we just change the code in those modules to use the Client Services inside of Helpers (for example, instead of `const clientService = new ClientService(ENDPOINT)`, we would just `import {ClientService} from '../helpers'` and then call the functions directly on that).
+
+Stubbing Client Services with Sinon is also incredibly easy. Simply put something similar to this in a before() call:
+
+```javascript
+// "Stubs" in this case is an import of 'test-setup/stubs'
+Stubs.setupStubs(
+  'UserClientService',
+  'loadUserById',
+  userThatWouldResult, // The result that will be returned when the function resolves.
+  101253, // This is the argument to be supplied to the function, if any. Optional.
+);
+```
+
+... and then be sure to put this in an after() call:
+
+```javascript
+Stubs.restoreStubs();
+```
+
+I like to put the before and after calls on a describe block that surrounds some it() calls. This ensures that the data is stubbed out the same for the entire module during testing.
