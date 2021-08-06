@@ -300,8 +300,7 @@ export const TransactionTable: FC<Props> = ({
     txn.setId(id);
     txn.setStatusId(statusID);
     txn.setFieldMaskList(['StatusId']);
-    txn.setIsRecorded(true);
-    console.log('make update status is called');
+    txn.setIsBillingRecorded(true);
     try {
       await transactionClient.Update(txn);
     } catch (err) {
@@ -361,7 +360,7 @@ export const TransactionTable: FC<Props> = ({
     );
     req.setPageNumber(pageNumber);
     req.setIsActive(1);
-    req.setIsRecorded(true);
+    req.setIsBillingRecorded(true);
     req.setVendorCategory("'PickTicket','Receipt'");
     if (filter.isAccepted) {
       req.setStatusId(3);
@@ -373,8 +372,8 @@ export const TransactionTable: FC<Props> = ({
     if (filter.departmentId != 0) req.setDepartmentId(filter.departmentId);
     if (filter.employeeId != 0) req.setAssignedEmployeeId(filter.employeeId);
     if (filter.amount) req.setAmount(filter.amount);
-    req.setFieldMaskList(['IsRecorded']);
-    req.setNotEqualsList(['IsRecorded']);
+    req.setFieldMaskList(['IsBillingRecorded']);
+    req.setNotEqualsList(['IsBillingRecorded']);
     let res: TransactionList | null = null;
     try {
       res = await TransactionClientService.BatchGet(req);
