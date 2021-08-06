@@ -104,7 +104,6 @@ export const TransactionTable: FC<Props> = ({
 }) => {
   const FileInput = React.createRef<HTMLInputElement>();
 
-  const acceptOverride = ![1734, 9646, 8418].includes(loggedUserId);
   const [transactions, setTransactions] = useState<SelectorParams[]>();
   const [transactionToEdit, setTransactionToEdit] = useState<
     Transaction | undefined
@@ -275,21 +274,6 @@ export const TransactionTable: FC<Props> = ({
     await refresh();
   };
 
-  const updateStatus = async (txn: Transaction) => {
-    const ok = confirm(
-      `Are you sure you want to mark this transaction as ${
-        acceptOverride ? 'accepted' : 'recorded'
-      }?`,
-    );
-    if (ok) {
-      const fn = acceptOverride
-        ? async () => makeUpdateStatus(txn.getId(), 3, 'accepted')
-        : async () => makeRecordTransaction(txn.getId());
-      await fn();
-      await refresh();
-    }
-  };
-
   const makeUpdateStatus = async (
     id: number,
     statusID: number,
@@ -310,6 +294,16 @@ export const TransactionTable: FC<Props> = ({
       await makeLog(`${description} ${reason || ''}`, id);
     } catch (err) {
       console.error(`An error occurred while making an activity log: ${err}`);
+    }
+  };
+
+  const updateStatus = async (txn: Transaction) => {
+    const ok = confirm(
+      `Are you sure you want to mark this transaction as accepted?`,
+    );
+    if (ok) {
+      await makeUpdateStatus(txn.getId(), 3, 'accepted');
+      await refresh();
     }
   };
 
@@ -1116,14 +1110,7 @@ export const TransactionTable: FC<Props> = ({
                               </Tooltip>,
                             ]
                           : []),
-                        <Tooltip
-                          key="submit"
-                          content={
-                            acceptOverride
-                              ? 'Mark as accepted'
-                              : 'Mark as entered'
-                          }
-                        >
+                        <Tooltip key="submit" content={'Mark as accepted'}>
                           <IconButton
                             size="small"
                             onClick={() => updateStatus(selectorParam.txn)}
