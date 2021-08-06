@@ -125,7 +125,7 @@ export const ServiceCall: FC<Props> = props => {
     [setEntry, serviceCallId],
   );
   const loadServicesRenderedData = useCallback(
-    async (_serviceCallId = serviceCallId) => {
+    async (_serviceCallId = serviceCallId, passLoading?: boolean) => {
       if (_serviceCallId) {
         setLoading(true);
         const req = new ServicesRendered();
@@ -138,8 +138,30 @@ export const ServiceCall: FC<Props> = props => {
         //  _serviceCallId,
         //);
         setServicesRendered(servicesRendered);
-        setLoading(false);
+        console.log(servicesRendered);
+        console.log('we are here getting sr data');
       }
+    },
+    [setServicesRendered, serviceCallId],
+  );
+  const loadServicesRenderedDataForProp = useCallback(
+    async (_serviceCallId = serviceCallId, passLoading?: boolean) => {
+      if (_serviceCallId) {
+        setLoading(true);
+        const req = new ServicesRendered();
+        req.setIsActive(1);
+        req.setEventId(_serviceCallId);
+        const servicesRendered = (
+          await ServicesRenderedClientService.BatchGet(req)
+        ).getResultsList();
+        //const servicesRendered = await ServicesRenderedClientService.loadServicesRenderedByEventID(
+        //  _serviceCallId,
+        //);
+        setServicesRendered(servicesRendered);
+        console.log(servicesRendered);
+        console.log('we are here getting sr data');
+      }
+      setLoading(false);
     },
     [setServicesRendered, serviceCallId],
   );
@@ -218,7 +240,11 @@ export const ServiceCall: FC<Props> = props => {
 
       promises.push(
         new Promise<void>(async resolve => {
-          await loadEntry();
+          const req = new Event();
+          req.setId(serviceCallId);
+          const entry = await EventClientService.Get(req);
+          console.log('entry', entry);
+          setEntry(entry);
           resolve();
         }),
       );
@@ -239,6 +265,7 @@ export const ServiceCall: FC<Props> = props => {
       );
 
       Promise.all(promises).then(() => {
+        console.log('all processes complete');
         setLoaded(true);
         setLoading(false);
       });
@@ -251,8 +278,8 @@ export const ServiceCall: FC<Props> = props => {
     projectData,
     propertyId,
     userID,
+    serviceCallId,
     loggedUserId,
-    loadEntry,
     loadServicesRenderedData,
     handleSetError,
   ]);
@@ -280,30 +307,29 @@ export const ServiceCall: FC<Props> = props => {
   }, [setPendingSave, setTabKey, setTabIdx, tabKey, tabIdx]);
   const saveServiceCall = useCallback(async () => {
     setSaving(true);
-    const req = entry;
-    req.setIsActive(1);
-    if (serviceCallId) {
-      req.setId(serviceCallId);
-      req.addFieldMask('Id');
-    } else {
-      setLoading(true);
-    }
-    let res = new Event();
+    setLoading(true);
+    const temp = entry;
     if (serviceCallId) {
       console.log('saving existing ID');
-      res = await EventClientService.Update(req);
+      temp.setId(serviceCallId);
+      temp.addFieldMask('Id');
+      await EventClientService.Update(temp);
+
+      console.log('finished Update');
     } else {
-      res = await EventClientService.Create(req);
+      const res = await EventClientService.Create(temp);
       console.log('creating new one');
+      setEntry(res);
+      if (!serviceCallId) {
+        console.log('no service call Id');
+        setServiceCallId(res.getId());
+        await loadEntry(res.getId());
+        await loadServicesRenderedData(res.getId());
+      }
     }
 
-    setEntry(res);
     setSaving(false);
-    if (!serviceCallId) {
-      setServiceCallId(res.getId());
-      await loadEntry(res.getId());
-      await loadServicesRenderedData(res.getId());
-    }
+    setLoading(false);
     if (onSave) {
       onSave();
     }
@@ -777,7 +803,7 @@ export const ServiceCall: FC<Props> = props => {
                           serviceCallId={serviceCallId}
                           servicesRendered={servicesRendered}
                           loggedUser={loggedUser}
-                          loadServicesRendered={loadServicesRenderedData}
+                          loadServicesRendered={loadServicesRenderedDataForProp}
                           loading={loading}
                           onAddMaterials={handleOnAddMaterials}
                         />

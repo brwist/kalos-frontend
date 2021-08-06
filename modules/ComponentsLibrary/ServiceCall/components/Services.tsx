@@ -6,6 +6,7 @@ import {
   ServicesRenderedClient,
   ServicesRendered,
 } from '@kalos-core/kalos-rpc/ServicesRendered';
+import { Payment } from '@kalos-core/kalos-rpc/Payment';
 import { Quotable } from '@kalos-core/kalos-rpc/Event';
 import { SectionBar } from '../../SectionBar';
 import { ConfirmDelete } from '../../ConfirmDelete';
@@ -19,11 +20,11 @@ import {
   timestamp,
   formatDateTime,
   formatDateTimeDay,
-  getRPCFields,
   formatDay,
   formatDate,
   formatTime,
   EventClientService,
+  makeSafeFormObject,
 } from '../../../../helpers';
 import {
   ENDPOINT,
@@ -33,7 +34,6 @@ import {
   PAYMENT_NOT_COLLECTED_LIST,
   OPTION_BLANK,
 } from '../../../../constants';
-import { ServicesRenderedType } from '../';
 import './services.less';
 import { User } from '@kalos-core/kalos-rpc/User';
 
@@ -78,7 +78,7 @@ type PaymentPartType = {
 interface Props {
   serviceCallId: number;
   loggedUser: User;
-  servicesRendered: ServicesRenderedType[];
+  servicesRendered: ServicesRendered[];
   loadServicesRendered: () => void;
   loading: boolean;
   onAddMaterials: (materialUsed: string, materialTotal: number) => void;
@@ -144,7 +144,7 @@ const SCHEMA_PAYMENT: Schema<PaymentType> = [
   ],
 ];
 
-const SCHEMA_ON_CALL: Schema<ServicesRenderedType> = [
+const SCHEMA_ON_CALL: Schema<ServicesRendered> = [
   [
     {
       label: 'Services Rendered',
@@ -193,22 +193,26 @@ export const Services: FC<Props> = ({
   onAddMaterials,
 }) => {
   const [paymentFormKey, setPaymentFormKey] = useState<number>(0);
-  const [serviceRenderedForm, setServicesRenderedForm] =
-    useState<ServicesRenderedType>(new ServicesRendered());
+  const [
+    serviceRenderedForm,
+    setServicesRenderedForm,
+  ] = useState<ServicesRendered>(new ServicesRendered());
   const [paymentForm, setPaymentForm] = useState<PaymentType>(PAYMENT_INITIAL);
-  const [signatureForm, setSignatureForm] =
-    useState<SignatureType>(SIGNATURE_INITIAL);
-  const [paymentFormPart, setPaymentFormPart] =
-    useState<PaymentPartType>(PAYMENT_PART_INITIAL);
-  const [deleting, setDeleting] = useState<ServicesRenderedType>();
-  const [editing, setEditing] = useState<ServicesRenderedType>();
+  const [signatureForm, setSignatureForm] = useState<SignatureType>(
+    SIGNATURE_INITIAL,
+  );
+  const [paymentFormPart, setPaymentFormPart] = useState<PaymentPartType>(
+    PAYMENT_PART_INITIAL,
+  );
+  const [deleting, setDeleting] = useState<ServicesRendered>();
+  const [editing, setEditing] = useState<ServicesRendered>();
   const [saving, setSaving] = useState<boolean>(false);
   const [pendingSelectedQuote, setPendingSelectedQuote] = useState<
     SelectedQuote[]
   >([]);
   const [changingStatus, setChangingStatus] = useState<boolean>(false);
   const handleDeleting = useCallback(
-    (deleting?: ServicesRenderedType) => () => setDeleting(deleting),
+    (deleting?: ServicesRendered) => () => setDeleting(deleting),
     [setDeleting],
   );
   const handleDelete = useCallback(async () => {
@@ -217,7 +221,7 @@ export const Services: FC<Props> = ({
       const req = new ServicesRendered();
       req.setId(deleting.getId());
       await ServicesRenderedClientService.Delete(req);
-      loadServicesRendered();
+      () => loadServicesRendered();
     }
   }, [deleting, loadServicesRendered]);
   const handleChangeStatus = useCallback(
@@ -245,14 +249,6 @@ export const Services: FC<Props> = ({
       );
       req.setDatetime(timestamp());
       const fieldMaskList = ['EventId', 'Status', 'Name', 'Datetime'];
-      SCHEMA_ON_CALL.forEach(row =>
-        row.forEach(({ name }) => {
-          const { upperCaseProp, methodName } = getRPCFields(name!);
-          // @ts-ignore
-          req[methodName](serviceRenderedForm[name]);
-          fieldMaskList.push(upperCaseProp);
-        }),
-      );
       req.setFieldMaskList(fieldMaskList);
       const res = await ServicesRenderedClientService.Create(req);
       if (pendingSelectedQuote.length > 0) {
@@ -306,17 +302,17 @@ export const Services: FC<Props> = ({
         onAddMaterials(materialUsed, materialTotal);
         setPendingSelectedQuote([]);
       }
-      loadServicesRendered();
+
       setServicesRenderedForm(new ServicesRendered());
       setPaymentFormPart(PAYMENT_PART_INITIAL);
       setPaymentForm(PAYMENT_INITIAL);
       setSignatureForm(SIGNATURE_INITIAL);
       setChangingStatus(false);
+      await loadServicesRendered();
     },
     [
       loggedUser,
       loadServicesRendered,
-      serviceRenderedForm,
       setSignatureForm,
       setServicesRenderedForm,
       setPaymentFormPart,
@@ -329,21 +325,11 @@ export const Services: FC<Props> = ({
     ],
   );
   const handleChangeServiceRendered = useCallback(
-    async (data: ServicesRenderedType) => {
+    async (data: ServicesRendered) => {
       if (editing) {
         setSaving(true);
-        const req = new ServicesRendered();
+        const req = makeSafeFormObject(data, new ServicesRendered());
         req.setId(editing.getId());
-        const fieldMaskList: string[] = [];
-        SCHEMA_ON_CALL.forEach(row =>
-          row.forEach(({ name }) => {
-            const { upperCaseProp, methodName } = getRPCFields(name!);
-            // @ts-ignore
-            req[methodName](data[name]);
-            fieldMaskList.push(upperCaseProp);
-          }),
-        );
-        req.setFieldMaskList(fieldMaskList);
         await ServicesRenderedClientService.Update(req);
         await loadServicesRendered();
         setSaving(false);
@@ -353,7 +339,7 @@ export const Services: FC<Props> = ({
     [editing, setSaving, setEditing, loadServicesRendered],
   );
   const handleSetEditing = useCallback(
-    (editing?: ServicesRenderedType) => () => setEditing(editing),
+    (editing?: ServicesRendered) => () => setEditing(editing),
     [setEditing],
   );
   const handlePaymentFormChange = useCallback(
@@ -384,14 +370,15 @@ export const Services: FC<Props> = ({
             value: (
               <span
                 style={{
-                  ...([COMPLETED, INCOMPLETE].includes(status)
+                  ...([COMPLETED, INCOMPLETE].includes(props.getStatus())
                     ? {
-                        color: status === COMPLETED ? 'green' : 'red',
+                        color:
+                          props.getStatus() === COMPLETED ? 'green' : 'red',
                       }
                     : {}),
                 }}
               >
-                {status}
+                {props.getStatus()}
               </span>
             ),
             actions: [
@@ -632,7 +619,7 @@ export const Services: FC<Props> = ({
       {editing && (
         <Modal open onClose={handleSetEditing()}>
           <div className="ServicesEditing">
-            <Form<ServicesRenderedType>
+            <Form<ServicesRendered>
               title="Services Rendered Edit"
               schema={SCHEMA_ON_CALL}
               data={editing}
