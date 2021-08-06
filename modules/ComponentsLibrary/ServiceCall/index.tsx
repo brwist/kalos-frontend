@@ -83,6 +83,7 @@ export const ServiceCall: FC<Props> = props => {
   const [tabIdx, setTabIdx] = useState<number>(0);
   const [tabKey, setTabKey] = useState<number>(0);
   const [pendingSave, setPendingSave] = useState<boolean>(false);
+  const [saveInvoice, setSaveInvoice] = useState<boolean>(false);
   const [requestValid, setRequestValid] = useState<boolean>(false);
   const [serviceCallId, setServiceCallId] = useState<number>(eventId || 0);
   const [entry, setEntry] = useState<Event>(new Event());
@@ -270,7 +271,11 @@ export const ServiceCall: FC<Props> = props => {
     },
     [setConfirmedParentId],
   );
-
+const handleSaveInvoice = useCallback(async() => {
+  setPendingSave(true);
+  setRequestValid(true);
+  // setSaveInvoice(true);
+},[setPendingSave, setRequestValid]);
   const handleSave = useCallback(async () => {
     setPendingSave(true);
     if (tabIdx !== 0) {
@@ -716,7 +721,7 @@ export const ServiceCall: FC<Props> = props => {
               },
               {
                 label: 'Save and Invoice',
-                // onClick: // TODO
+                onClick: handleSaveInvoice,
                 disabled: loading || saving,
               },
               {
