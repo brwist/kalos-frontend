@@ -44,3 +44,13 @@ export const GetPathFromName = (
 export const Log = (output: string) => {
   console.log(`<TestLog>${output}</TestLog>`);
 };
+/**
+ * This is meant to be awaited in the test. It will allow you time in the test to have the 'loading'
+ * take place and resolve all of your mocked promises. Use after every call to BatchGet, Get, etc.
+ * (basically anything async that a component depends on).
+ *
+ * This is a bit of a workaround until we can figure something better out hopefully. A bit hacky,
+ * but it works!
+ */
+export const ReRenderAfterLoad = async () =>
+  await new Promise(res => setTimeout(res, 1));
