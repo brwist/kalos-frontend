@@ -52,6 +52,7 @@ import LineWeightIcon from '@material-ui/icons/LineWeight';
 import { EditTransaction } from '../EditTransaction';
 import { TimesheetDepartment } from '@kalos-core/kalos-rpc/TimesheetDepartment';
 import { StatusPicker } from './components/StatusPicker';
+import Typography from '@material-ui/core/Typography';
 export interface Props {
   loggedUserId: number;
   isSelector?: boolean; // Is this a selector table (checkboxes that return in on-change)?
@@ -1159,11 +1160,28 @@ export const TransactionTable: FC<Props> = ({
                           <> </>
                         )}
                         {selectorParam.txn.getStatusId() == 4 ? (
-                          <Tooltip key="rejected" content="Rejected">
-                            <IconButton size="small">
-                              <CloseIcon />
-                            </IconButton>
-                          </Tooltip>
+                          <>
+                            <Tooltip
+                              key="rejected"
+                              content={`Rejected ${transactionActivityLogs
+                                .filter(
+                                  log =>
+                                    log.getTransactionId() ==
+                                    selectorParam.txn.getId(),
+                                )
+                                .map(log => {
+                                  return `(Reason: ${log
+                                    .getDescription()
+                                    .substr(
+                                      log.getDescription().indexOf(' ') + 1,
+                                    )})`;
+                                })}`}
+                            >
+                              <IconButton size="small">
+                                <CloseIcon />
+                              </IconButton>
+                            </Tooltip>
+                          </>
                         ) : (
                           <> </>
                         )}
