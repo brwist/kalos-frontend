@@ -1169,13 +1169,14 @@ export const TransactionTable: FC<Props> = ({
                                     log.getTransactionId() ==
                                     selectorParam.txn.getId(),
                                 )
-                                .map(log => {
-                                  return `(Reason: ${log
-                                    .getDescription()
-                                    .substr(
-                                      log.getDescription().indexOf(' ') + 1,
-                                    )})`;
-                                })}`}
+                                .map(
+                                  log =>
+                                    `(Reason: ${log
+                                      .getDescription()
+                                      .substr(
+                                        log.getDescription().indexOf(' ') + 1,
+                                      )})`,
+                                )}`}
                             >
                               <IconButton size="small">
                                 <CloseIcon />
