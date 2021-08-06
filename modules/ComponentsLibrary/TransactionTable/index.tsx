@@ -107,6 +107,7 @@ export const TransactionTable: FC<Props> = ({
   const FileInput = React.createRef<HTMLInputElement>();
 
   const [transactions, setTransactions] = useState<SelectorParams[]>();
+  const [totalTransactions, setTotalTransactions] = useState<number>(0);
   const [transactionActivityLogs, setTransactionActivityLogs] = useState<
     TransactionActivity[]
   >([]);
@@ -312,6 +313,7 @@ export const TransactionTable: FC<Props> = ({
 
   const resetTransactions = useCallback(async () => {
     let req = new Transaction();
+    req.setWithoutLimit(true); // We need more than 50
     req.setOrderBy(sortBy ? sortBy : 'timestamp');
     req.setOrderDir(
       sortDir && sortDir != ' ' ? sortDir : sortDir == ' ' ? 'DESC' : 'DESC',
@@ -372,7 +374,7 @@ export const TransactionTable: FC<Props> = ({
     });
 
     setTransactionActivityLogs(logList);
-
+    setTotalTransactions(res.getTotalCount());
     setTransactions(
       res.getResultsList().map(txn => {
         return {
@@ -382,7 +384,7 @@ export const TransactionTable: FC<Props> = ({
         } as SelectorParams;
       }),
     );
-  }, [setTransactions, setTransactionActivityLogs]);
+  }, [setTransactions, setTotalTransactions, setTransactionActivityLogs]);
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -829,10 +831,7 @@ export const TransactionTable: FC<Props> = ({
         key={pageNumber.toString()}
         fixedActions
         pagination={{
-          count:
-            transactions && transactions.length > 0
-              ? transactions![0].totalCount
-              : 0,
+          count: totalTransactions,
           rowsPerPage: 50,
           page: pageNumber,
           onPageChange: handleChangePage,
