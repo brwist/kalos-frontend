@@ -79,6 +79,7 @@ interface FilterType {
   isAccepted: boolean | undefined;
   isRejected: boolean | undefined;
   amount: number | undefined;
+  billingRecorded: boolean;
 }
 
 let pageNumber = 0;
@@ -92,6 +93,7 @@ let filter: FilterType = {
   isAccepted: false,
   isRejected: false,
   amount: undefined,
+  billingRecorded: false,
 };
 export const TransactionTable: FC<Props> = ({
   loggedUserId,
@@ -311,7 +313,6 @@ export const TransactionTable: FC<Props> = ({
     );
     req.setPageNumber(pageNumber);
     req.setIsActive(1);
-    req.setIsBillingRecorded(true);
     req.setVendorCategory("'PickTicket','Receipt'");
     if (filter.isAccepted) {
       req.setStatusId(3);
@@ -323,8 +324,8 @@ export const TransactionTable: FC<Props> = ({
     if (filter.departmentId != 0) req.setDepartmentId(filter.departmentId);
     if (filter.employeeId != 0) req.setAssignedEmployeeId(filter.employeeId);
     if (filter.amount) req.setAmount(filter.amount);
+    req.setIsBillingRecorded(filter.billingRecorded);
     req.setFieldMaskList(['IsBillingRecorded']);
-    req.setNotEqualsList(['IsBillingRecorded']);
     let res: TransactionList | null = null;
     try {
       res = await TransactionClientService.BatchGet(req);
@@ -456,6 +457,7 @@ export const TransactionTable: FC<Props> = ({
     filter.isAccepted = d.accepted ? d.accepted : undefined;
     filter.isRejected = d.rejected ? d.rejected : undefined;
     filter.amount = d.amount;
+    filter.billingRecorded = d.billingRecorded;
   }, []);
 
   const handleChangePage = useCallback(
@@ -649,6 +651,11 @@ export const TransactionTable: FC<Props> = ({
               value: el.getId(),
             })),
         ],
+      },
+      {
+        name: 'billingRecorded',
+        label: 'Is already marked accepted or rejected?',
+        type: 'checkbox',
       },
     ],
     [
