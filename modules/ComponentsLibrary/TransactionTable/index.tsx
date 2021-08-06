@@ -31,6 +31,7 @@ import {
   timestamp,
   TransactionClientService,
   UserClientService,
+  TransactionActivityClientService,
 } from '../../../helpers';
 import { AltGallery } from '../../AltGallery/main';
 import { Tooltip } from '../../ComponentsLibrary/Tooltip';
@@ -105,6 +106,9 @@ export const TransactionTable: FC<Props> = ({
   const FileInput = React.createRef<HTMLInputElement>();
 
   const [transactions, setTransactions] = useState<SelectorParams[]>();
+  const [transactionActivityLogs, setTransactionActivityLogs] = useState<
+    TransactionActivity[]
+  >([]);
   const [transactionToEdit, setTransactionToEdit] = useState<
     Transaction | undefined
   >();
@@ -339,6 +343,35 @@ export const TransactionTable: FC<Props> = ({
       return;
     }
 
+    // List of the most recent TransactionActivity logs so we can use those to determine the last reason for
+    // rejection and display that to the user
+    let logList: TransactionActivity[] = [];
+    res.getResultsList().forEach(async transaction => {
+      try {
+        let req = new TransactionActivity();
+        req.setTransactionId(transaction.getId());
+        let res = await TransactionActivityClientService.BatchGet(req);
+        let latest: TransactionActivity | null = null;
+        res.getResultsList().forEach(transactionActivity => {
+          if (
+            latest == null ||
+            latest.getTimestamp() < transactionActivity.getTimestamp()
+          ) {
+            latest = transactionActivity;
+          }
+        });
+        if (latest) {
+          logList.push(latest);
+        }
+      } catch (err) {
+        console.error(
+          `An error occurred while getting a transaction activity log: ${err}`,
+        );
+      }
+    });
+
+    setTransactionActivityLogs(logList);
+
     setTransactions(
       res.getResultsList().map(txn => {
         return {
@@ -348,7 +381,7 @@ export const TransactionTable: FC<Props> = ({
         } as SelectorParams;
       }),
     );
-  }, [setTransactions]);
+  }, [setTransactions, setTransactionActivityLogs]);
 
   const load = useCallback(async () => {
     setLoading(true);

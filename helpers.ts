@@ -69,6 +69,7 @@ import {
 } from './modules/ComponentsLibrary/helpers';
 import { Contract, ContractClient } from '@kalos-core/kalos-rpc/Contract';
 import { NULL_TIME } from '@kalos-core/kalos-rpc/constants';
+import { TransactionActivityClient } from '@kalos-core/kalos-rpc/TransactionActivity';
 export type TaskEventType = TaskEvent.AsObject & { technicianName?: string };
 
 export type SimpleFile = {
@@ -127,6 +128,9 @@ export const TimeoffRequestClientService = new TimeoffRequestClient(ENDPOINT);
 export const TimesheetLineClientService = new TimesheetLineClient(ENDPOINT);
 export const ApiKeyClientService = new ApiKeyClient(ENDPOINT);
 export const TeamClientService = new TeamClient(ENDPOINT);
+export const TransactionActivityClientService = new TransactionActivityClient(
+  ENDPOINT,
+);
 
 export const getCFAppUrl = (action: string) => `${BASE_URL}?action=${action}`;
 
