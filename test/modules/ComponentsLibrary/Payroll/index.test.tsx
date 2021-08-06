@@ -115,7 +115,7 @@ describe('ComponentsLibrary', () => {
           ).to.equal(true);
         });
         it('loads correctly with no loader remaining', async () => {
-          await new Promise(res => setTimeout(res, 1)); // ! Updates the wrapper after the time has passed to "load"
+          await constants.ReRenderAfterLoad();
           wrapper.update();
           Chai.expect(
             wrapper.containsAllMatchingElements([<LoaderModule.Loader />]),
@@ -123,13 +123,13 @@ describe('ComponentsLibrary', () => {
         });
 
         it('loads a "Timesheet" title in the default page', async () => {
-          await new Promise(res => setTimeout(res, 1)); // ! Updates the wrapper after the time has passed to "load"
+          await constants.ReRenderAfterLoad();
           wrapper.update();
           Chai.expect(wrapper.find({ title: 'Timesheet' })).to.be.lengthOf(1);
         });
 
         it('loads two "Timesheet" labels for the tab', async () => {
-          await new Promise(res => setTimeout(res, 1)); // ! Updates the wrapper after the time has passed to "load"
+          await constants.ReRenderAfterLoad();
           wrapper.update();
           Chai.expect(
             wrapper.find({ label: 'Timeoff Requests' }),
@@ -137,7 +137,7 @@ describe('ComponentsLibrary', () => {
         });
 
         it('loads two "Timeoff Request" labels for the tab', async () => {
-          await new Promise(res => setTimeout(res, 1)); // ! Updates the wrapper after the time has passed to "load"
+          await constants.ReRenderAfterLoad();
           wrapper.update();
           Chai.expect(
             wrapper.find({ label: 'Timeoff Requests' }),
@@ -145,7 +145,7 @@ describe('ComponentsLibrary', () => {
         });
 
         it('loads two "Spiff/Bonus/Commission" labels for the tab', async () => {
-          await new Promise(res => setTimeout(res, 1)); // ! Updates the wrapper after the time has passed to "load"
+          await constants.ReRenderAfterLoad();
           wrapper.update();
           Chai.expect(
             wrapper.find({ label: 'Spiff/Bonus/Commission' }),
@@ -153,25 +153,25 @@ describe('ComponentsLibrary', () => {
         });
 
         it('loads two "Tool Logs" labels for the tab', async () => {
-          await new Promise(res => setTimeout(res, 1)); // ! Updates the wrapper after the time has passed to "load"
+          await constants.ReRenderAfterLoad();
           wrapper.update();
           Chai.expect(wrapper.find({ label: 'Tool Logs' })).to.be.lengthOf(2);
         });
 
         it('loads two "Per Diem" labels for the tab', async () => {
-          await new Promise(res => setTimeout(res, 1)); // ! Updates the wrapper after the time has passed to "load"
+          await constants.ReRenderAfterLoad();
           wrapper.update();
           Chai.expect(wrapper.find({ label: 'Per Diem' })).to.be.lengthOf(2);
         });
 
         it('loads two "Trips" labels for the tab', async () => {
-          await new Promise(res => setTimeout(res, 1)); // ! Updates the wrapper after the time has passed to "load"
+          await constants.ReRenderAfterLoad();
           wrapper.update();
           Chai.expect(wrapper.find({ label: 'Trips' })).to.be.lengthOf(2);
         });
 
         it('loads no "Employee Report" labels for the tab while not a Manager', async () => {
-          await new Promise(res => setTimeout(res, 1)); // ! Updates the wrapper after the time has passed to "load"
+          await constants.ReRenderAfterLoad();
           wrapper.update();
           Chai.expect(
             wrapper.find({ label: 'Employee Report' }),
@@ -180,7 +180,7 @@ describe('ComponentsLibrary', () => {
 
         describe('switching tab', () => {
           it('can switch to the "Timeoff Requests" tab', async () => {
-            await new Promise(res => setTimeout(res, 1)); // ! Updates the wrapper after the time has passed to "load"
+            await constants.ReRenderAfterLoad();
             wrapper.update();
             wrapper
               .find({ label: 'Timeoff Requests' })
@@ -193,7 +193,7 @@ describe('ComponentsLibrary', () => {
           });
 
           it('can switch to the "Spiff/Bonus/Commission" tab', async () => {
-            await new Promise(res => setTimeout(res, 1)); // ! Updates the wrapper after the time has passed to "load"
+            await constants.ReRenderAfterLoad();
             wrapper.update();
             wrapper
               .find({ label: 'Spiff/Bonus/Commission' })
@@ -204,7 +204,7 @@ describe('ComponentsLibrary', () => {
           });
 
           it('can switch to the "Tool Logs" tab', async () => {
-            await new Promise(res => setTimeout(res, 1)); // ! Updates the wrapper after the time has passed to "load"
+            await constants.ReRenderAfterLoad();
             wrapper.update();
             wrapper.find({ label: 'Tool Logs' }).first().simulate('click');
             wrapper.update();
@@ -212,7 +212,7 @@ describe('ComponentsLibrary', () => {
           });
 
           it('can switch to the "Per Diem" tab', async () => {
-            await new Promise(res => setTimeout(res, 1)); // ! Updates the wrapper after the time has passed to "load"
+            await constants.ReRenderAfterLoad();
             wrapper.update();
             wrapper.find({ label: 'Per Diem' }).first().simulate('click');
             wrapper.update();
@@ -220,7 +220,7 @@ describe('ComponentsLibrary', () => {
           });
 
           it('can switch to the "Trips" tab', async () => {
-            await new Promise(res => setTimeout(res, 1)); // ! Updates the wrapper after the time has passed to "load"
+            await constants.ReRenderAfterLoad();
             wrapper.update();
             wrapper.find({ label: 'Trips' }).first().simulate('click');
             wrapper.update();
