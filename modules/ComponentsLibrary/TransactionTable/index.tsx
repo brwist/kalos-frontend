@@ -18,9 +18,7 @@ import CheckIcon from '@material-ui/icons/CheckCircleSharp';
 import CloseIcon from '@material-ui/icons/Close';
 import UploadIcon from '@material-ui/icons/CloudUploadSharp';
 import DoneIcon from '@material-ui/icons/Done';
-import NotesIcon from '@material-ui/icons/EditSharp';
 import CopyIcon from '@material-ui/icons/FileCopySharp';
-import KeyboardIcon from '@material-ui/icons/KeyboardSharp';
 import RejectIcon from '@material-ui/icons/ThumbDownSharp';
 import SubmitIcon from '@material-ui/icons/ThumbUpSharp';
 import { format, parseISO } from 'date-fns';
@@ -179,18 +177,6 @@ export const TransactionTable: FC<Props> = ({
     });
   };
 
-  const makeRecordTransaction = (id: number) => {
-    return async () => {
-      const txn = new Transaction();
-      txn.setIsRecorded(true);
-      txn.setFieldMaskList(['IsRecorded']);
-      txn.setId(id);
-      await transactionClient.Update(txn);
-      await makeLog('Transaction recorded', id);
-      await refresh();
-    };
-  };
-
   const makeAuditTransaction = async (id: number) => {
     return async () => {
       const txn = new Transaction();
@@ -315,35 +301,6 @@ export const TransactionTable: FC<Props> = ({
       await makeUpdateStatus(txn.getId(), 3, 'accepted');
       await refresh();
     }
-  };
-
-  const addJobNumber = async (id: number, newJobNumber: string) => {
-    try {
-      let jobNumber;
-      if (newJobNumber.includes('-')) {
-        jobNumber = parseInt(newJobNumber.split('-')[1]);
-      } else {
-        jobNumber = parseInt(newJobNumber);
-      }
-      const txn = new Transaction();
-      txn.setId(id);
-      txn.setJobId(jobNumber);
-      txn.setFieldMaskList(['JobId']);
-      await transactionClient.Update(txn);
-      await refresh();
-    } catch (err) {
-      alert('Job number could not be set');
-      console.error(err);
-    }
-  };
-
-  const updateNotes = async (id: number, updatedNotes: string) => {
-    const txn = new Transaction();
-    txn.setId(id);
-    txn.setNotes(updatedNotes);
-    txn.setFieldMaskList(['Notes']);
-    await transactionClient.Update(txn);
-    await refresh();
   };
 
   const resetTransactions = useCallback(async () => {
