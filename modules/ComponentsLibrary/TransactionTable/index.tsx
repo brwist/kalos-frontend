@@ -84,7 +84,6 @@ interface FilterType {
   billingRecorded: boolean;
 }
 
-let pageNumber = 0;
 let sortDir: OrderDir | ' ' | undefined = 'ASC'; // Because I can't figure out why this isn't updating with the state
 let sortBy: string | undefined = 'vendor, timestamp';
 let filter: FilterType = {
@@ -128,6 +127,7 @@ export const TransactionTable: FC<Props> = ({
   const [selectedTransactions, setSelectedTransactions] = useState<
     Transaction[]
   >([]); // Transactions that are selected in the table if the isSelector prop is set
+  const [pageNumber, setPageNumber] = useState<number>(0);
 
   const [status, setStatus] = useState<
     'Accepted' | 'Rejected' | 'Accepted / Rejected'
@@ -313,7 +313,6 @@ export const TransactionTable: FC<Props> = ({
 
   const resetTransactions = useCallback(async () => {
     let req = new Transaction();
-    req.setWithoutLimit(true); // We need more than 50
     req.setOrderBy(sortBy ? sortBy : 'timestamp');
     req.setOrderDir(
       sortDir && sortDir != ' ' ? sortDir : sortDir == ' ' ? 'DESC' : 'DESC',
@@ -384,7 +383,12 @@ export const TransactionTable: FC<Props> = ({
         } as SelectorParams;
       }),
     );
-  }, [setTransactions, setTotalTransactions, setTransactionActivityLogs]);
+  }, [
+    setTransactions,
+    setTotalTransactions,
+    setTransactionActivityLogs,
+    pageNumber,
+  ]);
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -498,10 +502,9 @@ export const TransactionTable: FC<Props> = ({
 
   const handleChangePage = useCallback(
     (pageNumberToChangeTo: number) => {
-      pageNumber = pageNumberToChangeTo;
-      refresh();
+      setPageNumber(pageNumberToChangeTo);
     },
-    [refresh],
+    [setPageNumber],
   );
 
   const handleUpdateTransaction = useCallback(
@@ -531,7 +534,7 @@ export const TransactionTable: FC<Props> = ({
       }
     } else {
       newSortDir = 'DESC';
-      pageNumber = 0;
+      setPageNumber(0);
     }
 
     sortBy = newSort;
@@ -834,7 +837,7 @@ export const TransactionTable: FC<Props> = ({
           count: totalTransactions,
           rowsPerPage: 50,
           page: pageNumber,
-          onPageChange: handleChangePage,
+          onPageChange: number => handleChangePage(number),
         }}
         actions={
           hasActions
