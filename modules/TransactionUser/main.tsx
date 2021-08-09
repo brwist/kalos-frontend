@@ -26,16 +26,13 @@ const Transaction: FC<Props> = props => {
   const { userID } = props;
   const [loaded, setLoaded] = useState<boolean>(false);
   const [loading, setLoading] = useState<boolean>(true);
-  const [
-    uploadPhotoTransactionOpen,
-    setUploadPhotoTransactionOpen,
-  ] = useState<boolean>(false);
+  const [uploadPhotoTransactionOpen, setUploadPhotoTransactionOpen] =
+    useState<boolean>(false);
   const [user, setUser] = useState<User>();
   const [costCenters, setCostCenters] = useState<TransactionAccountList>();
   const [isManager, setIsManager] = useState<boolean>(false);
-  const [toggleAddTransaction, setToggleAddTransaction] = useState<boolean>(
-    false,
-  );
+  const [toggleAddTransaction, setToggleAddTransaction] =
+    useState<boolean>(false);
   const [managerDepartmentIds, setManagerDepartmentIds] = useState<number[]>(
     [],
   );
@@ -145,7 +142,7 @@ const Transaction: FC<Props> = props => {
               />
             </Modal>
           ) : null}
-          {
+          {user.getIsAdmin() === 1 && (
             <SectionBar
               actions={[
                 {
@@ -155,7 +152,7 @@ const Transaction: FC<Props> = props => {
                 },
               ]}
             />
-          }
+          )}
           <TransactionUserView
             userID={userID}
             userName={UserClientService.getCustomerName(user)}

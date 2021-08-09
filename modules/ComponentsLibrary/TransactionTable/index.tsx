@@ -31,6 +31,7 @@ import {
   timestamp,
   TransactionClientService,
   UserClientService,
+  TransactionActivityClientService,
 } from '../../../helpers';
 import { AltGallery } from '../../AltGallery/main';
 import { Tooltip } from '../../ComponentsLibrary/Tooltip';
@@ -51,6 +52,7 @@ import LineWeightIcon from '@material-ui/icons/LineWeight';
 import { EditTransaction } from '../EditTransaction';
 import { TimesheetDepartment } from '@kalos-core/kalos-rpc/TimesheetDepartment';
 import { StatusPicker } from './components/StatusPicker';
+import Typography from '@material-ui/core/Typography';
 export interface Props {
   loggedUserId: number;
   isSelector?: boolean; // Is this a selector table (checkboxes that return in on-change)?
@@ -82,7 +84,6 @@ interface FilterType {
   billingRecorded: boolean;
 }
 
-let pageNumber = 0;
 let sortDir: OrderDir | ' ' | undefined = 'ASC'; // Because I can't figure out why this isn't updating with the state
 let sortBy: string | undefined = 'vendor, timestamp';
 let filter: FilterType = {
@@ -105,6 +106,10 @@ export const TransactionTable: FC<Props> = ({
   const FileInput = React.createRef<HTMLInputElement>();
 
   const [transactions, setTransactions] = useState<SelectorParams[]>();
+  const [totalTransactions, setTotalTransactions] = useState<number>(0);
+  const [transactionActivityLogs, setTransactionActivityLogs] = useState<
+    TransactionActivity[]
+  >([]);
   const [transactionToEdit, setTransactionToEdit] = useState<
     Transaction | undefined
   >();
@@ -122,6 +127,7 @@ export const TransactionTable: FC<Props> = ({
   const [selectedTransactions, setSelectedTransactions] = useState<
     Transaction[]
   >([]); // Transactions that are selected in the table if the isSelector prop is set
+  const [pageNumber, setPageNumber] = useState<number>(0);
 
   const [status, setStatus] = useState<
     'Accepted' | 'Rejected' | 'Accepted / Rejected'
@@ -339,6 +345,35 @@ export const TransactionTable: FC<Props> = ({
       return;
     }
 
+    // List of the most recent TransactionActivity logs so we can use those to determine the last reason for
+    // rejection and display that to the user
+    let logList: TransactionActivity[] = [];
+    res.getResultsList().forEach(async transaction => {
+      try {
+        let req = new TransactionActivity();
+        req.setTransactionId(transaction.getId());
+        let res = await TransactionActivityClientService.BatchGet(req);
+        let latest: TransactionActivity | null = null;
+        res.getResultsList().forEach(transactionActivity => {
+          if (
+            latest == null ||
+            latest.getTimestamp() < transactionActivity.getTimestamp()
+          ) {
+            latest = transactionActivity;
+          }
+        });
+        if (latest) {
+          logList.push(latest);
+        }
+      } catch (err) {
+        console.error(
+          `An error occurred while getting a transaction activity log: ${err}`,
+        );
+      }
+    });
+
+    setTransactionActivityLogs(logList);
+    setTotalTransactions(res.getTotalCount());
     setTransactions(
       res.getResultsList().map(txn => {
         return {
@@ -348,7 +383,12 @@ export const TransactionTable: FC<Props> = ({
         } as SelectorParams;
       }),
     );
-  }, [setTransactions]);
+  }, [
+    setTransactions,
+    setTotalTransactions,
+    setTransactionActivityLogs,
+    pageNumber,
+  ]);
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -462,10 +502,9 @@ export const TransactionTable: FC<Props> = ({
 
   const handleChangePage = useCallback(
     (pageNumberToChangeTo: number) => {
-      pageNumber = pageNumberToChangeTo;
-      refresh();
+      setPageNumber(pageNumberToChangeTo);
     },
-    [refresh],
+    [setPageNumber],
   );
 
   const handleUpdateTransaction = useCallback(
@@ -495,7 +534,7 @@ export const TransactionTable: FC<Props> = ({
       }
     } else {
       newSortDir = 'DESC';
-      pageNumber = 0;
+      setPageNumber(0);
     }
 
     sortBy = newSort;
@@ -795,13 +834,10 @@ export const TransactionTable: FC<Props> = ({
         key={pageNumber.toString()}
         fixedActions
         pagination={{
-          count:
-            transactions && transactions.length > 0
-              ? transactions![0].totalCount
-              : 0,
+          count: totalTransactions,
           rowsPerPage: 50,
           page: pageNumber,
-          onPageChange: handleChangePage,
+          onPageChange: number => handleChangePage(number),
         }}
         actions={
           hasActions
@@ -1126,11 +1162,29 @@ export const TransactionTable: FC<Props> = ({
                           <> </>
                         )}
                         {selectorParam.txn.getStatusId() == 4 ? (
-                          <Tooltip key="rejected" content="Rejected">
-                            <IconButton size="small">
-                              <CloseIcon />
-                            </IconButton>
-                          </Tooltip>
+                          <>
+                            <Tooltip
+                              key="rejected"
+                              content={`Rejected ${transactionActivityLogs
+                                .filter(
+                                  log =>
+                                    log.getTransactionId() ==
+                                    selectorParam.txn.getId(),
+                                )
+                                .map(
+                                  log =>
+                                    `(Reason: ${log
+                                      .getDescription()
+                                      .substr(
+                                        log.getDescription().indexOf(' ') + 1,
+                                      )})`,
+                                )}`}
+                            >
+                              <IconButton size="small">
+                                <CloseIcon />
+                              </IconButton>
+                            </Tooltip>
+                          </>
                         ) : (
                           <> </>
                         )}
