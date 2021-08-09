@@ -362,6 +362,7 @@ const createTimesheetFetchFunction = (
   const req = new TimesheetLine();
   req.setGroupBy('technician_user_id');
   req.setIsActive(1);
+
   if (config.type === 'Payroll') {
     req.setWithoutLimit(true);
   }
@@ -388,6 +389,7 @@ const createTimesheetFetchFunction = (
   } else if (config.type === 'Manager') {
     req.setFieldMaskList(['AdminApprovalUserId']);
   }
+  req.addFieldMask('ClassCode');
   if (config.type == 'Manager') {
     return () => client.BatchGetManager(req); // Goes to the manager View in the database instead of the combined view from before, speed gains
   } else {

@@ -106,7 +106,6 @@ export const Form: <T>(
           .filter(({ required }) => required)
           .forEach(({ name, type = 'text', options }) => {
             if (name) {
-              console.log({ fields, formData });
               const value: string = '' + formData[name];
               if (
                 formData[name] === undefined ||
