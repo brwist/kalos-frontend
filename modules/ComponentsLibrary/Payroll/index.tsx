@@ -36,7 +36,7 @@ export type RoleType =
   | 'Manager'
   | 'Payroll'
   | 'Auditor'
-  | 'Accounts_Payable'
+  | 'AccountsPayable'
   | '';
 
 interface Props {

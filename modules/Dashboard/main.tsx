@@ -329,6 +329,28 @@ export class Dashboard extends React.PureComponent<props, state> {
                           },
                         ]
                       : []),
+                    ...(currentUser
+                      .getPermissionGroupsList()
+                      .find(p => p.getName() === 'AccountsPayable')
+                      ? [
+                          {
+                            value: (
+                              <>
+                                <br />
+                                <br />
+                                <br />
+                                <Button
+                                  label="Go To Accounts Payable"
+                                  disabled={isLoading}
+                                  onClick={() =>
+                                    (document.location.href = `https://app.kalosflorida.com/index.cfm?action=admin:reports.transaction_billing`)
+                                  }
+                                />
+                              </>
+                            ),
+                          },
+                        ]
+                      : []),
                   ],
                 ]
           }

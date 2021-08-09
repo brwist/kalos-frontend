@@ -122,7 +122,7 @@ const Transaction: FC<Props> = props => {
               />
             </Modal>
           )}
-          {role === 'Accounts_Payable' ? (
+          {role === 'AccountsPayable' ? (
             <Button
               label="Add Transaction"
               onClick={() => handleToggleAddTransaction(true)}
