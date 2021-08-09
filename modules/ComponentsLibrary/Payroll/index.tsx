@@ -51,6 +51,7 @@ export type FilterData = {
   accepted?: boolean;
   rejected?: boolean;
   amount?: number;
+  billingRecorded: boolean;
 };
 
 export const Payroll: FC<Props> = ({ userID }) => {
@@ -62,6 +63,7 @@ export const Payroll: FC<Props> = ({ userID }) => {
     departmentId: 0,
     employeeId: 0,
     week: OPTION_ALL,
+    billingRecorded: false,
   });
 
   const handleSetFilter = (d: FilterData) => {

@@ -98,7 +98,7 @@ Every client shares a common `GetToken` method, which accepts a username and pas
 ### Fetching a user by user ID
 
 ```javascript
-async function getUserByID(ID: number): User.AsObject {
+async function getUserByID(ID: number): User {
   const client = new UserClient();
   const req = new User();
   req.setId(ID);
@@ -114,7 +114,7 @@ The code above creates a new user client, which can handle the request for us. I
 Fetching lists requires you to specify the page (the API is constrained to return arrays with 25 entities at a time to simplify API usage and server code). Unlike the other methods, the `BatchGet` method returns a protobuf. Simply call the `toObject` method available to all protobufs to convert it to an object and then access the `resultsList` property. Under the hood this type will always be called `XList` where `X` is the kind of entity the client works with (in this case `UserList`).
 
 ```javascript
-async function getEmployeeList(page = 0): User.AsObject[] {
+async function getEmployeeList(page = 0): User[] {
   const client = new UserClient();
   const req = new User();
   req.setIsEmployee(1);
@@ -122,13 +122,7 @@ async function getEmployeeList(page = 0): User.AsObject[] {
   req.setPage(page);
   const res: UserList = await client.BatchGet(req);
 
-  const resAsObject: UserList.AsObject = res.toObject();
-  // UserList.AsObject {
-  //   resultsList: User.AsObject[];
-  //   totalCount: number;
-  // }
-
-  return res.toObject().resultsList;
+  return res.getResultsList();
 }
 ```
 
@@ -147,34 +141,77 @@ async function convertEmployeeToCustomer(ID: number): void {
 }
 ```
 
-### The List method
+### Complex Searching
 
-The list method is generally only used for small, cacheable sets of information. The List method requires a callback to handle new incoming messages. For example, the `TransactionStatus` client is a great candidate for the `List` method:
+Most API clients support various methods to allow for more complex queries to be generated.
+
+#### Date Ranges
 
 ```javascript
-function handleMessage(txnStatus: TransactionStatus.AsObject): void {
-  // do something with the status, usually setState
-}
+async function getEventsWithinRange(startDate: string, endDate: string) {
+  const req = new Event();
+  req.setDateRangeList(['>=', startDate, '<=', endDate]);
+  req.setDateTargetList(['time_started', 'time_finished']);
 
-function getTransactionStatuses(): TransactionStatusList.AsObject {
-  const client = new TransactionStatusClient();
-  client.List(new TransactionStatus(), handleMessage);
+  // generates the following SQL in the backend:
+  // SELECT * FROM event where time_started >= :startDate and time_finished <= :endDate
 }
 ```
 
-`List` can be dangerous, since it is not constrained server side and will list **every entity** requested. It is therefore recommended that you set client side constraints on your protobuf messages to prevent crashing the app or worse the server. For example, using the `ActivityLogClient.List` method without setting any constraints on the protobuf `ActivityLog` will initiate stream of 2.1 million individual protobuf messages, putting extreme strain on the server and database. `List` can also lead to many uneeded rerenders, which is why is should be used in conjunction with some caching solution, never on `PureComponent`, and with some `shouldComponentUpdate` logic.
+Raw SQL functions can also be passed instead of date values:
+
+```javascript
+async function getEventsWithinRange(startDate: string, endDate: string) {
+  const req = new Event();
+  req.setDateRangeList(['>=', 'NOW()', '<=', endDate]);
+  req.setDateTargetList(['time_started', 'time_finished']);
+
+  // generates the following SQL in the backend:
+  // SELECT * FROM event where time_started >= NOW() and time_finished <= :endDate
+}
+```
+
+#### Multi value "in" searches
+
+Some clients support this, others do not. Any property labeled as a `List` that is type `string` supports a comma separated list of values. For example:
+
+```javascript
+async function fetchUserList() {
+  const req = new User();
+  req.setUserIdList('1,2,3,4,5,6');
+
+  // generates the following SQL in the backend
+  // SELECT * FROM userz where user_id IN (1,2,3,4,5,6)
+}
+```
+
+#### Searching via joins
+
+```javascript
+async function getEventsWithinRange(startDate: string, endDate: string) {
+  const req = new Event();
+  const propReq = new Property();
+
+  propReq.setBusinessName('%b%');
+  // generates the following SQL in the backend:
+  // SELECT * FROM event left join event on properties.id = event.property_id
+  // WHERE properties.business_name like "%b%"
+}
+```
+
+Note that this data is not returned from the query, it is only used for narrowing your result set.
 
 ### Database relationships
 
 It is common to encounter two database entities with some relationship, for example in our database each `user` can have one or more `properties`. Our current system does not (in most cases) automatically handle these relationships and so it must be handled client side. For example, getting an array of all `properties` belonging to a single `user` must be done explicitly:
 
 ```javascript
-async function getUserProperties(userID: number): PropertyList.AsObject {
+async function getUserProperties(userID: number): PropertyList {
   const client = new PropertyClient();
   const req = new Property();
   req.setUserId(userID);
   const res = await client.BatchGet(req);
-  return res.toObject().resultsList;
+  return res;
 }
 ```
 
@@ -183,12 +220,12 @@ Or, more commonly, a list of `ServicesRendered` (note: `ServicesRendered` is a b
 ```javascript
 async function getServicesRenderedByUserID(
   userID: number,
-): ServicesRenderedList.AsObject {
+): ServicesRenderedList {
   const client = new ServicesRenderedClient();
   const req = new ServicesRendered();
   req.setTechnicianUserId(userID);
   const req = await client.BatchGet(req);
-  return res.toObject().resultsList;
+  return res;
 }
 ```
 

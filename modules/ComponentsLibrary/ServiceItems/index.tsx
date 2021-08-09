@@ -330,6 +330,7 @@ export const ServiceItems: FC<Props> = props => {
     materialsIds: number[],
     serviceItemId: number,
   ) => {
+    console.log('handle materials');
     const ids = materials.map(id => id.getId());
     await Promise.all(
       materialsIds
@@ -340,10 +341,12 @@ export const ServiceItems: FC<Props> = props => {
           return await MaterialClientService.Delete(entry);
         }),
     );
+    console.log('finished deleting');
     const operations: {
       operation: 'Create' | 'Update';
       entry: Material;
     }[] = [];
+    console.log('bfore for loop');
     for (let i = 0; i < materials.length; i += 1) {
       let entry = materials[i];
       entry.setServiceItemId(serviceItemId);
@@ -356,8 +359,20 @@ export const ServiceItems: FC<Props> = props => {
     }
     for (let i = 0; i < operations.length; i++) {
       if (operations[i].operation == 'Create') {
-        await MaterialClientService.Create(operations[i].entry);
+        console.log('create');
+        const entry = operations[i].entry;
+        entry.setId(0);
+        entry.setFieldMaskList([
+          'Name',
+          'Quantity',
+          'PartNumber',
+          'Vendor',
+          'ServiceItemId',
+        ]);
+        console.log({ entry });
+        await MaterialClientService.Create(entry);
       } else {
+        console.log('update');
         await MaterialClientService.Update(operations[i].entry);
       }
     }
@@ -521,14 +536,13 @@ export const ServiceItems: FC<Props> = props => {
   );
 
   const handleDeleteRepair = useCallback(
-    ({ id }: Repair) =>
-      () => {
-        const newRepairs = repairs.filter(item => item.id !== id);
-        setRepairs(newRepairs);
-        if (onRepairsChange) {
-          onRepairsChange(newRepairs);
-        }
-      },
+    ({ id }: Repair) => () => {
+      const newRepairs = repairs.filter(item => item.id !== id);
+      setRepairs(newRepairs);
+      if (onRepairsChange) {
+        onRepairsChange(newRepairs);
+      }
+    },
     [repairs, onRepairsChange],
   );
 
