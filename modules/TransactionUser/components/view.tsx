@@ -90,7 +90,7 @@ export class TransactionUserView extends React.PureComponent<props, state> {
 
   async fetchTxns(statusID: number) {
     const reqObj = new Transaction();
-    if (this.props.role != 'Accounts_Payable') {
+    if (this.props.role != 'AccountsPayable') {
       reqObj.setOwnerId(this.props.userID);
     }
     reqObj.setPageNumber(this.state.page);
@@ -98,12 +98,12 @@ export class TransactionUserView extends React.PureComponent<props, state> {
     /* if (
       this.props.departmentList &&
       this.props.departmentList.length > 0 &&
-      this.props.role != 'Accounts_Payable'
+      this.props.role != 'AccountsPayable'
     ) {
       const departmentListString = this.props.departmentList.toString();
       reqObj.setDepartmentIdList(departmentListString);
     }*/
-    if (this.props.role === 'Accounts_Payable') {
+    if (this.props.role === 'AccountsPayable') {
       reqObj.setVendorCategory('%Pick%');
     }
     reqObj.setIsActive(1);
@@ -122,7 +122,7 @@ export class TransactionUserView extends React.PureComponent<props, state> {
   }
 
   async fetchAllTxns() {
-    if (this.props.role === 'Accounts_Payable') {
+    if (this.props.role === 'AccountsPayable') {
       console.log('Hey, fetch your stuff here');
       this.setState(
         {
