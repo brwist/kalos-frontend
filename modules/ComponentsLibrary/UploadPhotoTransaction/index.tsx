@@ -184,9 +184,9 @@ export const UploadPhotoTransaction: FC<Props> = ({
       {
         name: 'tag',
         label: 'Tag',
-        required: role != 'Accounts_Payable',
+        required: role != 'AccountsPayable',
         options:
-          role != 'Accounts_Payable'
+          role != 'AccountsPayable'
             ? SUBJECT_TAGS_TRANSACTIONS
             : SUBJECT_TAGS_ACCOUNTS_PAYABLE,
       },
@@ -204,7 +204,7 @@ export const UploadPhotoTransaction: FC<Props> = ({
       {
         name: 'description',
         label: 'Description',
-        required: role != 'Accounts_Payable',
+        required: role != 'AccountsPayable',
       },
     ],
     [
@@ -219,7 +219,7 @@ export const UploadPhotoTransaction: FC<Props> = ({
         name: 'eventId',
         label: 'Job Number',
         type: 'eventId',
-        required: role != 'Accounts_Payable',
+        required: role != 'AccountsPayable',
       },
     ],
     [
