@@ -86,6 +86,7 @@ interface FilterType {
 
 let sortDir: OrderDir | ' ' | undefined = 'ASC'; // Because I can't figure out why this isn't updating with the state
 let sortBy: string | undefined = 'vendor, timestamp';
+// This is outside of state because it was slow inside of state
 let filter: FilterType = {
   departmentId: 0,
   employeeId: 0,
@@ -311,6 +312,13 @@ export const TransactionTable: FC<Props> = ({
     }
   };
 
+  const handleChangePage = useCallback(
+    (pageNumberToChangeTo: number) => {
+      setPageNumber(pageNumberToChangeTo);
+    },
+    [setPageNumber],
+  );
+
   const resetTransactions = useCallback(async () => {
     let req = new Transaction();
     req.setOrderBy(sortBy ? sortBy : 'timestamp');
@@ -318,6 +326,7 @@ export const TransactionTable: FC<Props> = ({
       sortDir && sortDir != ' ' ? sortDir : sortDir == ' ' ? 'DESC' : 'DESC',
     );
     req.setPageNumber(pageNumber);
+
     req.setIsActive(1);
     req.setVendorCategory("'PickTicket','Receipt'");
     if (filter.isAccepted) {
@@ -335,6 +344,10 @@ export const TransactionTable: FC<Props> = ({
     let res: TransactionList | null = null;
     try {
       res = await TransactionClientService.BatchGet(req);
+      if (res.getTotalCount() < totalTransactions) {
+        setTotalTransactions(res.getTotalCount());
+        handleChangePage(0);
+      }
     } catch (err) {
       console.error(
         `An error occurred while batch-getting transactions in TransactionTable: ${err}`,
@@ -383,12 +396,7 @@ export const TransactionTable: FC<Props> = ({
         } as SelectorParams;
       }),
     );
-  }, [
-    setTransactions,
-    setTotalTransactions,
-    setTransactionActivityLogs,
-    pageNumber,
-  ]);
+  }, [pageNumber, totalTransactions, handleChangePage]);
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -499,13 +507,6 @@ export const TransactionTable: FC<Props> = ({
     filter.amount = d.amount;
     filter.billingRecorded = d.billingRecorded;
   }, []);
-
-  const handleChangePage = useCallback(
-    (pageNumberToChangeTo: number) => {
-      setPageNumber(pageNumberToChangeTo);
-    },
-    [setPageNumber],
-  );
 
   const handleUpdateTransaction = useCallback(
     async (transactionToSave: Transaction) => {
@@ -737,11 +738,6 @@ export const TransactionTable: FC<Props> = ({
     load();
   }, [load]);
 
-  useEffect(() => {
-    resetTransactions();
-    refresh();
-  }, [refresh, resetTransactions]);
-
   return (
     <>
       {loading ? <Loader /> : <> </>}
@@ -831,7 +827,7 @@ export const TransactionTable: FC<Props> = ({
       />
       <SectionBar
         title="Transactions"
-        key={pageNumber.toString()}
+        key={pageNumber.toString() + totalTransactions.toString()}
         fixedActions
         pagination={{
           count: totalTransactions,
