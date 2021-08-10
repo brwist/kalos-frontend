@@ -434,6 +434,7 @@ export const CompareTransactions: FC<Props> = ({
                   txn.setVendorCategory(saved.getVendorCategory());
                   txn.setAssignedEmployeeId(saved.getAssignedEmployeeId());
                   txn.setAssignedEmployeeName(saved.getAssignedEmployeeName());
+                  txn.setInvoiceNumber(saved.getInvoiceNumber());
                 }
               }
 
