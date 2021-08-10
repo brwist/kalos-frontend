@@ -102,6 +102,11 @@ export const EditTransaction: FC<Props> = ({
         name: 'getOrderNumber',
         multiline: true,
       },
+      {
+        label: 'Invoice #',
+        name: 'getInvoiceNumber',
+        multiline: true,
+      },
     ],
     [
       {
