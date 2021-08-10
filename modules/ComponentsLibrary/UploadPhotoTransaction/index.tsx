@@ -102,12 +102,12 @@ export const UploadPhotoTransaction: FC<Props> = ({
     async (data: Entry) => {
       setSaved(false);
       setError(false);
-      setSaving(true);
+      setSaving(true); 
       const newTransaction = new Transaction();
       newTransaction.setJobId(data.eventId);
       const type = data.tag.replace('Subject=', '');
       newTransaction.setVendorCategory(type);
-      newTransaction.setStatusId(1);
+      newTransaction.setStatusId(2);
       newTransaction.setIsActive(1);
       newTransaction.setOwnerId(loggedUserId);
       newTransaction.setAmount(data.cost);
