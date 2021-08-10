@@ -100,8 +100,10 @@ export class Login extends React.PureComponent<props, state> {
       await this.LogClient.GetToken(username, password);
       const user = await this.UserClient.Get(userData);
       const log = new ActivityLog();
-      log.setActivityName(`${user.firstname} ${user.lastname} authenticated`);
-      log.setUserId(user.id);
+      log.setActivityName(
+        `${user.getFirstname()} ${user.getLastname()} authenticated`,
+      );
+      log.setUserId(user.getId());
       await this.LogClient.Create(log);
       if (this.props.onSuccess) {
         this.props.onSuccess();
