@@ -219,7 +219,7 @@ describe('ComponentsLibrary', () => {
         });
       });
 
-      describe('"Create New Teams" modal', () => {
+      describe.skip('"Create New Teams" modal', () => {
         it('has a search field to search for an existing team', () => {
           throw new Error('Needs to be implemented');
         });

@@ -10,9 +10,12 @@ import { InfoTable, Data } from '../InfoTable';
 import { Modal } from '../Modal';
 import { ConfirmDelete } from '../ConfirmDelete';
 import { Form, Schema } from '../Form';
-import { makeFakeRows, getRPCFields } from '../../../helpers';
-
-type Entry = PropLink.AsObject;
+import {
+  makeFakeRows,
+  getRPCFields,
+  makeSafeFormObject,
+  PropLinkClientService,
+} from '../../../helpers';
 
 interface Props {
   kind: string;
@@ -23,19 +26,19 @@ interface Props {
 }
 
 interface State {
-  entries: Entry[];
+  entries: PropLink[];
   loading: boolean;
   error: boolean;
   saving: boolean;
-  editedEntry?: Entry;
-  deletingEntry?: Entry;
+  editedEntry?: PropLink;
+  deletingEntry?: PropLink;
 }
 
-const SCHEMA: Schema<Entry> = [
+const SCHEMA: Schema<PropLink> = [
   [
     {
       label: 'Link',
-      name: 'url',
+      name: 'getUrl',
       required: true,
       helperText: 'Be sure to include "http://"',
     },
@@ -43,15 +46,13 @@ const SCHEMA: Schema<Entry> = [
   [
     {
       label: 'Description',
-      name: 'description',
+      name: 'getDescription',
       helperText: 'Keep this very short: 2 - 4 words',
     },
   ],
 ];
 
 export class ServiceItemLinks extends PureComponent<Props, State> {
-  SiLinkClient: PropLinkClient;
-
   constructor(props: Props) {
     super(props);
     this.state = {
@@ -62,7 +63,6 @@ export class ServiceItemLinks extends PureComponent<Props, State> {
       editedEntry: undefined,
       deletingEntry: undefined,
     };
-    this.SiLinkClient = new PropLinkClient(ENDPOINT);
   }
 
   load = async () => {
@@ -71,8 +71,8 @@ export class ServiceItemLinks extends PureComponent<Props, State> {
     const entry = new PropLink();
     entry.setPropertyId(serviceItemId);
     try {
-      const response = await this.SiLinkClient.BatchGet(entry);
-      const entries = response.toObject().resultsList;
+      const response = await PropLinkClientService.BatchGet(entry);
+      const entries = response.getResultsList();
       this.setState({ entries, loading: false });
     } catch (e) {
       this.setState({ error: true, loading: false });
@@ -83,31 +83,40 @@ export class ServiceItemLinks extends PureComponent<Props, State> {
     await this.load();
   }
 
-  setEditing = (editedEntry?: Entry) => () => this.setState({ editedEntry });
+  setEditing = (editedEntry?: PropLink) => () => this.setState({ editedEntry });
 
-  setDeleting = (deletingEntry?: Entry) => () =>
+  setDeleting = (deletingEntry?: PropLink) => () =>
     this.setState({ deletingEntry });
 
-  handleSave = async (data: Entry) => {
+  handleSave = async (data: PropLink) => {
+    data = makeSafeFormObject(data, new PropLink());
     const { serviceItemId } = this.props;
     const { editedEntry } = this.state;
     if (editedEntry) {
-      const isNew = !editedEntry.id;
+      const isNew = !editedEntry.getId();
       this.setState({ saving: true });
-      const entry = new PropLink();
+      const entry = data;
       if (!isNew) {
-        entry.setId(editedEntry.id);
+        entry.setId(editedEntry.getId());
       }
-      entry.setPropertyId(serviceItemId);
+      // entry.setPropertyId(serviceItemId);
       const fieldMaskList = ['PropertyId'];
-      for (const fieldName in data) {
-        const { upperCaseProp, methodName } = getRPCFields(fieldName);
-        // @ts-ignore
-        entry[methodName](data[fieldName]);
-        fieldMaskList.push(upperCaseProp);
-      }
+      // for (const fieldName in data) {
+      //   const { upperCaseProp, methodName } = getRPCFields(fieldName);
+      //   // @ts-ignore
+      //   entry[methodName](data[fieldName]);
+      //   fieldMaskList.push(upperCaseProp);
+      // }
       entry.setFieldMaskList(fieldMaskList);
-      await this.SiLinkClient[isNew ? 'Create' : 'Update'](entry);
+      try {
+        await PropLinkClientService[isNew ? 'Create' : 'Update'](entry);
+      } catch (err) {
+        console.error(
+          `An error occurred while ${
+            isNew ? 'creating' : 'updating'
+          } a prop link: ${err}`,
+        );
+      }
       this.setState({ saving: false });
       this.setEditing(undefined)();
       await this.load();
@@ -120,8 +129,12 @@ export class ServiceItemLinks extends PureComponent<Props, State> {
     if (deletingEntry) {
       this.setState({ loading: true });
       const entry = new PropLink();
-      entry.setId(deletingEntry.id);
-      await this.SiLinkClient.Delete(entry);
+      entry.setId(deletingEntry.getId());
+      try {
+        await PropLinkClientService.Delete(entry);
+      } catch (err) {
+        console.error(`An error occurred while deleting a prop link: ${err}`);
+      }
       await this.load();
     }
   };
@@ -134,13 +147,17 @@ export class ServiceItemLinks extends PureComponent<Props, State> {
     const data: Data = loading
       ? makeFakeRows()
       : entries.map(entry => {
-          const { url, description } = entry;
           return [
             {
-              value: description || url,
-              onClick: () => window.open(url),
+              value: entry.getDescription() || entry.getUrl(),
+              onClick: () => window.open(entry.getUrl()),
               actions: [
-                <a key="view" href={url} target="_blank" rel="noreferrer">
+                <a
+                  key="view"
+                  href={entry.getUrl()}
+                  target="_blank"
+                  rel="noreferrer"
+                >
                   <IconButton style={{ marginLeft: 4 }} size="small">
                     <SearchIcon />
                   </IconButton>
@@ -180,7 +197,7 @@ export class ServiceItemLinks extends PureComponent<Props, State> {
               : [
                   {
                     label: 'Add',
-                    onClick: setEditing({} as Entry),
+                    onClick: setEditing(new PropLink()),
                   },
                 ]),
             {
@@ -194,8 +211,8 @@ export class ServiceItemLinks extends PureComponent<Props, State> {
         <InfoTable data={data} loading={loading} hoverable />
         {editedEntry && (
           <Modal open onClose={setEditing(undefined)}>
-            <Form<Entry>
-              title={`${editedEntry.id ? 'Edit' : 'Add'} ${kind}`}
+            <Form<PropLink>
+              title={`${editedEntry.getId() ? 'Edit' : 'Add'} ${kind}`}
               schema={SCHEMA}
               data={editedEntry}
               onSave={handleSave}
@@ -210,7 +227,7 @@ export class ServiceItemLinks extends PureComponent<Props, State> {
             onClose={setDeleting(undefined)}
             onConfirm={handleDelete}
             kind={kind}
-            name={deletingEntry.description || deletingEntry.url}
+            name={deletingEntry.getDescription() || deletingEntry.getUrl()}
           />
         )}
       </div>
