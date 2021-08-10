@@ -29,7 +29,6 @@ import { Tabs } from '../Tabs';
 import {
   formatDate,
   TaskClientService,
-  TaskEventType,
   timestamp,
   EventClientService,
   UserClientService,
