@@ -6,7 +6,12 @@ import { InfoTable, Data, Columns } from '../InfoTable';
 import { Field, Value } from '../Field';
 import { Form, Schema } from '../Form';
 import { Filter } from './filter';
-import { makeFakeRows, usd, EventClientService } from '../../../helpers';
+import {
+  makeFakeRows,
+  usd,
+  EventClientService,
+  makeSafeFormObject,
+} from '../../../helpers';
 import { QuotableRead } from '@kalos-core/kalos-rpc/compiled-protos/event_pb';
 
 export type SelectedQuote = {
@@ -94,6 +99,7 @@ export const QuoteSelector: FC<Props> = ({
       EventClientService.loadQuoteParts(req),
       EventClientService.loadQuotable(serviceCallId),
     ]);
+    console.log(quoteParts);
     setQuoteParts(quoteParts);
     setQuotable(quotable);
     setLoaded(true);
@@ -186,10 +192,11 @@ export const QuoteSelector: FC<Props> = ({
   );
   const handleSaveNewQuotable = useCallback(
     (data: Quotable) => {
-      const quantity = data.getQuantity();
+      const safeData = makeSafeFormObject(data, new Quotable());
+      const quantity = safeData.getQuantity();
       const quotePart = new Quotable();
       Object.assign(quotePart, {
-        ...data,
+        ...safeData,
         quantity,
         isActive: true, // TODO rest default props?
       });
