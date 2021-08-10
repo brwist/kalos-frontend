@@ -1,8 +1,6 @@
-import { EmailClient, EmailConfig } from '@kalos-core/kalos-rpc/Email';
-import { S3Client } from '@kalos-core/kalos-rpc/S3File';
+import { EmailConfig } from '@kalos-core/kalos-rpc/Email';
 import {
   Transaction,
-  TransactionClient,
   TransactionList,
 } from '@kalos-core/kalos-rpc/Transaction';
 import { TransactionAccountList } from '@kalos-core/kalos-rpc/TransactionAccount';
@@ -10,8 +8,7 @@ import {
   TransactionActivity,
   TransactionActivityClient,
 } from '@kalos-core/kalos-rpc/TransactionActivity';
-import { TransactionDocumentClient } from '@kalos-core/kalos-rpc/TransactionDocument';
-import { User, UserClient } from '@kalos-core/kalos-rpc/User';
+import { User } from '@kalos-core/kalos-rpc/User';
 import IconButton from '@material-ui/core/IconButton';
 import AssignmentIndIcon from '@material-ui/icons/AssignmentInd';
 import CheckIcon from '@material-ui/icons/CheckCircleSharp';
@@ -32,6 +29,8 @@ import {
   TransactionClientService,
   UserClientService,
   TransactionActivityClientService,
+  EmailClientService,
+  TransactionDocumentClientService,
 } from '../../../helpers';
 import { AltGallery } from '../../AltGallery/main';
 import { Tooltip } from '../../ComponentsLibrary/Tooltip';
@@ -52,7 +51,6 @@ import LineWeightIcon from '@material-ui/icons/LineWeight';
 import { EditTransaction } from '../EditTransaction';
 import { TimesheetDepartment } from '@kalos-core/kalos-rpc/TimesheetDepartment';
 import { StatusPicker } from './components/StatusPicker';
-import Typography from '@material-ui/core/Typography';
 export interface Props {
   loggedUserId: number;
   isSelector?: boolean; // Is this a selector table (checkboxes that return in on-change)?
@@ -86,6 +84,7 @@ interface FilterType {
 
 let sortDir: OrderDir | ' ' | undefined = 'ASC'; // Because I can't figure out why this isn't updating with the state
 let sortBy: string | undefined = 'vendor, timestamp';
+// This is outside of state because it was slow inside of state
 let filter: FilterType = {
   departmentId: 0,
   employeeId: 0,
@@ -140,15 +139,6 @@ export const TransactionTable: FC<Props> = ({
     [setTransactionToEdit],
   );
 
-  const clients = {
-    user: new UserClient(ENDPOINT),
-    email: new EmailClient(ENDPOINT),
-    docs: new TransactionDocumentClient(ENDPOINT),
-    s3: new S3Client(ENDPOINT),
-  };
-
-  const transactionClient = new TransactionClient(ENDPOINT);
-
   // For emails
   const getRejectTxnBody = (
     reason: string,
@@ -191,7 +181,13 @@ export const TransactionTable: FC<Props> = ({
       txn.setIsAudited(true);
       txn.setFieldMaskList(['IsAudited']);
       txn.setId(id);
-      await transactionClient.Update(txn);
+      try {
+        await TransactionClientService.Update(txn);
+      } catch (err) {
+        console.error(
+          `An error occurred while updating the transaction: ${err}`,
+        );
+      }
       await makeLog('Transaction audited', id);
       await refresh();
     };
@@ -221,12 +217,38 @@ export const TransactionTable: FC<Props> = ({
   const dispute = async (reason: string, txn: Transaction) => {
     const userReq = new User();
     userReq.setId(txn.getOwnerId());
-    const user = await clients.user.Get(userReq);
-
+    let user: User | undefined;
+    try {
+      user = await UserClientService.Get(userReq);
+    } catch (err) {
+      console.error(
+        `An error occurred while fetching a user from the User Client Service: ${err}`,
+      );
+    }
+    if (!user) {
+      console.error(
+        'Need a user to send to for disputes, however none was gotten. Returning.',
+      );
+      return;
+    }
     // Request for this user
     const sendingReq = new User();
     sendingReq.setId(loggedUserId);
-    const sendingUser = await clients.user.Get(sendingReq);
+    let sendingUser: User | undefined;
+    try {
+      sendingUser = await UserClientService.Get(sendingReq);
+    } catch (err) {
+      console.error(
+        `An error occurred while fetching a user from the User Client Service: ${err}`,
+      );
+    }
+
+    if (!sendingUser) {
+      console.error(
+        'Need a user to send from for disputes, however none was gotten. Returning.',
+      );
+      return;
+    }
 
     const body = getRejectTxnBody(
       reason,
@@ -243,29 +265,13 @@ export const TransactionTable: FC<Props> = ({
     };
 
     try {
-      await clients.email.sendMail(email);
+      await EmailClientService.sendMail(email);
     } catch (err) {
       alert('An error occurred, user was not notified via email');
     }
-    try {
-      //const id = await getSlackID(txn.ownerName);
-      // await slackNotify(
-      //   id,
-      //   `A receipt you submitted has been rejected | ${
-      //     txn.description
-      //   } | $${prettyMoney(txn.amount)}. Reason: ${reason}`,
-      // );
-      // await slackNotify(
-      //   id,
-      //   `https://app.kalosflorida.com?action=admin:reports.transactions`,
-      // );
-    } catch (err) {
-      console.error(err);
-      alert('An error occurred, user was not notified via slack');
-    }
 
     await makeUpdateStatus(txn.getId(), 4, 'rejected', reason);
-    await refresh();
+    refresh();
   };
 
   const makeUpdateStatus = async (
@@ -280,7 +286,7 @@ export const TransactionTable: FC<Props> = ({
     txn.setFieldMaskList(['StatusId']);
     txn.setIsBillingRecorded(true);
     try {
-      await transactionClient.Update(txn);
+      await TransactionClientService.Update(txn);
     } catch (err) {
       console.error(`An error occurred while updating a transaction: ${err}`);
     }
@@ -311,6 +317,13 @@ export const TransactionTable: FC<Props> = ({
     }
   };
 
+  const handleChangePage = useCallback(
+    (pageNumberToChangeTo: number) => {
+      setPageNumber(pageNumberToChangeTo);
+    },
+    [setPageNumber],
+  );
+
   const resetTransactions = useCallback(async () => {
     let req = new Transaction();
     req.setOrderBy(sortBy ? sortBy : 'timestamp');
@@ -318,6 +331,7 @@ export const TransactionTable: FC<Props> = ({
       sortDir && sortDir != ' ' ? sortDir : sortDir == ' ' ? 'DESC' : 'DESC',
     );
     req.setPageNumber(pageNumber);
+
     req.setIsActive(1);
     req.setVendorCategory("'PickTicket','Receipt'");
     if (filter.isAccepted) {
@@ -335,6 +349,10 @@ export const TransactionTable: FC<Props> = ({
     let res: TransactionList | null = null;
     try {
       res = await TransactionClientService.BatchGet(req);
+      if (res.getTotalCount() < totalTransactions) {
+        setTotalTransactions(res.getTotalCount());
+        handleChangePage(0);
+      }
     } catch (err) {
       console.error(
         `An error occurred while batch-getting transactions in TransactionTable: ${err}`,
@@ -383,12 +401,7 @@ export const TransactionTable: FC<Props> = ({
         } as SelectorParams;
       }),
     );
-  }, [
-    setTransactions,
-    setTotalTransactions,
-    setTransactionActivityLogs,
-    pageNumber,
-  ]);
+  }, [pageNumber, totalTransactions, handleChangePage]);
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -448,7 +461,7 @@ export const TransactionTable: FC<Props> = ({
       fr.onload = async () => {
         try {
           const u8 = new Uint8Array(fr.result as ArrayBuffer);
-          await clients.docs.upload(
+          await TransactionDocumentClientService.upload(
             txn.getId(),
             FileInput.current!.files![0].name,
             u8,
@@ -465,7 +478,7 @@ export const TransactionTable: FC<Props> = ({
         fr.readAsArrayBuffer(FileInput.current.files[0]);
       }
     },
-    [FileInput, clients.docs, refresh],
+    [FileInput, refresh],
   );
 
   const handleSetAssigningUser = useCallback(
@@ -499,13 +512,6 @@ export const TransactionTable: FC<Props> = ({
     filter.amount = d.amount;
     filter.billingRecorded = d.billingRecorded;
   }, []);
-
-  const handleChangePage = useCallback(
-    (pageNumberToChangeTo: number) => {
-      setPageNumber(pageNumberToChangeTo);
-    },
-    [setPageNumber],
-  );
 
   const handleUpdateTransaction = useCallback(
     async (transactionToSave: Transaction) => {
@@ -737,11 +743,6 @@ export const TransactionTable: FC<Props> = ({
     load();
   }, [load]);
 
-  useEffect(() => {
-    resetTransactions();
-    refresh();
-  }, [refresh, resetTransactions]);
-
   return (
     <>
       {loading ? <Loader /> : <> </>}
@@ -831,7 +832,7 @@ export const TransactionTable: FC<Props> = ({
       />
       <SectionBar
         title="Transactions"
-        key={pageNumber.toString()}
+        key={pageNumber.toString() + totalTransactions.toString()}
         fixedActions
         pagination={{
           count: totalTransactions,
