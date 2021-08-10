@@ -5,17 +5,13 @@ import GoToCallIcon from '@material-ui/icons/ExitToApp';
 import { SectionBar } from '../../ComponentsLibrary/SectionBar';
 import { InfoTable } from '../../ComponentsLibrary/InfoTable';
 import { Tooltip } from '../../ComponentsLibrary/Tooltip';
-import {
-  makeFakeRows,
-  formatDate,
-  EventType,
-  UserClientService,
-} from '../../../helpers';
+import { makeFakeRows, formatDate, UserClientService } from '../../../helpers';
 import { getPropertyAddress } from '@kalos-core/kalos-rpc/Property';
 import { parseISO } from 'date-fns';
+import { Event } from '@kalos-core/kalos-rpc/Event';
 
 interface AssignmentProps {
-  events: EventType[];
+  events: Event[];
   isLoading: boolean;
 }
 
@@ -48,11 +44,12 @@ export const Assignments = ({ events, isLoading }: AssignmentProps) => {
               ? makeFakeRows(8, 5)
               : events
                   .sort((a, b) => {
-                    const dateA = parseISO(a.dateStarted.split(' ')[0]);
-                    const dateB = parseISO(b.dateStarted.split(' ')[0]);
+                    const dateA = parseISO(a.getDateStarted().split(' ')[0]);
+                    const dateB = parseISO(b.getDateStarted().split(' ')[0]);
                     return dateB.valueOf() - dateA.valueOf();
                   })
                   .map(e => {
+                    /*
                     const {
                       id,
                       dateStarted,
@@ -64,6 +61,16 @@ export const Assignments = ({ events, isLoading }: AssignmentProps) => {
                       jobSubtype,
                       logJobStatus,
                     } = e;
+                    */
+                    const id = e.getId();
+                    const dateStarted = e.getDateStarted();
+                    const timeStarted = e.getTimeStarted();
+                    const timeEnded = e.getTimeEnded();
+                    const customer = e.getCustomer();
+                    const property = e.getProperty();
+                    const jobType = e.getJobType();
+                    const jobSubtype = e.getJobSubtype();
+                    const logJobStatus = e.getLogJobStatus();
                     return [
                       {
                         value: id,
@@ -121,11 +128,11 @@ export const Assignments = ({ events, isLoading }: AssignmentProps) => {
   );
 };
 
-function openServiceCall(e: EventType) {
+function openServiceCall(e: Event) {
   return () => {
-    const url = `https://app.kalosflorida.com/index.cfm?action=admin:service.editServiceCall&id=${
-      e.id
-    }&user_id=${e.customer ? e.customer.id : 0}&property_id=${e.propertyId}`;
+    const url = `https://app.kalosflorida.com/index.cfm?action=admin:service.editServiceCall&id=${e.getId()}&user_id=${
+      e.getCustomer() ? e.getCustomer()!.getId() : 0
+    }&property_id=${e.getPropertyId()}`;
     window.location.href = url;
   };
 }
