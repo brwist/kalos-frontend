@@ -90,6 +90,7 @@ import StoredQuotes from './StoredQuotes/examples';
 import Tabs from './Tabs/examples';
 import Tasks from './Tasks/examples';
 import Teams from './Teams/examples';
+import Test from './Test/examples';
 import TimeOff from './TimeOff/examples';
 import TimeoffSummaryReport from './TimeoffSummaryReport/examples';
 import Timesheet from './Timesheet/examples';
@@ -198,6 +199,7 @@ const COMPONENTS = {
   Tabs,
   Tasks,
   Teams,
+  Test,
   TimeOff,
   TimeoffSummaryReport,
   Timesheet,
