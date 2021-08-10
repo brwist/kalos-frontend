@@ -1,8 +1,6 @@
-import { EmailClient, EmailConfig } from '@kalos-core/kalos-rpc/Email';
-import { S3Client } from '@kalos-core/kalos-rpc/S3File';
+import { EmailConfig } from '@kalos-core/kalos-rpc/Email';
 import {
   Transaction,
-  TransactionClient,
   TransactionList,
 } from '@kalos-core/kalos-rpc/Transaction';
 import { TransactionAccountList } from '@kalos-core/kalos-rpc/TransactionAccount';
@@ -10,8 +8,7 @@ import {
   TransactionActivity,
   TransactionActivityClient,
 } from '@kalos-core/kalos-rpc/TransactionActivity';
-import { TransactionDocumentClient } from '@kalos-core/kalos-rpc/TransactionDocument';
-import { User, UserClient } from '@kalos-core/kalos-rpc/User';
+import { User } from '@kalos-core/kalos-rpc/User';
 import IconButton from '@material-ui/core/IconButton';
 import AssignmentIndIcon from '@material-ui/icons/AssignmentInd';
 import CheckIcon from '@material-ui/icons/CheckCircleSharp';
@@ -142,8 +139,6 @@ export const TransactionTable: FC<Props> = ({
     [setTransactionToEdit],
   );
 
-  const transactionClient = new TransactionClient(ENDPOINT);
-
   // For emails
   const getRejectTxnBody = (
     reason: string,
@@ -186,7 +181,13 @@ export const TransactionTable: FC<Props> = ({
       txn.setIsAudited(true);
       txn.setFieldMaskList(['IsAudited']);
       txn.setId(id);
-      await transactionClient.Update(txn);
+      try {
+        await TransactionClientService.Update(txn);
+      } catch (err) {
+        console.error(
+          `An error occurred while updating the transaction: ${err}`,
+        );
+      }
       await makeLog('Transaction audited', id);
       await refresh();
     };
@@ -285,7 +286,7 @@ export const TransactionTable: FC<Props> = ({
     txn.setFieldMaskList(['StatusId']);
     txn.setIsBillingRecorded(true);
     try {
-      await transactionClient.Update(txn);
+      await TransactionClientService.Update(txn);
     } catch (err) {
       console.error(`An error occurred while updating a transaction: ${err}`);
     }
