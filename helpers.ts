@@ -71,7 +71,7 @@ import { Contract, ContractClient } from '@kalos-core/kalos-rpc/Contract';
 import { NULL_TIME } from '@kalos-core/kalos-rpc/constants';
 import { TransactionActivityClient } from '@kalos-core/kalos-rpc/TransactionActivity';
 import { EmailClient } from '@kalos-core/kalos-rpc/Email';
-export type TaskEventType = TaskEvent.AsObject & { technicianName?: string };
+import { PropLinkClient } from '@kalos-core/kalos-rpc/PropLink';
 
 export type SimpleFile = {
   key: string;
@@ -133,6 +133,7 @@ export const TransactionActivityClientService = new TransactionActivityClient(
   ENDPOINT,
 );
 export const EmailClientService = new EmailClient(ENDPOINT);
+export const PropLinkClientService = new PropLinkClient(ENDPOINT);
 
 export const getCFAppUrl = (action: string) => `${BASE_URL}?action=${action}`;
 
