@@ -32,6 +32,8 @@ import {
   TransactionClientService,
   UserClientService,
   TransactionActivityClientService,
+  EmailClientService,
+  TransactionDocumentClientService,
 } from '../../../helpers';
 import { AltGallery } from '../../AltGallery/main';
 import { Tooltip } from '../../ComponentsLibrary/Tooltip';
@@ -52,7 +54,6 @@ import LineWeightIcon from '@material-ui/icons/LineWeight';
 import { EditTransaction } from '../EditTransaction';
 import { TimesheetDepartment } from '@kalos-core/kalos-rpc/TimesheetDepartment';
 import { StatusPicker } from './components/StatusPicker';
-import Typography from '@material-ui/core/Typography';
 export interface Props {
   loggedUserId: number;
   isSelector?: boolean; // Is this a selector table (checkboxes that return in on-change)?
@@ -141,13 +142,6 @@ export const TransactionTable: FC<Props> = ({
     [setTransactionToEdit],
   );
 
-  const clients = {
-    user: new UserClient(ENDPOINT),
-    email: new EmailClient(ENDPOINT),
-    docs: new TransactionDocumentClient(ENDPOINT),
-    s3: new S3Client(ENDPOINT),
-  };
-
   const transactionClient = new TransactionClient(ENDPOINT);
 
   // For emails
@@ -222,12 +216,38 @@ export const TransactionTable: FC<Props> = ({
   const dispute = async (reason: string, txn: Transaction) => {
     const userReq = new User();
     userReq.setId(txn.getOwnerId());
-    const user = await clients.user.Get(userReq);
-
+    let user: User | undefined;
+    try {
+      user = await UserClientService.Get(userReq);
+    } catch (err) {
+      console.error(
+        `An error occurred while fetching a user from the User Client Service: ${err}`,
+      );
+    }
+    if (!user) {
+      console.error(
+        'Need a user to send to for disputes, however none was gotten. Returning.',
+      );
+      return;
+    }
     // Request for this user
     const sendingReq = new User();
     sendingReq.setId(loggedUserId);
-    const sendingUser = await clients.user.Get(sendingReq);
+    let sendingUser: User | undefined;
+    try {
+      sendingUser = await UserClientService.Get(sendingReq);
+    } catch (err) {
+      console.error(
+        `An error occurred while fetching a user from the User Client Service: ${err}`,
+      );
+    }
+
+    if (!sendingUser) {
+      console.error(
+        'Need a user to send from for disputes, however none was gotten. Returning.',
+      );
+      return;
+    }
 
     const body = getRejectTxnBody(
       reason,
@@ -244,29 +264,13 @@ export const TransactionTable: FC<Props> = ({
     };
 
     try {
-      await clients.email.sendMail(email);
+      await EmailClientService.sendMail(email);
     } catch (err) {
       alert('An error occurred, user was not notified via email');
     }
-    try {
-      //const id = await getSlackID(txn.ownerName);
-      // await slackNotify(
-      //   id,
-      //   `A receipt you submitted has been rejected | ${
-      //     txn.description
-      //   } | $${prettyMoney(txn.amount)}. Reason: ${reason}`,
-      // );
-      // await slackNotify(
-      //   id,
-      //   `https://app.kalosflorida.com?action=admin:reports.transactions`,
-      // );
-    } catch (err) {
-      console.error(err);
-      alert('An error occurred, user was not notified via slack');
-    }
 
     await makeUpdateStatus(txn.getId(), 4, 'rejected', reason);
-    await refresh();
+    refresh();
   };
 
   const makeUpdateStatus = async (
@@ -456,7 +460,7 @@ export const TransactionTable: FC<Props> = ({
       fr.onload = async () => {
         try {
           const u8 = new Uint8Array(fr.result as ArrayBuffer);
-          await clients.docs.upload(
+          await TransactionDocumentClientService.upload(
             txn.getId(),
             FileInput.current!.files![0].name,
             u8,
@@ -473,7 +477,7 @@ export const TransactionTable: FC<Props> = ({
         fr.readAsArrayBuffer(FileInput.current.files[0]);
       }
     },
-    [FileInput, clients.docs, refresh],
+    [FileInput, refresh],
   );
 
   const handleSetAssigningUser = useCallback(
