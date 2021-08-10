@@ -45,6 +45,7 @@ type Entry = {
   costCenter: number;
   department: number;
   orderNumber: string;
+  invoiceNumber: string;
 };
 export type CostCenter = {
   value: number;
@@ -90,6 +91,7 @@ export const UploadPhotoTransaction: FC<Props> = ({
       }
     ).value,
     orderNumber: '',
+    invoiceNumber: '',
   });
   const [formKey, setFormKey] = useState<number>(0);
   const handleFileLoad = useCallback(
@@ -102,7 +104,7 @@ export const UploadPhotoTransaction: FC<Props> = ({
     async (data: Entry) => {
       setSaved(false);
       setError(false);
-      setSaving(true); 
+      setSaving(true);
       const newTransaction = new Transaction();
       newTransaction.setJobId(data.eventId);
       const type = data.tag.replace('Subject=', '');
@@ -118,6 +120,7 @@ export const UploadPhotoTransaction: FC<Props> = ({
       newTransaction.setIsRecorded(true);
       newTransaction.setDepartmentId(data.department);
       newTransaction.setOrderNumber(data.orderNumber);
+      newTransaction.setInvoiceNumber(data.invoiceNumber);
       const insertRecord = new TransactionClient(ENDPOINT);
       const insert = await insertRecord.Create(newTransaction);
       if (data.file) {
@@ -212,6 +215,10 @@ export const UploadPhotoTransaction: FC<Props> = ({
         name: 'orderNumber',
         label: 'Order #',
         required: true,
+      },
+      {
+        name: 'invoiceNumber',
+        label: 'Invoice #',
       },
     ],
     [
