@@ -1,8 +1,11 @@
 import React, { FC, useState, useEffect, useCallback } from 'react';
 import { TransactionUserView } from './components/view';
 import { Loader } from '../Loader/main';
-import { UserClientService } from '../../helpers';
-import { ENDPOINT, PERMISSION_NAME_MANAGER } from '../../constants';
+import {
+  TransactionAccountClientService,
+  UserClientService,
+} from '../../helpers';
+import { PERMISSION_NAME_MANAGER } from '../../constants';
 import { PageWrapper, PageWrapperProps } from '../PageWrapper/main';
 import { User } from '@kalos-core/kalos-rpc/User';
 import { RoleType } from '../ComponentsLibrary/Payroll';
@@ -13,7 +16,6 @@ import { UploadPhotoTransaction } from '../ComponentsLibrary/UploadPhotoTransact
 import {
   TransactionAccountList,
   TransactionAccount,
-  TransactionAccountClient,
 } from '@kalos-core/kalos-rpc/TransactionAccount';
 import { SectionBar } from '../ComponentsLibrary/SectionBar';
 
@@ -21,6 +23,8 @@ interface Props extends PageWrapperProps {
   userID: number;
   isProd?: boolean;
 }
+
+const CAN_ADD_TXNS = [8418, 100153, 336];
 
 const Transaction: FC<Props> = props => {
   const { userID } = props;
@@ -58,7 +62,7 @@ const Transaction: FC<Props> = props => {
   const loadCostCenters = useCallback(async () => {
     const req = new TransactionAccount();
     req.setIsActive(1);
-    const results = await new TransactionAccountClient(ENDPOINT).BatchGet(req);
+    const results = await TransactionAccountClientService.BatchGet(req);
     setCostCenters(results);
   }, [setCostCenters]);
 
@@ -88,7 +92,7 @@ const Transaction: FC<Props> = props => {
     console.log(totalDepartments);
     setIsManager(isManager || role === 'Manager');
     setLoading(false);
-  }, [setLoading, userID, managerCheck, role]);
+  }, [setLoading, userID, managerCheck, role, loadCostCenters]);
   useEffect(() => {
     if (!loaded || !user) {
       setLoaded(true);
@@ -142,11 +146,12 @@ const Transaction: FC<Props> = props => {
               />
             </Modal>
           ) : null}
-          {user.getIsAdmin() === 1 && (
+          {CAN_ADD_TXNS.includes(user.getId()) && (
             <SectionBar
               actions={[
                 {
-                  label: 'Upload Pick Ticket or Receipt',
+                  label:
+                    'Upload Pick Ticket, Invoice, or Non Credit Card Receipt',
                   onClick: () => handleSetUploadPhotoTransactionOpen(true),
                   fixed: true,
                 },
