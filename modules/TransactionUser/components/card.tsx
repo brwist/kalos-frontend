@@ -3,28 +3,17 @@ import * as React from 'react';
 import debounce from 'lodash/debounce';
 import Paper from '@material-ui/core/Paper';
 import Alert from '@material-ui/lab/Alert';
-import {
-  Transaction,
-  TransactionClient,
-} from '@kalos-core/kalos-rpc/Transaction';
-import {
-  TransactionDocumentClient,
-  TransactionDocument,
-} from '@kalos-core/kalos-rpc/TransactionDocument';
-import {
-  TransactionActivity,
-  TransactionActivityClient,
-} from '@kalos-core/kalos-rpc/TransactionActivity';
+import { Transaction } from '@kalos-core/kalos-rpc/Transaction';
+import { TransactionDocument } from '@kalos-core/kalos-rpc/TransactionDocument';
+import { TransactionActivity } from '@kalos-core/kalos-rpc/TransactionActivity';
 import { AccountPicker } from '../../ComponentsLibrary/Pickers';
 import {
   TransactionAccount,
   TransactionAccountClient,
   TransactionAccountList,
 } from '@kalos-core/kalos-rpc/TransactionAccount';
-import { S3Client } from '@kalos-core/kalos-rpc/S3File';
 import { GalleryData, AltGallery } from '../../AltGallery/main';
-import { Event, EventClient } from '@kalos-core/kalos-rpc/Event';
-import { TaskClient } from '@kalos-core/kalos-rpc/Task';
+import { Event } from '@kalos-core/kalos-rpc/Event';
 import CloseIcon from '@material-ui/icons/CloseSharp';
 import { PDFMaker } from '../../ComponentsLibrary/PDFMaker';
 import ReIcon from '@material-ui/icons/RefreshSharp';
@@ -41,7 +30,7 @@ import {
 } from '../../../helpers';
 import { File } from '@kalos-core/kalos-rpc/File';
 import { ENDPOINT } from '../../../constants';
-import { EmailClient, EmailConfig } from '@kalos-core/kalos-rpc/Email';
+import { EmailConfig } from '@kalos-core/kalos-rpc/Email';
 import { Field } from '../../ComponentsLibrary/Field';
 import { SectionBar } from '../../ComponentsLibrary/SectionBar';
 import { Button } from '../../ComponentsLibrary/Button';
@@ -96,13 +85,6 @@ export class TxnCard extends React.PureComponent<props, state> {
       costCenters: new TransactionAccountList(),
       pendingEdit: undefined,
     };
-    // this.EmailClient = new EmailClient(ENDPOINT);
-    // this.TxnClient = new TransactionClient(ENDPOINT);
-    // this.DocsClient = new TransactionDocumentClient(ENDPOINT);
-    // this.LogClient = new TransactionActivityClient(ENDPOINT);
-    // this.S3Client = new S3Client(ENDPOINT);
-    // this.EventClient = new EventClient(ENDPOINT);
-    // this.TaskClient = new TaskClient(ENDPOINT);
     this.FileInput = React.createRef();
     this.NotesInput = React.createRef();
     this.openFilePrompt = this.openFilePrompt.bind(this);
@@ -128,7 +110,7 @@ export class TxnCard extends React.PureComponent<props, state> {
       log.setUserId(userID);
       await TransactionActivityClientService.Create(log);
     } catch (err) {
-      console.log(err);
+      console.error(err);
     }
   }
 
@@ -161,7 +143,7 @@ export class TxnCard extends React.PureComponent<props, state> {
           await this.makeLog(prop, oldValue, value);
         }
       } catch (err) {
-        console.log(err);
+        console.error(err);
       }
     };
   } //These functions both serve to update the individual fields of the record, and change
@@ -190,7 +172,7 @@ export class TxnCard extends React.PureComponent<props, state> {
             //throw 'The entered job number is invalid';
             //}
           } catch (err) {
-            console.log(err);
+            console.error(err);
           }
         }
         if (!txn.getCostCenter()) {
@@ -238,7 +220,7 @@ export class TxnCard extends React.PureComponent<props, state> {
             try {
               await EmailClientService.sendMail(mailConfig);
             } catch (err) {
-              console.log('failed to send mail to accounting', err);
+              console.error('failed to send mail to accounting', err);
             }
           }
           this.state.txn.setStatusId(statusID);
@@ -260,7 +242,7 @@ export class TxnCard extends React.PureComponent<props, state> {
         }
       }
     } catch (err) {
-      console.log(err);
+      console.error(err);
     }
   }
 
@@ -508,7 +490,7 @@ export class TxnCard extends React.PureComponent<props, state> {
       }
       await this.refresh();
     } catch (err) {
-      console.log(err);
+      console.error(err);
     }
   }
 
@@ -563,6 +545,7 @@ export class TxnCard extends React.PureComponent<props, state> {
     } catch (err) {
       console.error(`An error occurred while updating a transaction: ${err}`);
     }
+    this.refresh();
     try {
       let req = new TransactionActivity();
       req.setDescription(`Updated transaction ${transaction.getId()}`);
@@ -690,6 +673,7 @@ export class TxnCard extends React.PureComponent<props, state> {
               }}
             />
             <NoteField
+              key={this.state.txn.toString()}
               initialValue={t.getNotes()}
               onChange={debounce(
                 (value: string) => this.updateNotes(() => value.toString()),
