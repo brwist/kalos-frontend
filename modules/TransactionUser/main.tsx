@@ -88,7 +88,7 @@ const Transaction: FC<Props> = props => {
     console.log(totalDepartments);
     setIsManager(isManager || role === 'Manager');
     setLoading(false);
-  }, [setLoading, userID, managerCheck, role]);
+  }, [setLoading, userID, managerCheck, role, loadCostCenters]);
   useEffect(() => {
     if (!loaded || !user) {
       setLoaded(true);

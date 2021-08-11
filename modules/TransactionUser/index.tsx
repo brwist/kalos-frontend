@@ -7,7 +7,8 @@ import { ENDPOINT } from '../../constants';
 const u = new UserClient(ENDPOINT);
 u.GetToken('test', 'test').then(() => {
   ReactDOM.render(
-    <Transaction userID={8418} withHeader />,
+    // 8418 is also valid
+    <Transaction userID={100153} withHeader />,
     document.getElementById('txn-root'),
   );
 });
