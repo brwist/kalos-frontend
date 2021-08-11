@@ -67,6 +67,7 @@ const hardcodedList = [
   62600, 643002,
 ];
 
+const tags = ['Receipt', 'PickTicket', 'Invoice'];
 const TimPearsonUserId = 100153; // Specifically asked to give JUST Tim access to this new button
 
 export class TxnCard extends React.PureComponent<props, state> {
@@ -629,7 +630,7 @@ export class TxnCard extends React.PureComponent<props, state> {
                     pdfType="Retrievable Receipt"
                   />
                 )}
-                {this.props.userID === TimPearsonUserId && (
+                {tags.includes(t.getVendorCategory()) && (
                   <Button label="Edit" onClick={() => this.setPendingEdit(t)} />
                 )}
               </div>
