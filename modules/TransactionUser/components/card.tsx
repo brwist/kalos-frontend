@@ -47,6 +47,7 @@ import { FileGallery } from '../../ComponentsLibrary/FileGallery';
 import { Modal } from '../../ComponentsLibrary/Modal';
 import './card.css';
 import { parseISO } from 'date-fns';
+import { EditTransaction } from '../../ComponentsLibrary/EditTransaction';
 
 interface props {
   txn: Transaction;
@@ -65,6 +66,7 @@ interface state {
   pendingAddFromGallery: boolean;
   pendingAddFromSingleFile: boolean;
   costCenters: TransactionAccountList;
+  pendingEdit: Transaction | undefined;
 }
 
 const hardcodedList = [
@@ -95,6 +97,7 @@ export class TxnCard extends React.PureComponent<props, state> {
       pendingAddFromGallery: false,
       pendingAddFromSingleFile: false,
       costCenters: new TransactionAccountList(),
+      pendingEdit: undefined,
     };
     this.EmailClient = new EmailClient(ENDPOINT);
     this.TxnClient = new TransactionClient(ENDPOINT);
@@ -553,6 +556,10 @@ export class TxnCard extends React.PureComponent<props, state> {
     this.setState({ costCenters: results });
   };
 
+  setPendingEdit = (transaction: Transaction | undefined) => {
+    this.setState({ pendingEdit: transaction });
+  };
+
   render() {
     const { txn, pendingAddFromGallery, pendingAddFromSingleFile } = this.state;
     const { isManager, userID } = this.props;
@@ -618,6 +625,9 @@ export class TxnCard extends React.PureComponent<props, state> {
                     onCreate={this.onPDFGenerate}
                     pdfType="Retrievable Receipt"
                   />
+                )}
+                {this.props.userID === 100153 && (
+                  <Button label="Edit" onClick={() => this.setPendingEdit(t)} />
                 )}
               </div>
             }
@@ -704,6 +714,21 @@ export class TxnCard extends React.PureComponent<props, state> {
               inputFile={this.LastSingleFileUpload}
               onlyDisplayInputFile={true}
               onConfirmAdd={this.continueSingleUpload}
+            />
+          </Modal>
+        )}
+        {this.state.pendingEdit && (
+          <Modal
+            open={this.state.pendingEdit !== undefined}
+            onClose={() => this.setPendingEdit(undefined)}
+          >
+            <EditTransaction
+              title="Edit Transaction"
+              transactionInput={this.state.pendingEdit}
+              onClose={() => this.setPendingEdit(undefined)}
+              onSave={(saving: Transaction) =>
+                console.log('WOULD SAVE: ', saving)
+              }
             />
           </Modal>
         )}
