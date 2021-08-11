@@ -24,6 +24,8 @@ interface Props extends PageWrapperProps {
   isProd?: boolean;
 }
 
+const CAN_ADD_TXNS = [8418, 100153, 336];
+
 const Transaction: FC<Props> = props => {
   const { userID } = props;
   const [loaded, setLoaded] = useState<boolean>(false);
@@ -144,11 +146,12 @@ const Transaction: FC<Props> = props => {
               />
             </Modal>
           ) : null}
-          {user.getIsAdmin() === 1 && (
+          {CAN_ADD_TXNS.includes(user.getId()) && (
             <SectionBar
               actions={[
                 {
-                  label: 'Upload Pick Ticket or Receipt',
+                  label:
+                    'Upload Pick Ticket, Invoice, or Non Credit Card Receipt',
                   onClick: () => handleSetUploadPhotoTransactionOpen(true),
                   fixed: true,
                 },
