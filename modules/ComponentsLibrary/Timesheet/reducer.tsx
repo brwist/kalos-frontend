@@ -179,8 +179,12 @@ export const reducer = (state: State, action: Action) => {
               item.getStatus() !== 'Completed' &&
               item.getStatus() !== 'Incomplete',
           );
-          const timesheetLineList = dayData?.getTimesheetLineList() || [];
-
+          const timesheetLineList =
+            dayData
+              ?.getTimesheetLineList()
+              .sort((a, b) =>
+                a.getTimeStarted() > b.getTimeStarted() ? 1 : -1,
+              ) || [];
           const payroll = timesheetLineList.reduce(
             (acc, item) => {
               if (item.getUserApprovalDatetime() === NULL_TIME_VALUE) {

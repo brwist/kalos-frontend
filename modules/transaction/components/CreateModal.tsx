@@ -85,6 +85,7 @@ const CreateModal: FC<Props> = ({ show, entry, onClose, onSave }) => {
         data.setDepartmentId(parseInt(temp));
       }
       data.setCostCenterId(costCenterId);
+      data.setStatusId(2);
       const result = await transactionClient.Create(data);
       onSave(result);
     },
