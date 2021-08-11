@@ -301,7 +301,7 @@ export const ServiceCall: FC<Props> = props => {
 const handleSaveInvoice = useCallback(async() => {
   setPendingSave(true);
   setRequestValid(true);
-  // setSaveInvoice(true);
+  setSaveInvoice(true);
 },[setPendingSave, setRequestValid]);
   const handleSave = useCallback(async () => {
     setPendingSave(true);
@@ -322,9 +322,14 @@ const handleSaveInvoice = useCallback(async() => {
 
       console.log('finished Update');
     } else {
-      const res = await EventClientService.Create(temp);
-      console.log('creating new one');
-      setEntry(res);
+      if(saveInvoice) {
+        const res = await EventClientService.Create(temp, saveInvoice);
+      }
+      else {
+        const res = await EventClientService.Create(temp);
+      }
+        console.log('creating new one');
+        setEntry(res);
       if (!serviceCallId) {
         console.log('no service call Id');
         setServiceCallId(res.getId());
