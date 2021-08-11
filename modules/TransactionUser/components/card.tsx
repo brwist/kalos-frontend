@@ -67,6 +67,8 @@ const hardcodedList = [
   62600, 643002,
 ];
 
+const TimPearsonUserId = 100153; // Specifically asked to give JUST Tim access to this new button
+
 export class TxnCard extends React.PureComponent<props, state> {
   FileInput: React.RefObject<HTMLInputElement>;
   NotesInput: React.RefObject<HTMLInputElement>;
@@ -627,7 +629,7 @@ export class TxnCard extends React.PureComponent<props, state> {
                     pdfType="Retrievable Receipt"
                   />
                 )}
-                {this.props.userID === 100153 && (
+                {this.props.userID === TimPearsonUserId && (
                   <Button label="Edit" onClick={() => this.setPendingEdit(t)} />
                 )}
               </div>
