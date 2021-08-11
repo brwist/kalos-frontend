@@ -1,8 +1,11 @@
 import React, { FC, useState, useEffect, useCallback } from 'react';
 import { TransactionUserView } from './components/view';
 import { Loader } from '../Loader/main';
-import { UserClientService } from '../../helpers';
-import { ENDPOINT, PERMISSION_NAME_MANAGER } from '../../constants';
+import {
+  TransactionAccountClientService,
+  UserClientService,
+} from '../../helpers';
+import { PERMISSION_NAME_MANAGER } from '../../constants';
 import { PageWrapper, PageWrapperProps } from '../PageWrapper/main';
 import { User } from '@kalos-core/kalos-rpc/User';
 import { RoleType } from '../ComponentsLibrary/Payroll';
@@ -13,7 +16,6 @@ import { UploadPhotoTransaction } from '../ComponentsLibrary/UploadPhotoTransact
 import {
   TransactionAccountList,
   TransactionAccount,
-  TransactionAccountClient,
 } from '@kalos-core/kalos-rpc/TransactionAccount';
 import { SectionBar } from '../ComponentsLibrary/SectionBar';
 
@@ -58,7 +60,7 @@ const Transaction: FC<Props> = props => {
   const loadCostCenters = useCallback(async () => {
     const req = new TransactionAccount();
     req.setIsActive(1);
-    const results = await new TransactionAccountClient(ENDPOINT).BatchGet(req);
+    const results = await TransactionAccountClientService.BatchGet(req);
     setCostCenters(results);
   }, [setCostCenters]);
 
