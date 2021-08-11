@@ -9,6 +9,7 @@ interface Props {
   onSave: (saved: Transaction) => void;
   onClose: () => void;
   onChange?: (changed: Transaction) => void;
+  title?: string;
 }
 
 export const EditTransaction: FC<Props> = ({
@@ -16,6 +17,7 @@ export const EditTransaction: FC<Props> = ({
   onSave,
   onClose,
   onChange,
+  title,
 }) => {
   const [transaction] = useState<Transaction>(transactionInput);
   const [changed, setChanged] = useState<boolean>(false);
@@ -102,6 +104,11 @@ export const EditTransaction: FC<Props> = ({
         name: 'getOrderNumber',
         multiline: true,
       },
+      {
+        label: 'Invoice #',
+        name: 'getInvoiceNumber',
+        multiline: true,
+      },
     ],
     [
       {
@@ -156,7 +163,7 @@ export const EditTransaction: FC<Props> = ({
         onClose={onClose}
         submitLabel="Save"
         cancelLabel="Cancel"
-        title="Edit Transaction Created From Merge"
+        title={title ? title : 'Edit Transaction Created From Merge'}
       />
     </>
   );

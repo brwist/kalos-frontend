@@ -106,8 +106,23 @@ export const CompareTransactions: FC<Props> = ({
         setLoading(true);
         // Delete is not working atm, leaving a todo here for future reference but using update as a replacement
         // TODO
+        console.log(txn);
         txn.setIsActive(0);
         txn.setFieldMaskList(['IsActive']);
+
+        // ? Beginning of ignoring private fields to stop errors "fieldname" in "field_list"
+
+        // @ts-expect-error
+        txn.setOwnerName(undefined);
+        // @ts-expect-error
+        txn.setDepartmentString(undefined);
+        // @ts-expect-error
+        txn.setActivityLogString(undefined);
+        // @ts-expect-error
+        txn.setCardUsed(undefined);
+
+        // End of ignoring private fields
+
         await TransactionClientService.Update(txn);
         setLoading(false);
         // const transactionResult = await TransactionClientService.Delete(txn);
@@ -115,6 +130,13 @@ export const CompareTransactions: FC<Props> = ({
         //   console.log('Deleted transaction: ', transactionResult);
       } catch (err) {
         console.error('Failed to delete transaction: ', err);
+        if (
+          String(err).includes(`Unknown column`) &&
+          String(err).includes(`in 'field list'`)
+        )
+          console.error(
+            `This error commonly occurs when there are fields set on the transaction that do not exist in the database. Please ensure they are undefined.`,
+          );
         setLoading(false);
       }
     }
@@ -434,6 +456,7 @@ export const CompareTransactions: FC<Props> = ({
                   txn.setVendorCategory(saved.getVendorCategory());
                   txn.setAssignedEmployeeId(saved.getAssignedEmployeeId());
                   txn.setAssignedEmployeeName(saved.getAssignedEmployeeName());
+                  txn.setInvoiceNumber(saved.getInvoiceNumber());
                 }
               }
 
