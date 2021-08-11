@@ -2,6 +2,7 @@ import React, { FC, useEffect, useState } from 'react';
 import SideMenu, { Props as SideMenuProps } from '../SideMenu/main';
 import { StyledPage } from './styled';
 import './styles.less';
+import { UserClientService } from '../../helpers';
 
 export interface PageWrapperProps {
   padding?: number;
@@ -23,6 +24,7 @@ export const PageWrapper: FC<Props> = ({
       if (oldSideMenu) {
         oldSideMenu.remove();
       }
+      UserClientService.GetToken('test', 'test');
     }
   }, [initiated, setInitiated]);
   return (

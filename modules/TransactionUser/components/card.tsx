@@ -3,28 +3,17 @@ import * as React from 'react';
 import debounce from 'lodash/debounce';
 import Paper from '@material-ui/core/Paper';
 import Alert from '@material-ui/lab/Alert';
-import {
-  Transaction,
-  TransactionClient,
-} from '@kalos-core/kalos-rpc/Transaction';
-import {
-  TransactionDocumentClient,
-  TransactionDocument,
-} from '@kalos-core/kalos-rpc/TransactionDocument';
-import {
-  TransactionActivity,
-  TransactionActivityClient,
-} from '@kalos-core/kalos-rpc/TransactionActivity';
+import { Transaction } from '@kalos-core/kalos-rpc/Transaction';
+import { TransactionDocument } from '@kalos-core/kalos-rpc/TransactionDocument';
+import { TransactionActivity } from '@kalos-core/kalos-rpc/TransactionActivity';
 import { AccountPicker } from '../../ComponentsLibrary/Pickers';
 import {
   TransactionAccount,
   TransactionAccountClient,
   TransactionAccountList,
 } from '@kalos-core/kalos-rpc/TransactionAccount';
-import { S3Client } from '@kalos-core/kalos-rpc/S3File';
 import { GalleryData, AltGallery } from '../../AltGallery/main';
-import { Event, EventClient } from '@kalos-core/kalos-rpc/Event';
-import { TaskClient } from '@kalos-core/kalos-rpc/Task';
+import { Event } from '@kalos-core/kalos-rpc/Event';
 import CloseIcon from '@material-ui/icons/CloseSharp';
 import { PDFMaker } from '../../ComponentsLibrary/PDFMaker';
 import ReIcon from '@material-ui/icons/RefreshSharp';
@@ -34,11 +23,14 @@ import {
   getFileExt,
   FileClientService,
   TransactionDocumentClientService,
+  TransactionActivityClientService,
+  EmailClientService,
+  TaskClientService,
   TransactionClientService,
 } from '../../../helpers';
 import { File } from '@kalos-core/kalos-rpc/File';
 import { ENDPOINT } from '../../../constants';
-import { EmailClient, EmailConfig } from '@kalos-core/kalos-rpc/Email';
+import { EmailConfig } from '@kalos-core/kalos-rpc/Email';
 import { Field } from '../../ComponentsLibrary/Field';
 import { SectionBar } from '../../ComponentsLibrary/SectionBar';
 import { Button } from '../../ComponentsLibrary/Button';
@@ -47,6 +39,8 @@ import { FileGallery } from '../../ComponentsLibrary/FileGallery';
 import { Modal } from '../../ComponentsLibrary/Modal';
 import './card.css';
 import { parseISO } from 'date-fns';
+import { EditTransaction } from '../../ComponentsLibrary/EditTransaction';
+import format from 'date-fns/format';
 
 interface props {
   txn: Transaction;
@@ -65,6 +59,7 @@ interface state {
   pendingAddFromGallery: boolean;
   pendingAddFromSingleFile: boolean;
   costCenters: TransactionAccountList;
+  pendingEdit: Transaction | undefined;
 }
 
 const hardcodedList = [
@@ -72,16 +67,12 @@ const hardcodedList = [
   62600, 643002,
 ];
 
+const tags = ['Receipt', 'PickTicket', 'Invoice'];
+const TimPearsonUserId = 100153; // Specifically asked to give JUST Tim access to this new button
+
 export class TxnCard extends React.PureComponent<props, state> {
-  TxnClient: TransactionClient;
-  DocsClient: TransactionDocumentClient;
-  LogClient: TransactionActivityClient;
-  TaskClient: TaskClient;
-  EventClient: EventClient;
-  S3Client: S3Client;
   FileInput: React.RefObject<HTMLInputElement>;
   NotesInput: React.RefObject<HTMLInputElement>;
-  EmailClient: EmailClient;
   LastSingleFileUpload: {
     filename: string;
     fileurl: string;
@@ -95,14 +86,8 @@ export class TxnCard extends React.PureComponent<props, state> {
       pendingAddFromGallery: false,
       pendingAddFromSingleFile: false,
       costCenters: new TransactionAccountList(),
+      pendingEdit: undefined,
     };
-    this.EmailClient = new EmailClient(ENDPOINT);
-    this.TxnClient = new TransactionClient(ENDPOINT);
-    this.DocsClient = new TransactionDocumentClient(ENDPOINT);
-    this.LogClient = new TransactionActivityClient(ENDPOINT);
-    this.S3Client = new S3Client(ENDPOINT);
-    this.EventClient = new EventClient(ENDPOINT);
-    this.TaskClient = new TaskClient(ENDPOINT);
     this.FileInput = React.createRef();
     this.NotesInput = React.createRef();
     this.openFilePrompt = this.openFilePrompt.bind(this);
@@ -126,9 +111,9 @@ export class TxnCard extends React.PureComponent<props, state> {
         `User ${userName} updated txn ${prop}: ${oldValue} changed to ${newValue} `,
       );
       log.setUserId(userID);
-      await this.LogClient.Create(log);
+      await TransactionActivityClientService.Create(log);
     } catch (err) {
-      console.log(err);
+      console.error(err);
     }
   }
 
@@ -155,13 +140,13 @@ export class TxnCard extends React.PureComponent<props, state> {
           reqObj[methodName](value());
         }
         reqObj.setFieldMaskList([fieldMaskItem]);
-        const updatedTxn = await this.TxnClient.Update(reqObj);
+        const updatedTxn = await TransactionClientService.Update(reqObj);
         this.setState(() => ({ txn: updatedTxn }));
         if (prop !== 'setNotes') {
           await this.makeLog(prop, oldValue, value);
         }
       } catch (err) {
-        console.log(err);
+        console.error(err);
       }
     };
   } //These functions both serve to update the individual fields of the record, and change
@@ -190,7 +175,7 @@ export class TxnCard extends React.PureComponent<props, state> {
             //throw 'The entered job number is invalid';
             //}
           } catch (err) {
-            console.log(err);
+            console.error(err);
           }
         }
         if (!txn.getCostCenter()) {
@@ -236,9 +221,9 @@ export class TxnCard extends React.PureComponent<props, state> {
               subject: 'Receipts',
             };
             try {
-              await this.EmailClient.sendMail(mailConfig);
+              await EmailClientService.sendMail(mailConfig);
             } catch (err) {
-              console.log('failed to send mail to accounting', err);
+              console.error('failed to send mail to accounting', err);
             }
           }
           this.state.txn.setStatusId(statusID);
@@ -248,7 +233,7 @@ export class TxnCard extends React.PureComponent<props, state> {
             txn.getCostCenterId() === 673002 ||
             txn.getCostCenter()?.getId() === 673002
           ) {
-            await this.TaskClient.newToolPurchase(
+            await TaskClientService.newToolPurchase(
               txn.getAmount(),
               txn.getOwnerId(),
               txn.getVendor(),
@@ -260,7 +245,7 @@ export class TxnCard extends React.PureComponent<props, state> {
         }
       }
     } catch (err) {
-      console.log(err);
+      console.error(err);
     }
   }
 
@@ -270,7 +255,7 @@ export class TxnCard extends React.PureComponent<props, state> {
     log.setTransactionId(this.state.txn.getId());
     log.setStatusId(status);
     log.setDescription(action);
-    await this.LogClient.Create(log);
+    await TransactionActivityClientService.Create(log);
   }
 
   testCostCenter(acc: TransactionAccount) {
@@ -390,7 +375,7 @@ export class TxnCard extends React.PureComponent<props, state> {
 
   async onPDFGenerate(fileData: Uint8Array) {
     await this.props.toggleLoading();
-    await this.DocsClient.upload(
+    await TransactionDocumentClientService.upload(
       this.state.txn.getId(),
       `${timestamp()}-generated.pdf`,
       fileData,
@@ -409,7 +394,7 @@ export class TxnCard extends React.PureComponent<props, state> {
       return;
     }
     try {
-      await this.DocsClient.upload(
+      await TransactionDocumentClientService.upload(
         this.state.txn.getId(),
         this.FileInput.current!.files![0].name,
         this.LastSingleFileUpload?.filedata,
@@ -489,7 +474,7 @@ export class TxnCard extends React.PureComponent<props, state> {
     try {
       const req = new Transaction();
       req.setId(this.state.txn.getId());
-      const refreshTxn = await this.TxnClient.Get(req);
+      const refreshTxn = await TransactionClientService.Get(req);
       this.setState({
         txn: refreshTxn,
       });
@@ -502,13 +487,13 @@ export class TxnCard extends React.PureComponent<props, state> {
 
   async deleteFile(name: string, bucket: string, cb?: () => void) {
     try {
-      await this.DocsClient.deleteByName(name, bucket);
+      await TransactionDocumentClientService.deleteByName(name, bucket);
       if (cb) {
         cb();
       }
       await this.refresh();
     } catch (err) {
-      console.log(err);
+      console.error(err);
     }
   }
 
@@ -551,6 +536,32 @@ export class TxnCard extends React.PureComponent<props, state> {
     req.setIsActive(1);
     const results = await new TransactionAccountClient(ENDPOINT).BatchGet(req);
     this.setState({ costCenters: results });
+  };
+
+  setPendingEdit = (transaction: Transaction | undefined) => {
+    this.setState({ pendingEdit: transaction });
+  };
+
+  saveEditedTransaction = async (transaction: Transaction) => {
+    try {
+      await TransactionClientService.Update(transaction);
+    } catch (err) {
+      console.error(`An error occurred while updating a transaction: ${err}`);
+    }
+    this.refresh();
+    try {
+      let req = new TransactionActivity();
+      req.setDescription(`Updated transaction ${transaction.getId()}`);
+      req.setUserId(this.props.userID);
+      req.setTransactionId(transaction.getId());
+      req.setTimestamp(format(new Date(), 'yyyy-MM-dd hh:mm:ss'));
+      await TransactionActivityClientService.Create(req);
+    } catch (err) {
+      console.error(
+        `An error occurred while upserting a transaction log: ${err}`,
+      );
+    }
+    this.setPendingEdit(undefined);
   };
 
   render() {
@@ -619,6 +630,9 @@ export class TxnCard extends React.PureComponent<props, state> {
                     pdfType="Retrievable Receipt"
                   />
                 )}
+                {tags.includes(t.getVendorCategory()) && (
+                  <Button label="Edit" onClick={() => this.setPendingEdit(t)} />
+                )}
               </div>
             }
             sticky={false}
@@ -662,6 +676,7 @@ export class TxnCard extends React.PureComponent<props, state> {
               }}
             />
             <NoteField
+              key={this.state.txn.toString()}
               initialValue={t.getNotes()}
               onChange={debounce(
                 (value: string) => this.updateNotes(() => value.toString()),
@@ -704,6 +719,23 @@ export class TxnCard extends React.PureComponent<props, state> {
               inputFile={this.LastSingleFileUpload}
               onlyDisplayInputFile={true}
               onConfirmAdd={this.continueSingleUpload}
+            />
+          </Modal>
+        )}
+        {this.state.pendingEdit && (
+          <Modal
+            open={this.state.pendingEdit !== undefined}
+            onClose={() => this.setPendingEdit(undefined)}
+          >
+            <EditTransaction
+              title="Edit Transaction"
+              transactionInput={this.state.pendingEdit}
+              onClose={() => this.setPendingEdit(undefined)}
+              onSave={(saving: Transaction) => {
+                let txnToUpdate = saving;
+                txnToUpdate.setId(t.getId());
+                this.saveEditedTransaction(txnToUpdate);
+              }}
             />
           </Modal>
         )}
