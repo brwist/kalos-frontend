@@ -22,7 +22,7 @@ import Stubs = require('../../../test-setup/stubs'); // ? Sets the auth token up
 
 import ConstantsModule = require('../../../test-constants/constants');
 // ? Commented because it isn't quite set up yet and does send requests to the dev server
-describe.only('ComponentsLibrary', () => {
+describe('ComponentsLibrary', () => {
   describe('Test', () => {
     describe('<Test />', () => {
       before(async () => {
