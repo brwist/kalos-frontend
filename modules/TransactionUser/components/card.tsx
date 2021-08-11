@@ -34,7 +34,7 @@ import {
   getFileExt,
   FileClientService,
   TransactionDocumentClientService,
-  TransactionClientService,
+  TransactionActivityClientService,
 } from '../../../helpers';
 import { File } from '@kalos-core/kalos-rpc/File';
 import { ENDPOINT } from '../../../constants';
@@ -48,6 +48,7 @@ import { Modal } from '../../ComponentsLibrary/Modal';
 import './card.css';
 import { parseISO } from 'date-fns';
 import { EditTransaction } from '../../ComponentsLibrary/EditTransaction';
+import format from 'date-fns/format';
 
 interface props {
   txn: Transaction;
@@ -560,6 +561,27 @@ export class TxnCard extends React.PureComponent<props, state> {
     this.setState({ pendingEdit: transaction });
   };
 
+  saveEditedTransaction = async (transaction: Transaction) => {
+    try {
+      await this.TxnClient.Update(transaction);
+    } catch (err) {
+      console.error(`An error occurred while updating a transaction: ${err}`);
+    }
+    try {
+      let req = new TransactionActivity();
+      req.setDescription(`Updated transaction ${transaction.getId()}`);
+      req.setUserId(this.props.userID);
+      req.setTransactionId(transaction.getId());
+      req.setTimestamp(format(new Date(), 'yyyy-MM-dd hh:mm:ss'));
+      await TransactionActivityClientService.Create(req);
+    } catch (err) {
+      console.error(
+        `An error occurred while upserting a transaction log: ${err}`,
+      );
+    }
+    this.setPendingEdit(undefined);
+  };
+
   render() {
     const { txn, pendingAddFromGallery, pendingAddFromSingleFile } = this.state;
     const { isManager, userID } = this.props;
@@ -726,9 +748,11 @@ export class TxnCard extends React.PureComponent<props, state> {
               title="Edit Transaction"
               transactionInput={this.state.pendingEdit}
               onClose={() => this.setPendingEdit(undefined)}
-              onSave={(saving: Transaction) =>
-                console.log('WOULD SAVE: ', saving)
-              }
+              onSave={(saving: Transaction) => {
+                let txnToUpdate = saving;
+                txnToUpdate.setId(t.getId());
+                this.saveEditedTransaction(txnToUpdate);
+              }}
             />
           </Modal>
         )}
