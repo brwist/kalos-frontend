@@ -35,6 +35,9 @@ import {
   FileClientService,
   TransactionDocumentClientService,
   TransactionActivityClientService,
+  EmailClientService,
+  TaskClientService,
+  TransactionClientService,
 } from '../../../helpers';
 import { File } from '@kalos-core/kalos-rpc/File';
 import { ENDPOINT } from '../../../constants';
@@ -76,15 +79,8 @@ const hardcodedList = [
 ];
 
 export class TxnCard extends React.PureComponent<props, state> {
-  TxnClient: TransactionClient;
-  DocsClient: TransactionDocumentClient;
-  LogClient: TransactionActivityClient;
-  TaskClient: TaskClient;
-  EventClient: EventClient;
-  S3Client: S3Client;
   FileInput: React.RefObject<HTMLInputElement>;
   NotesInput: React.RefObject<HTMLInputElement>;
-  EmailClient: EmailClient;
   LastSingleFileUpload: {
     filename: string;
     fileurl: string;
@@ -100,13 +96,13 @@ export class TxnCard extends React.PureComponent<props, state> {
       costCenters: new TransactionAccountList(),
       pendingEdit: undefined,
     };
-    this.EmailClient = new EmailClient(ENDPOINT);
-    this.TxnClient = new TransactionClient(ENDPOINT);
-    this.DocsClient = new TransactionDocumentClient(ENDPOINT);
-    this.LogClient = new TransactionActivityClient(ENDPOINT);
-    this.S3Client = new S3Client(ENDPOINT);
-    this.EventClient = new EventClient(ENDPOINT);
-    this.TaskClient = new TaskClient(ENDPOINT);
+    // this.EmailClient = new EmailClient(ENDPOINT);
+    // this.TxnClient = new TransactionClient(ENDPOINT);
+    // this.DocsClient = new TransactionDocumentClient(ENDPOINT);
+    // this.LogClient = new TransactionActivityClient(ENDPOINT);
+    // this.S3Client = new S3Client(ENDPOINT);
+    // this.EventClient = new EventClient(ENDPOINT);
+    // this.TaskClient = new TaskClient(ENDPOINT);
     this.FileInput = React.createRef();
     this.NotesInput = React.createRef();
     this.openFilePrompt = this.openFilePrompt.bind(this);
@@ -130,7 +126,7 @@ export class TxnCard extends React.PureComponent<props, state> {
         `User ${userName} updated txn ${prop}: ${oldValue} changed to ${newValue} `,
       );
       log.setUserId(userID);
-      await this.LogClient.Create(log);
+      await TransactionActivityClientService.Create(log);
     } catch (err) {
       console.log(err);
     }
@@ -159,7 +155,7 @@ export class TxnCard extends React.PureComponent<props, state> {
           reqObj[methodName](value());
         }
         reqObj.setFieldMaskList([fieldMaskItem]);
-        const updatedTxn = await this.TxnClient.Update(reqObj);
+        const updatedTxn = await TransactionClientService.Update(reqObj);
         this.setState(() => ({ txn: updatedTxn }));
         if (prop !== 'setNotes') {
           await this.makeLog(prop, oldValue, value);
@@ -240,7 +236,7 @@ export class TxnCard extends React.PureComponent<props, state> {
               subject: 'Receipts',
             };
             try {
-              await this.EmailClient.sendMail(mailConfig);
+              await EmailClientService.sendMail(mailConfig);
             } catch (err) {
               console.log('failed to send mail to accounting', err);
             }
@@ -252,7 +248,7 @@ export class TxnCard extends React.PureComponent<props, state> {
             txn.getCostCenterId() === 673002 ||
             txn.getCostCenter()?.getId() === 673002
           ) {
-            await this.TaskClient.newToolPurchase(
+            await TaskClientService.newToolPurchase(
               txn.getAmount(),
               txn.getOwnerId(),
               txn.getVendor(),
@@ -274,7 +270,7 @@ export class TxnCard extends React.PureComponent<props, state> {
     log.setTransactionId(this.state.txn.getId());
     log.setStatusId(status);
     log.setDescription(action);
-    await this.LogClient.Create(log);
+    await TransactionActivityClientService.Create(log);
   }
 
   testCostCenter(acc: TransactionAccount) {
@@ -394,7 +390,7 @@ export class TxnCard extends React.PureComponent<props, state> {
 
   async onPDFGenerate(fileData: Uint8Array) {
     await this.props.toggleLoading();
-    await this.DocsClient.upload(
+    await TransactionDocumentClientService.upload(
       this.state.txn.getId(),
       `${timestamp()}-generated.pdf`,
       fileData,
@@ -413,7 +409,7 @@ export class TxnCard extends React.PureComponent<props, state> {
       return;
     }
     try {
-      await this.DocsClient.upload(
+      await TransactionDocumentClientService.upload(
         this.state.txn.getId(),
         this.FileInput.current!.files![0].name,
         this.LastSingleFileUpload?.filedata,
@@ -493,7 +489,7 @@ export class TxnCard extends React.PureComponent<props, state> {
     try {
       const req = new Transaction();
       req.setId(this.state.txn.getId());
-      const refreshTxn = await this.TxnClient.Get(req);
+      const refreshTxn = await TransactionClientService.Get(req);
       this.setState({
         txn: refreshTxn,
       });
@@ -506,7 +502,7 @@ export class TxnCard extends React.PureComponent<props, state> {
 
   async deleteFile(name: string, bucket: string, cb?: () => void) {
     try {
-      await this.DocsClient.deleteByName(name, bucket);
+      await TransactionDocumentClientService.deleteByName(name, bucket);
       if (cb) {
         cb();
       }
@@ -563,7 +559,7 @@ export class TxnCard extends React.PureComponent<props, state> {
 
   saveEditedTransaction = async (transaction: Transaction) => {
     try {
-      await this.TxnClient.Update(transaction);
+      await TransactionClientService.Update(transaction);
     } catch (err) {
       console.error(`An error occurred while updating a transaction: ${err}`);
     }
