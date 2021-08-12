@@ -146,7 +146,7 @@ const Transaction: FC<Props> = props => {
               />
             </Modal>
           ) : null}
-          {CAN_ADD_TXNS.includes(user.getId()) && (
+          {
             <SectionBar
               actions={[
                 {
@@ -157,7 +157,7 @@ const Transaction: FC<Props> = props => {
                 },
               ]}
             />
-          )}
+          }
           <TransactionUserView
             userID={userID}
             userName={UserClientService.getCustomerName(user)}
