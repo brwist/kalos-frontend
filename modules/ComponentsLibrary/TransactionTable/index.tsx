@@ -42,8 +42,9 @@ import { prettyMoney } from '../../transaction/components/row';
 import { CompareTransactions } from '../CompareTransactions';
 import { GalleryData } from '../Gallery';
 import { Data, InfoTable } from '../InfoTable';
+import { Alert } from '../Alert';
 import { Modal } from '../Modal';
-import { FilterData, RoleType } from '../Payroll';
+import { FilterData, RoleType, AssignedUserData } from '../Payroll';
 import { PlainForm, Schema } from '../PlainForm';
 import { SectionBar } from '../SectionBar';
 import { UploadPhotoTransaction } from '../UploadPhotoTransaction';
@@ -82,6 +83,10 @@ interface FilterType {
   billingRecorded: boolean;
 }
 
+interface AssignedEmployeeType {
+  employeeId: number;
+}
+
 let sortDir: OrderDir | ' ' | undefined = 'ASC'; // Because I can't figure out why this isn't updating with the state
 let sortBy: string | undefined = 'vendor, timestamp';
 // This is outside of state because it was slow inside of state
@@ -94,6 +99,9 @@ let filter: FilterType = {
   isRejected: false,
   amount: undefined,
   billingRecorded: false,
+};
+let assigned: AssignedEmployeeType = {
+  employeeId: 0,
 };
 export const TransactionTable: FC<Props> = ({
   loggedUserId,
@@ -127,6 +135,11 @@ export const TransactionTable: FC<Props> = ({
     Transaction[]
   >([]); // Transactions that are selected in the table if the isSelector prop is set
   const [pageNumber, setPageNumber] = useState<number>(0);
+  // For assigning employees, this will store the last chosen one for the form
+  const [assignedEmployee, setAssignedEmployee] = useState<number | undefined>(
+    undefined,
+  );
+  const [error, setError] = useState<string | undefined>(undefined);
 
   const [status, setStatus] = useState<
     'Accepted' | 'Rejected' | 'Accepted / Rejected'
@@ -481,14 +494,25 @@ export const TransactionTable: FC<Props> = ({
     [FileInput, refresh],
   );
 
+  const handleSetError = useCallback(
+    (error: string | undefined) => setError(error),
+    [setError],
+  );
+
   const handleSetAssigningUser = useCallback(
     (isAssigningUser: boolean, transactionId: number) => {
+      if (isAssigningUser) setAssignedEmployee(undefined);
       setAssigningUser({
         isAssigning: isAssigningUser,
         transactionId: transactionId,
       });
     },
-    [setAssigningUser],
+    [setAssigningUser, setAssignedEmployee],
+  );
+
+  const handleSetAssignedEmployee = useCallback(
+    assignedEmployee => setAssignedEmployee(assignedEmployee),
+    [setAssignedEmployee],
   );
 
   const handleSetFilter = useCallback((d: FilterData) => {
@@ -564,12 +588,17 @@ export const TransactionTable: FC<Props> = ({
   );
 
   const handleAssignEmployee = useCallback(
-    async (employeeIdToAssign: number, transactionId: number) => {
+    async (employeeIdToAssign: number | undefined, transactionId: number) => {
+      if (employeeIdToAssign == undefined) {
+        setError('There is no employee to assign.');
+        return;
+      }
       try {
         let req = new Transaction();
         req.setId(transactionId);
         req.setAssignedEmployeeId(employeeIdToAssign);
         req.setFieldMaskList(['AssignedEmployeeId']);
+        console.log('assigning employee with id: ', employeeIdToAssign);
         let result = await TransactionClientService.Update(req);
         if (!result) {
           console.error('Unable to assign employee.');
@@ -663,6 +692,16 @@ export const TransactionTable: FC<Props> = ({
     ],
   );
 
+  const SCHEMA_ASSIGN_USER: Schema<AssignedUserData> = [
+    [
+      {
+        name: 'employeeId',
+        label: 'Employee to assign',
+        type: 'technician',
+      },
+    ],
+  ];
+
   const SCHEMA: Schema<FilterData> = [
     [
       {
@@ -746,6 +785,15 @@ export const TransactionTable: FC<Props> = ({
   return (
     <>
       {loading ? <Loader /> : <> </>}
+      {error && (
+        <Alert
+          open={error != undefined}
+          onClose={() => handleSetError(undefined)}
+          title="Error"
+        >
+          {error}
+        </Alert>
+      )}
       {transactionToEdit && (
         <Modal
           open={true}
@@ -773,16 +821,18 @@ export const TransactionTable: FC<Props> = ({
                 label: 'Assign',
                 onClick: () =>
                   handleAssignEmployee(
-                    filter.employeeId,
+                    assignedEmployee,
                     assigningUser.transactionId,
                   ),
               },
             ]}
           />
           <PlainForm
-            data={filter}
-            onChange={handleSetFilter}
-            schema={SCHEMA}
+            data={assigned}
+            onChange={(type: AssignedEmployeeType) =>
+              handleSetAssignedEmployee(type.employeeId)
+            }
+            schema={SCHEMA_ASSIGN_USER}
             className="PayrollFilter"
           />
         </Modal>
