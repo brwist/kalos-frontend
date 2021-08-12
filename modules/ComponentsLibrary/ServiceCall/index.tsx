@@ -318,16 +318,17 @@ const handleSaveInvoice = useCallback(async() => {
       console.log('saving existing ID');
       temp.setId(serviceCallId);
       temp.addFieldMask('Id');
-      await EventClientService.Update(temp);
-
-      console.log('finished Update');
-    } else {
       if(saveInvoice) {
-        const res = await EventClientService.Create(temp, saveInvoice);
+        temp.setIsGeneratedInvoice(saveInvoice);
+        temp.addFieldMask('IsGeneratedInvoice');
+        const res = await EventClientService.Update(temp);
       }
       else {
-        const res = await EventClientService.Create(temp);
+        await EventClientService.Update(temp);
       }
+      console.log('finished Update');
+    } else {
+        const res = await EventClientService.Create(temp);
         console.log('creating new one');
         setEntry(res);
       if (!serviceCallId) {
