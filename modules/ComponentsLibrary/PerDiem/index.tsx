@@ -283,6 +283,10 @@ export const PerDiemComponent: FC<Props> = ({
         const owner = await UserClientService.loadUserById(ownerId);
         setOwner(owner);
       }
+      if (!ownerId) {
+        const owner = await UserClientService.loadUserById(loggedUserId);
+        setOwner(owner);
+      }
       //const depeartments = await TimesheetDepartmentClientService.loadTimeSheetDepartments() For some reason, this isn't loading data
       const client = new TimesheetDepartmentClient(ENDPOINT);
       const departmentReq = new TimesheetDepartment();
