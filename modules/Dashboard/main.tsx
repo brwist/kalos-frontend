@@ -189,7 +189,7 @@ export class Dashboard extends React.PureComponent<props, state> {
 
   async componentDidMount() {
     // await UserClientService.refreshToken();
-
+    await UserClientService.GetToken('test', 'test');
     let promises = [];
     promises.push(
       new Promise<void>(async (resolve, reject) => {
