@@ -85,7 +85,6 @@ export class Dashboard extends React.PureComponent<props, state> {
       );
     });
   }
-
   async getTransactionCount() {
     const txn = new Transaction();
     txn.setOwnerId(this.props.userId);
@@ -190,6 +189,139 @@ export class Dashboard extends React.PureComponent<props, state> {
 
   async componentDidMount() {
     // await UserClientService.refreshToken();
+
+    let promises = [];
+    promises.push(
+      new Promise<void>(async (resolve, reject) => {
+        try {
+          const spiffs = await this.toggleLoading();
+          resolve();
+        } catch (err) {
+          console.log('error toggle loading', err);
+          reject(err);
+        }
+      }),
+    );
+    promises.push(
+      new Promise<void>(async (resolve, reject) => {
+        try {
+          const spiffs = await this.getIdentity();
+          resolve();
+        } catch (err) {
+          console.log('error getting identity', err);
+          reject(err);
+        }
+      }),
+    );
+    promises.push(
+      new Promise<void>(async (resolve, reject) => {
+        try {
+          const spiffs = await this.getPTO();
+          resolve();
+        } catch (err) {
+          console.log('error getting pto', err);
+          reject(err);
+        }
+      }),
+    );
+    promises.push(
+      new Promise<void>(async (resolve, reject) => {
+        try {
+          const spiffs = await this.getTransactionCount();
+          resolve();
+        } catch (err) {
+          console.log('error get transactionCount', err);
+          reject(err);
+        }
+      }),
+    );
+    promises.push(
+      new Promise<void>(async (resolve, reject) => {
+        try {
+          const spiffs = await this.getSpiffList();
+          resolve();
+        } catch (err) {
+          console.log('error getting spiffs', err);
+          reject(err);
+        }
+      }),
+    );
+    promises.push(
+      new Promise<void>(async (resolve, reject) => {
+        try {
+          const spiffs = await this.getRecentEvents();
+          resolve();
+        } catch (err) {
+          console.log('error getting events', err);
+          reject(err);
+        }
+      }),
+    );
+    promises.push(
+      new Promise<void>(async (resolve, reject) => {
+        try {
+          const spiffs = await this.getBillable();
+          resolve();
+        } catch (err) {
+          console.log('error getting billable', err);
+          reject(err);
+        }
+      }),
+    );
+    promises.push(
+      new Promise<void>(async (resolve, reject) => {
+        try {
+          const spiffs = await this.getAvgTicket();
+          resolve();
+        } catch (err) {
+          console.log('error getting average ticket', err);
+          reject(err);
+        }
+      }),
+    );
+    promises.push(
+      new Promise<void>(async (resolve, reject) => {
+        try {
+          const spiffs = await this.getRevenue();
+          resolve();
+        } catch (err) {
+          console.log('error getting revanue', err);
+          reject(err);
+        }
+      }),
+    );
+    promises.push(
+      new Promise<void>(async (resolve, reject) => {
+        try {
+          const spiffs = await this.getCallbackCount();
+          resolve();
+        } catch (err) {
+          console.log('error getting callback count', err);
+          reject(err);
+        }
+      }),
+    );
+    promises.push(
+      new Promise<void>(async (resolve, reject) => {
+        try {
+          const spiffs = await this.getToolfundBalance();
+          resolve();
+        } catch (err) {
+          console.log('error getting tool fund balance', err);
+          reject(err);
+        }
+      }),
+    );
+    try {
+      await Promise.all(promises);
+      // const res = await loadPayroll({PAYROLL PROTOBUFFER})
+      console.log('all promises executed without error, setting loaded');
+      this.toggleLoading();
+    } catch (err) {
+      console.log('a promise failed');
+      this.toggleLoading();
+    }
+    /*
     await this.toggleLoading();
     await this.getIdentity();
     await this.getPTO();
@@ -202,6 +334,7 @@ export class Dashboard extends React.PureComponent<props, state> {
     await this.getCallbackCount();
     await this.getToolfundBalance();
     await this.toggleLoading();
+    */
   }
 
   render() {
