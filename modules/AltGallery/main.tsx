@@ -97,7 +97,6 @@ export class AltGallery extends React.PureComponent<props, state> {
 
   fetchData() {
     return new Promise(async resolve => {
-      console.log('fetch');
       const docs = await this.DocClient.byTransactionID(
         this.props.transactionID,
       );

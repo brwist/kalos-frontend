@@ -213,6 +213,9 @@ export class Gallery extends React.PureComponent<props, state> {
           currentURL,
         });
       } catch (err) {
+        console.error(
+          `An error occurred while fetching data for the Gallery: ${err}`,
+        );
         alert('No documents were found');
         this.toggleOpen();
       }
