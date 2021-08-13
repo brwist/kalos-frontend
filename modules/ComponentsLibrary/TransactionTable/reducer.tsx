@@ -9,6 +9,8 @@ import {
   TransactionActivityClient,
 } from '@kalos-core/kalos-rpc/TransactionActivity';
 import { User } from '@kalos-core/kalos-rpc/User';
+import { FilterData, RoleType, AssignedUserData } from '../Payroll';
+
 interface FilterType {
   departmentId: number;
   employeeId: number;
@@ -30,6 +32,10 @@ export type State = {
   transactionActivityLogs: TransactionActivity[];
   transactionToEdit: Transaction | undefined;
   loading: boolean;
+  loadTransactions: boolean;
+  creatingTransaction: boolean;
+  mergingTransaction: boolean;
+  role: RoleType | undefined;
 };
 export type Action =
   | { type: 'setFilter'; data: FilterType }
@@ -37,7 +43,11 @@ export type Action =
   | { type: 'setTotalTransactions'; data: number }
   | { type: 'setTransactionActivityLogs'; data: TransactionActivity[] }
   | { type: 'setTransactionToEdit'; data: Transaction | undefined }
-  | { type: 'setLoading'; data: boolean };
+  | { type: 'setLoading'; data: boolean }
+  | { type: 'setLoadTransactions'; data: boolean }
+  | { type: 'setMergingTransaction'; data: boolean }
+  | { type: 'setRole'; data: RoleType }
+  | { type: 'setCreatingTransaction'; data: boolean };
 
 export const reducer = (state: State, action: Action) => {
   switch (action.type) {
@@ -78,6 +88,34 @@ export const reducer = (state: State, action: Action) => {
       return {
         ...state,
         loading: action.data,
+      };
+    }
+    case 'setLoadTransactions': {
+      console.log('setting loading transactions');
+      return {
+        ...state,
+        loadTransactions: action.data,
+      };
+    }
+    case 'setCreatingTransaction': {
+      console.log('setting creating transactions');
+      return {
+        ...state,
+        creatingTransaction: action.data,
+      };
+    }
+    case 'setMergingTransaction': {
+      console.log('setting merging transactions');
+      return {
+        ...state,
+        mergingTransaction: action.data,
+      };
+    }
+    case 'setRole': {
+      console.log('setting role');
+      return {
+        ...state,
+        role: action.data,
       };
     }
     default:

@@ -140,12 +140,12 @@ export const TransactionTable: FC<Props> = ({
   //   Transaction | undefined
   // >();
   //const [loading, setLoading] = useState<boolean>(true);
-  const [loadTransactions, setloadTransactions] = useState<boolean>(true);
+  //const [loadTransactions, setloadTransactions] = useState<boolean>(true);
 
-  const [creatingTransaction, setCreatingTransaction] = useState<boolean>(); // for when a transaction is being made, pops up the popup
-  const [mergingTransaction, setMergingTransaction] = useState<boolean>(); // When a txn is being merged with another one, effectively allowing full
+  //const [creatingTransaction, setCreatingTransaction] = useState<boolean>(); // for when a transaction is being made, pops up the popup
+  //const [mergingTransaction, setMergingTransaction] = useState<boolean>(); // When a txn is being merged with another one, effectively allowing full
   // editorial control for Dani
-  const [role, setRole] = useState<RoleType>();
+  //const [role, setRole] = useState<RoleType>();
   const [assigningUser, setAssigningUser] = useState<{
     isAssigning: boolean;
     transactionId: number;
@@ -174,6 +174,10 @@ export const TransactionTable: FC<Props> = ({
     transactionActivityLogs: [],
     transactionToEdit: undefined,
     loading: true,
+    loadTransactions: true,
+    creatingTransaction: false,
+    mergingTransaction: false,
+    role: undefined,
   });
   const {
     transactionFilter,
@@ -182,6 +186,10 @@ export const TransactionTable: FC<Props> = ({
     transactionActivityLogs,
     transactionToEdit,
     loading,
+    loadTransactions,
+    creatingTransaction,
+    mergingTransaction,
+    role,
   } = state;
 
   const handleSetTransactionToEdit = useCallback(
@@ -394,7 +402,6 @@ export const TransactionTable: FC<Props> = ({
         let req = new TransactionActivity();
         req.setTransactionId(transaction.getId());
         let res = await TransactionActivityClientService.BatchGet(req);
-        console.log(res.getResultsList());
         let latest: TransactionActivity | null = null;
         res.getResultsList().forEach(transactionActivity => {
           if (
@@ -461,7 +468,9 @@ export const TransactionTable: FC<Props> = ({
       .getPermissionGroupsList()
       .find(p => p.getType() === 'role');
 
-    if (role) setRole(role.getName() as RoleType);
+    if (role) {
+      dispatch({ type: 'setRole', data: role.getName() as RoleType });
+    }
 
     setChangingPage(false);
     dispatch({ type: 'setLoading', data: false });
@@ -568,7 +577,6 @@ export const TransactionTable: FC<Props> = ({
   );
 
   const handleSetFilter = useCallback(async (d: FilterData) => {
-    console.log('updating filter');
     if (!d.week) {
       d.week = OPTION_ALL;
     }
@@ -589,7 +597,7 @@ export const TransactionTable: FC<Props> = ({
     filter.amount = d.amount;
     filter.billingRecorded = d.billingRecorded;
     dispatch({ type: 'setFilter', data: filter });
-    setloadTransactions(true);
+    dispatch({ type: 'setLoadTransactions', data: true });
   }, []);
 
   const handleUpdateTransaction = useCallback(
@@ -630,16 +638,16 @@ export const TransactionTable: FC<Props> = ({
 
   const handleSetCreatingTransaction = useCallback(
     (isCreatingTransaction: boolean) => {
-      setCreatingTransaction(isCreatingTransaction);
+      dispatch({ type: 'setCreatingTransaction', data: isCreatingTransaction });
     },
-    [setCreatingTransaction],
+    [],
   );
 
   const handleSetMergingTransaction = useCallback(
     (isMergingTransaction: boolean) => {
-      setMergingTransaction(isMergingTransaction);
+      dispatch({ type: 'setMergingTransaction', data: isMergingTransaction });
     },
-    [setMergingTransaction],
+    [],
   );
 
   const handleAssignEmployee = useCallback(
@@ -694,9 +702,8 @@ export const TransactionTable: FC<Props> = ({
           );
           break;
       }
-      console.log('we got here');
       dispatch({ type: 'setFilter', data: tempFilter });
-      setloadTransactions(true);
+      dispatch({ type: 'setLoadTransactions', data: true });
     },
     [setStatus, transactionFilter],
   );
@@ -846,7 +853,7 @@ export const TransactionTable: FC<Props> = ({
   useEffect(() => {
     if (loadTransactions) {
       resetTransactions();
-      setloadTransactions(false);
+      dispatch({ type: 'setLoadTransactions', data: false });
     }
   }, [loadTransactions, resetTransactions]);
   return (
