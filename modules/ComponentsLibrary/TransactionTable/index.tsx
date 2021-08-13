@@ -56,8 +56,7 @@ import {
   TransactionDocument,
   TransactionDocumentList,
 } from '@kalos-core/kalos-rpc/TransactionDocument';
-import ImageSearchTwoTone from '@material-ui/icons/ImageSearchTwoTone';
-import { Gallery } from '../Gallery/index';
+import { ErrorBoundary } from '../ErrorBoundary';
 export interface Props {
   loggedUserId: number;
   isSelector?: boolean; // Is this a selector table (checkboxes that return in on-change)?
@@ -806,7 +805,7 @@ export const TransactionTable: FC<Props> = ({
   }, [load, loaded, changingPage]);
 
   return (
-    <>
+    <ErrorBoundary>
       {loading ? <Loader /> : <> </>}
       {error && (
         <Alert
@@ -1033,268 +1032,279 @@ export const TransactionTable: FC<Props> = ({
                 let txnWithId = selectedTransactions.filter(
                   txn => txn.getId() === selectorParam.txn.getId(),
                 );
-                return [
-                  {
-                    value: txnWithId.length == 1 ? 'SELECTED' : '',
-                    invisible: !isSelector,
-                  },
-                  {
-                    value: selectorParam.txn.getVendorCategory(),
-                    onClick: isSelector
-                      ? () => setTransactionChecked(idx)
-                      : undefined,
-                  },
-                  {
-                    value:
-                      selectorParam.txn.getTimestamp() != NULL_TIME &&
-                      selectorParam.txn.getTimestamp() != '0000-00-00 00:00:00'
-                        ? format(
-                            new Date(selectorParam.txn.getTimestamp()),
-                            'yyyy-MM-dd',
-                          )
-                        : '-',
-                    onClick: isSelector
-                      ? () => setTransactionChecked(idx)
-                      : undefined,
-                  },
-                  {
-                    value: `${selectorParam.txn.getOrderNumber()}`,
-                    onClick: isSelector
-                      ? () => setTransactionChecked(idx)
-                      : undefined,
-                  },
-                  {
-                    value: `${selectorParam.txn.getOwnerName()} (${selectorParam.txn.getOwnerId()})`,
-                    onClick: isSelector
-                      ? () => setTransactionChecked(idx)
-                      : undefined,
-                  },
-                  {
-                    value: `${selectorParam.txn
-                      .getDepartment()
-                      ?.getDescription()}`,
-                    onClick: isSelector
-                      ? () => setTransactionChecked(idx)
-                      : undefined,
-                  },
-                  {
-                    value: selectorParam.txn.getJobId(),
-                    onClick: isSelector
-                      ? () => setTransactionChecked(idx)
-                      : undefined,
-                  },
-                  {
-                    value: `$ ${prettyMoney(selectorParam.txn.getAmount())}`,
-                    onClick: isSelector
-                      ? () => setTransactionChecked(idx)
-                      : undefined,
-                  },
-                  {
-                    value: selectorParam.txn.getVendor(),
-                    onClick: isSelector
-                      ? () => setTransactionChecked(idx)
-                      : undefined,
-                  },
-                  {
-                    actions: !isSelector ? (
-                      [
-                        <Tooltip key="copy" content="Copy data to clipboard">
-                          <IconButton
-                            size="small"
-                            onClick={() =>
-                              copyToClipboard(
-                                `${parseISO(
-                                  selectorParam.txn
-                                    .getTimestamp()
-                                    .split(' ')
-                                    .join('T'),
-                                ).toLocaleDateString()},${selectorParam.txn.getDescription()},${selectorParam.txn.getAmount()},${selectorParam.txn.getOwnerName()},${selectorParam.txn.getVendor()}`,
-                              )
-                            }
-                          >
-                            <CopyIcon />
-                          </IconButton>
-                        </Tooltip>,
-                        <Tooltip key="editAll" content="Edit this transaction">
-                          <IconButton
-                            size="small"
-                            onClick={() =>
-                              handleSetTransactionToEdit(selectorParam.txn)
-                            }
-                          >
-                            <LineWeightIcon />
-                          </IconButton>
-                        </Tooltip>,
-                        <Tooltip key="upload" content="Upload File">
-                          <IconButton
-                            size="small"
-                            onClick={event => {
-                              if (!event.isTrusted) {
-                                // This is likely a duplicate event called for some reason I couldn't figure out
-                                return;
+                try {
+                  return [
+                    {
+                      value: txnWithId.length == 1 ? 'SELECTED' : '',
+                      invisible: !isSelector,
+                    },
+                    {
+                      value: selectorParam.txn.getVendorCategory(),
+                      onClick: isSelector
+                        ? () => setTransactionChecked(idx)
+                        : undefined,
+                    },
+                    {
+                      value:
+                        selectorParam.txn.getTimestamp() != NULL_TIME &&
+                        selectorParam.txn.getTimestamp() !=
+                          '0000-00-00 00:00:00'
+                          ? format(
+                              new Date(selectorParam.txn.getTimestamp()),
+                              'yyyy-MM-dd',
+                            )
+                          : '-',
+                      onClick: isSelector
+                        ? () => setTransactionChecked(idx)
+                        : undefined,
+                    },
+                    {
+                      value: `${selectorParam.txn.getOrderNumber()}`,
+                      onClick: isSelector
+                        ? () => setTransactionChecked(idx)
+                        : undefined,
+                    },
+                    {
+                      value: `${selectorParam.txn.getOwnerName()} (${selectorParam.txn.getOwnerId()})`,
+                      onClick: isSelector
+                        ? () => setTransactionChecked(idx)
+                        : undefined,
+                    },
+                    {
+                      value: `${selectorParam.txn
+                        .getDepartment()
+                        ?.getDescription()}`,
+                      onClick: isSelector
+                        ? () => setTransactionChecked(idx)
+                        : undefined,
+                    },
+                    {
+                      value: selectorParam.txn.getJobId(),
+                      onClick: isSelector
+                        ? () => setTransactionChecked(idx)
+                        : undefined,
+                    },
+                    {
+                      value: `$ ${prettyMoney(selectorParam.txn.getAmount())}`,
+                      onClick: isSelector
+                        ? () => setTransactionChecked(idx)
+                        : undefined,
+                    },
+                    {
+                      value: selectorParam.txn.getVendor(),
+                      onClick: isSelector
+                        ? () => setTransactionChecked(idx)
+                        : undefined,
+                    },
+                    {
+                      actions: !isSelector ? (
+                        [
+                          <Tooltip key="copy" content="Copy data to clipboard">
+                            <IconButton
+                              size="small"
+                              onClick={() =>
+                                copyToClipboard(
+                                  `${parseISO(
+                                    selectorParam.txn
+                                      .getTimestamp()
+                                      .split(' ')
+                                      .join('T'),
+                                  ).toLocaleDateString()},${selectorParam.txn.getDescription()},${selectorParam.txn.getAmount()},${selectorParam.txn.getOwnerName()},${selectorParam.txn.getVendor()}`,
+                                )
                               }
-                              event.preventDefault();
-                              // Working around the input (since it isn't a React-based element, idx is just the last value in the loop)
-                              // As a result, I'm simply setting a variable outside of react to work with it at the top. Could fix this
-                              // at some point so FIXME but it works
-                              transactionOfFileUploading =
-                                transactions[idx].txn;
-                              openFileInput(idx);
-                            }}
+                            >
+                              <CopyIcon />
+                            </IconButton>
+                          </Tooltip>,
+                          <Tooltip
+                            key="editAll"
+                            content="Edit this transaction"
                           >
-                            <UploadIcon />
-                            <input
-                              type="file"
-                              ref={FileInput}
-                              onChange={event => {
-                                if (!transactionOfFileUploading) {
-                                  console.error(
-                                    'No transaction selected for upload.',
-                                  );
-                                  alert('No transaction selected for upload.');
+                            <IconButton
+                              size="small"
+                              onClick={() =>
+                                handleSetTransactionToEdit(selectorParam.txn)
+                              }
+                            >
+                              <LineWeightIcon />
+                            </IconButton>
+                          </Tooltip>,
+                          <Tooltip key="upload" content="Upload File">
+                            <IconButton
+                              size="small"
+                              onClick={event => {
+                                if (!event.isTrusted) {
+                                  // This is likely a duplicate event called for some reason I couldn't figure out
                                   return;
                                 }
                                 event.preventDefault();
-                                handleFile(transactionOfFileUploading!);
+                                // Working around the input (since it isn't a React-based element, idx is just the last value in the loop)
+                                // As a result, I'm simply setting a variable outside of react to work with it at the top. Could fix this
+                                // at some point so FIXME but it works
+                                transactionOfFileUploading =
+                                  transactions[idx].txn;
+                                openFileInput(idx);
                               }}
-                              style={{ display: 'none' }}
-                            />
-                          </IconButton>
-                        </Tooltip>,
-                        <AltGallery
-                          key="Gallery"
-                          fileList={[]}
-                          title="Transaction Uploads"
-                          text="View Photos and Documents"
-                          transactionID={transactions[idx].txn.getId()}
-                          iconButton
-                        />,
-                        <TxnLog
-                          key="txnLog"
-                          iconButton
-                          txnID={selectorParam.txn.getId()}
-                        />,
-                        <TxnNotes
-                          key="viewNotes"
-                          iconButton
-                          text="View notes"
-                          notes={selectorParam.txn.getNotes()}
-                          disabled={selectorParam.txn.getNotes() === ''}
-                        />,
-                        ...([9928, 9646, 1734].includes(loggedUserId)
-                          ? [
-                              <Tooltip
-                                key="audit"
-                                content={
-                                  selectorParam.txn.getIsAudited() &&
-                                  loggedUserId !== 1734
-                                    ? 'This transaction has already been audited'
-                                    : 'Mark as correct'
-                                }
-                              >
-                                <IconButton
-                                  size="small"
-                                  onClick={
-                                    loggedUserId === 1734
-                                      ? () => forceAccept(selectorParam.txn)
-                                      : () => auditTxn(selectorParam.txn)
+                            >
+                              <UploadIcon />
+                              <input
+                                type="file"
+                                ref={FileInput}
+                                onChange={event => {
+                                  if (!transactionOfFileUploading) {
+                                    console.error(
+                                      'No transaction selected for upload.',
+                                    );
+                                    alert(
+                                      'No transaction selected for upload.',
+                                    );
+                                    return;
                                   }
-                                  disabled={
+                                  event.preventDefault();
+                                  handleFile(transactionOfFileUploading!);
+                                }}
+                                style={{ display: 'none' }}
+                              />
+                            </IconButton>
+                          </Tooltip>,
+                          <AltGallery
+                            key="Gallery"
+                            fileList={[]}
+                            title="Transaction Uploads"
+                            text="View Photos and Documents"
+                            transactionID={transactions[idx].txn.getId()}
+                            iconButton
+                          />,
+                          <TxnLog
+                            key="txnLog"
+                            iconButton
+                            txnID={selectorParam.txn.getId()}
+                          />,
+                          <TxnNotes
+                            key="viewNotes"
+                            iconButton
+                            text="View notes"
+                            notes={selectorParam.txn.getNotes()}
+                            disabled={selectorParam.txn.getNotes() === ''}
+                          />,
+                          ...([9928, 9646, 1734].includes(loggedUserId)
+                            ? [
+                                <Tooltip
+                                  key="audit"
+                                  content={
                                     selectorParam.txn.getIsAudited() &&
                                     loggedUserId !== 1734
+                                      ? 'This transaction has already been audited'
+                                      : 'Mark as correct'
                                   }
                                 >
-                                  <CheckIcon />
-                                </IconButton>
-                              </Tooltip>,
-                            ]
-                          : []),
-                        <Tooltip key="submit" content={'Mark as accepted'}>
-                          <IconButton
-                            size="small"
-                            onClick={() => updateStatus(selectorParam.txn)}
-                          >
-                            <SubmitIcon />
-                          </IconButton>
-                        </Tooltip>,
-                        <Tooltip
-                          key="assign"
-                          content="Assign an employee to this task"
-                        >
-                          <IconButton
-                            size="small"
-                            onClick={() =>
-                              handleSetAssigningUser(
-                                true,
-                                selectorParam.txn.getId(),
-                              )
-                            }
-                          >
-                            <AssignmentIndIcon />
-                          </IconButton>
-                        </Tooltip>,
-                        <Prompt
-                          key="reject"
-                          confirmFn={reason =>
-                            dispute(reason, selectorParam.txn)
-                          }
-                          text="Reject transaction"
-                          prompt="Enter reason for rejection: "
-                          Icon={RejectIcon}
-                        />,
-                      ]
-                    ) : (
-                      <> </>
-                    ),
-                    actionsFullWidth: true,
-                  },
-                  {
-                    actions: [
-                      <>
-                        {selectorParam.txn.getStatusId() === 3 ? (
-                          <Tooltip key="accepted" content="Accepted">
-                            <IconButton size="small">
-                              <DoneIcon />
-                            </IconButton>
-                          </Tooltip>
-                        ) : (
-                          <> </>
-                        )}
-                        {selectorParam.txn.getStatusId() == 4 ? (
-                          <>
-                            <Tooltip
-                              key="rejected"
-                              content={`Rejected ${transactionActivityLogs
-                                .filter(
-                                  log =>
-                                    log.getTransactionId() ==
-                                    selectorParam.txn.getId(),
-                                )
-                                .map(
-                                  log =>
-                                    `(Reason: ${log
-                                      .getDescription()
-                                      .substr(
-                                        log.getDescription().indexOf(' ') + 1,
-                                      )})`,
-                                )}`}
+                                  <IconButton
+                                    size="small"
+                                    onClick={
+                                      loggedUserId === 1734
+                                        ? () => forceAccept(selectorParam.txn)
+                                        : () => auditTxn(selectorParam.txn)
+                                    }
+                                    disabled={
+                                      selectorParam.txn.getIsAudited() &&
+                                      loggedUserId !== 1734
+                                    }
+                                  >
+                                    <CheckIcon />
+                                  </IconButton>
+                                </Tooltip>,
+                              ]
+                            : []),
+                          <Tooltip key="submit" content={'Mark as accepted'}>
+                            <IconButton
+                              size="small"
+                              onClick={() => updateStatus(selectorParam.txn)}
                             >
+                              <SubmitIcon />
+                            </IconButton>
+                          </Tooltip>,
+                          <Tooltip
+                            key="assign"
+                            content="Assign an employee to this task"
+                          >
+                            <IconButton
+                              size="small"
+                              onClick={() =>
+                                handleSetAssigningUser(
+                                  true,
+                                  selectorParam.txn.getId(),
+                                )
+                              }
+                            >
+                              <AssignmentIndIcon />
+                            </IconButton>
+                          </Tooltip>,
+                          <Prompt
+                            key="reject"
+                            confirmFn={reason =>
+                              dispute(reason, selectorParam.txn)
+                            }
+                            text="Reject transaction"
+                            prompt="Enter reason for rejection: "
+                            Icon={RejectIcon}
+                          />,
+                        ]
+                      ) : (
+                        <> </>
+                      ),
+                      actionsFullWidth: true,
+                    },
+                    {
+                      actions: [
+                        <>
+                          {selectorParam.txn.getStatusId() === 3 ? (
+                            <Tooltip key="accepted" content="Accepted">
                               <IconButton size="small">
-                                <CloseIcon />
+                                <DoneIcon />
                               </IconButton>
                             </Tooltip>
-                          </>
-                        ) : (
-                          <> </>
-                        )}
-                      </>,
-                    ],
-                  },
-                ];
+                          ) : (
+                            <> </>
+                          )}
+                          {selectorParam.txn.getStatusId() == 4 ? (
+                            <>
+                              <Tooltip
+                                key="rejected"
+                                content={`Rejected ${transactionActivityLogs
+                                  .filter(
+                                    log =>
+                                      log.getTransactionId() ==
+                                      selectorParam.txn.getId(),
+                                  )
+                                  .map(
+                                    log =>
+                                      `(Reason: ${log
+                                        .getDescription()
+                                        .substr(
+                                          log.getDescription().indexOf(' ') + 1,
+                                        )})`,
+                                  )}`}
+                              >
+                                <IconButton size="small">
+                                  <CloseIcon />
+                                </IconButton>
+                              </Tooltip>
+                            </>
+                          ) : (
+                            <> </>
+                          )}
+                        </>,
+                      ],
+                    },
+                  ];
+                } catch (err) {
+                  console.error('An error occurred while rendering: ', err);
+                  return <>An error occurred while rendering: {err}</>;
+                }
               }) as Data)
         }
         loading={loading}
       />
-    </>
+    </ErrorBoundary>
   );
 };

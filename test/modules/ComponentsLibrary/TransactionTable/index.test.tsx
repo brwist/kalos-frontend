@@ -99,8 +99,14 @@ describe('ComponentsLibrary', () => {
       });
 
       it('displays the correct transaction in the table', async () => {
-        await Constants.ReRenderAfterLoad();
-        console.log(wrapper.debug());
+        await Constants.ReRenderAfterLoad(200);
+        wrapper.setProps({ loggedUserId: 98217 });
+        Chai.expect(
+          wrapper
+            .find('.InfoTableValueContent')
+            .filterWhere(result => result.text() !== 'TEST ORDER NUMBER')
+            .first(),
+        ).to.be.lengthOf(1);
       });
     });
   });
