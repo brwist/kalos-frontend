@@ -11,6 +11,9 @@ import Chai = require('chai');
 
 import Stubs = require('../../../test-setup/stubs'); // ? Sets the auth token up in a one-liner
 import TransactionModule = require('@kalos-core/kalos-rpc/Transaction');
+import LoaderModule = require('../../../../modules/Loader/main');
+import UserModule = require('@kalos-core/kalos-rpc/User');
+import TransactionActivityModule = require('@kalos-core/kalos-rpc/TransactionActivity');
 
 import TestConstants = require('../../../test-constants/test-response-data');
 
@@ -37,12 +40,41 @@ describe('ComponentsLibrary', () => {
         req.setOrderBy('vendor, timestamp');
         req.setOrderDir('ASC');
         req.setVendorCategory("'PickTicket','Receipt'");
+        req.setDocumentsList([]);
+        req.setActivityLogList([]);
+        // @ts-expect-error
+        req.setPageNumber(null);
+        req.setNotEqualsList([]);
+        // @ts-expect-error
+        req.setIsBillingRecorded(null);
+        (req as any)['wrappers_'] = null;
 
         Stubs.setupStubs(
           'TransactionClientService',
           'BatchGet',
-          TestConstants.getFakeTransactions(),
+          TestConstants.getFakeTransactionList(),
           req,
+        );
+
+        let userReq = new UserModule.User();
+        userReq.setId(98217);
+
+        Stubs.setupStubs(
+          'UserClientService',
+          'Get',
+          TestConstants.getFakeUser(98217),
+          userReq,
+        );
+
+        let transactionActivity =
+          new TransactionActivityModule.TransactionActivity();
+        transactionActivity.setTransactionId(100);
+
+        Stubs.setupStubs(
+          'TransactionActivityClientService',
+          'BatchGet',
+          TestConstants.getFakeActivityLogList(100, 98217),
+          transactionActivity,
         );
       });
       after(() => {
@@ -59,7 +91,11 @@ describe('ComponentsLibrary', () => {
         wrapper.unmount();
       });
 
-      
+      it.only('has a loader while it is loading', () => {
+        Chai.expect(
+          wrapper.containsAllMatchingElements([<LoaderModule.Loader />]),
+        ).to.be.equal(true);
+      });
     });
   });
 });
