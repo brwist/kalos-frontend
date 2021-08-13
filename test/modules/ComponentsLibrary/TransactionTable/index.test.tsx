@@ -99,14 +99,26 @@ describe('ComponentsLibrary', () => {
       });
 
       it('displays the correct transaction in the table', async () => {
-        await Constants.ReRenderAfterLoad(200);
-        wrapper.setProps({ loggedUserId: 98217 });
+        await Constants.ReRenderAfterLoad();
+        wrapper.update();
         Chai.expect(
           wrapper
             .find('.InfoTableValueContent')
             .filterWhere(result => result.text() !== 'TEST ORDER NUMBER')
             .first(),
         ).to.be.lengthOf(1);
+      });
+
+      describe('Pagination', () => {
+        it('shows the correct pages for a single transaction', async () => {
+          await Constants.ReRenderAfterLoad();
+          wrapper.update();
+          Chai.expect(
+            wrapper
+              .find('.MuiTypography-root')
+              .filterWhere(result => result.text() === '1-1 of 1'),
+          ).to.be.lengthOf(1);
+        });
       });
     });
   });
