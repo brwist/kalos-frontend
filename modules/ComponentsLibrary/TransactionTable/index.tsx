@@ -149,16 +149,10 @@ export const TransactionTable: FC<Props> = ({
     undefined,
   );
   const [error, setError] = useState<string | undefined>(undefined);
-  const [transactionForGallery, setTransactionForGallery] = useState<
-    Transaction | undefined
-  >(undefined);
   const [status, setStatus] = useState<
     'Accepted' | 'Rejected' | 'Accepted / Rejected'
   >('Accepted / Rejected');
   const [loaded, setLoaded] = useState<boolean>(false);
-  const [galleryLists, setGalleryLists] = useState<
-    { galleryData: GalleryData[]; transaction: Transaction }[]
-  >([]);
 
   const handleSetTransactionToEdit = useCallback(
     (transaction: Transaction | undefined) => {
@@ -430,15 +424,6 @@ export const TransactionTable: FC<Props> = ({
 
     setTransactionActivityLogs(logList);
     setTotalTransactions(res.getTotalCount());
-    let galleryDataForTransactions = await Promise.all(
-      res
-        .getResultsList()
-        .map(async txn => {
-          return { galleryData: await getGalleryData(txn), transaction: txn };
-        })
-        .reverse(),
-    );
-    setGalleryLists(galleryDataForTransactions);
     let transactions = res.getResultsList().map(txn => {
       return {
         txn: txn,
@@ -502,12 +487,6 @@ export const TransactionTable: FC<Props> = ({
     document.execCommand('copy');
     document.body.removeChild(el);
   }, []);
-
-  const handleSetTransactionForGallery = useCallback(
-    (transaction: Transaction | undefined) =>
-      setTransactionForGallery(transaction),
-    [setTransactionForGallery],
-  );
   const handleFile = (txn: Transaction) => {
     const fr = new FileReader();
     fr.onload = async () => {
@@ -824,19 +803,6 @@ export const TransactionTable: FC<Props> = ({
   return (
     <>
       {loading ? <Loader /> : <> </>}
-      {transactionForGallery && (
-        <Modal
-          open={transactionForGallery != undefined}
-          onClose={() => handleSetTransactionForGallery(undefined)}
-        >
-          <Gallery
-            fileList={[]}
-            title="Transaction Uploads"
-            text="Test"
-            transactionID={transactionForGallery.getId()}
-          />
-        </Modal>
-      )}
       {error && (
         <Alert
           open={error != undefined}
@@ -1189,19 +1155,14 @@ export const TransactionTable: FC<Props> = ({
                             />
                           </IconButton>
                         </Tooltip>,
-                        <Tooltip
+                        <AltGallery
                           key="Gallery"
-                          content="View Documents and Photos"
-                        >
-                          <IconButton
-                            size="small"
-                            onClick={() => {
-                              handleSetTransactionForGallery(selectorParam.txn);
-                            }}
-                          >
-                            <ImageSearchTwoTone />
-                          </IconButton>
-                        </Tooltip>,
+                          fileList={[]}
+                          title="Transaction Uploads"
+                          text="View Photos and Documents"
+                          transactionID={transactions[idx].txn.getId()}
+                          iconButton
+                        />,
                         <TxnLog
                           key="txnLog"
                           iconButton
