@@ -152,6 +152,8 @@ export const TransactionTable: FC<Props> = ({
     'Accepted' | 'Rejected' | 'Accepted / Rejected'
   >('Accepted / Rejected');
   const [loaded, setLoaded] = useState<boolean>(false);
+  const [changingPage, setChangingPage] = useState<boolean>(false); // To fix a bunch of issues with callbacks going in
+  // front of other callbacks
 
   const handleSetTransactionToEdit = useCallback(
     (transaction: Transaction | undefined) => {
@@ -305,54 +307,12 @@ export const TransactionTable: FC<Props> = ({
     refresh();
   };
 
-  const makeUpdateStatus = async (
-    id: number,
-    statusID: number,
-    description: string,
-    reason?: string,
-  ) => {
-    const txn = new Transaction();
-    txn.setId(id);
-    txn.setStatusId(statusID);
-    txn.setFieldMaskList(['StatusId']);
-    txn.setIsBillingRecorded(true);
-    try {
-      await TransactionClientService.Update(txn);
-    } catch (err) {
-      console.error(`An error occurred while updating a transaction: ${err}`);
-    }
-    try {
-      await makeLog(`${description} ${reason || ''}`, id);
-    } catch (err) {
-      console.error(`An error occurred while making an activity log: ${err}`);
-    }
-  };
-
-  const updateStatus = async (txn: Transaction) => {
-    const ok = confirm(
-      `Are you sure you want to mark this transaction as accepted?`,
-    );
-    if (ok) {
-      await makeUpdateStatus(txn.getId(), 3, 'accepted');
-      await refresh();
-    }
-  };
-
-  const forceAccept = async (txn: Transaction) => {
-    const ok = confirm(
-      `Are you sure you want to mark this transaction as accepted?`,
-    );
-    if (ok) {
-      await makeUpdateStatus(txn.getId(), 3, 'accepted');
-      await refresh();
-    }
-  };
-
   const handleChangePage = useCallback(
     (pageNumberToChangeTo: number) => {
       setPageNumber(pageNumberToChangeTo);
+      setChangingPage(true);
     },
-    [setPageNumber],
+    [setPageNumber, setChangingPage],
   );
 
   const resetTransactions = useCallback(async () => {
@@ -463,6 +423,7 @@ export const TransactionTable: FC<Props> = ({
 
     if (role) setRole(role.getName() as RoleType);
 
+    setChangingPage(false);
     setLoading(false);
     setLoaded(true);
   }, [
@@ -472,7 +433,51 @@ export const TransactionTable: FC<Props> = ({
     setEmployees,
     loggedUserId,
     setLoaded,
+    setChangingPage,
   ]);
+
+  const makeUpdateStatus = async (
+    id: number,
+    statusID: number,
+    description: string,
+    reason?: string,
+  ) => {
+    const txn = new Transaction();
+    txn.setId(id);
+    txn.setStatusId(statusID);
+    txn.setFieldMaskList(['StatusId']);
+    txn.setIsBillingRecorded(true);
+    try {
+      await TransactionClientService.Update(txn);
+    } catch (err) {
+      console.error(`An error occurred while updating a transaction: ${err}`);
+    }
+    try {
+      await makeLog(`${description} ${reason || ''}`, id);
+    } catch (err) {
+      console.error(`An error occurred while making an activity log: ${err}`);
+    }
+  };
+
+  const updateStatus = async (txn: Transaction) => {
+    const ok = confirm(
+      `Are you sure you want to mark this transaction as accepted?`,
+    );
+    if (ok) {
+      await makeUpdateStatus(txn.getId(), 3, 'accepted');
+      await refresh();
+    }
+  };
+
+  const forceAccept = async (txn: Transaction) => {
+    const ok = confirm(
+      `Are you sure you want to mark this transaction as accepted?`,
+    );
+    if (ok) {
+      await makeUpdateStatus(txn.getId(), 3, 'accepted');
+      await refresh();
+    }
+  };
 
   const refresh = useCallback(async () => {
     await load();
@@ -797,7 +802,8 @@ export const TransactionTable: FC<Props> = ({
 
   useEffect(() => {
     if (!loaded) load();
-  }, [load, loaded]);
+    if (changingPage) load();
+  }, [load, loaded, changingPage]);
 
   return (
     <>
