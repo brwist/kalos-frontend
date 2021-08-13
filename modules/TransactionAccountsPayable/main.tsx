@@ -5,6 +5,6 @@ import { PageWrapper } from '../PageWrapper/main';
 
 export const TransactionAccountsPayable: FC<Props> = props => (
   <PageWrapper {...props} userID={props.loggedUserId} withHeader>
-    <TransactionTable {...props} loggedUserId={props.loggedUserId} />
+    <TransactionTable {...props} loggedUserId={props.loggedUserId} hasActions />
   </PageWrapper>
 );
