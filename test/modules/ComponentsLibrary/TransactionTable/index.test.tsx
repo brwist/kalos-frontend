@@ -16,6 +16,7 @@ import UserModule = require('@kalos-core/kalos-rpc/User');
 import TransactionActivityModule = require('@kalos-core/kalos-rpc/TransactionActivity');
 
 import TestConstants = require('../../../test-constants/test-response-data');
+import Constants = require('../../../test-constants/constants');
 
 describe('ComponentsLibrary', () => {
   describe('TransactionTable', () => {
@@ -91,10 +92,15 @@ describe('ComponentsLibrary', () => {
         wrapper.unmount();
       });
 
-      it.only('has a loader while it is loading', () => {
+      it('has a loader while it is loading', () => {
         Chai.expect(
           wrapper.containsAllMatchingElements([<LoaderModule.Loader />]),
         ).to.be.equal(true);
+      });
+
+      it('displays the correct transaction in the table', async () => {
+        await Constants.ReRenderAfterLoad();
+        console.log(wrapper.debug());
       });
     });
   });
