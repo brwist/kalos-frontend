@@ -110,7 +110,6 @@ let assigned: AssignedEmployeeType = {
   employeeId: 0,
 };
 
-let selectorParamTxns: Transaction[] = []; // Sick of wrestling with this error, so I'm adding this in to bypass it. TODO
 let transactionOfFileUploading: Transaction | undefined = undefined;
 export const TransactionTable: FC<Props> = ({
   loggedUserId,
@@ -1025,8 +1024,6 @@ export const TransactionTable: FC<Props> = ({
           loading
             ? makeFakeRows(10, 15)
             : (transactions?.map((selectorParam, idx) => {
-                if (idx === 0) selectorParamTxns = [];
-                selectorParamTxns.unshift(selectorParam.txn); // Unshifting because the gallery reverses the lists
                 let txnWithId = selectedTransactions.filter(
                   txn => txn.getId() === selectorParam.txn.getId(),
                 );
@@ -1131,6 +1128,9 @@ export const TransactionTable: FC<Props> = ({
                                 return;
                               }
                               event.preventDefault();
+                              // Working around the input (since it isn't a React-based element, idx is just the last value in the loop)
+                              // As a result, I'm simply setting a variable outside of react to work with it at the top. Could fix this
+                              // at some point so FIXME but it works
                               transactionOfFileUploading =
                                 transactions[idx].txn;
                               openFileInput(idx);
