@@ -19,7 +19,7 @@ import CopyIcon from '@material-ui/icons/FileCopySharp';
 import RejectIcon from '@material-ui/icons/ThumbDownSharp';
 import SubmitIcon from '@material-ui/icons/ThumbUpSharp';
 import { format, parseISO } from 'date-fns';
-import React, { FC, useCallback, useEffect, useState } from 'react';
+import React, { FC, useCallback, useEffect, useMemo, useState } from 'react';
 import { ENDPOINT, NULL_TIME, OPTION_ALL } from '../../../constants';
 import {
   makeFakeRows,
@@ -42,8 +42,9 @@ import { prettyMoney } from '../../transaction/components/row';
 import { CompareTransactions } from '../CompareTransactions';
 import { GalleryData } from '../Gallery';
 import { Data, InfoTable } from '../InfoTable';
+import { Alert } from '../Alert';
 import { Modal } from '../Modal';
-import { FilterData, RoleType } from '../Payroll';
+import { FilterData, RoleType, AssignedUserData } from '../Payroll';
 import { PlainForm, Schema } from '../PlainForm';
 import { SectionBar } from '../SectionBar';
 import { UploadPhotoTransaction } from '../UploadPhotoTransaction';
@@ -51,6 +52,12 @@ import LineWeightIcon from '@material-ui/icons/LineWeight';
 import { EditTransaction } from '../EditTransaction';
 import { TimesheetDepartment } from '@kalos-core/kalos-rpc/TimesheetDepartment';
 import { StatusPicker } from './components/StatusPicker';
+import {
+  TransactionDocument,
+  TransactionDocumentList,
+} from '@kalos-core/kalos-rpc/TransactionDocument';
+import ImageSearchTwoTone from '@material-ui/icons/ImageSearchTwoTone';
+import { Gallery } from '../Gallery/index';
 export interface Props {
   loggedUserId: number;
   isSelector?: boolean; // Is this a selector table (checkboxes that return in on-change)?
@@ -82,6 +89,10 @@ interface FilterType {
   billingRecorded: boolean;
 }
 
+interface AssignedEmployeeType {
+  employeeId: number;
+}
+
 let sortDir: OrderDir | ' ' | undefined = 'ASC'; // Because I can't figure out why this isn't updating with the state
 let sortBy: string | undefined = 'vendor, timestamp';
 // This is outside of state because it was slow inside of state
@@ -95,6 +106,11 @@ let filter: FilterType = {
   amount: undefined,
   billingRecorded: false,
 };
+let assigned: AssignedEmployeeType = {
+  employeeId: 0,
+};
+
+let transactionOfFileUploading: Transaction | undefined = undefined;
 export const TransactionTable: FC<Props> = ({
   loggedUserId,
   isSelector,
@@ -127,10 +143,17 @@ export const TransactionTable: FC<Props> = ({
     Transaction[]
   >([]); // Transactions that are selected in the table if the isSelector prop is set
   const [pageNumber, setPageNumber] = useState<number>(0);
-
+  // For assigning employees, this will store the last chosen one for the form
+  const [assignedEmployee, setAssignedEmployee] = useState<number | undefined>(
+    undefined,
+  );
+  const [error, setError] = useState<string | undefined>(undefined);
   const [status, setStatus] = useState<
     'Accepted' | 'Rejected' | 'Accepted / Rejected'
   >('Accepted / Rejected');
+  const [loaded, setLoaded] = useState<boolean>(false);
+  const [changingPage, setChangingPage] = useState<boolean>(false); // To fix a bunch of issues with callbacks going in
+  // front of other callbacks
 
   const handleSetTransactionToEdit = useCallback(
     (transaction: Transaction | undefined) => {
@@ -166,12 +189,22 @@ export const TransactionTable: FC<Props> = ({
   </body>`;
   };
 
-  const getGalleryData = (txn: Transaction): GalleryData[] => {
-    return txn.getDocumentsList().map(d => {
+  const getGalleryData = async (txn: Transaction) => {
+    let documents: TransactionDocumentList = new TransactionDocumentList();
+    try {
+      let req = new TransactionDocument();
+      req.setTransactionId(txn.getId());
+      documents = await TransactionDocumentClientService.BatchGet(req);
+    } catch (err) {
+      console.error(
+        `An error occurred while getting transaction documents for transaction #${txn.getId()}: ${err}`,
+      );
+    }
+    return documents.getResultsList().map(result => {
       return {
-        key: `${txn.getId()}-${d.getReference()}`,
+        key: `${txn.getId()}-${result.getReference()}`,
         bucket: 'kalos-transactions',
-      };
+      } as GalleryData;
     });
   };
 
@@ -274,54 +307,12 @@ export const TransactionTable: FC<Props> = ({
     refresh();
   };
 
-  const makeUpdateStatus = async (
-    id: number,
-    statusID: number,
-    description: string,
-    reason?: string,
-  ) => {
-    const txn = new Transaction();
-    txn.setId(id);
-    txn.setStatusId(statusID);
-    txn.setFieldMaskList(['StatusId']);
-    txn.setIsBillingRecorded(true);
-    try {
-      await TransactionClientService.Update(txn);
-    } catch (err) {
-      console.error(`An error occurred while updating a transaction: ${err}`);
-    }
-    try {
-      await makeLog(`${description} ${reason || ''}`, id);
-    } catch (err) {
-      console.error(`An error occurred while making an activity log: ${err}`);
-    }
-  };
-
-  const updateStatus = async (txn: Transaction) => {
-    const ok = confirm(
-      `Are you sure you want to mark this transaction as accepted?`,
-    );
-    if (ok) {
-      await makeUpdateStatus(txn.getId(), 3, 'accepted');
-      await refresh();
-    }
-  };
-
-  const forceAccept = async (txn: Transaction) => {
-    const ok = confirm(
-      `Are you sure you want to mark this transaction as accepted?`,
-    );
-    if (ok) {
-      await makeUpdateStatus(txn.getId(), 3, 'accepted');
-      await refresh();
-    }
-  };
-
   const handleChangePage = useCallback(
     (pageNumberToChangeTo: number) => {
       setPageNumber(pageNumberToChangeTo);
+      setChangingPage(true);
     },
-    [setPageNumber],
+    [setPageNumber, setChangingPage],
   );
 
   const resetTransactions = useCallback(async () => {
@@ -392,15 +383,14 @@ export const TransactionTable: FC<Props> = ({
 
     setTransactionActivityLogs(logList);
     setTotalTransactions(res.getTotalCount());
-    setTransactions(
-      res.getResultsList().map(txn => {
-        return {
-          txn: txn,
-          checked: false,
-          totalCount: res!.getTotalCount(),
-        } as SelectorParams;
-      }),
-    );
+    let transactions = res.getResultsList().map(txn => {
+      return {
+        txn: txn,
+        checked: false,
+        totalCount: res!.getTotalCount(),
+      } as SelectorParams;
+    });
+    setTransactions(transactions.map(txn => txn));
   }, [pageNumber, totalTransactions, handleChangePage]);
 
   const load = useCallback(async () => {
@@ -433,14 +423,61 @@ export const TransactionTable: FC<Props> = ({
 
     if (role) setRole(role.getName() as RoleType);
 
+    setChangingPage(false);
     setLoading(false);
+    setLoaded(true);
   }, [
     setLoading,
     resetTransactions,
     setDepartments,
     setEmployees,
     loggedUserId,
+    setLoaded,
+    setChangingPage,
   ]);
+
+  const makeUpdateStatus = async (
+    id: number,
+    statusID: number,
+    description: string,
+    reason?: string,
+  ) => {
+    const txn = new Transaction();
+    txn.setId(id);
+    txn.setStatusId(statusID);
+    txn.setFieldMaskList(['StatusId']);
+    txn.setIsBillingRecorded(true);
+    try {
+      await TransactionClientService.Update(txn);
+    } catch (err) {
+      console.error(`An error occurred while updating a transaction: ${err}`);
+    }
+    try {
+      await makeLog(`${description} ${reason || ''}`, id);
+    } catch (err) {
+      console.error(`An error occurred while making an activity log: ${err}`);
+    }
+  };
+
+  const updateStatus = async (txn: Transaction) => {
+    const ok = confirm(
+      `Are you sure you want to mark this transaction as accepted?`,
+    );
+    if (ok) {
+      await makeUpdateStatus(txn.getId(), 3, 'accepted');
+      await refresh();
+    }
+  };
+
+  const forceAccept = async (txn: Transaction) => {
+    const ok = confirm(
+      `Are you sure you want to mark this transaction as accepted?`,
+    );
+    if (ok) {
+      await makeUpdateStatus(txn.getId(), 3, 'accepted');
+      await refresh();
+    }
+  };
 
   const refresh = useCallback(async () => {
     await load();
@@ -454,41 +491,48 @@ export const TransactionTable: FC<Props> = ({
     document.execCommand('copy');
     document.body.removeChild(el);
   }, []);
-
-  const handleFile = useCallback(
-    (txn: Transaction) => {
-      const fr = new FileReader();
-      fr.onload = async () => {
-        try {
-          const u8 = new Uint8Array(fr.result as ArrayBuffer);
-          await TransactionDocumentClientService.upload(
-            txn.getId(),
-            FileInput.current!.files![0].name,
-            u8,
-          );
-        } catch (err) {
-          alert('File could not be uploaded');
-          console.error(err);
-        }
-
-        await refresh();
-        alert('Upload complete!');
-      };
-      if (FileInput.current && FileInput.current.files) {
-        fr.readAsArrayBuffer(FileInput.current.files[0]);
+  const handleFile = (txn: Transaction) => {
+    const fr = new FileReader();
+    fr.onload = async () => {
+      try {
+        const u8 = new Uint8Array(fr.result as ArrayBuffer);
+        await TransactionDocumentClientService.upload(
+          txn.getId(),
+          FileInput.current!.files![0].name,
+          u8,
+        );
+      } catch (err) {
+        alert('File could not be uploaded');
+        console.error(err);
       }
-    },
-    [FileInput, refresh],
+
+      await refresh();
+      alert('Upload complete!');
+    };
+    if (FileInput.current && FileInput.current.files) {
+      fr.readAsArrayBuffer(FileInput.current.files[0]);
+    }
+  };
+
+  const handleSetError = useCallback(
+    (error: string | undefined) => setError(error),
+    [setError],
   );
 
   const handleSetAssigningUser = useCallback(
     (isAssigningUser: boolean, transactionId: number) => {
+      if (isAssigningUser) setAssignedEmployee(undefined);
       setAssigningUser({
         isAssigning: isAssigningUser,
         transactionId: transactionId,
       });
     },
-    [setAssigningUser],
+    [setAssigningUser, setAssignedEmployee],
+  );
+
+  const handleSetAssignedEmployee = useCallback(
+    assignedEmployee => setAssignedEmployee(assignedEmployee),
+    [setAssignedEmployee],
   );
 
   const handleSetFilter = useCallback((d: FilterData) => {
@@ -564,7 +608,11 @@ export const TransactionTable: FC<Props> = ({
   );
 
   const handleAssignEmployee = useCallback(
-    async (employeeIdToAssign: number, transactionId: number) => {
+    async (employeeIdToAssign: number | undefined, transactionId: number) => {
+      if (employeeIdToAssign == undefined) {
+        setError('There is no employee to assign.');
+        return;
+      }
       try {
         let req = new Transaction();
         req.setId(transactionId);
@@ -582,9 +630,12 @@ export const TransactionTable: FC<Props> = ({
     [setAssigningUser],
   );
 
-  const openFileInput = () => {
-    FileInput.current && FileInput.current.click();
-  };
+  const openFileInput = useCallback(
+    (idx: number) => {
+      FileInput.current && FileInput.current.click();
+    },
+    [FileInput],
+  );
 
   const handleSetFilterAcceptedRejected = useCallback(
     (option: 'Accepted' | 'Rejected' | 'Accepted / Rejected') => {
@@ -663,6 +714,16 @@ export const TransactionTable: FC<Props> = ({
     ],
   );
 
+  const SCHEMA_ASSIGN_USER: Schema<AssignedUserData> = [
+    [
+      {
+        name: 'employeeId',
+        label: 'Employee to assign',
+        type: 'technician',
+      },
+    ],
+  ];
+
   const SCHEMA: Schema<FilterData> = [
     [
       {
@@ -699,7 +760,7 @@ export const TransactionTable: FC<Props> = ({
       },
       {
         name: 'billingRecorded',
-        label: 'Is already marked accepted or rejected?',
+        label: 'Was processed?',
         type: 'checkbox',
       },
     ],
@@ -740,12 +801,22 @@ export const TransactionTable: FC<Props> = ({
   ];
 
   useEffect(() => {
-    load();
-  }, [load]);
+    if (!loaded) load();
+    if (changingPage) load();
+  }, [load, loaded, changingPage]);
 
   return (
     <>
       {loading ? <Loader /> : <> </>}
+      {error && (
+        <Alert
+          open={error != undefined}
+          onClose={() => handleSetError(undefined)}
+          title="Error"
+        >
+          {error}
+        </Alert>
+      )}
       {transactionToEdit && (
         <Modal
           open={true}
@@ -773,16 +844,18 @@ export const TransactionTable: FC<Props> = ({
                 label: 'Assign',
                 onClick: () =>
                   handleAssignEmployee(
-                    filter.employeeId,
+                    assignedEmployee,
                     assigningUser.transactionId,
                   ),
               },
             ]}
           />
           <PlainForm
-            data={filter}
-            onChange={handleSetFilter}
-            schema={SCHEMA}
+            data={assigned}
+            onChange={(type: AssignedEmployeeType) =>
+              handleSetAssignedEmployee(type.employeeId)
+            }
+            schema={SCHEMA_ASSIGN_USER}
             className="PayrollFilter"
           />
         </Modal>
@@ -1053,22 +1126,47 @@ export const TransactionTable: FC<Props> = ({
                           </IconButton>
                         </Tooltip>,
                         <Tooltip key="upload" content="Upload File">
-                          <IconButton size="small" onClick={openFileInput}>
+                          <IconButton
+                            size="small"
+                            onClick={event => {
+                              if (!event.isTrusted) {
+                                // This is likely a duplicate event called for some reason I couldn't figure out
+                                return;
+                              }
+                              event.preventDefault();
+                              // Working around the input (since it isn't a React-based element, idx is just the last value in the loop)
+                              // As a result, I'm simply setting a variable outside of react to work with it at the top. Could fix this
+                              // at some point so FIXME but it works
+                              transactionOfFileUploading =
+                                transactions[idx].txn;
+                              openFileInput(idx);
+                            }}
+                          >
                             <UploadIcon />
                             <input
                               type="file"
                               ref={FileInput}
-                              onChange={() => handleFile(selectorParam.txn)}
+                              onChange={event => {
+                                if (!transactionOfFileUploading) {
+                                  console.error(
+                                    'No transaction selected for upload.',
+                                  );
+                                  alert('No transaction selected for upload.');
+                                  return;
+                                }
+                                event.preventDefault();
+                                handleFile(transactionOfFileUploading!);
+                              }}
                               style={{ display: 'none' }}
                             />
                           </IconButton>
                         </Tooltip>,
                         <AltGallery
-                          key="receiptPhotos"
-                          title="Transaction Photos"
-                          fileList={getGalleryData(selectorParam.txn)}
-                          transactionID={selectorParam.txn.getId()}
-                          text="View photos"
+                          key="Gallery"
+                          fileList={[]}
+                          title="Transaction Uploads"
+                          text="View Photos and Documents"
+                          transactionID={transactions[idx].txn.getId()}
                           iconButton
                         />,
                         <TxnLog

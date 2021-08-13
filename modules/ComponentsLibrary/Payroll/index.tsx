@@ -54,6 +54,10 @@ export type FilterData = {
   billingRecorded: boolean;
 };
 
+export type AssignedUserData = {
+  employeeId: number;
+};
+
 export const Payroll: FC<Props> = ({ userID }) => {
   const [initiated, setInitiated] = useState<boolean>(false);
   const [initiatedRole, setInitiatedRole] = useState<boolean>(false);

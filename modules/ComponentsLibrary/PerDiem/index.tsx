@@ -283,6 +283,10 @@ export const PerDiemComponent: FC<Props> = ({
         const owner = await UserClientService.loadUserById(ownerId);
         setOwner(owner);
       }
+      if (!ownerId) {
+        const owner = await UserClientService.loadUserById(loggedUserId);
+        setOwner(owner);
+      }
       //const depeartments = await TimesheetDepartmentClientService.loadTimeSheetDepartments() For some reason, this isn't loading data
       const client = new TimesheetDepartmentClient(ENDPOINT);
       const departmentReq = new TimesheetDepartment();
@@ -413,19 +417,19 @@ export const PerDiemComponent: FC<Props> = ({
   );
   const handleSavePerDiem = useCallback(
     async (data: PerDiem) => {
+      const temp = makeSafeFormObject(data, new PerDiem());
       setPendingPerDiemEditDuplicated(false);
       if (
         managerPerDiems.find(
           loadedPerDiem =>
-            loadedPerDiem.getUserId() === data.getUserId() &&
-            loadedPerDiem.getDepartmentId() === data.getDepartmentId(),
+            loadedPerDiem.getUserId() === temp.getUserId() &&
+            loadedPerDiem.getDepartmentId() === temp.getDepartmentId(),
         )
       ) {
         setPendingPerDiemEditDuplicated(true);
         return;
       }
       setSaving(true);
-      const temp = makeSafeFormObject(data, new PerDiem());
       if (temp.getUserId() === 0) {
         const newPerDiem = makeNewPerDiem();
         await PerDiemClientService.Create(newPerDiem);
