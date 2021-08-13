@@ -777,7 +777,7 @@ export const TransactionTable: FC<Props> = ({
       },
       {
         name: 'billingRecorded',
-        label: 'Is already marked accepted or rejected?',
+        label: 'Was processed?',
         type: 'checkbox',
       },
     ],
