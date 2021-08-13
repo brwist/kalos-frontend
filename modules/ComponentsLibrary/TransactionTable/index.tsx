@@ -19,7 +19,7 @@ import CopyIcon from '@material-ui/icons/FileCopySharp';
 import RejectIcon from '@material-ui/icons/ThumbDownSharp';
 import SubmitIcon from '@material-ui/icons/ThumbUpSharp';
 import { format, parseISO } from 'date-fns';
-import React, { FC, useCallback, useEffect, useState } from 'react';
+import React, { FC, useCallback, useEffect, useMemo, useState } from 'react';
 import { ENDPOINT, NULL_TIME, OPTION_ALL } from '../../../constants';
 import {
   makeFakeRows,
@@ -52,6 +52,12 @@ import LineWeightIcon from '@material-ui/icons/LineWeight';
 import { EditTransaction } from '../EditTransaction';
 import { TimesheetDepartment } from '@kalos-core/kalos-rpc/TimesheetDepartment';
 import { StatusPicker } from './components/StatusPicker';
+import {
+  TransactionDocument,
+  TransactionDocumentList,
+} from '@kalos-core/kalos-rpc/TransactionDocument';
+import ImageSearchTwoTone from '@material-ui/icons/ImageSearchTwoTone';
+import { Gallery } from '../Gallery/index';
 export interface Props {
   loggedUserId: number;
   isSelector?: boolean; // Is this a selector table (checkboxes that return in on-change)?
@@ -103,6 +109,9 @@ let filter: FilterType = {
 let assigned: AssignedEmployeeType = {
   employeeId: 0,
 };
+
+let selectorParamTxns: Transaction[] = []; // Sick of wrestling with this error, so I'm adding this in to bypass it. TODO
+let transactionOfFileUploading: Transaction | undefined = undefined;
 export const TransactionTable: FC<Props> = ({
   loggedUserId,
   isSelector,
@@ -140,10 +149,16 @@ export const TransactionTable: FC<Props> = ({
     undefined,
   );
   const [error, setError] = useState<string | undefined>(undefined);
-
+  const [transactionForGallery, setTransactionForGallery] = useState<
+    Transaction | undefined
+  >(undefined);
   const [status, setStatus] = useState<
     'Accepted' | 'Rejected' | 'Accepted / Rejected'
   >('Accepted / Rejected');
+  const [loaded, setLoaded] = useState<boolean>(false);
+  const [galleryLists, setGalleryLists] = useState<
+    { galleryData: GalleryData[]; transaction: Transaction }[]
+  >([]);
 
   const handleSetTransactionToEdit = useCallback(
     (transaction: Transaction | undefined) => {
@@ -179,12 +194,22 @@ export const TransactionTable: FC<Props> = ({
   </body>`;
   };
 
-  const getGalleryData = (txn: Transaction): GalleryData[] => {
-    return txn.getDocumentsList().map(d => {
+  const getGalleryData = async (txn: Transaction) => {
+    let documents: TransactionDocumentList = new TransactionDocumentList();
+    try {
+      let req = new TransactionDocument();
+      req.setTransactionId(txn.getId());
+      documents = await TransactionDocumentClientService.BatchGet(req);
+    } catch (err) {
+      console.error(
+        `An error occurred while getting transaction documents for transaction #${txn.getId()}: ${err}`,
+      );
+    }
+    return documents.getResultsList().map(result => {
       return {
-        key: `${txn.getId()}-${d.getReference()}`,
+        key: `${txn.getId()}-${result.getReference()}`,
         bucket: 'kalos-transactions',
-      };
+      } as GalleryData;
     });
   };
 
@@ -405,15 +430,23 @@ export const TransactionTable: FC<Props> = ({
 
     setTransactionActivityLogs(logList);
     setTotalTransactions(res.getTotalCount());
-    setTransactions(
-      res.getResultsList().map(txn => {
-        return {
-          txn: txn,
-          checked: false,
-          totalCount: res!.getTotalCount(),
-        } as SelectorParams;
-      }),
+    let galleryDataForTransactions = await Promise.all(
+      res
+        .getResultsList()
+        .map(async txn => {
+          return { galleryData: await getGalleryData(txn), transaction: txn };
+        })
+        .reverse(),
     );
+    setGalleryLists(galleryDataForTransactions);
+    let transactions = res.getResultsList().map(txn => {
+      return {
+        txn: txn,
+        checked: false,
+        totalCount: res!.getTotalCount(),
+      } as SelectorParams;
+    });
+    setTransactions(transactions.map(txn => txn));
   }, [pageNumber, totalTransactions, handleChangePage]);
 
   const load = useCallback(async () => {
@@ -447,12 +480,14 @@ export const TransactionTable: FC<Props> = ({
     if (role) setRole(role.getName() as RoleType);
 
     setLoading(false);
+    setLoaded(true);
   }, [
     setLoading,
     resetTransactions,
     setDepartments,
     setEmployees,
     loggedUserId,
+    setLoaded,
   ]);
 
   const refresh = useCallback(async () => {
@@ -468,31 +503,33 @@ export const TransactionTable: FC<Props> = ({
     document.body.removeChild(el);
   }, []);
 
-  const handleFile = useCallback(
-    (txn: Transaction) => {
-      const fr = new FileReader();
-      fr.onload = async () => {
-        try {
-          const u8 = new Uint8Array(fr.result as ArrayBuffer);
-          await TransactionDocumentClientService.upload(
-            txn.getId(),
-            FileInput.current!.files![0].name,
-            u8,
-          );
-        } catch (err) {
-          alert('File could not be uploaded');
-          console.error(err);
-        }
-
-        await refresh();
-        alert('Upload complete!');
-      };
-      if (FileInput.current && FileInput.current.files) {
-        fr.readAsArrayBuffer(FileInput.current.files[0]);
-      }
-    },
-    [FileInput, refresh],
+  const handleSetTransactionForGallery = useCallback(
+    (transaction: Transaction | undefined) =>
+      setTransactionForGallery(transaction),
+    [setTransactionForGallery],
   );
+  const handleFile = (txn: Transaction) => {
+    const fr = new FileReader();
+    fr.onload = async () => {
+      try {
+        const u8 = new Uint8Array(fr.result as ArrayBuffer);
+        await TransactionDocumentClientService.upload(
+          txn.getId(),
+          FileInput.current!.files![0].name,
+          u8,
+        );
+      } catch (err) {
+        alert('File could not be uploaded');
+        console.error(err);
+      }
+
+      await refresh();
+      alert('Upload complete!');
+    };
+    if (FileInput.current && FileInput.current.files) {
+      fr.readAsArrayBuffer(FileInput.current.files[0]);
+    }
+  };
 
   const handleSetError = useCallback(
     (error: string | undefined) => setError(error),
@@ -598,7 +635,6 @@ export const TransactionTable: FC<Props> = ({
         req.setId(transactionId);
         req.setAssignedEmployeeId(employeeIdToAssign);
         req.setFieldMaskList(['AssignedEmployeeId']);
-        console.log('assigning employee with id: ', employeeIdToAssign);
         let result = await TransactionClientService.Update(req);
         if (!result) {
           console.error('Unable to assign employee.');
@@ -611,9 +647,12 @@ export const TransactionTable: FC<Props> = ({
     [setAssigningUser],
   );
 
-  const openFileInput = () => {
-    FileInput.current && FileInput.current.click();
-  };
+  const openFileInput = useCallback(
+    (idx: number) => {
+      FileInput.current && FileInput.current.click();
+    },
+    [FileInput],
+  );
 
   const handleSetFilterAcceptedRejected = useCallback(
     (option: 'Accepted' | 'Rejected' | 'Accepted / Rejected') => {
@@ -779,12 +818,25 @@ export const TransactionTable: FC<Props> = ({
   ];
 
   useEffect(() => {
-    load();
-  }, [load]);
+    if (!loaded) load();
+  }, [load, loaded]);
 
   return (
     <>
       {loading ? <Loader /> : <> </>}
+      {transactionForGallery && (
+        <Modal
+          open={transactionForGallery != undefined}
+          onClose={() => handleSetTransactionForGallery(undefined)}
+        >
+          <Gallery
+            fileList={[]}
+            title="Transaction Uploads"
+            text="Test"
+            transactionID={transactionForGallery.getId()}
+          />
+        </Modal>
+      )}
       {error && (
         <Alert
           open={error != undefined}
@@ -1007,6 +1059,8 @@ export const TransactionTable: FC<Props> = ({
           loading
             ? makeFakeRows(10, 15)
             : (transactions?.map((selectorParam, idx) => {
+                if (idx === 0) selectorParamTxns = [];
+                selectorParamTxns.unshift(selectorParam.txn); // Unshifting because the gallery reverses the lists
                 let txnWithId = selectedTransactions.filter(
                   txn => txn.getId() === selectorParam.txn.getId(),
                 );
@@ -1103,24 +1157,51 @@ export const TransactionTable: FC<Props> = ({
                           </IconButton>
                         </Tooltip>,
                         <Tooltip key="upload" content="Upload File">
-                          <IconButton size="small" onClick={openFileInput}>
+                          <IconButton
+                            size="small"
+                            onClick={event => {
+                              if (!event.isTrusted) {
+                                // This is likely a duplicate event called for some reason I couldn't figure out
+                                return;
+                              }
+                              event.preventDefault();
+                              transactionOfFileUploading =
+                                transactions[idx].txn;
+                              openFileInput(idx);
+                            }}
+                          >
                             <UploadIcon />
                             <input
                               type="file"
                               ref={FileInput}
-                              onChange={() => handleFile(selectorParam.txn)}
+                              onChange={event => {
+                                if (!transactionOfFileUploading) {
+                                  console.error(
+                                    'No transaction selected for upload.',
+                                  );
+                                  alert('No transaction selected for upload.');
+                                  return;
+                                }
+                                event.preventDefault();
+                                handleFile(transactionOfFileUploading!);
+                              }}
                               style={{ display: 'none' }}
                             />
                           </IconButton>
                         </Tooltip>,
-                        <AltGallery
-                          key="receiptPhotos"
-                          title="Transaction Photos"
-                          fileList={getGalleryData(selectorParam.txn)}
-                          transactionID={selectorParam.txn.getId()}
-                          text="View photos"
-                          iconButton
-                        />,
+                        <Tooltip
+                          key="Gallery"
+                          content="View Documents and Photos"
+                        >
+                          <IconButton
+                            size="small"
+                            onClick={() => {
+                              handleSetTransactionForGallery(selectorParam.txn);
+                            }}
+                          >
+                            <ImageSearchTwoTone />
+                          </IconButton>
+                        </Tooltip>,
                         <TxnLog
                           key="txnLog"
                           iconButton
