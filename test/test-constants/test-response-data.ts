@@ -39,6 +39,8 @@ export const getFakeTransactionList = () => {
   );
   testTxn.setId(100);
   testTxn.setIsActive(1);
+  testTxn.setTimestamp(DateFns.format(new Date(), 'yyyy-MM-dd hh:mm:ss'));
+  testTxn.setOrderNumber('TEST ORDER NUMBER');
 
   let testTxnList = new TransactionModule.TransactionList();
   testTxnList.setResultsList([testTxn]);
