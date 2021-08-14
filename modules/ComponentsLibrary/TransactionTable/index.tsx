@@ -18,9 +18,18 @@ import DoneIcon from '@material-ui/icons/Done';
 import CopyIcon from '@material-ui/icons/FileCopySharp';
 import RejectIcon from '@material-ui/icons/ThumbDownSharp';
 import SubmitIcon from '@material-ui/icons/ThumbUpSharp';
-import { format, parseISO } from 'date-fns';
-import React, { FC, useCallback, useEffect, useMemo, useState } from 'react';
+import { format, parseISO, parseJSON } from 'date-fns';
+import React, {
+  FC,
+  useCallback,
+  useEffect,
+  useMemo,
+  useState,
+  useReducer,
+} from 'react';
 import { ENDPOINT, NULL_TIME, OPTION_ALL } from '../../../constants';
+import { reducer } from './reducer';
+
 import {
   makeFakeRows,
   OrderDir,
@@ -95,6 +104,7 @@ interface AssignedEmployeeType {
 let sortDir: OrderDir | ' ' | undefined = 'ASC'; // Because I can't figure out why this isn't updating with the state
 let sortBy: string | undefined = 'vendor, timestamp';
 // This is outside of state because it was slow inside of state
+
 let filter: FilterType = {
   departmentId: 0,
   employeeId: 0,
@@ -105,6 +115,7 @@ let filter: FilterType = {
   amount: undefined,
   billingRecorded: false,
 };
+
 let assigned: AssignedEmployeeType = {
   employeeId: 0,
 };
@@ -119,19 +130,21 @@ export const TransactionTable: FC<Props> = ({
 }) => {
   const FileInput = React.createRef<HTMLInputElement>();
 
-  const [transactions, setTransactions] = useState<SelectorParams[]>();
-  const [totalTransactions, setTotalTransactions] = useState<number>(0);
-  const [transactionActivityLogs, setTransactionActivityLogs] = useState<
-    TransactionActivity[]
-  >([]);
-  const [transactionToEdit, setTransactionToEdit] = useState<
-    Transaction | undefined
-  >();
-  const [loading, setLoading] = useState<boolean>(true);
-  const [creatingTransaction, setCreatingTransaction] = useState<boolean>(); // for when a transaction is being made, pops up the popup
-  const [mergingTransaction, setMergingTransaction] = useState<boolean>(); // When a txn is being merged with another one, effectively allowing full
+  //const [transactions, setTransactions] = useState<SelectorParams[]>();
+  //const [totalTransactions, setTotalTransactions] = useState<number>(0);
+  //const [transactionActivityLogs, setTransactionActivityLogs] = useState<
+  //  TransactionActivity[]
+  //>([]);
+  // const [transactionToEdit, setTransactionToEdit] = useState<
+  //   Transaction | undefined
+  // >();
+  //const [loading, setLoading] = useState<boolean>(true);
+  //const [loadTransactions, setloadTransactions] = useState<boolean>(true);
+
+  //const [creatingTransaction, setCreatingTransaction] = useState<boolean>(); // for when a transaction is being made, pops up the popup
+  //const [mergingTransaction, setMergingTransaction] = useState<boolean>(); // When a txn is being merged with another one, effectively allowing full
   // editorial control for Dani
-  const [role, setRole] = useState<RoleType>();
+  //const [role, setRole] = useState<RoleType>();
   const [assigningUser, setAssigningUser] = useState<{
     isAssigning: boolean;
     transactionId: number;
@@ -153,12 +166,36 @@ export const TransactionTable: FC<Props> = ({
   const [loaded, setLoaded] = useState<boolean>(false);
   const [changingPage, setChangingPage] = useState<boolean>(false); // To fix a bunch of issues with callbacks going in
   // front of other callbacks
+  const [state, dispatch] = useReducer(reducer, {
+    transactionFilter: filter,
+    transactions: undefined,
+    totalTransactions: 0,
+    transactionActivityLogs: [],
+    transactionToEdit: undefined,
+    loading: true,
+    loadTransactions: true,
+    creatingTransaction: false,
+    mergingTransaction: false,
+    role: undefined,
+  });
+  const {
+    transactionFilter,
+    transactions,
+    totalTransactions,
+    transactionActivityLogs,
+    transactionToEdit,
+    loading,
+    loadTransactions,
+    creatingTransaction,
+    mergingTransaction,
+    role,
+  } = state;
 
   const handleSetTransactionToEdit = useCallback(
     (transaction: Transaction | undefined) => {
-      setTransactionToEdit(transaction);
+      dispatch({ type: 'setTransactionToEdit', data: transaction });
     },
-    [setTransactionToEdit],
+    [],
   );
 
   // For emails
@@ -313,7 +350,6 @@ export const TransactionTable: FC<Props> = ({
     },
     [setPageNumber, setChangingPage],
   );
-
   const resetTransactions = useCallback(async () => {
     let req = new Transaction();
     req.setOrderBy(sortBy ? sortBy : 'timestamp');
@@ -324,23 +360,27 @@ export const TransactionTable: FC<Props> = ({
 
     req.setIsActive(1);
     req.setVendorCategory("'PickTicket','Receipt'");
-    if (filter.isAccepted) {
+    if (transactionFilter.isAccepted) {
       req.setStatusId(3);
     }
-    if (filter.isRejected) {
+    if (transactionFilter.isRejected) {
       req.setStatusId(4);
     }
-    if (filter.vendor) req.setVendor(`%${filter.vendor}%`);
-    if (filter.departmentId != 0) req.setDepartmentId(filter.departmentId);
-    if (filter.employeeId != 0) req.setAssignedEmployeeId(filter.employeeId);
-    if (filter.amount) req.setAmount(filter.amount);
-    req.setIsBillingRecorded(filter.billingRecorded);
+    if (transactionFilter.vendor)
+      req.setVendor(`%${transactionFilter.vendor}%`);
+    if (transactionFilter.departmentId != 0)
+      req.setDepartmentId(transactionFilter.departmentId);
+    if (transactionFilter.employeeId != 0)
+      req.setAssignedEmployeeId(transactionFilter.employeeId);
+    if (transactionFilter.amount) req.setAmount(transactionFilter.amount);
+    req.setIsBillingRecorded(transactionFilter.billingRecorded);
     req.setFieldMaskList(['IsBillingRecorded']);
     let res: TransactionList | null = null;
     try {
       res = await TransactionClientService.BatchGet(req);
       if (res.getTotalCount() < totalTransactions) {
-        setTotalTransactions(res.getTotalCount());
+        dispatch({ type: 'setTotalTransactions', data: res.getTotalCount() });
+
         handleChangePage(0);
       }
     } catch (err) {
@@ -379,9 +419,9 @@ export const TransactionTable: FC<Props> = ({
         );
       }
     });
+    dispatch({ type: 'setTransactionActivityLogs', data: logList });
 
-    setTransactionActivityLogs(logList);
-    setTotalTransactions(res.getTotalCount());
+    dispatch({ type: 'setTotalTransactions', data: res.getTotalCount() });
     let transactions = res.getResultsList().map(txn => {
       return {
         txn: txn,
@@ -389,21 +429,31 @@ export const TransactionTable: FC<Props> = ({
         totalCount: res!.getTotalCount(),
       } as SelectorParams;
     });
-    setTransactions(transactions.map(txn => txn));
-  }, [pageNumber, totalTransactions, handleChangePage]);
+    const temp = transactions.map(txn => txn);
+    dispatch({ type: 'setTransactions', data: temp });
+  }, [pageNumber, totalTransactions, transactionFilter, handleChangePage]);
 
   const load = useCallback(async () => {
-    setLoading(true);
+    dispatch({ type: 'setLoading', data: true });
     const employees = await UserClientService.loadTechnicians();
     let sortedEmployeeList = employees.sort((a, b) =>
       a.getLastname() > b.getLastname() ? 1 : -1,
     );
     setEmployees(sortedEmployeeList);
-
+    const userReq = new User();
+    userReq.setId(loggedUserId);
+    const user = await UserClientService.Get(userReq);
     let departments;
     try {
-      departments =
-        await TimesheetDepartmentClientService.loadTimeSheetDepartments();
+      let departmentReq = new TimesheetDepartment();
+      departmentReq.setIsActive(1);
+      departments = (
+        await TimesheetDepartmentClientService.BatchGet(departmentReq)
+      ).getResultsList();
+      let userDepartments = user
+        .getPermissionGroupsList()
+        .filter(a => a.getType() == 'department');
+      //let filteredDepartments = departments.filter((a, b) =>
       setDepartments(departments);
     } catch (err) {
       console.error(
@@ -411,29 +461,20 @@ export const TransactionTable: FC<Props> = ({
       );
     }
 
-    await resetTransactions();
-    setLoading(true);
-
-    const user = await UserClientService.loadUserById(loggedUserId);
+    dispatch({ type: 'setLoading', data: true });
 
     const role = user
       .getPermissionGroupsList()
       .find(p => p.getType() === 'role');
 
-    if (role) setRole(role.getName() as RoleType);
+    if (role) {
+      dispatch({ type: 'setRole', data: role.getName() as RoleType });
+    }
 
     setChangingPage(false);
-    setLoading(false);
+    dispatch({ type: 'setLoading', data: false });
     setLoaded(true);
-  }, [
-    setLoading,
-    resetTransactions,
-    setDepartments,
-    setEmployees,
-    loggedUserId,
-    setLoaded,
-    setChangingPage,
-  ]);
+  }, [setDepartments, setEmployees, loggedUserId, setLoaded, setChangingPage]);
 
   const makeUpdateStatus = async (
     id: number,
@@ -534,7 +575,7 @@ export const TransactionTable: FC<Props> = ({
     [setAssignedEmployee],
   );
 
-  const handleSetFilter = useCallback((d: FilterData) => {
+  const handleSetFilter = useCallback(async (d: FilterData) => {
     if (!d.week) {
       d.week = OPTION_ALL;
     }
@@ -554,20 +595,22 @@ export const TransactionTable: FC<Props> = ({
     filter.isRejected = d.rejected ? d.rejected : undefined;
     filter.amount = d.amount;
     filter.billingRecorded = d.billingRecorded;
+    dispatch({ type: 'setFilter', data: filter });
+    dispatch({ type: 'setLoadTransactions', data: true });
   }, []);
 
   const handleUpdateTransaction = useCallback(
     async (transactionToSave: Transaction) => {
       try {
         await TransactionClientService.Update(transactionToSave);
-        setTransactionToEdit(undefined);
+        dispatch({ type: 'setTransactionToEdit', data: undefined });
         refresh();
       } catch (err) {
         console.error('An error occurred while updating a transaction: ', err);
-        setTransactionToEdit(undefined);
+        dispatch({ type: 'setTransactionToEdit', data: undefined });
       }
     },
-    [setTransactionToEdit, refresh],
+    [refresh],
   );
 
   const handleChangeSort = (newSort: string) => {
@@ -594,16 +637,16 @@ export const TransactionTable: FC<Props> = ({
 
   const handleSetCreatingTransaction = useCallback(
     (isCreatingTransaction: boolean) => {
-      setCreatingTransaction(isCreatingTransaction);
+      dispatch({ type: 'setCreatingTransaction', data: isCreatingTransaction });
     },
-    [setCreatingTransaction],
+    [],
   );
 
   const handleSetMergingTransaction = useCallback(
     (isMergingTransaction: boolean) => {
-      setMergingTransaction(isMergingTransaction);
+      dispatch({ type: 'setMergingTransaction', data: isMergingTransaction });
     },
-    [setMergingTransaction],
+    [],
   );
 
   const handleAssignEmployee = useCallback(
@@ -638,17 +681,18 @@ export const TransactionTable: FC<Props> = ({
 
   const handleSetFilterAcceptedRejected = useCallback(
     (option: 'Accepted' | 'Rejected' | 'Accepted / Rejected') => {
+      let tempFilter = transactionFilter;
       setStatus(option);
       switch (option) {
         case 'Accepted':
-          filter.isAccepted = true;
+          tempFilter.isAccepted = true;
           break;
         case 'Rejected':
-          filter.isRejected = true;
+          tempFilter.isRejected = true;
           break;
         case 'Accepted / Rejected':
-          filter.isAccepted = undefined;
-          filter.isRejected = undefined;
+          tempFilter.isAccepted = undefined;
+          tempFilter.isRejected = undefined;
 
           break;
         default:
@@ -657,8 +701,10 @@ export const TransactionTable: FC<Props> = ({
           );
           break;
       }
+      dispatch({ type: 'setFilter', data: tempFilter });
+      dispatch({ type: 'setLoadTransactions', data: true });
     },
-    [setStatus],
+    [setStatus, transactionFilter],
   );
 
   const setTransactionChecked = useCallback(
@@ -746,7 +792,7 @@ export const TransactionTable: FC<Props> = ({
           { label: OPTION_ALL, value: 0 },
           ...employees
             .filter(el => {
-              if (filter.departmentId === 0) return true;
+              if (transactionFilter.departmentId === 0) return true;
               return el.getEmployeeDepartmentId() === filter.departmentId;
             })
             .map(el => ({
@@ -803,7 +849,12 @@ export const TransactionTable: FC<Props> = ({
     if (!loaded) load();
     if (changingPage) load();
   }, [load, loaded, changingPage]);
-
+  useEffect(() => {
+    if (loadTransactions) {
+      resetTransactions();
+      dispatch({ type: 'setLoadTransactions', data: false });
+    }
+  }, [loadTransactions, resetTransactions]);
   return (
     <ErrorBoundary>
       {loading ? <Loader /> : <> </>}
@@ -897,7 +948,7 @@ export const TransactionTable: FC<Props> = ({
         <> </>
       )}
       <PlainForm
-        data={filter}
+        data={transactionFilter}
         onChange={handleSetFilter}
         schema={SCHEMA}
         className="PayrollFilter"
