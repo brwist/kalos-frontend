@@ -14,6 +14,7 @@ import TransactionModule = require('@kalos-core/kalos-rpc/Transaction');
 import LoaderModule = require('../../../../modules/Loader/main');
 import UserModule = require('@kalos-core/kalos-rpc/User');
 import TransactionActivityModule = require('@kalos-core/kalos-rpc/TransactionActivity');
+import TimesheetDepartmentModule = require('@kalos-core/kalos-rpc/TimesheetDepartment');
 
 import TestConstants = require('../../../test-constants/test-response-data');
 import Constants = require('../../../test-constants/constants');
@@ -33,6 +34,16 @@ describe('ComponentsLibrary', () => {
           'TimesheetDepartmentClientService',
           'loadTimeSheetDepartments',
           TestConstants.getFakeTimesheetDepartments(),
+        );
+
+        let departmentReq = new TimesheetDepartmentModule.TimesheetDepartment();
+        departmentReq.setIsActive(1);
+
+        Stubs.setupStubs(
+          'TimesheetDepartmentClientService',
+          'BatchGet',
+          TestConstants.getFakeTimesheetDepartments(),
+          departmentReq,
         );
 
         let req = new TransactionModule.Transaction();
@@ -99,7 +110,7 @@ describe('ComponentsLibrary', () => {
       });
 
       it('displays the correct transaction in the table', async () => {
-        await Constants.ReRenderAfterLoad();
+        await Constants.ReRenderAfterLoad(200);
         wrapper.update();
         Chai.expect(
           wrapper
