@@ -213,8 +213,8 @@ export const ServiceCallsPending: FC<Props> = ({ loggedUserId }) => {
       }),
     },
     {
-      name: 'Date Completed',
-      ...(sort.orderByField === 'getLogDateCompleted'
+      name: 'Job Type-Subtype',
+      ...(sort.orderByField === 'getJobType'
         ? {
             dir: sort.orderDir,
           }
@@ -235,7 +235,7 @@ export const ServiceCallsPending: FC<Props> = ({ loggedUserId }) => {
         const customer = event.getCustomer();
         const property = event.getProperty();
         const logJobNumber = event.getLogJobNumber();
-        const logDateCompleted = event.getLogDateCompleted();
+        const jobType = `${event.getJobType()}-${event.getJobSubtype()}`;
         const openEditServiceCall = (event: Event) => {
           return () => {
             window.open(
@@ -263,7 +263,7 @@ export const ServiceCallsPending: FC<Props> = ({ loggedUserId }) => {
             onClick: openEditServiceCall(event),
           },
           {
-            value: formatDate(logDateCompleted),
+            value: jobType,
             onClick: openEditServiceCall(event),
           },
           {
