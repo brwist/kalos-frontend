@@ -52,5 +52,5 @@ export const Log = (output: string) => {
  * This is a bit of a workaround until we can figure something better out hopefully. A bit hacky,
  * but it works!
  */
-export const ReRenderAfterLoad = async () =>
-  await new Promise(res => setTimeout(res, 1));
+export const ReRenderAfterLoad = async (timeInMs?: number) =>
+  await new Promise(res => setTimeout(res, timeInMs ? timeInMs : 1));
