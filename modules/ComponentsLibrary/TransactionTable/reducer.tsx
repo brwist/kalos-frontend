@@ -1,4 +1,5 @@
 import { EmailConfig } from '@kalos-core/kalos-rpc/Email';
+import { TimesheetDepartment } from '@kalos-core/kalos-rpc/TimesheetDepartment';
 import {
   Transaction,
   TransactionList,
@@ -40,6 +41,7 @@ export type State = {
       }
     | undefined;
   employees: User[];
+  departments: TimesheetDepartment[];
 };
 export type Action =
   | { type: 'setFilter'; data: FilterType }
@@ -53,6 +55,7 @@ export type Action =
   | { type: 'setRole'; data: RoleType }
   | { type: 'setCreatingTransaction'; data: boolean }
   | { type: 'setEmployees'; data: User[] }
+  | { type: 'setDepartments'; data: TimesheetDepartment[] }
   | {
       type: 'setAssigningUser';
       data: {
@@ -142,6 +145,13 @@ export const reducer = (state: State, action: Action) => {
       return {
         ...state,
         employees: action.data,
+      };
+    }
+    case 'setDepartments': {
+      console.log('setting department');
+      return {
+        ...state,
+        departments: action.data,
       };
     }
     default:
