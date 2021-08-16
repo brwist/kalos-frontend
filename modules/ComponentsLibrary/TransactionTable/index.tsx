@@ -18,9 +18,18 @@ import DoneIcon from '@material-ui/icons/Done';
 import CopyIcon from '@material-ui/icons/FileCopySharp';
 import RejectIcon from '@material-ui/icons/ThumbDownSharp';
 import SubmitIcon from '@material-ui/icons/ThumbUpSharp';
-import { format, parseISO } from 'date-fns';
-import React, { FC, useCallback, useEffect, useMemo, useState } from 'react';
+import { format, parseISO, parseJSON } from 'date-fns';
+import React, {
+  FC,
+  useCallback,
+  useEffect,
+  useMemo,
+  useState,
+  useReducer,
+} from 'react';
 import { ENDPOINT, NULL_TIME, OPTION_ALL } from '../../../constants';
+import { reducer } from './reducer';
+
 import {
   makeFakeRows,
   OrderDir,
@@ -56,8 +65,7 @@ import {
   TransactionDocument,
   TransactionDocumentList,
 } from '@kalos-core/kalos-rpc/TransactionDocument';
-import ImageSearchTwoTone from '@material-ui/icons/ImageSearchTwoTone';
-import { Gallery } from '../Gallery/index';
+import { ErrorBoundary } from '../ErrorBoundary';
 export interface Props {
   loggedUserId: number;
   isSelector?: boolean; // Is this a selector table (checkboxes that return in on-change)?
@@ -96,6 +104,7 @@ interface AssignedEmployeeType {
 let sortDir: OrderDir | ' ' | undefined = 'ASC'; // Because I can't figure out why this isn't updating with the state
 let sortBy: string | undefined = 'vendor, timestamp';
 // This is outside of state because it was slow inside of state
+
 let filter: FilterType = {
   departmentId: 0,
   employeeId: 0,
@@ -106,6 +115,7 @@ let filter: FilterType = {
   amount: undefined,
   billingRecorded: false,
 };
+
 let assigned: AssignedEmployeeType = {
   employeeId: 0,
 };
@@ -120,19 +130,21 @@ export const TransactionTable: FC<Props> = ({
 }) => {
   const FileInput = React.createRef<HTMLInputElement>();
 
-  const [transactions, setTransactions] = useState<SelectorParams[]>();
-  const [totalTransactions, setTotalTransactions] = useState<number>(0);
-  const [transactionActivityLogs, setTransactionActivityLogs] = useState<
-    TransactionActivity[]
-  >([]);
-  const [transactionToEdit, setTransactionToEdit] = useState<
-    Transaction | undefined
-  >();
-  const [loading, setLoading] = useState<boolean>(true);
-  const [creatingTransaction, setCreatingTransaction] = useState<boolean>(); // for when a transaction is being made, pops up the popup
-  const [mergingTransaction, setMergingTransaction] = useState<boolean>(); // When a txn is being merged with another one, effectively allowing full
+  //const [transactions, setTransactions] = useState<SelectorParams[]>();
+  //const [totalTransactions, setTotalTransactions] = useState<number>(0);
+  //const [transactionActivityLogs, setTransactionActivityLogs] = useState<
+  //  TransactionActivity[]
+  //>([]);
+  // const [transactionToEdit, setTransactionToEdit] = useState<
+  //   Transaction | undefined
+  // >();
+  //const [loading, setLoading] = useState<boolean>(true);
+  //const [loadTransactions, setloadTransactions] = useState<boolean>(true);
+
+  //const [creatingTransaction, setCreatingTransaction] = useState<boolean>(); // for when a transaction is being made, pops up the popup
+  //const [mergingTransaction, setMergingTransaction] = useState<boolean>(); // When a txn is being merged with another one, effectively allowing full
   // editorial control for Dani
-  const [role, setRole] = useState<RoleType>();
+  //const [role, setRole] = useState<RoleType>();
   const [assigningUser, setAssigningUser] = useState<{
     isAssigning: boolean;
     transactionId: number;
@@ -154,12 +166,36 @@ export const TransactionTable: FC<Props> = ({
   const [loaded, setLoaded] = useState<boolean>(false);
   const [changingPage, setChangingPage] = useState<boolean>(false); // To fix a bunch of issues with callbacks going in
   // front of other callbacks
+  const [state, dispatch] = useReducer(reducer, {
+    transactionFilter: filter,
+    transactions: undefined,
+    totalTransactions: 0,
+    transactionActivityLogs: [],
+    transactionToEdit: undefined,
+    loading: true,
+    loadTransactions: true,
+    creatingTransaction: false,
+    mergingTransaction: false,
+    role: undefined,
+  });
+  const {
+    transactionFilter,
+    transactions,
+    totalTransactions,
+    transactionActivityLogs,
+    transactionToEdit,
+    loading,
+    loadTransactions,
+    creatingTransaction,
+    mergingTransaction,
+    role,
+  } = state;
 
   const handleSetTransactionToEdit = useCallback(
     (transaction: Transaction | undefined) => {
-      setTransactionToEdit(transaction);
+      dispatch({ type: 'setTransactionToEdit', data: transaction });
     },
-    [setTransactionToEdit],
+    [],
   );
 
   // For emails
@@ -314,7 +350,6 @@ export const TransactionTable: FC<Props> = ({
     },
     [setPageNumber, setChangingPage],
   );
-
   const resetTransactions = useCallback(async () => {
     let req = new Transaction();
     req.setOrderBy(sortBy ? sortBy : 'timestamp');
@@ -325,23 +360,27 @@ export const TransactionTable: FC<Props> = ({
 
     req.setIsActive(1);
     req.setVendorCategory("'PickTicket','Receipt'");
-    if (filter.isAccepted) {
+    if (transactionFilter.isAccepted) {
       req.setStatusId(3);
     }
-    if (filter.isRejected) {
+    if (transactionFilter.isRejected) {
       req.setStatusId(4);
     }
-    if (filter.vendor) req.setVendor(`%${filter.vendor}%`);
-    if (filter.departmentId != 0) req.setDepartmentId(filter.departmentId);
-    if (filter.employeeId != 0) req.setAssignedEmployeeId(filter.employeeId);
-    if (filter.amount) req.setAmount(filter.amount);
-    req.setIsBillingRecorded(filter.billingRecorded);
+    if (transactionFilter.vendor)
+      req.setVendor(`%${transactionFilter.vendor}%`);
+    if (transactionFilter.departmentId != 0)
+      req.setDepartmentId(transactionFilter.departmentId);
+    if (transactionFilter.employeeId != 0)
+      req.setAssignedEmployeeId(transactionFilter.employeeId);
+    if (transactionFilter.amount) req.setAmount(transactionFilter.amount);
+    req.setIsBillingRecorded(transactionFilter.billingRecorded);
     req.setFieldMaskList(['IsBillingRecorded']);
     let res: TransactionList | null = null;
     try {
       res = await TransactionClientService.BatchGet(req);
       if (res.getTotalCount() < totalTransactions) {
-        setTotalTransactions(res.getTotalCount());
+        dispatch({ type: 'setTotalTransactions', data: res.getTotalCount() });
+
         handleChangePage(0);
       }
     } catch (err) {
@@ -380,9 +419,9 @@ export const TransactionTable: FC<Props> = ({
         );
       }
     });
+    dispatch({ type: 'setTransactionActivityLogs', data: logList });
 
-    setTransactionActivityLogs(logList);
-    setTotalTransactions(res.getTotalCount());
+    dispatch({ type: 'setTotalTransactions', data: res.getTotalCount() });
     let transactions = res.getResultsList().map(txn => {
       return {
         txn: txn,
@@ -390,21 +429,31 @@ export const TransactionTable: FC<Props> = ({
         totalCount: res!.getTotalCount(),
       } as SelectorParams;
     });
-    setTransactions(transactions.map(txn => txn));
-  }, [pageNumber, totalTransactions, handleChangePage]);
+    const temp = transactions.map(txn => txn);
+    dispatch({ type: 'setTransactions', data: temp });
+  }, [pageNumber, totalTransactions, transactionFilter, handleChangePage]);
 
   const load = useCallback(async () => {
-    setLoading(true);
+    dispatch({ type: 'setLoading', data: true });
     const employees = await UserClientService.loadTechnicians();
     let sortedEmployeeList = employees.sort((a, b) =>
       a.getLastname() > b.getLastname() ? 1 : -1,
     );
     setEmployees(sortedEmployeeList);
-
+    const userReq = new User();
+    userReq.setId(loggedUserId);
+    const user = await UserClientService.Get(userReq);
     let departments;
     try {
-      departments =
-        await TimesheetDepartmentClientService.loadTimeSheetDepartments();
+      let departmentReq = new TimesheetDepartment();
+      departmentReq.setIsActive(1);
+      departments = (
+        await TimesheetDepartmentClientService.BatchGet(departmentReq)
+      ).getResultsList();
+      let userDepartments = user
+        .getPermissionGroupsList()
+        .filter(a => a.getType() == 'department');
+      //let filteredDepartments = departments.filter((a, b) =>
       setDepartments(departments);
     } catch (err) {
       console.error(
@@ -412,29 +461,20 @@ export const TransactionTable: FC<Props> = ({
       );
     }
 
-    await resetTransactions();
-    setLoading(true);
-
-    const user = await UserClientService.loadUserById(loggedUserId);
+    dispatch({ type: 'setLoading', data: true });
 
     const role = user
       .getPermissionGroupsList()
       .find(p => p.getType() === 'role');
 
-    if (role) setRole(role.getName() as RoleType);
+    if (role) {
+      dispatch({ type: 'setRole', data: role.getName() as RoleType });
+    }
 
     setChangingPage(false);
-    setLoading(false);
+    dispatch({ type: 'setLoading', data: false });
     setLoaded(true);
-  }, [
-    setLoading,
-    resetTransactions,
-    setDepartments,
-    setEmployees,
-    loggedUserId,
-    setLoaded,
-    setChangingPage,
-  ]);
+  }, [setDepartments, setEmployees, loggedUserId, setLoaded, setChangingPage]);
 
   const makeUpdateStatus = async (
     id: number,
@@ -535,7 +575,7 @@ export const TransactionTable: FC<Props> = ({
     [setAssignedEmployee],
   );
 
-  const handleSetFilter = useCallback((d: FilterData) => {
+  const handleSetFilter = useCallback(async (d: FilterData) => {
     if (!d.week) {
       d.week = OPTION_ALL;
     }
@@ -555,20 +595,22 @@ export const TransactionTable: FC<Props> = ({
     filter.isRejected = d.rejected ? d.rejected : undefined;
     filter.amount = d.amount;
     filter.billingRecorded = d.billingRecorded;
+    dispatch({ type: 'setFilter', data: filter });
+    dispatch({ type: 'setLoadTransactions', data: true });
   }, []);
 
   const handleUpdateTransaction = useCallback(
     async (transactionToSave: Transaction) => {
       try {
         await TransactionClientService.Update(transactionToSave);
-        setTransactionToEdit(undefined);
+        dispatch({ type: 'setTransactionToEdit', data: undefined });
         refresh();
       } catch (err) {
         console.error('An error occurred while updating a transaction: ', err);
-        setTransactionToEdit(undefined);
+        dispatch({ type: 'setTransactionToEdit', data: undefined });
       }
     },
-    [setTransactionToEdit, refresh],
+    [refresh],
   );
 
   const handleChangeSort = (newSort: string) => {
@@ -595,16 +637,16 @@ export const TransactionTable: FC<Props> = ({
 
   const handleSetCreatingTransaction = useCallback(
     (isCreatingTransaction: boolean) => {
-      setCreatingTransaction(isCreatingTransaction);
+      dispatch({ type: 'setCreatingTransaction', data: isCreatingTransaction });
     },
-    [setCreatingTransaction],
+    [],
   );
 
   const handleSetMergingTransaction = useCallback(
     (isMergingTransaction: boolean) => {
-      setMergingTransaction(isMergingTransaction);
+      dispatch({ type: 'setMergingTransaction', data: isMergingTransaction });
     },
-    [setMergingTransaction],
+    [],
   );
 
   const handleAssignEmployee = useCallback(
@@ -639,17 +681,18 @@ export const TransactionTable: FC<Props> = ({
 
   const handleSetFilterAcceptedRejected = useCallback(
     (option: 'Accepted' | 'Rejected' | 'Accepted / Rejected') => {
+      let tempFilter = transactionFilter;
       setStatus(option);
       switch (option) {
         case 'Accepted':
-          filter.isAccepted = true;
+          tempFilter.isAccepted = true;
           break;
         case 'Rejected':
-          filter.isRejected = true;
+          tempFilter.isRejected = true;
           break;
         case 'Accepted / Rejected':
-          filter.isAccepted = undefined;
-          filter.isRejected = undefined;
+          tempFilter.isAccepted = undefined;
+          tempFilter.isRejected = undefined;
 
           break;
         default:
@@ -658,8 +701,10 @@ export const TransactionTable: FC<Props> = ({
           );
           break;
       }
+      dispatch({ type: 'setFilter', data: tempFilter });
+      dispatch({ type: 'setLoadTransactions', data: true });
     },
-    [setStatus],
+    [setStatus, transactionFilter],
   );
 
   const setTransactionChecked = useCallback(
@@ -747,7 +792,7 @@ export const TransactionTable: FC<Props> = ({
           { label: OPTION_ALL, value: 0 },
           ...employees
             .filter(el => {
-              if (filter.departmentId === 0) return true;
+              if (transactionFilter.departmentId === 0) return true;
               return el.getEmployeeDepartmentId() === filter.departmentId;
             })
             .map(el => ({
@@ -804,9 +849,14 @@ export const TransactionTable: FC<Props> = ({
     if (!loaded) load();
     if (changingPage) load();
   }, [load, loaded, changingPage]);
-
+  useEffect(() => {
+    if (loadTransactions) {
+      resetTransactions();
+      dispatch({ type: 'setLoadTransactions', data: false });
+    }
+  }, [loadTransactions, resetTransactions]);
   return (
-    <>
+    <ErrorBoundary>
       {loading ? <Loader /> : <> </>}
       {error && (
         <Alert
@@ -898,7 +948,7 @@ export const TransactionTable: FC<Props> = ({
         <> </>
       )}
       <PlainForm
-        data={filter}
+        data={transactionFilter}
         onChange={handleSetFilter}
         schema={SCHEMA}
         className="PayrollFilter"
@@ -1033,268 +1083,279 @@ export const TransactionTable: FC<Props> = ({
                 let txnWithId = selectedTransactions.filter(
                   txn => txn.getId() === selectorParam.txn.getId(),
                 );
-                return [
-                  {
-                    value: txnWithId.length == 1 ? 'SELECTED' : '',
-                    invisible: !isSelector,
-                  },
-                  {
-                    value: selectorParam.txn.getVendorCategory(),
-                    onClick: isSelector
-                      ? () => setTransactionChecked(idx)
-                      : undefined,
-                  },
-                  {
-                    value:
-                      selectorParam.txn.getTimestamp() != NULL_TIME &&
-                      selectorParam.txn.getTimestamp() != '0000-00-00 00:00:00'
-                        ? format(
-                            new Date(selectorParam.txn.getTimestamp()),
-                            'yyyy-MM-dd',
-                          )
-                        : '-',
-                    onClick: isSelector
-                      ? () => setTransactionChecked(idx)
-                      : undefined,
-                  },
-                  {
-                    value: `${selectorParam.txn.getOrderNumber()}`,
-                    onClick: isSelector
-                      ? () => setTransactionChecked(idx)
-                      : undefined,
-                  },
-                  {
-                    value: `${selectorParam.txn.getOwnerName()} (${selectorParam.txn.getOwnerId()})`,
-                    onClick: isSelector
-                      ? () => setTransactionChecked(idx)
-                      : undefined,
-                  },
-                  {
-                    value: `${selectorParam.txn
-                      .getDepartment()
-                      ?.getDescription()}`,
-                    onClick: isSelector
-                      ? () => setTransactionChecked(idx)
-                      : undefined,
-                  },
-                  {
-                    value: selectorParam.txn.getJobId(),
-                    onClick: isSelector
-                      ? () => setTransactionChecked(idx)
-                      : undefined,
-                  },
-                  {
-                    value: `$ ${prettyMoney(selectorParam.txn.getAmount())}`,
-                    onClick: isSelector
-                      ? () => setTransactionChecked(idx)
-                      : undefined,
-                  },
-                  {
-                    value: selectorParam.txn.getVendor(),
-                    onClick: isSelector
-                      ? () => setTransactionChecked(idx)
-                      : undefined,
-                  },
-                  {
-                    actions: !isSelector ? (
-                      [
-                        <Tooltip key="copy" content="Copy data to clipboard">
-                          <IconButton
-                            size="small"
-                            onClick={() =>
-                              copyToClipboard(
-                                `${parseISO(
-                                  selectorParam.txn
-                                    .getTimestamp()
-                                    .split(' ')
-                                    .join('T'),
-                                ).toLocaleDateString()},${selectorParam.txn.getDescription()},${selectorParam.txn.getAmount()},${selectorParam.txn.getOwnerName()},${selectorParam.txn.getVendor()}`,
-                              )
-                            }
-                          >
-                            <CopyIcon />
-                          </IconButton>
-                        </Tooltip>,
-                        <Tooltip key="editAll" content="Edit this transaction">
-                          <IconButton
-                            size="small"
-                            onClick={() =>
-                              handleSetTransactionToEdit(selectorParam.txn)
-                            }
-                          >
-                            <LineWeightIcon />
-                          </IconButton>
-                        </Tooltip>,
-                        <Tooltip key="upload" content="Upload File">
-                          <IconButton
-                            size="small"
-                            onClick={event => {
-                              if (!event.isTrusted) {
-                                // This is likely a duplicate event called for some reason I couldn't figure out
-                                return;
+                try {
+                  return [
+                    {
+                      value: txnWithId.length == 1 ? 'SELECTED' : '',
+                      invisible: !isSelector,
+                    },
+                    {
+                      value: selectorParam.txn.getVendorCategory(),
+                      onClick: isSelector
+                        ? () => setTransactionChecked(idx)
+                        : undefined,
+                    },
+                    {
+                      value:
+                        selectorParam.txn.getTimestamp() != NULL_TIME &&
+                        selectorParam.txn.getTimestamp() !=
+                          '0000-00-00 00:00:00'
+                          ? format(
+                              new Date(selectorParam.txn.getTimestamp()),
+                              'yyyy-MM-dd',
+                            )
+                          : '-',
+                      onClick: isSelector
+                        ? () => setTransactionChecked(idx)
+                        : undefined,
+                    },
+                    {
+                      value: `${selectorParam.txn.getOrderNumber()}`,
+                      onClick: isSelector
+                        ? () => setTransactionChecked(idx)
+                        : undefined,
+                    },
+                    {
+                      value: `${selectorParam.txn.getOwnerName()} (${selectorParam.txn.getOwnerId()})`,
+                      onClick: isSelector
+                        ? () => setTransactionChecked(idx)
+                        : undefined,
+                    },
+                    {
+                      value: `${selectorParam.txn
+                        .getDepartment()
+                        ?.getDescription()}`,
+                      onClick: isSelector
+                        ? () => setTransactionChecked(idx)
+                        : undefined,
+                    },
+                    {
+                      value: selectorParam.txn.getJobId(),
+                      onClick: isSelector
+                        ? () => setTransactionChecked(idx)
+                        : undefined,
+                    },
+                    {
+                      value: `$ ${prettyMoney(selectorParam.txn.getAmount())}`,
+                      onClick: isSelector
+                        ? () => setTransactionChecked(idx)
+                        : undefined,
+                    },
+                    {
+                      value: selectorParam.txn.getVendor(),
+                      onClick: isSelector
+                        ? () => setTransactionChecked(idx)
+                        : undefined,
+                    },
+                    {
+                      actions: !isSelector ? (
+                        [
+                          <Tooltip key="copy" content="Copy data to clipboard">
+                            <IconButton
+                              size="small"
+                              onClick={() =>
+                                copyToClipboard(
+                                  `${parseISO(
+                                    selectorParam.txn
+                                      .getTimestamp()
+                                      .split(' ')
+                                      .join('T'),
+                                  ).toLocaleDateString()},${selectorParam.txn.getDescription()},${selectorParam.txn.getAmount()},${selectorParam.txn.getOwnerName()},${selectorParam.txn.getVendor()}`,
+                                )
                               }
-                              event.preventDefault();
-                              // Working around the input (since it isn't a React-based element, idx is just the last value in the loop)
-                              // As a result, I'm simply setting a variable outside of react to work with it at the top. Could fix this
-                              // at some point so FIXME but it works
-                              transactionOfFileUploading =
-                                transactions[idx].txn;
-                              openFileInput(idx);
-                            }}
+                            >
+                              <CopyIcon />
+                            </IconButton>
+                          </Tooltip>,
+                          <Tooltip
+                            key="editAll"
+                            content="Edit this transaction"
                           >
-                            <UploadIcon />
-                            <input
-                              type="file"
-                              ref={FileInput}
-                              onChange={event => {
-                                if (!transactionOfFileUploading) {
-                                  console.error(
-                                    'No transaction selected for upload.',
-                                  );
-                                  alert('No transaction selected for upload.');
+                            <IconButton
+                              size="small"
+                              onClick={() =>
+                                handleSetTransactionToEdit(selectorParam.txn)
+                              }
+                            >
+                              <LineWeightIcon />
+                            </IconButton>
+                          </Tooltip>,
+                          <Tooltip key="upload" content="Upload File">
+                            <IconButton
+                              size="small"
+                              onClick={event => {
+                                if (!event.isTrusted) {
+                                  // This is likely a duplicate event called for some reason I couldn't figure out
                                   return;
                                 }
                                 event.preventDefault();
-                                handleFile(transactionOfFileUploading!);
+                                // Working around the input (since it isn't a React-based element, idx is just the last value in the loop)
+                                // As a result, I'm simply setting a variable outside of react to work with it at the top. Could fix this
+                                // at some point so FIXME but it works
+                                transactionOfFileUploading =
+                                  transactions[idx].txn;
+                                openFileInput(idx);
                               }}
-                              style={{ display: 'none' }}
-                            />
-                          </IconButton>
-                        </Tooltip>,
-                        <AltGallery
-                          key="Gallery"
-                          fileList={[]}
-                          title="Transaction Uploads"
-                          text="View Photos and Documents"
-                          transactionID={transactions[idx].txn.getId()}
-                          iconButton
-                        />,
-                        <TxnLog
-                          key="txnLog"
-                          iconButton
-                          txnID={selectorParam.txn.getId()}
-                        />,
-                        <TxnNotes
-                          key="viewNotes"
-                          iconButton
-                          text="View notes"
-                          notes={selectorParam.txn.getNotes()}
-                          disabled={selectorParam.txn.getNotes() === ''}
-                        />,
-                        ...([9928, 9646, 1734].includes(loggedUserId)
-                          ? [
-                              <Tooltip
-                                key="audit"
-                                content={
-                                  selectorParam.txn.getIsAudited() &&
-                                  loggedUserId !== 1734
-                                    ? 'This transaction has already been audited'
-                                    : 'Mark as correct'
-                                }
-                              >
-                                <IconButton
-                                  size="small"
-                                  onClick={
-                                    loggedUserId === 1734
-                                      ? () => forceAccept(selectorParam.txn)
-                                      : () => auditTxn(selectorParam.txn)
+                            >
+                              <UploadIcon />
+                              <input
+                                type="file"
+                                ref={FileInput}
+                                onChange={event => {
+                                  if (!transactionOfFileUploading) {
+                                    console.error(
+                                      'No transaction selected for upload.',
+                                    );
+                                    alert(
+                                      'No transaction selected for upload.',
+                                    );
+                                    return;
                                   }
-                                  disabled={
+                                  event.preventDefault();
+                                  handleFile(transactionOfFileUploading!);
+                                }}
+                                style={{ display: 'none' }}
+                              />
+                            </IconButton>
+                          </Tooltip>,
+                          <AltGallery
+                            key="Gallery"
+                            fileList={[]}
+                            title="Transaction Uploads"
+                            text="View Photos and Documents"
+                            transactionID={transactions[idx].txn.getId()}
+                            iconButton
+                          />,
+                          <TxnLog
+                            key="txnLog"
+                            iconButton
+                            txnID={selectorParam.txn.getId()}
+                          />,
+                          <TxnNotes
+                            key="viewNotes"
+                            iconButton
+                            text="View notes"
+                            notes={selectorParam.txn.getNotes()}
+                            disabled={selectorParam.txn.getNotes() === ''}
+                          />,
+                          ...([9928, 9646, 1734].includes(loggedUserId)
+                            ? [
+                                <Tooltip
+                                  key="audit"
+                                  content={
                                     selectorParam.txn.getIsAudited() &&
                                     loggedUserId !== 1734
+                                      ? 'This transaction has already been audited'
+                                      : 'Mark as correct'
                                   }
                                 >
-                                  <CheckIcon />
-                                </IconButton>
-                              </Tooltip>,
-                            ]
-                          : []),
-                        <Tooltip key="submit" content={'Mark as accepted'}>
-                          <IconButton
-                            size="small"
-                            onClick={() => updateStatus(selectorParam.txn)}
-                          >
-                            <SubmitIcon />
-                          </IconButton>
-                        </Tooltip>,
-                        <Tooltip
-                          key="assign"
-                          content="Assign an employee to this task"
-                        >
-                          <IconButton
-                            size="small"
-                            onClick={() =>
-                              handleSetAssigningUser(
-                                true,
-                                selectorParam.txn.getId(),
-                              )
-                            }
-                          >
-                            <AssignmentIndIcon />
-                          </IconButton>
-                        </Tooltip>,
-                        <Prompt
-                          key="reject"
-                          confirmFn={reason =>
-                            dispute(reason, selectorParam.txn)
-                          }
-                          text="Reject transaction"
-                          prompt="Enter reason for rejection: "
-                          Icon={RejectIcon}
-                        />,
-                      ]
-                    ) : (
-                      <> </>
-                    ),
-                    actionsFullWidth: true,
-                  },
-                  {
-                    actions: [
-                      <>
-                        {selectorParam.txn.getStatusId() === 3 ? (
-                          <Tooltip key="accepted" content="Accepted">
-                            <IconButton size="small">
-                              <DoneIcon />
-                            </IconButton>
-                          </Tooltip>
-                        ) : (
-                          <> </>
-                        )}
-                        {selectorParam.txn.getStatusId() == 4 ? (
-                          <>
-                            <Tooltip
-                              key="rejected"
-                              content={`Rejected ${transactionActivityLogs
-                                .filter(
-                                  log =>
-                                    log.getTransactionId() ==
-                                    selectorParam.txn.getId(),
-                                )
-                                .map(
-                                  log =>
-                                    `(Reason: ${log
-                                      .getDescription()
-                                      .substr(
-                                        log.getDescription().indexOf(' ') + 1,
-                                      )})`,
-                                )}`}
+                                  <IconButton
+                                    size="small"
+                                    onClick={
+                                      loggedUserId === 1734
+                                        ? () => forceAccept(selectorParam.txn)
+                                        : () => auditTxn(selectorParam.txn)
+                                    }
+                                    disabled={
+                                      selectorParam.txn.getIsAudited() &&
+                                      loggedUserId !== 1734
+                                    }
+                                  >
+                                    <CheckIcon />
+                                  </IconButton>
+                                </Tooltip>,
+                              ]
+                            : []),
+                          <Tooltip key="submit" content={'Mark as accepted'}>
+                            <IconButton
+                              size="small"
+                              onClick={() => updateStatus(selectorParam.txn)}
                             >
+                              <SubmitIcon />
+                            </IconButton>
+                          </Tooltip>,
+                          <Tooltip
+                            key="assign"
+                            content="Assign an employee to this task"
+                          >
+                            <IconButton
+                              size="small"
+                              onClick={() =>
+                                handleSetAssigningUser(
+                                  true,
+                                  selectorParam.txn.getId(),
+                                )
+                              }
+                            >
+                              <AssignmentIndIcon />
+                            </IconButton>
+                          </Tooltip>,
+                          <Prompt
+                            key="reject"
+                            confirmFn={reason =>
+                              dispute(reason, selectorParam.txn)
+                            }
+                            text="Reject transaction"
+                            prompt="Enter reason for rejection: "
+                            Icon={RejectIcon}
+                          />,
+                        ]
+                      ) : (
+                        <> </>
+                      ),
+                      actionsFullWidth: true,
+                    },
+                    {
+                      actions: [
+                        <>
+                          {selectorParam.txn.getStatusId() === 3 ? (
+                            <Tooltip key="accepted" content="Accepted">
                               <IconButton size="small">
-                                <CloseIcon />
+                                <DoneIcon />
                               </IconButton>
                             </Tooltip>
-                          </>
-                        ) : (
-                          <> </>
-                        )}
-                      </>,
-                    ],
-                  },
-                ];
+                          ) : (
+                            <> </>
+                          )}
+                          {selectorParam.txn.getStatusId() == 4 ? (
+                            <>
+                              <Tooltip
+                                key="rejected"
+                                content={`Rejected ${transactionActivityLogs
+                                  .filter(
+                                    log =>
+                                      log.getTransactionId() ==
+                                      selectorParam.txn.getId(),
+                                  )
+                                  .map(
+                                    log =>
+                                      `(Reason: ${log
+                                        .getDescription()
+                                        .substr(
+                                          log.getDescription().indexOf(' ') + 1,
+                                        )})`,
+                                  )}`}
+                              >
+                                <IconButton size="small">
+                                  <CloseIcon />
+                                </IconButton>
+                              </Tooltip>
+                            </>
+                          ) : (
+                            <> </>
+                          )}
+                        </>,
+                      ],
+                    },
+                  ];
+                } catch (err) {
+                  console.error('An error occurred while rendering: ', err);
+                  return <>An error occurred while rendering: {err}</>;
+                }
               }) as Data)
         }
         loading={loading}
       />
-    </>
+    </ErrorBoundary>
   );
 };

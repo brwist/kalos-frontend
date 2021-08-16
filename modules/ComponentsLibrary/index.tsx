@@ -36,6 +36,7 @@ import Documents from './Documents/examples';
 import EditProject from './EditProject/examples';
 import EditTransaction from './EditTransaction/examples';
 import EmployeeDepartments from './EmployeeDepartments/examples';
+import ErrorBoundary from './ErrorBoundary/examples';
 import EventsReport from './EventsReport/examples';
 import ExportJSON from './ExportJSON/examples';
 import Field from './Field/examples';
@@ -145,6 +146,7 @@ const COMPONENTS = {
   EditProject,
   EditTransaction,
   EmployeeDepartments,
+  ErrorBoundary,
   EventsReport,
   ExportJSON,
   Field,

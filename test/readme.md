@@ -83,3 +83,7 @@ Stubs.restoreStubs();
 ```
 
 I like to put the before and after calls on a describe block that surrounds some it() calls. This ensures that the data is stubbed out the same for the entire module during testing.
+
+# Why do I keep getting an error similar to "Error: route /TransactionActivityService/BatchGet requires authentication - rpc error: code = Unauthenticated desc = missing authorization token"?
+
+This is because there is a function somewhere (most likely in the component loading cycle or the methods that get called by things you are testing) that must be stubbed properly.
