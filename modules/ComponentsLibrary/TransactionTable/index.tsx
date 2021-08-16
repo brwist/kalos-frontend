@@ -150,7 +150,7 @@ export const TransactionTable: FC<Props> = ({
   //  transactionId: number;
   //}>(); // sets open an employee picker in a modal
   //const [employees, setEmployees] = useState<User[]>([]);
-  const [departments, setDepartments] = useState<TimesheetDepartment[]>([]);
+  //const [departments, setDepartments] = useState<TimesheetDepartment[]>([]);
   const [selectedTransactions, setSelectedTransactions] = useState<
     Transaction[]
   >([]); // Transactions that are selected in the table if the isSelector prop is set
@@ -179,6 +179,7 @@ export const TransactionTable: FC<Props> = ({
     role: undefined,
     assigningUser: undefined,
     employees: [],
+    departments: [],
   });
   const {
     transactionFilter,
@@ -193,6 +194,7 @@ export const TransactionTable: FC<Props> = ({
     role,
     assigningUser,
     employees,
+    departments,
   } = state;
 
   const handleSetTransactionToEdit = useCallback(
@@ -459,7 +461,7 @@ export const TransactionTable: FC<Props> = ({
         .getPermissionGroupsList()
         .filter(a => a.getType() == 'department');
       //let filteredDepartments = departments.filter((a, b) =>
-      setDepartments(departments);
+      dispatch({ type: 'setDepartments', data: departments });
     } catch (err) {
       console.error(
         `An error occurred while getting the timesheet departments: ${err}`,
@@ -479,7 +481,7 @@ export const TransactionTable: FC<Props> = ({
     setChangingPage(false);
     dispatch({ type: 'setLoading', data: false });
     setLoaded(true);
-  }, [setDepartments, loggedUserId, setLoaded, setChangingPage]);
+  }, [loggedUserId, setLoaded, setChangingPage]);
 
   const makeUpdateStatus = async (
     id: number,
