@@ -4,10 +4,7 @@ import {
   TransactionList,
 } from '@kalos-core/kalos-rpc/Transaction';
 import { TransactionAccountList } from '@kalos-core/kalos-rpc/TransactionAccount';
-import {
-  TransactionActivity,
-  TransactionActivityClient,
-} from '@kalos-core/kalos-rpc/TransactionActivity';
+import { TransactionActivity } from '@kalos-core/kalos-rpc/TransactionActivity';
 import { User } from '@kalos-core/kalos-rpc/User';
 import { FilterData, RoleType, AssignedUserData } from '../Payroll';
 
@@ -36,6 +33,13 @@ export type State = {
   creatingTransaction: boolean;
   mergingTransaction: boolean;
   role: RoleType | undefined;
+  assigningUser:
+    | {
+        isAssigning: boolean;
+        transactionId: number;
+      }
+    | undefined;
+  employees: User[];
 };
 export type Action =
   | { type: 'setFilter'; data: FilterType }
@@ -47,7 +51,15 @@ export type Action =
   | { type: 'setLoadTransactions'; data: boolean }
   | { type: 'setMergingTransaction'; data: boolean }
   | { type: 'setRole'; data: RoleType }
-  | { type: 'setCreatingTransaction'; data: boolean };
+  | { type: 'setCreatingTransaction'; data: boolean }
+  | { type: 'setEmployees'; data: User[] }
+  | {
+      type: 'setAssigningUser';
+      data: {
+        isAssigning: boolean;
+        transactionId: number;
+      };
+    };
 
 export const reducer = (state: State, action: Action) => {
   switch (action.type) {
@@ -116,6 +128,20 @@ export const reducer = (state: State, action: Action) => {
       return {
         ...state,
         role: action.data,
+      };
+    }
+    case 'setAssigningUser': {
+      console.log('setting assigning user');
+      return {
+        ...state,
+        assigningUser: action.data,
+      };
+    }
+    case 'setEmployees': {
+      console.log('setting employees');
+      return {
+        ...state,
+        employees: action.data,
       };
     }
     default:

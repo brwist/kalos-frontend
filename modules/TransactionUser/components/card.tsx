@@ -693,7 +693,7 @@ export class TxnCard extends React.PureComponent<props, state> {
               initialValue={t.getNotes()}
               onChange={debounce(
                 (value: string) => this.updateNotes(() => value.toString()),
-                1000,
+                5000,
               )}
             />
           </div>

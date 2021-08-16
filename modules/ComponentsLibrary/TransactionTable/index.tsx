@@ -145,11 +145,11 @@ export const TransactionTable: FC<Props> = ({
   //const [mergingTransaction, setMergingTransaction] = useState<boolean>(); // When a txn is being merged with another one, effectively allowing full
   // editorial control for Dani
   //const [role, setRole] = useState<RoleType>();
-  const [assigningUser, setAssigningUser] = useState<{
-    isAssigning: boolean;
-    transactionId: number;
-  }>(); // sets open an employee picker in a modal
-  const [employees, setEmployees] = useState<User[]>([]);
+  //const [assigningUser, setAssigningUser] = useState<{
+  //  isAssigning: boolean;
+  //  transactionId: number;
+  //}>(); // sets open an employee picker in a modal
+  //const [employees, setEmployees] = useState<User[]>([]);
   const [departments, setDepartments] = useState<TimesheetDepartment[]>([]);
   const [selectedTransactions, setSelectedTransactions] = useState<
     Transaction[]
@@ -177,6 +177,8 @@ export const TransactionTable: FC<Props> = ({
     creatingTransaction: false,
     mergingTransaction: false,
     role: undefined,
+    assigningUser: undefined,
+    employees: [],
   });
   const {
     transactionFilter,
@@ -189,6 +191,8 @@ export const TransactionTable: FC<Props> = ({
     creatingTransaction,
     mergingTransaction,
     role,
+    assigningUser,
+    employees,
   } = state;
 
   const handleSetTransactionToEdit = useCallback(
@@ -439,7 +443,8 @@ export const TransactionTable: FC<Props> = ({
     let sortedEmployeeList = employees.sort((a, b) =>
       a.getLastname() > b.getLastname() ? 1 : -1,
     );
-    setEmployees(sortedEmployeeList);
+    dispatch({ type: 'setEmployees', data: sortedEmployeeList });
+
     const userReq = new User();
     userReq.setId(loggedUserId);
     const user = await UserClientService.Get(userReq);
@@ -474,7 +479,7 @@ export const TransactionTable: FC<Props> = ({
     setChangingPage(false);
     dispatch({ type: 'setLoading', data: false });
     setLoaded(true);
-  }, [setDepartments, setEmployees, loggedUserId, setLoaded, setChangingPage]);
+  }, [setDepartments, loggedUserId, setLoaded, setChangingPage]);
 
   const makeUpdateStatus = async (
     id: number,
@@ -562,12 +567,15 @@ export const TransactionTable: FC<Props> = ({
   const handleSetAssigningUser = useCallback(
     (isAssigningUser: boolean, transactionId: number) => {
       if (isAssigningUser) setAssignedEmployee(undefined);
-      setAssigningUser({
-        isAssigning: isAssigningUser,
-        transactionId: transactionId,
+      dispatch({
+        type: 'setAssigningUser',
+        data: {
+          isAssigning: isAssigningUser,
+          transactionId: transactionId,
+        },
       });
     },
-    [setAssigningUser, setAssignedEmployee],
+    [setAssignedEmployee],
   );
 
   const handleSetAssignedEmployee = useCallback(
@@ -664,12 +672,18 @@ export const TransactionTable: FC<Props> = ({
         if (!result) {
           console.error('Unable to assign employee.');
         }
-        setAssigningUser({ isAssigning: false, transactionId: -1 });
+        dispatch({
+          type: 'setAssigningUser',
+          data: {
+            isAssigning: false,
+            transactionId: -1,
+          },
+        });
       } catch (err) {
         console.error('An error occurred while assigning an employee: ', err);
       }
     },
-    [setAssigningUser],
+    [],
   );
 
   const openFileInput = useCallback(
@@ -1101,7 +1115,9 @@ export const TransactionTable: FC<Props> = ({
                         selectorParam.txn.getTimestamp() !=
                           '0000-00-00 00:00:00'
                           ? format(
-                              new Date(selectorParam.txn.getTimestamp()),
+                              new Date(
+                                parseISO(selectorParam.txn.getTimestamp()),
+                              ),
                               'yyyy-MM-dd',
                             )
                           : '-',
