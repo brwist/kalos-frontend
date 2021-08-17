@@ -188,10 +188,7 @@ export const UploadPhotoTransaction: FC<Props> = ({
         name: 'tag',
         label: 'Tag',
         required: role != 'AccountsPayable',
-        options:
-          role != 'AccountsPayable'
-            ? SUBJECT_TAGS_TRANSACTIONS
-            : SUBJECT_TAGS_ACCOUNTS_PAYABLE,
+        options: SUBJECT_TAGS_ACCOUNTS_PAYABLE,
       },
     ],
     [
