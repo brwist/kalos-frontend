@@ -19,6 +19,7 @@ import CopyIcon from '@material-ui/icons/FileCopySharp';
 import RejectIcon from '@material-ui/icons/ThumbDownSharp';
 import SubmitIcon from '@material-ui/icons/ThumbUpSharp';
 import DeleteIcon from '@material-ui/icons/Delete';
+
 import { format, parseISO, parseJSON } from 'date-fns';
 import React, {
   FC,
@@ -152,20 +153,22 @@ export const TransactionTable: FC<Props> = ({
   //}>(); // sets open an employee picker in a modal
   //const [employees, setEmployees] = useState<User[]>([]);
   //const [departments, setDepartments] = useState<TimesheetDepartment[]>([]);
-  const [selectedTransactions, setSelectedTransactions] = useState<
-    Transaction[]
-  >([]); // Transactions that are selected in the table if the isSelector prop is set
-  const [pageNumber, setPageNumber] = useState<number>(0);
+  //const [selectedTransactions, setSelectedTransactions] = useState<
+  //  Transaction[]
+  //>([]); // Transactions that are selected in the table if the isSelector prop is set
+  //const [pageNumber, setPageNumber] = useState<number>(0);
   // For assigning employees, this will store the last chosen one for the form
-  const [assignedEmployee, setAssignedEmployee] = useState<number | undefined>(
-    undefined,
-  );
-  const [error, setError] = useState<string | undefined>(undefined);
+  //const [assignedEmployee, setAssignedEmployee] = useState<number | undefined>(
+  //  undefined,
+  //);
+  //const [error, setError] = useState<string | undefined>(undefined);
+  /*
   const [status, setStatus] = useState<
     'Accepted' | 'Rejected' | 'Accepted / Rejected'
   >('Accepted / Rejected');
-  const [loaded, setLoaded] = useState<boolean>(false);
-  const [changingPage, setChangingPage] = useState<boolean>(false); // To fix a bunch of issues with callbacks going in
+  */
+  //const [loaded, setLoaded] = useState<boolean>(false);
+  //const [changingPage, setChangingPage] = useState<boolean>(false); // To fix a bunch of issues with callbacks going in
   // front of other callbacks
   const [state, dispatch] = useReducer(reducer, {
     transactionFilter: filter,
@@ -181,7 +184,14 @@ export const TransactionTable: FC<Props> = ({
     assigningUser: undefined,
     employees: [],
     departments: [],
+    page: 0,
+    selectedTransactions: [],
     transactionToDelete: undefined,
+    assignedEmployee: undefined,
+    error: undefined,
+    loaded: false,
+    changingPage: false,
+    status: 'Accepted / Rejected',
   });
   const {
     transactionFilter,
@@ -189,14 +199,22 @@ export const TransactionTable: FC<Props> = ({
     totalTransactions,
     transactionActivityLogs,
     transactionToEdit,
+    transactionToDelete,
     loading,
+    loaded,
     loadTransactions,
     creatingTransaction,
     mergingTransaction,
     role,
     assigningUser,
     employees,
+    selectedTransactions,
     departments,
+    page,
+    changingPage,
+    assignedEmployee,
+    error,
+    status,
   } = state;
 
   const handleSetTransactionToEdit = useCallback(
@@ -351,20 +369,17 @@ export const TransactionTable: FC<Props> = ({
     refresh();
   };
 
-  const handleChangePage = useCallback(
-    (pageNumberToChangeTo: number) => {
-      setPageNumber(pageNumberToChangeTo);
-      setChangingPage(true);
-    },
-    [setPageNumber, setChangingPage],
-  );
+  const handleChangePage = useCallback((pageNumberToChangeTo: number) => {
+    dispatch({ type: 'setPage', data: pageNumberToChangeTo });
+    dispatch({ type: 'setChangingPage', data: true });
+  }, []);
   const resetTransactions = useCallback(async () => {
     let req = new Transaction();
     req.setOrderBy(sortBy ? sortBy : 'timestamp');
     req.setOrderDir(
       sortDir && sortDir != ' ' ? sortDir : sortDir == ' ' ? 'DESC' : 'DESC',
     );
-    req.setPageNumber(pageNumber);
+    req.setPageNumber(page);
 
     req.setIsActive(1);
     req.setVendorCategory("'PickTicket','Receipt'");
@@ -439,7 +454,7 @@ export const TransactionTable: FC<Props> = ({
     });
     const temp = transactions.map(txn => txn);
     dispatch({ type: 'setTransactions', data: temp });
-  }, [pageNumber, totalTransactions, transactionFilter, handleChangePage]);
+  }, [totalTransactions, page, transactionFilter, handleChangePage]);
 
   const load = useCallback(async () => {
     dispatch({ type: 'setLoading', data: true });
@@ -480,10 +495,11 @@ export const TransactionTable: FC<Props> = ({
       dispatch({ type: 'setRole', data: role.getName() as RoleType });
     }
 
-    setChangingPage(false);
+    dispatch({ type: 'setChangingPage', data: false });
+
     dispatch({ type: 'setLoading', data: false });
-    setLoaded(true);
-  }, [loggedUserId, setLoaded, setChangingPage]);
+    dispatch({ type: 'setLoaded', data: true });
+  }, [loggedUserId]);
 
   const makeUpdateStatus = async (
     id: number,
@@ -564,13 +580,18 @@ export const TransactionTable: FC<Props> = ({
   };
 
   const handleSetError = useCallback(
-    (error: string | undefined) => setError(error),
-    [setError],
+    (error: string | undefined) => dispatch({ type: 'setError', data: error }),
+    [],
   );
 
   const handleSetAssigningUser = useCallback(
     (isAssigningUser: boolean, transactionId: number) => {
-      if (isAssigningUser) setAssignedEmployee(undefined);
+      if (isAssigningUser) {
+        dispatch({
+          type: 'setAssignedEmployee',
+          data: undefined,
+        });
+      }
       dispatch({
         type: 'setAssigningUser',
         data: {
@@ -579,12 +600,16 @@ export const TransactionTable: FC<Props> = ({
         },
       });
     },
-    [setAssignedEmployee],
+    [],
   );
 
   const handleSetAssignedEmployee = useCallback(
-    assignedEmployee => setAssignedEmployee(assignedEmployee),
-    [setAssignedEmployee],
+    assignedEmployee =>
+      dispatch({
+        type: 'setAssignedEmployee',
+        data: assignedEmployee,
+      }),
+    [],
   );
 
   const handleSetFilter = useCallback(async (d: FilterData) => {
@@ -638,7 +663,7 @@ export const TransactionTable: FC<Props> = ({
       }
     } else {
       newSortDir = 'DESC';
-      setPageNumber(0);
+      dispatch({ type: 'setPage', data: 0 });
     }
 
     sortBy = newSort;
@@ -664,7 +689,7 @@ export const TransactionTable: FC<Props> = ({
   const handleAssignEmployee = useCallback(
     async (employeeIdToAssign: number | undefined, transactionId: number) => {
       if (employeeIdToAssign == undefined) {
-        setError('There is no employee to assign.');
+        dispatch({ type: 'setError', data: 'There is no employee to assign.' });
         return;
       }
       try {
@@ -700,7 +725,7 @@ export const TransactionTable: FC<Props> = ({
   const handleSetFilterAcceptedRejected = useCallback(
     (option: 'Accepted' | 'Rejected' | 'Accepted / Rejected') => {
       let tempFilter = transactionFilter;
-      setStatus(option);
+      dispatch({ type: 'setStatus', data: option });
       switch (option) {
         case 'Accepted':
           tempFilter.isAccepted = true;
@@ -722,7 +747,7 @@ export const TransactionTable: FC<Props> = ({
       dispatch({ type: 'setFilter', data: tempFilter });
       dispatch({ type: 'setLoadTransactions', data: true });
     },
-    [setStatus, transactionFilter],
+    [transactionFilter],
   );
 
   const setTransactionChecked = useCallback(
@@ -742,23 +767,25 @@ export const TransactionTable: FC<Props> = ({
           contained = true;
         }
       });
+
       if (!contained) {
         // We want to toggle it
-        setSelectedTransactions([
-          ...selectedTransactions,
-          transactions[idx].txn,
-        ]);
+        dispatch({
+          type: 'setSelectedTransactions',
+          data: [...selectedTransactions, transactions[idx].txn],
+        });
         if (onSelect)
           onSelect(transactions[idx].txn, [
             ...selectedTransactions,
             transactions[idx].txn,
           ]);
       } else {
-        setSelectedTransactions(
-          selectedTransactions.filter(
+        dispatch({
+          type: 'setSelectedTransactions',
+          data: selectedTransactions.filter(
             txn => txn.getId() !== transactions[idx].txn.getId(),
           ),
-        );
+        });
         if (onDeselect)
           onDeselect(
             transactions[idx].txn,
@@ -768,13 +795,7 @@ export const TransactionTable: FC<Props> = ({
           );
       }
     },
-    [
-      transactions,
-      setSelectedTransactions,
-      selectedTransactions,
-      onDeselect,
-      onSelect,
-    ],
+    [transactions, selectedTransactions, onDeselect, onSelect],
   );
 
   const SCHEMA_ASSIGN_USER: Schema<AssignedUserData> = [
@@ -973,12 +994,12 @@ export const TransactionTable: FC<Props> = ({
       />
       <SectionBar
         title="Transactions"
-        key={pageNumber.toString() + totalTransactions.toString()}
+        key={page.toString() + totalTransactions.toString()}
         fixedActions
         pagination={{
           count: totalTransactions,
           rowsPerPage: 50,
-          page: pageNumber,
+          page: page,
           onPageChange: number => handleChangePage(number),
         }}
         actions={
