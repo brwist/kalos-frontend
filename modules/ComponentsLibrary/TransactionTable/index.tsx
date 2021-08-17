@@ -67,6 +67,7 @@ import {
   TransactionDocumentList,
 } from '@kalos-core/kalos-rpc/TransactionDocument';
 import { ErrorBoundary } from '../ErrorBoundary';
+import { ConfirmDelete } from '../ConfirmDelete';
 export interface Props {
   loggedUserId: number;
   isSelector?: boolean; // Is this a selector table (checkboxes that return in on-change)?
@@ -863,6 +864,22 @@ export const TransactionTable: FC<Props> = ({
     ],
   ];
 
+  const handleDeleteTransaction = useCallback(async () => {
+    try {
+      if (state.transactionToDelete === undefined) {
+        throw new Error(
+          'There is no transaction to delete defined in state, yet handleDeleteTransaction was called.',
+        );
+      }
+      await TransactionClientService.Delete(state.transactionToDelete);
+      dispatch({ type: 'setTransactionToDelete', data: undefined });
+      await resetTransactions();
+      await refresh();
+    } catch (err) {
+      console.error(`An error occurred while deleting a transaction: ${err}`);
+    }
+  }, [state.transactionToDelete, refresh, resetTransactions]);
+
   useEffect(() => {
     if (!loaded) load();
     if (changingPage) load();
@@ -884,6 +901,20 @@ export const TransactionTable: FC<Props> = ({
         >
           {error}
         </Alert>
+      )}
+      {state.transactionToDelete && (
+        <ConfirmDelete
+          open={state.transactionToDelete != undefined}
+          onClose={() =>
+            dispatch({ type: 'setTransactionToDelete', data: undefined })
+          }
+          onConfirm={() => handleDeleteTransaction()}
+          kind="this transaction"
+          name=""
+          title="Delete"
+        >
+          Are you sure you want to delete this transaction?
+        </ConfirmDelete>
       )}
       {transactionToEdit && (
         <Modal
