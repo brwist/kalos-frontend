@@ -19,17 +19,10 @@ import CopyIcon from '@material-ui/icons/FileCopySharp';
 import RejectIcon from '@material-ui/icons/ThumbDownSharp';
 import SubmitIcon from '@material-ui/icons/ThumbUpSharp';
 import DeleteIcon from '@material-ui/icons/Delete';
-import { format, parseISO, parseJSON } from 'date-fns';
-import React, {
-  FC,
-  useCallback,
-  useEffect,
-  useMemo,
-  useState,
-  useReducer,
-} from 'react';
+import { format, parseISO } from 'date-fns';
+import React, { FC, useCallback, useEffect, useState, useReducer } from 'react';
 import { ENDPOINT, NULL_TIME, OPTION_ALL } from '../../../constants';
-import { reducer } from './reducer';
+import { FilterType, reducer } from './reducer';
 
 import {
   makeFakeRows,
@@ -88,17 +81,6 @@ type SelectorParams = {
   totalCount: number;
 };
 
-interface FilterType {
-  departmentId: number;
-  employeeId: number;
-  week: string;
-  vendor: string;
-  isAccepted: boolean | undefined;
-  isRejected: boolean | undefined;
-  amount: number | undefined;
-  billingRecorded: boolean;
-}
-
 interface AssignedEmployeeType {
   employeeId: number;
 }
@@ -116,6 +98,7 @@ let filter: FilterType = {
   isRejected: false,
   amount: undefined,
   billingRecorded: false,
+  universalSearch: undefined,
 };
 
 let assigned: AssignedEmployeeType = {
@@ -183,6 +166,7 @@ export const TransactionTable: FC<Props> = ({
     employees: [],
     departments: [],
     transactionToDelete: undefined,
+    universalSearch: undefined,
   });
   const {
     transactionFilter,
@@ -608,6 +592,7 @@ export const TransactionTable: FC<Props> = ({
     filter.isRejected = d.rejected ? d.rejected : undefined;
     filter.amount = d.amount;
     filter.billingRecorded = d.billingRecorded;
+    filter.universalSearch = d.universalSearch;
     dispatch({ type: 'setFilter', data: filter });
     dispatch({ type: 'setLoadTransactions', data: true });
   }, []);
@@ -789,6 +774,12 @@ export const TransactionTable: FC<Props> = ({
   ];
 
   const SCHEMA: Schema<FilterData> = [
+    [
+      {
+        name: 'universalSearch',
+        label: 'Search All Transactions',
+      },
+    ],
     [
       {
         name: 'departmentId',
