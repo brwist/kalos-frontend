@@ -228,6 +228,8 @@ export const UploadPhotoTransaction: FC<Props> = ({
         type: 'string',
         required: true,
       },
+    ],
+    [
       {
         name: 'cost',
         label: 'Cost',
