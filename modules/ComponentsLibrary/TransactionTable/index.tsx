@@ -1341,19 +1341,19 @@ export const TransactionTable: FC<Props> = ({
                               <AssignmentIndIcon />
                             </IconButton>
                           </Tooltip>,
-                          <Tooltip key="delete" content="Delete this task">
-                            <IconButton
-                              size="small"
-                              onClick={() =>
-                                dispatch({
-                                  type: 'setTransactionToDelete',
-                                  data: selectorParam.txn,
-                                })
-                              }
-                            >
-                              <DeleteIcon />
-                            </IconButton>
-                          </Tooltip>,
+                          // <Tooltip key="delete" content="Delete this task">
+                          //   <IconButton
+                          //     size="small"
+                          //     onClick={() =>
+                          //       dispatch({
+                          //         type: 'setTransactionToDelete',
+                          //         data: selectorParam.txn,
+                          //       })
+                          //     }
+                          //   >
+                          //     <DeleteIcon />
+                          //   </IconButton>
+                          // </Tooltip>,
                           <Prompt
                             key="reject"
                             confirmFn={reason =>
