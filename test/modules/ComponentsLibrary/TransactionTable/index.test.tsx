@@ -12,8 +12,11 @@ import Chai = require('chai');
 import Stubs = require('../../../test-setup/stubs'); // ? Sets the auth token up in a one-liner
 import TransactionModule = require('@kalos-core/kalos-rpc/Transaction');
 import LoaderModule = require('../../../../modules/Loader/main');
+import ModalModule = require('../../../../modules/ComponentsLibrary/Modal');
+import EditTransactionModule = require('../../../../modules/ComponentsLibrary/EditTransaction');
 import UserModule = require('@kalos-core/kalos-rpc/User');
 import TransactionActivityModule = require('@kalos-core/kalos-rpc/TransactionActivity');
+import TimesheetDepartmentModule = require('@kalos-core/kalos-rpc/TimesheetDepartment');
 
 import TestConstants = require('../../../test-constants/test-response-data');
 import Constants = require('../../../test-constants/constants');
@@ -33,6 +36,16 @@ describe('ComponentsLibrary', () => {
           'TimesheetDepartmentClientService',
           'loadTimeSheetDepartments',
           TestConstants.getFakeTimesheetDepartments(),
+        );
+
+        let departmentReq = new TimesheetDepartmentModule.TimesheetDepartment();
+        departmentReq.setIsActive(1);
+
+        Stubs.setupStubs(
+          'TimesheetDepartmentClientService',
+          'BatchGet',
+          TestConstants.getFakeTimesheetDepartments(),
+          departmentReq,
         );
 
         let req = new TransactionModule.Transaction();
@@ -98,15 +111,165 @@ describe('ComponentsLibrary', () => {
         ).to.be.equal(true);
       });
 
-      it('displays the correct transaction in the table', async () => {
-        await Constants.ReRenderAfterLoad();
-        wrapper.update();
-        Chai.expect(
-          wrapper
-            .find('.InfoTableValueContent')
-            .filterWhere(result => result.text() !== 'TEST ORDER NUMBER')
-            .first(),
-        ).to.be.lengthOf(1);
+      describe('Transactions Table', () => {
+        it('displays the correct transaction in the table', async () => {
+          await Constants.ReRenderAfterLoad(200);
+          wrapper.update();
+          Chai.expect(
+            wrapper
+              .find('.InfoTableValueContent')
+              .filterWhere(result => result.text() !== 'TEST ORDER NUMBER')
+              .first(),
+          ).to.be.lengthOf(1);
+        });
+
+        describe('Table row', () => {
+          describe('Actions', () => {
+            describe('"Copy Data to Clipboard" button', () => {
+              it('has an icon to Copy Data to Clipboard', async () => {
+                await Constants.ReRenderAfterLoad();
+                wrapper.update();
+                Chai.expect(
+                  wrapper
+                    .find({ title: 'Copy data to clipboard' })
+                    .filter('button'),
+                ).to.be.lengthOf(1);
+              });
+            });
+
+            describe('"Edit this transaction" button', () => {
+              it('has an icon to edit the transaction', async () => {
+                await Constants.ReRenderAfterLoad();
+                wrapper.update();
+                Chai.expect(
+                  wrapper
+                    .find({ title: 'Edit this transaction' })
+                    .filter('button'),
+                ).to.be.lengthOf(1);
+              });
+
+              describe('"Edit Transaction Created From Merge" modal', () => {
+                beforeEach(async () => {
+                  await Constants.ReRenderAfterLoad();
+                  wrapper.update();
+                  wrapper
+                    .find({ title: 'Edit this transaction' })
+                    .filter('button')
+                    .simulate('click');
+                });
+
+                it('can be clicked to open a modal with an EditTransaction component in it', async () => {
+                  wrapper.update();
+
+                  Chai.expect(
+                    wrapper.find({ open: true }).containsMatchingElement(
+                      // @ts-expect-error
+                      <EditTransactionModule.EditTransaction />,
+                    ),
+                  ).to.be.equal(true);
+                });
+
+                it('has a functional "CANCEL" button', () => {
+                  wrapper
+                    .find('span')
+                    .findWhere(span => span.text() === 'Cancel')
+                    .find('.MuiButton-label')
+                    .simulate('click');
+
+                  Chai.expect(wrapper.find({ open: true })).to.be.lengthOf(0);
+                });
+
+                it('has a disabled "Save" button when first opened', () => {
+                  // Checking to ensure the button is disabled
+                  Chai.expect(
+                    wrapper
+                      .find('span')
+                      .findWhere(span => span.text() === 'Save')
+                      .find('.MuiButton-label')
+                      .parent()
+                      .prop('disabled'),
+                  ).to.be.equal(true);
+                });
+              });
+            });
+
+            describe('"Upload File" button', () => {
+              it('has an icon to Upload File', async () => {
+                await Constants.ReRenderAfterLoad();
+                wrapper.update();
+                Chai.expect(
+                  wrapper.find({ title: 'Upload File' }).filter('button'),
+                ).to.be.lengthOf(1);
+              });
+            });
+
+            describe('"View Photos and Documents" button', () => {
+              it('has an icon to View Photos and Documents', async () => {
+                await Constants.ReRenderAfterLoad();
+                wrapper.update();
+                Chai.expect(
+                  wrapper
+                    .find({ title: 'View Photos and Documents' })
+                    .filter('span'), // Span because this is the one generated from the gallery, which doesn't output an HTML button
+                ).to.be.lengthOf(1);
+              });
+            });
+
+            describe('"View activity log" button', () => {
+              it('has an icon to View activity log', async () => {
+                await Constants.ReRenderAfterLoad();
+                wrapper.update();
+                Chai.expect(
+                  wrapper.find({ title: 'View activity log' }).filter('button'),
+                ).to.be.lengthOf(1);
+              });
+            });
+
+            describe('"View Notes" button', () => {
+              it('has an icon to View notes', async () => {
+                await Constants.ReRenderAfterLoad();
+                wrapper.update();
+                Chai.expect(
+                  wrapper.find({ title: 'View notes' }).filter('span'),
+                ).to.be.lengthOf(1);
+              });
+            });
+
+            describe('"Mark as accepted" button', () => {
+              it('has an icon to Mark as accepted', async () => {
+                await Constants.ReRenderAfterLoad();
+                wrapper.update();
+                Chai.expect(
+                  wrapper.find({ title: 'Mark as accepted' }).filter('button'),
+                ).to.be.lengthOf(1);
+              });
+            });
+
+            describe('"Assign an employee to this task" button', () => {
+              it('has an icon to Assign an employee to this task', async () => {
+                await Constants.ReRenderAfterLoad();
+                wrapper.update();
+                Chai.expect(
+                  wrapper
+                    .find({ title: 'Assign an employee to this task' })
+                    .filter('button'),
+                ).to.be.lengthOf(1);
+              });
+            });
+
+            describe('"Reject transaction" button', () => {
+              it('has an icon to Reject transaction', async () => {
+                await Constants.ReRenderAfterLoad();
+                wrapper.update();
+                Chai.expect(
+                  wrapper
+                    .find({ title: 'Reject transaction' })
+                    .filter('button'),
+                ).to.be.lengthOf(1);
+              });
+            });
+          });
+        });
       });
 
       describe('Pagination', () => {
