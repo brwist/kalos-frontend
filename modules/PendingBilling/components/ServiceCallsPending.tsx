@@ -52,12 +52,7 @@ export const ServiceCallsPending: FC<Props> = ({ loggedUserId }) => {
     setLoading(true);
     const tempFilter = filter;
     const req = new Event();
-    tempFilter.logDateCompleted = filter.logDateCompleted
-      ? filter.logDateCompleted
-      : NULL_TIME;
-    tempFilter.notEqualsList = filter.logDateCompleted
-      ? []
-      : ['LogDateCompleted'];
+    req.setFieldMaskList(['LogDatecompleted']);
     const client = new EventClient(ENDPOINT);
     const results = await loadEventsByFilter({
       page,
