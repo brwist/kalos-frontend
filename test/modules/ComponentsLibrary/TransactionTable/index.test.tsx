@@ -149,7 +149,7 @@ describe('ComponentsLibrary', () => {
               Chai.expect(
                 wrapper.find({ title: 'Upload File' }).filter('button'),
               ).to.be.lengthOf(1);
-            }); 
+            });
 
             it('has an icon to View Photos and Documents', async () => {
               await Constants.ReRenderAfterLoad();
@@ -158,6 +158,48 @@ describe('ComponentsLibrary', () => {
                 wrapper
                   .find({ title: 'View Photos and Documents' })
                   .filter('span'), // Span because this is the one generated from the gallery, which doesn't output an HTML button
+              ).to.be.lengthOf(1);
+            });
+
+            it('has an icon to View activity log', async () => {
+              await Constants.ReRenderAfterLoad();
+              wrapper.update();
+              Chai.expect(
+                wrapper.find({ title: 'View activity log' }).filter('button'),
+              ).to.be.lengthOf(1);
+            });
+
+            it('has an icon to View notes', async () => {
+              await Constants.ReRenderAfterLoad();
+              wrapper.update();
+              Chai.expect(
+                wrapper.find({ title: 'View notes' }).filter('span'),
+              ).to.be.lengthOf(1);
+            });
+
+            it('has an icon to Mark as accepted', async () => {
+              await Constants.ReRenderAfterLoad();
+              wrapper.update();
+              Chai.expect(
+                wrapper.find({ title: 'Mark as accepted' }).filter('button'),
+              ).to.be.lengthOf(1);
+            });
+
+            it('has an icon to Assign an employee to this task', async () => {
+              await Constants.ReRenderAfterLoad();
+              wrapper.update();
+              Chai.expect(
+                wrapper
+                  .find({ title: 'Assign an employee to this task' })
+                  .filter('button'),
+              ).to.be.lengthOf(1);
+            });
+
+            it('has an icon to Reject transaction', async () => {
+              await Constants.ReRenderAfterLoad();
+              wrapper.update();
+              Chai.expect(
+                wrapper.find({ title: 'Reject transaction' }).filter('button'),
               ).to.be.lengthOf(1);
             });
           });
