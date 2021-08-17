@@ -1,16 +1,16 @@
 import React from 'react';
-import { State, Action } from '.';
+import { State, Action, ACTIONS } from '.';
 
 export const Reducer: React.Reducer<State, Action> = (
   state: State,
   action: Action,
 ): State => {
   switch (action.type) {
-    case 'set-teams':
+    case ACTIONS.SET_TEAMS:
       return { ...state, teams: action.payload };
-    case 'set-loading':
+    case ACTIONS.SET_LOADING:
       return { ...state, loading: action.payload };
-    case 'set-create-team-model-open':
+    case ACTIONS.SET_CREATE_TEAM_MODEL_OPEN:
       return { ...state, createTeamModalOpen: action.payload };
     default:
       console.error(action);
