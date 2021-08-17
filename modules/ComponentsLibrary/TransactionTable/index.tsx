@@ -18,6 +18,7 @@ import DoneIcon from '@material-ui/icons/Done';
 import CopyIcon from '@material-ui/icons/FileCopySharp';
 import RejectIcon from '@material-ui/icons/ThumbDownSharp';
 import SubmitIcon from '@material-ui/icons/ThumbUpSharp';
+import DeleteIcon from '@material-ui/icons/Delete';
 import { format, parseISO, parseJSON } from 'date-fns';
 import React, {
   FC,
@@ -180,6 +181,7 @@ export const TransactionTable: FC<Props> = ({
     assigningUser: undefined,
     employees: [],
     departments: [],
+    transactionToDelete: undefined,
   });
   const {
     transactionFilter,
@@ -1306,6 +1308,19 @@ export const TransactionTable: FC<Props> = ({
                               }
                             >
                               <AssignmentIndIcon />
+                            </IconButton>
+                          </Tooltip>,
+                          <Tooltip key="delete" content="Delete this task">
+                            <IconButton
+                              size="small"
+                              onClick={() =>
+                                dispatch({
+                                  type: 'setTransactionToDelete',
+                                  data: selectorParam.txn,
+                                })
+                              }
+                            >
+                              <DeleteIcon />
                             </IconButton>
                           </Tooltip>,
                           <Prompt

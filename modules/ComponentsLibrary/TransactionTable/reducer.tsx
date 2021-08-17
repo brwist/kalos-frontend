@@ -29,6 +29,7 @@ export type State = {
   totalTransactions: number;
   transactionActivityLogs: TransactionActivity[];
   transactionToEdit: Transaction | undefined;
+  transactionToDelete: Transaction | undefined;
   loading: boolean;
   loadTransactions: boolean;
   creatingTransaction: boolean;
@@ -62,6 +63,10 @@ export type Action =
         isAssigning: boolean;
         transactionId: number;
       };
+    }
+  | {
+      type: 'setTransactionToDelete';
+      data: Transaction | undefined;
     };
 
 export const reducer = (state: State, action: Action) => {
@@ -154,6 +159,13 @@ export const reducer = (state: State, action: Action) => {
         departments: action.data,
       };
     }
+    case 'setTransactionToDelete':
+      console.log('setting transaction to delete');
+      // Filling
+      return {
+        ...state,
+        transactionToDelete: action.data,
+      };
     default:
       return state;
   }
