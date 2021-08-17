@@ -109,15 +109,59 @@ describe('ComponentsLibrary', () => {
         ).to.be.equal(true);
       });
 
-      it('displays the correct transaction in the table', async () => {
-        await Constants.ReRenderAfterLoad(200);
-        wrapper.update();
-        Chai.expect(
-          wrapper
-            .find('.InfoTableValueContent')
-            .filterWhere(result => result.text() !== 'TEST ORDER NUMBER')
-            .first(),
-        ).to.be.lengthOf(1);
+      describe('Transactions Table', () => {
+        it('displays the correct transaction in the table', async () => {
+          await Constants.ReRenderAfterLoad(200);
+          wrapper.update();
+          Chai.expect(
+            wrapper
+              .find('.InfoTableValueContent')
+              .filterWhere(result => result.text() !== 'TEST ORDER NUMBER')
+              .first(),
+          ).to.be.lengthOf(1);
+        });
+
+        describe('Table row', () => {
+          describe('Actions', () => {
+            it('has an icon to Copy Data to Clipboard', async () => {
+              await Constants.ReRenderAfterLoad();
+              wrapper.update();
+              Chai.expect(
+                wrapper
+                  .find({ title: 'Copy data to clipboard' })
+                  .filter('button'),
+              ).to.be.lengthOf(1);
+            });
+
+            it('has an icon to edit the transaction', async () => {
+              await Constants.ReRenderAfterLoad();
+              wrapper.update();
+              Chai.expect(
+                wrapper
+                  .find({ title: 'Edit this transaction' })
+                  .filter('button'),
+              ).to.be.lengthOf(1);
+            });
+
+            it('has an icon to Upload File', async () => {
+              await Constants.ReRenderAfterLoad();
+              wrapper.update();
+              Chai.expect(
+                wrapper.find({ title: 'Upload File' }).filter('button'),
+              ).to.be.lengthOf(1);
+            }); 
+
+            it('has an icon to View Photos and Documents', async () => {
+              await Constants.ReRenderAfterLoad();
+              wrapper.update();
+              Chai.expect(
+                wrapper
+                  .find({ title: 'View Photos and Documents' })
+                  .filter('span'), // Span because this is the one generated from the gallery, which doesn't output an HTML button
+              ).to.be.lengthOf(1);
+            });
+          });
+        });
       });
 
       describe('Pagination', () => {
