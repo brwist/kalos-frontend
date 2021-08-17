@@ -16,17 +16,23 @@ export type State = {
   teams: Team[];
 };
 
+export enum ACTIONS {
+  SET_TEAMS = 'set-teams',
+  SET_CREATE_TEAM_MODEL_OPEN = 'set-create-team-model-open',
+  SET_LOADING = 'set-loading',
+}
+
 export type Action =
   | {
-      type: 'set-teams';
+      type: ACTIONS.SET_TEAMS;
       payload: Team[];
     }
   | {
-      type: 'set-create-team-model-open';
+      type: ACTIONS.SET_CREATE_TEAM_MODEL_OPEN;
       payload: boolean;
     }
   | {
-      type: 'set-loading';
+      type: ACTIONS.SET_LOADING;
       payload: boolean;
     };
 
@@ -41,7 +47,7 @@ export const Teams: FC<Props> = () => {
 
   const handleSetCreateTeamModalOpen = useCallback(
     (isOpen: boolean) =>
-      dispatch({ type: 'set-create-team-model-open', payload: isOpen }),
+      dispatch({ type: ACTIONS.SET_CREATE_TEAM_MODEL_OPEN, payload: isOpen }),
     [dispatch],
   );
 
@@ -54,13 +60,12 @@ export const Teams: FC<Props> = () => {
       console.error(`An error occurred while batch-getting teams: ${err}`);
       // TODO implement better logging here for errors
     }
-    console.log('Teams gotten: ', teams);
     dispatch({
-      type: 'set-teams',
+      type: ACTIONS.SET_TEAMS,
       payload: teams,
     });
     dispatch({
-      type: 'set-loading',
+      type: ACTIONS.SET_LOADING,
       payload: false,
     });
   }, [dispatch]);
