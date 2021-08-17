@@ -178,6 +178,18 @@ describe('ComponentsLibrary', () => {
 
                   Chai.expect(wrapper.find({ open: true })).to.be.lengthOf(0);
                 });
+
+                it('has a disabled "Save" button when first opened', () => {
+                  // Checking to ensure the button is disabled
+                  Chai.expect(
+                    wrapper
+                      .find('span')
+                      .findWhere(span => span.text() === 'Save')
+                      .find('.MuiButton-label')
+                      .parent()
+                      .prop('disabled'),
+                  ).to.be.equal(true);
+                });
               });
             });
 
