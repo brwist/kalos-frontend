@@ -196,7 +196,6 @@ export const UploadPhotoTransaction: FC<Props> = ({
         name: 'file',
         label: 'Photo',
         type: 'file',
-        required: true,
         onFileLoad: handleFileLoad,
       },
     ],

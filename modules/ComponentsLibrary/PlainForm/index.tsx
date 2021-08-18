@@ -38,6 +38,7 @@ export type SchemaProps<T> = {
   multiline?: boolean;
   type?: Type;
   onChange?: (value: Value) => void;
+  onBlur?: (value: Value) => void;
   onFileLoad?: (file: string | ArrayBuffer | null, filename: string) => void;
   actions?: ButtonProps[];
   actionsInLabel?: boolean;

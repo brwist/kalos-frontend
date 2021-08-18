@@ -90,9 +90,8 @@ export class TransactionUserView extends React.PureComponent<props, state> {
 
   async fetchTxns(statusID: number) {
     const reqObj = new Transaction();
-    if (this.props.role != 'AccountsPayable') {
-      reqObj.setOwnerId(this.props.userID);
-    }
+    reqObj.setOwnerId(this.props.userID);
+
     reqObj.setPageNumber(this.state.page);
     reqObj.setStatusId(statusID);
     /* if (
@@ -107,34 +106,8 @@ export class TransactionUserView extends React.PureComponent<props, state> {
     const res = await this.TxnClient.BatchGet(reqObj);
     return res.getResultsList();
   }
-  async fetchTxnsAccountsPayable(statusID: number) {
-    const reqObj = new Transaction();
-    reqObj.setOwnerId(this.props.userID);
-    reqObj.setPageNumber(this.state.page);
-    reqObj.setStatusId(statusID);
-
-    reqObj.setIsActive(1);
-    const res = (await this.TxnClient.BatchGet(reqObj)).toObject();
-    return res.resultsList;
-  }
-
   async fetchAllTxns() {
-    if (this.props.role === 'AccountsPayable') {
-      console.log('Hey, fetch your stuff here');
-      this.setState(
-        {
-          isLoading: true,
-        },
-        await (async () => {
-          const newTxns = await this.fetchTxns(1);
-          const rejectedTxns = await this.fetchTxns(4);
-          this.setState({
-            transactions: newTxns.concat(rejectedTxns),
-            isLoading: false,
-          });
-        }),
-      );
-    } else {
+    {
       this.setState(
         {
           isLoading: true,
