@@ -19,18 +19,10 @@ import CopyIcon from '@material-ui/icons/FileCopySharp';
 import RejectIcon from '@material-ui/icons/ThumbDownSharp';
 import SubmitIcon from '@material-ui/icons/ThumbUpSharp';
 import DeleteIcon from '@material-ui/icons/Delete';
-
-import { format, parseISO, parseJSON } from 'date-fns';
-import React, {
-  FC,
-  useCallback,
-  useEffect,
-  useMemo,
-  useState,
-  useReducer,
-} from 'react';
+import { format, parseISO } from 'date-fns';
+import React, { FC, useCallback, useEffect, useState, useReducer } from 'react';
 import { ENDPOINT, NULL_TIME, OPTION_ALL } from '../../../constants';
-import { reducer } from './reducer';
+import { FilterType, reducer } from './reducer';
 
 import {
   makeFakeRows,
@@ -68,6 +60,7 @@ import {
   TransactionDocumentList,
 } from '@kalos-core/kalos-rpc/TransactionDocument';
 import { ErrorBoundary } from '../ErrorBoundary';
+import { ConfirmDelete } from '../ConfirmDelete';
 export interface Props {
   loggedUserId: number;
   isSelector?: boolean; // Is this a selector table (checkboxes that return in on-change)?
@@ -88,17 +81,6 @@ type SelectorParams = {
   totalCount: number;
 };
 
-interface FilterType {
-  departmentId: number;
-  employeeId: number;
-  week: string;
-  vendor: string;
-  isAccepted: boolean | undefined;
-  isRejected: boolean | undefined;
-  amount: number | undefined;
-  billingRecorded: boolean;
-}
-
 interface AssignedEmployeeType {
   employeeId: number;
 }
@@ -116,6 +98,7 @@ let filter: FilterType = {
   isRejected: false,
   amount: undefined,
   billingRecorded: false,
+  universalSearch: undefined,
 };
 
 let assigned: AssignedEmployeeType = {
@@ -192,6 +175,7 @@ export const TransactionTable: FC<Props> = ({
     loaded: false,
     changingPage: false,
     status: 'Accepted / Rejected',
+    universalSearch: undefined,
   });
   const {
     transactionFilter,
@@ -632,6 +616,7 @@ export const TransactionTable: FC<Props> = ({
     filter.isRejected = d.rejected ? d.rejected : undefined;
     filter.amount = d.amount;
     filter.billingRecorded = d.billingRecorded;
+    filter.universalSearch = d.universalSearch;
     dispatch({ type: 'setFilter', data: filter });
     dispatch({ type: 'setLoadTransactions', data: true });
   }, []);
@@ -811,6 +796,12 @@ export const TransactionTable: FC<Props> = ({
   const SCHEMA: Schema<FilterData> = [
     [
       {
+        name: 'universalSearch',
+        label: 'Search All Transactions',
+      },
+    ],
+    [
+      {
         name: 'departmentId',
         label: 'From department:',
         options: [
@@ -884,6 +875,22 @@ export const TransactionTable: FC<Props> = ({
     ],
   ];
 
+  const handleDeleteTransaction = useCallback(async () => {
+    try {
+      if (state.transactionToDelete === undefined) {
+        throw new Error(
+          'There is no transaction to delete defined in state, yet handleDeleteTransaction was called.',
+        );
+      }
+      await TransactionClientService.Delete(state.transactionToDelete);
+      dispatch({ type: 'setTransactionToDelete', data: undefined });
+      await resetTransactions();
+      await refresh();
+    } catch (err) {
+      console.error(`An error occurred while deleting a transaction: ${err}`);
+    }
+  }, [state.transactionToDelete, refresh, resetTransactions]);
+
   useEffect(() => {
     if (!loaded) load();
     if (changingPage) load();
@@ -905,6 +912,20 @@ export const TransactionTable: FC<Props> = ({
         >
           {error}
         </Alert>
+      )}
+      {state.transactionToDelete && (
+        <ConfirmDelete
+          open={state.transactionToDelete != undefined}
+          onClose={() =>
+            dispatch({ type: 'setTransactionToDelete', data: undefined })
+          }
+          onConfirm={() => handleDeleteTransaction()}
+          kind="this transaction"
+          name=""
+          title="Delete"
+        >
+          Are you sure you want to delete this transaction?
+        </ConfirmDelete>
       )}
       {transactionToEdit && (
         <Modal

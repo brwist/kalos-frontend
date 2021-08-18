@@ -1,15 +1,10 @@
-import { EmailConfig } from '@kalos-core/kalos-rpc/Email';
 import { TimesheetDepartment } from '@kalos-core/kalos-rpc/TimesheetDepartment';
-import {
-  Transaction,
-  TransactionList,
-} from '@kalos-core/kalos-rpc/Transaction';
-import { TransactionAccountList } from '@kalos-core/kalos-rpc/TransactionAccount';
+import { Transaction } from '@kalos-core/kalos-rpc/Transaction';
 import { TransactionActivity } from '@kalos-core/kalos-rpc/TransactionActivity';
 import { User } from '@kalos-core/kalos-rpc/User';
-import { FilterData, RoleType, AssignedUserData } from '../Payroll';
+import { RoleType } from '../Payroll';
 
-interface FilterType {
+export interface FilterType {
   departmentId: number;
   employeeId: number;
   week: string;
@@ -18,6 +13,7 @@ interface FilterType {
   isRejected: boolean | undefined;
   amount: number | undefined;
   billingRecorded: boolean;
+  universalSearch: string | undefined;
 }
 
 type SelectorParams = {
@@ -52,6 +48,7 @@ export type State = {
   selectedTransactions: Transaction[];
   status: 'Accepted' | 'Rejected' | 'Accepted / Rejected';
   departments: TimesheetDepartment[];
+  universalSearch: string | undefined;
 };
 export type Action =
   | { type: 'setFilter'; data: FilterType }
@@ -83,7 +80,11 @@ export type Action =
       type: 'setTransactionToDelete';
       data: Transaction | undefined;
     }
-  | { type: 'setAssignedEmployee'; data: number | undefined };
+  | { type: 'setAssignedEmployee'; data: number | undefined }
+  | {
+      type: 'setUniversalSearch';
+      data: string | undefined;
+    };
 
 export const reducer = (state: State, action: Action) => {
   switch (action.type) {
@@ -177,7 +178,6 @@ export const reducer = (state: State, action: Action) => {
     }
     case 'setTransactionToDelete':
       console.log('setting transaction to delete');
-      // Filling
       return {
         ...state,
         transactionToDelete: action.data,
@@ -231,6 +231,12 @@ export const reducer = (state: State, action: Action) => {
         loaded: action.data,
       };
     }
+    case 'setUniversalSearch':
+      console.log('setting universal search');
+      return {
+        ...state,
+        universalSearch: action.data,
+      };
     default:
       return state;
   }

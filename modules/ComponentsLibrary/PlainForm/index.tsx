@@ -49,6 +49,7 @@ export type SchemaProps<T> = {
   readOnly?: boolean;
   technicianAsEmployee?: boolean;
   minutesStep?: number;
+  invisible?: boolean;
 };
 
 export type Schema<T> = SchemaProps<T>[][];
@@ -213,6 +214,7 @@ export const PlainForm: <T>(
         {schema.map((fields, idx) => (
           <div key={idx} className="PlainFormGroup">
             {fields.map((props, idx2) => {
+              if (props.invisible) return <> </>;
               const { name } = props;
               return (
                 <Field
