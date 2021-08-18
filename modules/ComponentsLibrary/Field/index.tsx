@@ -135,6 +135,7 @@ export const Field: <T>(
       headline,
       options,
       onChange,
+      onBlur,
       onFileLoad,
       disabled = false,
       required = false,
@@ -151,6 +152,7 @@ export const Field: <T>(
       compact = false,
       technicianAsEmployee = false,
       white = false,
+
       minutesStep = 15,
       ...props
     },
@@ -294,6 +296,15 @@ export const Field: <T>(
         }
       },
       [type, setEventIdValue, dateTimePart, onChange],
+    );
+    const handleBlur = useCallback(
+      ({ target: { value } }) => {
+        if (onBlur) {
+          let newValue = type === 'number' ? +value : value;
+          onBlur(newValue);
+        }
+      },
+      [type, onBlur],
     );
     const handleFileChange = useCallback(
       ({ target }) => {
@@ -533,7 +544,7 @@ export const Field: <T>(
           <DateTimePicker
             className={clsx('FieldInput', className, { compact, disabled })}
             label={inputLabel}
-            value={parseISO(props.value as unknown as string)}
+            value={parseISO((props.value as unknown) as string)}
             onChange={value =>
               handleChange({
                 target: {
@@ -555,7 +566,7 @@ export const Field: <T>(
           <DatePicker
             className={clsx('FieldInput', className, { compact, disabled })}
             label={inputLabel}
-            value={parseISO(props.value as unknown as string)}
+            value={parseISO((props.value as unknown) as string)}
             onChange={value =>
               handleChange({
                 target: {
@@ -576,7 +587,7 @@ export const Field: <T>(
           <TimePicker
             className={clsx('FieldInput', className, { compact, disabled })}
             label={inputLabel}
-            value={parseISO(props.value as unknown as string)}
+            value={parseISO((props.value as unknown) as string)}
             onChange={value =>
               handleChange({
                 target: {
@@ -855,7 +866,7 @@ export const Field: <T>(
             className={clsx('FieldInput', { compact, disabled })}
             withinForm
             renderItem={renderSelectOptions}
-            selected={props.value as unknown as number}
+            selected={(props.value as unknown) as number}
             onSelect={handleChange}
             disabled={disabled}
             required={required}
@@ -878,7 +889,7 @@ export const Field: <T>(
           className={clsx('FieldInput', className, { compact, disabled })}
           withinForm
           renderItem={renderSelectOptions}
-          selected={props.value as unknown as number}
+          selected={(props.value as unknown) as number}
           onSelect={handleChange}
           disabled={disabled}
           required={required}
@@ -907,6 +918,7 @@ export const Field: <T>(
           className={clsx('FieldInput', { compact, disabled })}
           disabled={disabled}
           onChange={handleChange}
+          onBlur={handleBlur}
           label={inputLabel}
           fullWidth
           InputProps={{

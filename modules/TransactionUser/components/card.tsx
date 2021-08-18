@@ -41,6 +41,7 @@ import './card.css';
 import { parseISO } from 'date-fns';
 import { EditTransaction } from '../../ComponentsLibrary/EditTransaction';
 import format from 'date-fns/format';
+import { delay } from 'lodash';
 
 interface props {
   txn: Transaction;
@@ -60,6 +61,7 @@ interface state {
   pendingAddFromSingleFile: boolean;
   costCenters: TransactionAccountList;
   pendingEdit: Transaction | undefined;
+  notes: string;
 }
 
 const hardcodedList = [
@@ -98,6 +100,7 @@ export class TxnCard extends React.PureComponent<props, state> {
       pendingAddFromSingleFile: false,
       costCenters: new TransactionAccountList(),
       pendingEdit: undefined,
+      notes: props.txn.getNotes(),
     };
     this.FileInput = React.createRef();
     this.NotesInput = React.createRef();
@@ -582,6 +585,7 @@ export class TxnCard extends React.PureComponent<props, state> {
     const { isManager, userID } = this.props;
     const t = txn;
     let subheader = `${t.getDescription().split(' ')[0]} - ${t.getVendor()}`;
+
     const deriveCallout = this.deriveCallout(t);
     return (
       <>
@@ -618,7 +622,10 @@ export class TxnCard extends React.PureComponent<props, state> {
                   transactionID={t.getId()}
                   canDelete
                 />
-                <Button label="Submit" onClick={this.submit} />
+                <Button
+                  label="Submit"
+                  onClick={() => delay(this.submit, 1500)}
+                />
                 <PDFMaker
                   dateStr={t.getTimestamp()}
                   name={t.getOwnerName()}
@@ -691,10 +698,10 @@ export class TxnCard extends React.PureComponent<props, state> {
             <NoteField
               key={this.state.txn.toString()}
               initialValue={t.getNotes()}
-              onChange={debounce(
-                (value: string) => this.updateNotes(() => value.toString()),
-                5000,
-              )}
+              onChange={console.log}
+              onBlur={(value: string) =>
+                this.updateNotes(() => value.toString())
+              }
             />
           </div>
           <input
