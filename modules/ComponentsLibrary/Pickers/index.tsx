@@ -2,6 +2,7 @@ import React from 'react';
 import InputLabel from '@material-ui/core/InputLabel';
 import FormControl from '@material-ui/core/FormControl';
 import NativeSelect from '@material-ui/core/NativeSelect';
+import Select from '@material-ui/core/Select';
 import {
   TransactionAccount,
   TransactionAccountClient,
@@ -27,13 +28,21 @@ interface props<R, T> {
   hideInactive?: boolean;
   fullWidth?: boolean;
   className?: string;
+  multiple?: boolean;
   reqObj?: {
     new (): R;
   };
   client?: {
     new (endpoint: string): Client<R, T>;
   };
-  onSelect?(e: React.SyntheticEvent<HTMLSelectElement> | number): void;
+  onSelect?(
+    e:
+      | React.ChangeEvent<{
+          name?: string | undefined;
+          value: unknown;
+        }>
+      | number,
+  ): void;
   sort?(a: T, b: T): number;
   filter?(a: T): boolean;
   renderItem(item: T): JSX.Element;
@@ -73,8 +82,13 @@ class Picker<R, T> extends React.PureComponent<props<R, T>, state<T>> {
     this.fetchData = this.fetchData.bind(this);
   }
 
-  handleSelect(e: React.SyntheticEvent<HTMLSelectElement>) {
-    const id = parseInt(e.currentTarget.value);
+  handleSelect(
+    e: React.ChangeEvent<{
+      name?: string | undefined;
+      value: unknown;
+    }>,
+  ) {
+    const id = parseInt(e.currentTarget.value as string);
     if (this.props.onSelect) {
       try {
         this.props.onSelect(this.props.withinForm ? e : id);
@@ -114,7 +128,7 @@ class Picker<R, T> extends React.PureComponent<props<R, T>, state<T>> {
     }
     if (this.props.filter) {
       list = list.filter(this.props.filter);
-    } 
+    }
     return (
       <FormControl
         className={this.props.className}
@@ -124,15 +138,16 @@ class Picker<R, T> extends React.PureComponent<props<R, T>, state<T>> {
         fullWidth={this.props.fullWidth}
       >
         <InputLabel htmlFor={`${this.label}-picker`}>{this.label}</InputLabel>
-        <NativeSelect
+        <Select
           value={this.props.selected}
           onChange={this.handleSelect}
           IconComponent={undefined}
+          multiple={this.props.multiple}
           inputProps={{ id: `${this.label}-picker` }}
         >
           <option value={0}>Select {this.label}</option>
           {list.map(this.props.renderItem)}
-        </NativeSelect>
+        </Select>
       </FormControl>
     );
   }

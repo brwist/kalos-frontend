@@ -49,6 +49,7 @@ import { InternalDocumentClient } from '@kalos-core/kalos-rpc/InternalDocument';
 import { PDFClient } from '@kalos-core/kalos-rpc/PDF';
 import { DocumentClient } from '@kalos-core/kalos-rpc/Document';
 import { TeamClient } from '@kalos-core/kalos-rpc/Team';
+import { DispatchClient } from '@kalos-core/kalos-rpc/Dispatch';
 import {
   ENDPOINT,
   MONTHS,
@@ -130,6 +131,7 @@ export const TimeoffRequestClientService = new TimeoffRequestClient(ENDPOINT);
 export const TimesheetLineClientService = new TimesheetLineClient(ENDPOINT);
 export const ApiKeyClientService = new ApiKeyClient(ENDPOINT);
 export const TeamClientService = new TeamClient(ENDPOINT);
+export const DispatchClientService = new DispatchClient(ENDPOINT);
 export const TransactionActivityClientService = new TransactionActivityClient(
   ENDPOINT,
 );
