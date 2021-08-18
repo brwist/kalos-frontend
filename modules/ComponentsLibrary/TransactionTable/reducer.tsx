@@ -1,15 +1,10 @@
-import { EmailConfig } from '@kalos-core/kalos-rpc/Email';
 import { TimesheetDepartment } from '@kalos-core/kalos-rpc/TimesheetDepartment';
-import {
-  Transaction,
-  TransactionList,
-} from '@kalos-core/kalos-rpc/Transaction';
-import { TransactionAccountList } from '@kalos-core/kalos-rpc/TransactionAccount';
+import { Transaction } from '@kalos-core/kalos-rpc/Transaction';
 import { TransactionActivity } from '@kalos-core/kalos-rpc/TransactionActivity';
 import { User } from '@kalos-core/kalos-rpc/User';
-import { FilterData, RoleType, AssignedUserData } from '../Payroll';
+import { RoleType } from '../Payroll';
 
-interface FilterType {
+export interface FilterType {
   departmentId: number;
   employeeId: number;
   week: string;
@@ -18,6 +13,7 @@ interface FilterType {
   isRejected: boolean | undefined;
   amount: number | undefined;
   billingRecorded: boolean;
+  universalSearch: string | undefined;
 }
 type SelectorParams = {
   txn: Transaction;
@@ -29,6 +25,7 @@ export type State = {
   totalTransactions: number;
   transactionActivityLogs: TransactionActivity[];
   transactionToEdit: Transaction | undefined;
+  transactionToDelete: Transaction | undefined;
   loading: boolean;
   loadTransactions: boolean;
   creatingTransaction: boolean;
@@ -42,6 +39,7 @@ export type State = {
     | undefined;
   employees: User[];
   departments: TimesheetDepartment[];
+  universalSearch: string | undefined;
 };
 export type Action =
   | { type: 'setFilter'; data: FilterType }
@@ -62,6 +60,14 @@ export type Action =
         isAssigning: boolean;
         transactionId: number;
       };
+    }
+  | {
+      type: 'setTransactionToDelete';
+      data: Transaction | undefined;
+    }
+  | {
+      type: 'setUniversalSearch';
+      data: string | undefined;
     };
 
 export const reducer = (state: State, action: Action) => {
@@ -154,6 +160,18 @@ export const reducer = (state: State, action: Action) => {
         departments: action.data,
       };
     }
+    case 'setTransactionToDelete':
+      console.log('setting transaction to delete');
+      return {
+        ...state,
+        transactionToDelete: action.data,
+      };
+    case 'setUniversalSearch':
+      console.log('setting universal search');
+      return {
+        ...state,
+        universalSearch: action.data,
+      };
     default:
       return state;
   }
