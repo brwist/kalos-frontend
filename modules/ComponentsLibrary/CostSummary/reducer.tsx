@@ -68,7 +68,6 @@ export const reducer = (state: State, action: Action) => {
       };
     }
     case 'updateTotalPerDiemProcessed': {
-      console.log(action.data);
       if (action.data.totalLodging == 0 && action.data.totalMeals === 0) {
         const temp = state.totalPerDiemProcessed;
         temp.totalLodging += state.totalPerDiem.totalLodging;
