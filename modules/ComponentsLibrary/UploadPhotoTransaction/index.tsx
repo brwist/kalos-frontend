@@ -169,19 +169,6 @@ export const UploadPhotoTransaction: FC<Props> = ({
     [fileData, setSaving, setFormKey, formKey, bucket, loggedUserId, onUpload],
   );
 
-  let conditionalSchema = [
-    formData.tag == 'Subject=Receipt'
-      ? [
-          {
-            name: 'cost',
-            label: 'Cost',
-            type: 'number',
-            required: true,
-          },
-        ]
-      : [{}],
-  ];
-
   let SCHEMA: Schema<Entry> = [
     [
       {
@@ -242,11 +229,18 @@ export const UploadPhotoTransaction: FC<Props> = ({
         required: true,
       },
     ],
-    ...conditionalSchema,
+    [
+      {
+        name: 'cost',
+        label: 'Cost',
+        type: 'number',
+        invisible: formData.tag != 'Subject=Receipt',
+      },
+    ],
   ] as Schema<Entry>;
   return (
     <Form<Entry>
-      key={formKey}
+      key={formKey + formData.tag}
       title={title}
       schema={SCHEMA}
       data={formData}
