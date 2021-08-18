@@ -103,9 +103,6 @@ export class TransactionUserView extends React.PureComponent<props, state> {
       const departmentListString = this.props.departmentList.toString();
       reqObj.setDepartmentIdList(departmentListString);
     }*/
-    if (this.props.role === 'AccountsPayable') {
-      reqObj.setVendorCategory('%Pick%');
-    }
     reqObj.setIsActive(1);
     const res = await this.TxnClient.BatchGet(reqObj);
     return res.getResultsList();
