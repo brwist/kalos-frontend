@@ -203,6 +203,16 @@ describe('ComponentsLibrary', () => {
               });
             });
 
+            describe('"Delete this task" button', () => {
+              it('has an icon to Delete this task', async () => {
+                await Constants.ReRenderAfterLoad();
+                wrapper.update();
+                Chai.expect(
+                  wrapper.find({ title: 'Delete this task' }).filter('button'),
+                ).to.be.lengthOf(1);
+              });
+            });
+
             describe('"View Photos and Documents" button', () => {
               it('has an icon to View Photos and Documents', async () => {
                 await Constants.ReRenderAfterLoad();
