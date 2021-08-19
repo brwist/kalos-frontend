@@ -133,6 +133,13 @@ export const SCHEMA_GOOGLE_MAP_INPUT_FORM: Schema<AddressPair.AsObject> = [
   ],
   [
     {
+      name: 'JobNumber',
+      label: 'Job Number',
+      type: 'eventId',
+    },
+  ],
+  [
+    {
       label: 'Time of Trip Start',
       name: 'Date',
       type: 'mui-datetime',
@@ -208,7 +215,7 @@ export class TripInfoTable extends React.PureComponent<Props, State> {
     }
 
     trip.setNotes(data.Notes);
-
+    trip.setJobNumber(data.JobNumber);
     trip.setDate(data.Date);
 
     const user = await UserClientService.loadUserById(this.props.loggedUserId);

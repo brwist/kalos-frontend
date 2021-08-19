@@ -361,7 +361,12 @@ export class PlaceAutocompleteAddressForm extends React.PureComponent<
 
   save = (addressPair: AddressPair.AddressPair) => {
     for (const [key, value] of Object.entries(addressPair)) {
-      if (value == '' && key != 'Notes' && key != 'HomeTravel') {
+      if (
+        value == '' &&
+        key != 'Notes' &&
+        key != 'HomeTravel' &&
+        key != 'JobNumber'
+      ) {
         this.setState({ validationPopupOpen: true });
         return;
       }

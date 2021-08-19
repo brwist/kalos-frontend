@@ -1461,7 +1461,7 @@
 
 "@improbable-eng/grpc-web@^0.9.6":
   version "0.9.6"
-  resolved "https://registry.npmjs.org/@improbable-eng/grpc-web/-/grpc-web-0.9.6.tgz"
+  resolved "https://registry.yarnpkg.com/@improbable-eng/grpc-web/-/grpc-web-0.9.6.tgz#87e43ebf0eafaca30f5f720bf646b6abea99c1ae"
   integrity sha512-Qs4++T+UvFmrgELd70VX9WbqiP22rk+a28fiwmerrCfrb2gt+mYAqO5xa5GxvHnL+geXcCbgZOeVWxQXrvXB4Q==
   dependencies:
     browser-headers "^0.4.0"
@@ -1483,9 +1483,9 @@
   integrity sha512-ZXRY4jNvVgSVQ8DL3LTcakaAtXwTVUxE81hslsyD2AtoXW/wVob10HkOJ1X/pAlcI7D+2YoZKg5do8G/w6RYgA==
 
 "@kalos-core/kalos-rpc@^3.3.7":
-  version "3.3.22"
-  resolved "https://registry.yarnpkg.com/@kalos-core/kalos-rpc/-/kalos-rpc-3.3.22.tgz#0add5f873ec7296272a270d62b4d026397e834f8"
-  integrity sha512-Cno1vpFxuzvjUuSNt55Uby83Vn5vrhwn2uyk6I5lY6TeDCMIzNTs5FkrUCn7l+Akhr2pSrTO8JDqgW2V32dBrw==
+  version "3.3.24"
+  resolved "https://registry.yarnpkg.com/@kalos-core/kalos-rpc/-/kalos-rpc-3.3.24.tgz#22fce0ca19860b56b9901c390c9bd2a02ba3bb4f"
+  integrity sha512-yXoBy+qA+fGbXE18myh1IrIeapB/Xzaqb9ETM3bCBmOtYwkxh3egaHTEud9siV4KNdPnQpVg6xO+AahspWArXg==
   dependencies:
     "@improbable-eng/grpc-web" "^0.9.6"
     "@types/pako" "^1.0.1"
@@ -1927,14 +1927,19 @@
   resolved "https://registry.npmjs.org/@types/mocha/-/mocha-8.2.3.tgz"
   integrity sha512-ekGvFhFgrc2zYQoX4JeZPmVzZxw6Dtllga7iGHzfbYIYkAMUx/sAFP2GdFpLff+vdHXu5fl7WX9AT+TtqYcsyw==
 
-"@types/node@*", "@types/node@^16.3.3":
+"@types/node@*":
   version "16.6.1"
   resolved "https://registry.npmjs.org/@types/node/-/node-16.6.1.tgz"
   integrity sha512-Sr7BhXEAer9xyGuCN3Ek9eg9xPviCF2gfu9kTfuU2HkTVAMYSDeX40fvpmo72n5nansg3nsBjuQBrsS28r+NUw==
 
+"@types/node@^16.3.3":
+  version "16.6.2"
+  resolved "https://registry.yarnpkg.com/@types/node/-/node-16.6.2.tgz#331b7b9f8621c638284787c5559423822fdffc50"
+  integrity sha512-LSw8TZt12ZudbpHc6EkIyDM3nHVWKYrAvGy6EAJfNfjusbwnThqjqxUKKRwuV3iWYeW/LYMzNgaq3MaLffQ2xA==
+
 "@types/pako@^1.0.1":
   version "1.0.2"
-  resolved "https://registry.npmjs.org/@types/pako/-/pako-1.0.2.tgz"
+  resolved "https://registry.yarnpkg.com/@types/pako/-/pako-1.0.2.tgz#17c9b136877f33d9ecc8e73cd26944f1f6dd39a1"
   integrity sha512-8UJl2MjkqqS6ncpLZqRZ5LmGiFBkbYxocD4e4jmBqGvfRG1RS23gKsBQbdtV9O9GvRyjFTiRHRByjSlKCLlmZw==
 
 "@types/papaparse@^5.0.6":
@@ -2938,7 +2943,7 @@ brotli@^1.2.0:
 
 browser-headers@^0.4.0:
   version "0.4.1"
-  resolved "https://registry.npmjs.org/browser-headers/-/browser-headers-0.4.1.tgz"
+  resolved "https://registry.yarnpkg.com/browser-headers/-/browser-headers-0.4.1.tgz#4308a7ad3b240f4203dbb45acedb38dc2d65dd02"
   integrity sha512-CA9hsySZVo9371qEHjHZtYxV2cFtVj5Wj/ZHi8ooEsrtm4vOnl9Y9HmyYWk9q+05d7K3rdoAE0j3MVEFVvtQtg==
 
 browser-process-hrtime@^1.0.0:
@@ -5362,7 +5367,7 @@ growl@1.10.5, growl@>=1.10.0:
 
 grpc-web@^1.0.5:
   version "1.2.1"
-  resolved "https://registry.npmjs.org/grpc-web/-/grpc-web-1.2.1.tgz"
+  resolved "https://registry.yarnpkg.com/grpc-web/-/grpc-web-1.2.1.tgz#860051d705bf5baa7b81fcbd14030060bf16b7b9"
   integrity sha512-ibBaJPzfMVuLPgaST9w0kZl60s+SnkPBQp6QKdpEr85tpc1gXW2QDqSne9xiyiym0logDfdUSm4aX5h9YBA2mw==
 
 gulp-cli@^2.2.0:
