@@ -383,17 +383,28 @@ export const TransactionTable: FC<Props> = ({
     req.setIsBillingRecorded(transactionFilter.billingRecorded);
     req.setFieldMaskList(['IsBillingRecorded']);
     let res: TransactionList | null = null;
-    try {
-      res = await TransactionClientService.BatchGet(req);
-      if (res.getTotalCount() < totalTransactions) {
-        dispatch({ type: 'setTotalTransactions', data: res.getTotalCount() });
-
-        handleChangePage(0);
+    if (transactionFilter.universalSearch) {
+      try {
+        req.setSearchPhrase(`%${transactionFilter.universalSearch}%`);
+        res = await TransactionClientService.Search(req);
+      } catch (err) {
+        console.error(
+          `An error occurred while searching for transactions in TransactionTable: ${err}`,
+        );
       }
-    } catch (err) {
-      console.error(
-        `An error occurred while batch-getting transactions in TransactionTable: ${err}`,
-      );
+    } else {
+      try {
+        res = await TransactionClientService.BatchGet(req);
+        if (res.getTotalCount() < totalTransactions) {
+          dispatch({ type: 'setTotalTransactions', data: res.getTotalCount() });
+
+          handleChangePage(0);
+        }
+      } catch (err) {
+        console.error(
+          `An error occurred while batch-getting transactions in TransactionTable: ${err}`,
+        );
+      }
     }
     if (!res) {
       console.error('No transaction result was gotten. Returning.');
