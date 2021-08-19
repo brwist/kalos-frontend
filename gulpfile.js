@@ -610,6 +610,18 @@ const NAMED_EXPORTS = {
   'node_modules/@improbable-eng/grpc-web/dist/grpc-web-client.umd.js': ['grpc'],
   'node_modules/@kalos-core/kalos-rpc/node_modules/@improbable-eng/grpc-web/dist/grpc-web-client.umd.js':
     ['grpc'],
+  'node_modules/@material-ui/utils/node_modules/react-is/index.js'  :  ['ForwardRef','Memo','isFragment'],
+  'node_modules/@material-ui/core/node_modules/react-is/index.js'  :  ['isFragment'],
+  'node_modules/lodash/lodash.js'  :  ['delay'],
+  'node_modules/@kalos-core/kalos-rpc/compiled-protos/dispatch_pb.js'  :  [
+    'DispatchableTechList',
+    'DispatchableTech',
+    'DispatchCall',
+    'DispatchCallBack',
+    'DispatchCallTime',
+    'DispatchCallCount',
+    'DispatchFirstCall'
+  ],
   'node_modules/@kalos-core/kalos-rpc/compiled-protos/kalosmaps_pb.js': [
     'Place',
     'Places',

@@ -233,7 +233,9 @@ export const UploadPhotoTransaction: FC<Props> = ({
         name: 'cost',
         label: 'Cost',
         type: 'number',
-        invisible: formData.tag != 'Subject=Receipt',
+        invisible:
+          formData.tag != 'Subject=Receipt' &&
+          formData.tag != 'Subject=Invoice',
       },
     ],
   ] as Schema<Entry>;

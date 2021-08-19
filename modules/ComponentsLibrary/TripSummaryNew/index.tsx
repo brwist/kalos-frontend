@@ -315,6 +315,13 @@ export const TripSummaryNew: FC<Props> = ({
         multiline: true,
       },
     ],
+    [
+      {
+        label: 'Job Number',
+        type: 'eventId',
+        name: 'jobNumber',
+      },
+    ],
     [{ headline: true, label: 'Approval' }],
     [
       {
@@ -500,6 +507,8 @@ export const TripSummaryNew: FC<Props> = ({
 
     trip.setNotes(data.Notes);
     trip.setHomeTravel(data.HomeTravel);
+    console.log(data.JobNumber);
+    trip.setJobNumber(data.JobNumber);
     trip.setDate(data.Date);
     trip.setUserId(userId);
     let user;
@@ -785,6 +794,9 @@ export const TripSummaryNew: FC<Props> = ({
             name: 'Home Travel',
           },
           {
+            name: 'Job Number',
+          },
+          {
             name: 'Payroll Processed?',
             actions: actions,
           },
@@ -829,6 +841,9 @@ export const TripSummaryNew: FC<Props> = ({
                   },
                   {
                     value: currentTrip.getHomeTravel() ? 'Yes' : 'No',
+                  },
+                  {
+                    value: currentTrip.getJobNumber(),
                   },
                   {
                     value: currentTrip.getPayrollProcessed() ? 'Yes' : 'No',

@@ -32,7 +32,7 @@ export type TripInfo = {
   payrollProcessed: boolean;
   page: number;
   approved: boolean;
-
+  jobNumber: number;
   distanceInDollars: string;
   weekOf: string;
   date: string;
