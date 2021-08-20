@@ -1,9 +1,11 @@
 import { DispatchableTech, DispatchCall } from '@kalos-core/kalos-rpc/Dispatch';
 import { Event } from '@kalos-core/kalos-rpc/Event';
+import { JobType } from '@kalos-core/kalos-rpc/JobType';
 import { TimesheetDepartment } from '@kalos-core/kalos-rpc/TimesheetDepartment';
 
 export type FormData = {
   departmentIds: number[];
+  jobTypes: number[];
 };
 export interface State {
   techs: DispatchableTech[];
@@ -12,17 +14,32 @@ export interface State {
   departmentIds: number[];
   jobTypes: number[];
   departmentList: TimesheetDepartment[];
+  jobTypeList: JobType[];
   formData: FormData;
+  notIncludedJobTypes: number[];
 }
 
 export type Action =
   | { type: 'setTechs'; data: DispatchableTech[] }
   | { type: 'setDismissedTechs'; data: DispatchableTech[] }
   | { type: 'setCalls'; data: DispatchCall[] }
-  | { type: 'setDepartmentIds'; data: number[] }
-  | { type: 'setJobTypes'; data: number[] }
+  | { type: 'updateDepartmentIds'; data: {
+    techs: DispatchableTech[],
+    departmentIds: number[] 
+  }}
+  | { type: 'updateJobTypes'; data: {
+    calls: DispatchCall[],
+    jobTypes: number[]
+  }}
   | { type: 'setDepartmentList'; data: TimesheetDepartment[] }
-  | { type: 'setFormData'; data: FormData };
+  | { type: 'setJobTypeList'; data: JobType[] }
+  | { type: 'setFormData'; data: FormData }
+  | { type: 'setInitialRender'; data: {
+    techs: DispatchableTech[],
+    calls: DispatchCall[],
+    departmentList: TimesheetDepartment[],
+    jobTypeList: JobType[]
+  }};
 
 export const reducer = (state: State, action: Action) => {
   switch (action.type) {
@@ -41,15 +58,27 @@ export const reducer = (state: State, action: Action) => {
         ...state,
         calls: action.data,
       };
-    case 'setDepartmentIds':
+    case 'updateDepartmentIds':
       return {
         ...state,
-        departmentIds: action.data,
+        techs: action.data.techs,
+        departmentIds: action.data.departmentIds,
+      };
+    case 'updateJobTypes':
+      return {
+        ...state,
+        calls: action.data.calls,
+        jobTypes: action.data.jobTypes,
       };
     case 'setDepartmentList':
       return {
         ...state,
         departmentList: action.data,
+      };
+    case 'setJobTypeList':
+      return {
+        ...state,
+        jobTypeList: action.data,
       };
     case 'setFormData':
       console.log(state.formData);
@@ -57,6 +86,14 @@ export const reducer = (state: State, action: Action) => {
         ...state,
         formData: action.data,
       };
+    case 'setInitialRender':
+      return {
+        ...state,
+        techs: action.data.techs,
+        calls: action.data.calls,
+        departmentList: action.data.departmentList,
+        jobTypeList: action.data.jobTypeList,
+      }
     default:
       return state;
   }
