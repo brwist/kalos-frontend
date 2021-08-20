@@ -12,16 +12,15 @@ import {
   TimesheetDepartmentClientService,
   JobTypeClientService,
 } from '../../../helpers';
-import { InfoTable } from '../InfoTable';
 import { DateRange } from '@kalos-core/kalos-rpc/compiled-protos/common_pb';
 import { format } from 'date-fns';
 import { SectionBar } from '../SectionBar';
 import { PlainForm, Schema } from '../PlainForm';
-import { DepartmentPicker } from '../Pickers';
 import { TimesheetDepartment } from '@kalos-core/kalos-rpc/TimesheetDepartment';
 import { JobType } from '@kalos-core/kalos-rpc/JobType';
 import { debounce } from 'lodash';
 import { DispatchableTech, DispatchCall } from '@kalos-core/kalos-rpc/Dispatch';
+import { DragDropContext, Droppable } from 'react-beautiful-dnd';
 
 export interface Props {
   userID: number;
@@ -146,14 +145,30 @@ export const DispatchDashboard: React.FC<Props> = function DispatchDashboard({
         data={initialFormData}
         onChange={debounce(handleChange, 1000)}
       />
-      <DispatchTechs
-        userID={userID}
-        techs={state.techs}
-      />
-      <DispatchCalls
-        userID={userID}
-        calls={state.calls}
-      />
+      <DragDropContext onDragEnd = {() => {
+
+      }}
+      >
+        <Droppable droppableId="droppable-1" type="TECH">
+          {(provided, snapshot) => (
+            <div
+              ref={provided.innerRef}
+              {...provided.droppableProps}
+            >
+              <DispatchTechs
+                userID={userID}
+                techs={state.techs}
+              />             
+              <DispatchCalls
+                userID={userID}
+                calls={state.calls}
+              />
+
+              {provided.placeholder}
+            </div>
+          )}
+        </Droppable>
+      </DragDropContext>
     </PageWrapper>
   );
 };
