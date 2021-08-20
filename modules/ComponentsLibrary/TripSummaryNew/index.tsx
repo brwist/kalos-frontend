@@ -73,6 +73,7 @@ interface Props {
   searchable?: boolean;
   managerView?: boolean;
   toggle?: boolean;
+  onClose?: (flag: boolean) => void;
   onSaveTrip?: (savedTrip?: Trip) => any;
   onDeleteTrip?: (deletedTrip?: Trip) => any;
   onDeleteAllTrips?: (deletedTrips?: Trip[]) => any;
@@ -91,6 +92,7 @@ export const TripSummaryNew: FC<Props> = ({
   canApprove,
   canProcessPayroll,
   role,
+  onClose,
   viewingOwn,
   checkboxes,
   managerView,
@@ -683,6 +685,7 @@ export const TripSummaryNew: FC<Props> = ({
           <Typography>Are you sure you want to reject this trip?</Typography>
         </Confirm>
       )}
+
       {canAddTrips && (
         <Button
           label="Add Trip"
@@ -985,6 +988,15 @@ export const TripSummaryNew: FC<Props> = ({
           kind="" // Purposely left blank for clarity purposes in the box
           name="this trip"
           onConfirm={() => deleteTrip(pendingTripToDelete!)}
+        />
+      )}
+      {onClose && (
+        <Button
+          label="Close"
+          size="small"
+          key={'closeTrips'}
+          variant="contained"
+          onClick={() => onClose(false)}
         />
       )}
       {pendingDeleteAllTrips && (
