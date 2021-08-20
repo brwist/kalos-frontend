@@ -121,5 +121,11 @@ export default () => (
     />
     <ExampleTitle>error</ExampleTitle>
     <InfoTable data={EXAMPLE_2} error />
+    <ExampleTitle>add row button</ExampleTitle>
+    <InfoTable
+      data={EXAMPLE_2}
+      addRowButton
+      columns={[{ name: 'Column 1' }, { name: 'Column 2' }]}
+    />
   </>
 );

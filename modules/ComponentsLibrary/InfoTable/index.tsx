@@ -9,7 +9,7 @@ import { Actions, ActionsProps } from '../Actions';
 import { Link } from '../Link';
 import { OrderDir } from '../../../helpers';
 import './styles.less';
-
+import { Button, Props as ButtonProps } from '../Button';
 type Styles = {
   loading?: boolean;
   error?: boolean;
@@ -48,6 +48,7 @@ interface Props extends Styles {
   styles?: CSSProperties;
   className?: string;
   skipPreLine?: boolean;
+  addRowButton?: boolean; // Will add a button to add a new row
 }
 
 export const InfoTable = ({
@@ -60,7 +61,13 @@ export const InfoTable = ({
   skipPreLine = false,
   className = '',
   styles,
+  addRowButton,
 }: Props) => {
+  if (addRowButton && columns.length === 0) {
+    console.error(
+      `addRowButton requires the columns to be defined. This is a no-op, but there will be no addRowButton. `,
+    );
+  }
   const theme = useTheme();
   const md = useMediaQuery(theme.breakpoints.down('xs'));
   return (
@@ -73,7 +80,7 @@ export const InfoTable = ({
                 name,
                 dir,
                 onClick,
-                actions,
+                actions = [],
                 fixedActions,
                 width,
                 align = 'left',
@@ -82,6 +89,11 @@ export const InfoTable = ({
               idx,
             ) => {
               if (invisible) return null;
+              if (addRowButton)
+                actions.push({
+                  label: 'TEST',
+                  onClick: () => alert('alerting'),
+                });
               const ArrowIcon =
                 dir === 'DESC' ? ArrowDropDownIcon : ArrowDropUpIcon;
               return (
@@ -117,7 +129,18 @@ export const InfoTable = ({
                     {name} {dir && <ArrowIcon />}
                   </span>
                   {actions && (
-                    <Actions actions={actions} fixed={fixedActions} />
+                    <Actions
+                      actions={actions}
+                      fixed={fixedActions}
+                      onClickAction={(
+                        actionClicked: ButtonProps & {
+                          desktop?: boolean;
+                          burgeronly?: number; // Number as a workaround to a bug involving spreads
+                          // Read more here: https://stackoverflow.com/a/49786272
+                          fixed?: boolean;
+                        },
+                      ) => alert(`Clicked one: ${actionClicked.label}`)}
+                    />
                   )}
                 </Typography>
               );
@@ -137,7 +160,7 @@ export const InfoTable = ({
                   label,
                   value,
                   href,
-                  actions,
+                  actions = [],
                   onClick,
                   actionsFullWidth = false,
                   invisible,
@@ -149,6 +172,7 @@ export const InfoTable = ({
                   columns && columns[idx2]
                     ? columns[idx2].align || 'left'
                     : 'left';
+
                 return (
                   <Typography
                     key={idx2}
