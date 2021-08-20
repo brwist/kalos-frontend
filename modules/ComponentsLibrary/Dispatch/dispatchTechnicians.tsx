@@ -6,14 +6,13 @@ import { DragDropContext } from 'react-beautiful-dnd';
 interface props {
   userID : number;
   techs : DispatchableTech[];
-  departmentIDs : Number[];
 }
 
 export const DispatchTechs: FC<props> = props => {
 
-  const load = useEffect( () => {
-    console.log(props.departmentIDs);
-  }, [props.departmentIDs])
+  useEffect( () => {
+    console.log(props.techs);
+  }, [props.techs])
   return (
     <div>
       <DragDropContext onDragEnd = {() => {
