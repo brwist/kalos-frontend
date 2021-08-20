@@ -1,7 +1,7 @@
 import { DispatchableTech } from '@kalos-core/kalos-rpc/Dispatch';
 import React, { FC, useEffect, useState, useCallback } from 'react';
 import { InfoTable } from '../InfoTable';
-import { Draggable } from 'react-beautiful-dnd';
+import { Draggable, Droppable } from 'react-beautiful-dnd';
 
 interface props {
   userID : number;
@@ -15,6 +15,14 @@ export const DispatchTechs: FC<props> = props => {
   }, [props.techs])
   return (
     <div>
+      <div>
+      <Droppable droppableId="TechDroppable" isDropDisabled={true}>
+      {(provided, snapshot) => {
+        return (
+        <div
+          ref={provided.innerRef}
+          {...provided.droppableProps}
+        >
         <InfoTable
           columns={[
             { name: 'Name' },
@@ -30,67 +38,82 @@ export const DispatchTechs: FC<props> = props => {
                 {
                   value: (
                     <Draggable draggableId={tech.getUserId().toString()} index={index}>
-                    {(provided, snapshot) => (
-                      <div
-                        ref={provided.innerRef}
-                        {...provided.draggableProps}
-                        {...provided.dragHandleProps}
-                      >
-                      {tech.getTechname()}
-                      </div>
-                    )}
+                      {(provided, snapshot) => (
+                        <div
+                          ref={provided.innerRef}
+                          {...provided.draggableProps}
+                          {...provided.dragHandleProps}
+                        >
+                          {tech.getTechname()}
+                        </div>
+                      )}
                     </Draggable>
                   ),
                 },
                 {
                   value: (
                     <Draggable draggableId={tech.getUserId().toString()} index={index}>
-                    {(provided, snapshot) => (
-                      <div
-                        ref={provided.innerRef}
-                        {...provided.draggableProps}
-                        {...provided.dragHandleProps}
-                      >
-                   {tech.getActivity() != "Standby" ? ( 
-                    <a
-                    target='_blank' 
-                    href={`/index.cfm?action=admin:service.editServiceCall&id=${tech.getEventId()}&user_id=${tech.getPropertyUserId()}&property_id=${tech.getPropertyId()}`} rel="noreferrer">
-                      {tech.getActivity()}
-                    </a> ) : (
-                      tech.getActivity()
-                      )
-                    }
-                    </div>
-                    )}
-                  </Draggable>
+                      {(provided, snapshot) => (
+                        <div
+                          ref={provided.innerRef}
+                          {...provided.draggableProps}
+                          {...provided.dragHandleProps}
+                          
+                        >
+                          {tech.getActivity() != "Standby" ? ( 
+                            <a
+                            target='_blank' 
+                            href={`/index.cfm?action=admin:service.editServiceCall&id=${tech.getEventId()}&user_id=${tech.getPropertyUserId()}&property_id=${tech.getPropertyId()}`} rel="noreferrer">
+                              {tech.getActivity()}
+                            </a> ) : (
+                              tech.getActivity()
+                          )}
+                        </div>
+                      )}
+                    </Draggable>
                   ),
                 },
                 {
                   value: (
                     <Draggable draggableId={tech.getUserId().toString()} index={index}>
-                    {(provided, snapshot) => (
-                      <div
-                        ref={provided.innerRef}
-                        {...provided.draggableProps}
-                        {...provided.dragHandleProps}
-                      >
-                   {tech.getPropertyCity() === '0' ? 'Not Known' : tech.getPropertyCity()}
-                    </div>
-                    )}
-                  </Draggable>
+                      {(provided, snapshot) => (
+                        <div
+                          ref={provided.innerRef}
+                          {...provided.draggableProps}
+                          {...provided.dragHandleProps}
+                        >
+                          {tech.getPropertyCity() === '0' ? 'Not Known' : tech.getPropertyCity()}
+                        </div>
+                      )}
+                    </Draggable>
                   ), 
                 },
-                /* // {
-                  //   value: `${hours}:${minutes}`
-                // },
-                // {
-                  //   value: `${tech.getHoursWorked().h}:${tech.getHoursWorked().m}`
-                // }, */
               ];
             })
             : []
           }
         />
-    </div>
+          {provided.placeholder}
+        </div>
+        )}
+      }
+      </Droppable>
+      </div>
+      <div>
+        <Droppable droppableId="dismissTech">
+          {(provided, snapshot) => {
+            return (
+              <div
+                ref={provided.innerRef}
+                {...provided.droppableProps}
+              >
+                {"This is a Stupid Test"}
+                {provided.placeholder}
+              </div>
+            )
+          }}
+        </Droppable>
+      </div>
+      </div>
   )
 }
