@@ -1,4 +1,9 @@
-import React, { ReactElement, ReactNode, CSSProperties } from 'react';
+import React, {
+  ReactElement,
+  ReactNode,
+  CSSProperties,
+  useReducer,
+} from 'react';
 import clsx from 'clsx';
 import useTheme from '@material-ui/core/styles/useTheme';
 import useMediaQuery from '@material-ui/core/useMediaQuery';
@@ -10,6 +15,7 @@ import { Link } from '../Link';
 import { OrderDir } from '../../../helpers';
 import './styles.less';
 import { Button, Props as ButtonProps } from '../Button';
+import { ACTIONS, Reducer } from './reducer';
 type Styles = {
   loading?: boolean;
   error?: boolean;
@@ -63,6 +69,9 @@ export const InfoTable = ({
   styles,
   addRowButton,
 }: Props) => {
+  const [state, dispatch] = useReducer(Reducer, {
+    isAddingRow: false,
+  });
   if (addRowButton && columns.length === 0) {
     console.error(
       `addRowButton requires the columns to be defined. This is a no-op, but there will be no addRowButton. `,
@@ -70,8 +79,13 @@ export const InfoTable = ({
   }
   const theme = useTheme();
   const md = useMediaQuery(theme.breakpoints.down('xs'));
+  if (state.isAddingRow) console.log('IS ADDING ROW');
   return (
-    <div className={clsx('InfoTable', className)} style={styles}>
+    <div
+      className={clsx('InfoTable', className)}
+      style={styles}
+      key={state.toString()}
+    >
       {columns.length > 0 && (
         <div className="InfoTableHeader">
           {columns.map(
@@ -89,11 +103,16 @@ export const InfoTable = ({
               idx,
             ) => {
               if (invisible) return null;
-              if (addRowButton)
+              if (addRowButton) {
                 actions.push({
                   label: 'TEST',
-                  onClick: () => alert('alerting'),
+                  onClick: () =>
+                    dispatch({
+                      type: ACTIONS.SET_IS_ADDING_ROW,
+                      payload: true,
+                    }),
                 });
+              }
               const ArrowIcon =
                 dir === 'DESC' ? ArrowDropDownIcon : ArrowDropUpIcon;
               return (
