@@ -776,6 +776,7 @@ export const Timesheet: FC<Props> = props => {
             viewingOwn={props.userId === props.timesheetOwnerId}
             canApprove={role === 'Manager'}
             canProcessPayroll={role === 'Payroll'}
+            onClose={() => setTripsOpen(false)}
           ></TripSummaryNew>
         </Modal>
       )}

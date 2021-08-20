@@ -169,6 +169,7 @@ export const ServiceCallsPending: FC<Props> = ({ loggedUserId }) => {
         label: 'Zip Code',
         type: 'search',
       },
+
       {
         name: 'logDateCompleted',
         label: 'Date Completed',
@@ -209,6 +210,9 @@ export const ServiceCallsPending: FC<Props> = ({ loggedUserId }) => {
     },
     {
       name: 'Job Type-Subtype',
+    },
+    {
+      name: 'Date Completed',
       ...(sort.orderByField === 'getJobType'
         ? {
             dir: sort.orderDir,
@@ -259,6 +263,10 @@ export const ServiceCallsPending: FC<Props> = ({ loggedUserId }) => {
           },
           {
             value: jobType,
+            onClick: openEditServiceCall(event),
+          },
+          {
+            value: formatDate(event.getLogDateCompleted()),
             onClick: openEditServiceCall(event),
           },
           {
