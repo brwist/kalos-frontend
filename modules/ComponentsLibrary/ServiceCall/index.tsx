@@ -83,6 +83,7 @@ export const ServiceCall: FC<Props> = props => {
   const [tabIdx, setTabIdx] = useState<number>(0);
   const [tabKey, setTabKey] = useState<number>(0);
   const [pendingSave, setPendingSave] = useState<boolean>(false);
+  const [saveInvoice, setSaveInvoice] = useState<boolean>(false);
   const [requestValid, setRequestValid] = useState<boolean>(false);
   const [serviceCallId, setServiceCallId] = useState<number>(eventId || 0);
   const [entry, setEntry] = useState<Event>(new Event());
@@ -297,7 +298,11 @@ export const ServiceCall: FC<Props> = props => {
     },
     [setConfirmedParentId],
   );
-
+const handleSaveInvoice = useCallback(async() => {
+  setPendingSave(true);
+  setRequestValid(true);
+  setSaveInvoice(true);
+},[setPendingSave, setRequestValid]);
   const handleSave = useCallback(async () => {
     setPendingSave(true);
     if (tabIdx !== 0) {
@@ -313,13 +318,19 @@ export const ServiceCall: FC<Props> = props => {
       console.log('saving existing ID');
       temp.setId(serviceCallId);
       temp.addFieldMask('Id');
-      await EventClientService.Update(temp);
-
+      if(saveInvoice) {
+        temp.setIsGeneratedInvoice(saveInvoice);
+        temp.addFieldMask('IsGeneratedInvoice');
+        const res = await EventClientService.Update(temp);
+      }
+      else {
+        await EventClientService.Update(temp);
+      }
       console.log('finished Update');
     } else {
-      const res = await EventClientService.Create(temp);
-      console.log('creating new one');
-      setEntry(res);
+        const res = await EventClientService.Create(temp);
+        console.log('creating new one');
+        setEntry(res);
       if (!serviceCallId) {
         console.log('no service call Id');
         setServiceCallId(res.getId());
@@ -742,7 +753,7 @@ export const ServiceCall: FC<Props> = props => {
               },
               {
                 label: 'Save and Invoice',
-                // onClick: // TODO
+                onClick: handleSaveInvoice,
                 disabled: loading || saving,
               },
               {
