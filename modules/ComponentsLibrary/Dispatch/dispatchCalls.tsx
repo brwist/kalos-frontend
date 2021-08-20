@@ -6,10 +6,13 @@ import { format, setMinutes, setHours } from 'date-fns';
 interface props {
   userID : number;
   calls : DispatchCall[];
-  jobTypes : Number[];
 }
 
 export const DispatchCalls: FC<props> = props => {
+
+  useEffect( () => {
+    console.log(props.calls);
+  }, [props.calls])
 
   return (
     <div>
