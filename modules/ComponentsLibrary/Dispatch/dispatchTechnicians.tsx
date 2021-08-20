@@ -1,7 +1,7 @@
 import { DispatchableTech } from '@kalos-core/kalos-rpc/Dispatch';
 import React, { FC, useEffect, useState, useCallback } from 'react';
 import { InfoTable } from '../InfoTable';
-import { DragDropContext } from 'react-beautiful-dnd';
+import { Draggable } from 'react-beautiful-dnd';
 
 interface props {
   userID : number;
@@ -15,11 +15,6 @@ export const DispatchTechs: FC<props> = props => {
   }, [props.techs])
   return (
     <div>
-      <DragDropContext onDragEnd = {() => {
-
-      }}
-        >
-
         <InfoTable
           columns={[
             { name: 'Name' },
@@ -30,13 +25,33 @@ export const DispatchTechs: FC<props> = props => {
           ]}
           data={
             props.techs
-            ? props.techs.map(tech => {
+            ? props.techs.map((tech, index) => { 
               return [
                 {
-                  value: tech.getTechname(),
+                  value: (
+                    <Draggable draggableId={tech.getUserId().toString()} index={index}>
+                    {(provided, snapshot) => (
+                      <div
+                        ref={provided.innerRef}
+                        {...provided.draggableProps}
+                        {...provided.dragHandleProps}
+                      >
+                      {tech.getTechname()}
+                      </div>
+                    )}
+                    </Draggable>
+                  ),
                 },
                 {
-                  value: tech.getActivity() != "Standby" ? ( 
+                  value: (
+                    <Draggable draggableId={tech.getUserId().toString()} index={index}>
+                    {(provided, snapshot) => (
+                      <div
+                        ref={provided.innerRef}
+                        {...provided.draggableProps}
+                        {...provided.dragHandleProps}
+                      >
+                   {tech.getActivity() != "Standby" ? ( 
                     <a
                     target='_blank' 
                     href={`/index.cfm?action=admin:service.editServiceCall&id=${tech.getEventId()}&user_id=${tech.getPropertyUserId()}&property_id=${tech.getPropertyId()}`} rel="noreferrer">
@@ -44,22 +59,38 @@ export const DispatchTechs: FC<props> = props => {
                     </a> ) : (
                       tech.getActivity()
                       )
+                    }
+                    </div>
+                    )}
+                  </Draggable>
+                  ),
                 },
                 {
-                  value: tech.getPropertyCity() === '0' ? 'Not Known' : tech.getPropertyCity()
+                  value: (
+                    <Draggable draggableId={tech.getUserId().toString()} index={index}>
+                    {(provided, snapshot) => (
+                      <div
+                        ref={provided.innerRef}
+                        {...provided.draggableProps}
+                        {...provided.dragHandleProps}
+                      >
+                   {tech.getPropertyCity() === '0' ? 'Not Known' : tech.getPropertyCity()}
+                    </div>
+                    )}
+                  </Draggable>
+                  ), 
                 },
-                // {
+                /* // {
                   //   value: `${hours}:${minutes}`
                 // },
                 // {
                   //   value: `${tech.getHoursWorked().h}:${tech.getHoursWorked().m}`
-                // },
+                // }, */
               ];
             })
             : []
           }
         />
-      </DragDropContext>
     </div>
   )
 }
