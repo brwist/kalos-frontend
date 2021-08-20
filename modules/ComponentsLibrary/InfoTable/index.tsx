@@ -94,7 +94,7 @@ export const InfoTable = ({
                 name,
                 dir,
                 onClick,
-                actions = [],
+                actions,
                 fixedActions,
                 width,
                 align = 'left',
@@ -103,7 +103,8 @@ export const InfoTable = ({
               idx,
             ) => {
               if (invisible) return null;
-              if (addRowButton) {
+              if (addRowButton && idx === columns.length - 1) {
+                if (actions === undefined) actions = [];
                 actions.push({
                   label: 'TEST',
                   onClick: () =>
@@ -154,11 +155,10 @@ export const InfoTable = ({
                       onClickAction={(
                         actionClicked: ButtonProps & {
                           desktop?: boolean;
-                          burgeronly?: number; // Number as a workaround to a bug involving spreads
-                          // Read more here: https://stackoverflow.com/a/49786272
+                          burgeronly?: number;
                           fixed?: boolean;
                         },
-                      ) => alert(`Clicked one: ${actionClicked.label}`)}
+                      ) => console.log('CLICKED THE ACTION')}
                     />
                   )}
                 </Typography>
