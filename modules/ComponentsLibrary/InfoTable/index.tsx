@@ -82,45 +82,14 @@ export const InfoTable = ({
   }
   const theme = useTheme();
   const md = useMediaQuery(theme.breakpoints.down('xs'));
+
+  let fields: {} = {};
+  let temporaryResult: {}; // The result assigned when the onChange is fired.
+
   if (state.isAddingRow) {
-    let fields: {} = {};
     columns.forEach(col => {
       (fields as any)[col.name as any] = ''; // Creating the field on the object for use later
     });
-
-    let temporaryResult: {}; // The result assigned when the onChange is fired.
-
-    data?.unshift([
-      {
-        value: (
-          <PlainForm<typeof fields>
-            onChange={fieldOutput => (temporaryResult = fieldOutput)}
-            schema={[
-              Object.keys(fields).map((field: any, idx: number) => {
-                return {
-                  label: field,
-                  name: field,
-                  type: 'text',
-                  actions:
-                    idx == Object.keys(fields).length - 1
-                      ? [
-                          {
-                            label: 'OK',
-                            onClick: () => {
-                              if (onSaveRowButton)
-                                onSaveRowButton(temporaryResult);
-                            },
-                          },
-                        ]
-                      : [],
-                };
-              }),
-            ]}
-            data={fields}
-          />
-        ),
-      },
-    ]);
   }
   return (
     <div
@@ -208,6 +177,37 @@ export const InfoTable = ({
             },
           )}
         </div>
+      )}
+      {state.isAddingRow && (
+        <PlainForm<typeof fields>
+          onChange={fieldOutput => (temporaryResult = fieldOutput)}
+          schema={[
+            Object.keys(fields).map((field: any, idx: number) => {
+              return {
+                label: field,
+                name: field,
+                type: 'text',
+                actions:
+                  idx == Object.keys(fields).length - 1
+                    ? [
+                        {
+                          label: 'OK',
+                          onClick: () => {
+                            dispatch({
+                              type: ACTIONS.SET_IS_ADDING_ROW,
+                              payload: false,
+                            });
+                            if (onSaveRowButton)
+                              onSaveRowButton(temporaryResult);
+                          },
+                        },
+                      ]
+                    : [],
+              };
+            }),
+          ]}
+          data={fields}
+        />
       )}
       {data &&
         data.map((items, idx) => (
