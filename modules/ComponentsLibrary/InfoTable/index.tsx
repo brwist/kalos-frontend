@@ -14,8 +14,9 @@ import { Actions, ActionsProps } from '../Actions';
 import { Link } from '../Link';
 import { OrderDir } from '../../../helpers';
 import './styles.less';
-import { Button, Props as ButtonProps } from '../Button';
+import { Props as ButtonProps } from '../Button';
 import { ACTIONS, Reducer } from './reducer';
+import { PlainForm } from '../PlainForm';
 type Styles = {
   loading?: boolean;
   error?: boolean;
@@ -79,7 +80,37 @@ export const InfoTable = ({
   }
   const theme = useTheme();
   const md = useMediaQuery(theme.breakpoints.down('xs'));
-  if (state.isAddingRow) console.log('IS ADDING ROW');
+  if (state.isAddingRow) {
+    let arrOfObjects: { fieldValue: string }[] = [];
+    columns.forEach(_col =>
+      arrOfObjects.push({
+        fieldValue: '',
+      }),
+    );
+
+    let fields: {} = {};
+    columns.forEach(col => {
+      (fields as any)[col.name as any] = ''; // Creating the field on the object for use later
+    });
+
+    let proto = fields;
+
+    data?.unshift([
+      {
+        value: (
+          <PlainForm<typeof proto>
+            onChange={fieldOutput => console.log('changed: ', fieldOutput)}
+            schema={[
+              Object.keys(proto).map((field: any) => {
+                return { label: field, name: field, type: 'text' };
+              }),
+            ]}
+            data={fields}
+          />
+        ),
+      },
+    ]);
+  }
   return (
     <div
       className={clsx('InfoTable', className)}
@@ -106,7 +137,7 @@ export const InfoTable = ({
               if (addRowButton && idx === columns.length - 1) {
                 if (actions === undefined) actions = [];
                 actions.push({
-                  label: 'TEST',
+                  label: 'Add New Row',
                   onClick: () =>
                     dispatch({
                       type: ACTIONS.SET_IS_ADDING_ROW,
