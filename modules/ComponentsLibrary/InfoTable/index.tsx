@@ -56,6 +56,7 @@ interface Props extends Styles {
   className?: string;
   skipPreLine?: boolean;
   addRowButton?: boolean; // Will add a button to add a new row
+  onSaveRowButton?: (results: {}) => any;
 }
 
 export const InfoTable = ({
@@ -69,6 +70,7 @@ export const InfoTable = ({
   className = '',
   styles,
   addRowButton,
+  onSaveRowButton,
 }: Props) => {
   const [state, dispatch] = useReducer(Reducer, {
     isAddingRow: false,
@@ -86,7 +88,7 @@ export const InfoTable = ({
       (fields as any)[col.name as any] = ''; // Creating the field on the object for use later
     });
 
-    let temporaryResult: {}; // The result assigned when the onChange is fired. Set to state once the "OK" button is clicked
+    let temporaryResult: {}; // The result assigned when the onChange is fired.
 
     data?.unshift([
       {
@@ -104,8 +106,10 @@ export const InfoTable = ({
                       ? [
                           {
                             label: 'OK',
-                            onClick: () =>
-                              console.log('WOULD SET OUT: ', temporaryResult),
+                            onClick: () => {
+                              if (onSaveRowButton)
+                                onSaveRowButton(temporaryResult);
+                            },
                           },
                         ]
                       : [],
