@@ -86,14 +86,30 @@ export const InfoTable = ({
       (fields as any)[col.name as any] = ''; // Creating the field on the object for use later
     });
 
+    let temporaryResult: {}; // The result assigned when the onChange is fired. Set to state once the "OK" button is clicked
+
     data?.unshift([
       {
         value: (
           <PlainForm<typeof fields>
-            onChange={fieldOutput => console.log('changed: ', fieldOutput)}
+            onChange={fieldOutput => (temporaryResult = fieldOutput)}
             schema={[
-              Object.keys(fields).map((field: any) => {
-                return { label: field, name: field, type: 'text' };
+              Object.keys(fields).map((field: any, idx: number) => {
+                return {
+                  label: field,
+                  name: field,
+                  type: 'text',
+                  actions:
+                    idx == Object.keys(fields).length - 1
+                      ? [
+                          {
+                            label: 'OK',
+                            onClick: () =>
+                              console.log('WOULD SET OUT: ', temporaryResult),
+                          },
+                        ]
+                      : [],
+                };
               }),
             ]}
             data={fields}
