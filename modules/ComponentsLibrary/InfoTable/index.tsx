@@ -159,18 +159,9 @@ export const InfoTable = ({
                   >
                     {name} {dir && <ArrowIcon />}
                   </span>
+                  {/* ! This action can be appended to above via the actions variable to add the "Add New" button in */}
                   {actions && (
-                    <Actions
-                      actions={actions}
-                      fixed={fixedActions}
-                      onClickAction={(
-                        actionClicked: ButtonProps & {
-                          desktop?: boolean;
-                          burgeronly?: number;
-                          fixed?: boolean;
-                        },
-                      ) => console.log('CLICKED THE ACTION')}
-                    />
+                    <Actions actions={actions} fixed={fixedActions} />
                   )}
                 </Typography>
               );
