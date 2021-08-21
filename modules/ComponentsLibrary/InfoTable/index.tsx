@@ -81,27 +81,18 @@ export const InfoTable = ({
   const theme = useTheme();
   const md = useMediaQuery(theme.breakpoints.down('xs'));
   if (state.isAddingRow) {
-    let arrOfObjects: { fieldValue: string }[] = [];
-    columns.forEach(_col =>
-      arrOfObjects.push({
-        fieldValue: '',
-      }),
-    );
-
     let fields: {} = {};
     columns.forEach(col => {
       (fields as any)[col.name as any] = ''; // Creating the field on the object for use later
     });
 
-    let proto = fields;
-
     data?.unshift([
       {
         value: (
-          <PlainForm<typeof proto>
+          <PlainForm<typeof fields>
             onChange={fieldOutput => console.log('changed: ', fieldOutput)}
             schema={[
-              Object.keys(proto).map((field: any) => {
+              Object.keys(fields).map((field: any) => {
                 return { label: field, name: field, type: 'text' };
               }),
             ]}
