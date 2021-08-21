@@ -35,23 +35,43 @@ describe.only('ComponentsLibrary', () => {
   afterEach(() => {
     wrapper.unmount();
   });
-  describe('InfoTable', () => {
+  describe.only('InfoTable', () => {
     describe(`<InfoTable data={EXAMPLE} addRowButton columns={EXAMPLE_COLUMNS}/>`, () => {
       it('has an action that can be clicked to open a new row', () => {
         let burger = wrapper.find('.Actions');
         burger.simulate('click');
-        console.log(wrapper.debug());
-        wrapper.find('.MuiButton-label').first().simulate('click');
+        wrapper
+          .find('.MuiButton-label')
+          .filterWhere(label => label.text() === 'Add New Row')
+          .simulate('click');
         wrapper.update();
-        describe('new row', () => {
-          it('has an "OK" button at the end to confirm changes', () => {
-            describe('results', () => {
-              it('outputs the correct results', () => {});
-            });
+      });
+      describe('new row', () => {
+        it('has an "OK" button at the end to confirm changes', () => {
+          describe('results', () => {
+            it('outputs the correct results', () => {});
           });
-          describe('fields', () => {
-            it('has the correct number of fields for the columns', () => {});
-            it('allows you to fill out the fields with information', () => {});
+        });
+        describe('fields', () => {
+          it('has the correct number of fields for the columns', () => {
+            let burger = wrapper.find('.Actions');
+            burger.simulate('click');
+            wrapper
+              .find('.MuiButton-label')
+              .filterWhere(label => label.text() === 'Add New Row')
+              .simulate('click');
+            wrapper.update();
+            console.log('DEBUG: ', wrapper.debug());
+            Chai.expect(
+              wrapper
+                .find('.MuiFormLabel-root')
+                .filterWhere(label => label.text() === 'Column 1'),
+            ).to.be.lengthOf(2);
+            Chai.expect(
+              wrapper
+                .find('label')
+                .filterWhere(label => label.text() === 'Column 2'),
+            ).to.be.lengthOf(2);
           });
         });
       });
