@@ -126,6 +126,7 @@ export default () => (
       data={EXAMPLE_2}
       addRowButton
       columns={[{ name: 'Column 1' }, { name: 'Column 2' }]}
+      onSaveRowButton={result => console.log('RESULT OF ROW SAVE: ', result)}
     />
   </>
 );
