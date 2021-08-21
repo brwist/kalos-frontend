@@ -57,6 +57,7 @@ interface Props extends Styles {
   skipPreLine?: boolean;
   addRowButton?: boolean; // Will add a button to add a new row
   onSaveRowButton?: (results: {}) => any;
+  rowButtonColumnsToIgnore?: string[]; // The columns to ignore when adding a new row to the table via the addRow button
 }
 
 export const InfoTable = ({
@@ -71,6 +72,7 @@ export const InfoTable = ({
   styles,
   addRowButton,
   onSaveRowButton,
+  rowButtonColumnsToIgnore,
 }: Props) => {
   const [state, dispatch] = useReducer(Reducer, {
     isAddingRow: false,
@@ -88,7 +90,11 @@ export const InfoTable = ({
 
   if (state.isAddingRow) {
     columns.forEach(col => {
-      (fields as any)[col.name as any] = ''; // Creating the field on the object for use later
+      if (
+        !rowButtonColumnsToIgnore?.includes(col.name!.toString()) &&
+        !col.invisible
+      )
+        (fields as any)[col.name as any] = ''; // Creating the field on the object for use later
     });
   }
   return (

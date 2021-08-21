@@ -1057,6 +1057,9 @@ export const TransactionTable: FC<Props> = ({
           selectedTransactions.toString()
         }
         hoverable={false}
+        addRowButton
+        onSaveRowButton={saved => console.log('SAVED: ', saved)}
+        rowButtonColumnsToIgnore={['Actions', 'Accepted / Rejected']}
         columns={[
           {
             name: isSelector ? 'Is selected?' : '',
