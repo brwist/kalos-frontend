@@ -218,7 +218,6 @@ export const reducer = (state: State, action: Action) => {
       };
     }
     case 'setLoaded': {
-      console.log('setting loaded ');
       return {
         ...state,
         loaded: action.data,
@@ -228,7 +227,7 @@ export const reducer = (state: State, action: Action) => {
       console.log('setting changing page ');
       return {
         ...state,
-        loaded: action.data,
+        changingPage: action.data,
       };
     }
     case 'setUniversalSearch':
