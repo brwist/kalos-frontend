@@ -209,7 +209,6 @@ export const UploadPhotoTransaction: FC<Props> = ({
         name: 'eventId',
         label: 'Job Number',
         type: 'eventId',
-        required: role != 'AccountsPayable',
       },
     ],
     [
