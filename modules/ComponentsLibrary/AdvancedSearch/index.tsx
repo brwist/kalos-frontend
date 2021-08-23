@@ -2496,7 +2496,7 @@ export const AdvancedSearch: FC<Props> = ({
   };
   const generateCsvEntry = useCallback(
     async (data: User) => {
-      await UserClientService.generateCsvFunction(
+      await UserClientService.GenerateCSV(
         data,
       );
     },
@@ -2509,6 +2509,24 @@ export const AdvancedSearch: FC<Props> = ({
 
   const generateCsvEvnt = () => {
     const req = new User();
+    return req;
+  };
+
+  const generateServiceCallCsvEntry = useCallback(
+    async (data: Event) => {
+      await EventClientService.GenerateCSV(
+        data,
+      );
+    },
+    [],
+  );
+  const handleServiceCallGenerateCSV = useCallback(
+    (entry: Event) => () => generateServiceCallCsvEntry(entry),
+    [generateServiceCallCsvEntry],
+  );
+
+  const generateServiceCallCsvEvnt = () => {
+    const req = new Event();
     return req;
   };
 
@@ -2619,6 +2637,14 @@ export const AdvancedSearch: FC<Props> = ({
                 },
               ]
             : []),
+            ...(handleServiceCallGenerateCSV
+              ? [
+                  {
+                    label: 'Generate CSV',
+                    onClick: handleServiceCallGenerateCSV(generateServiceCallCsvEvnt()),
+                  },
+                ]
+              : []),
           ...(eventsWithAdd
             ? [
                 {
