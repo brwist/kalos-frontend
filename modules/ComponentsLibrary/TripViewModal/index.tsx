@@ -1,10 +1,11 @@
+import { Trip } from '@kalos-core/kalos-rpc/compiled-protos/perdiem_pb';
 import { User } from '@kalos-core/kalos-rpc/compiled-protos/user_pb';
-import React, { FC, useState } from 'react';
+import React, { FC, useState, useCallback } from 'react';
 import { PerDiemClientService, UserClientService } from '../../../helpers';
 import { Button } from '../Button';
 import { Schema } from '../Form';
 import { Modal } from '../Modal';
-import { PlainForm } from '../PlainForm';
+import { Form } from '../Form';
 import { SectionBar } from '../SectionBar';
 
 interface Props {
@@ -13,6 +14,7 @@ interface Props {
   onClose: () => any;
   onApprove: (approvedTrip: TripInfo) => any;
   onProcessPayroll: (processedTrip: TripInfo) => any;
+  reloadResults: () => void;
   open: boolean;
   fullScreen?: boolean;
   canApprove?: boolean;
@@ -33,6 +35,7 @@ export type TripInfo = {
   page: number;
   approved: boolean;
   jobNumber: number;
+  homeTravel: boolean;
   distanceInDollars: string;
   weekOf: string;
   date: string;
@@ -51,9 +54,31 @@ export const TripViewModal: FC<Props> = ({
   canApprove,
   canProcess,
 }) => {
-  const [key, setKey] = useState<string>('');
-
-  if (!data.weekOf)
+  const [key, setKey] = useState<string>('TripForm');
+  const [formData, setFormData] = useState<TripInfo>(data);
+  const tripId = data.id;
+  const handleChange = useCallback((data: TripInfo) => {
+    console.log({ data });
+    setFormData(data);
+  }, []);
+  const SaveChanges = useCallback(
+    async (data: TripInfo) => {
+      const date = data.date;
+      const homeTravel = data.homeTravel;
+      const jobNumber = data.jobNumber;
+      const req = new Trip();
+      req.setDate(date);
+      req.setHomeTravel(homeTravel);
+      req.setJobNumber(jobNumber);
+      req.setId(tripId);
+      req.setFieldMaskList(['Date', 'HomeTravel', 'JobNumber']);
+      console.log(req);
+      const result = await PerDiemClientService.UpdateTrip(req);
+      //console.log(result);
+    },
+    [tripId],
+  );
+  if (!formData.weekOf)
     PerDiemClientService.getRowDatesFromPerDiemTripInfos([data]).then(
       result => {
         if (result == null) {
@@ -62,16 +87,17 @@ export const TripViewModal: FC<Props> = ({
           );
           return;
         }
-        data.weekOf = result[0].date.split(' ')[0];
+        formData.weekOf = result[0].date.split(' ')[0];
         setKey(key + '!');
       },
     );
 
-  if (!data.nameOfEmployee) {
+  if (!formData.nameOfEmployee) {
     let u = new User();
     u.setId(data.userId);
     UserClientService.Get(u).then(result => {
-      data.nameOfEmployee = result.getFirstname() + ' ' + result.getLastname();
+      formData.nameOfEmployee =
+        result.getFirstname() + ' ' + result.getLastname();
     });
   }
   return (
@@ -83,28 +109,29 @@ export const TripViewModal: FC<Props> = ({
             <>
               <Button
                 label="Approve"
-                disabled={data.approved || !canApprove}
+                disabled={formData.approved || !canApprove}
                 onClick={() => onApprove(data)}
               />
+
               <Button
                 label="Process Payroll"
-                disabled={data.payrollProcessed || !canProcess}
+                disabled={formData.payrollProcessed || !canProcess}
                 onClick={() => onProcessPayroll(data)}
-              />
-              <Button
-                label="Close"
-                variant="outlined"
-                onClick={() => onClose()}
               />
             </>
           }
         />
-        <PlainForm<TripInfo>
-          key={key}
-          readOnly
-          data={data}
+        <Form<TripInfo>
+          key={formData.originAddress + formData.destinationAddress}
+          title={'Trip Info'}
           schema={schema}
-          onChange={() => {}}
+          data={formData}
+          onClose={onClose}
+          onSave={SaveChanges}
+          onChange={setFormData}
+          submitLabel="Update Trip"
+          cancelLabel="Close"
+          disabled={false}
         />
       </>
     </Modal>

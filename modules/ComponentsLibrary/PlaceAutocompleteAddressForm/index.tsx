@@ -420,6 +420,7 @@ export class PlaceAutocompleteAddressForm extends React.PureComponent<
           <>
             {this.state.saving && <Loader />}
             <>
+              {/*
               <SectionBar title="Per Diem" uncollapsable>
                 <FormControl>
                   {this.state.perDiems ? (
@@ -466,6 +467,7 @@ export class PlaceAutocompleteAddressForm extends React.PureComponent<
                   )}
                 </FormControl>
               </SectionBar>
+              */}
             </>
             <Form
               title="Enter Trip Origin and Destination"
