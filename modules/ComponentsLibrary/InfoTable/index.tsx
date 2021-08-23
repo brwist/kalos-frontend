@@ -17,6 +17,7 @@ import './styles.less';
 import { Props as ButtonProps } from '../Button';
 import { ACTIONS, Reducer } from './reducer';
 import { PlainForm } from '../PlainForm';
+import { Type } from '../Field';
 type Styles = {
   loading?: boolean;
   error?: boolean;
@@ -58,6 +59,8 @@ interface Props extends Styles {
   addRowButton?: boolean; // Will add a button to add a new row
   onSaveRowButton?: (results: {}) => any;
   rowButtonColumnsToIgnore?: string[]; // The columns to ignore when adding a new row to the table via the addRow button
+  rowButtonTypes?: { columnName: string; columnType: Type }[]; // To override certain column types in conjunction with the
+  // row button
 }
 
 export const InfoTable = ({
@@ -73,6 +76,7 @@ export const InfoTable = ({
   addRowButton,
   onSaveRowButton,
   rowButtonColumnsToIgnore,
+  rowButtonTypes = [],
 }: Props) => {
   const [state, dispatch] = useReducer(Reducer, {
     isAddingRow: false,
@@ -89,6 +93,8 @@ export const InfoTable = ({
   let temporaryResult: {}; // The result assigned when the onChange is fired.
 
   if (state.isAddingRow) {
+    console.log(data);
+
     columns.forEach(col => {
       if (
         !rowButtonColumnsToIgnore?.includes(col.name!.toString()) &&
@@ -180,10 +186,14 @@ export const InfoTable = ({
           onChange={fieldOutput => (temporaryResult = fieldOutput)}
           schema={[
             Object.keys(fields).map((field: any, idx: number) => {
+              let columnType = rowButtonTypes.filter(
+                type => type.columnName === field,
+              );
               return {
                 label: field,
                 name: field,
-                type: 'text',
+                type:
+                  columnType.length === 1 ? columnType[0].columnType : 'text',
                 actions:
                   idx == Object.keys(fields).length - 1
                     ? [
