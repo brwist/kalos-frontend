@@ -2634,7 +2634,7 @@ export const AdvancedSearch: FC<Props> = ({
             ...(kinds.includes('employees') && isAdmin
             ? [
                 {
-                  label: 'Generate CSV',
+                  label: 'Generate Employees CSV',
                   onClick: handleGenerateCSV(generateCsvEvnt()),
                 },
               ]
@@ -2658,7 +2658,7 @@ export const AdvancedSearch: FC<Props> = ({
             ...(kinds.includes('serviceCalls')
               ? [
                   {
-                    label: 'Generate CSV',
+                    label: 'Generate ServiceCalls CSV',
                     onClick: handleServiceCallGenerateCSV(generateServiceCallCsvEvnt()),
                   },
                 ]
@@ -2674,7 +2674,7 @@ export const AdvancedSearch: FC<Props> = ({
             ...(kinds.includes('customers')
               ? [
                   {
-                    label: 'Generate CSV',
+                    label: 'Generate Customers CSV',
                     onClick: handleGenerateCSV(generateCsvEvnt()),
                   },
                 ]
@@ -2682,7 +2682,7 @@ export const AdvancedSearch: FC<Props> = ({
             ...(kinds.includes('properties')
             ? [
                 {
-                  label: 'Generate CSV',
+                  label: 'Generate Properties CSV',
                   onClick: handlePropertyGenerateCSV(generatePropertyCsvEvnt()),
                 },
               ]
