@@ -190,33 +190,14 @@ export class Dashboard extends React.PureComponent<props, state> {
   async componentDidMount() {
     // await UserClientService.refreshToken();
     await UserClientService.GetToken('test', 'test');
+    await this.toggleLoading();
+    await this.getIdentity();
+
     let promises = [];
     promises.push(
       new Promise<void>(async (resolve, reject) => {
         try {
-          const spiffs = await this.toggleLoading();
-          resolve();
-        } catch (err) {
-          console.log('error toggle loading', err);
-          reject(err);
-        }
-      }),
-    );
-    promises.push(
-      new Promise<void>(async (resolve, reject) => {
-        try {
-          const spiffs = await this.getIdentity();
-          resolve();
-        } catch (err) {
-          console.log('error getting identity', err);
-          reject(err);
-        }
-      }),
-    );
-    promises.push(
-      new Promise<void>(async (resolve, reject) => {
-        try {
-          const spiffs = await this.getPTO();
+          await this.getPTO();
           resolve();
         } catch (err) {
           console.log('error getting pto', err);
@@ -227,7 +208,7 @@ export class Dashboard extends React.PureComponent<props, state> {
     promises.push(
       new Promise<void>(async (resolve, reject) => {
         try {
-          const spiffs = await this.getTransactionCount();
+          await this.getTransactionCount();
           resolve();
         } catch (err) {
           console.log('error get transactionCount', err);
@@ -238,7 +219,7 @@ export class Dashboard extends React.PureComponent<props, state> {
     promises.push(
       new Promise<void>(async (resolve, reject) => {
         try {
-          const spiffs = await this.getSpiffList();
+          await this.getSpiffList();
           resolve();
         } catch (err) {
           console.log('error getting spiffs', err);
@@ -249,7 +230,7 @@ export class Dashboard extends React.PureComponent<props, state> {
     promises.push(
       new Promise<void>(async (resolve, reject) => {
         try {
-          const spiffs = await this.getRecentEvents();
+          await this.getRecentEvents();
           resolve();
         } catch (err) {
           console.log('error getting events', err);
@@ -260,7 +241,7 @@ export class Dashboard extends React.PureComponent<props, state> {
     promises.push(
       new Promise<void>(async (resolve, reject) => {
         try {
-          const spiffs = await this.getBillable();
+          await this.getBillable();
           resolve();
         } catch (err) {
           console.log('error getting billable', err);
@@ -271,7 +252,7 @@ export class Dashboard extends React.PureComponent<props, state> {
     promises.push(
       new Promise<void>(async (resolve, reject) => {
         try {
-          const spiffs = await this.getAvgTicket();
+          await this.getAvgTicket();
           resolve();
         } catch (err) {
           console.log('error getting average ticket', err);
@@ -282,7 +263,7 @@ export class Dashboard extends React.PureComponent<props, state> {
     promises.push(
       new Promise<void>(async (resolve, reject) => {
         try {
-          const spiffs = await this.getRevenue();
+          await this.getRevenue();
           resolve();
         } catch (err) {
           console.log('error getting revanue', err);
@@ -293,7 +274,7 @@ export class Dashboard extends React.PureComponent<props, state> {
     promises.push(
       new Promise<void>(async (resolve, reject) => {
         try {
-          const spiffs = await this.getCallbackCount();
+          await this.getCallbackCount();
           resolve();
         } catch (err) {
           console.log('error getting callback count', err);
@@ -304,7 +285,7 @@ export class Dashboard extends React.PureComponent<props, state> {
     promises.push(
       new Promise<void>(async (resolve, reject) => {
         try {
-          const spiffs = await this.getToolfundBalance();
+          await this.getToolfundBalance();
           resolve();
         } catch (err) {
           console.log('error getting tool fund balance', err);
@@ -316,10 +297,10 @@ export class Dashboard extends React.PureComponent<props, state> {
       await Promise.all(promises);
       // const res = await loadPayroll({PAYROLL PROTOBUFFER})
       console.log('all promises executed without error, setting loaded');
-      this.toggleLoading();
+      await this.toggleLoading();
     } catch (err) {
       console.log('a promise failed');
-      this.toggleLoading();
+      await this.toggleLoading();
     }
     /*
     await this.toggleLoading();

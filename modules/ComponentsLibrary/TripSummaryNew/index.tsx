@@ -193,10 +193,7 @@ export const TripSummaryNew: FC<Props> = ({
     (tripToDelete: Trip | undefined) => setPendingTripToDelete(tripToDelete),
     [setPendingTripToDelete],
   );
-  const handleSetTripToView = useCallback(
-    (tripToView: Trip | undefined) => setTripToView(tripToView),
-    [setTripToView],
-  );
+
   const handleSetPendingTripToApprove = useCallback(
     (tripToApprove: Trip | undefined) => {
       setPendingTripToApprove(tripToApprove);
@@ -340,6 +337,100 @@ export const TripSummaryNew: FC<Props> = ({
       },
     ],
   ];
+  const SCHEMA_TRIP_INFO_LIMITED_EDITING: Schema<TripInfo> = [
+    [{ headline: true, label: 'Monetary' }],
+    [
+      {
+        label: 'Distance in Miles',
+        type: 'text',
+        name: 'distanceInMiles',
+        disabled: true,
+      },
+      {
+        name: 'distanceInDollars',
+        type: 'text',
+        label: 'Amount for Trip',
+        readOnly: true,
+        disabled: true,
+      },
+    ],
+    [{ headline: true, label: 'General' }],
+    [
+      {
+        label: 'Employee Name',
+        type: 'text',
+        name: 'nameOfEmployee',
+        disabled: true,
+      },
+      {
+        label: 'Department',
+        type: 'text',
+        name: 'departmentName',
+        disabled: true,
+      },
+    ],
+    [
+      {
+        label: 'Day Of',
+        type: 'date',
+        name: 'date',
+      },
+    ],
+    [
+      {
+        label: 'Origin Address',
+        type: 'text',
+        name: 'originAddress',
+        disabled: true,
+      },
+    ],
+    [
+      {
+        label: 'Destination Address',
+        type: 'text',
+        name: 'destinationAddress',
+        disabled: true,
+      },
+    ],
+    [
+      {
+        label: 'Notes',
+        type: 'text',
+        name: 'notes',
+        multiline: true,
+        disabled: true,
+      },
+    ],
+    [
+      {
+        label: 'Home Travel',
+        type: 'checkbox',
+        name: 'homeTravel',
+      },
+    ],
+    [
+      {
+        label: 'Job Number',
+        type: 'eventId',
+        name: 'jobNumber',
+      },
+    ],
+    [{ headline: true, label: 'Approval' }],
+    [
+      {
+        name: 'approved',
+        type: 'text',
+        label: 'Approved',
+        readOnly: true,
+      },
+      {
+        name: 'payrollProcessed',
+        type: 'text',
+        label: 'Payroll Processed',
+        readOnly: true,
+      },
+    ],
+  ];
 
   const CHECKBOXES_SCHEMA: Schema<CheckboxesFilterType> = [
     [
@@ -403,7 +494,13 @@ export const TripSummaryNew: FC<Props> = ({
     checkboxFilter.approved,
     checkboxFilter.payrollProcessed,
   ]);
-
+  const handleSetTripToView = useCallback(
+    (tripToView: Trip | undefined) => {
+      setTripToView(tripToView);
+      loadTrips();
+    },
+    [setTripToView, loadTrips],
+  );
   const handleProcessPayroll = useCallback(
     async (id: number) => {
       try {
@@ -710,7 +807,7 @@ export const TripSummaryNew: FC<Props> = ({
       {tripToView && (
         <TripViewModal
           fullScreen
-          schema={SCHEMA_TRIP_INFO}
+          schema={SCHEMA_TRIP_INFO_LIMITED_EDITING}
           data={{
             ...tripToView.toObject(),
             distanceInDollars: perDiemTripMilesToUsd(
@@ -731,6 +828,7 @@ export const TripSummaryNew: FC<Props> = ({
             handleSetToggleApproveOrProcess();
             handleSetTripToView(undefined);
           }}
+          reloadResults={loadTrips}
           onProcessPayroll={async processed => {
             await handleProcessPayroll(processed.id);
             handleSetToggleApproveOrProcess();
