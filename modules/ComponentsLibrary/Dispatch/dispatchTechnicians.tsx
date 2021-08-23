@@ -6,94 +6,93 @@ import TableBody from '@material-ui/core/TableBody';
 import TableContainer from '@material-ui/core/TableContainer';
 import TableRow from '@material-ui/core/TableRow';
 import TableHead from '@material-ui/core/TableHead';
-import { TableCell } from '@material-ui/core';
+import TableCell from '@material-ui/core/TableCell';
 
 interface props {
-  userID : number;
-  techs : DispatchableTech[];
+  userID: number;
+  techs: DispatchableTech[];
 }
 
 export const DispatchTechs: FC<props> = props => {
-
-  useEffect( () => {
+  useEffect(() => {
     console.log(props.techs);
-  }, [props.techs])
+  }, [props.techs]);
 
   return (
-    <div>
-      <TableContainer>
-        <Table>
-          <TableHead>
-            <TableRow>
-              <TableCell>Name</TableCell>
-              <TableCell>Status</TableCell>
-              <TableCell>Location</TableCell>
-              <TableCell>Time On Status</TableCell>
-              <TableCell>Hours Worked</TableCell>
-            </TableRow>
-          </TableHead>
-          <Droppable droppableId="TechDroppable" isDropDisabled={true}>
-            {(provided, snapshop) => (
-              <TableBody
-                ref={provided.innerRef}
-                {...provided.droppableProps}
-              >
-                {props.techs &&
-                props.techs.map((tech,index) => {
-                  console.log("maybe here");
+    <TableContainer>
+      <Table>
+        <TableHead>
+          <TableRow key="TechHeader">
+            <TableCell>Name</TableCell>
+            <TableCell>Status</TableCell>
+            <TableCell>Location</TableCell>
+            <TableCell>Time On Status</TableCell>
+            <TableCell>Hours Worked</TableCell>
+          </TableRow>
+        </TableHead>
+        <Droppable droppableId="TechDroppable" isDropDisabled={true}>
+          {(provided, snapshop) => (
+            <TableBody ref={provided.innerRef} {...provided.droppableProps}>
+              {props.techs &&
+                props.techs.map((tech, index) => {
                   return (
-                  <Draggable
-                    key={tech.getUserId.toString()}
-                    draggableId={tech.getUserId().toString()}
-                    index={index}
-                  >
-                    {(dragProvided, snapshot) => (
-                      <TableRow
-                        ref={dragProvided.innerRef}
-                        {...dragProvided.draggableProps}
-                        {...dragProvided.dragHandleProps}
-                        key={`${tech.getUserId}_techs`}
-                      >
-                        {console.log("here")}
-                        <TableCell>{tech.getTechname()}</TableCell>
-                        <TableCell>{tech.getActivity() != "Standby" ? ( 
+                    <Draggable
+                      key={tech.getUserId.toString() + tech.getActivityDate()}
+                      draggableId={tech.getUserId().toString()}
+                      index={index}
+                    >
+                      {(dragProvided, snapshot) => (
+                        <TableRow
+                          ref={dragProvided.innerRef}
+                          {...dragProvided.draggableProps}
+                          {...dragProvided.dragHandleProps}
+                          key={`${tech.getUserId}_techs`}
+                        >
+                          <TableCell>{tech.getTechname()}</TableCell>
+                          <TableCell>
+                            {tech.getActivity() != 'Standby' ? (
                               <a
-                              target='_blank' 
-                              href={`/index.cfm?action=admin:service.editServiceCall&id=${tech.getEventId()}&user_id=${tech.getPropertyUserId()}&property_id=${tech.getPropertyId()}`} rel="noreferrer">
+                                target="_blank"
+                                href={`/index.cfm?action=admin:service.editServiceCall&id=${tech.getEventId()}&user_id=${tech.getPropertyUserId()}&property_id=${tech.getPropertyId()}`}
+                                rel="noreferrer"
+                              >
                                 {tech.getActivity()}
-                              </a> ) : (
-                                tech.getActivity()
-                            )}</TableCell>
-                        <TableCell>{tech.getPropertyCity() === '0' ? 'Not Known' : tech.getPropertyCity()}</TableCell>
-                        <TableCell>{"15.50"}</TableCell>
-                        <TableCell>{"40.40"}</TableCell>
-                      </TableRow>
-                    )}
-                  </Draggable>
-                )})
-              }
+                              </a>
+                            ) : (
+                              tech.getActivity()
+                            )}
+                          </TableCell>
+                          <TableCell>
+                            {tech.getPropertyCity() === '0'
+                              ? 'Not Known'
+                              : tech.getPropertyCity()}
+                          </TableCell>
+                          <TableCell>{'15.50'}</TableCell>
+                          <TableCell>{'40.40'}</TableCell>
+                        </TableRow>
+                      )}
+                    </Draggable>
+                  );
+                })}
               {provided.placeholder}
-              </TableBody>
-            )}
-          </Droppable>
-        </Table>
-      </TableContainer>
-      
-      <div>
+            </TableBody>
+          )}
+        </Droppable>
+      </Table>
+      <Table>
         <Droppable droppableId="dismissTech">
           {(provided, snapshot) => {
             return (
-              <div
-                ref={provided.innerRef}
-                {...provided.droppableProps}
-              >
-                {"This is a Stupid Test"}
+              <TableBody ref={provided.innerRef} {...provided.droppableProps}>
+                <TableRow>
+                  <TableCell>This is a Stupid Test</TableCell>
+                </TableRow>
                 {provided.placeholder}
-              </div>
-            )
+              </TableBody>
+            );
           }}
         </Droppable>
-      </div>
-    </div>
-  )
-}
+      </Table>
+    </TableContainer>
+  );
+};
