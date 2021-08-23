@@ -56,11 +56,12 @@ interface Props extends Styles {
   styles?: CSSProperties;
   className?: string;
   skipPreLine?: boolean;
-  addRowButton?: boolean; // Will add a button to add a new row
   onSaveRowButton?: (results: {}) => any;
-  rowButtonColumnsToIgnore?: string[]; // The columns to ignore when adding a new row to the table via the addRow button
-  rowButtonTypes?: { columnName: string; columnType: Type }[]; // To override certain column types in conjunction with the
   // row button
+  rowButton?: {
+    columnsToIgnore: string[];
+    columnTypeOverrides: { columnName: string; columnType: Type }[];
+  };
 }
 
 export const InfoTable = ({
@@ -73,15 +74,13 @@ export const InfoTable = ({
   skipPreLine = false,
   className = '',
   styles,
-  addRowButton,
   onSaveRowButton,
-  rowButtonColumnsToIgnore,
-  rowButtonTypes = [],
+  rowButton,
 }: Props) => {
   const [state, dispatch] = useReducer(Reducer, {
     isAddingRow: false,
   });
-  if (addRowButton && columns.length === 0) {
+  if (rowButton !== undefined && columns.length === 0) {
     console.error(
       `addRowButton requires the columns to be defined. This is a no-op, but there will be no addRowButton. `,
     );
@@ -93,11 +92,9 @@ export const InfoTable = ({
   let temporaryResult: {}; // The result assigned when the onChange is fired.
 
   if (state.isAddingRow) {
-    console.log(data);
-
     columns.forEach(col => {
       if (
-        !rowButtonColumnsToIgnore?.includes(col.name!.toString()) &&
+        !rowButton?.columnsToIgnore.includes(col.name!.toString()) &&
         !col.invisible
       )
         (fields as any)[col.name as any] = ''; // Creating the field on the object for use later
@@ -126,7 +123,7 @@ export const InfoTable = ({
               idx,
             ) => {
               if (invisible) return null;
-              if (addRowButton && idx === columns.length - 1) {
+              if (rowButton !== undefined && idx === columns.length - 1) {
                 if (actions === undefined) actions = [];
                 actions.push({
                   label: 'Add New Row',
@@ -186,14 +183,14 @@ export const InfoTable = ({
           onChange={fieldOutput => (temporaryResult = fieldOutput)}
           schema={[
             Object.keys(fields).map((field: any, idx: number) => {
-              let columnType = rowButtonTypes.filter(
+              let columnType = rowButton?.columnTypeOverrides.filter(
                 type => type.columnName === field,
               );
               return {
                 label: field,
                 name: field,
                 type:
-                  columnType.length === 1 ? columnType[0].columnType : 'text',
+                  columnType?.length === 1 ? columnType![0].columnType : 'text',
                 actions:
                   idx == Object.keys(fields).length - 1
                     ? [
