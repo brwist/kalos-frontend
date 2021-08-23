@@ -1,4 +1,4 @@
-import React, { useReducer, useCallback, useEffect, useState } from 'react';
+import React, { useReducer, useCallback, useEffect } from 'react';
 import { PageWrapper } from '../../PageWrapper/main';
 import { State, reducer } from './reducer';
 import { DispatchTechs } from './dispatchTechnicians';
@@ -10,34 +10,37 @@ import {
   TimeoffRequestClientService,
   ServicesRenderedClientService,
   TimesheetDepartmentClientService,
+  JobTypeClientService,
 } from '../../../helpers';
-import { InfoTable } from '../InfoTable';
 import { DateRange } from '@kalos-core/kalos-rpc/compiled-protos/common_pb';
 import { format } from 'date-fns';
 import { SectionBar } from '../SectionBar';
 import { PlainForm, Schema } from '../PlainForm';
-import { DepartmentPicker } from '../Pickers';
 import { TimesheetDepartment } from '@kalos-core/kalos-rpc/TimesheetDepartment';
+import { JobType } from '@kalos-core/kalos-rpc/JobType';
+import { debounce } from 'lodash';
+import { DispatchableTech, DispatchCall } from '@kalos-core/kalos-rpc/Dispatch';
+import { DragDropContext, Droppable } from 'react-beautiful-dnd';
 
 export interface Props {
   userID: number;
 }
 
-// export type FilterData = {
-//   departmentIds : number[];
-//   jobTypes : number[];
-// };
 const initialFormData: FormData = {
   departmentIds: [],
+  jobTypes: [],
 };
+
 const initialState: State = {
   techs: [],
   dismissedTechs: [],
   calls: [],
-  departmentIds: [0],
-  jobTypes: [0],
+  departmentIds: [],
+  jobTypes: [1,2,3,9],
   departmentList: [],
+  jobTypeList: [],
   formData: initialFormData,
+  notIncludedJobTypes: [8,10],
 };
 
 export const DispatchDashboard: React.FC<Props> = function DispatchDashboard({
@@ -45,88 +48,120 @@ export const DispatchDashboard: React.FC<Props> = function DispatchDashboard({
 }) {
   const [state, dispatchDashboard] = useReducer(reducer, initialState);
 
-  const handleSetFilter = (data: number) => {
-    if (state.departmentIds.length == 1 && state.departmentIds[0] == 0) {
-      dispatchDashboard({ type: 'setDepartmentIds', data: [data] });
-    } else {
-      let currentDepartmentIds = state.departmentIds;
-      currentDepartmentIds.push(data);
+  const handleChange = useCallback( async (formData: FormData) => {
+    if (state.departmentIds.length != formData.departmentIds.length || !state.departmentIds.every((val, index) => val === formData.departmentIds[index])) {
+      const dateRange = new DateRange();
+      dateRange.setStart('2012-01-01');
+      dateRange.setEnd(format(new Date(), 'yyyy-MM-dd'));
+      const newDispatchTechs = new DispatchableTech();
+      newDispatchTechs.setDateRange(dateRange);
+      newDispatchTechs.setDepartmentList(formData.departmentIds.toString());
+      const techs = await DispatchClientService.GetDispatchableTechnicians(newDispatchTechs);
       dispatchDashboard({
-        type: 'setDepartmentIds',
-        data: currentDepartmentIds,
+        type: 'updateDepartmentIds',
+        data: {
+          techs: techs.getResultsList(),
+          departmentIds: formData.departmentIds,
+        }
       });
     }
-  };
+    if (state.jobTypes.length != formData.jobTypes.length || !state.jobTypes.every((val, index) => val === formData.jobTypes[index])) {
+      const newDispatchCalls = new DispatchCall();
+      newDispatchCalls.setJobTypeIdList(formData.jobTypes.toString());
+      const calls = await DispatchClientService.GetDispatchCalls(newDispatchCalls);
+      dispatchDashboard({
+        type: 'updateJobTypes',
+        data: {
+          calls: calls.getResultsList(),
+          jobTypes: formData.jobTypes,
+        }
+      });
+    }
+  }, [state.departmentIds, state.jobTypes]);
 
-  const fetchTechs = async function () {
+  const load = useCallback(async () => {
+    const dispatchTech = new DispatchableTech();
+    dispatchTech.setDepartmentList(state.departmentIds.toString());
     const dateRange = new DateRange();
     dateRange.setStart('2012-01-01');
     dateRange.setEnd(format(new Date(), 'yyyy-MM-dd'));
-    const result = await DispatchClientService.GetDispatchableTechnicians();
-    console.log(result);
-    dispatchDashboard({ type: 'setTechs', data: result.getResultsList() });
-  };
-
-  const fetchCalls = async function () {
-    const result = await DispatchClientService.GetDispatchCalls();
-    dispatchDashboard({ type: 'setCalls', data: result.getResultsList() });
-  };
-  const handleChange = useCallback((formData: FormData) => {
-    dispatchDashboard({
-      type: 'setFormData',
-      data: formData,
-    });
-  }, []);
-
-  const load = useCallback(async () => {
-    await fetchTechs();
-    await fetchCalls();
+    dispatchTech.setDateRange(dateRange);
+    const dispatchCall = new DispatchCall();
+    dispatchCall.setJobTypeIdList(state.jobTypes.toString());
+    const techs = await DispatchClientService.GetDispatchableTechnicians(dispatchTech);
+    const calls = await DispatchClientService.GetDispatchCalls(dispatchCall);
     const departmentReq = new TimesheetDepartment();
     departmentReq.setIsActive(1);
-    const departments = await TimesheetDepartmentClientService.BatchGet(
-      departmentReq,
-    );
+    const departments = await TimesheetDepartmentClientService.BatchGet(departmentReq);
+    const jobTypeReq = new JobType();
+    const jobTypes = await JobTypeClientService.BatchGet(jobTypeReq);
+
+    const displayedJobTypes = jobTypes.getResultsList().filter(jobType => !state.notIncludedJobTypes.includes(jobType.getId()));
+
     dispatchDashboard({
-      type: 'setDepartmentList',
-      data: departments.getResultsList(),
-    });
-  }, []);
+      type: 'setInitialRender',
+      data: {
+        techs: techs.getResultsList(),
+        calls: calls.getResultsList(),
+        departmentList: departments.getResultsList(),
+        jobTypeList: displayedJobTypes,
+      }
+    })
+  }, [state.notIncludedJobTypes]);
   const SCHEMA_PRINT: Schema<FormData> = [
     [
       {
         name: 'departmentIds',
         label: 'Department(s)',
-        options: state.departmentList.map(el => ({
-          label: el.getDescription(),
-          value: el.getId(),
+        options: state.departmentList.map(dl => ({
+          label: dl.getDescription(),
+          value: dl.getId(),
+        })),
+        type: 'multiselect',
+      },
+      {
+        name: 'jobTypes',
+        label: 'Job Type(s)',
+        options: state.jobTypeList.map(jtl => ({
+          label: jtl.getName(),
+          value: jtl.getId(),
         })),
         type: 'multiselect',
       },
     ],
   ];
 
+  const onDragEndHandler = useCallback((result) => {
+    console.log(result);
+  }, []);
+
   useEffect(() => {
     load();
   }, [load]);
+
   console.log(state.formData);
+  
   return (
     <PageWrapper userID={userID}>
       <SectionBar title="Dispatch" />
       <PlainForm
         schema={SCHEMA_PRINT}
         data={initialFormData}
-        onChange={handleChange}
+        onChange={debounce(handleChange, 1000)}
       />
-      <DispatchTechs
-        userID={userID}
-        techs={state.techs}
-        departmentIDs={state.departmentIds}
-      />
-      <DispatchCalls
-        userID={userID}
-        calls={state.calls}
-        jobTypes={state.jobTypes}
-      />
+      <DragDropContext onDragEnd={onDragEndHandler}>
+        
+        <DispatchTechs
+          userID={userID}
+          techs={state.techs}
+        />             
+        
+        <DispatchCalls
+          userID={userID}
+          calls={state.calls}
+        />
+
+      </DragDropContext>
     </PageWrapper>
   );
 };
