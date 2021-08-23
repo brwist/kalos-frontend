@@ -2637,7 +2637,7 @@ export const AdvancedSearch: FC<Props> = ({
                 },
               ]
             : []),
-            ...(handleServiceCallGenerateCSV
+            ...(kinds.includes('serviceCalls')
               ? [
                   {
                     label: 'Generate CSV',
@@ -2653,6 +2653,14 @@ export const AdvancedSearch: FC<Props> = ({
                 },
               ]
             : []),
+            ...(kinds.includes('customers')
+              ? [
+                  {
+                    label: 'Generate CSV',
+                    onClick: handleGenerateCSV(generateCsvEvnt()),
+                  },
+                ]
+              : []),
           ...(propertyCustomerId
             ? [
                 {
