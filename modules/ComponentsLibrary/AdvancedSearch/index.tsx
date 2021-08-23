@@ -2530,6 +2530,24 @@ export const AdvancedSearch: FC<Props> = ({
     return req;
   };
 
+  const generatePropertyCsvEntry = useCallback(
+    async (data: Property) => {
+      await PropertyClientService.GenerateCSV(
+        data,
+      );
+    },
+    [],
+  );
+  const handlePropertyGenerateCSV = useCallback(
+    (entry: Property) => () => generatePropertyCsvEntry(entry),
+    [generatePropertyCsvEntry],
+  );
+
+  const generatePropertyCsvEvnt = () => {
+    const req = new Property();
+    return req;
+  };
+
   const printHeaderSubtitle = useMemo(() => {
     const {
       firstname,
@@ -2661,6 +2679,14 @@ export const AdvancedSearch: FC<Props> = ({
                   },
                 ]
               : []),
+            ...(kinds.includes('properties')
+            ? [
+                {
+                  label: 'Generate CSV',
+                  onClick: handlePropertyGenerateCSV(generatePropertyCsvEvnt()),
+                },
+              ]
+            : []),
           ...(propertyCustomerId
             ? [
                 {
