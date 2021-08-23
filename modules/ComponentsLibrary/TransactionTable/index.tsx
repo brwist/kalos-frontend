@@ -363,7 +363,7 @@ export const TransactionTable: FC<Props> = ({
     req.setOrderDir(
       sortDir && sortDir != ' ' ? sortDir : sortDir == ' ' ? 'DESC' : 'DESC',
     );
-    req.setPageNumber(page);
+    req.setPageNumber(state.page);
 
     req.setIsActive(1);
     req.setVendorCategory("'PickTicket','Receipt'");
@@ -449,7 +449,7 @@ export const TransactionTable: FC<Props> = ({
     });
     const temp = transactions.map(txn => txn);
     dispatch({ type: 'setTransactions', data: temp });
-  }, [totalTransactions, page, transactionFilter, handleChangePage]);
+  }, [totalTransactions, state.page, transactionFilter, handleChangePage]);
 
   const load = useCallback(async () => {
     dispatch({ type: 'setLoading', data: true });
@@ -904,8 +904,11 @@ export const TransactionTable: FC<Props> = ({
 
   useEffect(() => {
     if (!loaded) load();
-    if (changingPage) load();
-  }, [load, loaded, changingPage]);
+    if (changingPage) {
+      load();
+      resetTransactions();
+    }
+  }, [load, loaded, changingPage, resetTransactions]);
   useEffect(() => {
     if (loadTransactions) {
       resetTransactions();
