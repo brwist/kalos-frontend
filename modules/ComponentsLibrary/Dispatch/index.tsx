@@ -107,7 +107,7 @@ export const DispatchDashboard: React.FC<Props> = function DispatchDashboard({
         jobTypeList: displayedJobTypes,
       }
     })
-  }, []);
+  }, [state.notIncludedJobTypes]);
   const SCHEMA_PRINT: Schema<FormData> = [
     [
       {
@@ -131,6 +131,10 @@ export const DispatchDashboard: React.FC<Props> = function DispatchDashboard({
     ],
   ];
 
+  const onDragEndHandler = useCallback((result) => {
+    console.log(result);
+  }, []);
+
   useEffect(() => {
     load();
   }, [load]);
@@ -145,29 +149,18 @@ export const DispatchDashboard: React.FC<Props> = function DispatchDashboard({
         data={initialFormData}
         onChange={debounce(handleChange, 1000)}
       />
-      <DragDropContext onDragEnd = {() => {
+      <DragDropContext onDragEnd={onDragEndHandler}>
+        
+        <DispatchTechs
+          userID={userID}
+          techs={state.techs}
+        />             
+        
+        <DispatchCalls
+          userID={userID}
+          calls={state.calls}
+        />
 
-      }}
-      >
-        <Droppable droppableId="droppable-1" type="TECH">
-          {(provided, snapshot) => (
-            <div
-              ref={provided.innerRef}
-              {...provided.droppableProps}
-            >
-              <DispatchTechs
-                userID={userID}
-                techs={state.techs}
-              />             
-              <DispatchCalls
-                userID={userID}
-                calls={state.calls}
-              />
-
-              {provided.placeholder}
-            </div>
-          )}
-        </Droppable>
       </DragDropContext>
     </PageWrapper>
   );
