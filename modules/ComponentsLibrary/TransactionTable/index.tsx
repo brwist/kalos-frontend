@@ -525,6 +525,7 @@ export const TransactionTable: FC<Props> = ({
     );
     if (ok) {
       await makeUpdateStatus(txn.getId(), 3, 'accepted');
+      await resetTransactions();
       await refresh();
     }
   };
