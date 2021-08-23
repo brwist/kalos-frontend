@@ -544,7 +544,7 @@ export const Field: <T>(
           <DateTimePicker
             className={clsx('FieldInput', className, { compact, disabled })}
             label={inputLabel}
-            value={parseISO((props.value as unknown) as string)}
+            value={parseISO(props.value as unknown as string)}
             onChange={value =>
               handleChange({
                 target: {
@@ -566,7 +566,7 @@ export const Field: <T>(
           <DatePicker
             className={clsx('FieldInput', className, { compact, disabled })}
             label={inputLabel}
-            value={parseISO((props.value as unknown) as string)}
+            value={parseISO(props.value as unknown as string)}
             onChange={value =>
               handleChange({
                 target: {
@@ -587,7 +587,7 @@ export const Field: <T>(
           <TimePicker
             className={clsx('FieldInput', className, { compact, disabled })}
             label={inputLabel}
-            value={parseISO((props.value as unknown) as string)}
+            value={parseISO(props.value as unknown as string)}
             onChange={value =>
               handleChange({
                 target: {
@@ -866,7 +866,7 @@ export const Field: <T>(
             className={clsx('FieldInput', { compact, disabled })}
             withinForm
             renderItem={renderSelectOptions}
-            selected={(props.value as unknown) as number}
+            selected={props.value as unknown as number}
             onSelect={handleChange}
             disabled={disabled}
             required={required}
@@ -889,7 +889,7 @@ export const Field: <T>(
           className={clsx('FieldInput', className, { compact, disabled })}
           withinForm
           renderItem={renderSelectOptions}
-          selected={(props.value as unknown) as number}
+          selected={props.value as unknown as number}
           onSelect={handleChange}
           disabled={disabled}
           required={required}
@@ -907,11 +907,6 @@ export const Field: <T>(
             className="FieldFile"
           />
         )}
-
-        {/*TS-ignoring because of known bug with MUI and Textfields: 
-        https://github.com/mui-org/material-ui/issues/2699
-        */}
-        {/* @ts-ignore */}
         <TextField
           inputRef={functionRef}
           variant={'standard'}
@@ -939,18 +934,22 @@ export const Field: <T>(
                     </label>
                   )}
                 </InputAdornment>
-              ) : undefined,
+              ) : (
+                <></>
+              ),
             endAdornment: endAdornment ? (
               <InputAdornment position="end">{endAdornment}</InputAdornment>
             ) : type === 'eventId' ? (
               eventAdornment
-            ) : undefined,
+            ) : (
+              <></>
+            ),
           }}
           InputLabelProps={{
             shrink: true,
           }}
           error={error}
-          {...props}
+          {...(props as any)}
           type={type === 'file' ? 'text' : type === 'eventId' ? 'number' : type}
           value={
             type === 'file'
