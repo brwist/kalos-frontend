@@ -53,6 +53,7 @@ export const EmployeeDepartments: FC<Props> = ({ onClose, loggedUserId }) => {
   const [loaded, setLoaded] = useState<boolean>(false);
   const [entries, setEntries] = useState<EmployeeFunction[]>([]);
   const [pendingEdit, setPendingEdit] = useState<EmployeeFunction>();
+  const [generateCsv, setGenerateCsv] = useState<EmployeeFunction>();
   const [pendingDelete, setPendingDelete] = useState<EmployeeFunction>();
   const [user, setUser] = useState<User>();
   const loadDicts = useCallback(async () => {
@@ -103,6 +104,18 @@ export const EmployeeDepartments: FC<Props> = ({ onClose, loggedUserId }) => {
     (entry?: EmployeeFunction) => () => setPendingEdit(entry),
     [setPendingEdit],
   );
+  const generateCsvEntry = useCallback(
+    async (data: EmployeeFunction) => {
+      await EmployeeFunctionClientService.generateCsvFunction(
+        data,
+      );
+    },
+    [],
+  );
+  const handleGenerateCSV = useCallback(
+    (entry: EmployeeFunction) => () => generateCsvEntry(entry),
+    [generateCsvEntry],
+  );
   const handlePendingDeleteToggle = useCallback(
     (entry?: EmployeeFunction) => () => setPendingDelete(entry),
     [setPendingDelete],
@@ -112,6 +125,10 @@ export const EmployeeDepartments: FC<Props> = ({ onClose, loggedUserId }) => {
     req.setIsdeleted(0);
     req.setStatus(0);
     req.setColor('#000000');
+    return req;
+  };
+  const generateCsvEnt = () => {
+    const req = new EmployeeFunction();
     return req;
   };
   const data: Data =
@@ -185,6 +202,14 @@ export const EmployeeDepartments: FC<Props> = ({ onClose, loggedUserId }) => {
                 {
                   label: 'Add Department',
                   onClick: handlePendingEditToggle(makeNewEntry()),
+                },
+              ]
+            : []),          
+            ...(handleGenerateCSV
+            ? [
+                {
+                  label: 'Generate CSV',
+                  onClick: handleGenerateCSV(generateCsvEnt()),
                 },
               ]
             : []),
