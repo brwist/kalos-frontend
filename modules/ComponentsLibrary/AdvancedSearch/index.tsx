@@ -148,6 +148,7 @@ export const AdvancedSearch: FC<Props> = ({
   const [jobSubtypes, setJobSubtypes] = useState<JobSubtype[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
   const [loaded, setLoaded] = useState<boolean>(false);
+  const [generateCsv, setGenerateCsv] = useState<User>();
   const [page, setPage] = useState<number>(0);
   const [count, setCount] = useState<number>(0);
   const [accounting, setAccounting] = useState<boolean>(false);
@@ -2493,6 +2494,24 @@ export const AdvancedSearch: FC<Props> = ({
     req.setIsEmployee(1);
     return req;
   };
+  const generateCsvEntry = useCallback(
+    async (data: User) => {
+      await UserClientService.generateCsvFunction(
+        data,
+      );
+    },
+    [],
+  );
+  const handleGenerateCSV = useCallback(
+    (entry: User) => () => generateCsvEntry(entry),
+    [generateCsvEntry],
+  );
+
+  const generateCsvEvnt = () => {
+    const req = new User();
+    return req;
+  };
+
   const printHeaderSubtitle = useMemo(() => {
     const {
       firstname,
@@ -2573,6 +2592,14 @@ export const AdvancedSearch: FC<Props> = ({
                   onClick: handlePendingEmployeeEditingToggle(
                     makeNewEmployee(),
                   ),
+                },
+              ]
+            : []),
+            ...(kinds.includes('employees') && isAdmin
+            ? [
+                {
+                  label: 'Generate CSV',
+                  onClick: handleGenerateCSV(generateCsvEvnt()),
                 },
               ]
             : []),
