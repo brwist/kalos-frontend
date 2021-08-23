@@ -1011,6 +1011,7 @@ export const TransactionTable: FC<Props> = ({
             role={role}
             onUpload={() => {
               handleSetCreatingTransaction(false);
+              resetTransactions();
               refresh();
             }}
           />
