@@ -124,10 +124,12 @@ export default () => (
     <ExampleTitle>add row button</ExampleTitle>
     <InfoTable
       data={EXAMPLE_2}
-      addRowButton
       columns={[{ name: 'Column 1' }, { name: 'Column 2' }]}
       onSaveRowButton={result => console.log('RESULT OF ROW SAVE: ', result)}
-      rowButtonTypes={[{ columnName: 'Column 1', columnType: 'mui-datetime' }]}
+      rowButton={{
+        columnsToIgnore: [],
+        columnTypeOverrides: [{ columnName: 'Column 1', columnType: 'number' }],
+      }}
     />
   </>
 );
