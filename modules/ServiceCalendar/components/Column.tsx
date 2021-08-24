@@ -51,6 +51,9 @@ const Column = ({
   timeoffRequestTypes,
 }: Props): JSX.Element => {
   const [showCompleted, setShowCompleted] = useState(false);
+  const [showTimeoff, setShowTimeoff] = useState(false);
+  const [showReminder, setShowReminder] = useState(false);
+
   const [dayView, setDayView] = useState(false);
   const [autoScrollInitialized, setAutoScrollInitialized] = useState(false);
   useLayoutEffect(() => {
@@ -309,8 +312,11 @@ const Column = ({
   filteredCalendarDay.setCompletedServiceCallsList(
     calendarDay!.getCompletedServiceCallsList(),
   );
-  const { completedServiceCallsList, remindersList, serviceCallsList } =
-    filterCalls(filteredCalendarDay);
+  const {
+    completedServiceCallsList,
+    remindersList,
+    serviceCallsList,
+  } = filterCalls(filteredCalendarDay);
   const timeoffRequestsList = calendarDay!.getTimeoffRequestsList();
   /*
   const {
@@ -367,18 +373,47 @@ const Column = ({
           )}
         </Box>
       </div>
-      {completedServiceCallsList != undefined && (
+      {completedServiceCallsList != undefined &&
+        completedServiceCallsList.length > 0 && (
+          <Button
+            className="ServiceCalendarColumnCompletedButton"
+            onClick={() => setShowCompleted(!showCompleted)}
+            style={{ background: colorsMapping.Completed }}
+          >
+            <ExpandMoreIcon
+              className={clsx('ServiceCalendarColumnExpand', {
+                ['ServiceCalendarColumnExpandOpen']: showCompleted,
+              })}
+            />
+            Completed Service Calls
+          </Button>
+        )}
+      {timeoffRequestsList != undefined && timeoffRequestsList.length > 0 && (
         <Button
-          className="ServiceCalendarColumnCompletedButton"
-          onClick={() => setShowCompleted(!showCompleted)}
-          style={{ background: colorsMapping.Completed }}
+          className="ServiceCalendarColumnTimeoffButton"
+          onClick={() => setShowTimeoff(!showTimeoff)}
+          style={{ background: '#dfdede' }}
         >
           <ExpandMoreIcon
             className={clsx('ServiceCalendarColumnExpand', {
-              ['ServiceCalendarColumnExpandOpen']: showCompleted,
+              ['ServiceCalendarColumnExpandOpen']: showTimeoff,
             })}
           />
-          Completed Service Calls
+          TimeOff Requests
+        </Button>
+      )}
+      {remindersList != undefined && remindersList.length > 0 && (
+        <Button
+          className="ServiceCalendarColumnReminderButton"
+          onClick={() => setShowReminder(!showReminder)}
+          style={{ background: colorsMapping.reminder }}
+        >
+          <ExpandMoreIcon
+            className={clsx('ServiceCalendarColumnExpand', {
+              ['ServiceCalendarColumnExpandOpen']: showReminder,
+            })}
+          />
+          Reminders
         </Button>
       )}
       <Collapse in={showCompleted}>
@@ -391,20 +426,26 @@ const Column = ({
             <CallCard key={call.getId()} card={call} type="completed" />
           ))}
       </Collapse>
-      {timeoffRequestsList
-        .sort(
-          (a, b) => parseInt(a.getTimeStarted()) - parseInt(b.getTimeStarted()),
-        )
-        .map(call => (
-          <TimeoffCard key={call.getId()} card={call} loggedUserId={userId} />
-        ))}
-      {remindersList
-        .sort(
-          (a, b) => parseInt(a.getTimeStarted()) - parseInt(b.getTimeStarted()),
-        )
-        .map(call => (
-          <CallCard key={call.getId()} card={call} type="reminder" />
-        ))}
+      <Collapse in={showTimeoff}>
+        {timeoffRequestsList
+          .sort(
+            (a, b) =>
+              parseInt(a.getTimeStarted()) - parseInt(b.getTimeStarted()),
+          )
+          .map(call => (
+            <TimeoffCard key={call.getId()} card={call} loggedUserId={userId} />
+          ))}
+      </Collapse>
+      <Collapse in={showReminder}>
+        {remindersList
+          .sort(
+            (a, b) =>
+              parseInt(a.getTimeStarted()) - parseInt(b.getTimeStarted()),
+          )
+          .map(call => (
+            <CallCard key={call.getId()} card={call} type="reminder" />
+          ))}
+      </Collapse>
       {serviceCallsList
         .sort(
           (a, b) => parseInt(a.getTimeStarted()) - parseInt(b.getTimeStarted()),
