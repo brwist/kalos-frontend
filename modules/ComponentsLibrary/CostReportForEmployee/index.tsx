@@ -161,6 +161,32 @@ export const CostReportForEmployee: FC<Props> = ({ userId, week }) => {
       return 'No Admin Status';
     }
   };
+  const getPerDiemStatus = (perDiem: PerDiem) => {
+    if (perDiem.getPayrollProcessed() == true) {
+      return 'Processed';
+    }
+    if (perDiem.getDateApproved() != NULL_TIME) {
+      return 'Approved';
+    }
+    if (perDiem.getDateSubmitted() != NULL_TIME) {
+      return 'Submitted';
+    } else {
+      return 'Not Submitted';
+    }
+  };
+  const getTripStatus = (trip: Trip) => {
+    if (trip.getPayrollProcessed() == true) {
+      return 'Processed';
+    }
+    if (trip.getAdminActionDate() != NULL_TIME && trip.getApproved() == true) {
+      return 'Approved';
+    }
+    if (trip.getAdminActionDate() != NULL_TIME && trip.getApproved() == false) {
+      return 'Rejected';
+    } else {
+      return 'Pending Approval';
+    }
+  };
   const getSpiffs = useCallback(async () => {
     const req = new Task();
     req.setExternalId(userId);
@@ -379,8 +405,7 @@ export const CostReportForEmployee: FC<Props> = ({ userId, week }) => {
             { name: 'ZipCode' },
             { name: 'Lodging' },
             { name: 'Meals' },
-            { name: 'Approved By' },
-            { name: 'Processed' },
+            { name: 'Status' },
           ]}
           data={
             perDiems
@@ -402,16 +427,7 @@ export const CostReportForEmployee: FC<Props> = ({ userId, week }) => {
                       value: usd(perDiem.getAmountProcessedMeals()),
                     },
                     {
-                      value:
-                        perDiem.getApprovedById() != 0
-                          ? perDiem.getApprovedByName()
-                          : 'Not Approved',
-                    },
-                    {
-                      value:
-                        perDiem.getPayrollProcessed() === false
-                          ? 'Not Processed'
-                          : 'Processed',
+                      value: getPerDiemStatus(perDiem),
                     },
                   ];
                 })
@@ -426,8 +442,7 @@ export const CostReportForEmployee: FC<Props> = ({ userId, week }) => {
             { name: 'Distance' },
             { name: 'Start' },
             { name: 'End' },
-            { name: 'Approved?' },
-            { name: 'Processed?' },
+            { name: 'Status?' },
           ]}
           data={
             trips
@@ -446,13 +461,7 @@ export const CostReportForEmployee: FC<Props> = ({ userId, week }) => {
                       value: trip.getDestinationAddress(),
                     },
                     {
-                      value: trip.getApproved() === true ? 'Yes' : 'No',
-                    },
-                    {
-                      value:
-                        trip.getPayrollProcessed() === false
-                          ? 'Not Processed'
-                          : 'Processed',
+                      value: getTripStatus(trip),
                     },
                   ];
                 })
