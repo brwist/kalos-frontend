@@ -111,48 +111,25 @@ export const PlainForm: <T>(
               return {
                 ...aggr,
                 [field.name]:
-                  // @ts-ignore
-                  data[field.name]() || getDefaultValueByType(field.type!),
+                  (data[field.name] as any)() ||
+                  getDefaultValueByType(field.type!),
               };
             }
             return {
               ...aggr,
               [field.name]:
-                // @ts-ignore
                 data[field.name] || getDefaultValueByType(field.type!),
             };
           } else {
             return aggr;
           }
         }, {});
-        //console.log({ aggr });
         return {
           ...aggr,
           ...fieldObj,
         };
       }, {} as typeof data),
     );
-
-    /*
-      const [formData, setFormData] = useState(
-        schema.reduce((aggr, fields) => {
-          return {
-            ...aggr,
-            ...fields.reduce((aggr, field) => {
-              if (field.name === undefined) {
-                return aggr;
-              } else {
-                return {
-                  ...aggr,
-                  [field.name]:
-                    // @ts-ignore
-                    data[field.name]() || getDefaultValueByType(field.type!),
-                };
-              }
-            }),
-          };
-        }, {} as typeof data),
-      );*/
 
     const handleChange = useCallback(
       name => (value: Value) => {

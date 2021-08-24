@@ -363,7 +363,7 @@ export const TransactionTable: FC<Props> = ({
     req.setOrderDir(
       sortDir && sortDir != ' ' ? sortDir : sortDir == ' ' ? 'DESC' : 'DESC',
     );
-    req.setPageNumber(page);
+    req.setPageNumber(state.page);
 
     req.setIsActive(1);
     req.setVendorCategory("'PickTicket','Receipt'");
@@ -449,7 +449,7 @@ export const TransactionTable: FC<Props> = ({
     });
     const temp = transactions.map(txn => txn);
     dispatch({ type: 'setTransactions', data: temp });
-  }, [totalTransactions, page, transactionFilter, handleChangePage]);
+  }, [totalTransactions, state.page, transactionFilter, handleChangePage]);
 
   const load = useCallback(async () => {
     dispatch({ type: 'setLoading', data: true });
@@ -525,6 +525,7 @@ export const TransactionTable: FC<Props> = ({
     );
     if (ok) {
       await makeUpdateStatus(txn.getId(), 3, 'accepted');
+      await resetTransactions();
       await refresh();
     }
   };
@@ -904,8 +905,11 @@ export const TransactionTable: FC<Props> = ({
 
   useEffect(() => {
     if (!loaded) load();
-    if (changingPage) load();
-  }, [load, loaded, changingPage]);
+    if (changingPage) {
+      load();
+      resetTransactions();
+    }
+  }, [load, loaded, changingPage, resetTransactions]);
   useEffect(() => {
     if (loadTransactions) {
       resetTransactions();
@@ -1011,6 +1015,7 @@ export const TransactionTable: FC<Props> = ({
             role={role}
             onUpload={() => {
               handleSetCreatingTransaction(false);
+              resetTransactions();
               refresh();
             }}
           />
@@ -1057,6 +1062,33 @@ export const TransactionTable: FC<Props> = ({
           selectedTransactions.toString()
         }
         hoverable={false}
+        // onSaveRowButton={saved => console.log('SAVED: ', saved)}
+        // rowButton={{
+        //   columnsToIgnore: ['Actions', 'Accepted / Rejected'],
+        //   columnTypeOverrides: [
+        //     { columnName: 'Type', columnType: 'text' },
+        //     {
+        //       columnName: 'Date',
+        //       columnType: 'date',
+        //     },
+        //     {
+        //       columnName: 'Department',
+        //       columnType: 'department',
+        //     },
+        //     {
+        //       columnName: 'Job #',
+        //       columnType: 'number',
+        //     },
+        //     {
+        //       columnName: 'Amount',
+        //       columnType: 'number',
+        //     },
+        //     {
+        //       columnName: 'Purchaser',
+        //       columnType: 'technician',
+        //     },
+        //   ],
+        // }}
         columns={[
           {
             name: isSelector ? 'Is selected?' : '',

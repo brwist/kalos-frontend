@@ -121,5 +121,15 @@ export default () => (
     />
     <ExampleTitle>error</ExampleTitle>
     <InfoTable data={EXAMPLE_2} error />
+    <ExampleTitle>add row button</ExampleTitle>
+    <InfoTable
+      data={EXAMPLE_2}
+      columns={[{ name: 'Column 1' }, { name: 'Column 2' }]}
+      onSaveRowButton={result => console.log('RESULT OF ROW SAVE: ', result)}
+      rowButton={{
+        columnsToIgnore: [],
+        columnTypeOverrides: [{ columnName: 'Column 1', columnType: 'number' }],
+      }}
+    />
   </>
 );

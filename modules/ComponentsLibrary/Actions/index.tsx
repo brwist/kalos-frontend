@@ -24,6 +24,14 @@ interface Props extends Style {
   actions: ActionsProps;
   className?: string;
   disabled?: boolean;
+  onClickAction?: (
+    actionClicked: ButtonProps & {
+      desktop?: boolean;
+      burgeronly?: number; // Number as a workaround to a bug involving spreads
+      // Read more here: https://stackoverflow.com/a/49786272
+      fixed?: boolean;
+    },
+  ) => any;
 }
 
 export const Actions: FC<Props> = ({
@@ -32,9 +40,11 @@ export const Actions: FC<Props> = ({
   className,
   responsiveColumn = false,
   disabled,
+  onClickAction,
 }) => {
-  const [anchorEl, setAnchorEl] =
-    useState<(EventTarget & HTMLElement) | null>(null);
+  const [anchorEl, setAnchorEl] = useState<(EventTarget & HTMLElement) | null>(
+    null,
+  );
   const theme = useTheme();
   const matches = useMediaQuery(theme.breakpoints.down('md'));
   const handleSetAnchorEl = useCallback(
@@ -98,6 +108,7 @@ export const Actions: FC<Props> = ({
                       {...props}
                       dense
                       onClick={event => {
+                        if (onClickAction) onClickAction(actions[idx]);
                         handleSetAnchorEl(null)();
                         if (onClick) {
                           onClick(event);
@@ -123,9 +134,13 @@ export const Actions: FC<Props> = ({
         <div className={clsx('ActionsActions', { responsiveColumn })}>
           {actions
             .filter(({ desktop }) => desktop === undefined || desktop === true)
-            .map(({ desktop, ...props }, idx) => (
+            .map(({ desktop, onClick, ...props }, idx) => (
               <Button
                 key={idx}
+                onClick={(e: any) => {
+                  if (onClickAction) onClickAction(actions[idx]);
+                  if (onClick) onClick(e);
+                }}
                 {...props}
                 className={clsx('ActionsButton', { responsiveColumn })}
                 disabled={disabled || props.disabled}

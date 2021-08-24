@@ -21,6 +21,7 @@ import { RoleType } from '../Payroll';
 import { SUBJECT_TAGS_ACCOUNTS_PAYABLE } from '@kalos-core/kalos-rpc/S3File';
 import { File } from '@kalos-core/kalos-rpc/File';
 import { TransactionDocument } from '@kalos-core/kalos-rpc/TransactionDocument';
+import { Confirm } from '../Confirm';
 
 interface Props {
   loggedUserId: number;
@@ -67,6 +68,9 @@ export const UploadPhotoTransaction: FC<Props> = ({
   const [saving, setSaving] = useState<boolean>(false);
   const [saved, setSaved] = useState<boolean>(false);
   const [error, setError] = useState<boolean>(false);
+  const [validateJobNumber, setValidateJobNumber] = useState<Entry | undefined>(
+    undefined,
+  );
   let temp = costCenters.getResultsList().map(entry => {
     return {
       value: entry.toObject().id,
@@ -98,6 +102,7 @@ export const UploadPhotoTransaction: FC<Props> = ({
     (fileData: string) => setFileData(fileData),
     [setFileData],
   );
+
   // TODO reminding myself to fix this in a bit, we don't need to switch between Entry and Transaction, we can just use Transaction
   // ! Also no need to create a new Transaction client when we can reuse the one from Helpers
   const handleSubmit = useCallback(
@@ -169,6 +174,22 @@ export const UploadPhotoTransaction: FC<Props> = ({
     [fileData, setSaving, setFormKey, formKey, bucket, loggedUserId, onUpload],
   );
 
+  const handleSetValidateJobNumber = useCallback(
+    (validate: Entry | undefined) => setValidateJobNumber(validate),
+    [setValidateJobNumber],
+  );
+  const handleValidate = useCallback(
+    (entry: Entry) => {
+      // @ts-expect-error
+      if (entry.eventId === '') {
+        handleSetValidateJobNumber(entry);
+        return;
+      }
+      handleSubmit(entry);
+    },
+    [handleSetValidateJobNumber, handleSubmit],
+  );
+
   let SCHEMA: Schema<Entry> = [
     [
       {
@@ -209,7 +230,6 @@ export const UploadPhotoTransaction: FC<Props> = ({
         name: 'eventId',
         label: 'Job Number',
         type: 'eventId',
-        required: role != 'AccountsPayable',
       },
     ],
     [
@@ -240,28 +260,43 @@ export const UploadPhotoTransaction: FC<Props> = ({
     ],
   ] as Schema<Entry>;
   return (
-    <Form<Entry>
-      key={formKey + formData.tag}
-      title={title}
-      schema={SCHEMA}
-      data={formData}
-      onClose={onClose}
-      onSave={handleSubmit}
-      onChange={setFormData}
-      submitLabel="Create Transaction"
-      cancelLabel="Close"
-      disabled={saving}
-      intro={
-        saved && (
-          <Alert severity="success" className="UploadPhotoSuccess">
-            <big>Transaction Created!</big>
-            <br />
-            You can upload another file.
-          </Alert>
-        )
-      }
-      error={error && <>Error while uploading file. Please try again.</>}
-      fullWidth={fullWidth}
-    />
+    <>
+      {validateJobNumber && (
+        <Confirm
+          title="No Job Number Set"
+          open={validateJobNumber !== undefined}
+          onClose={() => handleSetValidateJobNumber(undefined)}
+          onConfirm={() => {
+            handleSubmit(validateJobNumber);
+            handleSetValidateJobNumber(undefined);
+          }}
+        >
+          Are you sure that this transaction does not require a job number?
+        </Confirm>
+      )}
+      <Form<Entry>
+        key={formKey + formData.tag}
+        title={title}
+        schema={SCHEMA}
+        data={formData}
+        onClose={onClose}
+        onSave={saved => handleValidate(saved)}
+        onChange={setFormData}
+        submitLabel="Create Transaction"
+        cancelLabel="Close"
+        disabled={saving}
+        intro={
+          saved && (
+            <Alert severity="success" className="UploadPhotoSuccess">
+              <big>Transaction Created!</big>
+              <br />
+              You can upload another file.
+            </Alert>
+          )
+        }
+        error={error && <>Error while uploading file. Please try again.</>}
+        fullWidth={fullWidth}
+      />
+    </>
   );
 };

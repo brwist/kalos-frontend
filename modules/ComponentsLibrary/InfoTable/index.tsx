@@ -1,4 +1,9 @@
-import React, { ReactElement, ReactNode, CSSProperties } from 'react';
+import React, {
+  ReactElement,
+  ReactNode,
+  CSSProperties,
+  useReducer,
+} from 'react';
 import clsx from 'clsx';
 import useTheme from '@material-ui/core/styles/useTheme';
 import useMediaQuery from '@material-ui/core/useMediaQuery';
@@ -9,7 +14,10 @@ import { Actions, ActionsProps } from '../Actions';
 import { Link } from '../Link';
 import { OrderDir } from '../../../helpers';
 import './styles.less';
-
+import { Props as ButtonProps } from '../Button';
+import { ACTIONS, Reducer } from './reducer';
+import { PlainForm } from '../PlainForm';
+import { Type } from '../Field';
 type Styles = {
   loading?: boolean;
   error?: boolean;
@@ -48,6 +56,12 @@ interface Props extends Styles {
   styles?: CSSProperties;
   className?: string;
   skipPreLine?: boolean;
+  onSaveRowButton?: (results: {}) => any;
+  // row button
+  rowButton?: {
+    columnsToIgnore: string[];
+    columnTypeOverrides: { columnName: string; columnType: Type }[];
+  };
 }
 
 export const InfoTable = ({
@@ -60,11 +74,38 @@ export const InfoTable = ({
   skipPreLine = false,
   className = '',
   styles,
+  onSaveRowButton,
+  rowButton,
 }: Props) => {
+  const [state, dispatch] = useReducer(Reducer, {
+    isAddingRow: false,
+  });
+  if (rowButton !== undefined && columns.length === 0) {
+    console.error(
+      `addRowButton requires the columns to be defined. This is a no-op, but there will be no addRowButton. `,
+    );
+  }
   const theme = useTheme();
   const md = useMediaQuery(theme.breakpoints.down('xs'));
+
+  let fields: {} = {};
+  let temporaryResult: {}; // The result assigned when the onChange is fired.
+
+  if (state.isAddingRow) {
+    columns.forEach(col => {
+      if (
+        !rowButton?.columnsToIgnore.includes(col.name!.toString()) &&
+        !col.invisible
+      )
+        (fields as any)[col.name as any] = ''; // Creating the field on the object for use later
+    });
+  }
   return (
-    <div className={clsx('InfoTable', className)} style={styles}>
+    <div
+      className={clsx('InfoTable', className)}
+      style={styles}
+      key={state.toString()}
+    >
       {columns.length > 0 && (
         <div className="InfoTableHeader">
           {columns.map(
@@ -82,6 +123,17 @@ export const InfoTable = ({
               idx,
             ) => {
               if (invisible) return null;
+              if (rowButton !== undefined && idx === columns.length - 1) {
+                if (actions === undefined) actions = [];
+                actions.push({
+                  label: 'Add New Row',
+                  onClick: () =>
+                    dispatch({
+                      type: ACTIONS.SET_IS_ADDING_ROW,
+                      payload: true,
+                    }),
+                });
+              }
               const ArrowIcon =
                 dir === 'DESC' ? ArrowDropDownIcon : ArrowDropUpIcon;
               return (
@@ -116,6 +168,7 @@ export const InfoTable = ({
                   >
                     {name} {dir && <ArrowIcon />}
                   </span>
+                  {/* ! This action can be appended to above via the actions variable to add the "Add New" button in */}
                   {actions && (
                     <Actions actions={actions} fixed={fixedActions} />
                   )}
@@ -124,6 +177,41 @@ export const InfoTable = ({
             },
           )}
         </div>
+      )}
+      {state.isAddingRow && (
+        <PlainForm<typeof fields>
+          onChange={fieldOutput => (temporaryResult = fieldOutput)}
+          schema={[
+            Object.keys(fields).map((field: any, idx: number) => {
+              let columnType = rowButton?.columnTypeOverrides.filter(
+                type => type.columnName === field,
+              );
+              return {
+                label: field,
+                name: field,
+                type:
+                  columnType?.length === 1 ? columnType![0].columnType : 'text',
+                actions:
+                  idx == Object.keys(fields).length - 1
+                    ? [
+                        {
+                          label: 'OK',
+                          onClick: () => {
+                            dispatch({
+                              type: ACTIONS.SET_IS_ADDING_ROW,
+                              payload: false,
+                            });
+                            if (onSaveRowButton)
+                              onSaveRowButton(temporaryResult);
+                          },
+                        },
+                      ]
+                    : [],
+              };
+            }),
+          ]}
+          data={fields}
+        />
       )}
       {data &&
         data.map((items, idx) => (
@@ -137,7 +225,7 @@ export const InfoTable = ({
                   label,
                   value,
                   href,
-                  actions,
+                  actions = [],
                   onClick,
                   actionsFullWidth = false,
                   invisible,
@@ -149,6 +237,7 @@ export const InfoTable = ({
                   columns && columns[idx2]
                     ? columns[idx2].align || 'left'
                     : 'left';
+
                 return (
                   <Typography
                     key={idx2}
