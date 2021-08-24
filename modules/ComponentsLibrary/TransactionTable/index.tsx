@@ -1008,7 +1008,7 @@ export const TransactionTable: FC<Props> = ({
         >
           <UploadPhotoTransaction
             loggedUserId={loggedUserId}
-            bucket="testbuckethelios"
+            bucket="kalos-transactions"
             onClose={() => handleSetCreatingTransaction(false)}
             costCenters={new TransactionAccountList()}
             fullWidth={false}
@@ -1328,7 +1328,7 @@ export const TransactionTable: FC<Props> = ({
                             fileList={[]}
                             title="Transaction Uploads"
                             text="View Photos and Documents"
-                            transactionID={transactions[idx].txn.getId()}
+                            transactionID={selectorParam.txn.getId()}
                             iconButton
                           />,
                           <TxnLog
