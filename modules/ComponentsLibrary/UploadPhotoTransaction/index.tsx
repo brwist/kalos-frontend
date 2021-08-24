@@ -71,6 +71,9 @@ export const UploadPhotoTransaction: FC<Props> = ({
   const [validateJobNumber, setValidateJobNumber] = useState<Entry | undefined>(
     undefined,
   );
+  const [nameValidationError, setNameValidationError] = useState<
+    string | undefined
+  >(undefined);
   let temp = costCenters.getResultsList().map(entry => {
     return {
       value: entry.toObject().id,
@@ -107,6 +110,13 @@ export const UploadPhotoTransaction: FC<Props> = ({
   // ! Also no need to create a new Transaction client when we can reuse the one from Helpers
   const handleSubmit = useCallback(
     async (data: Entry) => {
+      if (data.description.includes('/') || data.description.includes('\\')) {
+        setNameValidationError(
+          'The description field cannot contain the characters "/" or "\\".',
+        );
+        setError(true);
+        return;
+      }
       setSaved(false);
       setError(false);
       setSaving(true);
@@ -294,7 +304,14 @@ export const UploadPhotoTransaction: FC<Props> = ({
             </Alert>
           )
         }
-        error={error && <>Error while uploading file. Please try again.</>}
+        error={
+          error &&
+          (nameValidationError ? (
+            <>{nameValidationError}</>
+          ) : (
+            <>Error while uploading file. Please try again.</>
+          ))
+        }
         fullWidth={fullWidth}
       />
     </>
