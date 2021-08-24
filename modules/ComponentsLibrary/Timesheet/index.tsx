@@ -51,6 +51,7 @@ import { RoleType } from '../Payroll';
 import { NULL_TIME_VALUE } from './constants';
 import { OPTION_ALL } from '../../../constants';
 import { TimeoffRequest } from '@kalos-core/kalos-rpc/TimeoffRequest';
+import { SectionBar } from '../SectionBar';
 
 const tslClient = new TimesheetLineClient(ENDPOINT);
 const txnClient = new TransactionClient(ENDPOINT);
@@ -617,16 +618,10 @@ export const Timesheet: FC<Props> = props => {
         name: 'week' as const,
         label: 'Select Week',
         options: weekOptions,
-        onChange: async (date: React.ReactText) => handleSelectNewWeek(date),
       },
     ],
   ];
-  const handleSelectNewWeek = useCallback(async dateString => {
-    {
-      let date = new Date(dateString);
-      date.setDate(date.getDate() + 1);
-    }
-  }, []);
+
   const handleSetFilter = (d: FilterData) => {
     if (!d.week) {
       d.week = OPTION_ALL;
@@ -809,19 +804,21 @@ export const Timesheet: FC<Props> = props => {
       )}
       {personalReportOpen && (
         <Modal open onClose={() => setPersonalReportOpen(false)}>
-          <PlainForm
-            data={filter}
-            onChange={handleSetFilter}
-            schema={SCHEMA}
-            className="PayrollFilter"
-          />
-          {filter.week != OPTION_ALL && (
-            <CostReportForEmployee
-              key={filter.week + owner!.getId()}
-              userId={owner!.getId()}
-              week={filter.week}
-            ></CostReportForEmployee>
-          )}
+          <SectionBar subtitle={'Generate Employee Weekly Report'}>
+            <PlainForm
+              data={filter}
+              onChange={handleSetFilter}
+              schema={SCHEMA}
+              className="PayrollFilter"
+            />
+            {filter.week != OPTION_ALL && (
+              <CostReportForEmployee
+                key={filter.week + owner!.getId()}
+                userId={owner!.getId()}
+                week={filter.week}
+              ></CostReportForEmployee>
+            )}
+          </SectionBar>
         </Modal>
       )}
       {tripsOpen && perDiemRowId?.length != 0 && (
