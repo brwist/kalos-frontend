@@ -21,7 +21,9 @@ export type Payroll = {
   billable: number | null;
   unbillable: number | null;
 };
-
+export type FilterData = {
+  week: string;
+};
 type RawDayData = {
   servicesRenderedList: ServicesRendered[];
   timesheetLineList: TimesheetLine[];
@@ -67,9 +69,11 @@ export type State = {
   data: DataList;
   timeoffOpen: boolean;
   tripsOpen: boolean;
+  personalReportOpen: boolean;
   perDiemRowId: number[] | null;
   pendingEntries: boolean;
   selectedDate: Date;
+  filter: FilterData;
   timeoffRequestTypes: TimeoffRequestTypes | undefined;
   shownDates: string[];
   payroll: {
@@ -115,7 +119,9 @@ export type Action =
   | { type: 'error'; text: string }
   | { type: 'submitTimesheet' }
   | { type: 'timeoffOpen'; value: boolean }
+  | { type: 'setFilterData'; value: FilterData }
   | { type: 'tripsOpen'; value: boolean }
+  | { type: 'setPersonalReportOpen'; value: boolean }
   | { type: 'timeoffRequestTypes'; value: TimeoffRequestTypes }
   | { type: 'perDiemRowId'; value: number[] }
   | { type: 'approveTimesheet' }
@@ -474,6 +480,11 @@ export const reducer = (state: State, action: Action) => {
         ...state,
         tripsOpen: action.value,
       };
+    case 'setPersonalReportOpen':
+      return {
+        ...state,
+        personalReportOpen: action.value,
+      };
     case 'perDiemRowId':
       return {
         ...state,
@@ -483,6 +494,11 @@ export const reducer = (state: State, action: Action) => {
       return {
         ...state,
         timeoffRequestTypes: action.value,
+      };
+    case 'setFilterData':
+      return {
+        ...state,
+        filter: action.value,
       };
     default:
       return state;

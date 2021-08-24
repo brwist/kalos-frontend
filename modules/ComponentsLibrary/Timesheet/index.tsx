@@ -4,6 +4,7 @@ import React, {
   useEffect,
   useReducer,
   useCallback,
+  useMemo,
   useState,
 } from 'react';
 import { startOfWeek, subDays, parseISO, addDays, format } from 'date-fns';
@@ -12,6 +13,8 @@ import Box from '@material-ui/core/Box';
 import EventIcon from '@material-ui/icons/Event';
 import TimerOffIcon from '@material-ui/icons/TimerOff';
 import DriveEtaIcon from '@material-ui/icons/DriveEta';
+import AssessmentIcon from '@material-ui/icons/Assessment';
+import { Schema, PlainForm } from '../PLainForm';
 import AssignmentIndIcon from '@material-ui/icons/AssignmentInd';
 import AddAlertIcon from '@material-ui/icons/AddAlert';
 import Alert from '@material-ui/lab/Alert';
@@ -23,6 +26,7 @@ import {
   TimesheetLineList,
 } from '@kalos-core/kalos-rpc/TimesheetLine';
 import { TransactionClient } from '@kalos-core/kalos-rpc/Transaction';
+import { CostReportForEmployee } from '../CostReportForEmployee';
 import { AddNewButton } from '../AddNewButton';
 import { ConfirmServiceProvider } from '../ConfirmService';
 import Toolbar from './components/Toolbar';
@@ -34,6 +38,7 @@ import {
   TimeoffRequestClientService,
   TimeoffRequestTypes,
   UserClientService,
+  getWeekOptions,
 } from '../../../helpers';
 import { Action, getShownDates, reducer, State } from './reducer';
 import ReceiptsIssueDialog from './components/ReceiptsIssueDialog';
@@ -44,7 +49,9 @@ import './styles.less';
 import { TripSummaryNew } from '../TripSummaryNew';
 import { RoleType } from '../Payroll';
 import { NULL_TIME_VALUE } from './constants';
+import { OPTION_ALL } from '../../../constants';
 import { TimeoffRequest } from '@kalos-core/kalos-rpc/TimeoffRequest';
+import { SectionBar } from '../SectionBar';
 
 const tslClient = new TimesheetLineClient(ENDPOINT);
 const txnClient = new TransactionClient(ENDPOINT);
@@ -56,7 +63,9 @@ export type Props = {
   startOnWeek?: boolean;
   onClose?: () => void;
 };
-
+export type FilterData = {
+  week: string;
+};
 type EditTimesheetContext = {
   editTimesheetCard: (card: TimesheetLine) => void;
   editServicesRenderedCard: (card: ServicesRendered) => void;
@@ -83,9 +92,14 @@ export const Timesheet: FC<Props> = props => {
   const { userId, timesheetOwnerId, week, onClose, startOnWeek } = props;
   //const [timeoffOpen, setTimeoffOpen] = useState<boolean>(false);
   //const [tripsOpen, setTripsOpen] = useState<boolean>(false);
-
+  const weekOptions = useMemo(
+    () => [
+      { label: OPTION_ALL, value: OPTION_ALL },
+      ...getWeekOptions(52, 0, -1),
+    ],
+    [],
+  );
   const [role, setRole] = useState<RoleType>();
-
   const [state, dispatch] = useReducer<React.Reducer<State, Action>>(reducer, {
     user: undefined,
     owner: undefined,
@@ -95,6 +109,10 @@ export const Timesheet: FC<Props> = props => {
     timeoffRequestTypes: undefined,
     fetchingTimesheetData: true,
     data: {},
+    filter: {
+      week: OPTION_ALL,
+    },
+    personalReportOpen: false,
     pendingEntries: false,
     selectedDate: getWeekStart(userId, timesheetOwnerId, week, startOnWeek),
     shownDates: getShownDates(
@@ -131,12 +149,14 @@ export const Timesheet: FC<Props> = props => {
     timeoffRequestTypes,
     perDiemRowId,
     data,
+    filter,
     pendingEntries,
     payroll,
     selectedDate,
     shownDates,
     editing,
     error,
+    personalReportOpen,
     receiptsIssue,
   } = state;
   const handleOnSave = (
@@ -170,6 +190,9 @@ export const Timesheet: FC<Props> = props => {
   };
   const setTripsOpen = (value: boolean) => {
     dispatch({ type: 'tripsOpen', value });
+  };
+  const setPersonalReportOpen = (value: boolean) => {
+    dispatch({ type: 'setPersonalReportOpen', value });
   };
   const setPerDiemRowId = (value: number[]) => {
     dispatch({ type: 'perDiemRowId', value });
@@ -210,6 +233,13 @@ export const Timesheet: FC<Props> = props => {
       name: 'Trips',
       action: () => {
         setTripsOpen(true);
+      },
+    },
+    {
+      icon: <AssessmentIcon />,
+      name: 'Personal Report',
+      action: () => {
+        setPersonalReportOpen(true);
       },
     },
 
@@ -582,7 +612,24 @@ export const Timesheet: FC<Props> = props => {
     setTimeoffRequestTypes,
     timeoffRequestTypes,
   ]);
+  const SCHEMA: Schema<FilterData> = [
+    [
+      {
+        name: 'week' as const,
+        label: 'Select Week',
+        options: weekOptions,
+      },
+    ],
+  ];
 
+  const handleSetFilter = (d: FilterData) => {
+    if (!d.week) {
+      d.week = OPTION_ALL;
+    }
+    console.log(d);
+    dispatch({ type: 'setFilterData', value: d });
+    // {departmentId: 18, week: undefined, employeeId: undefined}
+  };
   const reload = () => {
     dispatch({ type: 'fetchingTimesheetData' });
     (async () => {
@@ -753,6 +800,25 @@ export const Timesheet: FC<Props> = props => {
               reload();
             }}
           />
+        </Modal>
+      )}
+      {personalReportOpen && (
+        <Modal open onClose={() => setPersonalReportOpen(false)}>
+          <SectionBar subtitle={'Generate Employee Weekly Report'}>
+            <PlainForm
+              data={filter}
+              onChange={handleSetFilter}
+              schema={SCHEMA}
+              className="PayrollFilter"
+            />
+            {filter.week != OPTION_ALL && (
+              <CostReportForEmployee
+                key={filter.week + owner!.getId()}
+                userId={owner!.getId()}
+                week={filter.week}
+              ></CostReportForEmployee>
+            )}
+          </SectionBar>
         </Modal>
       )}
       {tripsOpen && perDiemRowId?.length != 0 && (
