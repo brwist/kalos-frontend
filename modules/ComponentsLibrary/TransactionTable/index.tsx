@@ -366,7 +366,7 @@ export const TransactionTable: FC<Props> = ({
     req.setPageNumber(state.page);
 
     req.setIsActive(1);
-    req.setVendorCategory("'PickTicket','Receipt'");
+    req.setVendorCategory("'PickTicket','Receipt','Invoice'");
     if (transactionFilter.isAccepted) {
       req.setStatusId(3);
     }
