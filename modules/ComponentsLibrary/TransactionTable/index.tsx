@@ -114,45 +114,6 @@ export const TransactionTable: FC<Props> = ({
   hasActions,
 }) => {
   const FileInput = React.createRef<HTMLInputElement>();
-
-  //const [transactions, setTransactions] = useState<SelectorParams[]>();
-  //const [totalTransactions, setTotalTransactions] = useState<number>(0);
-  //const [transactionActivityLogs, setTransactionActivityLogs] = useState<
-  //  TransactionActivity[]
-  //>([]);
-  // const [transactionToEdit, setTransactionToEdit] = useState<
-  //   Transaction | undefined
-  // >();
-  //const [loading, setLoading] = useState<boolean>(true);
-  //const [loadTransactions, setloadTransactions] = useState<boolean>(true);
-
-  //const [creatingTransaction, setCreatingTransaction] = useState<boolean>(); // for when a transaction is being made, pops up the popup
-  //const [mergingTransaction, setMergingTransaction] = useState<boolean>(); // When a txn is being merged with another one, effectively allowing full
-  // editorial control for Dani
-  //const [role, setRole] = useState<RoleType>();
-  //const [assigningUser, setAssigningUser] = useState<{
-  //  isAssigning: boolean;
-  //  transactionId: number;
-  //}>(); // sets open an employee picker in a modal
-  //const [employees, setEmployees] = useState<User[]>([]);
-  //const [departments, setDepartments] = useState<TimesheetDepartment[]>([]);
-  //const [selectedTransactions, setSelectedTransactions] = useState<
-  //  Transaction[]
-  //>([]); // Transactions that are selected in the table if the isSelector prop is set
-  //const [pageNumber, setPageNumber] = useState<number>(0);
-  // For assigning employees, this will store the last chosen one for the form
-  //const [assignedEmployee, setAssignedEmployee] = useState<number | undefined>(
-  //  undefined,
-  //);
-  //const [error, setError] = useState<string | undefined>(undefined);
-  /*
-  const [status, setStatus] = useState<
-    'Accepted' | 'Rejected' | 'Accepted / Rejected'
-  >('Accepted / Rejected');
-  */
-  //const [loaded, setLoaded] = useState<boolean>(false);
-  //const [changingPage, setChangingPage] = useState<boolean>(false); // To fix a bunch of issues with callbacks going in
-  // front of other callbacks
   const [state, dispatch] = useReducer(reducer, {
     transactionFilter: filter,
     transactions: undefined,
@@ -480,8 +441,6 @@ export const TransactionTable: FC<Props> = ({
       );
     }
 
-    dispatch({ type: 'setLoading', data: true });
-
     const role = user
       .getPermissionGroupsList()
       .find(p => p.getType() === 'role');
@@ -543,7 +502,9 @@ export const TransactionTable: FC<Props> = ({
   const refresh = useCallback(async () => {
     await load();
   }, [load]);
-
+  const searchRefresh = useCallback(async () => {
+    dispatch({ type: 'setLoadTransactions', data: true });
+  }, []);
   const copyToClipboard = useCallback((text: string): void => {
     const el = document.createElement('textarea');
     el.value = text;
@@ -629,8 +590,7 @@ export const TransactionTable: FC<Props> = ({
     filter.amount = d.amount;
     filter.billingRecorded = d.billingRecorded;
     filter.universalSearch = d.universalSearch;
-    dispatch({ type: 'setFilter', data: filter });
-    dispatch({ type: 'setLoadTransactions', data: true });
+    dispatch({ type: 'setTransactionFilter', data: filter });
   }, []);
 
   const handleUpdateTransaction = useCallback(
@@ -741,8 +701,7 @@ export const TransactionTable: FC<Props> = ({
           );
           break;
       }
-      dispatch({ type: 'setFilter', data: tempFilter });
-      dispatch({ type: 'setLoadTransactions', data: true });
+      dispatch({ type: 'setTransactionFilter', data: tempFilter });
     },
     [transactionFilter],
   );
@@ -880,7 +839,7 @@ export const TransactionTable: FC<Props> = ({
         actions: [
           {
             label: 'search',
-            onClick: () => refresh(),
+            onClick: () => searchRefresh(),
           },
         ],
       },
