@@ -49,7 +49,7 @@ export const CostReportForEmployee: FC<Props> = ({ userId, week }) => {
   const startDay = week;
 
   const formatDateFns = (date: Date) => format(date, 'yyyy-MM-dd');
-  const endDay = formatDateFns(addDays(new Date(startDay), 7));
+  const endDay = formatDateFns(addDays(new Date(startDay), 8));
   const getTrips = useCallback(async () => {
     let trip = new Trip();
     trip.setUserId(userId);
@@ -148,8 +148,11 @@ export const CostReportForEmployee: FC<Props> = ({ userId, week }) => {
       return results;
     }
   }, [userId, endDay, startDay]);
-  const getSpiffStatus = (status: number) => {
-    if (status === 1) {
+  const getSpiffStatus = (status: number, processed: boolean) => {
+    if (status === 1 && processed == true) {
+      return 'Processed';
+    }
+    if (status === 1 && processed == false) {
       return 'Approved';
     }
     if (status === 2) {
@@ -389,6 +392,7 @@ export const CostReportForEmployee: FC<Props> = ({ userId, week }) => {
                               spiff
                                 .getActionsList()
                                 [spiff.getActionsList().length - 1].getStatus(),
+                              spiff.getPayrollProcessed(),
                             )
                           : 'No Status',
                     },
