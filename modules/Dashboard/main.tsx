@@ -24,6 +24,7 @@ import { PageWrapper, PageWrapperProps } from '../PageWrapper/main';
 import { ManagerTimeoffs } from '../ComponentsLibrary/ManagerTimeoffs';
 import './styles.less';
 import { SpiffTool } from '../SpiffToolLogs/components/SpiffTool';
+import { PersonalReport } from './components/PersonalReport';
 interface props extends PageWrapperProps {
   userId: number;
 }
@@ -591,6 +592,12 @@ export class Dashboard extends React.PureComponent<props, state> {
             <Assignments
               events={this.state.recentEvents}
               isLoading={this.state.isLoading}
+            />
+          )}
+          {this.state.currentUser.getIsEmployee() === 1 && (
+            <PersonalReport
+              userId={this.props.userId}
+              username={`${this.state.currentUser.getFirstname()} ${this.state.currentUser.getLastname()} `}
             />
           )}
           {this.state.currentUser.getToolFund() > 0 && (
