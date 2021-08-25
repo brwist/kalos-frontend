@@ -3,6 +3,7 @@ import React, { FC, useCallback, useState } from 'react';
 import { NULL_TIME } from '../../../constants';
 import { makeSafeFormObject } from '../../../helpers';
 import { Form, Schema } from '../Form';
+import { SUBJECT_TAGS_ACCOUNTS_PAYABLE } from '@kalos-core/kalos-rpc/S3File';
 
 interface Props {
   transactionInput: Transaction;
@@ -21,7 +22,15 @@ export const EditTransaction: FC<Props> = ({
 }) => {
   const [transaction] = useState<Transaction>(transactionInput);
   const [changed, setChanged] = useState<boolean>(false);
-
+  const tagsTranslated = [];
+  for (let i = 0; i < SUBJECT_TAGS_ACCOUNTS_PAYABLE.length; i++) {
+    const tempStruct = {
+      label: SUBJECT_TAGS_ACCOUNTS_PAYABLE[i].label,
+      value: SUBJECT_TAGS_ACCOUNTS_PAYABLE[i].label.replace(' ', ''),
+    };
+    tagsTranslated.push(tempStruct);
+  }
+  console.log(tagsTranslated);
   const handleSetChanged = useCallback(
     (changed: boolean) => setChanged(changed),
     [setChanged],
@@ -114,6 +123,7 @@ export const EditTransaction: FC<Props> = ({
       {
         label: 'Vendor Category',
         name: 'getVendorCategory',
+        options: tagsTranslated,
       },
     ],
     [

@@ -51,7 +51,7 @@ export type State = {
   universalSearch: string | undefined;
 };
 export type Action =
-  | { type: 'setFilter'; data: FilterType }
+  | { type: 'setTransactionFilter'; data: FilterType }
   | { type: 'setTransactions'; data: SelectorParams[] }
   | { type: 'setTotalTransactions'; data: number }
   | { type: 'setTransactionActivityLogs'; data: TransactionActivity[] }
@@ -88,7 +88,8 @@ export type Action =
 
 export const reducer = (state: State, action: Action) => {
   switch (action.type) {
-    case 'setFilter': {
+    case 'setTransactionFilter': {
+      console.log('we got filter', action.data);
       return {
         ...state,
         transactionFilter: action.data,
