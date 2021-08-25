@@ -69,11 +69,9 @@ export type State = {
   data: DataList;
   timeoffOpen: boolean;
   tripsOpen: boolean;
-  personalReportOpen: boolean;
   perDiemRowId: number[] | null;
   pendingEntries: boolean;
   selectedDate: Date;
-  filter: FilterData;
   timeoffRequestTypes: TimeoffRequestTypes | undefined;
   shownDates: string[];
   payroll: {
@@ -119,7 +117,6 @@ export type Action =
   | { type: 'error'; text: string }
   | { type: 'submitTimesheet' }
   | { type: 'timeoffOpen'; value: boolean }
-  | { type: 'setFilterData'; value: FilterData }
   | { type: 'tripsOpen'; value: boolean }
   | { type: 'setPersonalReportOpen'; value: boolean }
   | { type: 'timeoffRequestTypes'; value: TimeoffRequestTypes }
@@ -494,11 +491,6 @@ export const reducer = (state: State, action: Action) => {
       return {
         ...state,
         timeoffRequestTypes: action.value,
-      };
-    case 'setFilterData':
-      return {
-        ...state,
-        filter: action.value,
       };
     default:
       return state;
