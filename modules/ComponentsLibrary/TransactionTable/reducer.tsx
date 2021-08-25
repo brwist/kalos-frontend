@@ -31,7 +31,6 @@ export type State = {
   loading: boolean;
   changingPage: boolean;
   loaded: boolean;
-  loadTransactions: boolean;
   creatingTransaction: boolean;
   mergingTransaction: boolean;
   role: RoleType | undefined;
@@ -44,6 +43,7 @@ export type State = {
       }
     | undefined;
   employees: User[];
+  searching: boolean;
   assignedEmployee: number | undefined;
   selectedTransactions: Transaction[];
   status: 'Accepted' | 'Rejected' | 'Accepted / Rejected';
@@ -59,8 +59,8 @@ export type Action =
   | { type: 'setLoading'; data: boolean }
   | { type: 'setLoaded'; data: boolean }
   | { type: 'setChangingPage'; data: boolean }
-  | { type: 'setLoadTransactions'; data: boolean }
   | { type: 'setMergingTransaction'; data: boolean }
+  | { type: 'setSearching'; data: boolean }
   | { type: 'setRole'; data: RoleType }
   | { type: 'setCreatingTransaction'; data: boolean }
   | { type: 'setEmployees'; data: User[] }
@@ -126,13 +126,6 @@ export const reducer = (state: State, action: Action) => {
       return {
         ...state,
         loading: action.data,
-      };
-    }
-    case 'setLoadTransactions': {
-      console.log('setting loading transactions');
-      return {
-        ...state,
-        loadTransactions: action.data,
       };
     }
     case 'setCreatingTransaction': {
@@ -236,6 +229,12 @@ export const reducer = (state: State, action: Action) => {
       return {
         ...state,
         universalSearch: action.data,
+      };
+    case 'setSearching':
+      console.log('setting searching');
+      return {
+        ...state,
+        searching: action.data,
       };
     default:
       return state;

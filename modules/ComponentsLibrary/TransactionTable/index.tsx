@@ -121,7 +121,6 @@ export const TransactionTable: FC<Props> = ({
     transactionActivityLogs: [],
     transactionToEdit: undefined,
     loading: true,
-    loadTransactions: true,
     creatingTransaction: false,
     mergingTransaction: false,
     role: undefined,
@@ -137,6 +136,7 @@ export const TransactionTable: FC<Props> = ({
     changingPage: false,
     status: 'Accepted / Rejected',
     universalSearch: undefined,
+    searching: false,
   });
   const {
     transactionFilter,
@@ -147,7 +147,6 @@ export const TransactionTable: FC<Props> = ({
     transactionToDelete,
     loading,
     loaded,
-    loadTransactions,
     creatingTransaction,
     mergingTransaction,
     role,
@@ -160,6 +159,7 @@ export const TransactionTable: FC<Props> = ({
     assignedEmployee,
     error,
     status,
+    searching,
   } = state;
 
   const handleSetTransactionToEdit = useCallback(
@@ -502,9 +502,6 @@ export const TransactionTable: FC<Props> = ({
   const refresh = useCallback(async () => {
     await load();
   }, [load]);
-  const searchRefresh = useCallback(async () => {
-    dispatch({ type: 'setLoadTransactions', data: true });
-  }, []);
   const copyToClipboard = useCallback((text: string): void => {
     const el = document.createElement('textarea');
     el.value = text;
@@ -839,7 +836,7 @@ export const TransactionTable: FC<Props> = ({
         actions: [
           {
             label: 'search',
-            onClick: () => searchRefresh(),
+            onClick: () => dispatch({ type: 'setSearching', data: true }),
           },
         ],
       },
@@ -863,18 +860,20 @@ export const TransactionTable: FC<Props> = ({
   }, [state.transactionToDelete, refresh, resetTransactions]);
 
   useEffect(() => {
-    if (!loaded) load();
+    if (!loaded) {
+      load();
+      resetTransactions();
+    }
     if (changingPage) {
       load();
       resetTransactions();
     }
-  }, [load, loaded, changingPage, resetTransactions]);
-  useEffect(() => {
-    if (loadTransactions) {
+    if (searching) {
+      load();
       resetTransactions();
-      dispatch({ type: 'setLoadTransactions', data: false });
+      dispatch({ type: 'setSearching', data: false });
     }
-  }, [loadTransactions, resetTransactions]);
+  }, [load, loaded, searching, changingPage, resetTransactions]);
   return (
     <ErrorBoundary>
       {loading ? <Loader /> : <> </>}
@@ -911,6 +910,7 @@ export const TransactionTable: FC<Props> = ({
             onSave={saved => {
               saved.setId(transactionToEdit.getId());
               handleUpdateTransaction(saved);
+              dispatch({ type: 'setSearching', data: true });
             }}
             onClose={() => handleSetTransactionToEdit(undefined)}
           />
@@ -974,8 +974,7 @@ export const TransactionTable: FC<Props> = ({
             role={role}
             onUpload={() => {
               handleSetCreatingTransaction(false);
-              resetTransactions();
-              refresh();
+              dispatch({ type: 'setSearching', data: true });
             }}
           />
         </Modal>
