@@ -1,4 +1,4 @@
-import React, { FC, useState, useEffect, useCallback, useRef } from 'react';
+import React, { FC, useState, useEffect,useReducer, useCallback, useRef } from 'react';
 import { EventClient, Event } from '@kalos-core/kalos-rpc/Event';
 import { UserClient, User } from '@kalos-core/kalos-rpc/User';
 import { JobType } from '@kalos-core/kalos-rpc/JobType';
@@ -167,122 +167,205 @@ export const ServiceCall: FC<Props> = props => {
     [setServicesRendered, serviceCallId],
   );
 
+  async function reducer(state,action){
+    switch (action.type){
+      case 'saveServiceCall':
+          if (serviceCallId) {
+              const temp = entry;
+              console.log('saving existing ID');
+              temp.setId(serviceCallId);
+              temp.addFieldMask('Id');
+              if(saveInvoice) {
+                temp.setIsGeneratedInvoice(saveInvoice);
+                temp.addFieldMask('IsGeneratedInvoice');
+                const res =await  EventClientService.Update(temp);
+              }
+              else {
+                const res=await EventClientService.Update(temp);
+              }
+              console.log('finished Update');
+            } else {
+              const temp=entry;
+                const res = await EventClientService.Create(temp);
+                console.log('creating new one');
+                setEntry(res);
+              if (!serviceCallId) {
+                console.log('no service call Id');
+                setServiceCallId(res.getId());
+                await loadEntry(res.getId());
+                await loadServicesRenderedData(res.getId());
+              }
+          }
+          break;
+      case 'load':
+      console.log("This reducer is Called");
+      {
+        setLoading(true);
+        let newProjectData = projectData;
+        newProjectData.setPropertyId(propertyId);
+        setProjectData(newProjectData);
+        try {
+          let promises = [];
+    
+          promises.push(
+            new Promise<void>(async resolve => {
+              const property = await PropertyClientService.loadPropertyByID(
+                propertyId,
+              );
+              setProperty(property);
+              resolve();
+            }),
+          );
+    
+          promises.push(
+            new Promise<void>(async resolve => {
+              const customer = await UserClientService.loadUserById(userID);
+              setCustomer(customer);
+              resolve();
+            }),
+          );
+    
+          promises.push(
+            new Promise<void>(async resolve => {
+              const propertyEvents = await EventClientService.loadEventsByPropertyId(
+                propertyId,
+              );
+              setPropertyEvents(propertyEvents);
+              resolve();
+            }),
+          );
+    
+          promises.push(
+            new Promise<void>(async resolve => {
+              const jobTypes = await JobTypeClientService.loadJobTypes();
+              setJobTypes(jobTypes);
+              resolve();
+            }),
+          );
+    
+          promises.push(
+            new Promise<void>(async resolve => {
+              const jobSubtypes = await JobSubtypeClientService.loadJobSubtypes();
+              setJobSubtype(jobSubtypes);
+              resolve();
+            }),
+          );
+    
+          promises.push(
+            new Promise<void>(async resolve => {
+              const jobTypeSubtypes = await JobTypeSubtypeClientService.loadJobTypeSubtypes();
+              setJobTypeSubtypes(jobTypeSubtypes);
+              resolve();
+            }),
+          );
+    
+          promises.push(
+            new Promise<void>(async resolve => {
+              const loggedUser = await UserClientService.loadUserById(loggedUserId);
+              setLoggedUser(loggedUser);
+              resolve();
+            }),
+          );
+    
+          promises.push(
+            new Promise<void>(async resolve => {
+              const req = new Event();
+              req.setId(serviceCallId);
+              const entry = await EventClientService.Get(req);
+              console.log('entry', entry);
+              setEntry(entry);
+              resolve();
+            }),
+          );
+    
+          promises.push(
+            new Promise<void>(async resolve => {
+              await loadServicesRenderedData();
+              resolve();
+            }),
+          );
+    
+          promises.push(
+            new Promise<void>(async resolve => {
+              const projects = await loadProjects();
+              setProjects(projects);
+              resolve();
+            }),
+          );
+    
+          Promise.all(promises).then(() => {
+            console.log('all processes complete');
+            setLoaded(true);
+            setLoading(false);
+          });
+        } catch (e) {
+          handleSetError(e);
+          setLoaded(true);
+          setLoading(false);
+        }
+      }
+      break;
+      case 'SaveCustomer':
+        {
+        async (data: User) => {
+          setSaving(true);
+          const temp = makeSafeFormObject(data, new User());
+          const entry = new User();
+          entry.setId(userID);
+          const fieldMaskList = [];
+          for (const fieldName in data) {
+            const { upperCaseProp, methodName } = getRPCFields(fieldName);
+            // @ts-ignore
+            entry[methodName](data[fieldName]);
+            fieldMaskList.push(upperCaseProp);
+          }
+          entry.setFieldMaskList(fieldMaskList);
+          //await UserClientService.Update(entry);
+          await loadEntry();
+          setSaving(false);
+          handleSetNotificationEditing(false)();
+        }
+      }
+        break;
+      case 'AddMaterials':
+      {
+        async (materialUsed, materialTotal) => {
+        await EventClientService.updateMaterialUsed(
+          serviceCallId,
+          materialUsed + entry.getMaterialUsed(),
+          materialTotal + entry.getMaterialTotal(),
+        );
+        await loadEntry();
+        }
+      }
+      break;
+      case 'saveProject':
+        {
+          async (data: Event) => {
+            setSaving(true);
+            if (confirmedParentId) {
+              data.setParentId(confirmedParentId);
+            }
+            const temp = makeSafeFormObject(data, new Event());
+            await EventClientService.upsertEvent(data);
+            setSaving(false);
+            if (onSave) {
+              onSave();
+            }
+            if (onClose) {
+              onClose();
+            }
+          }
+      }
+      break;
+
+      default:
+        return console.error("some thing went wrong");     
+    }
+  }
+
   const handleSetError = useCallback((error: boolean) => setError(error), [
     setError,
-  ]);
-
-  const load = useCallback(async () => {
-    setLoading(true);
-    let newProjectData = projectData;
-    newProjectData.setPropertyId(propertyId);
-    setProjectData(newProjectData);
-    try {
-      let promises = [];
-
-      promises.push(
-        new Promise<void>(async resolve => {
-          const property = await PropertyClientService.loadPropertyByID(
-            propertyId,
-          );
-          setProperty(property);
-          resolve();
-        }),
-      );
-
-      promises.push(
-        new Promise<void>(async resolve => {
-          const customer = await UserClientService.loadUserById(userID);
-          setCustomer(customer);
-          resolve();
-        }),
-      );
-
-      promises.push(
-        new Promise<void>(async resolve => {
-          const propertyEvents = await EventClientService.loadEventsByPropertyId(
-            propertyId,
-          );
-          setPropertyEvents(propertyEvents);
-          resolve();
-        }),
-      );
-
-      promises.push(
-        new Promise<void>(async resolve => {
-          const jobTypes = await JobTypeClientService.loadJobTypes();
-          setJobTypes(jobTypes);
-          resolve();
-        }),
-      );
-
-      promises.push(
-        new Promise<void>(async resolve => {
-          const jobSubtypes = await JobSubtypeClientService.loadJobSubtypes();
-          setJobSubtype(jobSubtypes);
-          resolve();
-        }),
-      );
-
-      promises.push(
-        new Promise<void>(async resolve => {
-          const jobTypeSubtypes = await JobTypeSubtypeClientService.loadJobTypeSubtypes();
-          setJobTypeSubtypes(jobTypeSubtypes);
-          resolve();
-        }),
-      );
-
-      promises.push(
-        new Promise<void>(async resolve => {
-          const loggedUser = await UserClientService.loadUserById(loggedUserId);
-          setLoggedUser(loggedUser);
-          resolve();
-        }),
-      );
-
-      promises.push(
-        new Promise<void>(async resolve => {
-          const req = new Event();
-          req.setId(serviceCallId);
-          const entry = await EventClientService.Get(req);
-          console.log('entry', entry);
-          setEntry(entry);
-          resolve();
-        }),
-      );
-
-      promises.push(
-        new Promise<void>(async resolve => {
-          await loadServicesRenderedData();
-          resolve();
-        }),
-      );
-
-      promises.push(
-        new Promise<void>(async resolve => {
-          const projects = await loadProjects();
-          setProjects(projects);
-          resolve();
-        }),
-      );
-
-      Promise.all(promises).then(() => {
-        console.log('all processes complete');
-        setLoaded(true);
-        setLoading(false);
-      });
-    } catch (e) {
-      handleSetError(e);
-      setLoaded(true);
-      setLoading(false);
-    }
-  }, [
-    projectData,
-    propertyId,
-    userID,
-    serviceCallId,
-    loggedUserId,
-    loadServicesRenderedData,
-    handleSetError,
   ]);
 
   const handleSetParentId = useCallback(
@@ -298,83 +381,22 @@ export const ServiceCall: FC<Props> = props => {
     },
     [setConfirmedParentId],
   );
-const handleSaveInvoice = useCallback(async() => {
-  setPendingSave(true);
-  setRequestValid(true);
-  setSaveInvoice(true);
-},[setPendingSave, setRequestValid]);
-  const handleSave = useCallback(async () => {
-    setPendingSave(true);
-    if (tabIdx !== 0) {
-      setTabIdx(0);
-      setTabKey(tabKey + 1);
-    }
-  }, [setPendingSave, setTabKey, setTabIdx, tabKey, tabIdx]);
-  const saveServiceCall = useCallback(async () => {
-    setSaving(true);
-    setLoading(true);
-    const temp = entry;
-    if (serviceCallId) {
-      console.log('saving existing ID');
-      temp.setId(serviceCallId);
-      temp.addFieldMask('Id');
-      if(saveInvoice) {
-        temp.setIsGeneratedInvoice(saveInvoice);
-        temp.addFieldMask('IsGeneratedInvoice');
-        const res = await EventClientService.Update(temp);
-      }
-      else {
-        await EventClientService.Update(temp);
-      }
-      console.log('finished Update');
-    } else {
-        const res = await EventClientService.Create(temp);
-        console.log('creating new one');
-        setEntry(res);
-      if (!serviceCallId) {
-        console.log('no service call Id');
-        setServiceCallId(res.getId());
-        await loadEntry(res.getId());
-        await loadServicesRenderedData(res.getId());
-      }
-    }
+const [state, dispatch] = useReducer(reducer, '0');
 
-    setSaving(false);
-    setLoading(false);
-    if (onSave) {
-      onSave();
-    }
-  }, [
-    entry,
-    serviceCallId,
-    setEntry,
-    setSaving,
-    setLoading,
-    onSave,
-    loadEntry,
-    loadServicesRenderedData,
-  ]);
-  const saveProject = useCallback(
-    async (data: Event) => {
-      setSaving(true);
-      if (confirmedParentId) {
-        data.setParentId(confirmedParentId);
-      }
-      const temp = makeSafeFormObject(data, new Event());
-      await EventClientService.upsertEvent(data);
-      setSaving(false);
-      if (onSave) {
-        onSave();
-      }
-      if (onClose) {
-        onClose();
-      }
-    },
-    [onSave, onClose, confirmedParentId],
-  );
+  const handleSaveInvoice = () => {
+    dispatch({type:'saveServiceCall'});
+  };
+  const handleSave =  () => {
+    dispatch({type:'saveServiceCall'});
+  };
+ 
+  const saveProject = () =>{
+    dispatch({type:'saveProject'});
+  }
   useEffect(() => {
     if (!loaded) {
-      load();
+      // load();
+    dispatch({type:'load'});
       setLoaded(true);
     }
     if (
@@ -386,7 +408,7 @@ const handleSaveInvoice = useCallback(async() => {
     }
     if (pendingSave && requestValid) {
       setPendingSave(false);
-      saveServiceCall();
+      // saveServiceCall();
     }
     if (pendingSave && tabIdx === 0 && requestRef.current) {
       //@ts-ignore
@@ -395,13 +417,13 @@ const handleSaveInvoice = useCallback(async() => {
   }, [
     entry,
     loaded,
-    load,
+    // load,
     setLoaded,
     setNotificationViewing,
     pendingSave,
     requestValid,
     setPendingSave,
-    saveServiceCall,
+    // saveServiceCall,
     tabIdx,
     requestRef,
   ]);
@@ -435,39 +457,13 @@ const handleSaveInvoice = useCallback(async() => {
     [setNotificationViewing],
   );
 
-  const handleSaveCustomer = useCallback(
-    async (data: User) => {
-      setSaving(true);
-      const temp = makeSafeFormObject(data, new User());
-      const entry = new User();
-      entry.setId(userID);
-      const fieldMaskList = [];
-      for (const fieldName in data) {
-        const { upperCaseProp, methodName } = getRPCFields(fieldName);
-        // @ts-ignore
-        entry[methodName](data[fieldName]);
-        fieldMaskList.push(upperCaseProp);
-      }
-      entry.setFieldMaskList(fieldMaskList);
-      //await UserClientService.Update(entry);
-      await loadEntry();
-      setSaving(false);
-      handleSetNotificationEditing(false)();
-    },
-    [userID, loadEntry, handleSetNotificationEditing],
-  );
+  const handleSaveCustomer = () => {
+    dispatch({type:'SaveCustomer'});
+  };
 
-  const handleOnAddMaterials = useCallback(
-    async (materialUsed, materialTotal) => {
-      await EventClientService.updateMaterialUsed(
-        serviceCallId,
-        materialUsed + entry.getMaterialUsed(),
-        materialTotal + entry.getMaterialTotal(),
-      );
-      await loadEntry();
-    },
-    [serviceCallId, entry, loadEntry],
-  );
+  const handleOnAddMaterials = ( ) =>{
+    dispatch({type:'AddMaterials'});
+  }
 
   const jobTypeOptions: Option[] = jobTypes.map(id => ({
     label: id.getName(),
