@@ -114,45 +114,6 @@ export const TransactionTable: FC<Props> = ({
   hasActions,
 }) => {
   const FileInput = React.createRef<HTMLInputElement>();
-
-  //const [transactions, setTransactions] = useState<SelectorParams[]>();
-  //const [totalTransactions, setTotalTransactions] = useState<number>(0);
-  //const [transactionActivityLogs, setTransactionActivityLogs] = useState<
-  //  TransactionActivity[]
-  //>([]);
-  // const [transactionToEdit, setTransactionToEdit] = useState<
-  //   Transaction | undefined
-  // >();
-  //const [loading, setLoading] = useState<boolean>(true);
-  //const [loadTransactions, setloadTransactions] = useState<boolean>(true);
-
-  //const [creatingTransaction, setCreatingTransaction] = useState<boolean>(); // for when a transaction is being made, pops up the popup
-  //const [mergingTransaction, setMergingTransaction] = useState<boolean>(); // When a txn is being merged with another one, effectively allowing full
-  // editorial control for Dani
-  //const [role, setRole] = useState<RoleType>();
-  //const [assigningUser, setAssigningUser] = useState<{
-  //  isAssigning: boolean;
-  //  transactionId: number;
-  //}>(); // sets open an employee picker in a modal
-  //const [employees, setEmployees] = useState<User[]>([]);
-  //const [departments, setDepartments] = useState<TimesheetDepartment[]>([]);
-  //const [selectedTransactions, setSelectedTransactions] = useState<
-  //  Transaction[]
-  //>([]); // Transactions that are selected in the table if the isSelector prop is set
-  //const [pageNumber, setPageNumber] = useState<number>(0);
-  // For assigning employees, this will store the last chosen one for the form
-  //const [assignedEmployee, setAssignedEmployee] = useState<number | undefined>(
-  //  undefined,
-  //);
-  //const [error, setError] = useState<string | undefined>(undefined);
-  /*
-  const [status, setStatus] = useState<
-    'Accepted' | 'Rejected' | 'Accepted / Rejected'
-  >('Accepted / Rejected');
-  */
-  //const [loaded, setLoaded] = useState<boolean>(false);
-  //const [changingPage, setChangingPage] = useState<boolean>(false); // To fix a bunch of issues with callbacks going in
-  // front of other callbacks
   const [state, dispatch] = useReducer(reducer, {
     transactionFilter: filter,
     transactions: undefined,
@@ -160,7 +121,6 @@ export const TransactionTable: FC<Props> = ({
     transactionActivityLogs: [],
     transactionToEdit: undefined,
     loading: true,
-    loadTransactions: true,
     creatingTransaction: false,
     mergingTransaction: false,
     role: undefined,
@@ -176,6 +136,7 @@ export const TransactionTable: FC<Props> = ({
     changingPage: false,
     status: 'Accepted / Rejected',
     universalSearch: undefined,
+    searching: false,
   });
   const {
     transactionFilter,
@@ -186,7 +147,6 @@ export const TransactionTable: FC<Props> = ({
     transactionToDelete,
     loading,
     loaded,
-    loadTransactions,
     creatingTransaction,
     mergingTransaction,
     role,
@@ -199,6 +159,7 @@ export const TransactionTable: FC<Props> = ({
     assignedEmployee,
     error,
     status,
+    searching,
   } = state;
 
   const handleSetTransactionToEdit = useCallback(
@@ -388,6 +349,19 @@ export const TransactionTable: FC<Props> = ({
         req.setSearchPhrase(`%${transactionFilter.universalSearch}%`);
         res = await TransactionClientService.Search(req);
       } catch (err) {
+        try {
+          let errLog = new TransactionActivity();
+          errLog.setTimestamp(format(new Date(), 'yyyy-MM-dd hh:mm:ss'));
+          errLog.setUserId(loggedUserId);
+          errLog.setDescription(
+            `ERROR : An error occurred while using universal search: ${err}`,
+          );
+          await TransactionActivityClientService.Create(errLog);
+        } catch (errActivity) {
+          console.error(
+            `An error occurred while using universal search: ${err} `,
+          );
+        }
         console.error(
           `An error occurred while searching for transactions in TransactionTable: ${err}`,
         );
@@ -401,6 +375,19 @@ export const TransactionTable: FC<Props> = ({
           handleChangePage(0);
         }
       } catch (err) {
+        try {
+          let errLog = new TransactionActivity();
+          errLog.setTimestamp(format(new Date(), 'yyyy-MM-dd hh:mm:ss'));
+          errLog.setUserId(loggedUserId);
+          errLog.setDescription(
+            `ERROR : An error occurred while batch-getting transactions in TransactionTable: ${err}`,
+          );
+          await TransactionActivityClientService.Create(errLog);
+        } catch (errActivity) {
+          console.error(
+            `An error occurred while batch-getting transactions in TransactionTable: ${err} `,
+          );
+        }
         console.error(
           `An error occurred while batch-getting transactions in TransactionTable: ${err}`,
         );
@@ -432,6 +419,20 @@ export const TransactionTable: FC<Props> = ({
           logList.push(latest);
         }
       } catch (err) {
+        try {
+          let errLog = new TransactionActivity();
+          errLog.setTimestamp(format(new Date(), 'yyyy-MM-dd hh:mm:ss'));
+          errLog.setTransactionId(transaction.getId());
+          errLog.setUserId(loggedUserId);
+          errLog.setDescription(
+            `ERROR : An error occurred while getting a transaction activity log: ${err}`,
+          );
+          await TransactionActivityClientService.Create(errLog);
+        } catch (errActivity) {
+          console.error(
+            `An error occurred while getting a transaction activity log: ${err} `,
+          );
+        }
         console.error(
           `An error occurred while getting a transaction activity log: ${err}`,
         );
@@ -449,7 +450,20 @@ export const TransactionTable: FC<Props> = ({
     });
     const temp = transactions.map(txn => txn);
     dispatch({ type: 'setTransactions', data: temp });
-  }, [totalTransactions, state.page, transactionFilter, handleChangePage]);
+  }, [
+    state.page,
+    transactionFilter.isAccepted,
+    transactionFilter.isRejected,
+    transactionFilter.vendor,
+    transactionFilter.departmentId,
+    transactionFilter.employeeId,
+    transactionFilter.amount,
+    transactionFilter.billingRecorded,
+    transactionFilter.universalSearch,
+    loggedUserId,
+    totalTransactions,
+    handleChangePage,
+  ]);
 
   const load = useCallback(async () => {
     dispatch({ type: 'setLoading', data: true });
@@ -469,18 +483,12 @@ export const TransactionTable: FC<Props> = ({
       departments = (
         await TimesheetDepartmentClientService.BatchGet(departmentReq)
       ).getResultsList();
-      let userDepartments = user
-        .getPermissionGroupsList()
-        .filter(a => a.getType() == 'department');
-      //let filteredDepartments = departments.filter((a, b) =>
       dispatch({ type: 'setDepartments', data: departments });
     } catch (err) {
       console.error(
         `An error occurred while getting the timesheet departments: ${err}`,
       );
     }
-
-    dispatch({ type: 'setLoading', data: true });
 
     const role = user
       .getPermissionGroupsList()
@@ -543,7 +551,6 @@ export const TransactionTable: FC<Props> = ({
   const refresh = useCallback(async () => {
     await load();
   }, [load]);
-
   const copyToClipboard = useCallback((text: string): void => {
     const el = document.createElement('textarea');
     el.value = text;
@@ -556,15 +563,87 @@ export const TransactionTable: FC<Props> = ({
     const fr = new FileReader();
     fr.onload = async () => {
       try {
+        let log = new TransactionActivity();
+        log.setTimestamp(format(new Date(), 'yyyy-MM-dd hh:mm:ss'));
+        log.setTransactionId(txn.getId());
+        log.setUserId(loggedUserId);
+        log.setDescription(
+          `Uploading a new file from user ${loggedUserId} for transaction ${txn.getId()} with name: ${
+            FileInput.current!.files![0].name
+          }`,
+        );
+        await TransactionActivityClientService.Create(log);
+      } catch (err) {
+        handleSetError(
+          `An error occurred while uploading an activity log: ${err}`,
+        );
+        console.error(
+          `An error occurred while uploading an activity log: ${err}`,
+        );
+      }
+      let initialDocumentLength = 0;
+
+      try {
+        initialDocumentLength = (
+          await TransactionDocumentClientService.byTransactionID(txn.getId())
+        ).length;
+      } catch (err) {
+        console.error(
+          `An error occurred while double-checking that the file which was just uploaded exists: ${err}`,
+        );
+        alert(
+          'An error occurred while double-checking that the file exists. Please retry the upload, and if the problem persists, please contact the webtech team.',
+        );
+      }
+
+      try {
         const u8 = new Uint8Array(fr.result as ArrayBuffer);
+        console.log('Transaction file being uploaded');
         await TransactionDocumentClientService.upload(
           txn.getId(),
           FileInput.current!.files![0].name,
           u8,
         );
+        console.log('Uploaded successfully');
       } catch (err) {
         alert('File could not be uploaded');
+        try {
+          let errLog = new TransactionActivity();
+          errLog.setTimestamp(format(new Date(), 'yyyy-MM-dd hh:mm:ss'));
+          errLog.setTransactionId(txn.getId());
+          errLog.setUserId(loggedUserId);
+          errLog.setDescription(
+            `ERROR : An error occurred while uploading a file for transaction #${txn.getId()} with name "${
+              FileInput.current!.files![0].name
+            }" in transaction billing: ${err}`,
+          );
+          await TransactionActivityClientService.Create(errLog);
+        } catch (errActivity) {
+          alert(
+            `An error occurred while uploading an activity log about a failure within the module. Please inform the webtech team. `,
+          );
+        }
+        handleSetError(`An error occurred while uploading a file: ${err}`);
         console.error(err);
+      }
+
+      try {
+        const docs = await TransactionDocumentClientService.byTransactionID(
+          txn.getId(),
+        );
+        if (docs.length <= initialDocumentLength) {
+          alert('Upload was unsuccessful, please contact the webtech team.');
+          await refresh();
+          return;
+        }
+        console.log('DOC LENGTH WAS GOOD FROM CHECK: ', docs.length);
+      } catch (err) {
+        console.error(
+          `An error occurred while double-checking that the file which was just uploaded exists: ${err}`,
+        );
+        alert(
+          'An error occurred while double-checking that the file exists. Please retry the upload, and if the problem persists, please contact the webtech team.',
+        );
       }
 
       await refresh();
@@ -629,22 +708,50 @@ export const TransactionTable: FC<Props> = ({
     filter.amount = d.amount;
     filter.billingRecorded = d.billingRecorded;
     filter.universalSearch = d.universalSearch;
-    dispatch({ type: 'setFilter', data: filter });
-    dispatch({ type: 'setLoadTransactions', data: true });
+    dispatch({ type: 'setTransactionFilter', data: filter });
   }, []);
 
   const handleUpdateTransaction = useCallback(
     async (transactionToSave: Transaction) => {
       try {
+        let log = new TransactionActivity();
+        log.setTimestamp(format(new Date(), 'yyyy-MM-dd hh:mm:ss'));
+        log.setPageNumber(state.page);
+        log.setTransactionId(transactionToSave.getId());
+        log.setUserId(loggedUserId);
+        log.setDescription(
+          `Updating transaction with id ${transactionToSave.getId()} (done by user #${loggedUserId})`,
+        );
+        await TransactionActivityClientService.Create(log);
+      } catch (err) {
+        console.error(
+          `An error occurred while uploading an activity log: ${err}`,
+        );
+      }
+      try {
         await TransactionClientService.Update(transactionToSave);
         dispatch({ type: 'setTransactionToEdit', data: undefined });
         refresh();
       } catch (err) {
+        try {
+          let errLog = new TransactionActivity();
+          errLog.setTimestamp(format(new Date(), 'yyyy-MM-dd hh:mm:ss'));
+          errLog.setTransactionId(transactionToSave.getId());
+          errLog.setUserId(loggedUserId);
+          errLog.setDescription(
+            `ERROR : An error occurred while updating a transaction: ${err}`,
+          );
+          await TransactionActivityClientService.Create(errLog);
+        } catch (errActivity) {
+          console.error(
+            `An error occurred while updating a transaction: ${err}`,
+          );
+        }
         console.error('An error occurred while updating a transaction: ', err);
         dispatch({ type: 'setTransactionToEdit', data: undefined });
       }
     },
-    [refresh],
+    [refresh, loggedUserId, state.page],
   );
 
   const handleChangeSort = (newSort: string) => {
@@ -741,8 +848,7 @@ export const TransactionTable: FC<Props> = ({
           );
           break;
       }
-      dispatch({ type: 'setFilter', data: tempFilter });
-      dispatch({ type: 'setLoadTransactions', data: true });
+      dispatch({ type: 'setTransactionFilter', data: tempFilter });
     },
     [transactionFilter],
   );
@@ -880,7 +986,7 @@ export const TransactionTable: FC<Props> = ({
         actions: [
           {
             label: 'search',
-            onClick: () => refresh(),
+            onClick: () => dispatch({ type: 'setSearching', data: true }),
           },
         ],
       },
@@ -904,18 +1010,20 @@ export const TransactionTable: FC<Props> = ({
   }, [state.transactionToDelete, refresh, resetTransactions]);
 
   useEffect(() => {
-    if (!loaded) load();
+    if (!loaded) {
+      load();
+      resetTransactions();
+    }
     if (changingPage) {
       load();
       resetTransactions();
     }
-  }, [load, loaded, changingPage, resetTransactions]);
-  useEffect(() => {
-    if (loadTransactions) {
+    if (searching) {
+      load();
       resetTransactions();
-      dispatch({ type: 'setLoadTransactions', data: false });
+      dispatch({ type: 'setSearching', data: false });
     }
-  }, [loadTransactions, resetTransactions]);
+  }, [load, loaded, searching, changingPage, resetTransactions]);
   return (
     <ErrorBoundary>
       {loading ? <Loader /> : <> </>}
@@ -952,6 +1060,7 @@ export const TransactionTable: FC<Props> = ({
             onSave={saved => {
               saved.setId(transactionToEdit.getId());
               handleUpdateTransaction(saved);
+              dispatch({ type: 'setSearching', data: true });
             }}
             onClose={() => handleSetTransactionToEdit(undefined)}
           />
@@ -1015,8 +1124,7 @@ export const TransactionTable: FC<Props> = ({
             role={role}
             onUpload={() => {
               handleSetCreatingTransaction(false);
-              resetTransactions();
-              refresh();
+              dispatch({ type: 'setSearching', data: true });
             }}
           />
         </Modal>
