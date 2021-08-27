@@ -349,6 +349,19 @@ export const TransactionTable: FC<Props> = ({
         req.setSearchPhrase(`%${transactionFilter.universalSearch}%`);
         res = await TransactionClientService.Search(req);
       } catch (err) {
+        try {
+          let errLog = new TransactionActivity();
+          errLog.setTimestamp(format(new Date(), 'yyyy-MM-dd hh:mm:ss'));
+          errLog.setUserId(loggedUserId);
+          errLog.setDescription(
+            `ERROR : An error occurred while using universal search: ${err}`,
+          );
+          await TransactionActivityClientService.Create(errLog);
+        } catch (errActivity) {
+          console.error(
+            `An error occurred while using universal search: ${err} `,
+          );
+        }
         console.error(
           `An error occurred while searching for transactions in TransactionTable: ${err}`,
         );
@@ -362,6 +375,19 @@ export const TransactionTable: FC<Props> = ({
           handleChangePage(0);
         }
       } catch (err) {
+        try {
+          let errLog = new TransactionActivity();
+          errLog.setTimestamp(format(new Date(), 'yyyy-MM-dd hh:mm:ss'));
+          errLog.setUserId(loggedUserId);
+          errLog.setDescription(
+            `ERROR : An error occurred while batch-getting transactions in TransactionTable: ${err}`,
+          );
+          await TransactionActivityClientService.Create(errLog);
+        } catch (errActivity) {
+          console.error(
+            `An error occurred while batch-getting transactions in TransactionTable: ${err} `,
+          );
+        }
         console.error(
           `An error occurred while batch-getting transactions in TransactionTable: ${err}`,
         );
@@ -393,6 +419,20 @@ export const TransactionTable: FC<Props> = ({
           logList.push(latest);
         }
       } catch (err) {
+        try {
+          let errLog = new TransactionActivity();
+          errLog.setTimestamp(format(new Date(), 'yyyy-MM-dd hh:mm:ss'));
+          errLog.setTransactionId(transaction.getId());
+          errLog.setUserId(loggedUserId);
+          errLog.setDescription(
+            `ERROR : An error occurred while getting a transaction activity log: ${err}`,
+          );
+          await TransactionActivityClientService.Create(errLog);
+        } catch (errActivity) {
+          console.error(
+            `An error occurred while getting a transaction activity log: ${err} `,
+          );
+        }
         console.error(
           `An error occurred while getting a transaction activity log: ${err}`,
         );
@@ -410,7 +450,20 @@ export const TransactionTable: FC<Props> = ({
     });
     const temp = transactions.map(txn => txn);
     dispatch({ type: 'setTransactions', data: temp });
-  }, [totalTransactions, state.page, transactionFilter, handleChangePage]);
+  }, [
+    state.page,
+    transactionFilter.isAccepted,
+    transactionFilter.isRejected,
+    transactionFilter.vendor,
+    transactionFilter.departmentId,
+    transactionFilter.employeeId,
+    transactionFilter.amount,
+    transactionFilter.billingRecorded,
+    transactionFilter.universalSearch,
+    loggedUserId,
+    totalTransactions,
+    handleChangePage,
+  ]);
 
   const load = useCallback(async () => {
     dispatch({ type: 'setLoading', data: true });
@@ -430,10 +483,6 @@ export const TransactionTable: FC<Props> = ({
       departments = (
         await TimesheetDepartmentClientService.BatchGet(departmentReq)
       ).getResultsList();
-      let userDepartments = user
-        .getPermissionGroupsList()
-        .filter(a => a.getType() == 'department');
-      //let filteredDepartments = departments.filter((a, b) =>
       dispatch({ type: 'setDepartments', data: departments });
     } catch (err) {
       console.error(
@@ -514,15 +563,87 @@ export const TransactionTable: FC<Props> = ({
     const fr = new FileReader();
     fr.onload = async () => {
       try {
+        let log = new TransactionActivity();
+        log.setTimestamp(format(new Date(), 'yyyy-MM-dd hh:mm:ss'));
+        log.setTransactionId(txn.getId());
+        log.setUserId(loggedUserId);
+        log.setDescription(
+          `Uploading a new file from user ${loggedUserId} for transaction ${txn.getId()} with name: ${
+            FileInput.current!.files![0].name
+          }`,
+        );
+        await TransactionActivityClientService.Create(log);
+      } catch (err) {
+        handleSetError(
+          `An error occurred while uploading an activity log: ${err}`,
+        );
+        console.error(
+          `An error occurred while uploading an activity log: ${err}`,
+        );
+      }
+      let initialDocumentLength = 0;
+
+      try {
+        initialDocumentLength = (
+          await TransactionDocumentClientService.byTransactionID(txn.getId())
+        ).length;
+      } catch (err) {
+        console.error(
+          `An error occurred while double-checking that the file which was just uploaded exists: ${err}`,
+        );
+        alert(
+          'An error occurred while double-checking that the file exists. Please retry the upload, and if the problem persists, please contact the webtech team.',
+        );
+      }
+
+      try {
         const u8 = new Uint8Array(fr.result as ArrayBuffer);
+        console.log('Transaction file being uploaded');
         await TransactionDocumentClientService.upload(
           txn.getId(),
           FileInput.current!.files![0].name,
           u8,
         );
+        console.log('Uploaded successfully');
       } catch (err) {
         alert('File could not be uploaded');
+        try {
+          let errLog = new TransactionActivity();
+          errLog.setTimestamp(format(new Date(), 'yyyy-MM-dd hh:mm:ss'));
+          errLog.setTransactionId(txn.getId());
+          errLog.setUserId(loggedUserId);
+          errLog.setDescription(
+            `ERROR : An error occurred while uploading a file for transaction #${txn.getId()} with name "${
+              FileInput.current!.files![0].name
+            }" in transaction billing: ${err}`,
+          );
+          await TransactionActivityClientService.Create(errLog);
+        } catch (errActivity) {
+          alert(
+            `An error occurred while uploading an activity log about a failure within the module. Please inform the webtech team. `,
+          );
+        }
+        handleSetError(`An error occurred while uploading a file: ${err}`);
         console.error(err);
+      }
+
+      try {
+        const docs = await TransactionDocumentClientService.byTransactionID(
+          txn.getId(),
+        );
+        if (docs.length <= initialDocumentLength) {
+          alert('Upload was unsuccessful, please contact the webtech team.');
+          await refresh();
+          return;
+        }
+        console.log('DOC LENGTH WAS GOOD FROM CHECK: ', docs.length);
+      } catch (err) {
+        console.error(
+          `An error occurred while double-checking that the file which was just uploaded exists: ${err}`,
+        );
+        alert(
+          'An error occurred while double-checking that the file exists. Please retry the upload, and if the problem persists, please contact the webtech team.',
+        );
       }
 
       await refresh();
@@ -593,15 +714,44 @@ export const TransactionTable: FC<Props> = ({
   const handleUpdateTransaction = useCallback(
     async (transactionToSave: Transaction) => {
       try {
+        let log = new TransactionActivity();
+        log.setTimestamp(format(new Date(), 'yyyy-MM-dd hh:mm:ss'));
+        log.setPageNumber(state.page);
+        log.setTransactionId(transactionToSave.getId());
+        log.setUserId(loggedUserId);
+        log.setDescription(
+          `Updating transaction with id ${transactionToSave.getId()} (done by user #${loggedUserId})`,
+        );
+        await TransactionActivityClientService.Create(log);
+      } catch (err) {
+        console.error(
+          `An error occurred while uploading an activity log: ${err}`,
+        );
+      }
+      try {
         await TransactionClientService.Update(transactionToSave);
         dispatch({ type: 'setTransactionToEdit', data: undefined });
         refresh();
       } catch (err) {
+        try {
+          let errLog = new TransactionActivity();
+          errLog.setTimestamp(format(new Date(), 'yyyy-MM-dd hh:mm:ss'));
+          errLog.setTransactionId(transactionToSave.getId());
+          errLog.setUserId(loggedUserId);
+          errLog.setDescription(
+            `ERROR : An error occurred while updating a transaction: ${err}`,
+          );
+          await TransactionActivityClientService.Create(errLog);
+        } catch (errActivity) {
+          console.error(
+            `An error occurred while updating a transaction: ${err}`,
+          );
+        }
         console.error('An error occurred while updating a transaction: ', err);
         dispatch({ type: 'setTransactionToEdit', data: undefined });
       }
     },
-    [refresh],
+    [refresh, loggedUserId, state.page],
   );
 
   const handleChangeSort = (newSort: string) => {
