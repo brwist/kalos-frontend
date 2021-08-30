@@ -11,6 +11,7 @@ export interface Props {
   onConfirm: () => void;
   submitLabel?: string;
   submitDisabled?: boolean;
+  cancelLabel?: string;
   maxWidth?: number | 'none';
   disabled?: boolean;
 }
@@ -22,6 +23,7 @@ export const Confirm: FC<Props> = ({
   onConfirm,
   submitLabel = 'Confirm',
   submitDisabled = false,
+  cancelLabel = 'Cancel',
   maxWidth = 370,
   children,
   disabled = false,
@@ -35,7 +37,7 @@ export const Confirm: FC<Props> = ({
           onClick: onConfirm,
           disabled: disabled || submitDisabled,
         },
-        { label: 'Cancel', onClick: onClose, variant: 'outlined', disabled },
+        { label: cancelLabel, onClick: onClose, variant: 'outlined', disabled },
       ]}
       fixedActions
     />
