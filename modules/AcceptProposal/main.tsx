@@ -2,6 +2,7 @@ import React, { ReactText } from 'react';
 import Checkbox from '@material-ui/core/Checkbox';
 import Alert from '@material-ui/lab/Alert';
 import ReactPDF from '@react-pdf/renderer';
+import { Button } from '../ComponentsLibrary/Button';
 import { QuoteLine, QuoteLineClient } from '@kalos-core/kalos-rpc/QuoteLine';
 import { ENDPOINT } from '../../constants';
 import { b64toBlob, timestamp } from '../../helpers';
@@ -405,16 +406,6 @@ export class AcceptProposal extends React.PureComponent<props, state> {
               footer={
                 this.state.notes.length > 0 ? `Notes: ${this.state.notes}` : ''
               }
-              actions={[
-                {
-                  label: 'Submit',
-                  onClick: this.toggleModal,
-                  disabled: !(
-                    this.state.sigURL.length > 0 &&
-                    this.state.selected.length > 0
-                  ),
-                },
-              ]}
               fixedActions
             />
             <InfoTable
@@ -464,16 +455,39 @@ export class AcceptProposal extends React.PureComponent<props, state> {
               subject to their terms. There is no warranty on refrigerant or
               refrigerant recharge.
             </Alert>
-            <div
-              style={{ display: 'flex', justifyContent: 'center', margin: 16 }}
-            >
-              <Field
-                name="signature"
-                value=""
-                label="Sign Below"
-                type="signature"
-                onChange={this.sign}
-              />
+            <div>
+              <div
+                style={{
+                  display: 'flex',
+                  justifyContent: 'left',
+                  margin: 16,
+                }}
+              >
+                <Field
+                  name="signature"
+                  value=""
+                  label="Sign Below"
+                  type="signature"
+                  onChange={this.sign}
+                />
+                <Button
+                  label={'Approve Proposal'}
+                  onClick={this.toggleModal}
+                  disabled={
+                    !(
+                      this.state.sigURL.length > 0 &&
+                      this.state.selected.length > 0
+                    )
+                  }
+                ></Button>
+              </div>
+              <div
+                style={{
+                  display: 'flex',
+                  justifyContent: 'left',
+                  margin: 16,
+                }}
+              ></div>
             </div>
           </>
         )}
