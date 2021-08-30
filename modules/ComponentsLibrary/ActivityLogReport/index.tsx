@@ -1,4 +1,4 @@
-import React, { FC, useState, useCallback, useEffect } from 'react';
+import React, { FC, useState, useCallback,useReducer,useRef, useEffect } from 'react';
 import { SectionBar } from '../SectionBar';
 import { InfoTable, Columns, Data } from '../InfoTable';
 import { PrintPage, Status } from '../PrintPage';
@@ -59,36 +59,82 @@ export const ActivityLogReport: FC<Props> = ({
     orderByField: 'getActivityDate',
     orderDir: 'DESC',
   });
-  const getFilter = useCallback(() => {
-    const filter: ActivityLogsFilter = {
-      activityDateStart,
-      activityDateEnd,
-      withUser: true,
-    };
-    if (status) {
-      filter.activityName = status + ' % Notification';
-    } else {
-      filter.activityName = 'Notification';
+
+const getFilter = useCallback(() => {
+  const filter: ActivityLogsFilter = {
+    activityDateStart,
+    activityDateEnd,
+    withUser: true,
+  };
+  if (status) {
+    filter.activityName = status + ' % Notification';
+  } else {
+    filter.activityName = 'Notification';
+  }
+  return filter;
+}, [activityDateStart, activityDateEnd, status]);
+
+const [state, dispatch] = useReducer((state, action) => {
+  switch (action.type) {
+    case 'load':
+    {
+      let load = async ()=>{
+        setLoading(true);
+        const { results, totalCount } = await loadActivityLogsByFilter({
+          page,
+          filter: getFilter(),
+          sort,
+        });
+        setEntries(results);
+        setCount(totalCount);
+        setLoading(false);
+      };
+      load();
     }
-    return filter;
-  }, [activityDateStart, activityDateEnd, status]);
-  const load = useCallback(async () => {
-    setLoading(true);
-    const { results, totalCount } = await loadActivityLogsByFilter({
-      page,
-      filter: getFilter(),
-      sort,
-    });
-    setEntries(results);
-    setCount(totalCount);
-    setLoading(false);
-  }, [setLoading, getFilter, sort, page]);
+		break;     
+    case 'loadPrintEntries':
+    {
+      let loadPrintEntries= async ()=>{
+        if (printEntries.length === count) return;
+        const { results } = await loadActivityLogsByFilter({
+          page: -1,
+          filter: getFilter(),
+          sort,
+        });
+        setPrintEntries(results);
+        setPrintStatus('loaded');
+      }
+      setPrintStatus('loading');
+      loadPrintEntries();
+    }
+		break;
+    case 'loadExportEntries':
+    {
+      let loadExportEntries = async ()=>{
+        if (printEntries.length === count) return;
+        const { results } = await loadActivityLogsByFilter({
+          page: -1,
+          filter: getFilter(),
+          sort,
+        });
+        setPrintEntries(results);
+        setExportStatus('loaded');
+      }
+      setExportStatus('loading');
+      loadExportEntries();
+    }
+		break;  
+    default:
+      return state;
+  }
+}, []);
+
   useEffect(() => {
     if (!loaded) {
       setLoaded(true);
-      load();
+      dispatch({type:'load'});
     }
-  }, [setLoaded, loaded, load]);
+  }, [setLoaded, loaded]);
   const reload = useCallback(() => setLoaded(false), [setLoaded]);
   const handlePageChange = useCallback(
     (page: number) => {
@@ -97,28 +143,15 @@ export const ActivityLogReport: FC<Props> = ({
     },
     [setPage, reload],
   );
-  const loadPrintEntries = useCallback(async () => {
-    if (printEntries.length === count) return;
-    const { results } = await loadActivityLogsByFilter({
-      page: -1,
-      filter: getFilter(),
-      sort,
-    });
-    setPrintEntries(results);
-  }, [setPrintEntries, sort, getFilter, printEntries, count]);
-  const handleExport = useCallback(async () => {
-    setExportStatus('loading');
-    await loadPrintEntries();
-    setExportStatus('loaded');
-  }, [loadPrintEntries, setExportStatus]);
+  const handleExport = async () => {
+    dispatch({type:'loadExportEntries'});
+  };
   const handleExported = useCallback(() => setExportStatus('idle'), [
     setExportStatus,
   ]);
-  const handlePrint = useCallback(async () => {
-    setPrintStatus('loading');
-    await loadPrintEntries();
-    setPrintStatus('loaded');
-  }, [loadPrintEntries, setPrintStatus]);
+  const handlePrint = async () => {
+    dispatch({type:'loadPrintEntries'});
+  };
   const handlePrinted = useCallback(() => setPrintStatus('idle'), [
     setPrintStatus,
   ]);
