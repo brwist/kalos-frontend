@@ -349,6 +349,7 @@ export const CostSummary: FC<Props> = ({
       } else {
         req.setBillableType('Tool Purchase');
       }
+      req.setWithoutLimit(true);
       const results = (
         await new TaskClient(ENDPOINT).BatchGet(req)
       ).getResultsList();
@@ -395,6 +396,7 @@ export const CostSummary: FC<Props> = ({
       const req = new Task();
       const action = new SpiffToolAdminAction();
       req.setExternalId(userId);
+      req.setWithoutLimit(true);
       if (spiffType == 'Spiff') {
         req.setBillableType('Spiff');
       } else {
