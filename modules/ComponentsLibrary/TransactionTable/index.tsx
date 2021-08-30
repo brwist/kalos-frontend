@@ -1203,16 +1203,6 @@ export const TransactionTable: FC<Props> = ({
             invisible: true,
           },
           {
-            name: 'Type',
-            dir:
-              sortBy == 'vendor'
-                ? sortDir != ' '
-                  ? sortDir
-                  : undefined
-                : undefined,
-            onClick: () => handleChangeSort('vendor'),
-          },
-          {
             name: 'Date',
             dir:
               sortBy == 'timestamp'
@@ -1299,13 +1289,7 @@ export const TransactionTable: FC<Props> = ({
                     {
                       value: txnWithId.length == 1 ? 'SELECTED' : '',
                       invisible: !isSelector,
-                    },
-                    {
-                      value: selectorParam.txn.getVendorCategory(),
-                      onClick: isSelector
-                        ? () => setTransactionChecked(idx)
-                        : undefined,
-                    },
+                    }, 
                     {
                       value:
                         selectorParam.txn.getTimestamp() != NULL_TIME &&
