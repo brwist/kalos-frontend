@@ -1,5 +1,5 @@
 // this files ts-ignore lines have been checked
-import React, { FC, useState, useCallback, useEffect, useMemo } from 'react';
+import React, { FC, useState, useCallback,useReducer, useEffect, useMemo } from 'react';
 import clsx from 'clsx';
 import {
   User,
@@ -89,6 +89,18 @@ type Kind =
   | 'properties'
   | 'employees'
   | 'contracts';
+
+type Action =
+  | 'loadDicts'
+  | 'serviceCalls'
+  | 'customers'
+  | 'properties'
+  | 'employees'
+  | 'contracts'
+  | 'deleteServiceCalls'
+  | 'deleteCustomer'
+  | 'deleteEmployee'
+  | 'deleteProperty';
 
 export interface Props {
   loggedUserId: number;
@@ -238,207 +250,282 @@ export const AdvancedSearch: FC<Props> = ({
       setPendingAddProperty(pendingAddProperty),
     [setPendingAddProperty],
   );
-  const loadDicts = useCallback(async () => {
-    setLoadingDicts(true);
-    const jobTypes = await JobTypeClientService.loadJobTypes();
-    setJobTypes(jobTypes);
-    const jobSubtypes = await JobSubtypeClientService.loadJobSubtypes();
-    setJobSubtypes(jobSubtypes);
-    setLoadingDicts(false);
-    if (kinds.includes('employees')) {
-      //const departments = await TimesheetDepartmentClientService.loadTimeSheetDepartments();
-      const departmentRequest = new TimesheetDepartment();
-      departmentRequest.setIsActive(1);
-      const departments = (
-        await TimesheetDepartmentClientService.BatchGet(departmentRequest)
-      ).getResultsList();
-      setDepartments(departments);
-      const employeeFunctions = await EmployeeFunctionClientService.loadEmployeeFunctions();
-      setEmployeeFunctions(employeeFunctions);
-      const userReq = new User();
-      userReq.setId(loggedUserId);
-      const loggedUser = await UserClientService.Get(userReq);
-      setIsAdmin(loggedUser.getIsAdmin());
+
+  const [state, dispatch] = useReducer((state, action:Action) => {
+    const { kind, ...filterCriteria } = filter;
+    switch (action) {
+      case 'loadDicts':
+        {
+          let loadDicts = async () => {
+            setLoadingDicts(true);
+            const jobTypes = await JobTypeClientService.loadJobTypes();
+            setJobTypes(jobTypes);
+            const jobSubtypes = await JobSubtypeClientService.loadJobSubtypes();
+            setJobSubtypes(jobSubtypes);
+            setLoadingDicts(false);
+            if (kinds.includes('employees')) {
+              //const departments = await TimesheetDepartmentClientService.loadTimeSheetDepartments();
+              const departmentRequest = new TimesheetDepartment();
+              departmentRequest.setIsActive(1);
+              const departments = (
+                await TimesheetDepartmentClientService.BatchGet(departmentRequest)
+              ).getResultsList();
+              setDepartments(departments);
+              const employeeFunctions = await EmployeeFunctionClientService.loadEmployeeFunctions();
+              setEmployeeFunctions(employeeFunctions);
+              const userReq = new User();
+              userReq.setId(loggedUserId);
+              const loggedUser = await UserClientService.Get(userReq);
+              setIsAdmin(loggedUser.getIsAdmin());
+            }
+            setFormKey(formKey + 1);
+            setLoadedDicts(true);
+            CustomEventsHandler.listen(
+              'AddProperty',
+              handleTogglePendingAddProperty(true),
+            );
+          }
+          loadDicts();
+        }
+        break;
+      case 'serviceCalls':
+      {    
+        let loadServiceCalls = async () => {
+          const criteria: LoadEventsByFilter = {
+            page,
+            filter: filterCriteria,
+            sort: eventsSort,
+            req: new Event(),
+          };
+          const { resultsList, totalCount } = await loadEventsByFilter(criteria);
+          setCount(totalCount);
+          setEvents(resultsList);
+        }
+        loadServiceCalls();
+      }
+      break;     
+      case 'customers':
+      case 'employees':
+      {
+        let loadCustomerandEmployees = async()=>{
+          const criteria: LoadUsersByFilter = {
+            page: kind === 'employees' ? -1 : page,
+            filter: {
+              ...filterCriteria,
+              ...(kind === 'employees' ? { isEmployee: 1 } : {}),
+            } as UsersFilter,
+            sort: usersSort,
+          };
+          if ( kind === 'customers' ||
+            (filterCriteria as UsersFilter).employeeDepartmentId! < 0
+          ) {
+            criteria.filter.employeeDepartmentId = 0;
+          }
+          let userResults = [new User()];
+          if (kind === 'customers') {
+            const {
+              results,
+              totalCount,
+            } = await UserClientService.loadUsersByFilter(criteria);
+            setUsers(results);
+            setCount(totalCount);
+          } else {
+            const userReq = new User();
+            userReq.setOverrideLimit(true);
+            userReq.setIsEmployee(1);
+            userReq.setIsActive(1);
+            userReq.setOrderBy(criteria.sort.orderBy);
+            userReq.setOrderDir(criteria.sort.orderDir);
+            const userRes = await UserClientService.BatchGet(userReq);
+            userResults = userRes.getResultsList();
+    
+            const compare = (a: User, b: User) => {
+              const lastA = a.getLastname().toLowerCase();
+              const lastB = b.getLastname().toLowerCase();
+              const firstA = a.getFirstname().toLowerCase();
+              const firstB = b.getFirstname().toLowerCase();
+              if (
+                criteria.sort.orderDir === 'ASC' &&
+                criteria.sort.orderBy == 'user_lastname'
+              ) {
+                if (lastA + firstA < lastB + firstB) return -1;
+                if (lastA + firstA > lastB + firstB) return 1;
+              }
+              if (
+                criteria.sort.orderDir === 'DESC' &&
+                criteria.sort.orderBy == 'user_lastname'
+              ) {
+                if (lastA + firstA > lastB + firstB) return -1;
+                if (lastA + firstA < lastB + firstB) return 1;
+              }
+              if (
+                criteria.sort.orderDir === 'ASC' &&
+                criteria.sort.orderBy == 'user_firstname'
+              ) {
+                if (firstA + lastA > firstB + lastB) return -1;
+                if (firstA + lastA < firstB + lastB) return 1;
+              }
+              if (
+                criteria.sort.orderDir === 'DESC' &&
+                criteria.sort.orderBy == 'user_firstname'
+              ) {
+                if (firstA + lastA < firstB + lastB) return -1;
+                if (firstA + lastA > firstB + lastB) return 1;
+              }
+              return 0;
+            };
+            const sortedResultsList = userRes.getResultsList().sort(compare);
+            setCount(userRes.getTotalCount());
+            setUsers(sortedResultsList);
+          }
+          if (kind === 'employees') {
+            const images = await Promise.all(
+              userResults.filter(i => !!i.getImage())
+                .map(async i => ({
+                  image: i.getImage(),
+                  url: await S3ClientService.getFileS3BucketUrl(
+                    i.getImage(),
+                    'kalos-employee-images',
+                  ),
+                })),
+            );
+            setEmployeeImages(
+              images.reduce(
+                (aggr, { image, url }) => ({ ...aggr, [image]: url }),
+                {},
+              ),
+            );
+          }
+        }
+        loadCustomerandEmployees();
+      }
+      break;
+      case 'properties':
+      {
+        const criteria: LoadPropertiesByFilter = {
+          page,
+          filter: filterCriteria as PropertiesFilter,
+          sort: propertiesSort,
+          req: new Property(),
+        };
+        let loadProp = async ()=>{
+          delete criteria.filter.employeeDepartmentId;
+          const { results, totalCount } = await loadPropertiesByFilter(criteria);
+          setCount(totalCount);
+          setProperties(results);
+        }
+        loadProp();
+      }
+      break;
+      case 'contracts':
+      {
+        const criteria: LoadContractsByFilter = {
+          page,
+          filter: filterCriteria as ContractsFilter,
+          sort: contractsSort,
+          req: new Contract(),
+        };
+        let loadContract = async ()=>{
+          delete criteria.filter.employeeDepartmentId;
+          const { results, totalCount } = await loadContractsByFilter(criteria);
+          setCount(totalCount);
+          setContracts(results);
+        }
+        loadContract();
+      }
+      break;
+      case 'deleteServiceCalls':
+      {
+        let deleteServiceCall = async () =>{
+          if (pendingEventDeleting) {
+            const id = pendingEventDeleting.getId();
+            setPendingEventDeleting(undefined);
+            setLoading(true);
+            await EventClientService.deleteEventById(id);
+            setLoaded(false);
+          }
+        }
+        deleteServiceCall();
+      }
+      break;
+      case 'deleteCustomer':
+      {
+        let deleteCustomer = async () =>{
+          if (pendingCustomerDeleting) {
+            const id = pendingCustomerDeleting.getId();
+            setPendingCustomerDeleting(undefined);
+            setLoading(true);
+            await UserClientService.deleteUserById(id);
+            setLoaded(false);
+          }
+        }
+        deleteCustomer();
+      }
+      break;
+      case 'deleteEmployee':
+      {
+        let deleteEmployee = async () =>{
+          if (pendingEmployeeDeleting) {
+            const id = pendingEmployeeDeleting.getId();
+            setPendingEmployeeDeleting(undefined);
+            setLoading(true);
+            await UserClientService.deleteUserById(id);
+            setLoaded(false);
+          }
+        }   
+        deleteEmployee();
+      }
+      break;
+      case 'deleteProperty':
+        {
+          let deleteProperty = async () =>{
+            if (pendingPropertyDeleting) {
+              const id = pendingPropertyDeleting.getId();
+              setPendingPropertyDeleting(undefined);
+              setLoading(true);
+              await PropertyClientService.deletePropertyById(id);
+              setLoaded(false);
+            }  
+          }
+          deleteProperty();
+        }
+        break;
+      default:
+        return state;
     }
-    setFormKey(formKey + 1);
-    setLoadedDicts(true);
-    CustomEventsHandler.listen(
-      'AddProperty',
-      handleTogglePendingAddProperty(true),
-    );
-  }, [
-    setLoadingDicts,
-    setJobTypes,
-    setJobSubtypes,
-    loggedUserId,
-    // setFormKey,
-    formKey,
-    kinds,
-    setDepartments,
-    setLoadedDicts,
-    setIsAdmin,
-    setEmployeeFunctions,
-    handleTogglePendingAddProperty,
-  ]);
+  }, []);
+  
+
   const load = useCallback(async () => {
     setLoading(true);
     const { kind, ...filterCriteria } = filter;
     if (kind === 'serviceCalls') {
-      const criteria: LoadEventsByFilter = {
-        page,
-        filter: filterCriteria,
-        sort: eventsSort,
-        req: new Event(),
-      };
-      const { resultsList, totalCount } = await loadEventsByFilter(criteria);
-      setCount(totalCount);
-      setEvents(resultsList);
+      dispatch("serviceCalls");
     }
     if (kind === 'customers' || kind === 'employees') {
-      const criteria: LoadUsersByFilter = {
-        page: kind === 'employees' ? -1 : page,
-        filter: {
-          ...filterCriteria,
-          ...(kind === 'employees' ? { isEmployee: 1 } : {}),
-        } as UsersFilter,
-        sort: usersSort,
-      };
-      if (
-        kind === 'customers' ||
-        (filterCriteria as UsersFilter).employeeDepartmentId! < 0
-      ) {
-        criteria.filter.employeeDepartmentId = 0;
-      }
-      let userResults = [new User()];
       if (kind === 'customers') {
-        const {
-          results,
-          totalCount,
-        } = await UserClientService.loadUsersByFilter(criteria);
-        setUsers(results);
-        setCount(totalCount);
+        dispatch("customers");
       } else {
-        const userReq = new User();
-        userReq.setOverrideLimit(true);
-        userReq.setIsEmployee(1);
-        userReq.setIsActive(1);
-        userReq.setOrderBy(criteria.sort.orderBy);
-        userReq.setOrderDir(criteria.sort.orderDir);
-        const userRes = await UserClientService.BatchGet(userReq);
-        userResults = userRes.getResultsList();
-
-        const compare = (a: User, b: User) => {
-          const lastA = a.getLastname().toLowerCase();
-          const lastB = b.getLastname().toLowerCase();
-          const firstA = a.getFirstname().toLowerCase();
-          const firstB = b.getFirstname().toLowerCase();
-          if (
-            criteria.sort.orderDir === 'ASC' &&
-            criteria.sort.orderBy == 'user_lastname'
-          ) {
-            if (lastA + firstA < lastB + firstB) return -1;
-            if (lastA + firstA > lastB + firstB) return 1;
-          }
-          if (
-            criteria.sort.orderDir === 'DESC' &&
-            criteria.sort.orderBy == 'user_lastname'
-          ) {
-            if (lastA + firstA > lastB + firstB) return -1;
-            if (lastA + firstA < lastB + firstB) return 1;
-          }
-          if (
-            criteria.sort.orderDir === 'ASC' &&
-            criteria.sort.orderBy == 'user_firstname'
-          ) {
-            if (firstA + lastA > firstB + lastB) return -1;
-            if (firstA + lastA < firstB + lastB) return 1;
-          }
-          if (
-            criteria.sort.orderDir === 'DESC' &&
-            criteria.sort.orderBy == 'user_firstname'
-          ) {
-            if (firstA + lastA < firstB + lastB) return -1;
-            if (firstA + lastA > firstB + lastB) return 1;
-          }
-          return 0;
-        };
-        const sortedResultsList = userRes.getResultsList().sort(compare);
-        setCount(userRes.getTotalCount());
-        setUsers(sortedResultsList);
-      }
-      if (kind === 'employees') {
-        const images = await Promise.all(
-          userResults
-            .filter(i => !!i.getImage())
-            .map(async i => ({
-              image: i.getImage(),
-              url: await S3ClientService.getFileS3BucketUrl(
-                i.getImage(),
-                'kalos-employee-images',
-              ),
-            })),
-        );
-
-        setEmployeeImages(
-          images.reduce(
-            (aggr, { image, url }) => ({ ...aggr, [image]: url }),
-            {},
-          ),
-        );
+        dispatch("employees");
       }
     }
     if (kind === 'properties') {
-      const criteria: LoadPropertiesByFilter = {
-        page,
-        filter: filterCriteria as PropertiesFilter,
-        sort: propertiesSort,
-        req: new Property(),
-      };
-      //@ts-ignore
-      delete criteria.filter.employeeDepartmentId;
-      const { results, totalCount } = await loadPropertiesByFilter(criteria);
-      setCount(totalCount);
-      setProperties(results);
+      dispatch("properties");
     }
     if (kind === 'contracts') {
-      const criteria: LoadContractsByFilter = {
-        page,
-        filter: filterCriteria as ContractsFilter,
-        sort: contractsSort,
-        req: new Contract(),
-      };
-      //@ts-ignore
-      delete criteria.filter.employeeDepartmentId;
-      const { results, totalCount } = await loadContractsByFilter(criteria);
-      setCount(totalCount);
-      setContracts(results);
+      dispatch("contracts");
     }
     setLoading(false);
-  }, [
-    filter,
-    page,
-    setCount,
-    setEvents,
-    setUsers,
-    setProperties,
-    setContracts,
-    setLoading,
-    eventsSort,
-    usersSort,
-    propertiesSort,
-    contractsSort,
-    setEmployeeImages,
-  ]);
+  },[ setLoading ]);
   useEffect(() => {
     if (!loaded && loadedDicts) {
       setLoaded(true);
       load();
     }
     if (!loadedDicts) {
-      setLoadedDicts(true);
-      loadDicts();
+      dispatch("loadDicts");
     }
-  }, [loaded, setLoaded, load, loadedDicts, loadDicts]);
+  }, [loaded, setLoaded, load, loadedDicts]);
   const reload = useCallback(() => setLoaded(false), [setLoaded]);
   const handleEventsSortChange = useCallback(
     (sort: EventsSort) => () => {
@@ -536,57 +623,18 @@ export const AdvancedSearch: FC<Props> = ({
       setPendingEventDeleting(pendingEventDeleting),
     [setPendingEventDeleting],
   );
-  const handleDeleteServiceCall = useCallback(async () => {
-    if (pendingEventDeleting) {
-      const id = pendingEventDeleting.getId();
-      setPendingEventDeleting(undefined);
-      setLoading(true);
-      await EventClientService.deleteEventById(id);
-      setLoaded(false);
-    }
-  }, [pendingEventDeleting, setLoaded, setPendingEventDeleting, setLoading]);
-  const handleDeleteCustomer = useCallback(async () => {
-    if (pendingCustomerDeleting) {
-      const id = pendingCustomerDeleting.getId();
-      setPendingCustomerDeleting(undefined);
-      setLoading(true);
-      await UserClientService.deleteUserById(id);
-      setLoaded(false);
-    }
-  }, [
-    pendingCustomerDeleting,
-    setLoaded,
-    setPendingCustomerDeleting,
-    setLoading,
-  ]);
-  const handleDeleteEmployee = useCallback(async () => {
-    if (pendingEmployeeDeleting) {
-      const id = pendingEmployeeDeleting.getId();
-      setPendingEmployeeDeleting(undefined);
-      setLoading(true);
-      await UserClientService.deleteUserById(id);
-      setLoaded(false);
-    }
-  }, [
-    pendingEmployeeDeleting,
-    setLoaded,
-    setPendingEmployeeDeleting,
-    setLoading,
-  ]);
-  const handleDeleteProperty = useCallback(async () => {
-    if (pendingPropertyDeleting) {
-      const id = pendingPropertyDeleting.getId();
-      setPendingPropertyDeleting(undefined);
-      setLoading(true);
-      await PropertyClientService.deletePropertyById(id);
-      setLoaded(false);
-    }
-  }, [
-    pendingPropertyDeleting,
-    setLoaded,
-    setPendingPropertyDeleting,
-    setLoading,
-  ]);
+  const handleDeleteServiceCall = () => {
+    dispatch("deleteServiceCalls");
+  };
+  const handleDeleteCustomer =  () => {
+    dispatch("deleteCustomer");
+  };
+  const handleDeleteEmployee =  () => {
+    dispatch("deleteEmployee");
+  };
+  const handleDeleteProperty = () => {
+    dispatch("deleteProperty");
+  };
   const handlePendingEmployeeViewingToggle = useCallback(
     (pendingEmployeeViewing?: User) => () =>
       setPendingEmployeeViewing(pendingEmployeeViewing),
