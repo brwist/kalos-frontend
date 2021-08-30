@@ -9,6 +9,7 @@ interface Props {
   open: boolean;
   onClose: () => void;
   label?: string;
+  maxWidth?: number;
 }
 
 export const Alert: FC<Props> = ({
@@ -16,9 +17,10 @@ export const Alert: FC<Props> = ({
   title,
   onClose,
   label = 'Okay',
+  maxWidth = 370,
   children,
 }) => (
-  <Modal open={open} onClose={onClose} compact maxWidth={370}>
+  <Modal open={open} onClose={onClose} compact maxWidth={maxWidth}>
     <SectionBar
       title={title}
       actions={[{ onClick: onClose, label }]}

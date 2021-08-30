@@ -17,6 +17,12 @@ export interface State {
   jobTypeList: JobType[];
   formData: FormData;
   notIncludedJobTypes: number[];
+  openModal: boolean;
+  modalKey: string;
+  selectedTech: DispatchableTech;
+  selectedCall: DispatchCall;
+  center: {lat: number, lng: number};
+  zoom: number;
 }
 
 export type Action =
@@ -25,6 +31,7 @@ export type Action =
   | { type: 'setCalls'; data: DispatchCall[] }
   | { type: 'updateDepartmentIds'; data: {
     techs: DispatchableTech[],
+    dismissedTechs: DispatchableTech[],
     departmentIds: number[] 
   }}
   | { type: 'updateJobTypes'; data: {
@@ -37,8 +44,19 @@ export type Action =
   | { type: 'setInitialRender'; data: {
     techs: DispatchableTech[],
     calls: DispatchCall[],
+    dismissedTechs: DispatchableTech[],
     departmentList: TimesheetDepartment[],
     jobTypeList: JobType[]
+  }}
+  | { type: 'setModal'; data: {
+    openModal: boolean,
+    modalKey: string,
+    selectedTech: DispatchableTech,
+    selectedCall: DispatchCall 
+  }}
+  | { type: 'setCenter'; data: {
+    center: {lat: number, lng: number},
+    zoom: number
   }};
 
 export const reducer = (state: State, action: Action) => {
@@ -62,6 +80,7 @@ export const reducer = (state: State, action: Action) => {
       return {
         ...state,
         techs: action.data.techs,
+        dismissedTechs: action.data.dismissedTechs,
         departmentIds: action.data.departmentIds,
       };
     case 'updateJobTypes':
@@ -81,7 +100,6 @@ export const reducer = (state: State, action: Action) => {
         jobTypeList: action.data,
       };
     case 'setFormData':
-      console.log(state.formData);
       return {
         ...state,
         formData: action.data,
@@ -91,8 +109,23 @@ export const reducer = (state: State, action: Action) => {
         ...state,
         techs: action.data.techs,
         calls: action.data.calls,
+        dismissedTechs: action.data.dismissedTechs,
         departmentList: action.data.departmentList,
         jobTypeList: action.data.jobTypeList,
+      }
+    case 'setModal':
+      return {
+        ...state,
+        openModal: action.data.openModal,
+        modalKey: action.data.modalKey,
+        selectedTech: action.data.selectedTech,
+        selectedCall: action.data.selectedCall,
+      }
+    case 'setCenter':
+      return {
+        ...state,
+        center: action.data.center,
+        zoom: action.data.zoom,
       }
     default:
       return state;
