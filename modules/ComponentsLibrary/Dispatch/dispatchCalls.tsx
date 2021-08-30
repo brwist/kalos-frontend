@@ -13,12 +13,15 @@ import { CallsByTech } from '../../CallsByTech/main';
 interface props {
   userID: number;
   calls: DispatchCall[];
-  handleMapRecenter: (center: {lat: number, lng: number}, zoom: number, address?: string) => void;
+  handleMapRecenter: (
+    center: { lat: number; lng: number },
+    zoom: number,
+    address?: string,
+  ) => void;
 }
 
 export const DispatchCalls: FC<props> = props => {
-  useEffect(() => {
-  }, [props]);
+  useEffect(() => {}, [props]);
 
   return (
     <TableContainer>
@@ -27,73 +30,142 @@ export const DispatchCalls: FC<props> = props => {
         <TableBody>
           <TableRow>
             {/* Temporarily using hardcoded for variable for Estimated End */}
-            <TableCell align="right" style={{fontWeight: "bolder", fontSize: "16px"}} width="50%">Service Calls Remaining: {props.calls.length}</TableCell>
-            <TableCell align="left" style={{fontWeight: "bolder", fontSize: "16px"}} width="50%">Estimated End of Day: 3:05 PM</TableCell>
+            <TableCell
+              align="right"
+              style={{ fontWeight: 'bolder', fontSize: '16px' }}
+              width="50%"
+            >
+              Service Calls Remaining: {props.calls.length}
+            </TableCell>
+            <TableCell
+              align="left"
+              style={{ fontWeight: 'bolder', fontSize: '16px' }}
+              width="50%"
+            >
+              Estimated End of Day: 3:05 PM
+            </TableCell>
           </TableRow>
         </TableBody>
       </Table>
       <Table>
         <TableHead key="Header">
           <TableRow>
-            <TableCell align="center" style={{fontWeight: "bolder", fontSize: "16px", width:"8%"}}>Map Id</TableCell>
-            <TableCell align="center" style={{fontWeight: "bolder", fontSize: "16px", width:"12%"}}>Time</TableCell>
-            <TableCell align="center" style={{fontWeight: "bolder", fontSize: "16px", width:"15%"}}>City</TableCell>
-            <TableCell align="center" style={{fontWeight: "bolder", fontSize: "16px", width:"15%"}}>Customer</TableCell>
-            <TableCell align="center" style={{fontWeight: "bolder", fontSize: "16px", width:"30%"}}>Description</TableCell>
-            <TableCell align="center" style={{fontWeight: "bolder", fontSize: "16px", width:"10%"}}>JobType/Subtype</TableCell>
-            <TableCell align="center" style={{fontWeight: "bolder", fontSize: "16px", width:"10%"}}>Assigned</TableCell>
+            <TableCell
+              align="center"
+              style={{ fontWeight: 'bolder', fontSize: '16px', width: '8%' }}
+            >
+              Map Id
+            </TableCell>
+            <TableCell
+              align="center"
+              style={{ fontWeight: 'bolder', fontSize: '16px', width: '12%' }}
+            >
+              Time
+            </TableCell>
+            <TableCell
+              align="center"
+              style={{ fontWeight: 'bolder', fontSize: '16px', width: '15%' }}
+            >
+              City
+            </TableCell>
+            <TableCell
+              align="center"
+              style={{ fontWeight: 'bolder', fontSize: '16px', width: '15%' }}
+            >
+              Customer
+            </TableCell>
+            <TableCell
+              align="center"
+              style={{ fontWeight: 'bolder', fontSize: '16px', width: '30%' }}
+            >
+              Description
+            </TableCell>
+            <TableCell
+              align="center"
+              style={{ fontWeight: 'bolder', fontSize: '16px', width: '10%' }}
+            >
+              JobType/Subtype
+            </TableCell>
+            <TableCell
+              align="center"
+              style={{ fontWeight: 'bolder', fontSize: '16px', width: '10%' }}
+            >
+              Assigned
+            </TableCell>
           </TableRow>
         </TableHead>
-        <TableBody>
-          {props.calls.map((call, index) => {
-            const timeStartArray = call.getTimeStarted().split(':');
-            let startHour: number = Number(timeStartArray[0]),
-              startMin: number = Number(timeStartArray[1]);
-            const timeEndedArray = call.getTimeEnded().split(':');
-            let endHour: number = Number(timeEndedArray[0]),
-              endMin = Number(timeEndedArray[1]);
-            let timeStarted = setMinutes(
-              setHours(new Date(), startHour),
-              startMin,
-            );
-            let timeEnded = setMinutes(setHours(new Date(), endHour), endMin);
-            let center : {lat: number, lng: number} = {lat: call.getGeolocationLat(), lng: call.getGeolocationLng()};
+        {props.calls.map((call, index) => {
+          const timeStartArray = call.getTimeStarted().split(':');
+          let startHour: number = Number(timeStartArray[0]),
+            startMin: number = Number(timeStartArray[1]);
+          const timeEndedArray = call.getTimeEnded().split(':');
+          let endHour: number = Number(timeEndedArray[0]),
+            endMin = Number(timeEndedArray[1]);
+          let timeStarted = setMinutes(
+            setHours(new Date(), startHour),
+            startMin,
+          );
+          let timeEnded = setMinutes(setHours(new Date(), endHour), endMin);
+          let center: { lat: number; lng: number } = {
+            lat: call.getGeolocationLat(),
+            lng: call.getGeolocationLng(),
+          };
 
-            return (
-              <Droppable
-                droppableId={call.getId().toString()}
-                key={call.getId() + call.getLogNotes()}
-              >
-                {(provided, snapshot) => (
+          return (
+            <Droppable
+              droppableId={call.getId().toString()}
+              key={call.getId() + call.getLogNotes()}
+            >
+              {(provided, snapshot) => (
+                <TableBody
+                  key={
+                    call.getId() +
+                    call.getLogNotes() +
+                    call.getLogTechnicianAssigned()
+                  }
+                  ref={provided.innerRef}
+                  style={{
+                    backgroundColor: snapshot.isDraggingOver ? 'gray' : 'white',
+                  }}
+                  {...provided.droppableProps}
+                >
                   <TableRow
-                    key={
-                      call.getId() +
-                      call.getLogNotes() +
-                      call.getLogTechnicianAssigned()
-                    }
                     hover={true}
-                    onClick={() => props.handleMapRecenter(center, 12, call.getPropertyAddress())}
-                    ref={provided.innerRef}
-                    style={{backgroundColor: snapshot.isDraggingOver ? 'gray' : 'white'}}
-                    {...provided.droppableProps}
+                    onClick={() =>
+                      props.handleMapRecenter(
+                        center,
+                        12,
+                        call.getPropertyAddress(),
+                      )
+                    }
                   >
                     <TableCell align="center">{index + 1}</TableCell>
-                    <TableCell align="center">{`${format(timeStarted, 'h:mm aa')} - ${format(
-                      timeEnded,
+                    <TableCell align="center">{`${format(
+                      timeStarted,
                       'h:mm aa',
-                    )}`}</TableCell>
-                    <TableCell align="center">{call.getPropertyCity()}</TableCell>
+                    )} - ${format(timeEnded, 'h:mm aa')}`}</TableCell>
+                    <TableCell align="center">
+                      {call.getPropertyCity()}
+                    </TableCell>
                     <TableCell align="center">{call.getCustName()}</TableCell>
-                    <TableCell align="center">{call.getDescription().length >= 200 ? call.getDescription().slice(0,150).concat(" ...") : call.getDescription()}</TableCell>
+                    <TableCell align="center">
+                      {call.getDescription().length >= 200
+                        ? call.getDescription().slice(0, 150).concat(' ...')
+                        : call.getDescription()}
+                    </TableCell>
                     <TableCell align="center">{`${call.getJobType()}/${call.getJobSubtype()}`}</TableCell>
-                    <TableCell align="center">{call.getAssigned() != '0' && call.getAssigned() != '' ? call.getAssigned() : 'Unassigned'}</TableCell>
-                    {provided.placeholder}
+                    <TableCell align="center">
+                      {call.getAssigned() != '0' && call.getAssigned() != ''
+                        ? call.getAssigned()
+                        : 'Unassigned'}
+                    </TableCell>
                   </TableRow>
-                )}
-              </Droppable>
-            );
-          })}
-        </TableBody>
+                  {provided.placeholder}
+                </TableBody>
+              )}
+            </Droppable>
+          );
+        })}
       </Table>
     </TableContainer>
   );
