@@ -138,16 +138,15 @@ class Picker<R, T> extends React.PureComponent<props<R, T>, state<T>> {
         fullWidth={this.props.fullWidth}
       >
         <InputLabel htmlFor={`${this.label}-picker`}>{this.label}</InputLabel>
-        <Select
+        <NativeSelect
           value={this.props.selected}
           onChange={this.handleSelect}
           IconComponent={undefined}
-          multiple={this.props.multiple}
           inputProps={{ id: `${this.label}-picker` }}
         >
           <option value={0}>Select {this.label}</option>
           {list.map(this.props.renderItem)}
-        </Select>
+        </NativeSelect>
       </FormControl>
     );
   }

@@ -108,6 +108,7 @@ export const CostSummary: FC<Props> = ({
     trip.setDateProcessed(NULL_TIME);
     trip.setFieldMaskList(['PayrollProcessed']);
     trip.setApproved(true);
+    trip.setWithoutLimit(true);
     trip.setDateTargetList(['date', 'date']);
     trip.setDateRangeList(['>=', '0001-01-01', '<', formatDateFns(endDay)]);
     let tempTripList = (
@@ -135,7 +136,7 @@ export const CostSummary: FC<Props> = ({
     let trip = new Trip();
     trip.setUserId(userId);
     let processed = true;
-
+    trip.setWithoutLimit(true);
     trip.setDateTargetList(['date_processed', 'date_processed']);
     trip.setDateRangeList([
       '>=',
