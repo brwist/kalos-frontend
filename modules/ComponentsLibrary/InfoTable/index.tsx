@@ -59,8 +59,13 @@ interface Props extends Styles {
   onSaveRowButton?: (results: {}) => any;
   // row button
   rowButton?: {
-    columnsToIgnore: string[];
-    columnTypeOverrides: { columnName: string; columnType: Type }[];
+    // Type to use with row button (new Transaction(), new PerDiem(), etc.)
+    type: any;
+    // Information about the columns to use
+    columnDefinition: {
+      columnsToIgnore: string[];
+      columnTypeOverrides: { columnName: string; columnType: Type }[];
+    };
   };
 }
 
@@ -94,7 +99,9 @@ export const InfoTable = ({
   if (state.isAddingRow) {
     columns.forEach(col => {
       if (
-        !rowButton?.columnsToIgnore.includes(col.name!.toString()) &&
+        !rowButton?.columnDefinition.columnsToIgnore.includes(
+          col.name!.toString(),
+        ) &&
         !col.invisible
       )
         (fields as any)[col.name as any] = ''; // Creating the field on the object for use later
@@ -183,9 +190,10 @@ export const InfoTable = ({
           onChange={fieldOutput => (temporaryResult = fieldOutput)}
           schema={[
             Object.keys(fields).map((field: any, idx: number) => {
-              let columnType = rowButton?.columnTypeOverrides.filter(
-                type => type.columnName === field,
-              );
+              let columnType =
+                rowButton?.columnDefinition.columnTypeOverrides.filter(
+                  type => type.columnName === field,
+                );
               return {
                 label: field,
                 name: field,
