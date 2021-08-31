@@ -81,6 +81,15 @@ type SelectorParams = {
   totalCount: number;
 };
 
+enum COLUMN_TO_FIELD {
+  'Date' = 'getTimestamp',
+  'Order #' = 'getOrderNumber',
+  'Purchaser' = 'getOwnerId',
+  'Department' = 'getDepartment',
+  'Job #' = 'getJobNumber',
+  'Amount' = 'getAmount',
+  'Vendor' = 'getVendor',
+}
 interface AssignedEmployeeType {
   employeeId: number;
 }
@@ -993,6 +1002,60 @@ export const TransactionTable: FC<Props> = ({
     ],
   ];
 
+  const handleSaveFromRowButton = useCallback(
+    async (saved: any) => {
+      let newTxn = new Transaction();
+      newTxn.setTimestamp(saved['Date']);
+      newTxn.setOrderNumber(saved['Order #']);
+      newTxn.setOwnerId(saved['Purchaser']);
+      newTxn.setDepartmentId(saved['Department']);
+      newTxn.setJobId(saved['Job #']);
+      newTxn.setAmount(saved['Amount']);
+      newTxn.setVendor(saved['Vendor']);
+      newTxn.setVendorCategory('Receipt');
+
+      let res: Transaction | undefined;
+      try {
+        res = await TransactionClientService.Create(newTxn);
+      } catch (err) {
+        console.error(`An error occurred while creating a transaction: ${err}`);
+        try {
+          let log = new TransactionActivity();
+          log.setTimestamp(format(new Date(), 'yyyy-MM-dd hh:mm:ss'));
+          log.setUserId(loggedUserId);
+          log.setStatusId(2);
+          log.setIsActive(1);
+          log.setDescription(
+            `ERROR : An error occurred while uploading a new transaction: ${err}.`,
+          );
+          await TransactionActivityClientService.Create(log);
+        } catch (err) {
+          console.error(
+            `An error occurred while uploading a transaction activity log for a transaction: ${err}`,
+          );
+        }
+      }
+
+      try {
+        let log = new TransactionActivity();
+        log.setTimestamp(format(new Date(), 'yyyy-MM-dd hh:mm:ss'));
+        log.setUserId(loggedUserId);
+        log.setStatusId(2);
+        log.setIsActive(1);
+        log.setDescription(`Transaction created with id: ${res!.getId()}`);
+        await TransactionActivityClientService.Create(log);
+      } catch (err) {
+        console.error(
+          `An error occurred while uploading a transaction activity log for a transaction: ${err}`,
+        );
+      }
+
+      await resetTransactions();
+      refresh();
+    },
+    [loggedUserId, resetTransactions, refresh],
+  );
+
   const handleDeleteTransaction = useCallback(async () => {
     try {
       if (state.transactionToDelete === undefined) {
@@ -1170,7 +1233,7 @@ export const TransactionTable: FC<Props> = ({
           selectedTransactions.toString()
         }
         hoverable={false}
-        onSaveRowButton={saved => console.log('SAVED: ', saved)}
+        onSaveRowButton={saved => handleSaveFromRowButton(saved)}
         rowButton={{
           type: new Transaction(),
           columnDefinition: {
@@ -1490,19 +1553,19 @@ export const TransactionTable: FC<Props> = ({
                               <AssignmentIndIcon />
                             </IconButton>
                           </Tooltip>,
-                          // <Tooltip key="delete" content="Delete this task">
-                          //   <IconButton
-                          //     size="small"
-                          //     onClick={() =>
-                          //       dispatch({
-                          //         type: 'setTransactionToDelete',
-                          //         data: selectorParam.txn,
-                          //       })
-                          //     }
-                          //   >
-                          //     <DeleteIcon />
-                          //   </IconButton>
-                          // </Tooltip>,
+                          <Tooltip key="delete" content="Delete this task">
+                            <IconButton
+                              size="small"
+                              onClick={() =>
+                                dispatch({
+                                  type: 'setTransactionToDelete',
+                                  data: selectorParam.txn,
+                                })
+                              }
+                            >
+                              <DeleteIcon />
+                            </IconButton>
+                          </Tooltip>,
                           <Prompt
                             key="reject"
                             confirmFn={reason =>
