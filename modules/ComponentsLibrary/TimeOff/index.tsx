@@ -485,8 +485,8 @@ export const TimeOff: FC<Props> = ({
         subtitle={
           pto && user ? (
             <span>
-              PTO Used: <span style={css}>{pto.getDaysAvailable()}</span> of{' '}
-              <span style={css}>{user.getAnnualHoursPto()}</span>
+              PTO Remaining: <span style={css}>{pto.getDaysAvailable()}</span>{' '}
+              of <span style={css}>{user.getAnnualHoursPto()}</span>
             </span>
           ) : null
         }
