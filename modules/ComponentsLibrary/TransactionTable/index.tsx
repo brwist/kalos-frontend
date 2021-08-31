@@ -20,7 +20,14 @@ import RejectIcon from '@material-ui/icons/ThumbDownSharp';
 import SubmitIcon from '@material-ui/icons/ThumbUpSharp';
 import DeleteIcon from '@material-ui/icons/Delete';
 import { format, parseISO } from 'date-fns';
-import React, { FC, useCallback, useEffect, useState, useReducer } from 'react';
+import React, {
+  FC,
+  useCallback,
+  useEffect,
+  useState,
+  useReducer,
+  useRef,
+} from 'react';
 import { ENDPOINT, NULL_TIME, OPTION_ALL } from '../../../constants';
 import { FilterType, reducer } from './reducer';
 
@@ -61,6 +68,7 @@ import {
 } from '@kalos-core/kalos-rpc/TransactionDocument';
 import { ErrorBoundary } from '../ErrorBoundary';
 import { ConfirmDelete } from '../ConfirmDelete';
+import { FastForwardOutlined } from '@material-ui/icons';
 export interface Props {
   loggedUserId: number;
   isSelector?: boolean; // Is this a selector table (checkboxes that return in on-change)?
@@ -645,7 +653,6 @@ export const TransactionTable: FC<Props> = ({
           await refresh();
           return;
         }
-        console.log('DOC LENGTH WAS GOOD FROM CHECK: ', docs.length);
       } catch (err) {
         console.error(
           `An error occurred while double-checking that the file which was just uploaded exists: ${err}`,
@@ -1173,7 +1180,7 @@ export const TransactionTable: FC<Props> = ({
       ) : (
         <></>
       )}
-      {creatingTransaction ? (
+      {/* {creatingTransaction ? ( 
         <Modal
           open={creatingTransaction}
           onClose={() => handleSetCreatingTransaction(false)}
@@ -1193,7 +1200,7 @@ export const TransactionTable: FC<Props> = ({
         </Modal>
       ) : (
         <> </>
-      )}
+      )} */}
       <PlainForm
         data={transactionFilter}
         onChange={handleSetFilter}
@@ -1233,8 +1240,13 @@ export const TransactionTable: FC<Props> = ({
           selectedTransactions.toString()
         }
         hoverable={false}
-        onSaveRowButton={saved => handleSaveFromRowButton(saved)}
+        onSaveRowButton={saved => {
+          handleSaveFromRowButton(saved);
+          handleSetCreatingTransaction(false);
+        }}
         rowButton={{
+          externalButtonClicked: creatingTransaction,
+          externalButton: true,
           type: new Transaction(),
           columnDefinition: {
             columnsToIgnore: ['Actions', 'Accepted / Rejected'],
