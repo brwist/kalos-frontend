@@ -3,6 +3,7 @@ import React, {
   ReactNode,
   CSSProperties,
   useReducer,
+  useCallback,
 } from 'react';
 import clsx from 'clsx';
 import useTheme from '@material-ui/core/styles/useTheme';
@@ -71,6 +72,8 @@ interface Props extends Styles {
   };
 }
 
+let addingRowSelected = false; // Will go true before state set, performance optimization so clicking the button doesn't freeze a little bit
+
 export const InfoTable = ({
   columns = [],
   data,
@@ -135,12 +138,14 @@ export const InfoTable = ({
               if (
                 rowButton?.externalButton &&
                 rowButton?.externalButtonClicked &&
-                !state.isAddingRow
+                !state.isAddingRow &&
+                !addingRowSelected
               ) {
                 dispatch({
                   type: ACTIONS.SET_IS_ADDING_ROW,
                   payload: true,
                 });
+                addingRowSelected = true;
               }
               if (
                 rowButton !== undefined &&
