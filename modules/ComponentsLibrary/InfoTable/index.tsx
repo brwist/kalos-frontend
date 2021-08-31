@@ -66,6 +66,8 @@ interface Props extends Styles {
       columnsToIgnore: string[];
       columnTypeOverrides: { columnName: string; columnType: Type }[];
     };
+    externalButton?: boolean;
+    externalButtonClicked?: boolean; // Was an external button clicked that triggers this? (While true, makes the row appear)
   };
 }
 
@@ -130,7 +132,21 @@ export const InfoTable = ({
               idx,
             ) => {
               if (invisible) return null;
-              if (rowButton !== undefined && idx === columns.length - 1) {
+              if (
+                rowButton?.externalButton &&
+                rowButton?.externalButtonClicked &&
+                !state.isAddingRow
+              ) {
+                dispatch({
+                  type: ACTIONS.SET_IS_ADDING_ROW,
+                  payload: true,
+                });
+              }
+              if (
+                rowButton !== undefined &&
+                idx === columns.length - 1 &&
+                !rowButton.externalButton
+              ) {
                 if (actions === undefined) actions = [];
                 actions.push({
                   label: 'Add New Row',
@@ -143,6 +159,11 @@ export const InfoTable = ({
               }
               const ArrowIcon =
                 dir === 'DESC' ? ArrowDropDownIcon : ArrowDropUpIcon;
+              if (
+                rowButton?.externalButton &&
+                !rowButton?.externalButtonClicked
+              )
+                return null;
               return (
                 <Typography
                   key={idx}
