@@ -1,4 +1,4 @@
-import React, { FC, useState, useCallback, useEffect, useMemo } from 'react';
+import React, { FC, useState, useCallback,useReducer, useEffect, useMemo } from 'react';
 import {
   ENROUTE,
   CHECKIN,
@@ -105,7 +105,13 @@ export const SCHEMA_PROJECT: Schema<Event> = [
     },
   ],
 ];
-
+type Action =
+| {
+  type: "eventLoad";
+}
+| {
+  type: "loadInit";
+};
 export const EditProject: FC<Props> = ({
   serviceCallId: serviceCallIdInit,
   loggedUserId,
@@ -145,114 +151,123 @@ export const EditProject: FC<Props> = ({
   const [event, setEvent] = useState<Event>();
   const [projects, setProjects] = useState<Event[]>([]);
   const [editingProject, setEditingProject] = useState<boolean>(false);
-
-  const loadEvent = useCallback(async () => {
-    setLoadingEvent(true);
-    try {
-      const event = await EventClientService.LoadEventByServiceCallID(
-        serviceCallId,
-      );
-      setEvent(event);
-    } catch (err) {
-      console.log({ err });
-      if (!err.message.includes('failed to scan to struct')) {
-        console.error('Error occurred during ProjectTask query:', err);
-      }
+  const [state, dispatch] = useReducer((state:State, action:Action) => {
+    switch (action.type) {
+      case 'eventLoad':
+        {
+          let loadEvent = async () =>{
+          setLoadingEvent(true);
+          try {
+            const event = await EventClientService.LoadEventByServiceCallID(
+              serviceCallId,
+            );
+            setEvent(event);
+          } catch (err) {
+            console.log({ err });
+            if (!err.message.includes('failed to scan to struct')) {
+              console.error('Error occurred during ProjectTask query:', err);
+            }
+          }
+          setLoadingEvent(false);
+          }
+          loadEvent();
+        }
+        break;
+      default:
+        console.error(state);       
     }
-    setLoadingEvent(false);
-  }, [setEvent, setLoadingEvent, serviceCallId]);
-  const loadInit = useCallback(async () => {
-    let promises = [];
+  },[]);
+  
 
-    promises.push(
-      new Promise<void>(async resolve => {
-        const projects = await loadProjects();
-        setProjects(projects);
-        resolve();
-      }),
-    );
+  function loadEvent() {
+    dispatch({ type: 'eventLoad' });
+  }
+  const loadInit = useCallback(async () =>{
+    // dispatch({type:'loadInit'});
+      let promises = [];
+      console.log("working inside LoadingINT");
 
-    promises.push(
-      new Promise<void>(async resolve => {
-        await loadEvent();
-        resolve();
-      }),
-    );
+      promises.push(
+        new Promise<void>(async resolve => {
+          const projects = await loadProjects();
+          setProjects(projects);
+          resolve();
+        }),
+      );
 
-    promises.push(
-      new Promise<void>(async resolve => {
-        try {
-          const statuses = await TaskClientService.loadProjectTaskStatuses();
-          setStatuses(statuses);
-        } catch (err) {
-          console.log({ err });
-          if (!err.message.includes('failed to scan to struct')) {
-            console.error('Error occurred during ProjectTask query:', err);
+      promises.push(
+        new Promise<void>(async resolve => {
+          await loadEvent();
+          resolve();
+        }),
+      );
+  
+      promises.push(
+        new Promise<void>(async resolve => {
+          try {
+            const statuses = await TaskClientService.loadProjectTaskStatuses();
+            setStatuses(statuses);
+          } catch (err) {
+            console.log({ err });
+            if (!err.message.includes('failed to scan to struct')) {
+              console.error('Error occurred during ProjectTask query:', err);
+            }
           }
-        }
-        resolve();
-      }),
-    );
-
-    promises.push(
-      new Promise<void>(async resolve => {
-        try {
-          const priorities =
-            await TaskClientService.loadProjectTaskPriorities();
-          setPriorities(priorities);
-        } catch (err) {
-          console.log({ err });
-          if (!err.message.includes('failed to scan to struct')) {
-            console.error('Error occurred during ProjectTask query:', err);
+          resolve();
+        }),
+      );
+  
+      promises.push(
+        new Promise<void>(async resolve => {
+          try {
+            const priorities =
+              await TaskClientService.loadProjectTaskPriorities();
+            setPriorities(priorities);
+          } catch (err) {
+            console.log({ err });
+            if (!err.message.includes('failed to scan to struct')) {
+              console.error('Error occurred during ProjectTask query:', err);
+            }
           }
-        }
-        resolve();
-      }),
-    );
-
-    promises.push(
-      new Promise<void>(async resolve => {
-        try {
-          const departments =
-            await TimesheetDepartmentClientService.loadTimeSheetDepartments();
-          setDepartments(departments);
-        } catch (err) {
-          console.log({ err });
-          if (!err.message.includes('failed to scan to struct')) {
-            console.error('Error occurred during ProjectTask query:', err);
+          resolve();
+        }),
+      );
+  
+      promises.push(
+        new Promise<void>(async resolve => {
+          try {
+            const departments =
+              await TimesheetDepartmentClientService.loadTimeSheetDepartments();
+            setDepartments(departments);
+          } catch (err) {
+            console.log({ err });
+            if (!err.message.includes('failed to scan to struct')) {
+              console.error('Error occurred during ProjectTask query:', err);
+            }
           }
-        }
-        resolve();
-      }),
-    );
-
-    promises.push(
-      new Promise<void>(async resolve => {
-        try {
-          const loggedUser = await UserClientService.loadUserById(loggedUserId);
-          setLoggedUser(loggedUser);
-        } catch (err) {
-          console.log({ err });
-          if (!err.message.includes('failed to scan to struct')) {
-            console.error('Error occurred during ProjectTask query:', err);
+          resolve();
+        }),
+      );
+  
+      promises.push(
+        new Promise<void>(async resolve => {
+          try {
+            const loggedUser = await UserClientService.loadUserById(loggedUserId);
+            setLoggedUser(loggedUser);
+          } catch (err) {
+            console.log({ err });
+            if (!err.message.includes('failed to scan to struct')) {
+              console.error('Error occurred during ProjectTask query:', err);
+            }
           }
-        }
-        resolve();
-      }),
-    );
-
-    await Promise.all(promises);
-
-    setLoadedInit(true);
-  }, [
-    loadEvent,
-    setProjects,
-    setStatuses,
-    setPriorities,
-    setDepartments,
-    setLoadedInit,
-    loggedUserId,
-  ]);
+          resolve();
+        }),
+      );
+  
+      await Promise.all(promises);
+  
+      setLoadedInit(true);
+  }, [setLoading, serviceCallId, setTasks]);
 
   const load = useCallback(async () => {
     try {

@@ -1,4 +1,4 @@
-import React, { FC, useState, useEffect, useCallback, ReactNode } from 'react';
+import React, { FC, useState,useReducer, useEffect, useCallback, ReactNode } from 'react';
 import { User } from '@kalos-core/kalos-rpc/User';
 import { Group } from '@kalos-core/kalos-rpc/Group';
 import { UserGroupLink } from '@kalos-core/kalos-rpc/UserGroupLink';
@@ -52,7 +52,8 @@ interface Props {
   renderChildren?: (customer: User) => ReactNode;
   onClose?: () => void;
 }
-
+export type Action = |{type:'load'};
+export type State = |{isLoading:boolean;};
 export const CustomerInformation: FC<Props> = ({
   userID,
   propertyId,
@@ -99,62 +100,6 @@ export const CustomerInformation: FC<Props> = ({
     [setDocumentsOpened, documentsOpened],
   );
 
-  const load = useCallback(async () => {
-    if (propertyId) {
-      const pendingBilling = new PendingBilling();
-      pendingBilling.setUserId(userID);
-      pendingBilling.setPropertyId(propertyId);
-      let pendingBillingsTotalCount = 0;
-      try {
-        let result = await PendingBillingClientService.BatchGet(pendingBilling);
-        pendingBillingsTotalCount = result.getTotalCount();
-        setPendingBillingsLoaded(true);
-      } catch (err) {
-        console.error(
-          `An error occurred while batch-getting pending bills: ${err}`,
-        );
-      }
-      if (pendingBillingsTotalCount > 0) {
-        setPendingBilling(true);
-        setPendingBillingRecordCount(pendingBillingsTotalCount);
-      }
-    }
-    const groups = await GroupClientService.loadGroups();
-    setGroups(groups);
-    const groupLinks = await UserGroupLinkClientService.loadUserGroupLinksByUserId(
-      userID,
-    );
-    setGroupLinks(groupLinks);
-    setGroupLinksInitial(groupLinks);
-    const entry = new User();
-    entry.setId(userID);
-    entry.setIsActive(1);
-    try {
-      const customer = await UserClientService.loadUserById(
-        userID,
-        viewedAsCustomer,
-      );
-      setCustomer(customer);
-    } catch (e) {
-      console.error(`An error occurred while loading user by id, error: ${e}`);
-      setError(true);
-    }
-    CustomEventsHandler.listen('ShowDocuments', handleToggleDocuments);
-    CustomEventsHandler.listen('EditCustomer', handleToggleEditing);
-  }, [
-    userID,
-    propertyId,
-    setCustomer,
-    setError,
-    setGroupLinks,
-    setGroupLinksInitial,
-    setGroups,
-    viewedAsCustomer,
-    handleToggleDocuments,
-    handleToggleEditing,
-    setPendingBillingsLoaded,
-  ]);
-
   const handleSetNotificationEditing = useCallback(
     (notificationEditing: boolean) => () =>
       setNotificationEditing(notificationEditing),
@@ -185,6 +130,61 @@ export const CustomerInformation: FC<Props> = ({
     [setSaving, userID, setCustomer, setEditing, handleSetNotificationEditing],
   );
 
+  const [state, dispatch] = useReducer((state:State, action:Action) => {
+    switch (action.type) {
+      case 'load':
+        {
+          let load = async () =>{
+            if (propertyId) {
+              const pendingBilling = new PendingBilling();
+              pendingBilling.setUserId(userID);
+              pendingBilling.setPropertyId(propertyId);
+              let pendingBillingsTotalCount = 0;
+              try {
+                let result = await PendingBillingClientService.BatchGet(pendingBilling);
+                pendingBillingsTotalCount = result.getTotalCount();
+                setPendingBillingsLoaded(true);
+              } catch (err) {
+                console.error(
+                  `An error occurred while batch-getting pending bills: ${err}`,
+                );
+              }
+              if (pendingBillingsTotalCount > 0) {
+                setPendingBilling(true);
+                setPendingBillingRecordCount(pendingBillingsTotalCount);
+              }
+            }
+            const groups = await GroupClientService.loadGroups();
+            setGroups(groups);
+            const groupLinks = await UserGroupLinkClientService.loadUserGroupLinksByUserId(
+              userID,
+            );
+            setGroupLinks(groupLinks);
+            setGroupLinksInitial(groupLinks);
+            const entry = new User();
+            entry.setId(userID);
+            entry.setIsActive(1);
+            try {
+              const customer = await UserClientService.loadUserById(
+                userID,
+                viewedAsCustomer,
+              );
+              setCustomer(customer);
+            } catch (e) {
+              console.error(`An error occurred while loading user by id, error: ${e}`);
+              setError(true);
+            }
+            CustomEventsHandler.listen('ShowDocuments', handleToggleDocuments);
+            CustomEventsHandler.listen('EditCustomer', handleToggleEditing);
+          }
+          load();
+        }
+       break;    
+       default:
+        console.error(state);   
+    } 
+  },[];
+  
   const handleDelete = useCallback(async () => {
     // TODO: delete customer related data?
     const entry = new User();
@@ -195,12 +195,12 @@ export const CustomerInformation: FC<Props> = ({
 
   useEffect(() => {
     if (!customer.getId()) {
-      load();
+      dispatch({type:"load"});
     }
     if (!viewedAsCustomer && customer.getNotification() !== '') {
       setNotificationViewing(true);
     }
-  }, [customer, load, setNotificationViewing, viewedAsCustomer]);
+  }, [customer,  setNotificationViewing, viewedAsCustomer]);
 
   const data: Data = [
     [
