@@ -18,12 +18,7 @@ import CopyIcon from '@material-ui/icons/FileCopySharp';
 import RejectIcon from '@material-ui/icons/ThumbDownSharp';
 import SubmitIcon from '@material-ui/icons/ThumbUpSharp';
 import { format, parseISO } from 'date-fns';
-import React, {
-  FC,
-  useCallback,
-  useEffect,
-  useReducer,
-} from 'react';
+import React, { FC, useCallback, useEffect, useReducer } from 'react';
 import { ENDPOINT, NULL_TIME, OPTION_ALL } from '../../../constants';
 import { FilterType, reducer } from './reducer';
 import {
@@ -141,6 +136,7 @@ export const TransactionTable: FC<Props> = ({
     status: 'Accepted / Rejected',
     universalSearch: undefined,
     searching: false,
+    infoTableMode: 'overview',
   });
   const {
     transactionFilter,
@@ -1208,6 +1204,17 @@ export const TransactionTable: FC<Props> = ({
         actions={
           hasActions
             ? [
+                {
+                  label: 'Toggle Editing Interface',
+                  onClick: () =>
+                    dispatch({
+                      type: 'setInfoTableMode',
+                      data:
+                        state.infoTableMode === 'overview'
+                          ? 'editing'
+                          : 'overview',
+                    }),
+                },
                 {
                   label: 'New Transaction',
                   onClick: () => handleSetCreatingTransaction(true), // makes uploadPhotoTransaction appear in a modal

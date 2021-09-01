@@ -2,6 +2,7 @@ import { TimesheetDepartment } from '@kalos-core/kalos-rpc/TimesheetDepartment';
 import { Transaction } from '@kalos-core/kalos-rpc/Transaction';
 import { TransactionActivity } from '@kalos-core/kalos-rpc/TransactionActivity';
 import { User } from '@kalos-core/kalos-rpc/User';
+import { Modes } from '../InfoTable';
 import { RoleType } from '../Payroll';
 
 export interface FilterType {
@@ -49,6 +50,7 @@ export type State = {
   status: 'Accepted' | 'Rejected' | 'Accepted / Rejected';
   departments: TimesheetDepartment[];
   universalSearch: string | undefined;
+  infoTableMode: Modes;
 };
 export type Action =
   | { type: 'setTransactionFilter'; data: FilterType }
@@ -85,6 +87,10 @@ export type Action =
   | {
       type: 'setUniversalSearch';
       data: string | undefined;
+    }
+  | {
+      type: 'setInfoTableMode';
+      data: Modes;
     };
 
 export const reducer = (state: State, action: Action) => {
@@ -244,6 +250,9 @@ export const reducer = (state: State, action: Action) => {
         ...state,
         pendingUploadPhoto: action.data,
       };
+    case 'setInfoTableMode':
+      console.log('setting info table mode to: ', action.data);
+      return { ...state, infoTableMode: action.data };
     default:
       return state;
   }

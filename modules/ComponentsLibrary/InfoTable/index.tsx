@@ -27,6 +27,7 @@ type Styles = {
 };
 
 type Href = 'tel' | 'mailto';
+export type Modes = 'editing' | 'overview';
 
 export type Row = {
   label?: string;
@@ -70,6 +71,7 @@ interface Props extends Styles {
     externalButton?: boolean;
     externalButtonClicked?: boolean; // Was an external button clicked that triggers this? (While true, makes the row appear)
   };
+  mode?: Modes;
 }
 
 let addingRowSelected = false; // Will go true before state set, performance optimization so clicking the button doesn't freeze a little bit
@@ -86,10 +88,15 @@ export const InfoTable = ({
   styles,
   onSaveRowButton,
   rowButton,
+  mode,
 }: Props) => {
   const [state, dispatch] = useReducer(Reducer, {
     isAddingRow: false,
+    mode: 'overview',
   });
+  if (mode && state.mode !== mode) {
+    dispatch({ type: ACTIONS.SET_MODE, payload: mode });
+  }
   if (rowButton !== undefined && columns.length === 0) {
     console.error(
       `addRowButton requires the columns to be defined. This is a no-op, but there will be no addRowButton. `,
