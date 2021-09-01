@@ -5,6 +5,7 @@ import EditIcon from '@material-ui/icons/Edit';
 import { InfoTable, Data, Columns } from './';
 import { ExampleTitle } from '../helpers';
 import { makeFakeRows } from '../../../helpers';
+import { Transaction } from '@kalos-core/kalos-rpc/Transaction';
 
 const onClick = () => console.log('Row clicked');
 const actions = [
@@ -127,8 +128,13 @@ export default () => (
       columns={[{ name: 'Column 1' }, { name: 'Column 2' }]}
       onSaveRowButton={result => console.log('RESULT OF ROW SAVE: ', result)}
       rowButton={{
-        columnsToIgnore: [],
-        columnTypeOverrides: [{ columnName: 'Column 1', columnType: 'number' }],
+        type: new Transaction(),
+        columnDefinition: {
+          columnsToIgnore: [],
+          columnTypeOverrides: [
+            { columnName: 'Column 1', columnType: 'number' },
+          ],
+        },
       }}
     />
   </>

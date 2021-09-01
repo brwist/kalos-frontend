@@ -3,7 +3,6 @@ import {
   Transaction,
   TransactionList,
 } from '@kalos-core/kalos-rpc/Transaction';
-import { TransactionAccountList } from '@kalos-core/kalos-rpc/TransactionAccount';
 import {
   TransactionActivity,
   TransactionActivityClient,
@@ -19,7 +18,12 @@ import CopyIcon from '@material-ui/icons/FileCopySharp';
 import RejectIcon from '@material-ui/icons/ThumbDownSharp';
 import SubmitIcon from '@material-ui/icons/ThumbUpSharp';
 import { format, parseISO } from 'date-fns';
-import React, { FC, useCallback, useEffect, useReducer } from 'react';
+import React, {
+  FC,
+  useCallback,
+  useEffect,
+  useReducer,
+} from 'react';
 import { ENDPOINT, NULL_TIME, OPTION_ALL } from '../../../constants';
 import { FilterType, reducer } from './reducer';
 import {
@@ -48,8 +52,9 @@ import { Modal } from '../Modal';
 import { FilterData, RoleType, AssignedUserData } from '../Payroll';
 import { PlainForm, Schema } from '../PlainForm';
 import { SectionBar } from '../SectionBar';
-import { UploadPhotoTransaction } from '../UploadPhotoTransaction';
 import LineWeightIcon from '@material-ui/icons/LineWeight';
+import DeleteIcon from '@material-ui/icons/Delete';
+
 import { EditTransaction } from '../EditTransaction';
 import { TimesheetDepartment } from '@kalos-core/kalos-rpc/TimesheetDepartment';
 import { StatusPicker } from './components/StatusPicker';
@@ -104,7 +109,6 @@ let assigned: AssignedEmployeeType = {
   employeeId: 0,
 };
 
-let transactionOfFileUploading: Transaction | undefined = undefined;
 export const TransactionTable: FC<Props> = ({
   loggedUserId,
   isSelector,
@@ -637,7 +641,6 @@ export const TransactionTable: FC<Props> = ({
           await refresh();
           return;
         }
-        console.log('DOC LENGTH WAS GOOD FROM CHECK: ', docs.length);
       } catch (err) {
         console.error(
           `An error occurred while double-checking that the file which was just uploaded exists: ${err}`,
@@ -994,6 +997,60 @@ export const TransactionTable: FC<Props> = ({
     ],
   ];
 
+  const handleSaveFromRowButton = useCallback(
+    async (saved: any) => {
+      let newTxn = new Transaction();
+      newTxn.setTimestamp(saved['Date']);
+      newTxn.setOrderNumber(saved['Order #']);
+      newTxn.setOwnerId(saved['Purchaser']);
+      newTxn.setDepartmentId(saved['Department']);
+      newTxn.setJobId(saved['Job #']);
+      newTxn.setAmount(saved['Amount']);
+      newTxn.setVendor(saved['Vendor']);
+      newTxn.setVendorCategory('Receipt');
+
+      let res: Transaction | undefined;
+      try {
+        res = await TransactionClientService.Create(newTxn);
+      } catch (err) {
+        console.error(`An error occurred while creating a transaction: ${err}`);
+        try {
+          let log = new TransactionActivity();
+          log.setTimestamp(format(new Date(), 'yyyy-MM-dd hh:mm:ss'));
+          log.setUserId(loggedUserId);
+          log.setStatusId(2);
+          log.setIsActive(1);
+          log.setDescription(
+            `ERROR : An error occurred while uploading a new transaction: ${err}.`,
+          );
+          await TransactionActivityClientService.Create(log);
+        } catch (err) {
+          console.error(
+            `An error occurred while uploading a transaction activity log for a transaction: ${err}`,
+          );
+        }
+      }
+
+      try {
+        let log = new TransactionActivity();
+        log.setTimestamp(format(new Date(), 'yyyy-MM-dd hh:mm:ss'));
+        log.setUserId(loggedUserId);
+        log.setStatusId(2);
+        log.setIsActive(1);
+        log.setDescription(`Transaction created with id: ${res!.getId()}`);
+        await TransactionActivityClientService.Create(log);
+      } catch (err) {
+        console.error(
+          `An error occurred while uploading a transaction activity log for a transaction: ${err}`,
+        );
+      }
+
+      await resetTransactions();
+      refresh();
+    },
+    [loggedUserId, resetTransactions, refresh],
+  );
+
   const handleDeleteTransaction = useCallback(async () => {
     try {
       if (state.transactionToDelete === undefined) {
@@ -1111,7 +1168,7 @@ export const TransactionTable: FC<Props> = ({
       ) : (
         <></>
       )}
-      {creatingTransaction ? (
+      {/* {creatingTransaction ? ( 
         <Modal
           open={creatingTransaction}
           onClose={() => handleSetCreatingTransaction(false)}
@@ -1131,7 +1188,7 @@ export const TransactionTable: FC<Props> = ({
         </Modal>
       ) : (
         <> </>
-      )}
+      )} */}
       <PlainForm
         data={transactionFilter}
         onChange={handleSetFilter}
@@ -1194,33 +1251,41 @@ export const TransactionTable: FC<Props> = ({
           selectedTransactions.toString()
         }
         hoverable={false}
-        // onSaveRowButton={saved => console.log('SAVED: ', saved)}
-        // rowButton={{
-        //   columnsToIgnore: ['Actions', 'Accepted / Rejected'],
-        //   columnTypeOverrides: [
-        //     { columnName: 'Type', columnType: 'text' },
-        //     {
-        //       columnName: 'Date',
-        //       columnType: 'date',
-        //     },
-        //     {
-        //       columnName: 'Department',
-        //       columnType: 'department',
-        //     },
-        //     {
-        //       columnName: 'Job #',
-        //       columnType: 'number',
-        //     },
-        //     {
-        //       columnName: 'Amount',
-        //       columnType: 'number',
-        //     },
-        //     {
-        //       columnName: 'Purchaser',
-        //       columnType: 'technician',
-        //     },
-        //   ],
-        // }}
+        onSaveRowButton={saved => {
+          handleSaveFromRowButton(saved);
+          handleSetCreatingTransaction(false);
+        }}
+        rowButton={{
+          externalButtonClicked: creatingTransaction,
+          externalButton: true,
+          type: new Transaction(),
+          columnDefinition: {
+            columnsToIgnore: ['Actions', 'Accepted / Rejected'],
+            columnTypeOverrides: [
+              { columnName: 'Type', columnType: 'text' },
+              {
+                columnName: 'Date',
+                columnType: 'date',
+              },
+              {
+                columnName: 'Department',
+                columnType: 'department',
+              },
+              {
+                columnName: 'Job #',
+                columnType: 'number',
+              },
+              {
+                columnName: 'Amount',
+                columnType: 'number',
+              },
+              {
+                columnName: 'Purchaser',
+                columnType: 'technician',
+              },
+            ],
+          },
+        }}
         columns={[
           {
             name: isSelector ? 'Is selected?' : '',
@@ -1507,19 +1572,19 @@ export const TransactionTable: FC<Props> = ({
                               <AssignmentIndIcon />
                             </IconButton>
                           </Tooltip>,
-                          // <Tooltip key="delete" content="Delete this task">
-                          //   <IconButton
-                          //     size="small"
-                          //     onClick={() =>
-                          //       dispatch({
-                          //         type: 'setTransactionToDelete',
-                          //         data: selectorParam.txn,
-                          //       })
-                          //     }
-                          //   >
-                          //     <DeleteIcon />
-                          //   </IconButton>
-                          // </Tooltip>,
+                          <Tooltip key="delete" content="Delete this task">
+                            <IconButton
+                              size="small"
+                              onClick={() =>
+                                dispatch({
+                                  type: 'setTransactionToDelete',
+                                  data: selectorParam.txn,
+                                })
+                              }
+                            >
+                              <DeleteIcon />
+                            </IconButton>
+                          </Tooltip>,
                           <Prompt
                             key="reject"
                             confirmFn={reason =>

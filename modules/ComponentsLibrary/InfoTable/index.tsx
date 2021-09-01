@@ -3,6 +3,7 @@ import React, {
   ReactNode,
   CSSProperties,
   useReducer,
+  useCallback,
 } from 'react';
 import clsx from 'clsx';
 import useTheme from '@material-ui/core/styles/useTheme';
@@ -59,10 +60,19 @@ interface Props extends Styles {
   onSaveRowButton?: (results: {}) => any;
   // row button
   rowButton?: {
-    columnsToIgnore: string[];
-    columnTypeOverrides: { columnName: string; columnType: Type }[];
+    // Type to use with row button (new Transaction(), new PerDiem(), etc.)
+    type: any;
+    // Information about the columns to use
+    columnDefinition: {
+      columnsToIgnore: string[];
+      columnTypeOverrides: { columnName: string; columnType: Type }[];
+    };
+    externalButton?: boolean;
+    externalButtonClicked?: boolean; // Was an external button clicked that triggers this? (While true, makes the row appear)
   };
 }
+
+let addingRowSelected = false; // Will go true before state set, performance optimization so clicking the button doesn't freeze a little bit
 
 export const InfoTable = ({
   columns = [],
@@ -94,7 +104,9 @@ export const InfoTable = ({
   if (state.isAddingRow) {
     columns.forEach(col => {
       if (
-        !rowButton?.columnsToIgnore.includes(col.name!.toString()) &&
+        !rowButton?.columnDefinition.columnsToIgnore.includes(
+          col.name!.toString(),
+        ) &&
         !col.invisible
       )
         (fields as any)[col.name as any] = ''; // Creating the field on the object for use later
@@ -123,7 +135,23 @@ export const InfoTable = ({
               idx,
             ) => {
               if (invisible) return null;
-              if (rowButton !== undefined && idx === columns.length - 1) {
+              if (
+                rowButton?.externalButton &&
+                rowButton?.externalButtonClicked &&
+                !state.isAddingRow &&
+                !addingRowSelected
+              ) {
+                dispatch({
+                  type: ACTIONS.SET_IS_ADDING_ROW,
+                  payload: true,
+                });
+                addingRowSelected = true;
+              }
+              if (
+                rowButton !== undefined &&
+                idx === columns.length - 1 &&
+                !rowButton.externalButton
+              ) {
                 if (actions === undefined) actions = [];
                 actions.push({
                   label: 'Add New Row',
@@ -136,6 +164,11 @@ export const InfoTable = ({
               }
               const ArrowIcon =
                 dir === 'DESC' ? ArrowDropDownIcon : ArrowDropUpIcon;
+              if (
+                rowButton?.externalButton &&
+                !rowButton?.externalButtonClicked
+              )
+                return null;
               return (
                 <Typography
                   key={idx}
@@ -183,9 +216,10 @@ export const InfoTable = ({
           onChange={fieldOutput => (temporaryResult = fieldOutput)}
           schema={[
             Object.keys(fields).map((field: any, idx: number) => {
-              let columnType = rowButton?.columnTypeOverrides.filter(
-                type => type.columnName === field,
-              );
+              let columnType =
+                rowButton?.columnDefinition.columnTypeOverrides.filter(
+                  type => type.columnName === field,
+                );
               return {
                 label: field,
                 name: field,
