@@ -19,6 +19,7 @@ import './styles.less';
 export interface GalleryData {
   key: string;
   bucket: string;
+  description: string;
 }
 
 interface props {
@@ -104,6 +105,7 @@ export class AltGallery extends React.PureComponent<props, state> {
       const galleryData = reverseDoc.map(d => {
         return {
           key: `${this.props.transactionID}-${d.getReference()}`,
+          description: d.getDescription(),
           bucket: 'kalos-transactions',
         };
       });
@@ -267,6 +269,7 @@ export class AltGallery extends React.PureComponent<props, state> {
     return (
       <>
         {button}
+
         <Modal
           open={isOpen}
           onClose={this.toggleOpen}
@@ -276,6 +279,11 @@ export class AltGallery extends React.PureComponent<props, state> {
         >
           <SectionBar
             title={title}
+            subtitle={`Transaction Document Type : ${
+              fileList[activeImage]?.description === ''
+                ? 'No Type Provided'
+                : fileList[activeImage]?.description
+            }`}
             actions={[
               ...(canDelete
                 ? [
