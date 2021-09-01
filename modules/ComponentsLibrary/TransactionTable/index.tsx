@@ -1257,6 +1257,7 @@ export const TransactionTable: FC<Props> = ({
           transactions?.values.toString() +
           selectedTransactions.toString()
         }
+        mode={state.infoTableMode}
         hoverable={false}
         onSaveRowButton={saved => {
           handleSaveFromRowButton(saved);
