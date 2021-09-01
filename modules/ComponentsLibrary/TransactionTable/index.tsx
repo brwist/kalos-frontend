@@ -1441,6 +1441,7 @@ export const TransactionTable: FC<Props> = ({
                             text="View Photos and Documents"
                             transactionID={selectorParam.txn.getId()}
                             iconButton
+                            canDelete={true}
                           />,
                           <TxnLog
                             key="txnLog"
