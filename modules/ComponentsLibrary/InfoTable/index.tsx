@@ -119,6 +119,7 @@ export const InfoTable = ({
         (fields as any)[col.name as any] = ''; // Creating the field on the object for use later
     });
   }
+  console.log('columns: ', columns);
   return (
     <div
       className={clsx('InfoTable', className)}
@@ -171,11 +172,6 @@ export const InfoTable = ({
               }
               const ArrowIcon =
                 dir === 'DESC' ? ArrowDropDownIcon : ArrowDropUpIcon;
-              if (
-                rowButton?.externalButton &&
-                !rowButton?.externalButtonClicked
-              )
-                return null;
               return (
                 <Typography
                   key={idx}
