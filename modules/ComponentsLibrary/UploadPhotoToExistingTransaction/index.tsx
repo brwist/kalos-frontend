@@ -1,5 +1,6 @@
 import React, { FC, useState, useCallback, useEffect } from 'react';
 import Alert from '@material-ui/lab/Alert';
+
 import { Form, Schema } from '../Form';
 import {
   Transaction,
@@ -14,7 +15,7 @@ import {
   ActivityLogClientService,
 } from '../../../helpers';
 import './styles.less';
-import { ENDPOINT } from '../../../constants';
+import { ENDPOINT, WaiverTypes } from '../../../constants';
 import { RoleType } from '../Payroll';
 import { SUBJECT_TAGS_ACCOUNTS_PAYABLE } from '@kalos-core/kalos-rpc/S3File';
 import { File } from '@kalos-core/kalos-rpc/File';
@@ -35,7 +36,9 @@ interface Props {
 type Entry = {
   file: string;
   description: string;
+  invoiceWaiverType: number;
 };
+
 export const UploadPhotoToExistingTransaction: FC<Props> = ({
   onClose,
   loggedUserId,
@@ -51,6 +54,7 @@ export const UploadPhotoToExistingTransaction: FC<Props> = ({
   const [formData, setFormData] = useState<Entry>({
     file: '',
     description: '',
+    invoiceWaiverType: 1,
   });
   const [nameValidationError, setNameValidationError] = useState<
     string | undefined
@@ -60,7 +64,6 @@ export const UploadPhotoToExistingTransaction: FC<Props> = ({
     (fileData: string) => setFileData(fileData),
     [setFileData],
   );
-  console.log('our transaction', transactionPassed);
   // TODO reminding myself to fix this in a bit, we don't need to switch between Entry and Transaction, we can just use Transaction
   // ! Also no need to create a new Transaction client when we can reuse the one from Helpers
   const handleSubmit = useCallback(
@@ -122,10 +125,13 @@ export const UploadPhotoToExistingTransaction: FC<Props> = ({
 
             const tDoc = new TransactionDocument();
             tDoc.setDescription(data.description);
+            tDoc.setTypeId(data.invoiceWaiverType);
+            if (data.description != 'Invoice') {
+              tDoc.setTypeId(1);
+            }
             tDoc.setTransactionId(transactionPassed.getId());
             tDoc.setReference(nameWithoutId);
             tDoc.setFileId(uploadFile.getId());
-            tDoc.setTypeId(1);
             await TransactionDocumentClientService.Create(tDoc);
             setSaving(false);
             setSaved(true);
@@ -222,6 +228,13 @@ export const UploadPhotoToExistingTransaction: FC<Props> = ({
         required: true,
         onFileLoad: handleFileLoad,
       },
+      {
+        name: 'invoiceWaiverType',
+        label: 'Document Type',
+        options: WaiverTypes,
+        required: formData.description == 'Invoice',
+        invisible: formData.description !== 'Invoice',
+      },
     ],
   ] as Schema<Entry>;
   return (
@@ -233,7 +246,11 @@ export const UploadPhotoToExistingTransaction: FC<Props> = ({
         data={formData}
         onClose={onClose}
         onChange={a =>
-          setFormData({ description: a.description, file: a.file })
+          setFormData({
+            description: a.description,
+            file: a.file,
+            invoiceWaiverType: a.invoiceWaiverType,
+          })
         }
         onSave={() => handleSubmit(formData)}
         submitLabel="Add Photo To Transaction"
