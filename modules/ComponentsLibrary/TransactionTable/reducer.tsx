@@ -20,7 +20,6 @@ type SelectorParams = {
   txn: Transaction;
   totalCount: number;
 };
-
 export type State = {
   transactionFilter: FilterType;
   transactions: SelectorParams[] | undefined;
@@ -36,6 +35,7 @@ export type State = {
   role: RoleType | undefined;
   page: number;
   error: string | undefined;
+  pendingUploadPhoto: Transaction | undefined;
   assigningUser:
     | {
         isAssigning: boolean;
@@ -64,6 +64,7 @@ export type Action =
   | { type: 'setRole'; data: RoleType }
   | { type: 'setCreatingTransaction'; data: boolean }
   | { type: 'setEmployees'; data: User[] }
+  | { type: 'setPendingUploadPhoto'; data: Transaction | undefined }
   | { type: 'setPage'; data: number }
   | { type: 'setError'; data: string | undefined }
   | { type: 'setStatus'; data: 'Accepted' | 'Rejected' | 'Accepted / Rejected' }
@@ -235,6 +236,13 @@ export const reducer = (state: State, action: Action) => {
       return {
         ...state,
         searching: action.data,
+      };
+    case 'setPendingUploadPhoto':
+      console.log('setting pending upload:', action.data);
+      console.log(action.data);
+      return {
+        ...state,
+        pendingUploadPhoto: action.data,
       };
     default:
       return state;

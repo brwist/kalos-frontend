@@ -18,12 +18,10 @@ import DoneIcon from '@material-ui/icons/Done';
 import CopyIcon from '@material-ui/icons/FileCopySharp';
 import RejectIcon from '@material-ui/icons/ThumbDownSharp';
 import SubmitIcon from '@material-ui/icons/ThumbUpSharp';
-import DeleteIcon from '@material-ui/icons/Delete';
 import { format, parseISO } from 'date-fns';
-import React, { FC, useCallback, useEffect, useState, useReducer } from 'react';
+import React, { FC, useCallback, useEffect, useReducer } from 'react';
 import { ENDPOINT, NULL_TIME, OPTION_ALL } from '../../../constants';
 import { FilterType, reducer } from './reducer';
-
 import {
   makeFakeRows,
   OrderDir,
@@ -61,6 +59,7 @@ import {
 } from '@kalos-core/kalos-rpc/TransactionDocument';
 import { ErrorBoundary } from '../ErrorBoundary';
 import { ConfirmDelete } from '../ConfirmDelete';
+import { UploadPhotoToExistingTransaction } from '../UploadPhotoToExistingTransaction';
 export interface Props {
   loggedUserId: number;
   isSelector?: boolean; // Is this a selector table (checkboxes that return in on-change)?
@@ -123,6 +122,7 @@ export const TransactionTable: FC<Props> = ({
     loading: true,
     creatingTransaction: false,
     mergingTransaction: false,
+    pendingUploadPhoto: undefined,
     role: undefined,
     assigningUser: undefined,
     employees: [],
@@ -146,6 +146,7 @@ export const TransactionTable: FC<Props> = ({
     transactionToEdit,
     transactionToDelete,
     loading,
+    pendingUploadPhoto,
     loaded,
     creatingTransaction,
     mergingTransaction,
@@ -1162,6 +1163,29 @@ export const TransactionTable: FC<Props> = ({
             : []
         }
       />
+      {pendingUploadPhoto && (
+        <Modal
+          open
+          maxWidth={1000}
+          onClose={() =>
+            dispatch({
+              type: 'setPendingUploadPhoto',
+              data: undefined,
+            })
+          }
+        >
+          <UploadPhotoToExistingTransaction
+            transactionPassed={pendingUploadPhoto}
+            loggedUserId={loggedUserId}
+            onClose={() =>
+              dispatch({
+                type: 'setPendingUploadPhoto',
+                data: undefined,
+              })
+            }
+          ></UploadPhotoToExistingTransaction>
+        </Modal>
+      )}
       <InfoTable
         key={
           transactions?.toString() +
@@ -1289,7 +1313,7 @@ export const TransactionTable: FC<Props> = ({
                     {
                       value: txnWithId.length == 1 ? 'SELECTED' : '',
                       invisible: !isSelector,
-                    }, 
+                    },
                     {
                       value:
                         selectorParam.txn.getTimestamp() != NULL_TIME &&
@@ -1380,24 +1404,19 @@ export const TransactionTable: FC<Props> = ({
                           <Tooltip key="upload" content="Upload File">
                             <IconButton
                               size="small"
-                              onClick={event => {
-                                if (!event.isTrusted) {
-                                  // This is likely a duplicate event called for some reason I couldn't figure out
-                                  return;
-                                }
-                                event.preventDefault();
-                                // Working around the input (since it isn't a React-based element, idx is just the last value in the loop)
-                                // As a result, I'm simply setting a variable outside of react to work with it at the top. Could fix this
-                                // at some point so FIXME but it works
-                                transactionOfFileUploading =
-                                  transactions[idx].txn;
-                                openFileInput(idx);
-                              }}
+                              onClick={() =>
+                                dispatch({
+                                  type: 'setPendingUploadPhoto',
+                                  data: selectorParam.txn,
+                                })
+                              }
                             >
                               <UploadIcon />
-                              <input
+
+                              {/*<input
                                 type="file"
                                 ref={FileInput}
+                                
                                 onChange={event => {
                                   if (!transactionOfFileUploading) {
                                     console.error(
@@ -1412,7 +1431,7 @@ export const TransactionTable: FC<Props> = ({
                                   handleFile(transactionOfFileUploading!);
                                 }}
                                 style={{ display: 'none' }}
-                              />
+                              />*/}
                             </IconButton>
                           </Tooltip>,
                           <AltGallery
