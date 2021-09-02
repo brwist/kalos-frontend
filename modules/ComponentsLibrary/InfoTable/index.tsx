@@ -88,7 +88,7 @@ export const InfoTable = ({
   styles,
   onSaveRowButton,
   rowButton,
-  mode,
+  mode = 'overview',
 }: Props) => {
   const [state, dispatch] = useReducer(Reducer, {
     isAddingRow: false,
