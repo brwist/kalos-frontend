@@ -105,10 +105,10 @@ export const InfoTable = ({
   const theme = useTheme();
   const md = useMediaQuery(theme.breakpoints.down('xs'));
 
-  let fields: {} = {};
+  let fields: any = {};
   let temporaryResult: {}; // The result assigned when the onChange is fired.
 
-  if (state.isAddingRow) {
+  if (state.isAddingRow || mode !== 'overview') {
     columns.forEach(col => {
       if (
         !rowButton?.columnDefinition.columnsToIgnore.includes(
@@ -119,7 +119,9 @@ export const InfoTable = ({
         (fields as any)[col.name as any] = ''; // Creating the field on the object for use later
     });
   }
-  console.log('columns: ', columns);
+
+  let dataObject = {};
+
   return (
     <div
       className={clsx('InfoTable', className)}
@@ -251,6 +253,7 @@ export const InfoTable = ({
         />
       )}
       {data &&
+        mode === 'overview' &&
         data.map((items, idx) => (
           <div
             key={idx}
@@ -357,6 +360,75 @@ export const InfoTable = ({
                 );
               },
             )}
+          </div>
+        ))}
+
+      {/* Editing mode */}
+
+      {data &&
+        mode === 'editing' &&
+        data.map((items, idx) => (
+          <div
+            key={idx}
+            className={clsx('InfoTableRow', { compact, hoverable })}
+          >
+            <PlainForm<typeof fields>
+              key={idx}
+              onChange={fieldOutput => (temporaryResult = fieldOutput)}
+              schema={[
+                items.map((item, idx2) => {
+                  if (item.invisible || !item.value)
+                    return { label: item.value, invisible: true };
+                  const align =
+                    columns && columns[idx2]
+                      ? columns[idx2].align || 'left'
+                      : 'left';
+
+                  let columnType =
+                    rowButton?.columnDefinition.columnTypeOverrides.filter(
+                      type => type.columnName === String(columns[idx2].name),
+                    );
+                  return {
+                    label: String(columns[idx2].name),
+                    value: item.value,
+                    content: item.value,
+                    name: String(columns[idx2].name),
+                    type:
+                      columnType?.length === 1
+                        ? columnType![0].columnType
+                        : 'text',
+                    actions:
+                      idx == Object.keys(fields).length - 1
+                        ? [
+                            {
+                              label: 'OK',
+                              onClick: () => {
+                                dispatch({
+                                  type: ACTIONS.SET_IS_ADDING_ROW,
+                                  payload: false,
+                                });
+                                if (onSaveRowButton)
+                                  onSaveRowButton(temporaryResult);
+                              },
+                            },
+                          ]
+                        : [],
+                  };
+                }),
+              ]}
+              data={Object.assign(
+                {},
+                ...items.map((item, idx2) => {
+                  let string = `${columns[idx2].name}`;
+
+                  // This weird hacky thing is to create a precomputed object that has fields acceptable for the PlainForm to accept
+                  let obj = {};
+                  (obj as any)[string] = item.value;
+
+                  return obj;
+                }),
+              )}
+            />
           </div>
         ))}
       {!loading && !error && data && data.length === 0 && (
