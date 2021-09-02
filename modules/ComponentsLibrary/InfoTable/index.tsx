@@ -379,22 +379,33 @@ export const InfoTable = ({
               onChange={fieldOutput => (temporaryResult = fieldOutput)}
               schema={[
                 items.map((item, idx2) => {
-                  if (item.invisible || !item.value)
-                    return { label: item.value, invisible: true };
-                  // Kept this around to help with alignments later on hopefully
-                  const align =
-                    columns && columns[idx2]
-                      ? columns[idx2].align || 'left'
-                      : 'left';
+                  if (
+                    item.invisible ||
+                    rowButton?.columnDefinition?.columnsToIgnore.includes(
+                      String(columns[idx2].name),
+                    )
+                  ) {
+                    console.log(item.value);
+                    return {
+                      label: '',
+                      invisible: true,
+                    };
+                  }
 
                   let columnType =
                     rowButton?.columnDefinition.columnTypeOverrides.filter(
                       type => type.columnName === String(columns[idx2].name),
                     );
+                  if (item.value)
+                    console.log(item.value.toString().replace('$ ', ''));
                   return {
                     label: String(columns[idx2].name),
-                    value: item.value,
-                    content: item.value,
+                    value: item.value
+                      ? item.value.toString().replace('$ ', '')
+                      : '',
+                    content: item.value
+                      ? item.value.toString().replace('$ ', '')
+                      : '',
                     name: String(columns[idx2].name),
                     type:
                       columnType?.length === 1
