@@ -161,6 +161,8 @@ const EditTimesheetModal: FC<Props> = ({
           parseISO(data.getTimeStarted()),
         )
       ) {
+        // FIXME saw this in the console while submitting my timesheet, assuming this needs to be handled.
+        // The timesheet was still submitted fine but I saw this console.log.
         console.log('caught a negative time, lets do something about it here');
       }
       delete data.date;
