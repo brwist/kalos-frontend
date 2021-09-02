@@ -12,7 +12,8 @@ import { SectionBar } from '../ComponentsLibrary/SectionBar';
 import { ConfirmDelete } from '../ComponentsLibrary/ConfirmDelete';
 import { RotatedImage, Deg } from '../ComponentsLibrary/RotatedImage';
 import { Loader } from '../Loader/main';
-import { ENDPOINT } from '../../constants';
+import { ENDPOINT, WaiverTypes } from '../../constants';
+
 import { getMimeType } from '../../helpers';
 import './styles.less';
 
@@ -20,6 +21,7 @@ export interface GalleryData {
   key: string;
   bucket: string;
   description: string;
+  typeId: number;
 }
 
 interface props {
@@ -107,6 +109,7 @@ export class AltGallery extends React.PureComponent<props, state> {
           key: `${this.props.transactionID}-${d.getReference()}`,
           description: d.getDescription(),
           bucket: 'kalos-transactions',
+          typeId: d.getTypeId(),
         };
       });
 
@@ -282,7 +285,11 @@ export class AltGallery extends React.PureComponent<props, state> {
             subtitle={`Transaction Document Type : ${
               fileList[activeImage]?.description === ''
                 ? 'No Type Provided'
-                : fileList[activeImage]?.description
+                : fileList[activeImage]?.description +
+                  ', Waiver Status: ' +
+                  WaiverTypes.find(
+                    a => a.value === fileList[activeImage]?.typeId,
+                  )?.label
             }`}
             actions={[
               ...(canDelete
@@ -304,6 +311,7 @@ export class AltGallery extends React.PureComponent<props, state> {
             fixedActions
             className="AltGallerySectionBar"
           />
+
           {isLoading ? (
             <Loader />
           ) : mimeType === 'application/pdf' ? (
@@ -339,6 +347,7 @@ export class AltGallery extends React.PureComponent<props, state> {
               </tbody>
             </table>
           )}
+
           <SectionBar
             pagination={{
               count: fileList.length,

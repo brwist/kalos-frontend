@@ -3,7 +3,12 @@ import { Options } from './modules/ComponentsLibrary/Field';
 export const MEALS_RATE = 35;
 
 export const MAX_PAGES = 20;
-
+export const WaiverTypes = [
+  { label: 'Final Waiver', value: 2 },
+  { label: 'Partial Waiver', value: 3 },
+  { label: 'Waiver On File', value: 4 },
+  { label: 'No Waiver Required', value: 5 },
+];
 export const APP_URL = 'https://app.kalosflorida.com/';
 export const BASE_URL = `${APP_URL}index.cfm`;
 

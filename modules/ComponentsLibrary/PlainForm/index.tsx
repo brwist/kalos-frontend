@@ -162,6 +162,15 @@ export const PlainForm: <T>(
             onSubmit();
           }
         }}
+        onKeyUp={event => {
+          if (event.key === 'Enter') {
+            event.stopPropagation();
+            event.preventDefault();
+            if (onSubmit) {
+              onSubmit();
+            }
+          }
+        }}
       >
         {error && (
           <Typography className="PlainFormError" component="div">
