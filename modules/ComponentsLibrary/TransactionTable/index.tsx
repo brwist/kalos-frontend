@@ -18,12 +18,7 @@ import CopyIcon from '@material-ui/icons/FileCopySharp';
 import RejectIcon from '@material-ui/icons/ThumbDownSharp';
 import SubmitIcon from '@material-ui/icons/ThumbUpSharp';
 import { format, parseISO } from 'date-fns';
-import React, {
-  FC,
-  useCallback,
-  useEffect,
-  useReducer,
-} from 'react';
+import React, { FC, useCallback, useEffect, useReducer } from 'react';
 import { ENDPOINT, NULL_TIME, OPTION_ALL } from '../../../constants';
 import { FilterType, reducer } from './reducer';
 import {
@@ -1192,6 +1187,7 @@ export const TransactionTable: FC<Props> = ({
       <PlainForm
         data={transactionFilter}
         onChange={handleSetFilter}
+        onSubmit={() => dispatch({ type: 'setSearching', data: true })}
         schema={SCHEMA}
         className="PayrollFilter"
       />
