@@ -76,6 +76,7 @@ export interface PlainFormProps<T> extends Style {
 interface Props<T> extends PlainFormProps<T> {
   onChange: (data: T) => void;
   onSubmit?: () => void;
+  onEnter?: boolean;
   validations?: Validation;
 }
 
@@ -93,6 +94,7 @@ export const PlainForm: <T>(
       compact = false,
       fullWidth = false,
       error,
+      onEnter,
       validations = {},
       className = '',
       children,
@@ -166,7 +168,7 @@ export const PlainForm: <T>(
           if (event.key === 'Enter') {
             event.stopPropagation();
             event.preventDefault();
-            if (onSubmit) {
+            if (onSubmit && onEnter) {
               onSubmit();
             }
           }
