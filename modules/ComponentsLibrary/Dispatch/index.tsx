@@ -58,12 +58,12 @@ const initialState: State = {
   techs: [],
   dismissedTechs: [],
   calls: [],
-  departmentIds: [],
-  jobTypes: [],
+  departmentIds: initialFormData.departmentIds,
+  jobTypes: initialFormData.jobTypes,
   departmentList: [],
   jobTypeList: [],
-  callStartDate: format(new Date(), 'yyyy-MM-dd'),
-  callEndDate: format(addDays(new Date(), 1), 'yyyy-MM-dd'),
+  callStartDate: initialFormData.dateStart,
+  callEndDate: initialFormData.dateEnd,
   formData: initialFormData,
   notIncludedJobTypes: [],
   openModal: false,
@@ -301,7 +301,7 @@ export const DispatchDashboard: React.FC<Props> = function DispatchDashboard({
       );
     }
     resetModal();
-    getCalls();
+    setCalls();
   }
 
   const handleMapRecenter = async (center: {lat: number, lng: number}, zoom: number, address?: string) => {
@@ -389,8 +389,12 @@ export const DispatchDashboard: React.FC<Props> = function DispatchDashboard({
     })
   }
 
-  setDropDownValues();
-  
+  useEffect(() => {
+    setDropDownValues();
+    console.log('dropdowns rerendered');
+  }, []);
+
+  console.log("rerendered");
 
   return (
     <PageWrapper userID={userID}>

@@ -86,13 +86,16 @@ export const reducer = (state: State, action: Action) => {
         ...state,
         departmentIds: action.data.departmentIds,
       };
-    case 'updateCallParameters':
+    case 'updateCallParameters': {
+      console.log(action.data.callDateStarted)
+      console.log(action.data.callDateEnded)
       return {
         ...state,
         jobTypes: action.data.jobTypes,
         callDateStart: action.data.callDateStarted,
         callDateEnd: action.data.callDateEnded,
       };
+    }
     case 'setDepartmentList':
       return {
         ...state,
