@@ -3,7 +3,6 @@ import React, {
   ReactNode,
   CSSProperties,
   useReducer,
-  useCallback,
 } from 'react';
 import clsx from 'clsx';
 import useTheme from '@material-ui/core/styles/useTheme';
@@ -15,7 +14,6 @@ import { Actions, ActionsProps } from '../Actions';
 import { Link } from '../Link';
 import { OrderDir } from '../../../helpers';
 import './styles.less';
-import { Props as ButtonProps } from '../Button';
 import { ACTIONS, Reducer } from './reducer';
 import { PlainForm } from '../PlainForm';
 import { Type } from '../Field';
@@ -120,8 +118,6 @@ export const InfoTable = ({
     });
   }
 
-  let dataObject = {};
-
   return (
     <div
       className={clsx('InfoTable', className)}
@@ -206,7 +202,7 @@ export const InfoTable = ({
                   >
                     {name} {dir && <ArrowIcon />}
                   </span>
-                  {/* ! This action can be appended to above via the actions variable to add the "Add New" button in */}
+                  {/* ! This action can have new actions pushed to it above via the actions variable to add the "Add New" button in */}
                   {actions && (
                     <Actions actions={actions} fixed={fixedActions} />
                   )}
@@ -216,6 +212,9 @@ export const InfoTable = ({
           )}
         </div>
       )}
+
+      {/* Adding Row */}
+
       {state.isAddingRow && (
         <PlainForm<typeof fields>
           onChange={fieldOutput => (temporaryResult = fieldOutput)}
@@ -252,6 +251,9 @@ export const InfoTable = ({
           data={fields}
         />
       )}
+
+      {/* Overview Mode */}
+
       {data &&
         mode === 'overview' &&
         data.map((items, idx) => (
@@ -379,6 +381,7 @@ export const InfoTable = ({
                 items.map((item, idx2) => {
                   if (item.invisible || !item.value)
                     return { label: item.value, invisible: true };
+                  // Kept this around to help with alignments later on hopefully
                   const align =
                     columns && columns[idx2]
                       ? columns[idx2].align || 'left'
@@ -397,31 +400,15 @@ export const InfoTable = ({
                       columnType?.length === 1
                         ? columnType![0].columnType
                         : 'text',
-                    actions:
-                      idx == Object.keys(fields).length - 1
-                        ? [
-                            {
-                              label: 'OK',
-                              onClick: () => {
-                                dispatch({
-                                  type: ACTIONS.SET_IS_ADDING_ROW,
-                                  payload: false,
-                                });
-                                if (onSaveRowButton)
-                                  onSaveRowButton(temporaryResult);
-                              },
-                            },
-                          ]
-                        : [],
                   };
                 }),
               ]}
               data={Object.assign(
                 {},
                 ...items.map((item, idx2) => {
-                  let string = `${columns[idx2].name}`;
-
                   // This weird hacky thing is to create a precomputed object that has fields acceptable for the PlainForm to accept
+                  // (as it takes objects with specific fields in as input)
+                  let string = `${columns[idx2].name}`;
                   let obj = {};
                   (obj as any)[string] = item.value;
 
