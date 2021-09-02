@@ -4,6 +4,8 @@ import { JobType } from '@kalos-core/kalos-rpc/JobType';
 import { TimesheetDepartment } from '@kalos-core/kalos-rpc/TimesheetDepartment';
 
 export type FormData = {
+  dateStart: string;
+  dateEnd: string;
   departmentIds: number[];
   jobTypes: number[];
 };
@@ -15,6 +17,8 @@ export interface State {
   jobTypes: number[];
   departmentList: TimesheetDepartment[];
   jobTypeList: JobType[];
+  callStartDate: string;
+  callEndDate: string;
   formData: FormData;
   notIncludedJobTypes: number[];
   openModal: boolean;
@@ -26,17 +30,18 @@ export interface State {
 }
 
 export type Action =
-  | { type: 'setTechs'; data: DispatchableTech[] }
-  | { type: 'setDismissedTechs'; data: DispatchableTech[] }
+  | { type: 'setTechs'; data: {
+    availableTechs: DispatchableTech[],
+    dismissedTechs: DispatchableTech[]
+  }}
   | { type: 'setCalls'; data: DispatchCall[] }
-  | { type: 'updateDepartmentIds'; data: {
-    techs: DispatchableTech[],
-    dismissedTechs: DispatchableTech[],
+  | { type: 'updateTechParameters'; data: {
     departmentIds: number[] 
   }}
-  | { type: 'updateJobTypes'; data: {
-    calls: DispatchCall[],
-    jobTypes: number[]
+  | { type: 'updateCallParameters'; data: {
+    jobTypes: number[],
+    callDateStarted: string,
+    callDateEnded: string
   }}
   | { type: 'setDepartmentList'; data: TimesheetDepartment[] }
   | { type: 'setJobTypeList'; data: JobType[] }
@@ -45,6 +50,10 @@ export type Action =
     techs: DispatchableTech[],
     calls: DispatchCall[],
     dismissedTechs: DispatchableTech[],
+    departmentList: TimesheetDepartment[],
+    jobTypeList: JobType[]
+  }}
+  | { type: 'setInitialDropdowns'; data: {
     departmentList: TimesheetDepartment[],
     jobTypeList: JobType[]
   }}
@@ -64,30 +73,25 @@ export const reducer = (state: State, action: Action) => {
     case 'setTechs':
       return {
         ...state,
-        techs: action.data,
-      };
-    case 'setDismissedTechs':
-      return {
-        ...state,
-        dismissedtechs: action.data,
+        techs: action.data.availableTechs,
+        dismissedTechs: action.data.dismissedTechs
       };
     case 'setCalls':
       return {
         ...state,
         calls: action.data,
       };
-    case 'updateDepartmentIds':
+    case 'updateTechParameters':
       return {
         ...state,
-        techs: action.data.techs,
-        dismissedTechs: action.data.dismissedTechs,
         departmentIds: action.data.departmentIds,
       };
-    case 'updateJobTypes':
+    case 'updateCallParameters':
       return {
         ...state,
-        calls: action.data.calls,
         jobTypes: action.data.jobTypes,
+        callDateStart: action.data.callDateStarted,
+        callDateEnd: action.data.callDateEnded,
       };
     case 'setDepartmentList':
       return {
@@ -110,6 +114,12 @@ export const reducer = (state: State, action: Action) => {
         techs: action.data.techs,
         calls: action.data.calls,
         dismissedTechs: action.data.dismissedTechs,
+        departmentList: action.data.departmentList,
+        jobTypeList: action.data.jobTypeList,
+      }
+    case 'setInitialDropdowns':
+      return {
+        ...state,
         departmentList: action.data.departmentList,
         jobTypeList: action.data.jobTypeList,
       }

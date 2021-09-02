@@ -74,6 +74,7 @@ import { TransactionActivityClient } from '@kalos-core/kalos-rpc/TransactionActi
 import { EmailClient } from '@kalos-core/kalos-rpc/Email';
 import { PropLinkClient } from '@kalos-core/kalos-rpc/PropLink';
 import { TransactionAccountClient } from '@kalos-core/kalos-rpc/TransactionAccount';
+import { EventAssignmentClient } from '@kalos-core/kalos-rpc/EventAssignment';
 
 export type SimpleFile = {
   key: string;
@@ -140,6 +141,7 @@ export const PropLinkClientService = new PropLinkClient(ENDPOINT);
 export const TransactionAccountClientService = new TransactionAccountClient(
   ENDPOINT,
 );
+export const EventAssignmentClientService = new EventAssignmentClient(ENDPOINT);
 
 export const getCFAppUrl = (action: string) => `${BASE_URL}?action=${action}`;
 

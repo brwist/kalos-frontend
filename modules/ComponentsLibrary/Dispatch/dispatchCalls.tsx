@@ -1,5 +1,5 @@
 import { DispatchCall } from '@kalos-core/kalos-rpc/Dispatch';
-import React, { FC, useEffect, useState, useCallback } from 'react';
+import React, { FC, useEffect } from 'react';
 import Table from '@material-ui/core/Table';
 import TableRow from '@material-ui/core/TableRow';
 import TableHead from '@material-ui/core/TableHead';
@@ -8,7 +8,6 @@ import TableContainer from '@material-ui/core/TableContainer';
 import TableCell from '@material-ui/core/TableCell';
 import { format, setMinutes, setHours } from 'date-fns';
 import { Droppable } from 'react-beautiful-dnd';
-import { CallsByTech } from '../../CallsByTech/main';
 
 interface props {
   userID: number;
@@ -21,7 +20,9 @@ interface props {
 }
 
 export const DispatchCalls: FC<props> = props => {
-  useEffect(() => {}, [props]);
+  useEffect(() => {
+    console.log('inner calls');
+  }, [props.calls]);
 
   return (
     <TableContainer>
@@ -155,12 +156,15 @@ export const DispatchCalls: FC<props> = props => {
                     </TableCell>
                     <TableCell align="center">{`${call.getJobType()}/${call.getJobSubtype()}`}</TableCell>
                     <TableCell align="center">
-                      {call.getAssigned() != '0' && call.getAssigned() != ''
+                      {call.getLogTechnicianAssigned() != '0' && call.getLogTechnicianAssigned() != ''
                         ? call.getAssigned()
                         : 'Unassigned'}
                     </TableCell>
                   </TableRow>
-                  {provided.placeholder}
+                  {provided.placeholder && false}
+                  {/* Come back and Fix Later */}
+
+                  {/* <TableRow style={{ display: 'none' }}>{provided.placeholder}</TableRow> */}
                 </TableBody>
               )}
             </Droppable>

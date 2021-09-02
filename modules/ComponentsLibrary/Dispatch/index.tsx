@@ -11,6 +11,8 @@ import {
   ServicesRenderedClientService,
   TimesheetDepartmentClientService,
   JobTypeClientService,
+  EventAssignmentClientService,
+  EventClientService,
   slackNotify,
 } from '../../../helpers';
 import { DateRange } from '@kalos-core/kalos-rpc/compiled-protos/common_pb';
@@ -19,10 +21,12 @@ import { TimesheetDepartment } from '@kalos-core/kalos-rpc/TimesheetDepartment';
 import { JobType } from '@kalos-core/kalos-rpc/JobType';
 import { ActivityLog } from '@kalos-core/kalos-rpc/ActivityLog';
 import { ServicesRendered } from '@kalos-core/kalos-rpc/ServicesRendered';
+import { EventAssignment } from '@kalos-core/kalos-rpc/EventAssignment';
+import { Event } from '@kalos-core/kalos-rpc/Event';
 import { PageWrapper } from '../../PageWrapper/main';
 import { SectionBar } from '../SectionBar';
 import { PlainForm, Schema } from '../PlainForm';
-import { format } from 'date-fns';
+import { addDays, format } from 'date-fns';
 import { debounce } from 'lodash';
 import { DragDropContext } from 'react-beautiful-dnd';
 import { Confirm } from '../Confirm';
@@ -34,8 +38,9 @@ import TableRow from '@material-ui/core/TableRow';
 import TableHead from '@material-ui/core/TableHead';
 import TableCell from '@material-ui/core/TableCell';
 import Grid from '@material-ui/core/Grid';
-import { Button } from '@material-ui/core';
+import Button  from '@material-ui/core/Button';
 import { Alert } from '../Alert';
+import UndoRounded from '@material-ui/icons/UndoRounded';
 
 
 export interface Props {
@@ -43,6 +48,8 @@ export interface Props {
 }
 
 const initialFormData: FormData = {
+  dateStart: format(new Date(), 'yyyy-MM-dd'),
+  dateEnd: format(addDays(new Date(), 1), 'yyyy-MM-dd'),
   departmentIds: [],
   jobTypes: [],
 };
@@ -52,9 +59,11 @@ const initialState: State = {
   dismissedTechs: [],
   calls: [],
   departmentIds: [],
-  jobTypes: [1,2,3,9],
+  jobTypes: [],
   departmentList: [],
   jobTypeList: [],
+  callStartDate: format(new Date(), 'yyyy-MM-dd'),
+  callEndDate: format(addDays(new Date(), 1), 'yyyy-MM-dd'),
   formData: initialFormData,
   notIncludedJobTypes: [],
   openModal: false,
@@ -70,56 +79,129 @@ export const DispatchDashboard: React.FC<Props> = function DispatchDashboard({
 }) {
   const [state, dispatchDashboard] = useReducer(reducer, initialState);
 
-  const handleChange = useCallback( async (formData: FormData) => {
+  const getTechnicians = useCallback( async () => {
+    console.log('techs');
+    const tech = new DispatchableTech();
+    const dr = new DateRange();
+    dr.setStart('2012-01-01');
+    dr.setEnd(format(new Date(), 'yyyy-MM-dd'));
+    tech.setDateRange(dr);
+    tech.setDepartmentList(state.departmentIds.toString());
+    try {      
+      const techs = await DispatchClientService.GetDispatchableTechnicians(tech);
+      const availableTechs = techs.getResultsList().filter(tech => tech.getActivity() != 'Dismissed');
+      const dismissedTechs = techs.getResultsList().filter(tech => tech.getActivity() === 'Dismissed');
+      return {available: availableTechs, dismissed: dismissedTechs};
+    } catch (err) {
+      console.error(
+        `An error occurred while getting Dispatch Techs: ${err}`
+      );
+      return {available: [], dismissed: []};
+    }
+  }, [state.departmentIds]);
+
+  const getCalls = useCallback( async () => {
+    console.log('calls');
+    const call = new DispatchCall();
+    call.setDateRangeList(['>=', state.callStartDate, '<=', state.callEndDate]);
+    call.setDateTargetList(['date_started', 'date_ended']);
+    call.setJobTypeIdList(state.jobTypes.toString());
+    try {
+      const calls = await DispatchClientService.GetDispatchCalls(call);
+      return {calls: calls.getResultsList()};
+    } catch (err) {
+      console.error(
+        `An error occurred while getting Dispatch Calls: ${err}`
+      );
+      return {calls: []};
+    }
+  }, [state.jobTypes, state.callStartDate, state.callEndDate]);
+
+  const getDepartments = async() => {
+    const departmentReq = new TimesheetDepartment();
+    departmentReq.setIsActive(1);
+    try {
+      const departments = await TimesheetDepartmentClientService.BatchGet(departmentReq);
+      return {departments: departments.getResultsList()};
+    } catch (err) {
+      console.error(
+        `An error occurred while getting Departments: ${err}`
+      );
+      return {departments: []};
+    }
+  }
+
+  const getJobTypes = async() => {
+    const jobTypeReq = new JobType();
+    const jobTypes = await JobTypeClientService.BatchGet(jobTypeReq);
+    try {
+      const displayedJobTypes = jobTypes.getResultsList().filter(jobType => !state.notIncludedJobTypes.includes(jobType.getId()));
+      return {jobTypes: displayedJobTypes};
+    } catch (err) {
+      console.error(
+        `An error occurred while getting Job Types: ${err}`
+      );
+      return {jobTypes: []};
+    }
+  }
+
+  const setTechnicians = useCallback( async() => {
+    console.log('test tech');
+    const techs = await getTechnicians();
+      dispatchDashboard({
+        type: 'setTechs',
+        data: {
+          availableTechs: techs.available,
+          dismissedTechs: techs.dismissed
+        }
+      });
+  }, [getTechnicians]);
+
+  const setCalls = useCallback( async() => {
+    console.log('test call')
+    const calls = await getCalls();
+    dispatchDashboard({
+      type: 'setCalls',
+      data: calls.calls
+    });
+  }, [getCalls])
+
+  useEffect(() => {
+    setTechnicians();
+  }, [setTechnicians]);
+
+  useEffect(() => {
+    setCalls();
+  }, [setCalls])
+
+  const handleChange = async (formData: FormData) => {
+    const callDateStart = formData.dateStart.replace('00:00', '');
+    const callDateEnd = formData.dateEnd.replace('00:00', '');
+    console.log({stateStart: state.callStartDate, formStart: callDateStart});
+    console.log({stateEnd: state.callStartDate, formEnd: callDateEnd});
     if (state.departmentIds.length != formData.departmentIds.length || !state.departmentIds.every((val, index) => val === formData.departmentIds[index])) {
-      const dateRange = new DateRange();
-      dateRange.setStart('2012-01-01');
-      dateRange.setEnd(format(new Date(), 'yyyy-MM-dd'));
-      const newDispatchTechs = new DispatchableTech();
-      newDispatchTechs.setDateRange(dateRange);
-      newDispatchTechs.setDepartmentList(formData.departmentIds.toString());
-
-      try{
-
-        const techs = await DispatchClientService.GetDispatchableTechnicians(newDispatchTechs);
-        const availableTechs = techs.getResultsList().filter(tech => tech.getActivity() != 'Dismissed');
-        const dismissedTechs = techs.getResultsList().filter(tech => tech.getActivity() === 'Dismissed');
-        
-        dispatchDashboard({
-          type: 'updateDepartmentIds',
-          data: {
-            techs: availableTechs,
-            dismissedTechs: dismissedTechs,
-            departmentIds: formData.departmentIds,
-          }
-        });
-      } catch (err) {
-        console.error(
-          `An error occurred while getting Dispatch Techs: ${err}`
-        );
-      }
+      dispatchDashboard({
+        type: 'updateTechParameters',
+        data: {
+          departmentIds: formData.departmentIds
+        }
+      });
     }
-    if (state.jobTypes.length != formData.jobTypes.length || !state.jobTypes.every((val, index) => val === formData.jobTypes[index])) {
-      const newDispatchCalls = new DispatchCall();
-      newDispatchCalls.setJobTypeIdList(formData.jobTypes.toString());
-
-      try {
-        const calls = await DispatchClientService.GetDispatchCalls(newDispatchCalls);
-        dispatchDashboard({
-          type: 'updateJobTypes',
-          data: {
-            calls: calls.getResultsList(),
-            jobTypes: formData.jobTypes,
-          }
-        });
-      } catch (err) {
-        console.error(
-          `An error occurred while getting Dispatch Calls: ${err}`
-        );
-      }
+    if (state.jobTypes.length != formData.jobTypes.length 
+    || !state.jobTypes.every((val, index) => val === formData.jobTypes[index])
+    || state.callStartDate != callDateStart
+    || state.callEndDate != callDateEnd) {
+      console.log('here');
+      dispatchDashboard({
+        type: 'updateCallParameters',
+        data: {
+          jobTypes: formData.jobTypes,
+          callDateStarted: callDateStart,
+          callDateEnded: callDateEnd
+        }
+      });
     }
-  }, [state.departmentIds, state.jobTypes]);
-
+  }
 
   const handleUndismissButtonClick = () => {
     dispatchDashboard({ 
@@ -155,7 +237,7 @@ export const DispatchDashboard: React.FC<Props> = function DispatchDashboard({
       );
     }
     resetModal();
-    load();
+    setTechnicians();
   };
 
   const handleUndismissTech = async (tech : DispatchableTech) => {
@@ -181,13 +263,45 @@ export const DispatchDashboard: React.FC<Props> = function DispatchDashboard({
       );
     }
     resetModal();
-    load();
+    setTechnicians();
   }
 
   const handleAssignTech = async () => {
+    const assignment = new EventAssignment();
+    const event = new Event();
+    assignment.setEventId(state.selectedCall.getId());
 
+    event.setId(state.selectedCall.getId());
+    const ids = (state.selectedCall.getLogTechnicianAssigned() != '0' && state.selectedCall.getLogTechnicianAssigned() != '') 
+              ? `${state.selectedCall.getLogTechnicianAssigned()},${state.selectedTech.getUserId()}`
+              : `${state.selectedTech.getUserId()}`;
+
+    const idArray = ids.split(',');
+
+    event.setLogTechnicianAssigned(ids);
+
+    try {
+      const assignedEvents = await EventAssignmentClientService.BatchGet(assignment);
+      const results = assignedEvents.getResultsList();
+      for (let event in results) {
+        assignment.setId(results[event].getId());
+        EventAssignmentClientService.Delete(assignment);
+      }
+
+
+      for (let id in idArray) {
+        assignment.setUserId(Number(idArray[id]));
+        await EventAssignmentClientService.Create(assignment);
+      }
+
+      await EventClientService.Update(event);
+    } catch (err) {
+      console.error(
+        `An error occurred while updating the Event Assignment and Event: ${err}`
+      );
+    }
     resetModal();
-    load();
+    getCalls();
   }
 
   const handleMapRecenter = async (center: {lat: number, lng: number}, zoom: number, address?: string) => {
@@ -218,46 +332,30 @@ export const DispatchDashboard: React.FC<Props> = function DispatchDashboard({
     }})
   }
 
-  const load = useCallback(async () => {
-    const dispatchTech = new DispatchableTech();
-    dispatchTech.setDepartmentList(state.departmentIds.toString());
-    const dateRange = new DateRange();
-    dateRange.setStart('2012-01-01');
-    dateRange.setEnd(format(new Date(), 'yyyy-MM-dd'));
-    dispatchTech.setDateRange(dateRange);
-    const dispatchCall = new DispatchCall();
-    dispatchCall.setJobTypeIdList(state.jobTypes.toString());
-    const departmentReq = new TimesheetDepartment();
-    departmentReq.setIsActive(1);
-    const jobTypeReq = new JobType();
-    try {
-      const techs = await DispatchClientService.GetDispatchableTechnicians(dispatchTech);
-      const calls = await DispatchClientService.GetDispatchCalls(dispatchCall);
-      const departments = await TimesheetDepartmentClientService.BatchGet(departmentReq);
-      const jobTypes = await JobTypeClientService.BatchGet(jobTypeReq);
+  const setDropDownValues = async () => {
+    const departmentReq = await getDepartments();
+    const jobTypeReq = await getJobTypes();
+    dispatchDashboard({
+      type: 'setInitialDropdowns',
+      data: {
+        departmentList: departmentReq.departments,
+        jobTypeList: jobTypeReq.jobTypes,
+      }
+    })
+  }
 
-      const availableTechs = techs.getResultsList().filter(tech => tech.getActivity() != 'Dismissed');
-      const dismissedTechs = techs.getResultsList().filter(tech => tech.getActivity() === 'Dismissed');
-      const displayedJobTypes = jobTypes.getResultsList().filter(jobType => !state.notIncludedJobTypes.includes(jobType.getId()));
-      
-      dispatchDashboard({
-        type: 'setInitialRender',
-        data: {
-          techs: availableTechs,
-          dismissedTechs: dismissedTechs,
-          calls: calls.getResultsList(),
-          departmentList: departments.getResultsList(),
-          jobTypeList: displayedJobTypes,
-        }
-      })
-    } catch (err) {
-      console.error(
-        `An error occurred while getting Dispatch Techs, Calls, Departments, and Job Types: ${err}`
-      );
-    }
-  }, [state.notIncludedJobTypes]);
   const SCHEMA_PRINT: Schema<FormData> = [
     [
+      {
+        name: 'dateStart',
+        label: 'Calls Start Date',
+        type: 'mui-date',
+      },
+      {
+        name: 'dateEnd',
+        label: 'Call End Date',
+        type: 'mui-date',
+      },
       {
         name: 'departmentIds',
         label: 'Department(s)',
@@ -291,10 +389,9 @@ export const DispatchDashboard: React.FC<Props> = function DispatchDashboard({
     })
   }
 
-  useEffect(() => {
-    load();
-  }, [load]);
+  setDropDownValues();
   
+
   return (
     <PageWrapper userID={userID}>
       <Grid>
@@ -338,13 +435,12 @@ export const DispatchDashboard: React.FC<Props> = function DispatchDashboard({
           }}>
             <Grid container spacing={3}>
               <Grid item xs={6}>
-                {state.dismissedTechs.length > 0 && (
-                  <div style={{alignItems:'center', margin:'auto', textAlign:'center'}}>
-                    <Button style={{backgroundColor:'green', color:'white', width:'60%', padding:'10px', textAlign:'center'}} onClick={handleUndismissButtonClick}>
-                      Undismiss Technician
-                    </Button>
-                  </div>
-                )}
+                <div style={{alignItems:'center', margin:'auto', textAlign:'center', display:state.dismissedTechs.length ? '' : 'none'}}>
+                  <Button style={{backgroundColor:'green', color:'white', width:'60%', padding:'10px', textAlign:'center'}} onClick={handleUndismissButtonClick}>
+                    <UndoRounded></UndoRounded>
+                    Undismiss Technician
+                  </Button>
+                </div>
                 <DispatchTechs
                   userID={userID}
                   techs={state.techs}
@@ -464,6 +560,10 @@ export const DispatchDashboard: React.FC<Props> = function DispatchDashboard({
                         <TableRow>
                           <TableCell style={{width:"35%", fontWeight:"bold", fontSize:"15px"}}>Location:</TableCell>
                           <TableCell style={{width:"65%", textAlign:"center"}}>{state.selectedCall.getPropertyCity()}</TableCell>
+                        </TableRow>
+                        <TableRow>
+                          <TableCell style={{width:"35%", fontWeight:"bold", fontSize:"15px"}}>Customer:</TableCell>
+                          <TableCell style={{width:"65%", textAlign:"center"}}>{state.selectedCall.getCustName()}</TableCell>
                         </TableRow>
                         <TableRow>
                           <TableCell style={{fontWeight:"bold", fontSize:"15px"}}>Type:</TableCell>

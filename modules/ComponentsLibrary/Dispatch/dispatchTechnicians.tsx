@@ -1,5 +1,5 @@
 import { DispatchableTech } from '@kalos-core/kalos-rpc/Dispatch';
-import React, { FC, useEffect, useState, useCallback } from 'react';
+import React, { FC, useEffect } from 'react';
 import { Draggable, Droppable } from 'react-beautiful-dnd';
 import Table from '@material-ui/core/Table';
 import TableBody from '@material-ui/core/TableBody';
@@ -9,7 +9,6 @@ import TableHead from '@material-ui/core/TableHead';
 import TableCell from '@material-ui/core/TableCell';
 import { differenceInMinutes } from 'date-fns/esm';
 import DeleteOutlineIcon from '@material-ui/icons/DeleteOutline';
-import Grid from '@material-ui/core/Grid';
 
 
 interface props {
@@ -21,7 +20,8 @@ interface props {
 
 export const DispatchTechs: FC<props> = props => {
   useEffect(() => {
-  }, [props]);
+    console.log("inner techs")
+  }, [props.dismissedTechs, props.techs]);
 
   return (
     <div>
@@ -90,45 +90,49 @@ export const DispatchTechs: FC<props> = props => {
                     );
                   })}
                 {provided.placeholder}
-              </TableBody>
+                </TableBody>
+                
             )}
           </Droppable>
-        </Table>
+          </Table>
       </TableContainer>
-      
-      <Droppable droppableId="dismissTech">
-        {(provided, snapshot) => {
-          return (
-            <Grid
-              container
-              spacing={2}
-              ref={provided.innerRef}
-              style={{
-                backgroundColor: snapshot.isDraggingOver ? '#711313' : 'white',
-                color: snapshot.isDraggingOver ? 'white' : '#711313',
-                border: 1,
-                borderWidth: "3px",
-                borderColor: "#711313",
-                borderStyle: "solid",
-                height: "55px",
-                width: "95%",
-                margin: "auto"
-              }}
-              {...provided.droppableProps}
-            >
-              <Grid item xs={6} style={{margin:'auto', fontSize:'16px', fontWeight:'bold', textAlign:'right'}}>
-                {`Dismiss Technician`}
-              </Grid>
-              <Grid item xs={6} style={{}}>
-                <DeleteOutlineIcon
-                  style={{fontSize:'30'}}
-                />
-              </Grid>
-              {provided.placeholder}
-            </Grid>
-          )  
-        }}
-      </Droppable>
+
+      <TableContainer style={{paddingTop:'20px'}}>
+        <Droppable droppableId="dismissTech">
+          {(provided, snapshot) => {
+            return (
+              <Table
+                ref={provided.innerRef}
+                {...provided.droppableProps}
+                style={{width:'90%', margin:'auto'}} size={'small'}
+              >
+                <TableHead></TableHead>
+                <TableBody>
+                  <TableRow
+                    style={{
+                      backgroundColor: snapshot.isDraggingOver ? '#711313' : 'white',
+                      border: 1,
+                      borderWidth: "3px",
+                      borderColor: "#711313",
+                      borderStyle: "solid"
+                    }}     
+                  >
+                    <TableCell style={{color: snapshot.isDraggingOver ? 'white' : '#711313', margin:'auto', fontSize:'16px', fontWeight:'bold', textAlign:'right', width:'60%'}}>
+                      {`Dismiss Technician`}
+                    </TableCell>
+                    <TableCell style={{color: snapshot.isDraggingOver ? 'white' : '#711313', alignItems:'left'}}>
+                      <DeleteOutlineIcon
+                        style={{fontSize:'40'}}
+                      />
+                    </TableCell>
+                  </TableRow>
+                </TableBody>
+                <TableBody style={{ display: 'none' }}>{provided.placeholder}</TableBody>
+              </Table>
+            )
+          }}
+        </Droppable>
+      </TableContainer>
     </div>
   );
 };
