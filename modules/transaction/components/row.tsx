@@ -10,20 +10,23 @@ import NotesIcon from '@material-ui/icons/EditSharp';
 import CheckIcon from '@material-ui/icons/CheckCircleSharp';
 import CloseIcon from '@material-ui/icons/Close';
 import { Prompt } from '../../Prompt/main';
+import { PopoverComponent } from '../../ComponentsLibrary/Popover';
 import { Transaction } from '@kalos-core/kalos-rpc/Transaction';
 import { S3Client } from '@kalos-core/kalos-rpc/S3File';
+import { Event } from '@kalos-core/kalos-rpc/Event';
 import { TransactionDocumentClient } from '@kalos-core/kalos-rpc/TransactionDocument';
 import { UserClient, User } from '@kalos-core/kalos-rpc/User';
 import { EmailClient, EmailConfig } from '@kalos-core/kalos-rpc/Email';
 import { TxnLog } from './log';
 import { TxnNotes } from './notes';
-import { getSlackID, slackNotify } from '../../../helpers';
+import { getSlackID, slackNotify, EventClientService } from '../../../helpers';
 import { ENDPOINT } from '../../../constants';
 import { AccountPicker } from '../../ComponentsLibrary/Pickers/index';
 import { AltGallery, GalleryData } from '../../AltGallery/main';
 import { Row } from '../../ComponentsLibrary/InfoTable';
 import { Tooltip } from '../../ComponentsLibrary/Tooltip';
 import { parseISO } from 'date-fns';
+import { EventClient } from '@kalos-core/kalos-rpc/Event';
 
 interface props {
   txn: Transaction;
@@ -55,19 +58,37 @@ export function TransactionRow({
   updateNotes,
   acceptOverride,
   updateCostCenter,
+  //jobInfo,
   userID,
   editingCostCenter,
   toggleEditingCostCenter,
 }: props): Row {
   const FileInput = React.createRef<HTMLInputElement>();
+  const anchorEl = React.createRef<HTMLDivElement>();
 
   const clients = {
     user: new UserClient(ENDPOINT),
     email: new EmailClient(ENDPOINT),
     docs: new TransactionDocumentClient(ENDPOINT),
     s3: new S3Client(ENDPOINT),
+    job: new EventClient(ENDPOINT),
   };
 
+  const getJobNumberInfo = async (number: number) => {
+    let returnString = 'No Job Info Found';
+    if (number != 0) {
+      try {
+        console.log('we got called to get info');
+        const eventReq = new Event();
+        eventReq.setId(number);
+        const res = await EventClientService.Get(eventReq);
+        returnString = res.getDescription();
+      } catch (error) {
+        console.log('Not a number');
+      }
+    }
+    return returnString;
+  };
   const handleFile = (e: any) => {
     const fr = new FileReader();
     fr.onload = async () => {
@@ -182,7 +203,6 @@ export function TransactionRow({
     await updateCostCenter(id);
     toggleEditingCostCenter();
   };
-
   const amount = prettyMoney(txn.getAmount());
   return [
     {
@@ -229,7 +249,20 @@ export function TransactionRow({
         : '',
     },
     {
-      value: txn.getJobId(),
+      value:
+        txn.getJobId() != 0 ? (
+          <div ref={anchorEl}>
+            <PopoverComponent
+              buttonLabel={
+                txn.getJobId() === 0 ? '' : txn.getJobId().toString()
+              }
+              onClick={() => getJobNumberInfo(txn.getJobId())}
+              anchorElement={anchorEl}
+            />
+          </div>
+        ) : (
+          txn.getJobId()
+        ),
     },
     {
       value: `$ ${amount}`,
@@ -363,6 +396,8 @@ function getGalleryData(txn: Transaction): GalleryData[] {
     return {
       key: `${txn.getId()}-${d.getReference()}`,
       bucket: 'kalos-transactions',
+      typeId: d.getTypeId(),
+      description: d.getDescription(),
     };
   });
 }
