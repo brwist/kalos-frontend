@@ -3,6 +3,8 @@ import React, {
   ReactNode,
   CSSProperties,
   useReducer,
+  useEffect,
+  useCallback,
 } from 'react';
 import clsx from 'clsx';
 import useTheme from '@material-ui/core/styles/useTheme';
@@ -12,7 +14,7 @@ import ArrowDropDownIcon from '@material-ui/icons/ArrowDropDown';
 import Typography from '@material-ui/core/Typography';
 import { Actions, ActionsProps } from '../Actions';
 import { Link } from '../Link';
-import { OrderDir } from '../../../helpers';
+import { OrderDir, UserClientService } from '../../../helpers';
 import './styles.less';
 import { ACTIONS, Reducer } from './reducer';
 import { PlainForm } from '../PlainForm';
@@ -91,6 +93,7 @@ export const InfoTable = ({
   const [state, dispatch] = useReducer(Reducer, {
     isAddingRow: false,
     mode: 'overview',
+    technicians: undefined,
   });
   if (mode && state.mode !== mode) {
     dispatch({ type: ACTIONS.SET_MODE, payload: mode });
@@ -145,6 +148,19 @@ export const InfoTable = ({
 
     return value.toString().replace('$ ', '');
   };
+
+  const load = useCallback(async () => {
+    dispatch({
+      type: ACTIONS.SET_TECHNICIANS,
+      payload: await UserClientService.loadTechnicians(),
+    });
+  }, []);
+
+  useEffect(() => {
+    load();
+  }, [load]);
+
+  console.log('techs: ', state.technicians);
 
   return (
     <div
