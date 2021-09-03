@@ -118,6 +118,34 @@ export const InfoTable = ({
     });
   }
 
+  const determineCast = (
+    value:
+      | boolean
+      | React.ReactChild
+      | React.ReactFragment
+      | React.ReactPortal
+      | ReactNode
+      | undefined,
+    columnType:
+      | {
+          columnName: string;
+          columnType: Type;
+        }
+      | undefined,
+  ) => {
+    if (!value) {
+      return '';
+    }
+    if (columnType === undefined) {
+      return value.toString().replace('$ ', '');
+    }
+    if (columnType.columnType === 'number') {
+      return parseFloat(value.toString().replace('$ ', '').trim());
+    }
+
+    return value.toString().replace('$ ', '');
+  };
+
   return (
     <div
       className={clsx('InfoTable', className)}
@@ -385,7 +413,6 @@ export const InfoTable = ({
                       String(columns[idx2].name),
                     )
                   ) {
-                    console.log(item.value);
                     return {
                       label: '',
                       invisible: true,
@@ -396,16 +423,25 @@ export const InfoTable = ({
                     rowButton?.columnDefinition.columnTypeOverrides.filter(
                       type => type.columnName === String(columns[idx2].name),
                     );
-                  if (item.value)
-                    console.log(item.value.toString().replace('$ ', ''));
+
                   return {
                     label: String(columns[idx2].name),
-                    value: item.value
-                      ? item.value.toString().replace('$ ', '')
-                      : '',
-                    content: item.value
-                      ? item.value.toString().replace('$ ', '')
-                      : '',
+                    value: determineCast(
+                      item.value,
+                      columnType === undefined
+                        ? undefined
+                        : columnType.length > 0
+                        ? columnType[0]
+                        : undefined,
+                    ),
+                    content: determineCast(
+                      item.value,
+                      columnType === undefined
+                        ? undefined
+                        : columnType.length > 0
+                        ? columnType[0]
+                        : undefined,
+                    ),
                     name: String(columns[idx2].name),
                     type:
                       columnType?.length === 1
@@ -417,11 +453,23 @@ export const InfoTable = ({
               data={Object.assign(
                 {},
                 ...items.map((item, idx2) => {
+                  let columnType =
+                    rowButton?.columnDefinition.columnTypeOverrides.filter(
+                      type => type.columnName === String(columns[idx2].name),
+                    );
+
                   // This weird hacky thing is to create a precomputed object that has fields acceptable for the PlainForm to accept
                   // (as it takes objects with specific fields in as input)
                   let string = `${columns[idx2].name}`;
                   let obj = {};
-                  (obj as any)[string] = item.value;
+                  (obj as any)[string] = determineCast(
+                    item.value,
+                    columnType === undefined
+                      ? undefined
+                      : columnType.length > 0
+                      ? columnType[0]
+                      : undefined,
+                  );
 
                   return obj;
                 }),
