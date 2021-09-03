@@ -1,11 +1,13 @@
 import React from 'react';
-import ReactDOM from 'react-dom';
 import { Login } from './main';
 import { StyledPage } from '../PageWrapper/styled';
-
-ReactDOM.render(
+export const LoginForm = ()=>{
+  const Component = (
+  <>
   <StyledPage>
     <Login />
-  </StyledPage>,
-  document.getElementById('root'),
-);
+  </StyledPage>
+  </>
+  );
+  return Component;
+}

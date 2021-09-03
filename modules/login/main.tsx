@@ -7,6 +7,9 @@ import {
 import TextField from '@material-ui/core/TextField';
 import Button from '@material-ui/core/Button';
 import Grid from '@material-ui/core/Grid';
+import { ENDPOINT } from '../../constants';
+import { Dashboard } from '../Dashboard/main';
+import ReactDOM from 'react-dom';
 
 interface props {
   onSuccess?(): void;
@@ -91,24 +94,41 @@ export class Login extends React.PureComponent<props, state> {
   handlePasswordChange = this.handleValueChange('password');
 
   async handleLogin() {
-    try {
+    // Not working for local side
+    // try {
+    //   const userData = new User();
+    //   const username = this.LoginInput.current!.value;
+    //   const password = this.PwdInput.current!.value;
+    //   userData.setLogin(username);
+    //   userData.setPwd(password);
+    //   await this.LogClient.GetToken(username, password);
+    //   const user = await this.UserClient.Get(userData);
+    //   const log = new ActivityLog();
+    //   log.setActivityName(
+    //     `${user.getFirstname()} ${user.getLastname()} authenticated`,
+    //   );
+      
+    //   log.setUserId(user.getId());
+    //   await this.LogClient.Create(log);
+    //   if (this.props.onSuccess) {
+    //     this.props.onSuccess();
+    //   }
+    // } catch (err) {
+    //   console.log(err);
+    // }
+
+    try{
       const userData = new User();
       const username = this.LoginInput.current!.value;
       const password = this.PwdInput.current!.value;
       userData.setLogin(username);
       userData.setPwd(password);
-      await this.LogClient.GetToken(username, password);
-      const user = await this.UserClient.Get(userData);
-      const log = new ActivityLog();
-      log.setActivityName(
-        `${user.getFirstname()} ${user.getLastname()} authenticated`,
-      );
-      log.setUserId(user.getId());
-      await this.LogClient.Create(log);
-      if (this.props.onSuccess) {
-        this.props.onSuccess();
-      }
-    } catch (err) {
+      const u = new UserClient(ENDPOINT);
+      u.GetToken(username, password).then(() => {
+        ReactDOM.render(<Dashboard userId={103285} withHeader  withSideMenu />, document.getElementById('root'));
+        // ReactDOM.render(<ComponentsLibrary />, document.getElementById('root'));
+      });
+    }catch(err){
       console.log(err);
     }
   }

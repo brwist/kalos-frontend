@@ -3,6 +3,7 @@ import useTheme from '@material-ui/core/styles/useTheme';
 import useMediaQuery from '@material-ui/core/useMediaQuery';
 import ReactDOM from 'react-dom';
 import { StyledPage } from '../PageWrapper/styled';
+import Dashboard from '../Dashboard/index';
 import Actions from './Actions/examples';
 import ActivityLogReport from './ActivityLogReport/examples';
 import AddLog from './AddLog/examples';
@@ -105,6 +106,7 @@ import UploadPhoto from './UploadPhoto/examples';
 import UploadPhotoTransaction from './UploadPhotoTransaction/examples';
 import WarrantyReport from './WarrantyReport/examples';
 import WeekPicker from './WeekPicker/examples';
+import LoginForm from '../../App/index';
 
 import './styles.less';
 import { UserClient } from '@kalos-core/kalos-rpc/User';
@@ -114,6 +116,8 @@ const DEFAULT_COMPONENT_IDX = 0;
 
 const COMPONENTS = {
   Actions,
+  LoginForm,
+  Dashboard,
   ActivityLogReport,
   AddLog,
   AddNewButton,

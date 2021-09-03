@@ -1,8 +1,11 @@
 import React from 'react';
 import ReactDOM from 'react-dom';
 import { Dashboard } from './main';
+import './styles.less';
 
-ReactDOM.render(
-  <Dashboard userId={103285} withHeader />,
-  document.getElementById('root'),
-);
+export default ()=>{
+
+// ReactDOM.render(
+  return (<Dashboard userId={103285} withHeader />);
+// );
+}

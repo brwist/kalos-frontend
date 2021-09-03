@@ -1,12 +1,12 @@
-@import '../../styles/index.less';
+@import './styles/index.less';
 
-.Dashboard {
-  &Metric {
-    display: inline-block;
-    padding-top: .spacing() [];
-    font-size: 2rem;
+.App {
+  display: flex;
+  min-height: 100vh;
+  font-family: @body-font;
+  @media @bp-md-down {
+    flex-direction: column;
   }
-  
   &Menu {
     width: 185px;
     padding: .spacing() [];
