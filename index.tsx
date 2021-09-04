@@ -6,6 +6,8 @@ import ReactDOM from 'react-dom';
 import { StyledPage } from './modules/PageWrapper/styled';
 import Dashboard from './modules/Dashboard/index';
 import LoginForm  from './App';
+import { Provider } from 'react-redux';
+import store from './App/store';
 
 import Actions from './modules/ComponentsLibrary/Actions/examples';
 import ActivityLogReport from './modules/ComponentsLibrary/ActivityLogReport/examples';
@@ -285,5 +287,5 @@ const App = () => {
   );
 };
 u.GetToken('test', 'test').then(() => {
-  ReactDOM.render(<App />, document.getElementById('root'));
+  ReactDOM.render(<Provider store={store}><App /></Provider>, document.getElementById('root'));
 });

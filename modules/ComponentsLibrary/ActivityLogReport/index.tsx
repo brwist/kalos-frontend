@@ -6,6 +6,8 @@ import { PrintTable } from '../PrintTable';
 import { PrintHeaderSubtitleItem } from '../PrintHeader';
 import { ExportJSON } from '../ExportJSON';
 import { Button } from '../Button';
+import { useDispatch } from 'react-redux';
+import { logReport } from './logReportSlice';
 import {
   makeFakeRows,
   loadActivityLogsByFilter,
@@ -59,6 +61,7 @@ export const ActivityLogReport: FC<Props> = ({
     orderByField: 'getActivityDate',
     orderDir: 'DESC',
   });
+  const dispatch = useDispatch();
   const getFilter = useCallback(() => {
     const filter: ActivityLogsFilter = {
       activityDateStart,
@@ -190,6 +193,11 @@ export const ActivityLogReport: FC<Props> = ({
           const activityDate = entry.getActivityDate();
           const user = entry.getUser();
           const activityName = entry.getActivityName();
+          dispatch(logReport({
+            date: formatDateTime(activityDate),
+            user: UserClientService.getCustomerName(user!, true),
+            notification:activityName,
+          }));
           return [
             {
               value: formatDateTime(activityDate),
