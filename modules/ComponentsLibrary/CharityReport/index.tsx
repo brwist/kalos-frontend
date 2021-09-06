@@ -8,6 +8,8 @@ import { InfoTable } from '../InfoTable';
 import { Loader } from '../../Loader/main';
 import { loadCharityReport, usd, getCurrDate } from '../../../helpers';
 import './styles.less';
+import { useDispatch, useSelector } from 'react-redux';
+import { charityReport,selectCharityReport } from './charityReportSlice';
 
 interface Props {
   month: string;
@@ -32,6 +34,17 @@ export const CharityReport: FC<Props> = ({ month, onClose }) => {
     residentialServiceTotal: 0,
     items: [],
   });
+  const dispatch = useDispatch();
+  const loadCharityReportData = () =>{
+    data.items.map(item => {
+        dispatch(charityReport({
+          technician: item.technician,
+          contribution:usd(item.contribution),
+          averageHourly:usd(item.averageHourly),
+        }));
+      }
+    );
+  };
   const load = useCallback(async () => {
     setLoading(true);
     const data = await loadCharityReport(month);
@@ -139,6 +152,9 @@ export const CharityReport: FC<Props> = ({ month, onClose }) => {
                 { value: usd(averageHourly) },
               ],
             )}
+            { 
+              ...loadCharityReportData()
+            }
           />
         </>
       )}
