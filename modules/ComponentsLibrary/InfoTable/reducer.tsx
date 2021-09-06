@@ -8,6 +8,7 @@ export type State = {
   mode: Modes;
   technicians: User[] | undefined;
   departments: TimesheetDepartment[] | undefined;
+  loaded: boolean;
 };
 
 export enum ACTIONS {
@@ -15,6 +16,7 @@ export enum ACTIONS {
   SET_MODE = 'set-editing',
   SET_TECHNICIANS = 'set-technicians',
   SET_DEPARTMENTS = 'set-departments',
+  SET_LOADED = 'set-loaded',
 }
 
 export type Action =
@@ -33,6 +35,10 @@ export type Action =
   | {
       type: ACTIONS.SET_DEPARTMENTS;
       payload: TimesheetDepartment[];
+    }
+  | {
+      type: ACTIONS.SET_LOADED;
+      payload: boolean;
     };
 
 export const Reducer: React.Reducer<State, Action> = (
@@ -52,6 +58,9 @@ export const Reducer: React.Reducer<State, Action> = (
     case ACTIONS.SET_DEPARTMENTS:
       console.log('Setting departments: ', action.payload);
       return { ...state, departments: action.payload };
+    case ACTIONS.SET_LOADED:
+      console.log('Setting loaded: ', action.payload);
+      return { ...state, loaded: action.payload };
     default:
       console.error('Unexpected type passed to the reducer function.');
       return { ...state };

@@ -101,6 +101,7 @@ export const InfoTable = ({
     mode: 'overview',
     technicians: undefined,
     departments: undefined,
+    loaded: false,
   });
   if (mode && state.mode !== mode) {
     dispatch({ type: ACTIONS.SET_MODE, payload: mode });
@@ -128,77 +129,86 @@ export const InfoTable = ({
     });
   }
 
-  const determineCast = (
-    value:
-      | boolean
-      | React.ReactChild
-      | React.ReactFragment
-      | React.ReactPortal
-      | ReactNode
-      | undefined,
-    columnType:
-      | {
-          columnName: string;
-          columnType: Type;
-        }
-      | undefined,
-  ) => {
-    if (!value) {
-      return '';
-    }
-    if (columnType === undefined) {
-      return value.toString().replace('$ ', '');
-    }
+  const determineCast = useCallback(
+    (
+      value:
+        | boolean
+        | React.ReactChild
+        | React.ReactFragment
+        | React.ReactPortal
+        | ReactNode
+        | undefined,
+      columnType:
+        | {
+            columnName: string;
+            columnType: Type;
+          }
+        | undefined,
+    ) => {
+      if (!value || !state.loaded) {
+        return '';
+      }
+      if (columnType === undefined) {
+        return value.toString().replace('$ ', '');
+      }
 
-    const tech = state.technicians!.filter(
-      tech =>
-        tech.getId() ===
-        parseInt(
-          String(value).substring(
-            String(value).indexOf('(') + 1,
-            String(value).lastIndexOf(')'),
+      const tech = state.technicians!.filter(
+        tech =>
+          tech.getId() ===
+          parseInt(
+            String(value).substring(
+              String(value).indexOf('(') + 1,
+              String(value).lastIndexOf(')'),
+            ),
           ),
-        ),
-    );
-    let dept = state.departments!.filter(department => {
-      return (department as any)[2] === value.toString();
-    })[0];
-    let techResult = tech.length === 0 ? new User() : tech[0];
+      );
+      let dept;
+      if (state.departments) {
+        dept = state.departments!.filter(department => {
+          return (department as any)[2] === value.toString();
+        })[0];
+      }
+      let techResult = tech.length === 0 ? new User() : tech[0];
 
-    switch (columnType.columnType) {
-      case 'number':
-        return parseFloat(value.toString().replace('$ ', '').trim());
-      case 'technician':
-        return techResult !== new User() ? techResult.getId() : 0;
-      case 'department':
-        return (dept as any)[0];
-      default:
-        console.log('Retuning from default');
-    }
+      switch (columnType.columnType) {
+        case 'number':
+          return parseFloat(value.toString().replace('$ ', '').trim());
+        case 'technician':
+          return techResult !== new User() ? techResult.getId() : 0;
+        case 'department':
+          return (dept as any)[0];
+        default:
+          console.log('Returning from default');
+      }
 
-    return value.toString().replace('$ ', '');
-  };
+      return value.toString().replace('$ ', '');
+    },
+    [state.departments, state.loaded, state.technicians],
+  );
 
   const load = useCallback(async () => {
-    dispatch({
-      type: ACTIONS.SET_TECHNICIANS,
-      payload: await UserClientService.loadTechnicians(),
-    });
-    let req = new TimesheetDepartment();
-    req.setIsActive(1);
-    dispatch({
-      type: ACTIONS.SET_DEPARTMENTS,
-      payload: (
-        await TimesheetDepartmentClientService.BatchGet(req)
-      ).toArray()[0],
-    });
-  }, []);
+    if (state.technicians === undefined || state.technicians.length === 0) {
+      dispatch({
+        type: ACTIONS.SET_TECHNICIANS,
+        payload: await UserClientService.loadTechnicians(),
+      });
+    }
+    if (state.departments === undefined || state.departments.length === 0) {
+      let req = new TimesheetDepartment();
+      req.setIsActive(1);
+      dispatch({
+        type: ACTIONS.SET_DEPARTMENTS,
+        payload: (
+          await TimesheetDepartmentClientService.BatchGet(req)
+        ).toArray()[0],
+      });
+    }
+    dispatch({ type: ACTIONS.SET_LOADED, payload: true });
+  }, [state]);
 
   useEffect(() => {
-    load();
-  }, [load]);
-
-  console.log('techs: ', state.technicians);
+    if (!state.loaded) load();
+  }, [load, state.loaded]);
 
   return (
     <div
@@ -456,7 +466,7 @@ export const InfoTable = ({
             className={clsx('InfoTableRow', { compact, hoverable })}
           >
             <PlainForm<typeof fields>
-              key={idx}
+              key={String(idx) + String(state.loaded)}
               onChange={fieldOutput => {
                 temporaryResult = fieldOutput;
                 console.log('FIELD OUTPUT: ', fieldOutput);
