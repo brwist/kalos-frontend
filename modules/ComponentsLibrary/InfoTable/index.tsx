@@ -14,12 +14,17 @@ import ArrowDropDownIcon from '@material-ui/icons/ArrowDropDown';
 import Typography from '@material-ui/core/Typography';
 import { Actions, ActionsProps } from '../Actions';
 import { Link } from '../Link';
-import { OrderDir, UserClientService } from '../../../helpers';
+import {
+  OrderDir,
+  TimesheetDepartmentClientService,
+  UserClientService,
+} from '../../../helpers';
 import './styles.less';
 import { ACTIONS, Reducer } from './reducer';
 import { PlainForm } from '../PlainForm';
 import { Type } from '../Field';
 import { User } from '@kalos-core/kalos-rpc/User';
+import { TimesheetDepartment } from '@kalos-core/kalos-rpc/TimesheetDepartment';
 type Styles = {
   loading?: boolean;
   error?: boolean;
@@ -95,6 +100,7 @@ export const InfoTable = ({
     isAddingRow: false,
     mode: 'overview',
     technicians: undefined,
+    departments: undefined,
   });
   if (mode && state.mode !== mode) {
     dispatch({ type: ACTIONS.SET_MODE, payload: mode });
@@ -162,9 +168,8 @@ export const InfoTable = ({
       case 'technician':
         return techResult !== new User() ? techResult.getId() : 0;
       //return tech.length === 0 ? '' : tech[0];
-      case 'department': 
-
-        return ''
+      case 'department':
+        return '';
       default:
         console.log('Test');
     }
@@ -176,6 +181,12 @@ export const InfoTable = ({
     dispatch({
       type: ACTIONS.SET_TECHNICIANS,
       payload: await UserClientService.loadTechnicians(),
+    });
+    let req = new TimesheetDepartment();
+    req.setIsActive(1);
+    dispatch({
+      type: ACTIONS.SET_DEPARTMENTS,
+      payload: (await TimesheetDepartmentClientService.BatchGet(req)).toArray(),
     });
   }, []);
 
