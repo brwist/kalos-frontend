@@ -21,6 +21,9 @@ import {
   BillingAuditType,
 } from '../../../helpers';
 
+import { useDispatch, useSelector } from 'react-redux';
+import { billAuditReport,selectBillingReport } from './billingAuditReportSlice';
+
 // TODO Errors left issues with search functionality
 
 interface Props {
@@ -61,6 +64,8 @@ export const BillingAuditReport: FC<Props> = ({
       'yyyy-MM-dd',
     ),
   });
+  const dispatch = useDispatch();
+
   const load = useCallback(async () => {
     setLoading(true);
     const entries = await loadBillingAuditReport(form.startDate);
@@ -98,6 +103,13 @@ export const BillingAuditReport: FC<Props> = ({
     ? makeFakeRows(6, 5)
     : (entries.map(entry => {
         const { date, name, businessname, jobNumber, payable, items } = entry;
+        dispatch(billAuditReport({
+          date: formatDate(date),
+          name:name,
+          businessName:businessname,
+          jobNumber:jobNumber,
+          payable:usd(payable),
+        }));
         return [
           {
             value: formatDate(date),
