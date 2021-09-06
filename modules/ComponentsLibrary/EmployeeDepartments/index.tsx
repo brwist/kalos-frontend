@@ -16,6 +16,9 @@ import {
 } from '../../../helpers';
 import { User } from '@kalos-core/kalos-rpc/User';
 
+import { useDispatch, useSelector } from 'react-redux';
+import { employeeDepart } from './employeeDepartmentSlice';
+
 interface Props {
   loggedUserId: number;
   onClose?: () => void;
@@ -62,6 +65,7 @@ export const EmployeeDepartments: FC<Props> = ({ onClose, loggedUserId }) => {
     setLoadingDicts(false);
     setLoadedDicts(true);
   }, [setLoadingDicts, setLoadedDicts, loggedUserId, setUser]);
+  const dispatch = useDispatch();
   const load = useCallback(async () => {
     setLoading(true);
     const entries = await EmployeeFunctionClientService.loadEmployeeFunctions();
@@ -122,6 +126,12 @@ export const EmployeeDepartments: FC<Props> = ({ onClose, loggedUserId }) => {
           const color = entry.getName();
           const status = entry.getStatus();
           const addeddate = entry.getAddeddate();
+          dispatch(employeeDepart({
+            name: name,
+            color:color,
+            status:status ? 'Deactive' : 'Active',
+            addedDate:formatDate(addeddate),
+          }));
           return [
             {
               value: name,
