@@ -160,6 +160,9 @@ export const InfoTable = ({
           ),
         ),
     );
+    let dept = state.departments!.filter(department => {
+      return (department as any)[2] === value.toString();
+    })[0];
     let techResult = tech.length === 0 ? new User() : tech[0];
 
     switch (columnType.columnType) {
@@ -167,9 +170,8 @@ export const InfoTable = ({
         return parseFloat(value.toString().replace('$ ', '').trim());
       case 'technician':
         return techResult !== new User() ? techResult.getId() : 0;
-      //return tech.length === 0 ? '' : tech[0];
       case 'department':
-        return '';
+        return (dept as any)[0];
       default:
         console.log('Test');
     }
@@ -186,7 +188,9 @@ export const InfoTable = ({
     req.setIsActive(1);
     dispatch({
       type: ACTIONS.SET_DEPARTMENTS,
-      payload: (await TimesheetDepartmentClientService.BatchGet(req)).toArray(),
+      payload: (
+        await TimesheetDepartmentClientService.BatchGet(req)
+      ).toArray()[0],
     });
   }, []);
 
