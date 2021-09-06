@@ -173,7 +173,7 @@ export const InfoTable = ({
       case 'department':
         return (dept as any)[0];
       default:
-        console.log('Test');
+        console.log('Retuning from default');
     }
 
     return value.toString().replace('$ ', '');
