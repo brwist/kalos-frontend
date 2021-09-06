@@ -19,6 +19,7 @@ import './styles.less';
 import { ACTIONS, Reducer } from './reducer';
 import { PlainForm } from '../PlainForm';
 import { Type } from '../Field';
+import { User } from '@kalos-core/kalos-rpc/User';
 type Styles = {
   loading?: boolean;
   error?: boolean;
@@ -142,8 +143,30 @@ export const InfoTable = ({
     if (columnType === undefined) {
       return value.toString().replace('$ ', '');
     }
-    if (columnType.columnType === 'number') {
-      return parseFloat(value.toString().replace('$ ', '').trim());
+
+    const tech = state.technicians!.filter(
+      tech =>
+        tech.getId() ===
+        parseInt(
+          String(value).substring(
+            String(value).indexOf('(') + 1,
+            String(value).lastIndexOf(')'),
+          ),
+        ),
+    );
+    let techResult = tech.length === 0 ? new User() : tech[0];
+
+    switch (columnType.columnType) {
+      case 'number':
+        return parseFloat(value.toString().replace('$ ', '').trim());
+      case 'technician':
+        return techResult !== new User() ? techResult.getId() : 0;
+      //return tech.length === 0 ? '' : tech[0];
+      case 'department': 
+
+        return ''
+      default:
+        console.log('Test');
     }
 
     return value.toString().replace('$ ', '');
@@ -323,7 +346,6 @@ export const InfoTable = ({
                   columns && columns[idx2]
                     ? columns[idx2].align || 'left'
                     : 'left';
-
                 return (
                   <Typography
                     key={idx2}
@@ -420,7 +442,10 @@ export const InfoTable = ({
           >
             <PlainForm<typeof fields>
               key={idx}
-              onChange={fieldOutput => (temporaryResult = fieldOutput)}
+              onChange={fieldOutput => {
+                temporaryResult = fieldOutput;
+                console.log('FIELD OUTPUT: ', fieldOutput);
+              }}
               schema={[
                 items.map((item, idx2) => {
                   if (

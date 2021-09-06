@@ -1,0 +1,29 @@
+{
+	"folders": [
+		{
+			"path": "."
+		}
+	],
+	"settings": {
+		"typescript.tsserver.experimental.enableProjectDiagnostics": true
+	},
+	"launch": {
+		"version": "0.2.0",
+		"configurations": [
+			{
+				"type": "pwa-chrome",
+				"request": "launch",
+				"name": "Launch Chrome against localhost",
+				"url": "http://localhost:1234",
+				"trace": true,
+				"webRoot": "${workspaceFolder}",
+				"breakOnLoad": true,
+				"sourceMapPathOverrides": {
+					"../*": "${webRoot}/*",
+					"../*/*": "${webRoot}/*/*"
+				},
+				"sourceMaps": true
+			}
+		]
+	}
+}
