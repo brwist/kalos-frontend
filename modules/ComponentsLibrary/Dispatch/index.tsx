@@ -13,7 +13,8 @@ import {
   JobTypeClientService,
   EventAssignmentClientService,
   EventClientService,
-  slackNotify,
+  SlackClientService,
+  ApiKeyClientService,
 } from '../../../helpers';
 import { DateRange } from '@kalos-core/kalos-rpc/compiled-protos/common_pb';
 import { DispatchableTech, DispatchCall } from '@kalos-core/kalos-rpc/Dispatch';
@@ -23,6 +24,7 @@ import { ActivityLog } from '@kalos-core/kalos-rpc/ActivityLog';
 import { ServicesRendered } from '@kalos-core/kalos-rpc/ServicesRendered';
 import { EventAssignment } from '@kalos-core/kalos-rpc/EventAssignment';
 import { Event } from '@kalos-core/kalos-rpc/Event';
+import { ApiKey } from '@kalos-core/kalos-rpc/ApiKey';
 import { PageWrapper } from '../../PageWrapper/main';
 import { SectionBar } from '../SectionBar';
 import { PlainForm, Schema } from '../PlainForm';
@@ -72,6 +74,8 @@ const initialState: State = {
   selectedCall: new DispatchCall(),
   center: {lat: 28.565989, lng: -81.733872},
   zoom: 11,
+  isLoading: false,
+  googleApiKey: '',
 };
 
 export const DispatchDashboard: React.FC<Props> = function DispatchDashboard({
@@ -145,6 +149,13 @@ export const DispatchDashboard: React.FC<Props> = function DispatchDashboard({
     }
   }
 
+  const getGoogleApiKey = async() => {
+    const newKey = new ApiKey();
+    newKey.setTextId('google_maps');
+    const googleKey = await ApiKeyClientService.Get(newKey);
+    return googleKey.getApiKey();
+  }
+
   const setTechnicians = useCallback( async() => {
     console.log('test tech');
     const techs = await getTechnicians();
@@ -175,10 +186,9 @@ export const DispatchDashboard: React.FC<Props> = function DispatchDashboard({
   }, [setCalls])
 
   const handleChange = async (formData: FormData) => {
+    setLoading(true);
     const callDateStart = formData.dateStart.replace('00:00', '');
     const callDateEnd = formData.dateEnd.replace('00:00', '');
-    console.log({stateStart: state.callStartDate, formStart: callDateStart});
-    console.log({stateEnd: state.callStartDate, formEnd: callDateEnd});
     if (state.departmentIds.length != formData.departmentIds.length || !state.departmentIds.every((val, index) => val === formData.departmentIds[index])) {
       dispatchDashboard({
         type: 'updateTechParameters',
@@ -191,7 +201,6 @@ export const DispatchDashboard: React.FC<Props> = function DispatchDashboard({
     || !state.jobTypes.every((val, index) => val === formData.jobTypes[index])
     || state.callStartDate != callDateStart
     || state.callEndDate != callDateEnd) {
-      console.log('here');
       dispatchDashboard({
         type: 'updateCallParameters',
         data: {
@@ -210,12 +219,14 @@ export const DispatchDashboard: React.FC<Props> = function DispatchDashboard({
         openModal: true,
         modalKey: 'Undismiss',
         selectedTech: new DispatchableTech(),
-        selectedCall: new DispatchCall()
+        selectedCall: new DispatchCall(),
+        isLoading: false
       }
     })
   }
 
   const handleDismissTech =  async () => {
+    setLoading(true);
     const actLog = new ActivityLog();
     actLog.setUserId(userID);
     actLog.setPropertyId(19139);
@@ -231,6 +242,7 @@ export const DispatchDashboard: React.FC<Props> = function DispatchDashboard({
     try{
       await ActivityLogClientService.Create(actLog);
       await ServicesRenderedClientService.Create(service);
+      SlackClientService.DirectMessageUser(state.selectedTech.getUserId(), `Go Home, ${state.selectedTech.getTechname()}`);
     } catch (err) {
       console.error(
         `An error occurred while creating the Activity Log and Service Rendered for the dismissal: ${err}`
@@ -241,6 +253,7 @@ export const DispatchDashboard: React.FC<Props> = function DispatchDashboard({
   };
 
   const handleUndismissTech = async (tech : DispatchableTech) => {
+    setLoading(true);
     const actLog = new ActivityLog();
     actLog.setUserId(userID);
     actLog.setPropertyId(19139);
@@ -257,16 +270,18 @@ export const DispatchDashboard: React.FC<Props> = function DispatchDashboard({
     try{
       await ActivityLogClientService.Create(actLog);
       await ServicesRenderedClientService.Create(service);
+      SlackClientService.DirectMessageUser(tech.getUserId(), `False Alarm, ${tech.getTechname()}!  I need you back on the schedule!`);
     } catch (err) {
       console.error(
         `An error occured while create the Activity Log and Service Rendered for the Un-Dismissal: ${err}`
       );
     }
-    resetModal();
     setTechnicians();
+    setLoading(false);
   }
 
   const handleAssignTech = async () => {
+    setLoading(true);
     const assignment = new EventAssignment();
     const event = new Event();
     assignment.setEventId(state.selectedCall.getId());
@@ -295,6 +310,7 @@ export const DispatchDashboard: React.FC<Props> = function DispatchDashboard({
       }
 
       await EventClientService.Update(event);
+      SlackClientService.Dispatch(state.selectedCall.getId(), 103939, userID);
     } catch (err) {
       console.error(
         `An error occurred while updating the Event Assignment and Event: ${err}`
@@ -328,18 +344,21 @@ export const DispatchDashboard: React.FC<Props> = function DispatchDashboard({
       openModal: true,
       modalKey: 'mapInfo',
       selectedTech: tech,
-      selectedCall: call
+      selectedCall: call,
+      isLoading: false,
     }})
   }
 
   const setDropDownValues = async () => {
     const departmentReq = await getDepartments();
     const jobTypeReq = await getJobTypes();
+    const googleApiKey = await getGoogleApiKey();
     dispatchDashboard({
       type: 'setInitialDropdowns',
       data: {
         departmentList: departmentReq.departments,
         jobTypeList: jobTypeReq.jobTypes,
+        googleApiKey: googleApiKey,
       }
     })
   }
@@ -377,6 +396,10 @@ export const DispatchDashboard: React.FC<Props> = function DispatchDashboard({
     ],
   ];
 
+  const setLoading = (loading : boolean) => {
+    dispatchDashboard({ type: 'setLoading', data: loading});
+  }
+
   const resetModal = () => {
     dispatchDashboard({ 
       type: 'setModal',
@@ -384,17 +407,15 @@ export const DispatchDashboard: React.FC<Props> = function DispatchDashboard({
         openModal: false,
         modalKey: '',
         selectedTech: new DispatchableTech(),
-        selectedCall: new DispatchCall()
+        selectedCall: new DispatchCall(),
+        isLoading: false
       }
-    })
+    });
   }
 
   useEffect(() => {
     setDropDownValues();
-    console.log('dropdowns rerendered');
   }, []);
-
-  console.log("rerendered");
 
   return (
     <PageWrapper userID={userID}>
@@ -433,6 +454,7 @@ export const DispatchDashboard: React.FC<Props> = function DispatchDashboard({
                   modalKey: modalKey,
                   selectedTech: tech!,
                   selectedCall: call!, 
+                  isLoading: false,
                 }
               });
             }
@@ -453,14 +475,17 @@ export const DispatchDashboard: React.FC<Props> = function DispatchDashboard({
                 />             
               </Grid>
               <Grid item xs={6}>
-                <DispatchMap
-                  userID={userID}
-                  center={state.center}
-                  zoom={state.zoom}
-                  techs={state.techs}
-                  calls={state.calls}
-                  handleMapClick={handleMapClick}
-                />
+                {state.googleApiKey != '' && (
+                  <DispatchMap
+                    userID={userID}
+                    center={state.center}
+                    zoom={state.zoom}
+                    apiKey={state.googleApiKey}
+                    techs={state.techs}
+                    calls={state.calls}
+                    handleMapClick={handleMapClick}
+                  />
+                )}
               </Grid>
               
               <Grid item xs={12}>
@@ -489,7 +514,8 @@ export const DispatchDashboard: React.FC<Props> = function DispatchDashboard({
               open={true}
               onClose={resetModal}
               title="Undismiss Tech"
-              label="Cancel"
+              label={state.isLoading ? "Saving..." : "Cancel"}
+              disabled={state.isLoading}
               maxWidth={(window.innerWidth * .40)}
               >
               <DismissedTechs
@@ -508,8 +534,9 @@ export const DispatchDashboard: React.FC<Props> = function DispatchDashboard({
               onClose={resetModal}
               onConfirm={handleDismissTech}
               maxWidth={(window.innerWidth * .40)}
-              submitLabel="Dismiss"
+              submitLabel={state.isLoading ? "Saving..." : "Dismiss"}
               cancelLabel="Cancel Dismissal"
+              disabled={state.isLoading}
               >
               <h3>Send {state.selectedTech!.getTechname()} Home for the Day?</h3>
             </Confirm>
@@ -523,8 +550,9 @@ export const DispatchDashboard: React.FC<Props> = function DispatchDashboard({
               onClose={resetModal}
               onConfirm={handleAssignTech}
               maxWidth={(window.innerWidth * .60)}
-              submitLabel="Assign Tech to Call"
+              submitLabel={state.isLoading ? "Saving..." : "Assign Tech to Call"}
               cancelLabel="Cancel Assignment"
+              disabled={state.isLoading}
             >
               <div style={{display: 'flex', width: "98%"}}>
 

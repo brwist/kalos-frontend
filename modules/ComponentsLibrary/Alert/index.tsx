@@ -10,6 +10,7 @@ interface Props {
   onClose: () => void;
   label?: string;
   maxWidth?: number;
+  disabled?: boolean
 }
 
 export const Alert: FC<Props> = ({
@@ -19,11 +20,12 @@ export const Alert: FC<Props> = ({
   label = 'Okay',
   maxWidth = 370,
   children,
+  disabled,
 }) => (
   <Modal open={open} onClose={onClose} compact maxWidth={maxWidth}>
     <SectionBar
       title={title}
-      actions={[{ onClick: onClose, label }]}
+      actions={[{ onClick: onClose, label, disabled }]}
       fixedActions
     />
     <Typography className="Alert" component={'div'} variant={'body2'}>

@@ -59,13 +59,13 @@ export const DispatchCalls: FC<props> = props => {
             </TableCell>
             <TableCell
               align="center"
-              style={{ fontWeight: 'bolder', fontSize: '16px', width: '12%' }}
+              style={{ fontWeight: 'bolder', fontSize: '16px', width: '13%' }}
             >
-              Time
+              Date/Time
             </TableCell>
             <TableCell
               align="center"
-              style={{ fontWeight: 'bolder', fontSize: '16px', width: '15%' }}
+              style={{ fontWeight: 'bolder', fontSize: '16px', width: '14%' }}
             >
               City
             </TableCell>
@@ -96,6 +96,7 @@ export const DispatchCalls: FC<props> = props => {
           </TableRow>
         </TableHead>
         {props.calls.map((call, index) => {
+          const dateStarted = format(new Date(`${call.getDateStarted()} 00:00:00`), 'M/d/yyyy');
           const timeStartArray = call.getTimeStarted().split(':');
           let startHour: number = Number(timeStartArray[0]),
             startMin: number = Number(timeStartArray[1]);
@@ -141,10 +142,9 @@ export const DispatchCalls: FC<props> = props => {
                     }
                   >
                     <TableCell align="center">{index + 1}</TableCell>
-                    <TableCell align="center">{`${format(
-                      timeStarted,
-                      'h:mm aa',
-                    )} - ${format(timeEnded, 'h:mm aa')}`}</TableCell>
+                    <TableCell align="center">
+                      {`${dateStarted}`} <br></br> {`${format(timeStarted, 'h:mm aa')} - ${format(timeEnded, 'h:mm aa')}`}
+                    </TableCell>
                     <TableCell align="center">
                       {call.getPropertyCity()}
                     </TableCell>

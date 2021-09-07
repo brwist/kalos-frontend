@@ -1,5 +1,4 @@
 import { DispatchableTech, DispatchCall } from '@kalos-core/kalos-rpc/Dispatch';
-import { Event } from '@kalos-core/kalos-rpc/Event';
 import { JobType } from '@kalos-core/kalos-rpc/JobType';
 import { TimesheetDepartment } from '@kalos-core/kalos-rpc/TimesheetDepartment';
 
@@ -27,6 +26,8 @@ export interface State {
   selectedCall: DispatchCall;
   center: {lat: number, lng: number};
   zoom: number;
+  isLoading: boolean;
+  googleApiKey: string;
 }
 
 export type Action =
@@ -55,18 +56,21 @@ export type Action =
   }}
   | { type: 'setInitialDropdowns'; data: {
     departmentList: TimesheetDepartment[],
-    jobTypeList: JobType[]
+    jobTypeList: JobType[],
+    googleApiKey: string,
   }}
   | { type: 'setModal'; data: {
     openModal: boolean,
     modalKey: string,
     selectedTech: DispatchableTech,
-    selectedCall: DispatchCall 
+    selectedCall: DispatchCall,
+    isLoading: boolean,
   }}
   | { type: 'setCenter'; data: {
     center: {lat: number, lng: number},
     zoom: number
-  }};
+  }}
+  | {type: 'setLoading'; data: boolean };
 
 export const reducer = (state: State, action: Action) => {
   switch (action.type) {
@@ -86,16 +90,13 @@ export const reducer = (state: State, action: Action) => {
         ...state,
         departmentIds: action.data.departmentIds,
       };
-    case 'updateCallParameters': {
-      console.log(action.data.callDateStarted)
-      console.log(action.data.callDateEnded)
+    case 'updateCallParameters':
       return {
         ...state,
         jobTypes: action.data.jobTypes,
-        callDateStart: action.data.callDateStarted,
-        callDateEnd: action.data.callDateEnded,
+        callStartDate: action.data.callDateStarted,
+        callEndDate: action.data.callDateEnded,
       };
-    }
     case 'setDepartmentList':
       return {
         ...state,
@@ -125,6 +126,7 @@ export const reducer = (state: State, action: Action) => {
         ...state,
         departmentList: action.data.departmentList,
         jobTypeList: action.data.jobTypeList,
+        googleApiKey: action.data.googleApiKey,
       }
     case 'setModal':
       return {
@@ -133,12 +135,18 @@ export const reducer = (state: State, action: Action) => {
         modalKey: action.data.modalKey,
         selectedTech: action.data.selectedTech,
         selectedCall: action.data.selectedCall,
+        isLoading: action.data.isLoading,
       }
     case 'setCenter':
       return {
         ...state,
         center: action.data.center,
         zoom: action.data.zoom,
+      }
+    case 'setLoading':
+      return {
+        ...state,
+        isLoading: action.data,
       }
     default:
       return state;

@@ -1,12 +1,11 @@
 import React, { FC, useEffect, useCallback, useState } from 'react';
 import { GoogleMap, LoadScript, Marker } from '@react-google-maps/api';
 import { DispatchableTech, DispatchCall } from '@kalos-core/kalos-rpc/Dispatch';
-import { ApiKey } from '@kalos-core/kalos-rpc/ApiKey';
-import { ApiKeyClientService } from '../../../helpers';
 interface props {
   userID: number;
   center: {lat: number, lng: number};
   zoom: number;
+  apiKey: string;
   techs: DispatchableTech[];
   calls: DispatchCall[];
   handleMapClick: (tech: DispatchableTech, call: DispatchCall) => void
@@ -103,7 +102,8 @@ export const DispatchMap: FC<props> = props => {
   return (
     <div style={{textAlign: "center"}}>
       <LoadScript
-        googleMapsApiKey={"AIzaSyByAO5Z6jhy7NGgzd5iI8xfucFy68luaMw"}
+        googleMapsApiKey={props.apiKey}
+      //   // googleMapsApiKey='AIzaSyAYrAeGFmyE-POkh5Gl8S9fWGpSEsOclB0'
       >
         <GoogleMap
           id="dispatch_map"
