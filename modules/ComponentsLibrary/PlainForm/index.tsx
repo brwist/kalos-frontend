@@ -202,7 +202,8 @@ export const PlainForm: <T>(
         {schema.map((fields, idx) => (
           <div key={idx} className="PlainFormGroup">
             {fields.map((props, idx2) => {
-              if (props.invisible) return <> </>;
+              if (props.invisible)
+                return <React.Fragment key={idx2}></React.Fragment>;
               const { name } = props;
               return (
                 <Field
