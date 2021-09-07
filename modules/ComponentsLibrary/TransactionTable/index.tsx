@@ -1188,6 +1188,7 @@ export const TransactionTable: FC<Props> = ({
         data={transactionFilter}
         onChange={handleSetFilter}
         onSubmit={() => dispatch({ type: 'setSearching', data: true })}
+        onEnter={true}
         schema={SCHEMA}
         className="PayrollFilter"
       />
