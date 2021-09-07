@@ -121,7 +121,7 @@ export const TimeOff: FC<Props> = ({
     );
     const user = await UserClientService.loadUserById(userId || loggedUserId);
     setUser(user);
-    const pto = await TimeoffRequestClientService.getPTOInquiryByUserId(
+    const pto = await TimeoffRequestClientService.PTOInquiry(
       userId || loggedUserId,
     );
     setPto(pto);
@@ -485,7 +485,7 @@ export const TimeOff: FC<Props> = ({
         subtitle={
           pto && user ? (
             <span>
-              PTO Remaining: <span style={css}>{pto.getDaysAvailable()}</span>{' '}
+              PTO Remaining: <span style={css}>{pto.getHoursAvailable()}</span>{' '}
               of <span style={css}>{user.getAnnualHoursPto()}</span>
             </span>
           ) : null
