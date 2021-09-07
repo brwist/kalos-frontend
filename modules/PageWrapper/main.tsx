@@ -3,6 +3,7 @@ import SideMenu, { Props as SideMenuProps } from '../SideMenu/main';
 import { StyledPage } from './styled';
 import './styles.less';
 import { UserClientService } from '../../helpers';
+import { ErrorBoundary } from '../ComponentsLibrary/ErrorBoundary';
 
 export interface PageWrapperProps {
   padding?: number;
@@ -29,6 +30,7 @@ export const PageWrapper: FC<Props> = ({
   }, [initiated, setInitiated]);
   return (
     <StyledPage>
+      <ErrorBoundary>
       <div className="PageWrapper">
         {withHeader && (
           <div className="PageWrapperMenu">
@@ -42,6 +44,7 @@ export const PageWrapper: FC<Props> = ({
           {children}
         </div>
       </div>
+      </ErrorBoundary>
     </StyledPage>
   );
 };
