@@ -8,6 +8,7 @@ import AdvancedSearchReducer from '../modules/ComponentsLibrary/AdvancedSearch/a
 import deletedServiceCallsReportReducer from '../modules/ComponentsLibrary/DeletedServiceCallsReport/deletedServicecallsReportSlice';
 import eventsReportReducer from '../modules/ComponentsLibrary/EventsReport/eventsReportSlice';
 import perDiemsNeedsAuditingReducer from '../modules/ComponentsLibrary/PerDiemsNeedsAuditing/perDiemsNeedsAuditingSlice';
+import serviceItemsReducer from '../modules/ComponentsLibrary/ServiceItems/serviceItemsSlice';
 
 export default configureStore({
   reducer: {
@@ -20,5 +21,6 @@ export default configureStore({
     deletedServiceCallsReport:deletedServiceCallsReportReducer,
     eventsReport:eventsReportReducer,
     perDiemNeedsAudit:perDiemsNeedsAuditingReducer,
+    serviceItems:serviceItemsReducer,
   },
 })

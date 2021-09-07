@@ -35,6 +35,8 @@ import {
 import { ServiceItemLinks } from '../ServiceItemLinks';
 import { ServiceItemReadings } from '../ServiceItemReadings';
 import './styles.less';
+import { useDispatch, useSelector } from 'react-redux';
+import { serviceItem,selectServiceItems } from './serviceItemsSlice';
 
 const ServiceItemClientService = new ServiceItemClient(ENDPOINT);
 const ReadingClientService = new ReadingClient(ENDPOINT);
@@ -142,6 +144,7 @@ export const ServiceItems: FC<Props> = props => {
   const [selected, setSelected] = useState<ServiceItem[]>(
     selectedInitial || [],
   );
+  const dispatch = useDispatch();
 
   const handleMaterialChange = useCallback(
     (idx: number) => (data: Material) => {
@@ -594,6 +597,15 @@ export const ServiceItems: FC<Props> = props => {
   );
 
   const makeData = () => {
+    if(loaded){
+    entries.map(e =>{
+      dispatch(
+        serviceItem({
+          id: e.getId(),
+          type: e.getType(),
+      }));
+    });
+  }
     const data: Data = [];
     entries.forEach((entry, idx) => {
       // const { id, type: value } = entry;
