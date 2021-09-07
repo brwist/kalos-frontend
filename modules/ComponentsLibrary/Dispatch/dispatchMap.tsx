@@ -102,7 +102,6 @@ export const DispatchMap: FC<props> = props => {
     <div style={{textAlign: "center"}}>
       <LoadScript
         googleMapsApiKey={props.apiKey}
-      //   // googleMapsApiKey='AIzaSyAYrAeGFmyE-POkh5Gl8S9fWGpSEsOclB0'
       >
         <GoogleMap
           id="dispatch_map"

@@ -162,8 +162,6 @@ export const DispatchCalls: FC<props> = props => {
                   </TableRow>
                   {provided.placeholder && false}
                   {/* Come back and Fix Later */}
-
-                  {/* <TableRow style={{ display: 'none' }}>{provided.placeholder}</TableRow> */}
                 </TableBody>
               )}
             </Droppable>

@@ -13,6 +13,7 @@ export interface State {
   dismissedTechs: DispatchableTech[];
   calls: DispatchCall[];
   departmentIds: number[];
+  defaultDepartmentIds: number[];
   jobTypes: number[];
   departmentList: TimesheetDepartment[];
   jobTypeList: JobType[];
@@ -56,6 +57,7 @@ export type Action =
   }}
   | { type: 'setInitialDropdowns'; data: {
     departmentList: TimesheetDepartment[],
+    defaultDepartmentIds: number[],
     jobTypeList: JobType[],
     googleApiKey: string,
   }}
@@ -125,6 +127,7 @@ export const reducer = (state: State, action: Action) => {
       return {
         ...state,
         departmentList: action.data.departmentList,
+        defaultDepartmentIds: action.data.defaultDepartmentIds,
         jobTypeList: action.data.jobTypeList,
         googleApiKey: action.data.googleApiKey,
       }
