@@ -139,7 +139,6 @@ export const DispatchDashboard: React.FC<Props> = function DispatchDashboard({
       if (!displayedDepartments.length) {
         displayedDepartments = departments.getResultsList().filter(dep => dep.getId() === userData.getEmployeeDepartmentId()); 
       }
-      console.log(displayedDepartments);
       return {departments: displayedDepartments, defaultValues: displayedDepartments.map(dep => dep.getId())};
     } catch (err) {
       console.error(
@@ -377,7 +376,6 @@ export const DispatchDashboard: React.FC<Props> = function DispatchDashboard({
 
   const setDropDownValues = async () => {
     const departmentReq = await getDepartments();
-    console.log(departmentReq);
     const jobTypeReq = await getJobTypes();
     const googleApiKey = await getGoogleApiKey();
     dispatchDashboard({
