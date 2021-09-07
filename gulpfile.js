@@ -614,7 +614,7 @@ const NAMED_EXPORTS = {
   'node_modules/@material-ui/core/node_modules/react-is/index.js'  :  ['isFragment'],
   'node_modules/@material-ui/lab/node_modules/react-is/index.js'  :  ['isFragment'],
 
-  'node_modules/lodash/lodash.js'  :  ['delay'],
+  'node_modules/lodash/lodash.js'  :  ['delay', 'debounce'],
   'node_modules/@kalos-core/kalos-rpc/compiled-protos/dispatch_pb.js'  :  [
     'DispatchableTechList',
     'DispatchableTech',
