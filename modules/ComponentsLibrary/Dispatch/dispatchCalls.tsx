@@ -42,7 +42,7 @@ export const DispatchCalls: FC<props> = props => {
               style={{ fontWeight: 'bolder', fontSize: '16px' }}
               width="50%"
             >
-              Estimated End of Day: 3:05 PM
+              Estimated End of Day: N/A
             </TableCell>
           </TableRow>
         </TableBody>
