@@ -46,7 +46,7 @@ import UndoRounded from '@material-ui/icons/UndoRounded';
 
 
 export interface Props {
-  userID: number;
+  loggedUserId: number;
 }
 
 const initialFormData: FormData = {
@@ -79,7 +79,7 @@ const initialState: State = {
 };
 
 export const DispatchDashboard: React.FC<Props> = function DispatchDashboard({
-  userID,
+  loggedUserId,
 }) {
   const [state, dispatchDashboard] = useReducer(reducer, initialState);
 
@@ -235,7 +235,7 @@ export const DispatchDashboard: React.FC<Props> = function DispatchDashboard({
   const handleDismissTech =  async () => {
     setLoading(true);
     const actLog = new ActivityLog();
-    actLog.setUserId(userID);
+    actLog.setUserId(loggedUserId);
     actLog.setPropertyId(19139);
     actLog.setActivityName(`Sent user ${state.selectedTech.getUserId()} home for the day.`);
     actLog.setActivityDate(format(new Date(), 'yyyy-MM-dd HH:mm:ss'));
@@ -262,7 +262,7 @@ export const DispatchDashboard: React.FC<Props> = function DispatchDashboard({
   const handleUndismissTech = async (tech : DispatchableTech) => {
     setLoading(true);
     const actLog = new ActivityLog();
-    actLog.setUserId(userID);
+    actLog.setUserId(loggedUserId);
     actLog.setPropertyId(19139);
     actLog.setActivityName(`Recalling user ${tech.getUserId()}`);
     actLog.setActivityDate(format(new Date(), 'yyyy-MM-dd HH:mm:ss'));
@@ -317,7 +317,7 @@ export const DispatchDashboard: React.FC<Props> = function DispatchDashboard({
       }
 
       await EventClientService.Update(event);
-      SlackClientService.Dispatch(state.selectedCall.getId(), 103939, userID);
+      SlackClientService.Dispatch(state.selectedCall.getId(), state.selectedTech.getUserId(), loggedUserId);
     } catch (err) {
       console.error(
         `An error occurred while updating the Event Assignment and Event: ${err}`
@@ -432,7 +432,7 @@ export const DispatchDashboard: React.FC<Props> = function DispatchDashboard({
   }, []);
 
   return (
-    <PageWrapper userID={userID}>
+    <PageWrapper userID={loggedUserId}>
       <Grid>
         <Grid item xs={12}>
           <SectionBar title="Dispatch" styles={{backgroundColor: "#711313", color: "white"}} />
@@ -482,7 +482,7 @@ export const DispatchDashboard: React.FC<Props> = function DispatchDashboard({
                   </Button>
                 </div>
                 <DispatchTechs
-                  userID={userID}
+                  userID={loggedUserId}
                   techs={state.techs}
                   dismissedTechs={state.dismissedTechs}
                   handleMapRecenter={handleMapRecenter}
@@ -491,7 +491,7 @@ export const DispatchDashboard: React.FC<Props> = function DispatchDashboard({
               <Grid item xs={6}>
                 {state.googleApiKey != '' && (
                   <DispatchMap
-                    userID={userID}
+                    userID={loggedUserId}
                     center={state.center}
                     zoom={state.zoom}
                     apiKey={state.googleApiKey}
@@ -508,7 +508,7 @@ export const DispatchDashboard: React.FC<Props> = function DispatchDashboard({
               
               <Grid item xs={12} style={{paddingTop: "10px"}}>
                 <DispatchCalls
-                  userID={userID}
+                  userID={loggedUserId}
                   calls={state.calls}
                   handleMapRecenter={handleMapRecenter}
                   />
@@ -533,7 +533,7 @@ export const DispatchDashboard: React.FC<Props> = function DispatchDashboard({
               maxWidth={(window.innerWidth * .40)}
               >
               <DismissedTechs
-                userID={userID}
+                userID={loggedUserId}
                 dismissedTechs={state.dismissedTechs}
                 handleUndismissTech={handleUndismissTech}
               />
