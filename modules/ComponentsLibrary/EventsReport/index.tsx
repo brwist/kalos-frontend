@@ -26,6 +26,8 @@ import {
 import { ROWS_PER_PAGE } from '../../../constants';
 import { Event } from '@kalos-core/kalos-rpc/Event';
 import { Tasks } from '../Tasks';
+import { useDispatch, useSelector } from 'react-redux';
+import { eventReport,selectEventsReport } from './eventsReportSlice';
 
 type Props = {
   kind: 'jobStatus' | 'paymentStatus';
@@ -61,6 +63,7 @@ export const EventsReport: FC<Props> = ({
     (event: Event | undefined) => setTasksOpenEvent(event),
     [setTasksOpenEvent],
   );
+  const dispatch = useDispatch();
   const load = useCallback(async () => {
     setLoading(true);
     const filter: EventsFilter = {
@@ -291,6 +294,14 @@ export const EventsReport: FC<Props> = ({
     loading
       ? makeFakeRows(5, 5)
       : entries.map(entry => {
+          dispatch(eventReport({
+            property: getPropertyAddress(entry.getProperty()),
+            customerName: UserClientService.getCustomerName(entry.getCustomer()!),
+            job: entry.getLogJobNumber(),
+            date: formatDate(entry.getDateStarted()),
+            jobStatus: kind === 'jobStatus' ? entry.getLogJobStatus() :null ,
+            paymentStatus: kind != 'jobStatus' ? entry.getLogPaymentStatus():null,
+          }));
           return [
             {
               value: getPropertyAddress(entry.getProperty()),
