@@ -80,6 +80,15 @@ import { JobType } from '@kalos-core/kalos-rpc/JobType';
 import { JobSubtype } from '@kalos-core/kalos-rpc/JobSubtype';
 import { TimesheetDepartment } from '@kalos-core/kalos-rpc/TimesheetDepartment';
 import { EmployeeFunction } from '@kalos-core/kalos-rpc/EmployeeFunction';
+import { useDispatch, useSelector } from 'react-redux';
+import { 
+  advanceEmpDepart,
+  selectAdvanceEmpDepart,
+  advanceJobType,
+  selectAdvanceJobType,
+  advanceJobSubType,
+  selectAdvanceJobSubType,
+} from './advancedSearchSlice';
 
 import './styles.less';
 
@@ -238,6 +247,7 @@ export const AdvancedSearch: FC<Props> = ({
       setPendingAddProperty(pendingAddProperty),
     [setPendingAddProperty],
   );
+  const dispatch = useDispatch();
   const loadDicts = useCallback(async () => {
     setLoadingDicts(true);
     const jobTypes = await JobTypeClientService.loadJobTypes();
@@ -259,6 +269,24 @@ export const AdvancedSearch: FC<Props> = ({
       userReq.setId(loggedUserId);
       const loggedUser = await UserClientService.Get(userReq);
       setIsAdmin(loggedUser.getIsAdmin());
+      departments.map(d => (
+        dispatch(advanceEmpDepart({
+          label: d.getValue()+' - '+ d.getDescription(),
+          value: d.getId(),
+        }))
+      ));
+      jobTypes.map(jt => (
+        dispatch(advanceJobType({
+          label: jt.getName(),
+          value: jt.getId(),
+        }))
+      ));
+      jobSubtypes.map(jst => (
+        dispatch(advanceJobSubType({
+          label: jst.getName(),
+          value: jst.getId(),
+        }))
+      ));
     }
     setFormKey(formKey + 1);
     setLoadedDicts(true);
