@@ -94,7 +94,6 @@ export const DispatchMap: FC<props> = props => {
   }, [props.calls])
 
   useEffect(() => {
-    console.log('inner map');
     buildTechMarkers();
     buildCallMarkers();
   }, [buildTechMarkers, buildCallMarkers]);

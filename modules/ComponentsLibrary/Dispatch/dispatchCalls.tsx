@@ -21,7 +21,6 @@ interface props {
 
 export const DispatchCalls: FC<props> = props => {
   useEffect(() => {
-    console.log('inner calls');
   }, [props.calls]);
 
   return (

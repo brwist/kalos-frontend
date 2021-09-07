@@ -20,7 +20,6 @@ interface props {
 
 export const DispatchTechs: FC<props> = props => {
   useEffect(() => {
-    console.log("inner techs")
   }, [props.dismissedTechs, props.techs]);
 
   return (
