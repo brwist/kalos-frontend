@@ -7,6 +7,7 @@ import charityRepotReducer from '../modules/ComponentsLibrary/CharityReport/char
 import AdvancedSearchReducer from '../modules/ComponentsLibrary/AdvancedSearch/advancedSearchSlice';
 import deletedServiceCallsReportReducer from '../modules/ComponentsLibrary/DeletedServiceCallsReport/deletedServicecallsReportSlice';
 import eventsReportReducer from '../modules/ComponentsLibrary/EventsReport/eventsReportSlice';
+import perDiemsNeedsAuditingReducer from '../modules/ComponentsLibrary/PerDiemsNeedsAuditing/perDiemsNeedsAuditingSlice';
 
 export default configureStore({
   reducer: {
@@ -18,5 +19,6 @@ export default configureStore({
     advancedSearch:AdvancedSearchReducer,
     deletedServiceCallsReport:deletedServiceCallsReportReducer,
     eventsReport:eventsReportReducer,
+    perDiemNeedsAudit:perDiemsNeedsAuditingReducer,
   },
 })

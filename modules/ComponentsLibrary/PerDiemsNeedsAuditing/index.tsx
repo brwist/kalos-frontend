@@ -33,6 +33,8 @@ import { TripInfoTable } from '../TripInfoTable';
 import { NULL_TIME } from '@kalos-core/kalos-rpc/constants';
 import { TimesheetDepartment } from '@kalos-core/kalos-rpc/TimesheetDepartment';
 import { User } from '@kalos-core/kalos-rpc/User';
+import { useDispatch, useSelector } from 'react-redux';
+import { perDiemNeedsAudit,selectperDiemTechnician } from './perDiemsNeedsAuditingSlice';
 
 interface Props {
   loggedUserId: number;
@@ -120,9 +122,17 @@ export const PerDiemsNeedsAuditing: FC<Props> = ({ loggedUserId }) => {
   const [formKey, setFormKey] = useState<number>(0);
   const [govPerDiemsByYearMonth, setGovPerDiemsByYearMonth] =
     useState<GovPerDiemsByYearMonth>({});
+    const dispatch = useDispatch();
   const initialize = useCallback(async () => {
     const technicians = await UserClientService.loadTechnicians();
     setTechnicians(technicians);
+    technicians.map(el => (
+      dispatch(
+        perDiemNeedsAudit({
+          label:UserClientService.getCustomerName(el),
+          value: el.getId(),
+      }))
+    ));
     let departments: TimesheetDepartment[];
     try {
       departments =
