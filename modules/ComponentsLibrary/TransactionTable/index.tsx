@@ -60,6 +60,8 @@ import {
 import { ErrorBoundary } from '../ErrorBoundary';
 import { ConfirmDelete } from '../ConfirmDelete';
 import { UploadPhotoToExistingTransaction } from '../UploadPhotoToExistingTransaction';
+import { useDispatch, useSelector } from 'react-redux';
+import { employeeList,selectEmployeesList } from './transactionTableSlice';
 export interface Props {
   loggedUserId: number;
   isSelector?: boolean; // Is this a selector table (checkboxes that return in on-change)?
@@ -162,6 +164,7 @@ export const TransactionTable: FC<Props> = ({
     searching,
   } = state;
 
+  const dispatcher = useDispatch();
   const handleSetTransactionToEdit = useCallback(
     (transaction: Transaction | undefined) => {
       dispatch({ type: 'setTransactionToEdit', data: transaction });
@@ -473,6 +476,13 @@ export const TransactionTable: FC<Props> = ({
     );
     dispatch({ type: 'setEmployees', data: sortedEmployeeList });
 
+    employees.map(emp =>{
+      dispatcher(
+        employeeList({
+          label: UserClientService.getCustomerName(emp,)+'(ID: '+emp.getId()+')',
+          value: emp.getId(),
+      }))
+    });
     const userReq = new User();
     userReq.setId(loggedUserId);
     const user = await UserClientService.Get(userReq);

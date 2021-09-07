@@ -10,6 +10,7 @@ import eventsReportReducer from '../modules/ComponentsLibrary/EventsReport/event
 import perDiemsNeedsAuditingReducer from '../modules/ComponentsLibrary/PerDiemsNeedsAuditing/perDiemsNeedsAuditingSlice';
 import serviceItemsReducer from '../modules/ComponentsLibrary/ServiceItems/serviceItemsSlice';
 import SpiffToolLogEditReducer from '../modules/ComponentsLibrary/SpiffToolLogEdit/spiffToolLogEditSlice';
+import TransactionTableReducer from '../modules/ComponentsLibrary/TransactionTable/transactionTableSlice';
 
 export default configureStore({
   reducer: {
@@ -23,6 +24,7 @@ export default configureStore({
     eventsReport:eventsReportReducer,
     perDiemNeedsAudit:perDiemsNeedsAuditingReducer,
     serviceItems:serviceItemsReducer,
-    SpiffToolLogEdit:SpiffToolLogEditReducer,
+    spiffToolLogEdit:SpiffToolLogEditReducer,
+    transactionTable:TransactionTableReducer,
   },
 })
