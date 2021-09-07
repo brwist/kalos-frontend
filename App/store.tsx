@@ -9,6 +9,7 @@ import deletedServiceCallsReportReducer from '../modules/ComponentsLibrary/Delet
 import eventsReportReducer from '../modules/ComponentsLibrary/EventsReport/eventsReportSlice';
 import perDiemsNeedsAuditingReducer from '../modules/ComponentsLibrary/PerDiemsNeedsAuditing/perDiemsNeedsAuditingSlice';
 import serviceItemsReducer from '../modules/ComponentsLibrary/ServiceItems/serviceItemsSlice';
+import SpiffToolLogEditReducer from '../modules/ComponentsLibrary/SpiffToolLogEdit/spiffToolLogEditSlice';
 
 export default configureStore({
   reducer: {
@@ -22,5 +23,6 @@ export default configureStore({
     eventsReport:eventsReportReducer,
     perDiemNeedsAudit:perDiemsNeedsAuditingReducer,
     serviceItems:serviceItemsReducer,
+    SpiffToolLogEdit:SpiffToolLogEditReducer,
   },
 })

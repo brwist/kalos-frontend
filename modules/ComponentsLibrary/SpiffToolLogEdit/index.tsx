@@ -36,6 +36,8 @@ import { stat } from 'fs';
 import { userInfo } from 'os';
 import { EmailServiceClient } from '@kalos-core/kalos-rpc/compiled-protos/email_pb_service';
 import { ENDPOINT } from '@kalos-core/kalos-rpc/constants';
+import { useDispatch, useSelector } from 'react-redux';
+import { spiffToolType,selectspiffToolTypes } from './spiffToolLogEditSlice';
 
 type DocumentUpload = {
   filename: '';
@@ -184,11 +186,18 @@ export const SpiffToolLogEdit: FC<Props> = ({
   const [taskUser, setTaskUser] = useState<User>(new User());
   const [documentFile, setDocumentFile] = useState<string>('');
   const [documentSaving, setDocumentSaving] = useState<boolean>(false);
+  const dispatch = useDispatch();
   const load = useCallback(async () => {
     setLoading(true);
     if (type === 'Spiff' && spiffTypes.length === 0) {
       const spiffTypes = await TaskClientService.loadSpiffTypes();
       setSpiffTypes(spiffTypes);
+      spiffTypes.map(spiffType => {
+        dispatch(spiffToolType({
+          label: escapeText(spiffType.getType()),
+          value: spiffType.getId(),
+        }))
+      });
     }
     const userReq = new User();
     userReq.setId(loggedUserId);
