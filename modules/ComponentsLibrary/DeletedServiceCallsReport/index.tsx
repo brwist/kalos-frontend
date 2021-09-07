@@ -21,6 +21,8 @@ import {
 import { ROWS_PER_PAGE } from '../../../constants';
 import { Event } from '@kalos-core/kalos-rpc/Event';
 import { Tasks } from '../Tasks';
+import { useDispatch, useSelector } from 'react-redux';
+import { deletedServiceCallsReport,selectdeletedServiceCallsReport } from './deletedServicecallsReportSlice';
 
 interface Props {
   loggedUserId: number;
@@ -65,6 +67,7 @@ export const DeletedServiceCallsReport: FC<Props> = ({
   });
   const [printStatus, setPrintStatus] = useState<Status>('idle');
   const [pendingEdit, setPendingEdit] = useState<Event>();
+  const dispatch = useDispatch();
   const load = useCallback(async () => {
     setLoading(true);
     console.log({ form });
@@ -174,6 +177,13 @@ export const DeletedServiceCallsReport: FC<Props> = ({
           const dateStarted = entry.getDateStarted();
           const logJobStatus = entry.getLogJobStatus();
           const disabled = !property || !customer;
+          dispatch(deletedServiceCallsReport({
+            property: getPropertyAddress(property),
+            customerName: UserClientService.getCustomerName(customer!),
+            job:name,
+            date: formatDate(dateStarted),
+            jobStatus: logJobStatus,
+          }));
           return [
             {
               value: getPropertyAddress(property),

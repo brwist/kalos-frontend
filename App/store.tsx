@@ -5,6 +5,7 @@ import employeeDepartmentReducer from '../modules/ComponentsLibrary/EmployeeDepa
 import billingAuditRepotReducer from '../modules/ComponentsLibrary/BillingAuditReport/billingAuditReportSlice';
 import charityRepotReducer from '../modules/ComponentsLibrary/CharityReport/charityReportSlice';
 import AdvancedSearchReducer from '../modules/ComponentsLibrary/AdvancedSearch/advancedSearchSlice';
+import deletedServiceCallsReportReducer from '../modules/ComponentsLibrary/DeletedServiceCallsReport/deletedServicecallsReportSlice';
 
 export default configureStore({
   reducer: {
@@ -14,5 +15,6 @@ export default configureStore({
     billAuditReport:billingAuditRepotReducer,
     charityReport:charityRepotReducer,
     advancedSearch:AdvancedSearchReducer,
+    deletedServiceCallsReport:deletedServiceCallsReportReducer,
   },
 })
