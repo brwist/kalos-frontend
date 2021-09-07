@@ -85,7 +85,6 @@ export const Timesheet: FC<Props> = ({
     const getTimesheets = createTimesheetFetchFunction(filter, type);
     const results = await getTimesheets();
     const resultsList = results.getResultsList();
-    const totalCount = results.getTotalCount();
 
     const tempResults = [];
     if (
@@ -182,8 +181,13 @@ export const Timesheet: FC<Props> = ({
         : -1,
     );
     const salariedIds = await UserClientService.GetUserIdsInPermissionGroup(41);
+    const csrIds = await UserClientService.GetUserIdsInPermissionGroup(43);
+
     sortedResultsLists = sortedResultsLists.filter(
       i => salariedIds.findIndex(j => j === i.getTechnicianUserId()) == -1,
+    );
+    sortedResultsLists = sortedResultsLists.filter(
+      i => csrIds.findIndex(j => j === i.getTechnicianUserId()) == -1,
     );
     setTimesheets(sortedResultsLists);
     setCount(sortedResultsLists.length);
