@@ -8,7 +8,7 @@ const u = new UserClient(ENDPOINT)
 
 u.GetToken('test','test').then(() => {
   ReactDOM.render(
-    <Dispatch userID={8418} withHeader />,
+    <Dispatch loggedUserId={8418} withHeader />,
     document.getElementById('root'),
   );
 });
