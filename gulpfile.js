@@ -967,7 +967,7 @@ const NAMED_EXPORTS = {
     'Group',
     'GroupList',
   ],
-  'node_modules/react-is/index.js': ['ForwardRef', 'isFragment', 'Memo'],
+  'node_modules/react-is/index.js': ['ForwardRef', 'isFragment', 'Memo', 'isValidElementType'],
   'node_modules/tslib/tslib.js': ['__awaiter', '__generator', '__extends'],
   'node_modules/@kalos-core/kalos-rpc/compiled-protos/predict_pb.js': [
     'TransactionData',
