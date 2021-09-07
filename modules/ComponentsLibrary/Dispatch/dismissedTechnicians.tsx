@@ -17,7 +17,6 @@ interface props {
 export const DismissedTechs: FC<props> = props => {
 
   useEffect(() => {
-    console.log('inner dismissed');
   }, [props.dismissedTechs]);
 
   return (

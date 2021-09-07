@@ -137,8 +137,8 @@ export const DispatchDashboard: React.FC<Props> = function DispatchDashboard({
 
   const getJobTypes = async() => {
     const jobTypeReq = new JobType();
-    const jobTypes = await JobTypeClientService.BatchGet(jobTypeReq);
     try {
+      const jobTypes = await JobTypeClientService.BatchGet(jobTypeReq);
       const displayedJobTypes = jobTypes.getResultsList().filter(jobType => !state.notIncludedJobTypes.includes(jobType.getId()));
       return {jobTypes: displayedJobTypes};
     } catch (err) {
@@ -152,8 +152,15 @@ export const DispatchDashboard: React.FC<Props> = function DispatchDashboard({
   const getGoogleApiKey = async() => {
     const newKey = new ApiKey();
     newKey.setTextId('google_maps');
-    const googleKey = await ApiKeyClientService.Get(newKey);
-    return googleKey.getApiKey();
+    try {
+      const googleKey = await ApiKeyClientService.Get(newKey);
+      return {googleKey: googleKey.getApiKey()};
+    } catch (err) {
+      console.error(
+        `An error occurred while getting Google API Key: ${err}`
+      );
+      return {googleKey: ''};
+    }
   }
 
   const setTechnicians = useCallback( async() => {
@@ -325,8 +332,15 @@ export const DispatchDashboard: React.FC<Props> = function DispatchDashboard({
     if (center.lat === 0 && center.lng === 0) {
       if (address) {
         const geocode = new google.maps.Geocoder();
-        const results = await geocode.geocode({address});
-        newCenter = {lat: results.results[0].geometry.location.lat(), lng: results.results[0].geometry.location.lng()}
+        try {
+          const results = await geocode.geocode({address});
+          newCenter = {lat: results.results[0].geometry.location.lat(), lng: results.results[0].geometry.location.lng()};
+        } catch (err) {
+          console.error(
+            `An error occurred while geocoding: ${err}`
+          );
+          newCenter = {lat: 0, lng: 0};
+        }
       } else {
         alert("No Valid Latitude, Longitude, or Address found");
       }
@@ -358,7 +372,7 @@ export const DispatchDashboard: React.FC<Props> = function DispatchDashboard({
       data: {
         departmentList: departmentReq.departments,
         jobTypeList: jobTypeReq.jobTypes,
-        googleApiKey: googleApiKey,
+        googleApiKey: googleApiKey.googleKey,
       }
     })
   }
