@@ -15,6 +15,7 @@ import {
   EventClientService,
   SlackClientService,
   ApiKeyClientService,
+  UserClientService,
 } from '../../../helpers';
 import { DateRange } from '@kalos-core/kalos-rpc/compiled-protos/common_pb';
 import { DispatchableTech, DispatchCall } from '@kalos-core/kalos-rpc/Dispatch';
@@ -25,6 +26,7 @@ import { ServicesRendered } from '@kalos-core/kalos-rpc/ServicesRendered';
 import { EventAssignment } from '@kalos-core/kalos-rpc/EventAssignment';
 import { Event } from '@kalos-core/kalos-rpc/Event';
 import { ApiKey } from '@kalos-core/kalos-rpc/ApiKey';
+import { User } from '@kalos-core/kalos-rpc/User';
 import { PageWrapper } from '../../PageWrapper/main';
 import { SectionBar } from '../SectionBar';
 import { PlainForm, Schema } from '../PlainForm';
@@ -63,6 +65,7 @@ const initialState: State = {
   departmentIds: initialFormData.departmentIds,
   jobTypes: initialFormData.jobTypes,
   departmentList: [],
+  defaultDepartmentIds: [],
   jobTypeList: [],
   callStartDate: initialFormData.dateStart,
   callEndDate: initialFormData.dateEnd,
@@ -84,13 +87,16 @@ export const DispatchDashboard: React.FC<Props> = function DispatchDashboard({
   const [state, dispatchDashboard] = useReducer(reducer, initialState);
 
   const getTechnicians = useCallback( async () => {
-    console.log('techs');
     const tech = new DispatchableTech();
     const dr = new DateRange();
     dr.setStart('2012-01-01');
     dr.setEnd(format(new Date(), 'yyyy-MM-dd'));
     tech.setDateRange(dr);
-    tech.setDepartmentList(state.departmentIds.toString());
+    if (state.departmentIds.length) {
+      tech.setDepartmentList(state.departmentIds.toString());
+    } else {
+      tech.setDepartmentList(state.defaultDepartmentIds.toString());
+    }
     try {      
       const techs = await DispatchClientService.GetDispatchableTechnicians(tech);
       const availableTechs = techs.getResultsList().filter(tech => tech.getActivity() != 'Dismissed');
@@ -102,10 +108,9 @@ export const DispatchDashboard: React.FC<Props> = function DispatchDashboard({
       );
       return {available: [], dismissed: []};
     }
-  }, [state.departmentIds]);
+  }, [state.departmentIds, state.defaultDepartmentIds]);
 
   const getCalls = useCallback( async () => {
-    console.log('calls');
     const call = new DispatchCall();
     call.setDateRangeList(['>=', state.callStartDate, '<=', state.callEndDate]);
     call.setDateTargetList(['date_started', 'date_ended']);
@@ -123,15 +128,24 @@ export const DispatchDashboard: React.FC<Props> = function DispatchDashboard({
 
   const getDepartments = async() => {
     const departmentReq = new TimesheetDepartment();
+    const user = new User();
+    user.setId(loggedUserId);
     departmentReq.setIsActive(1);
     try {
       const departments = await TimesheetDepartmentClientService.BatchGet(departmentReq);
-      return {departments: departments.getResultsList()};
+      const userData = await UserClientService.Get(user);
+      const userDepartments = userData.getPermissionGroupsList().filter(user => user.getType() === 'department').reduce((aggr, item) => [...aggr, +JSON.parse(item.getFilterData()).value], [] as number[],);
+      let displayedDepartments = departments.getResultsList().filter(dep => userDepartments.includes(dep.getId()));
+      if (!displayedDepartments.length) {
+        displayedDepartments = departments.getResultsList().filter(dep => dep.getId() === userData.getEmployeeDepartmentId()); 
+      }
+      console.log(displayedDepartments);
+      return {departments: displayedDepartments, defaultValues: displayedDepartments.map(dep => dep.getId())};
     } catch (err) {
       console.error(
         `An error occurred while getting Departments: ${err}`
       );
-      return {departments: []};
+      return {departments: [], defaultValues: []};
     }
   }
 
@@ -164,7 +178,6 @@ export const DispatchDashboard: React.FC<Props> = function DispatchDashboard({
   }
 
   const setTechnicians = useCallback( async() => {
-    console.log('test tech');
     const techs = await getTechnicians();
       dispatchDashboard({
         type: 'setTechs',
@@ -176,7 +189,6 @@ export const DispatchDashboard: React.FC<Props> = function DispatchDashboard({
   }, [getTechnicians]);
 
   const setCalls = useCallback( async() => {
-    console.log('test call')
     const calls = await getCalls();
     dispatchDashboard({
       type: 'setCalls',
@@ -186,7 +198,7 @@ export const DispatchDashboard: React.FC<Props> = function DispatchDashboard({
 
   useEffect(() => {
     setTechnicians();
-  }, [setTechnicians]);
+  }, [setTechnicians, state.defaultDepartmentIds]);
 
   useEffect(() => {
     setCalls();
@@ -365,12 +377,14 @@ export const DispatchDashboard: React.FC<Props> = function DispatchDashboard({
 
   const setDropDownValues = async () => {
     const departmentReq = await getDepartments();
+    console.log(departmentReq);
     const jobTypeReq = await getJobTypes();
     const googleApiKey = await getGoogleApiKey();
     dispatchDashboard({
       type: 'setInitialDropdowns',
       data: {
         departmentList: departmentReq.departments,
+        defaultDepartmentIds: departmentReq.defaultValues,
         jobTypeList: jobTypeReq.jobTypes,
         googleApiKey: googleApiKey.googleKey,
       }
@@ -393,19 +407,23 @@ export const DispatchDashboard: React.FC<Props> = function DispatchDashboard({
         name: 'departmentIds',
         label: 'Department(s)',
         options: state.departmentList.map(dl => ({
+          key: dl.getId() + dl.getDescription(),
           label: dl.getDescription(),
           value: dl.getId(),
         })),
         type: 'multiselect',
+        invisible: state.departmentList.length <= 1 ? true : undefined,
       },
       {
         name: 'jobTypes',
         label: 'Job Type(s)',
         options: state.jobTypeList.map(jtl => ({
+          key: jtl.getId() + jtl.getName(),
           label: jtl.getName(),
           value: jtl.getId(),
         })),
         type: 'multiselect',
+        invisible: state.jobTypeList.length <= 1 ? true : undefined,
       },
     ],
   ];
