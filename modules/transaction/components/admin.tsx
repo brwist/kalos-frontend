@@ -955,8 +955,9 @@ export class TransactionAdminView extends React.Component<props, state> {
                     updateCostCenter: this.makeUpdateCostCenter(txn.getId()),
                     updateDepartment: this.makeUpdateDepartment(txn.getId()),
                     toggleLoading: this.toggleLoading,
-                    editingCostCenter:
-                      this.state.editingCostCenter[txn.getId()],
+                    editingCostCenter: this.state.editingCostCenter[
+                      txn.getId()
+                    ],
                     toggleEditingCostCenter: () =>
                       this.toggleEditingCostCenter(txn.getId()),
                   }),
