@@ -846,6 +846,7 @@ const NAMED_EXPORTS = {
     ['SpiffToolAdminAction', 'SpiffToolAdminActionList'],
   'node_modules/@kalos-core/kalos-rpc/compiled-protos/slack_pb.js': [
     'DispatchReq',
+    'DMReq',
   ],
   'node_modules/@kalos-core/kalos-rpc/compiled-protos/stock_vendor_pb.js': [
     'StockVendor',
