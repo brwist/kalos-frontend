@@ -21,6 +21,7 @@ interface props {
 
 export const DispatchCalls: FC<props> = props => {
   useEffect(() => {
+    console.log('dispatch call use effect');
   }, [props.calls]);
 
   return (

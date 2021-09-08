@@ -96,6 +96,7 @@ export const DispatchMap: FC<props> = props => {
   useEffect(() => {
     buildTechMarkers();
     buildCallMarkers();
+    console.log('dispatch map use effect');
   }, [buildTechMarkers, buildCallMarkers]);
 
   return (
