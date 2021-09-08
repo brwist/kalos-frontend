@@ -49,7 +49,7 @@ export const DispatchMap: FC<props> = props => {
           />
         )
       } else {
-        return ( <Marker position={{lat: 0, lng: 0}} />)
+        return ( <Marker position={{lat: 0, lng: 0}} key={`marker_${tech.getUserId()}`}/>)
       }
     })
     setTechMarkers(await Promise.all(markers));
@@ -87,7 +87,7 @@ export const DispatchMap: FC<props> = props => {
           />
         )
       } else {
-        return ( <Marker position={{lat: 0, lng: 0}} />)
+        return ( <Marker position={{lat: 0, lng: 0}} key={`marker_${call.getId()}`}/>)
       }
     })
     setCallMarkers(await Promise.all(markers));
