@@ -21,9 +21,8 @@ const PopoverExample: FC<Props> = ({
   return (
     <div ref={anchorEl}>
       <PopoverComponent
-        anchorElement={anchorEl}
         buttonLabel="Press to see testing stuff"
-        label={'Testing stuff'}
+        stringList={['Testing stuff', 'Testing other stuff']}
       />
     </div>
   );
@@ -42,7 +41,7 @@ export default () => (
         <LoremIpsumList key={idx} />
       ))}
     </PopoverExample>
-    <PopoverExample button="Full Height Modal" fullHeight>
+    <PopoverExample button="Open Popover" fullHeight>
       <LoremIpsumList />
     </PopoverExample>
   </>

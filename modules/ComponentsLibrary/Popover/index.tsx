@@ -1,4 +1,10 @@
-import React, { ReactNode, useEffect, useState, CSSProperties } from 'react';
+import React, {
+  createRef,
+  useEffect,
+  useState,
+  CSSProperties,
+  RefObject,
+} from 'react';
 import ModalUI from '@material-ui/core/Modal';
 import Paper from '@material-ui/core/Paper';
 import { Loader } from '../../Loader/main';
@@ -10,47 +16,45 @@ import './styles.less';
 interface Props {
   classname?: string;
   styles?: CSSProperties;
-  label?: string;
+  stringList?: string[];
   buttonLabel: string;
-  anchorElement: React.RefObject<HTMLDivElement>;
-  onClick?: () => Promise<string>;
+  onClick?: () => Promise<string[]>;
   onClose?: () => void;
 }
 
 export const PopoverComponent = ({
-  label,
+  stringList,
   buttonLabel,
-  anchorElement,
   onClick,
   onClose,
   styles = {},
 }: Props) => {
-  const [labelString, setLabelString] = useState<string>('Loading...');
-  const [loading, setLoading] = useState<boolean>(false);
+  const [labelString, setLabelString] = useState<string[]>(['Loading...']);
+  const [loaded, setLoaded] = useState<boolean>(false);
+  const anchorEl = createRef<HTMLDivElement>();
+  const [anchor, setAnchor] = useState<RefObject<HTMLDivElement>>(anchorEl);
+
   const [open, setOpen] = useState<boolean>(false);
-
-  if (label) {
-    setLabelString(label);
+  if (stringList) {
+    setLabelString(stringList);
   }
-
   useEffect(() => {
     async function getLabel() {
       if (onClick && open) {
         console.log('here');
         const link = await onClick();
         setLabelString(link);
-        setLoading(false);
       }
     }
-    if (!loading && open) {
+    if (!loaded && open) {
       console.log('loading and open');
-      setLoading(true);
+      setLoaded(true);
       getLabel();
     }
-  }, [loading, onClick, open]);
+  }, [loaded, onClick, open]);
 
   return (
-    <>
+    <div key="AnchorEl" ref={anchor}>
       <Button
         key={'PopoverButton'}
         variant="contained"
@@ -59,23 +63,27 @@ export const PopoverComponent = ({
         {buttonLabel === '' ? 'No Information Provided' : buttonLabel}
       </Button>
       <Popover
-        key={'PopoverElement' + anchorElement.current?.accessKey}
+        key={'PopoverElement' + anchorEl.current?.accessKey}
         open={open}
         onClose={onClose}
         onScroll={() => setOpen(false)}
         onBlur={() => setOpen(false)}
-        anchorEl={anchorElement.current}
+        anchorEl={anchor.current}
         anchorOrigin={{
           vertical: 'bottom',
           horizontal: 'left',
         }}
       >
-        {
-          <Typography style={{ padding: 10 }} key="PopUpInfo">
-            {labelString}
+        {labelString.map(label => (
+          <Typography
+            style={{ padding: 10 }}
+            variant="body2"
+            key={'PopUpInfo' + label}
+          >
+            {label}
           </Typography>
-        }
+        ))}
       </Popover>
-    </>
+    </div>
   );
 };

@@ -64,7 +64,6 @@ export function TransactionRow({
   toggleEditingCostCenter,
 }: props): Row {
   const FileInput = React.createRef<HTMLInputElement>();
-  const anchorEl = React.createRef<HTMLDivElement>();
 
   const clients = {
     user: new UserClient(ENDPOINT),
@@ -75,14 +74,29 @@ export function TransactionRow({
   };
 
   const getJobNumberInfo = async (number: number) => {
-    let returnString = 'No Job Info Found';
+    let returnString = ['No Job Info Found'];
     if (number != 0) {
       try {
         console.log('we got called to get info');
         const eventReq = new Event();
         eventReq.setId(number);
         const res = await EventClientService.Get(eventReq);
-        returnString = res.getDescription();
+        const descritpion = 'Job Description: ' + res.getDescription();
+        const customer =
+          'Customer' +
+          (res.getCustomer() === undefined
+            ? 'No Customer: '
+            : `${res
+                .getCustomer()!
+                .getFirstname()} ${res.getCustomer()!.getLastname()}`);
+        const property =
+          'Property: ' +
+          (res.getProperty() === undefined
+            ? 'No Property'
+            : `${res
+                .getProperty()!
+                .getAddress()} ${res.getProperty()!.getCity()}`);
+        returnString = [descritpion, customer, property];
       } catch (error) {
         console.log('Not a number');
       }
@@ -251,15 +265,10 @@ export function TransactionRow({
     {
       value:
         txn.getJobId() != 0 ? (
-          <div ref={anchorEl}>
-            <PopoverComponent
-              buttonLabel={
-                txn.getJobId() === 0 ? '' : txn.getJobId().toString()
-              }
-              onClick={() => getJobNumberInfo(txn.getJobId())}
-              anchorElement={anchorEl}
-            />
-          </div>
+          <PopoverComponent
+            buttonLabel={txn.getJobId() === 0 ? '' : txn.getJobId().toString()}
+            onClick={() => getJobNumberInfo(txn.getJobId())}
+          />
         ) : (
           txn.getJobId()
         ),
