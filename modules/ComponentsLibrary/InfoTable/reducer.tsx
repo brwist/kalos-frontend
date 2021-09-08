@@ -47,13 +47,13 @@ export const Reducer: React.Reducer<State, Action> = (
 ) => {
   switch (action.type) {
     case ACTIONS.SET_IS_ADDING_ROW:
-      console.log('Setting is adding row', action.payload);
+      console.log('Setting is adding row:', action.payload);
       return { ...state, isAddingRow: action.payload };
     case ACTIONS.SET_MODE:
-      console.log('Setting editing', action.payload);
+      console.log('Setting mode: ', action.payload);
       return { ...state, mode: action.payload };
     case ACTIONS.SET_TECHNICIANS:
-      console.log('Setting technicians', action.payload);
+      console.log('Setting technicians:', action.payload);
       return { ...state, technicians: action.payload };
     case ACTIONS.SET_DEPARTMENTS:
       console.log('Setting departments: ', action.payload);

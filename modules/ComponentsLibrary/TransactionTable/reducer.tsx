@@ -136,7 +136,6 @@ export const reducer = (state: State, action: Action) => {
       };
     }
     case 'setCreatingTransaction': {
-      console.log('setting creating transactions');
       return {
         ...state,
         creatingTransaction: action.data,

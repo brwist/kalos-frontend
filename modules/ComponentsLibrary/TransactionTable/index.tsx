@@ -317,6 +317,7 @@ export const TransactionTable: FC<Props> = ({
 
   const handleChangePage = useCallback((pageNumberToChangeTo: number) => {
     dispatch({ type: 'setPage', data: pageNumberToChangeTo });
+    dispatch({ type: 'setCreatingTransaction', data: false });
     dispatch({ type: 'setChangingPage', data: true });
   }, []);
   const resetTransactions = useCallback(async () => {

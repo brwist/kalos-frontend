@@ -80,8 +80,6 @@ interface Props extends Styles {
   mode?: Modes;
 }
 
-let addingRowSelected = false; // Will go true before state set, performance optimization so clicking the button doesn't freeze a little bit
-
 export const InfoTable = ({
   columns = [],
   data,
@@ -236,14 +234,12 @@ export const InfoTable = ({
               if (
                 rowButton?.externalButton &&
                 rowButton?.externalButtonClicked &&
-                !state.isAddingRow &&
-                !addingRowSelected
+                !state.isAddingRow
               ) {
                 dispatch({
                   type: ACTIONS.SET_IS_ADDING_ROW,
                   payload: true,
                 });
-                addingRowSelected = true;
               }
               if (
                 rowButton !== undefined &&
