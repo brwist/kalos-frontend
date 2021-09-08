@@ -45,6 +45,7 @@ import Grid from '@material-ui/core/Grid';
 import Button  from '@material-ui/core/Button';
 import { Alert } from '../Alert';
 import UndoRounded from '@material-ui/icons/UndoRounded';
+import { CostSummary } from '../CostSummary';
 
 
 export interface Props {
@@ -101,6 +102,7 @@ export const DispatchDashboard: React.FC<Props> = function DispatchDashboard({
       const techs = await DispatchClientService.GetDispatchableTechnicians(tech);
       const availableTechs = techs.getResultsList().filter(tech => tech.getActivity() != 'Dismissed');
       const dismissedTechs = techs.getResultsList().filter(tech => tech.getActivity() === 'Dismissed');
+      console.log('Dispatch Tech Success');
       return {available: availableTechs, dismissed: dismissedTechs};
     } catch (err) {
       console.error(
@@ -117,6 +119,7 @@ export const DispatchDashboard: React.FC<Props> = function DispatchDashboard({
     call.setJobTypeIdList(state.jobTypes.toString());
     try {
       const calls = await DispatchClientService.GetDispatchCalls(call);
+      console.log('Dispatch Call Success');
       return {calls: calls.getResultsList()};
     } catch (err) {
       console.error(
@@ -139,6 +142,7 @@ export const DispatchDashboard: React.FC<Props> = function DispatchDashboard({
       if (!displayedDepartments.length) {
         displayedDepartments = departments.getResultsList().filter(dep => dep.getId() === userData.getEmployeeDepartmentId()); 
       }
+      console.log('Department Success');
       return {departments: displayedDepartments, defaultValues: displayedDepartments.map(dep => dep.getId())};
     } catch (err) {
       console.error(
@@ -153,6 +157,7 @@ export const DispatchDashboard: React.FC<Props> = function DispatchDashboard({
     try {
       const jobTypes = await JobTypeClientService.BatchGet(jobTypeReq);
       const displayedJobTypes = jobTypes.getResultsList().filter(jobType => !state.notIncludedJobTypes.includes(jobType.getId()));
+      console.log('Job Type Success');
       return {jobTypes: displayedJobTypes};
     } catch (err) {
       console.error(
@@ -167,6 +172,7 @@ export const DispatchDashboard: React.FC<Props> = function DispatchDashboard({
     newKey.setTextId('google_maps');
     try {
       const googleKey = await ApiKeyClientService.Get(newKey);
+      console.log('API Key success');
       return {googleKey: googleKey.getApiKey()};
     } catch (err) {
       console.error(
@@ -196,11 +202,16 @@ export const DispatchDashboard: React.FC<Props> = function DispatchDashboard({
   }, [getCalls])
 
   useEffect(() => {
-    setTechnicians();
+    if (state.defaultDepartmentIds.length) {
+      setTechnicians();
+      console.log('Technicians Set');
+    }
+    console.log('Tech Use Effect');
   }, [setTechnicians, state.defaultDepartmentIds]);
 
   useEffect(() => {
     setCalls();
+    console.log('Call Use Effect');
   }, [setCalls])
 
   const handleChange = async (formData: FormData) => {
@@ -445,6 +456,7 @@ export const DispatchDashboard: React.FC<Props> = function DispatchDashboard({
 
   useEffect(() => {
     setDropDownValues();
+    console.log('drop down use effect');
   }, []);
 
   return (
@@ -497,12 +509,14 @@ export const DispatchDashboard: React.FC<Props> = function DispatchDashboard({
                     Undismiss Technician
                   </Button>
                 </div>
-                <DispatchTechs
-                  userID={loggedUserId}
-                  techs={state.techs}
-                  dismissedTechs={state.dismissedTechs}
-                  handleMapRecenter={handleMapRecenter}
-                />             
+                {state.techs.length > 0 && (
+                  <DispatchTechs
+                    userID={loggedUserId}
+                    techs={state.techs}
+                    dismissedTechs={state.dismissedTechs}
+                    handleMapRecenter={handleMapRecenter}
+                  />   
+                )}          
               </Grid>
               <Grid item xs={6}>
                 {state.googleApiKey != '' && (
@@ -523,11 +537,37 @@ export const DispatchDashboard: React.FC<Props> = function DispatchDashboard({
               </Grid>
               
               <Grid item xs={12} style={{paddingTop: "10px"}}>
-                <DispatchCalls
-                  userID={loggedUserId}
-                  calls={state.calls}
-                  handleMapRecenter={handleMapRecenter}
+                {state.calls.length > 0 && (
+                  <DispatchCalls
+                    userID={loggedUserId}
+                    calls={state.calls}
+                    handleMapRecenter={handleMapRecenter}
                   />
+                )}
+                {state.calls.length === 0 && (
+                  <Table>
+                    <TableHead></TableHead>
+                    <TableBody>
+                      <TableRow>
+                        {/* Temporarily using hardcoded for variable for Estimated End */}
+                        <TableCell
+                          align="right"
+                          style={{ fontWeight: 'bolder', fontSize: '16px' }}
+                          width="50%"
+                        >
+                          Service Calls Remaining: {state.calls.length}
+                        </TableCell>
+                        <TableCell
+                          align="left"
+                          style={{ fontWeight: 'bolder', fontSize: '16px' }}
+                          width="50%"
+                        >
+                          Estimated End of Day: {format(new Date(), 'H:mm a')}
+                        </TableCell>
+                      </TableRow>
+                    </TableBody>
+                  </Table>
+                )}
               </Grid>
 
             </Grid>
