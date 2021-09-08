@@ -230,7 +230,7 @@ export const UploadPhotoToExistingTransaction: FC<Props> = ({
       },
       {
         name: 'invoiceWaiverType',
-        label: 'Document Type',
+        label: 'Waiver Type',
         options: WaiverTypes,
         required: formData.description == 'Invoice',
         invisible: formData.description !== 'Invoice',
