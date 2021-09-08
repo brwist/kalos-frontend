@@ -1,6 +1,7 @@
 import React, { FC, useEffect, useCallback, useState } from 'react';
 import { GoogleMap, LoadScript, Marker } from '@react-google-maps/api';
 import { DispatchableTech, DispatchCall } from '@kalos-core/kalos-rpc/Dispatch';
+import CircularProgress from '@material-ui/core/CircularProgress';
 interface props {
   userID: number;
   center: {lat: number, lng: number};
@@ -8,7 +9,8 @@ interface props {
   apiKey: string;
   techs: DispatchableTech[];
   calls: DispatchCall[];
-  handleMapClick: (tech: DispatchableTech, call: DispatchCall) => void
+  handleMapClick: (tech: DispatchableTech, call: DispatchCall) => void;
+  loading: boolean;
 }
 
 export const DispatchMap: FC<props> = props => {
@@ -101,6 +103,12 @@ export const DispatchMap: FC<props> = props => {
 
   return (
     <div style={{textAlign: "center"}}>
+      {props.loading && (
+        <div style={{textAlign: 'center', paddingTop: '20px'}}>
+          <CircularProgress />
+        </div>
+      )}
+      {!props.loading && (
       <LoadScript
         googleMapsApiKey={props.apiKey}
       >
@@ -109,11 +117,13 @@ export const DispatchMap: FC<props> = props => {
           mapContainerStyle={{width:"98%", height:`${window.innerHeight * 0.7}px`}}
           center={props.center}
           zoom={props.zoom}
+          options={{streetViewControl: false}}
         >
           {techMarkers}
           {callMarkers}
         </GoogleMap>
       </LoadScript>
+      )}
     </div>
   )
 }
