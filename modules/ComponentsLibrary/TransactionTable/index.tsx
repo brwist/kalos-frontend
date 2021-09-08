@@ -136,6 +136,7 @@ export const TransactionTable: FC<Props> = ({
     status: 'Accepted / Rejected',
     universalSearch: undefined,
     searching: false,
+    fileData: undefined,
   });
   const {
     transactionFilter,
@@ -160,6 +161,7 @@ export const TransactionTable: FC<Props> = ({
     error,
     status,
     searching,
+    fileData,
   } = state;
 
   const handleSetTransactionToEdit = useCallback(
@@ -1251,9 +1253,12 @@ export const TransactionTable: FC<Props> = ({
         onSaveRowButton={saved => {
           handleSaveFromRowButton(saved);
           handleSetCreatingTransaction(false);
+          // This is where the data would be uploaded alongside the transaction
+
+          console.log('Data that would be saved: ', fileData);
         }}
         rowButton={{
-          onFileLoad: data => alert('Loaded file'),
+          onFileLoad: data => dispatch({ type: 'setFileData', data: data }),
           externalButtonClicked: creatingTransaction,
           externalButton: true,
           type: new Transaction(),
