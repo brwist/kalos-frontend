@@ -15,6 +15,7 @@ import {
   EventClientService,
   SlackClientService,
   ApiKeyClientService,
+  UserClientService,
 } from '../../../helpers';
 import { DateRange } from '@kalos-core/kalos-rpc/compiled-protos/common_pb';
 import { DispatchableTech, DispatchCall } from '@kalos-core/kalos-rpc/Dispatch';
@@ -25,6 +26,7 @@ import { ServicesRendered } from '@kalos-core/kalos-rpc/ServicesRendered';
 import { EventAssignment } from '@kalos-core/kalos-rpc/EventAssignment';
 import { Event } from '@kalos-core/kalos-rpc/Event';
 import { ApiKey } from '@kalos-core/kalos-rpc/ApiKey';
+import { User } from '@kalos-core/kalos-rpc/User';
 import { PageWrapper } from '../../PageWrapper/main';
 import { SectionBar } from '../SectionBar';
 import { PlainForm, Schema } from '../PlainForm';
@@ -43,6 +45,7 @@ import Grid from '@material-ui/core/Grid';
 import Button  from '@material-ui/core/Button';
 import { Alert } from '../Alert';
 import UndoRounded from '@material-ui/icons/UndoRounded';
+import { CostSummary } from '../CostSummary';
 
 
 export interface Props {
@@ -63,6 +66,7 @@ const initialState: State = {
   departmentIds: initialFormData.departmentIds,
   jobTypes: initialFormData.jobTypes,
   departmentList: [],
+  defaultDepartmentIds: [],
   jobTypeList: [],
   callStartDate: initialFormData.dateStart,
   callEndDate: initialFormData.dateEnd,
@@ -84,17 +88,21 @@ export const DispatchDashboard: React.FC<Props> = function DispatchDashboard({
   const [state, dispatchDashboard] = useReducer(reducer, initialState);
 
   const getTechnicians = useCallback( async () => {
-    console.log('techs');
     const tech = new DispatchableTech();
     const dr = new DateRange();
     dr.setStart('2012-01-01');
     dr.setEnd(format(new Date(), 'yyyy-MM-dd'));
     tech.setDateRange(dr);
-    tech.setDepartmentList(state.departmentIds.toString());
+    if (state.departmentIds.length) {
+      tech.setDepartmentList(state.departmentIds.toString());
+    } else {
+      tech.setDepartmentList(state.defaultDepartmentIds.toString());
+    }
     try {      
       const techs = await DispatchClientService.GetDispatchableTechnicians(tech);
       const availableTechs = techs.getResultsList().filter(tech => tech.getActivity() != 'Dismissed');
       const dismissedTechs = techs.getResultsList().filter(tech => tech.getActivity() === 'Dismissed');
+      console.log('Dispatch Tech Success');
       return {available: availableTechs, dismissed: dismissedTechs};
     } catch (err) {
       console.error(
@@ -102,16 +110,16 @@ export const DispatchDashboard: React.FC<Props> = function DispatchDashboard({
       );
       return {available: [], dismissed: []};
     }
-  }, [state.departmentIds]);
+  }, [state.departmentIds, state.defaultDepartmentIds]);
 
   const getCalls = useCallback( async () => {
-    console.log('calls');
     const call = new DispatchCall();
     call.setDateRangeList(['>=', state.callStartDate, '<=', state.callEndDate]);
     call.setDateTargetList(['date_started', 'date_ended']);
     call.setJobTypeIdList(state.jobTypes.toString());
     try {
       const calls = await DispatchClientService.GetDispatchCalls(call);
+      console.log('Dispatch Call Success');
       return {calls: calls.getResultsList()};
     } catch (err) {
       console.error(
@@ -123,15 +131,24 @@ export const DispatchDashboard: React.FC<Props> = function DispatchDashboard({
 
   const getDepartments = async() => {
     const departmentReq = new TimesheetDepartment();
+    const user = new User();
+    user.setId(loggedUserId);
     departmentReq.setIsActive(1);
     try {
       const departments = await TimesheetDepartmentClientService.BatchGet(departmentReq);
-      return {departments: departments.getResultsList()};
+      const userData = await UserClientService.Get(user);
+      const userDepartments = userData.getPermissionGroupsList().filter(user => user.getType() === 'department').reduce((aggr, item) => [...aggr, +JSON.parse(item.getFilterData()).value], [] as number[],);
+      let displayedDepartments = departments.getResultsList().filter(dep => userDepartments.includes(dep.getId()));
+      if (!displayedDepartments.length) {
+        displayedDepartments = departments.getResultsList().filter(dep => dep.getId() === userData.getEmployeeDepartmentId()); 
+      }
+      console.log('Department Success');
+      return {departments: displayedDepartments, defaultValues: displayedDepartments.map(dep => dep.getId())};
     } catch (err) {
       console.error(
         `An error occurred while getting Departments: ${err}`
       );
-      return {departments: []};
+      return {departments: [], defaultValues: []};
     }
   }
 
@@ -140,6 +157,7 @@ export const DispatchDashboard: React.FC<Props> = function DispatchDashboard({
     try {
       const jobTypes = await JobTypeClientService.BatchGet(jobTypeReq);
       const displayedJobTypes = jobTypes.getResultsList().filter(jobType => !state.notIncludedJobTypes.includes(jobType.getId()));
+      console.log('Job Type Success');
       return {jobTypes: displayedJobTypes};
     } catch (err) {
       console.error(
@@ -154,6 +172,7 @@ export const DispatchDashboard: React.FC<Props> = function DispatchDashboard({
     newKey.setTextId('google_maps');
     try {
       const googleKey = await ApiKeyClientService.Get(newKey);
+      console.log('API Key success');
       return {googleKey: googleKey.getApiKey()};
     } catch (err) {
       console.error(
@@ -164,7 +183,6 @@ export const DispatchDashboard: React.FC<Props> = function DispatchDashboard({
   }
 
   const setTechnicians = useCallback( async() => {
-    console.log('test tech');
     const techs = await getTechnicians();
       dispatchDashboard({
         type: 'setTechs',
@@ -176,7 +194,6 @@ export const DispatchDashboard: React.FC<Props> = function DispatchDashboard({
   }, [getTechnicians]);
 
   const setCalls = useCallback( async() => {
-    console.log('test call')
     const calls = await getCalls();
     dispatchDashboard({
       type: 'setCalls',
@@ -185,11 +202,16 @@ export const DispatchDashboard: React.FC<Props> = function DispatchDashboard({
   }, [getCalls])
 
   useEffect(() => {
-    setTechnicians();
-  }, [setTechnicians]);
+    if (state.defaultDepartmentIds.length) {
+      setTechnicians();
+      console.log('Technicians Set');
+    }
+    console.log('Tech Use Effect');
+  }, [setTechnicians, state.defaultDepartmentIds]);
 
   useEffect(() => {
     setCalls();
+    console.log('Call Use Effect');
   }, [setCalls])
 
   const handleChange = async (formData: FormData) => {
@@ -371,6 +393,7 @@ export const DispatchDashboard: React.FC<Props> = function DispatchDashboard({
       type: 'setInitialDropdowns',
       data: {
         departmentList: departmentReq.departments,
+        defaultDepartmentIds: departmentReq.defaultValues,
         jobTypeList: jobTypeReq.jobTypes,
         googleApiKey: googleApiKey.googleKey,
       }
@@ -393,19 +416,23 @@ export const DispatchDashboard: React.FC<Props> = function DispatchDashboard({
         name: 'departmentIds',
         label: 'Department(s)',
         options: state.departmentList.map(dl => ({
+          key: dl.getId() + dl.getDescription(),
           label: dl.getDescription(),
           value: dl.getId(),
         })),
         type: 'multiselect',
+        invisible: state.departmentList.length <= 1 ? true : undefined,
       },
       {
         name: 'jobTypes',
         label: 'Job Type(s)',
         options: state.jobTypeList.map(jtl => ({
+          key: jtl.getId() + jtl.getName(),
           label: jtl.getName(),
           value: jtl.getId(),
         })),
         type: 'multiselect',
+        invisible: state.jobTypeList.length <= 1 ? true : undefined,
       },
     ],
   ];
@@ -429,6 +456,7 @@ export const DispatchDashboard: React.FC<Props> = function DispatchDashboard({
 
   useEffect(() => {
     setDropDownValues();
+    console.log('drop down use effect');
   }, []);
 
   return (
@@ -481,12 +509,14 @@ export const DispatchDashboard: React.FC<Props> = function DispatchDashboard({
                     Undismiss Technician
                   </Button>
                 </div>
-                <DispatchTechs
-                  userID={loggedUserId}
-                  techs={state.techs}
-                  dismissedTechs={state.dismissedTechs}
-                  handleMapRecenter={handleMapRecenter}
-                />             
+                {state.techs.length > 0 && (
+                  <DispatchTechs
+                    userID={loggedUserId}
+                    techs={state.techs}
+                    dismissedTechs={state.dismissedTechs}
+                    handleMapRecenter={handleMapRecenter}
+                  />   
+                )}          
               </Grid>
               <Grid item xs={6}>
                 {state.googleApiKey != '' && (
@@ -507,11 +537,37 @@ export const DispatchDashboard: React.FC<Props> = function DispatchDashboard({
               </Grid>
               
               <Grid item xs={12} style={{paddingTop: "10px"}}>
-                <DispatchCalls
-                  userID={loggedUserId}
-                  calls={state.calls}
-                  handleMapRecenter={handleMapRecenter}
+                {state.calls.length > 0 && (
+                  <DispatchCalls
+                    userID={loggedUserId}
+                    calls={state.calls}
+                    handleMapRecenter={handleMapRecenter}
                   />
+                )}
+                {state.calls.length === 0 && (
+                  <Table>
+                    <TableHead></TableHead>
+                    <TableBody>
+                      <TableRow>
+                        {/* Temporarily using hardcoded for variable for Estimated End */}
+                        <TableCell
+                          align="right"
+                          style={{ fontWeight: 'bolder', fontSize: '16px' }}
+                          width="50%"
+                        >
+                          Service Calls Remaining: {state.calls.length}
+                        </TableCell>
+                        <TableCell
+                          align="left"
+                          style={{ fontWeight: 'bolder', fontSize: '16px' }}
+                          width="50%"
+                        >
+                          Estimated End of Day: {format(new Date(), 'H:mm a')}
+                        </TableCell>
+                      </TableRow>
+                    </TableBody>
+                  </Table>
+                )}
               </Grid>
 
             </Grid>
