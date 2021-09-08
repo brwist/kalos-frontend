@@ -49,6 +49,7 @@ export type State = {
   status: 'Accepted' | 'Rejected' | 'Accepted / Rejected';
   departments: TimesheetDepartment[];
   universalSearch: string | undefined;
+  fileData: any | undefined;
 };
 export type Action =
   | { type: 'setTransactionFilter'; data: FilterType }
@@ -85,6 +86,10 @@ export type Action =
   | {
       type: 'setUniversalSearch';
       data: string | undefined;
+    }
+  | {
+      type: 'setFileData';
+      data: any;
     };
 
 export const reducer = (state: State, action: Action) => {
@@ -244,6 +249,9 @@ export const reducer = (state: State, action: Action) => {
         ...state,
         pendingUploadPhoto: action.data,
       };
+    case 'setFileData':
+      console.log('setting file data');
+      return { ...state, fileData: action.data };
     default:
       return state;
   }
