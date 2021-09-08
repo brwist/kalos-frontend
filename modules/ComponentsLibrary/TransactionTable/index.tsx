@@ -1253,6 +1253,7 @@ export const TransactionTable: FC<Props> = ({
           handleSetCreatingTransaction(false);
         }}
         rowButton={{
+          onFileLoad: data => alert('Loaded file'),
           externalButtonClicked: creatingTransaction,
           externalButton: true,
           type: new Transaction(),

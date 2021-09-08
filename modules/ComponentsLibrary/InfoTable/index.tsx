@@ -69,6 +69,7 @@ interface Props extends Styles {
     };
     externalButton?: boolean;
     externalButtonClicked?: boolean; // Was an external button clicked that triggers this? (While true, makes the row appear)
+    onFileLoad?: (fileData: any) => any;
   };
 }
 
@@ -215,34 +216,46 @@ export const InfoTable = ({
         <PlainForm<typeof fields>
           onChange={fieldOutput => (temporaryResult = fieldOutput)}
           schema={[
-            Object.keys(fields).map((field: any, idx: number) => {
-              let columnType =
-                rowButton?.columnDefinition.columnTypeOverrides.filter(
-                  type => type.columnName === field,
-                );
-              return {
-                label: field,
-                name: field,
-                type:
-                  columnType?.length === 1 ? columnType![0].columnType : 'text',
-                actions:
-                  idx == Object.keys(fields).length - 1
-                    ? [
-                        {
-                          label: 'OK',
-                          onClick: () => {
-                            dispatch({
-                              type: ACTIONS.SET_IS_ADDING_ROW,
-                              payload: false,
-                            });
-                            if (onSaveRowButton)
-                              onSaveRowButton(temporaryResult);
-                          },
-                        },
-                      ]
-                    : [],
-              };
-            }),
+            [].concat.apply(
+              Object.keys(fields).map((field: any, idx: number) => {
+                let columnType =
+                  rowButton?.columnDefinition.columnTypeOverrides.filter(
+                    type => type.columnName === field,
+                  );
+                return {
+                  label: field,
+                  name: field,
+                  type:
+                    columnType?.length === 1
+                      ? columnType![0].columnType
+                      : 'text',
+                };
+              }) as any,
+              [
+                {
+                  label: 'Add Image',
+                  name: 'image',
+                  type: 'file',
+                  onFileLoad: (data: string) => {
+                    if (rowButton) {
+                      if (rowButton.onFileLoad) rowButton.onFileLoad(data);
+                    }
+                  },
+                  actions: [
+                    {
+                      label: 'OK',
+                      onClick: () => {
+                        dispatch({
+                          type: ACTIONS.SET_IS_ADDING_ROW,
+                          payload: false,
+                        });
+                        if (onSaveRowButton) onSaveRowButton(temporaryResult);
+                      },
+                    },
+                  ],
+                } as any,
+              ],
+            ),
           ]}
           data={fields}
         />
