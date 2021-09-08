@@ -216,10 +216,9 @@ export const InfoTable = ({
           onChange={fieldOutput => (temporaryResult = fieldOutput)}
           schema={[
             Object.keys(fields).map((field: any, idx: number) => {
-              let columnType =
-                rowButton?.columnDefinition.columnTypeOverrides.filter(
-                  type => type.columnName === field,
-                );
+              let columnType = rowButton?.columnDefinition.columnTypeOverrides.filter(
+                type => type.columnName === field,
+              );
               return {
                 label: field,
                 name: field,
@@ -237,6 +236,7 @@ export const InfoTable = ({
                             });
                             if (onSaveRowButton)
                               onSaveRowButton(temporaryResult);
+                            addingRowSelected = false;
                           },
                         },
                       ]
