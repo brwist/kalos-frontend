@@ -20,6 +20,7 @@ interface props {
 
 export const DispatchTechs: FC<props> = props => {
   useEffect(() => {
+    console.log('dispatch techs use effect');
   }, [props.dismissedTechs, props.techs]);
 
   return (
