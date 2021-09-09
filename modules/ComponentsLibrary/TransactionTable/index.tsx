@@ -49,7 +49,6 @@ import { TxnLog } from '../../transaction/components/log';
 import { TxnNotes } from '../../transaction/components/notes';
 import { prettyMoney } from '../../transaction/components/row';
 import { CompareTransactions } from '../CompareTransactions';
-import { GalleryData } from '../Gallery';
 import { Data, InfoTable } from '../InfoTable';
 import { Alert } from '../Alert';
 import { Modal } from '../Modal';
@@ -64,7 +63,6 @@ import { TimesheetDepartment } from '@kalos-core/kalos-rpc/TimesheetDepartment';
 import { StatusPicker } from './components/StatusPicker';
 import {
   TransactionDocument,
-  TransactionDocumentList,
 } from '@kalos-core/kalos-rpc/TransactionDocument';
 import { ErrorBoundary } from '../ErrorBoundary';
 import { ConfirmDelete } from '../ConfirmDelete';
@@ -851,10 +849,10 @@ export const TransactionTable: FC<Props> = ({
       {
         content: (
           <StatusPicker
-            key={status}
+            key={state.status}
             options={['Accepted / Rejected', 'Accepted', 'Rejected']}
             selected={
-              status == 'Accepted / Rejected' ? 0 : status == 'Accepted' ? 1 : 2
+              state.status == 'Accepted / Rejected' ? 0 : state.status == 'Accepted' ? 1 : 2
             }
             onSelect={(
               selected: 'Accepted' | 'Rejected' | 'Accepted / Rejected',
