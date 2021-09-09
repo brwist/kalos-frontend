@@ -1231,6 +1231,7 @@ export const TransactionTable: FC<Props> = ({
           }
         >
           <Form<PopupType>
+            disabled={loading}
             key={imageWaiverTypeFormData.toString()}
             title={'Specify Type for Document - ' + imageNameToSave}
             onChange={changed => {
@@ -1254,11 +1255,7 @@ export const TransactionTable: FC<Props> = ({
               ],
             ]}
             onSave={async saved => {
-              console.log(
-                `fileData: ${fileData === undefined}, transactionToSave: ${
-                  transactionToSave === undefined
-                }, imageNameToSave: ${imageNameToSave === undefined} `,
-              );
+              dispatch({ type: 'setLoading', data: true });
               if (!fileData || !transactionToSave || !imageNameToSave) {
                 console.error(
                   `Not proceeding with image save. Undefined values: fileData: ${
@@ -1267,6 +1264,7 @@ export const TransactionTable: FC<Props> = ({
                     transactionToSave === undefined
                   }, imageNameToSave: ${imageNameToSave === undefined} `,
                 );
+                dispatch({ type: 'setLoading', data: false });
                 return;
               }
               await handleSaveFileToBucket(
@@ -1276,7 +1274,7 @@ export const TransactionTable: FC<Props> = ({
                 saved.invoiceWaiverType,
                 transactionToSave,
               );
-
+              dispatch({ type: 'setLoading', data: false });
               dispatch({ type: 'setImageWaiverTypePopupOpen', data: false });
               dispatch({ type: 'setImageNameToSave', data: undefined });
               dispatch({ type: 'setFileData', data: undefined });
@@ -1463,11 +1461,12 @@ export const TransactionTable: FC<Props> = ({
         }
         hoverable={false}
         onSaveRowButton={async saved => {
+          dispatch({ type: 'setLoading', data: true });
           let result = await handleSaveFromRowButton(saved);
           handleSetCreatingTransaction(false);
           // This is where the data would be uploaded alongside the transaction
 
-          console.log('Image: ', (saved as any)['image']);
+          dispatch({ type: 'setLoading', data: false });
           if ((saved as any)['image']) {
             dispatch({
               type: 'setImageWaiverTypePopupOpen',
