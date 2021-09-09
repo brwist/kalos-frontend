@@ -7,7 +7,8 @@ import TableContainer from '@material-ui/core/TableContainer';
 import TableRow from '@material-ui/core/TableRow';
 import TableHead from '@material-ui/core/TableHead';
 import TableCell from '@material-ui/core/TableCell';
-import { differenceInMinutes } from 'date-fns/esm';
+import differenceInMinutes from 'date-fns/esm/differenceInMinutes';
+import parseISO from 'date-fns/esm/parseISO';
 import DeleteOutlineIcon from '@material-ui/icons/DeleteOutline';
 import CircularProgress from '@material-ui/core/CircularProgress';
 
@@ -54,8 +55,8 @@ export const DispatchTechs: FC<props> = props => {
                 )}
                 {props.techs.length > 0 &&
                   props.techs.map((tech, index) => {
-                    const timeOnHours = Math.floor(differenceInMinutes(new Date(), new Date(tech.getActivityDate())) / 60);
-                    const timeOnMinutes = differenceInMinutes(new Date(), new Date(tech.getActivityDate())) - timeOnHours * 60;
+                    const timeOnHours = Math.floor(differenceInMinutes(new Date(), parseISO(tech.getActivityDate())) / 60);
+                    const timeOnMinutes = differenceInMinutes(new Date(), parseISO(tech.getActivityDate())) - timeOnHours * 60;
                     const hoursWorked = Math.floor(tech.getHoursWorked() / 3600);
                     const minutesWorked = Math.floor((tech.getHoursWorked() - hoursWorked * 3600) / 60);
                     const techLatitude = tech.getGeolocationLat() ? tech.getGeolocationLat() : 0;
