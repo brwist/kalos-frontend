@@ -45,7 +45,8 @@ import Grid from '@material-ui/core/Grid';
 import Button  from '@material-ui/core/Button';
 import { Alert } from '../Alert';
 import UndoRounded from '@material-ui/icons/UndoRounded';
-import { CostSummary } from '../CostSummary';
+import CircularProgress from '@material-ui/core/CircularProgress';
+import { Loader } from '../../Loader/main';
 
 
 export interface Props {
@@ -78,8 +79,12 @@ const initialState: State = {
   selectedCall: new DispatchCall(),
   center: {lat: 28.565989, lng: -81.733872},
   zoom: 11,
-  isLoading: false,
+  isProcessing: false,
   googleApiKey: '',
+  isLoadingTech: false,
+  isLoadingCall: false,
+  isLoadingMap: true,
+  isInitialLoad: true,
 };
 
 export const DispatchDashboard: React.FC<Props> = function DispatchDashboard({
@@ -197,25 +202,32 @@ export const DispatchDashboard: React.FC<Props> = function DispatchDashboard({
     const calls = await getCalls();
     dispatchDashboard({
       type: 'setCalls',
-      data: calls.calls
+      data: {
+        calls: calls.calls
+      }
     });
   }, [getCalls])
 
   useEffect(() => {
+    dispatchDashboard({
+      type: 'setLoadingTech',
+      data: true
+    })
     if (state.defaultDepartmentIds.length) {
       setTechnicians();
-      console.log('Technicians Set');
     }
-    console.log('Tech Use Effect');
   }, [setTechnicians, state.defaultDepartmentIds]);
 
   useEffect(() => {
+    dispatchDashboard({
+      type: 'setLoadingCall',
+      data: true
+    });
     setCalls();
-    console.log('Call Use Effect');
   }, [setCalls])
 
   const handleChange = async (formData: FormData) => {
-    setLoading(true);
+    setProcessing(true);
     const callDateStart = formData.dateStart.replace('00:00', '');
     const callDateEnd = formData.dateEnd.replace('00:00', '');
     if (state.departmentIds.length != formData.departmentIds.length || !state.departmentIds.every((val, index) => val === formData.departmentIds[index])) {
@@ -249,13 +261,13 @@ export const DispatchDashboard: React.FC<Props> = function DispatchDashboard({
         modalKey: 'Undismiss',
         selectedTech: new DispatchableTech(),
         selectedCall: new DispatchCall(),
-        isLoading: false
+        isProcessing: false
       }
     })
   }
 
   const handleDismissTech =  async () => {
-    setLoading(true);
+    setProcessing(true);
     const actLog = new ActivityLog();
     actLog.setUserId(loggedUserId);
     actLog.setPropertyId(19139);
@@ -282,7 +294,7 @@ export const DispatchDashboard: React.FC<Props> = function DispatchDashboard({
   };
 
   const handleUndismissTech = async (tech : DispatchableTech) => {
-    setLoading(true);
+    setProcessing(true);
     const actLog = new ActivityLog();
     actLog.setUserId(loggedUserId);
     actLog.setPropertyId(19139);
@@ -306,11 +318,11 @@ export const DispatchDashboard: React.FC<Props> = function DispatchDashboard({
       );
     }
     setTechnicians();
-    setLoading(false);
+    setProcessing(false);
   }
 
   const handleAssignTech = async () => {
-    setLoading(true);
+    setProcessing(true);
     const assignment = new EventAssignment();
     const event = new Event();
     assignment.setEventId(state.selectedCall.getId());
@@ -381,7 +393,7 @@ export const DispatchDashboard: React.FC<Props> = function DispatchDashboard({
       modalKey: 'mapInfo',
       selectedTech: tech,
       selectedCall: call,
-      isLoading: false,
+      isProcessing: false,
     }})
   }
 
@@ -437,8 +449,8 @@ export const DispatchDashboard: React.FC<Props> = function DispatchDashboard({
     ],
   ];
 
-  const setLoading = (loading : boolean) => {
-    dispatchDashboard({ type: 'setLoading', data: loading});
+  const setProcessing = (loading : boolean) => {
+    dispatchDashboard({ type: 'setProcessing', data: loading});
   }
 
   const resetModal = () => {
@@ -449,7 +461,7 @@ export const DispatchDashboard: React.FC<Props> = function DispatchDashboard({
         modalKey: '',
         selectedTech: new DispatchableTech(),
         selectedCall: new DispatchCall(),
-        isLoading: false
+        isProcessing: false
       }
     });
   }
@@ -461,11 +473,17 @@ export const DispatchDashboard: React.FC<Props> = function DispatchDashboard({
 
   return (
     <PageWrapper userID={loggedUserId}>
-      <Grid>
-        <Grid item xs={12}>
-          <SectionBar title="Dispatch" styles={{backgroundColor: "#711313", color: "white"}} />
-        </Grid>
-        <Grid item xs={12} style={{width:'95%', margin:'auto'}}>
+      {state.isLoadingMap && state.isLoadingTech && state.isLoadingCall && (
+        <Loader
+          backgroundColor={'black'}
+          opacity={0.5}
+        />
+      )}
+      <SectionBar title="Dispatch" styles={{backgroundColor: "#711313", color: "white"}} />
+      {!state.isInitialLoad && (
+        <div>
+      <Grid style={{paddingTop:'15px'}}>
+        <Grid item xs={12} style={{width:'98%', margin:'auto'}}>
           <PlainForm
             schema={SCHEMA_PRINT}
             data={initialFormData}
@@ -473,8 +491,8 @@ export const DispatchDashboard: React.FC<Props> = function DispatchDashboard({
           />
         </Grid>
 
-        <Grid item xs={12} style={{width:'95%', margin:'auto'}}>
-          <hr style={{borderTop: "3px solid black"}}></hr>
+        <Grid item xs={12} style={{width:'98%', margin:'auto'}}>
+          <hr style={{borderTop: "3px solid black"}}/>
         </Grid>
 
         <Grid item xs={12} style={{width:'95%', margin:'auto'}}>
@@ -496,7 +514,7 @@ export const DispatchDashboard: React.FC<Props> = function DispatchDashboard({
                   modalKey: modalKey,
                   selectedTech: tech!,
                   selectedCall: call!, 
-                  isLoading: false,
+                  isProcessing: false,
                 }
               });
             }
@@ -509,14 +527,13 @@ export const DispatchDashboard: React.FC<Props> = function DispatchDashboard({
                     Undismiss Technician
                   </Button>
                 </div>
-                {state.techs.length > 0 && (
-                  <DispatchTechs
-                    userID={loggedUserId}
-                    techs={state.techs}
-                    dismissedTechs={state.dismissedTechs}
-                    handleMapRecenter={handleMapRecenter}
-                  />   
-                )}          
+                <DispatchTechs
+                  userID={loggedUserId}
+                  techs={state.techs}
+                  dismissedTechs={state.dismissedTechs}
+                  handleMapRecenter={handleMapRecenter}
+                  loading={state.isLoadingTech}
+                />
               </Grid>
               <Grid item xs={6}>
                 {state.googleApiKey != '' && (
@@ -528,48 +545,23 @@ export const DispatchDashboard: React.FC<Props> = function DispatchDashboard({
                     techs={state.techs}
                     calls={state.calls}
                     handleMapClick={handleMapClick}
+                    loading={state.isLoadingMap}
                   />
                 )}
               </Grid>
               
-              <Grid item xs={12}>
+              <Grid item xs={12} style={{margin:'auto'}}>
                 <hr style={{borderTop: "3px solid black"}}></hr>
               </Grid>
               
               <Grid item xs={12} style={{paddingTop: "10px"}}>
-                {state.calls.length > 0 && (
-                  <DispatchCalls
-                    userID={loggedUserId}
-                    calls={state.calls}
-                    handleMapRecenter={handleMapRecenter}
-                  />
-                )}
-                {state.calls.length === 0 && (
-                  <Table>
-                    <TableHead></TableHead>
-                    <TableBody>
-                      <TableRow>
-                        {/* Temporarily using hardcoded for variable for Estimated End */}
-                        <TableCell
-                          align="right"
-                          style={{ fontWeight: 'bolder', fontSize: '16px' }}
-                          width="50%"
-                        >
-                          Service Calls Remaining: {state.calls.length}
-                        </TableCell>
-                        <TableCell
-                          align="left"
-                          style={{ fontWeight: 'bolder', fontSize: '16px' }}
-                          width="50%"
-                        >
-                          Estimated End of Day: {format(new Date(), 'H:mm a')}
-                        </TableCell>
-                      </TableRow>
-                    </TableBody>
-                  </Table>
-                )}
+                <DispatchCalls
+                  userID={loggedUserId}
+                  calls={state.calls}
+                  handleMapRecenter={handleMapRecenter}
+                  loading={state.isLoadingCall}
+                />
               </Grid>
-
             </Grid>
           </DragDropContext>
         </Grid>
@@ -584,8 +576,8 @@ export const DispatchDashboard: React.FC<Props> = function DispatchDashboard({
               open={true}
               onClose={resetModal}
               title="Undismiss Tech"
-              label={state.isLoading ? "Saving..." : "Cancel"}
-              disabled={state.isLoading}
+              label={state.isProcessing ? "Saving..." : "Cancel"}
+              disabled={state.isProcessing}
               maxWidth={(window.innerWidth * .40)}
               >
               <DismissedTechs
@@ -604,9 +596,9 @@ export const DispatchDashboard: React.FC<Props> = function DispatchDashboard({
               onClose={resetModal}
               onConfirm={handleDismissTech}
               maxWidth={(window.innerWidth * .40)}
-              submitLabel={state.isLoading ? "Saving..." : "Dismiss"}
+              submitLabel={state.isProcessing ? "Saving..." : "Dismiss"}
               cancelLabel="Cancel Dismissal"
-              disabled={state.isLoading}
+              disabled={state.isProcessing}
               >
               <h3>Send {state.selectedTech!.getTechname()} Home for the Day?</h3>
             </Confirm>
@@ -620,9 +612,9 @@ export const DispatchDashboard: React.FC<Props> = function DispatchDashboard({
               onClose={resetModal}
               onConfirm={handleAssignTech}
               maxWidth={(window.innerWidth * .60)}
-              submitLabel={state.isLoading ? "Saving..." : "Assign Tech to Call"}
+              submitLabel={state.isProcessing ? "Saving..." : "Assign Tech to Call"}
               cancelLabel="Cancel Assignment"
-              disabled={state.isLoading}
+              disabled={state.isProcessing}
             >
               <div style={{display: 'flex', width: "98%"}}>
 
@@ -730,6 +722,8 @@ export const DispatchDashboard: React.FC<Props> = function DispatchDashboard({
           </Alert>
         )}
       </Modal>
+      </div>
+      )}
     </PageWrapper>
   );
 };

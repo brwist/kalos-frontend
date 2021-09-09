@@ -8,6 +8,7 @@ import TableContainer from '@material-ui/core/TableContainer';
 import TableCell from '@material-ui/core/TableCell';
 import { format, setMinutes, setHours } from 'date-fns';
 import { Droppable } from 'react-beautiful-dnd';
+import CircularProgress from '@material-ui/core/CircularProgress';
 
 interface props {
   userID: number;
@@ -17,6 +18,7 @@ interface props {
     zoom: number,
     address?: string,
   ) => void;
+  loading: boolean;
 }
 
 export const DispatchCalls: FC<props> = props => {
@@ -43,11 +45,17 @@ export const DispatchCalls: FC<props> = props => {
               style={{ fontWeight: 'bolder', fontSize: '16px' }}
               width="50%"
             >
-              Estimated End of Day: N/A
+              Estimated End of Day: {props.calls.length === 0 ? format(new Date(), 'h:mm a') : `N/A`}
             </TableCell>
           </TableRow>
         </TableBody>
       </Table>
+      {props.loading && (
+        <div style={{textAlign: 'center', paddingTop: '20px'}}>
+          <CircularProgress />
+        </div>
+      )}
+      {!props.loading && (
       <Table>
         <TableHead key="Header">
           <TableRow>
@@ -95,7 +103,16 @@ export const DispatchCalls: FC<props> = props => {
             </TableCell>
           </TableRow>
         </TableHead>
-        {props.calls.map((call, index) => {
+        {props.calls.length === 0 && (
+          <TableBody>
+            <TableRow>
+              <TableCell style={{textAlign: 'center', width: '15%'}}>
+                No Entries Found!
+              </TableCell>
+            </TableRow>
+          </TableBody>
+        )}
+        {props.calls.length > 0 && props.calls.map((call, index) => {
           const dateStarted = format(new Date(`${call.getDateStarted()} 00:00:00`), 'M/d/yyyy');
           const timeStartArray = call.getTimeStarted().split(':');
           let startHour: number = Number(timeStartArray[0]),
@@ -169,6 +186,7 @@ export const DispatchCalls: FC<props> = props => {
           );
         })}
       </Table>
+      )}
     </TableContainer>
   );
 };
