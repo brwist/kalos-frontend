@@ -83,9 +83,9 @@ export function TransactionRow({
         const res = await EventClientService.Get(eventReq);
         const descritpion = 'Job Description: ' + res.getDescription();
         const customer =
-          'Customer' +
+          'Customer: ' +
           (res.getCustomer() === undefined
-            ? 'No Customer: '
+            ? 'No Customer '
             : `${res
                 .getCustomer()!
                 .getFirstname()} ${res.getCustomer()!.getLastname()}`);
