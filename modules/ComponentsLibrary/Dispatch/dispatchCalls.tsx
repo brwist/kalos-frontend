@@ -6,7 +6,10 @@ import TableHead from '@material-ui/core/TableHead';
 import TableBody from '@material-ui/core/TableBody';
 import TableContainer from '@material-ui/core/TableContainer';
 import TableCell from '@material-ui/core/TableCell';
-import { format, setMinutes, setHours } from 'date-fns';
+import format from 'date-fns/esm/format';
+import setMinutes from 'date-fns/esm/setMinutes';
+import setHours from 'date-fns/esm/setHours';
+import parseISO from 'date-fns/esm/parseISO';
 import { Droppable } from 'react-beautiful-dnd';
 import CircularProgress from '@material-ui/core/CircularProgress';
 
@@ -113,7 +116,7 @@ export const DispatchCalls: FC<props> = props => {
           </TableBody>
         )}
         {props.calls.length > 0 && props.calls.map((call, index) => {
-          const dateStarted = format(new Date(`${call.getDateStarted()} 00:00:00`), 'M/d/yyyy');
+          const dateStarted = format(parseISO(`${call.getDateStarted()} 00:00:00`), 'M/d/yyyy');
           const timeStartArray = call.getTimeStarted().split(':');
           let startHour: number = Number(timeStartArray[0]),
             startMin: number = Number(timeStartArray[1]);
@@ -122,7 +125,7 @@ export const DispatchCalls: FC<props> = props => {
             endMin = Number(timeEndedArray[1]);
           let timeStarted = setMinutes(
             setHours(new Date(), startHour),
-            startMin,
+            startMin
           );
           let timeEnded = setMinutes(setHours(new Date(), endHour), endMin);
           let center: { lat: number; lng: number } = {
