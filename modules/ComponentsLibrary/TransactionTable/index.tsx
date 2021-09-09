@@ -901,7 +901,8 @@ export const TransactionTable: FC<Props> = ({
       let newTxn = new Transaction();
       newTxn.setTimestamp(saved['Date']);
       newTxn.setOrderNumber(saved['Order #']);
-      newTxn.setOwnerId(saved['Purchaser']);
+      newTxn.setAssignedEmployeeId(saved['Purchaser']);
+      newTxn.setOwnerId(loggedUserId);
       newTxn.setDepartmentId(saved['Department']);
       newTxn.setJobId(saved['Job #']);
       newTxn.setAmount(saved['Amount']);
