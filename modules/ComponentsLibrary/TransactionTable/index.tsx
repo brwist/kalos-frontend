@@ -1319,7 +1319,8 @@ export const TransactionTable: FC<Props> = ({
             ? [
                 {
                   label: 'New Transaction',
-                  onClick: () => handleSetCreatingTransaction(true), // makes uploadPhotoTransaction appear in a modal
+                  onClick: () =>
+                    handleSetCreatingTransaction(!state.creatingTransaction),
                 },
                 {
                   label: 'Merge Transactions',
