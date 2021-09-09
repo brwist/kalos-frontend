@@ -164,11 +164,7 @@ export const InfoTable = ({
               }
               const ArrowIcon =
                 dir === 'DESC' ? ArrowDropDownIcon : ArrowDropUpIcon;
-              if (
-                rowButton?.externalButton &&
-                !rowButton?.externalButtonClicked
-              )
-                return null;
+
               return (
                 <Typography
                   key={idx}
