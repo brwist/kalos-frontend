@@ -73,7 +73,6 @@ interface Props extends Styles {
   };
 }
 
-let addingRowSelected = false; // Will go true before state set, performance optimization so clicking the button doesn't freeze a little bit
 let temporaryResult: {}; // The result assigned when the onChange is fired.
 
 export const InfoTable = ({
@@ -113,6 +112,8 @@ export const InfoTable = ({
         (fields as any)[col.name as any] = ''; // Creating the field on the object for use later
     });
   }
+
+  console.log('adding row: ', state.isAddingRow);
   return (
     <div
       className={clsx('InfoTable', className)}
@@ -139,14 +140,12 @@ export const InfoTable = ({
               if (
                 rowButton?.externalButton &&
                 rowButton?.externalButtonClicked &&
-                !state.isAddingRow &&
-                !addingRowSelected
+                !state.isAddingRow
               ) {
                 dispatch({
                   type: ACTIONS.SET_IS_ADDING_ROW,
                   payload: true,
                 });
-                addingRowSelected = true;
               }
               if (
                 rowButton !== undefined &&
