@@ -6,7 +6,8 @@ import TableContainer from '@material-ui/core/TableContainer';
 import TableRow from '@material-ui/core/TableRow';
 import TableHead from '@material-ui/core/TableHead';
 import TableCell from '@material-ui/core/TableCell';
-import { format } from 'date-fns';
+import format from 'date-fns/esm/format';
+import parseISO from 'date-fns/esm/parseISO';
 
 interface props {
   userID: number;
@@ -39,7 +40,7 @@ export const DismissedTechs: FC<props> = props => {
               return (
                 <TableRow key={tech.getUserId()} hover={true} onClick={()=> props.handleUndismissTech(tech)}>
                   <TableCell style={{textAlign:'center'}}>{tech.getTechname()}</TableCell>
-                  <TableCell style={{textAlign:'center'}}>{format(new Date(tech.getActivityDate()), 'h:mm aa')}</TableCell>
+                  <TableCell style={{textAlign:'center'}}>{format(parseISO(tech.getActivityDate()), 'h:mm aa')}</TableCell>
                   <TableCell style={{textAlign:'center'}}>{hoursWorked >= 10 ? String(hoursWorked) : `0${hoursWorked}`}:{minutesWorked >= 10 ? String(minutesWorked) : `0${minutesWorked}`}</TableCell>
                 </TableRow>
               )
