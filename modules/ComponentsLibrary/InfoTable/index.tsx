@@ -69,10 +69,11 @@ interface Props extends Styles {
     };
     externalButton?: boolean;
     externalButtonClicked?: boolean; // Was an external button clicked that triggers this? (While true, makes the row appear)
+    onFileLoad?: (fileData: any) => any;
   };
 }
 
-let addingRowSelected = false; // Will go true before state set, performance optimization so clicking the button doesn't freeze a little bit
+let temporaryResult: {}; // The result assigned when the onChange is fired.
 
 export const InfoTable = ({
   columns = [],
@@ -99,7 +100,6 @@ export const InfoTable = ({
   const md = useMediaQuery(theme.breakpoints.down('xs'));
 
   let fields: {} = {};
-  let temporaryResult: {}; // The result assigned when the onChange is fired.
 
   if (state.isAddingRow) {
     columns.forEach(col => {
@@ -112,6 +112,8 @@ export const InfoTable = ({
         (fields as any)[col.name as any] = ''; // Creating the field on the object for use later
     });
   }
+
+  console.log('adding row: ', state.isAddingRow);
   return (
     <div
       className={clsx('InfoTable', className)}
@@ -138,14 +140,12 @@ export const InfoTable = ({
               if (
                 rowButton?.externalButton &&
                 rowButton?.externalButtonClicked &&
-                !state.isAddingRow &&
-                !addingRowSelected
+                !state.isAddingRow
               ) {
                 dispatch({
                   type: ACTIONS.SET_IS_ADDING_ROW,
                   payload: true,
                 });
-                addingRowSelected = true;
               }
               if (
                 rowButton !== undefined &&
@@ -164,11 +164,7 @@ export const InfoTable = ({
               }
               const ArrowIcon =
                 dir === 'DESC' ? ArrowDropDownIcon : ArrowDropUpIcon;
-              if (
-                rowButton?.externalButton &&
-                !rowButton?.externalButtonClicked
-              )
-                return null;
+
               return (
                 <Typography
                   key={idx}
@@ -215,34 +211,45 @@ export const InfoTable = ({
         <PlainForm<typeof fields>
           onChange={fieldOutput => (temporaryResult = fieldOutput)}
           schema={[
-            Object.keys(fields).map((field: any, idx: number) => {
-              let columnType =
-                rowButton?.columnDefinition.columnTypeOverrides.filter(
+            [].concat.apply(
+              Object.keys(fields).map((field: any, idx: number) => {
+                let columnType = rowButton?.columnDefinition.columnTypeOverrides.filter(
                   type => type.columnName === field,
                 );
-              return {
-                label: field,
-                name: field,
-                type:
-                  columnType?.length === 1 ? columnType![0].columnType : 'text',
-                actions:
-                  idx == Object.keys(fields).length - 1
-                    ? [
-                        {
-                          label: 'OK',
-                          onClick: () => {
-                            dispatch({
-                              type: ACTIONS.SET_IS_ADDING_ROW,
-                              payload: false,
-                            });
-                            if (onSaveRowButton)
-                              onSaveRowButton(temporaryResult);
-                          },
-                        },
-                      ]
-                    : [],
-              };
-            }),
+                return {
+                  label: field,
+                  name: field,
+                  type:
+                    columnType?.length === 1
+                      ? columnType![0].columnType
+                      : 'text',
+                };
+              }) as any,
+              [
+                {
+                  label: 'Add Image / Document',
+                  name: 'image',
+                  type: 'file',
+                  onFileLoad: (data: string) => {
+                    if (rowButton) {
+                      if (rowButton.onFileLoad) rowButton.onFileLoad(data);
+                    }
+                  },
+                  actions: [
+                    {
+                      label: 'OK',
+                      onClick: () => {
+                        dispatch({
+                          type: ACTIONS.SET_IS_ADDING_ROW,
+                          payload: false,
+                        });
+                        if (onSaveRowButton) onSaveRowButton(temporaryResult);
+                      },
+                    },
+                  ],
+                } as any,
+              ],
+            ),
           ]}
           data={fields}
         />
