@@ -9,6 +9,7 @@ import TableHead from '@material-ui/core/TableHead';
 import TableCell from '@material-ui/core/TableCell';
 import { differenceInMinutes } from 'date-fns/esm';
 import DeleteOutlineIcon from '@material-ui/icons/DeleteOutline';
+import CircularProgress from '@material-ui/core/CircularProgress';
 
 
 interface props {
@@ -16,6 +17,7 @@ interface props {
   techs: DispatchableTech[];
   dismissedTechs: DispatchableTech[];
   handleMapRecenter: (center: {lat: number, lng: number}, zoom: number) => void;
+  loading: boolean;
 }
 
 export const DispatchTechs: FC<props> = props => {
@@ -25,6 +27,12 @@ export const DispatchTechs: FC<props> = props => {
 
   return (
     <div>
+      {props.loading && (
+        <div style={{textAlign: 'center', paddingTop: '20px'}}>
+          <CircularProgress />
+        </div>
+      )}
+      {!props.loading && (
       <TableContainer>
         <Table>
           <TableHead>
@@ -39,7 +47,12 @@ export const DispatchTechs: FC<props> = props => {
           <Droppable droppableId="TechDroppable" isDropDisabled={true}>
             {(provided, snapshop) => (
               <TableBody ref={provided.innerRef} {...provided.droppableProps}>
-                {props.techs &&
+                {!props.techs.length && (
+                  <TableRow>
+                    <TableCell align="center">No Entries Found!</TableCell>
+                  </TableRow>
+                )}
+                {props.techs.length > 0 &&
                   props.techs.map((tech, index) => {
                     const timeOnHours = Math.floor(differenceInMinutes(new Date(), new Date(tech.getActivityDate())) / 60);
                     const timeOnMinutes = differenceInMinutes(new Date(), new Date(tech.getActivityDate())) - timeOnHours * 60;
@@ -91,11 +104,11 @@ export const DispatchTechs: FC<props> = props => {
                   })}
                 {provided.placeholder}
                 </TableBody>
-                
             )}
           </Droppable>
           </Table>
       </TableContainer>
+      )}
 
       <TableContainer style={{paddingTop:'20px'}}>
         <Droppable droppableId="dismissTech">
