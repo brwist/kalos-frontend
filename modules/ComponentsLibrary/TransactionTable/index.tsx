@@ -163,35 +163,6 @@ export const TransactionTable: FC<Props> = ({
     transactionToSave: undefined,
     imageNameToSave: undefined,
   });
-  const {
-    transactionFilter,
-    transactions,
-    totalTransactions,
-    transactionActivityLogs,
-    transactionToEdit,
-    transactionToDelete,
-    loading,
-    pendingUploadPhoto,
-    loaded,
-    creatingTransaction,
-    mergingTransaction,
-    role,
-    assigningUser,
-    employees,
-    selectedTransactions,
-    departments,
-    page,
-    changingPage,
-    assignedEmployee,
-    error,
-    status,
-    searching,
-    fileData,
-    imageWaiverTypePopupOpen,
-    imageWaiverTypeFormData,
-    transactionToSave,
-    imageNameToSave,
-  } = state;
 
   const handleSetTransactionToEdit = useCallback(
     (transaction: Transaction | undefined) => {
@@ -340,25 +311,26 @@ export const TransactionTable: FC<Props> = ({
 
     req.setIsActive(1);
     req.setVendorCategory("'PickTicket','Receipt','Invoice'");
-    if (transactionFilter.isAccepted) {
+    if (state.transactionFilter.isAccepted) {
       req.setStatusId(3);
     }
-    if (transactionFilter.isRejected) {
+    if (state.transactionFilter.isRejected) {
       req.setStatusId(4);
     }
-    if (transactionFilter.vendor)
-      req.setVendor(`%${transactionFilter.vendor}%`);
-    if (transactionFilter.departmentId != 0)
-      req.setDepartmentId(transactionFilter.departmentId);
-    if (transactionFilter.employeeId != 0)
-      req.setAssignedEmployeeId(transactionFilter.employeeId);
-    if (transactionFilter.amount) req.setAmount(transactionFilter.amount);
-    req.setIsBillingRecorded(transactionFilter.billingRecorded);
+    if (state.transactionFilter.vendor)
+      req.setVendor(`%${state.transactionFilter.vendor}%`);
+    if (state.transactionFilter.departmentId != 0)
+      req.setDepartmentId(state.transactionFilter.departmentId);
+    if (state.transactionFilter.employeeId != 0)
+      req.setAssignedEmployeeId(state.transactionFilter.employeeId);
+    if (state.transactionFilter.amount)
+      req.setAmount(state.transactionFilter.amount);
+    req.setIsBillingRecorded(state.transactionFilter.billingRecorded);
     req.setFieldMaskList(['IsBillingRecorded']);
     let res: TransactionList | null = null;
-    if (transactionFilter.universalSearch) {
+    if (state.transactionFilter.universalSearch) {
       try {
-        req.setSearchPhrase(`%${transactionFilter.universalSearch}%`);
+        req.setSearchPhrase(`%${state.transactionFilter.universalSearch}%`);
         res = await TransactionClientService.Search(req);
       } catch (err) {
         try {
@@ -381,7 +353,7 @@ export const TransactionTable: FC<Props> = ({
     } else {
       try {
         res = await TransactionClientService.BatchGet(req);
-        if (res.getTotalCount() < totalTransactions) {
+        if (res.getTotalCount() < state.totalTransactions) {
           dispatch({ type: 'setTotalTransactions', data: res.getTotalCount() });
 
           handleChangePage(0);
@@ -463,18 +435,18 @@ export const TransactionTable: FC<Props> = ({
     const temp = transactions.map(txn => txn);
     dispatch({ type: 'setTransactions', data: temp });
   }, [
-    state.page,
-    transactionFilter.isAccepted,
-    transactionFilter.isRejected,
-    transactionFilter.vendor,
-    transactionFilter.departmentId,
-    transactionFilter.employeeId,
-    transactionFilter.amount,
-    transactionFilter.billingRecorded,
-    transactionFilter.universalSearch,
-    loggedUserId,
-    totalTransactions,
     handleChangePage,
+    loggedUserId,
+    state.page,
+    state.totalTransactions,
+    state.transactionFilter.amount,
+    state.transactionFilter.billingRecorded,
+    state.transactionFilter.departmentId,
+    state.transactionFilter.employeeId,
+    state.transactionFilter.isAccepted,
+    state.transactionFilter.isRejected,
+    state.transactionFilter.universalSearch,
+    state.transactionFilter.vendor,
   ]);
 
   const load = useCallback(async () => {
@@ -739,7 +711,7 @@ export const TransactionTable: FC<Props> = ({
 
   const handleSetFilterAcceptedRejected = useCallback(
     (option: 'Accepted' | 'Rejected' | 'Accepted / Rejected') => {
-      let tempFilter = transactionFilter;
+      let tempFilter = state.transactionFilter;
       dispatch({ type: 'setStatus', data: option });
       switch (option) {
         case 'Accepted':
@@ -761,23 +733,30 @@ export const TransactionTable: FC<Props> = ({
       }
       dispatch({ type: 'setTransactionFilter', data: tempFilter });
     },
-    [transactionFilter],
+    [state.transactionFilter],
   );
 
   const setTransactionChecked = useCallback(
     (idx: number) => {
-      if (!transactions) {
+      if (!state.transactions) {
         console.error(
           'No transactions exist but setTransactionChecked is being called. This is a no-op, returning.',
         );
         return;
       }
-      transactions[idx] = { ...transactions[idx] };
+      state.transactions[idx] = { ...state.transactions[idx] };
+
+      if (!state.transactions) {
+        console.error(
+          `There are no transactions set in 'state.transactions', but setTransactionChecked was set (which depends on it). Returning. `,
+        );
+        return;
+      }
 
       // selectedTransactions.includes fails and I'm not sure why, so I'm writing this loop to do the same thing but check Ids
       let contained = false;
-      selectedTransactions.forEach(txn => {
-        if (txn.getId() === transactions[idx].txn.getId()) {
+      state.selectedTransactions.forEach(txn => {
+        if (txn.getId() === state.transactions![idx].txn.getId()) {
           contained = true;
         }
       });
@@ -786,30 +765,30 @@ export const TransactionTable: FC<Props> = ({
         // We want to toggle it
         dispatch({
           type: 'setSelectedTransactions',
-          data: [...selectedTransactions, transactions[idx].txn],
+          data: [...state.selectedTransactions, state.transactions[idx].txn],
         });
         if (onSelect)
-          onSelect(transactions[idx].txn, [
-            ...selectedTransactions,
-            transactions[idx].txn,
+          onSelect(state.transactions[idx].txn, [
+            ...state.selectedTransactions,
+            state.transactions[idx].txn,
           ]);
       } else {
         dispatch({
           type: 'setSelectedTransactions',
-          data: selectedTransactions.filter(
-            txn => txn.getId() !== transactions[idx].txn.getId(),
+          data: state.selectedTransactions.filter(
+            txn => txn.getId() !== state.transactions![idx].txn.getId(),
           ),
         });
         if (onDeselect)
           onDeselect(
-            transactions[idx].txn,
-            selectedTransactions.filter(
-              txn => txn.getId() !== transactions[idx].txn.getId(),
+            state.transactions[idx].txn,
+            state.selectedTransactions.filter(
+              txn => txn.getId() !== state.transactions![idx].txn.getId(),
             ),
           );
       }
     },
-    [transactions, selectedTransactions, onDeselect, onSelect],
+    [onDeselect, onSelect, state.selectedTransactions, state.transactions],
   );
 
   const SCHEMA_ASSIGN_USER: Schema<AssignedUserData> = [
@@ -838,7 +817,7 @@ export const TransactionTable: FC<Props> = ({
             label: OPTION_ALL,
             value: 0,
           },
-          ...departments.map(dept => ({
+          ...state.departments.map(dept => ({
             label: `${dept.getValue()} | ${dept.getDescription()}`,
             value: dept.getId(),
           })),
@@ -849,9 +828,9 @@ export const TransactionTable: FC<Props> = ({
         label: 'Select Employee',
         options: [
           { label: OPTION_ALL, value: 0 },
-          ...employees
+          ...state.employees
             .filter(el => {
-              if (transactionFilter.departmentId === 0) return true;
+              if (state.transactionFilter.departmentId === 0) return true;
               return el.getEmployeeDepartmentId() === filter.departmentId;
             })
             .map(el => ({
@@ -1088,23 +1067,29 @@ export const TransactionTable: FC<Props> = ({
   );
 
   useEffect(() => {
-    if (!loaded) {
+    if (!state.loaded) {
       load();
       resetTransactions();
     }
-    if (changingPage) {
+    if (state.changingPage) {
       load();
       resetTransactions();
     }
-    if (searching) {
+    if (state.searching) {
       load();
       resetTransactions();
       dispatch({ type: 'setSearching', data: false });
     }
-  }, [load, loaded, searching, changingPage, resetTransactions]);
+  }, [
+    load,
+    resetTransactions,
+    state.changingPage,
+    state.loaded,
+    state.searching,
+  ]);
   return (
     <ErrorBoundary>
-      {imageWaiverTypePopupOpen && (
+      {state.imageWaiverTypePopupOpen && (
         <Modal
           open
           onClose={() =>
@@ -1112,9 +1097,9 @@ export const TransactionTable: FC<Props> = ({
           }
         >
           <Form<PopupType>
-            disabled={loading}
-            key={imageWaiverTypeFormData.toString()}
-            title={'Specify Type for Document - ' + imageNameToSave}
+            disabled={state.loading}
+            key={state.imageWaiverTypeFormData.toString()}
+            title={'Specify Type for Document - ' + state.imageNameToSave}
             onChange={changed => {
               dispatch({ type: 'setImageWaiverTypeFormData', data: changed });
             }}
@@ -1130,30 +1115,36 @@ export const TransactionTable: FC<Props> = ({
                   name: 'invoiceWaiverType',
                   label: 'Waiver Type',
                   options: WaiverTypes,
-                  required: imageWaiverTypeFormData.documentType == 'Invoice',
-                  invisible: imageWaiverTypeFormData.documentType !== 'Invoice',
+                  required:
+                    state.imageWaiverTypeFormData.documentType == 'Invoice',
+                  invisible:
+                    state.imageWaiverTypeFormData.documentType !== 'Invoice',
                 },
               ],
             ]}
             onSave={async saved => {
               dispatch({ type: 'setLoading', data: true });
-              if (!fileData || !transactionToSave || !imageNameToSave) {
+              if (
+                !state.fileData ||
+                !state.transactionToSave ||
+                !state.imageNameToSave
+              ) {
                 console.error(
                   `Not proceeding with image save. Undefined values: fileData: ${
-                    fileData === undefined
+                    state.fileData === undefined
                   }, transactionToSave: ${
-                    transactionToSave === undefined
-                  }, imageNameToSave: ${imageNameToSave === undefined} `,
+                    state.transactionToSave === undefined
+                  }, imageNameToSave: ${state.imageNameToSave === undefined} `,
                 );
                 dispatch({ type: 'setLoading', data: false });
                 return;
               }
               await handleSaveFileToBucket(
-                fileData,
-                imageNameToSave,
+                state.fileData,
+                state.imageNameToSave,
                 saved.documentType,
                 saved.invoiceWaiverType,
-                transactionToSave,
+                state.transactionToSave,
               );
               dispatch({ type: 'setLoading', data: false });
               dispatch({ type: 'setImageWaiverTypePopupOpen', data: false });
@@ -1166,18 +1157,18 @@ export const TransactionTable: FC<Props> = ({
               dispatch({ type: 'setImageWaiverTypePopupOpen', data: false })
             }
             submitLabel="Upload"
-            data={imageWaiverTypeFormData}
+            data={state.imageWaiverTypeFormData}
           />
         </Modal>
       )}
-      {loading ? <Loader /> : <> </>}
-      {error && (
+      {state.loading ? <Loader /> : <> </>}
+      {state.error && (
         <Alert
-          open={error != undefined}
+          open={state.error != undefined}
           onClose={() => handleSetError(undefined)}
           title="Error"
         >
-          {error}
+          {state.error}
         </Alert>
       )}
       {state.transactionToDelete && (
@@ -1194,15 +1185,15 @@ export const TransactionTable: FC<Props> = ({
           Are you sure you want to delete this transaction?
         </ConfirmDelete>
       )}
-      {transactionToEdit && (
+      {state.transactionToEdit && (
         <Modal
           open={true}
           onClose={() => handleSetTransactionToEdit(undefined)}
         >
           <EditTransaction
-            transactionInput={transactionToEdit}
+            transactionInput={state.transactionToEdit}
             onSave={saved => {
-              saved.setId(transactionToEdit.getId());
+              saved.setId(state.transactionToEdit!.getId());
               handleUpdateTransaction(saved);
               dispatch({ type: 'setSearching', data: true });
             }}
@@ -1210,9 +1201,9 @@ export const TransactionTable: FC<Props> = ({
           />
         </Modal>
       )}
-      {assigningUser ? (
+      {state.assigningUser && (
         <Modal
-          open={assigningUser.isAssigning}
+          open={state.assigningUser.isAssigning}
           onClose={() => handleSetAssigningUser(false, -1)}
         >
           <SectionBar
@@ -1222,8 +1213,8 @@ export const TransactionTable: FC<Props> = ({
                 label: 'Assign',
                 onClick: () =>
                   handleAssignEmployee(
-                    assignedEmployee,
-                    assigningUser.transactionId,
+                    state.assignedEmployee,
+                    state.assigningUser!.transactionId,
                   ),
               },
             ]}
@@ -1237,12 +1228,10 @@ export const TransactionTable: FC<Props> = ({
             className="PayrollFilter"
           />
         </Modal>
-      ) : (
-        <></>
       )}
-      {mergingTransaction ? (
+      {state.mergingTransaction ? (
         <Modal
-          open={mergingTransaction}
+          open={state.mergingTransaction}
           onClose={() => handleSetMergingTransaction(false)}
         >
           <CompareTransactions
@@ -1254,29 +1243,8 @@ export const TransactionTable: FC<Props> = ({
       ) : (
         <></>
       )}
-      {/* {creatingTransaction ? ( 
-        <Modal
-          open={creatingTransaction}
-          onClose={() => handleSetCreatingTransaction(false)}
-        >
-          <UploadPhotoTransaction
-            loggedUserId={loggedUserId}
-            bucket="kalos-transactions"
-            onClose={() => handleSetCreatingTransaction(false)}
-            costCenters={new TransactionAccountList()}
-            fullWidth={false}
-            role={role}
-            onUpload={() => {
-              handleSetCreatingTransaction(false);
-              dispatch({ type: 'setSearching', data: true });
-            }}
-          />
-        </Modal>
-      ) : (
-        <> </>
-      )} */}
       <PlainForm
-        data={transactionFilter}
+        data={state.transactionFilter}
         onChange={handleSetFilter}
         onSubmit={() => dispatch({ type: 'setSearching', data: true })}
         onEnter={true}
@@ -1285,12 +1253,12 @@ export const TransactionTable: FC<Props> = ({
       />
       <SectionBar
         title="Transactions"
-        key={page.toString() + totalTransactions.toString()}
+        key={state.page.toString() + state.totalTransactions.toString()}
         fixedActions
         pagination={{
-          count: totalTransactions,
+          count: state.totalTransactions,
           rowsPerPage: 50,
-          page: page,
+          page: state.page,
           onPageChange: number => handleChangePage(number),
         }}
         actions={
@@ -1310,7 +1278,7 @@ export const TransactionTable: FC<Props> = ({
             : []
         }
       />
-      {pendingUploadPhoto && (
+      {state.pendingUploadPhoto && (
         <Modal
           open
           maxWidth={1000}
@@ -1322,7 +1290,7 @@ export const TransactionTable: FC<Props> = ({
           }
         >
           <UploadPhotoToExistingTransaction
-            transactionPassed={pendingUploadPhoto}
+            transactionPassed={state.pendingUploadPhoto}
             loggedUserId={loggedUserId}
             onClose={() =>
               dispatch({
@@ -1335,10 +1303,12 @@ export const TransactionTable: FC<Props> = ({
       )}
       <InfoTable
         key={
-          transactions?.toString() +
-          (creatingTransaction ? creatingTransaction.toString() : '') +
-          transactions?.values.toString() +
-          selectedTransactions.toString()
+          state.transactions?.toString() +
+          (state.creatingTransaction
+            ? state.creatingTransaction.toString()
+            : '') +
+          state.transactions?.values.toString() +
+          state.selectedTransactions.toString()
         }
         hoverable={false}
         onSaveRowButton={async saved => {
@@ -1362,7 +1332,7 @@ export const TransactionTable: FC<Props> = ({
         }}
         rowButton={{
           onFileLoad: data => dispatch({ type: 'setFileData', data: data }),
-          externalButtonClicked: creatingTransaction,
+          externalButtonClicked: state.creatingTransaction,
           externalButton: true,
           type: new Transaction(),
           columnDefinition: {
@@ -1473,10 +1443,10 @@ export const TransactionTable: FC<Props> = ({
           },
         ]}
         data={
-          loading
+          state.loading
             ? makeFakeRows(10, 15)
-            : (transactions?.map((selectorParam, idx) => {
-                let txnWithId = selectedTransactions.filter(
+            : (state.transactions?.map((selectorParam, idx) => {
+                let txnWithId = state.selectedTransactions.filter(
                   txn => txn.getId() === selectorParam.txn.getId(),
                 );
                 try {
@@ -1585,7 +1555,7 @@ export const TransactionTable: FC<Props> = ({
                               <UploadIcon />
 
                               {/*<input
-                                type="file"
+                                type="file" 
                                 ref={FileInput}
                                 
                                 onChange={event => {
@@ -1722,7 +1692,7 @@ export const TransactionTable: FC<Props> = ({
                             <>
                               <Tooltip
                                 key="rejected"
-                                content={`Rejected ${transactionActivityLogs
+                                content={`Rejected ${state.transactionActivityLogs
                                   .filter(
                                     log =>
                                       log.getTransactionId() ==
@@ -1755,7 +1725,7 @@ export const TransactionTable: FC<Props> = ({
                 }
               }) as Data)
         }
-        loading={loading}
+        loading={state.loading}
       />
     </ErrorBoundary>
   );
