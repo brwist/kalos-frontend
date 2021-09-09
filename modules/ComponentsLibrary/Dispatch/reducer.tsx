@@ -27,8 +27,12 @@ export interface State {
   selectedCall: DispatchCall;
   center: {lat: number, lng: number};
   zoom: number;
-  isLoading: boolean;
+  isProcessing: boolean;
   googleApiKey: string;
+  isLoadingTech: boolean;
+  isLoadingCall: boolean;
+  isLoadingMap: boolean;
+  isInitialLoad: boolean;
 }
 
 export type Action =
@@ -36,7 +40,9 @@ export type Action =
     availableTechs: DispatchableTech[],
     dismissedTechs: DispatchableTech[]
   }}
-  | { type: 'setCalls'; data: DispatchCall[] }
+  | { type: 'setCalls'; data: {
+    calls: DispatchCall[] 
+  }}
   | { type: 'updateTechParameters'; data: {
     departmentIds: number[] 
   }}
@@ -66,13 +72,16 @@ export type Action =
     modalKey: string,
     selectedTech: DispatchableTech,
     selectedCall: DispatchCall,
-    isLoading: boolean,
+    isProcessing: boolean,
   }}
   | { type: 'setCenter'; data: {
     center: {lat: number, lng: number},
     zoom: number
   }}
-  | {type: 'setLoading'; data: boolean };
+  | {type: 'setProcessing'; data: boolean }
+  | {type: 'setLoadingTech'; data: boolean}
+  | {type: 'setLoadingCall'; data: boolean}
+  | {type: 'setLoadingMap'; data: boolean};
 
 export const reducer = (state: State, action: Action) => {
   switch (action.type) {
@@ -80,12 +89,14 @@ export const reducer = (state: State, action: Action) => {
       return {
         ...state,
         techs: action.data.availableTechs,
-        dismissedTechs: action.data.dismissedTechs
+        dismissedTechs: action.data.dismissedTechs,
+        isLoadingTech: false,
       };
     case 'setCalls':
       return {
         ...state,
-        calls: action.data,
+        calls: action.data.calls,
+        isLoadingCall: false,
       };
     case 'updateTechParameters':
       return {
@@ -130,6 +141,8 @@ export const reducer = (state: State, action: Action) => {
         defaultDepartmentIds: action.data.defaultDepartmentIds,
         jobTypeList: action.data.jobTypeList,
         googleApiKey: action.data.googleApiKey,
+        isLoadingMap: false,
+        isInitialLoad: false,
       }
     case 'setModal':
       return {
@@ -138,7 +151,7 @@ export const reducer = (state: State, action: Action) => {
         modalKey: action.data.modalKey,
         selectedTech: action.data.selectedTech,
         selectedCall: action.data.selectedCall,
-        isLoading: action.data.isLoading,
+        isProcessing: action.data.isProcessing,
       }
     case 'setCenter':
       return {
@@ -146,10 +159,25 @@ export const reducer = (state: State, action: Action) => {
         center: action.data.center,
         zoom: action.data.zoom,
       }
-    case 'setLoading':
+    case 'setProcessing':
       return {
         ...state,
-        isLoading: action.data,
+        isProcessing: action.data,
+      }
+    case 'setLoadingTech':
+      return {
+        ...state,
+        isLoadingTech: action.data,
+      }
+    case 'setLoadingCall':
+      return {
+        ...state,
+        isLoadingCall: action.data,
+      }
+    case 'setLoadingMap':
+    return {
+      ...state,
+      isLoadingMap: action.data,
       }
     default:
       return state;

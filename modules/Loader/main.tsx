@@ -3,16 +3,20 @@ import CircularProgress from '@material-ui/core/CircularProgress';
 
 interface Props {
   zIndex?: number;
+  backgroundColor?: string;
+  opacity?: number;
+  height?: number | string;
+  width?: number | string;
 }
 
-const Loader: FC<Props> = ({ zIndex = 100 }) => {
+const Loader: FC<Props> = ({ zIndex = 100, backgroundColor= 'grey', opacity = 0.2, height = window.innerHeight, width = window.innerWidth}) => {
   const style: React.CSSProperties = {
-    backgroundColor: 'grey',
+    backgroundColor,
     position: 'absolute',
-    opacity: 0.2,
+    opacity,
     zIndex,
-    height: window.innerHeight,
-    width: window.innerWidth,
+    height,
+    width,
     top: window.scrollY,
   };
   useEffect(() => {
