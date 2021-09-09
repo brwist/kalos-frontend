@@ -31,6 +31,10 @@ import {
   TransactionActivityClientService,
   EmailClientService,
   TransactionDocumentClientService,
+  getFileExt,
+  uploadFileToS3Bucket,
+  FileClientService,
+  ActivityLogClientService,
 } from '../../../helpers';
 import { AltGallery } from '../../AltGallery/main';
 import { Tooltip } from '../../ComponentsLibrary/Tooltip';
@@ -60,6 +64,9 @@ import {
 import { ErrorBoundary } from '../ErrorBoundary';
 import { ConfirmDelete } from '../ConfirmDelete';
 import { UploadPhotoToExistingTransaction } from '../UploadPhotoToExistingTransaction';
+import { File } from '@kalos-core/kalos-rpc/File';
+import { ActivityLog } from '@kalos-core/kalos-rpc/ActivityLog';
+
 export interface Props {
   loggedUserId: number;
   isSelector?: boolean; // Is this a selector table (checkboxes that return in on-change)?
@@ -1044,6 +1051,7 @@ export const TransactionTable: FC<Props> = ({
 
       await resetTransactions();
       refresh();
+      return res;
     },
     [loggedUserId, resetTransactions, refresh],
   );
@@ -1063,6 +1071,108 @@ export const TransactionTable: FC<Props> = ({
       console.error(`An error occurred while deleting a transaction: ${err}`);
     }
   }, [state.transactionToDelete, refresh, resetTransactions]);
+
+  const handleSaveFileToBucket = useCallback(
+    async (fileData: string, fileName: string, transaction: Transaction) => {
+      const ext = getFileExt(fileName);
+      const name = `${transaction!.getId()}-${transaction.getDescription()}-${Math.floor(
+        Date.now() / 1000,
+      )}.${ext}`;
+      const nameWithoutId = `${transaction.getDescription()}-${Math.floor(
+        Date.now() / 1000,
+      )}.${ext}`;
+
+      let initialDocumentLength = 0;
+      // Get how many docs there are
+      try {
+        initialDocumentLength = (
+          await TransactionDocumentClientService.byTransactionID(
+            transaction!.getId(),
+          )
+        ).length;
+      } catch (err) {
+        console.error(
+          `An error occurred while getting the amount of items in the bucket: ${err}`,
+        );
+        alert('An error occurred while double-checking that the file exists.');
+      }
+
+      let status;
+      try {
+        status = await uploadFileToS3Bucket(
+          name,
+          fileData,
+          'kalos-transactions',
+          transaction.getVendorCategory(),
+        );
+        if (status === 'ok') {
+          const fReq = new File();
+          fReq.setBucket('kalos-transactions');
+          fReq.setName(name);
+          fReq.setMimeType(name);
+          fReq.setOwnerId(loggedUserId);
+          const uploadFile = await FileClientService.Create(fReq);
+
+          const tDoc = new TransactionDocument();
+          if (transaction) tDoc.setTransactionId(transaction.getId());
+          tDoc.setReference(nameWithoutId);
+          tDoc.setFileId(uploadFile.getId());
+          tDoc.setTypeId(1);
+          await TransactionDocumentClientService.Create(tDoc);
+        } else {
+          alert('An error occurred while uploading the file to the S3 bucket.');
+          try {
+            let log = new ActivityLog();
+            log.setActivityDate(format(new Date(), 'yyyy-MM-dd hh:mm:ss'));
+            log.setUserId(loggedUserId);
+            log.setActivityName(
+              `ERROR : An error occurred while uploading a file to the S3 bucket ${'kalos-transactions'} (Status came back as ${status}). File name: ${name}`,
+            );
+            await ActivityLogClientService.Create(log);
+          } catch (err) {
+            console.error(
+              `An error occurred while uploading an activity log for an error in an S3 bucket: ${err}`,
+            );
+          }
+        }
+        try {
+          const docs = await TransactionDocumentClientService.byTransactionID(
+            transaction!.getId(),
+          );
+          if (docs.length <= initialDocumentLength) {
+            alert('Upload was unsuccessful, please contact the webtech team.');
+            return;
+          }
+          console.log('DOC LENGTH WAS GOOD FROM CHECK: ', docs.length);
+        } catch (err) {
+          console.error(
+            `An error occurred while double-checking that the file which was just uploaded exists: ${err}`,
+          );
+          alert(
+            'An error occurred while double-checking that the file exists. Please retry the upload, and if the problem persists, please contact the webtech team.',
+          );
+        }
+      } catch (err) {
+        console.error(
+          `An error occurred while uploading the file to S3: ${err}`,
+        );
+        try {
+          let log = new ActivityLog();
+          log.setActivityDate(format(new Date(), 'yyyy-MM-dd hh:mm:ss'));
+          log.setUserId(loggedUserId);
+          log.setActivityName(
+            `ERROR : An error occurred while uploading a file to the S3 bucket ${'kalos-transactions'}. File name: ${name}. Error: ${err}`,
+          );
+          await ActivityLogClientService.Create(log);
+        } catch (err) {
+          console.error(
+            `An error occurred while uploading an activity log for an error in an S3 bucket: ${err}`,
+          );
+        }
+      }
+    },
+    [loggedUserId],
+  );
 
   useEffect(() => {
     if (!loaded) {
@@ -1250,12 +1360,13 @@ export const TransactionTable: FC<Props> = ({
           selectedTransactions.toString()
         }
         hoverable={false}
-        onSaveRowButton={saved => {
-          handleSaveFromRowButton(saved);
+        onSaveRowButton={async saved => {
+          let result = await handleSaveFromRowButton(saved);
           handleSetCreatingTransaction(false);
           // This is where the data would be uploaded alongside the transaction
 
-          console.log('Data that would be saved: ', fileData);
+          if (!fileData || !result) return;
+          handleSaveFileToBucket(fileData, (saved as any)['image'], result);
         }}
         rowButton={{
           onFileLoad: data => dispatch({ type: 'setFileData', data: data }),
