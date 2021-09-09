@@ -227,25 +227,6 @@ export const TransactionTable: FC<Props> = ({
   </body>`;
   };
 
-  const getGalleryData = async (txn: Transaction) => {
-    let documents: TransactionDocumentList = new TransactionDocumentList();
-    try {
-      let req = new TransactionDocument();
-      req.setTransactionId(txn.getId());
-      documents = await TransactionDocumentClientService.BatchGet(req);
-    } catch (err) {
-      console.error(
-        `An error occurred while getting transaction documents for transaction #${txn.getId()}: ${err}`,
-      );
-    }
-    return documents.getResultsList().map(result => {
-      return {
-        key: `${txn.getId()}-${result.getReference()}`,
-        bucket: 'kalos-transactions',
-      } as GalleryData;
-    });
-  };
-
   const makeAuditTransaction = async (id: number) => {
     return async () => {
       const txn = new Transaction();
@@ -590,99 +571,6 @@ export const TransactionTable: FC<Props> = ({
     document.execCommand('copy');
     document.body.removeChild(el);
   }, []);
-  const handleFile = (txn: Transaction) => {
-    const fr = new FileReader();
-    fr.onload = async () => {
-      try {
-        let log = new TransactionActivity();
-        log.setTimestamp(format(new Date(), 'yyyy-MM-dd hh:mm:ss'));
-        log.setTransactionId(txn.getId());
-        log.setUserId(loggedUserId);
-        log.setDescription(
-          `Uploading a new file from user ${loggedUserId} for transaction ${txn.getId()} with name: ${
-            FileInput.current!.files![0].name
-          }`,
-        );
-        await TransactionActivityClientService.Create(log);
-      } catch (err) {
-        handleSetError(
-          `An error occurred while uploading an activity log: ${err}`,
-        );
-        console.error(
-          `An error occurred while uploading an activity log: ${err}`,
-        );
-      }
-      let initialDocumentLength = 0;
-
-      try {
-        initialDocumentLength = (
-          await TransactionDocumentClientService.byTransactionID(txn.getId())
-        ).length;
-      } catch (err) {
-        console.error(
-          `An error occurred while double-checking that the file which was just uploaded exists: ${err}`,
-        );
-        alert(
-          'An error occurred while double-checking that the file exists. Please retry the upload, and if the problem persists, please contact the webtech team.',
-        );
-      }
-
-      try {
-        const u8 = new Uint8Array(fr.result as ArrayBuffer);
-        console.log('Transaction file being uploaded');
-        await TransactionDocumentClientService.upload(
-          txn.getId(),
-          FileInput.current!.files![0].name,
-          u8,
-        );
-        console.log('Uploaded successfully');
-      } catch (err) {
-        alert('File could not be uploaded');
-        try {
-          let errLog = new TransactionActivity();
-          errLog.setTimestamp(format(new Date(), 'yyyy-MM-dd hh:mm:ss'));
-          errLog.setTransactionId(txn.getId());
-          errLog.setUserId(loggedUserId);
-          errLog.setDescription(
-            `ERROR : An error occurred while uploading a file for transaction #${txn.getId()} with name "${
-              FileInput.current!.files![0].name
-            }" in transaction billing: ${err}`,
-          );
-          await TransactionActivityClientService.Create(errLog);
-        } catch (errActivity) {
-          alert(
-            `An error occurred while uploading an activity log about a failure within the module. Please inform the webtech team. `,
-          );
-        }
-        handleSetError(`An error occurred while uploading a file: ${err}`);
-        console.error(err);
-      }
-
-      try {
-        const docs = await TransactionDocumentClientService.byTransactionID(
-          txn.getId(),
-        );
-        if (docs.length <= initialDocumentLength) {
-          alert('Upload was unsuccessful, please contact the webtech team.');
-          await refresh();
-          return;
-        }
-      } catch (err) {
-        console.error(
-          `An error occurred while double-checking that the file which was just uploaded exists: ${err}`,
-        );
-        alert(
-          'An error occurred while double-checking that the file exists. Please retry the upload, and if the problem persists, please contact the webtech team.',
-        );
-      }
-
-      await refresh();
-      alert('Upload complete!');
-    };
-    if (FileInput.current && FileInput.current.files) {
-      fr.readAsArrayBuffer(FileInput.current.files[0]);
-    }
-  };
 
   const handleSetError = useCallback(
     (error: string | undefined) => dispatch({ type: 'setError', data: error }),
@@ -847,13 +735,6 @@ export const TransactionTable: FC<Props> = ({
       }
     },
     [],
-  );
-
-  const openFileInput = useCallback(
-    (idx: number) => {
-      FileInput.current && FileInput.current.click();
-    },
-    [FileInput],
   );
 
   const handleSetFilterAcceptedRejected = useCallback(
