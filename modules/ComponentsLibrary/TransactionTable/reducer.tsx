@@ -2,6 +2,7 @@ import { TimesheetDepartment } from '@kalos-core/kalos-rpc/TimesheetDepartment';
 import { Transaction } from '@kalos-core/kalos-rpc/Transaction';
 import { TransactionActivity } from '@kalos-core/kalos-rpc/TransactionActivity';
 import { User } from '@kalos-core/kalos-rpc/User';
+import { PopupType } from '.';
 import { RoleType } from '../Payroll';
 
 export interface FilterType {
@@ -49,6 +50,11 @@ export type State = {
   status: 'Accepted' | 'Rejected' | 'Accepted / Rejected';
   departments: TimesheetDepartment[];
   universalSearch: string | undefined;
+  fileData: any | undefined;
+  imageWaiverTypePopupOpen: boolean;
+  imageWaiverTypeFormData: PopupType;
+  transactionToSave: Transaction | undefined;
+  imageNameToSave: string | undefined;
 };
 export type Action =
   | { type: 'setTransactionFilter'; data: FilterType }
@@ -84,6 +90,26 @@ export type Action =
   | { type: 'setAssignedEmployee'; data: number | undefined }
   | {
       type: 'setUniversalSearch';
+      data: string | undefined;
+    }
+  | {
+      type: 'setFileData';
+      data: any;
+    }
+  | {
+      type: 'setImageWaiverTypePopupOpen';
+      data: boolean;
+    }
+  | {
+      type: 'setImageWaiverTypeFormData';
+      data: PopupType;
+    }
+  | {
+      type: 'setTransactionToSave';
+      data: Transaction | undefined;
+    }
+  | {
+      type: 'setImageNameToSave';
       data: string | undefined;
     };
 
@@ -244,6 +270,21 @@ export const reducer = (state: State, action: Action) => {
         ...state,
         pendingUploadPhoto: action.data,
       };
+    case 'setFileData':
+      console.log('setting file data');
+      return { ...state, fileData: action.data };
+    case 'setImageWaiverTypePopupOpen':
+      console.log('setting image waiver type popup open');
+      return { ...state, imageWaiverTypePopupOpen: action.data };
+    case 'setImageWaiverTypeFormData':
+      console.log('setting image waiver type form data');
+      return { ...state, imageWaiverTypeFormData: action.data };
+    case 'setTransactionToSave':
+      console.log('setting transaction to save');
+      return { ...state, transactionToSave: action.data };
+    case 'setImageNameToSave':
+      console.log('setting image name to save');
+      return { ...state, imageNameToSave: action.data };
     default:
       return state;
   }
