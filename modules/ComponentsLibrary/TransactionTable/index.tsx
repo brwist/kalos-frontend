@@ -25,7 +25,7 @@ import {
   OPTION_ALL,
   WaiverTypes,
 } from '../../../constants';
-import { FilterType, reducer } from './reducer';
+import { FilterType, PopupType, reducer } from './reducer';
 import {
   makeFakeRows,
   OrderDir,
@@ -61,15 +61,14 @@ import DeleteIcon from '@material-ui/icons/Delete';
 import { EditTransaction } from '../EditTransaction';
 import { TimesheetDepartment } from '@kalos-core/kalos-rpc/TimesheetDepartment';
 import { StatusPicker } from './components/StatusPicker';
-import {
-  TransactionDocument,
-} from '@kalos-core/kalos-rpc/TransactionDocument';
+import { TransactionDocument } from '@kalos-core/kalos-rpc/TransactionDocument';
 import { ErrorBoundary } from '../ErrorBoundary';
 import { ConfirmDelete } from '../ConfirmDelete';
 import { UploadPhotoToExistingTransaction } from '../UploadPhotoToExistingTransaction';
 import { File } from '@kalos-core/kalos-rpc/File';
 import { ActivityLog } from '@kalos-core/kalos-rpc/ActivityLog';
 import { Form } from '../Form';
+import { ACTIONS } from './reducer';
 
 export interface Props {
   loggedUserId: number;
@@ -85,11 +84,6 @@ export interface Props {
   hasActions?: boolean;
   key?: any;
 }
-
-export type PopupType = {
-  documentType: 'PickTicket' | 'Receipt' | 'Invoice';
-  invoiceWaiverType: number;
-};
 
 type SelectorParams = {
   txn: Transaction;
@@ -164,7 +158,7 @@ export const TransactionTable: FC<Props> = ({
 
   const handleSetTransactionToEdit = useCallback(
     (transaction: Transaction | undefined) => {
-      dispatch({ type: 'setTransactionToEdit', data: transaction });
+      dispatch({ type: ACTIONS.SET_TRANSACTION_TO_EDIT, data: transaction });
     },
     [],
   );
@@ -296,8 +290,8 @@ export const TransactionTable: FC<Props> = ({
   };
 
   const handleChangePage = useCallback((pageNumberToChangeTo: number) => {
-    dispatch({ type: 'setPage', data: pageNumberToChangeTo });
-    dispatch({ type: 'setChangingPage', data: true });
+    dispatch({ type: ACTIONS.SET_PAGE, data: pageNumberToChangeTo });
+    dispatch({ type: ACTIONS.SET_CHANGING_PAGE, data: true });
   }, []);
   const resetTransactions = useCallback(async () => {
     let req = new Transaction();
@@ -352,7 +346,10 @@ export const TransactionTable: FC<Props> = ({
       try {
         res = await TransactionClientService.BatchGet(req);
         if (res.getTotalCount() < state.totalTransactions) {
-          dispatch({ type: 'setTotalTransactions', data: res.getTotalCount() });
+          dispatch({
+            type: ACTIONS.SET_TOTAL_TRANSACTIONS,
+            data: res.getTotalCount(),
+          });
 
           handleChangePage(0);
         }
@@ -420,9 +417,12 @@ export const TransactionTable: FC<Props> = ({
         );
       }
     });
-    dispatch({ type: 'setTransactionActivityLogs', data: logList });
+    dispatch({ type: ACTIONS.SET_TRANSACTION_ACTIVITY_LOGS, data: logList });
 
-    dispatch({ type: 'setTotalTransactions', data: res.getTotalCount() });
+    dispatch({
+      type: ACTIONS.SET_TOTAL_TRANSACTIONS,
+      data: res.getTotalCount(),
+    });
     let transactions = res.getResultsList().map(txn => {
       return {
         txn: txn,
@@ -431,7 +431,7 @@ export const TransactionTable: FC<Props> = ({
       } as SelectorParams;
     });
     const temp = transactions.map(txn => txn);
-    dispatch({ type: 'setTransactions', data: temp });
+    dispatch({ type: ACTIONS.SET_TRANSACTIONS, data: temp });
   }, [
     handleChangePage,
     loggedUserId,
@@ -448,12 +448,12 @@ export const TransactionTable: FC<Props> = ({
   ]);
 
   const load = useCallback(async () => {
-    dispatch({ type: 'setLoading', data: true });
+    dispatch({ type: ACTIONS.SET_LOADING, data: true });
     const employees = await UserClientService.loadTechnicians();
     let sortedEmployeeList = employees.sort((a, b) =>
       a.getLastname() > b.getLastname() ? 1 : -1,
     );
-    dispatch({ type: 'setEmployees', data: sortedEmployeeList });
+    dispatch({ type: ACTIONS.SET_EMPLOYEES, data: sortedEmployeeList });
 
     const userReq = new User();
     userReq.setId(loggedUserId);
@@ -465,7 +465,7 @@ export const TransactionTable: FC<Props> = ({
       departments = (
         await TimesheetDepartmentClientService.BatchGet(departmentReq)
       ).getResultsList();
-      dispatch({ type: 'setDepartments', data: departments });
+      dispatch({ type: ACTIONS.SET_DEPARTMENTS, data: departments });
     } catch (err) {
       console.error(
         `An error occurred while getting the timesheet departments: ${err}`,
@@ -477,13 +477,13 @@ export const TransactionTable: FC<Props> = ({
       .find(p => p.getType() === 'role');
 
     if (role) {
-      dispatch({ type: 'setRole', data: role.getName() as RoleType });
+      dispatch({ type: ACTIONS.SET_ROLE, data: role.getName() as RoleType });
     }
 
-    dispatch({ type: 'setChangingPage', data: false });
+    dispatch({ type: ACTIONS.SET_CHANGING_PAGE, data: false });
 
-    dispatch({ type: 'setLoading', data: false });
-    dispatch({ type: 'setLoaded', data: true });
+    dispatch({ type: ACTIONS.SET_LOADING, data: false });
+    dispatch({ type: ACTIONS.SET_LOADED, data: true });
   }, [loggedUserId]);
 
   const makeUpdateStatus = async (
@@ -543,7 +543,8 @@ export const TransactionTable: FC<Props> = ({
   }, []);
 
   const handleSetError = useCallback(
-    (error: string | undefined) => dispatch({ type: 'setError', data: error }),
+    (error: string | undefined) =>
+      dispatch({ type: ACTIONS.SET_ERROR, data: error }),
     [],
   );
 
@@ -551,12 +552,12 @@ export const TransactionTable: FC<Props> = ({
     (isAssigningUser: boolean, transactionId: number) => {
       if (isAssigningUser) {
         dispatch({
-          type: 'setAssignedEmployee',
+          type: ACTIONS.SET_ASSIGNED_EMPLOYEE,
           data: undefined,
         });
       }
       dispatch({
-        type: 'setAssigningUser',
+        type: ACTIONS.SET_ASSIGNING_USER,
         data: {
           isAssigning: isAssigningUser,
           transactionId: transactionId,
@@ -569,7 +570,7 @@ export const TransactionTable: FC<Props> = ({
   const handleSetAssignedEmployee = useCallback(
     assignedEmployee =>
       dispatch({
-        type: 'setAssignedEmployee',
+        type: ACTIONS.SET_ASSIGNED_EMPLOYEE,
         data: assignedEmployee,
       }),
     [],
@@ -596,7 +597,7 @@ export const TransactionTable: FC<Props> = ({
     filter.amount = d.amount;
     filter.billingRecorded = d.billingRecorded;
     filter.universalSearch = d.universalSearch;
-    dispatch({ type: 'setTransactionFilter', data: filter });
+    dispatch({ type: ACTIONS.SET_TRANSACTION_FILTER, data: filter });
   }, []);
 
   const handleUpdateTransaction = useCallback(
@@ -618,7 +619,7 @@ export const TransactionTable: FC<Props> = ({
       }
       try {
         await TransactionClientService.Update(transactionToSave);
-        dispatch({ type: 'setTransactionToEdit', data: undefined });
+        dispatch({ type: ACTIONS.SET_TRANSACTION_TO_EDIT, data: undefined });
         refresh();
       } catch (err) {
         try {
@@ -636,7 +637,7 @@ export const TransactionTable: FC<Props> = ({
           );
         }
         console.error('An error occurred while updating a transaction: ', err);
-        dispatch({ type: 'setTransactionToEdit', data: undefined });
+        dispatch({ type: ACTIONS.SET_TRANSACTION_TO_EDIT, data: undefined });
       }
     },
     [refresh, loggedUserId, state.page],
@@ -655,7 +656,7 @@ export const TransactionTable: FC<Props> = ({
       }
     } else {
       newSortDir = 'DESC';
-      dispatch({ type: 'setPage', data: 0 });
+      dispatch({ type: ACTIONS.SET_PAGE, data: 0 });
     }
 
     sortBy = newSort;
@@ -666,14 +667,20 @@ export const TransactionTable: FC<Props> = ({
 
   const handleSetCreatingTransaction = useCallback(
     (isCreatingTransaction: boolean) => {
-      dispatch({ type: 'setCreatingTransaction', data: isCreatingTransaction });
+      dispatch({
+        type: ACTIONS.SET_CREATING_TRANSACTION,
+        data: isCreatingTransaction,
+      });
     },
     [],
   );
 
   const handleSetMergingTransaction = useCallback(
     (isMergingTransaction: boolean) => {
-      dispatch({ type: 'setMergingTransaction', data: isMergingTransaction });
+      dispatch({
+        type: ACTIONS.SET_MERGING_TRANSACTION,
+        data: isMergingTransaction,
+      });
     },
     [],
   );
@@ -681,7 +688,10 @@ export const TransactionTable: FC<Props> = ({
   const handleAssignEmployee = useCallback(
     async (employeeIdToAssign: number | undefined, transactionId: number) => {
       if (employeeIdToAssign == undefined) {
-        dispatch({ type: 'setError', data: 'There is no employee to assign.' });
+        dispatch({
+          type: ACTIONS.SET_ERROR,
+          data: 'There is no employee to assign.',
+        });
         return;
       }
       try {
@@ -694,7 +704,7 @@ export const TransactionTable: FC<Props> = ({
           console.error('Unable to assign employee.');
         }
         dispatch({
-          type: 'setAssigningUser',
+          type: ACTIONS.SET_ASSIGNING_USER,
           data: {
             isAssigning: false,
             transactionId: -1,
@@ -710,7 +720,7 @@ export const TransactionTable: FC<Props> = ({
   const handleSetFilterAcceptedRejected = useCallback(
     (option: 'Accepted' | 'Rejected' | 'Accepted / Rejected') => {
       let tempFilter = state.transactionFilter;
-      dispatch({ type: 'setStatus', data: option });
+      dispatch({ type: ACTIONS.SET_STATUS, data: option });
       switch (option) {
         case 'Accepted':
           tempFilter.isAccepted = true;
@@ -729,7 +739,7 @@ export const TransactionTable: FC<Props> = ({
           );
           break;
       }
-      dispatch({ type: 'setTransactionFilter', data: tempFilter });
+      dispatch({ type: ACTIONS.SET_TRANSACTION_FILTER, data: tempFilter });
     },
     [state.transactionFilter],
   );
@@ -762,7 +772,7 @@ export const TransactionTable: FC<Props> = ({
       if (!contained) {
         // We want to toggle it
         dispatch({
-          type: 'setSelectedTransactions',
+          type: ACTIONS.SET_SELECTED_TRANSACTIONS,
           data: [...state.selectedTransactions, state.transactions[idx].txn],
         });
         if (onSelect)
@@ -772,7 +782,7 @@ export const TransactionTable: FC<Props> = ({
           ]);
       } else {
         dispatch({
-          type: 'setSelectedTransactions',
+          type: ACTIONS.SET_SELECTED_TRANSACTIONS,
           data: state.selectedTransactions.filter(
             txn => txn.getId() !== state.transactions![idx].txn.getId(),
           ),
@@ -852,7 +862,11 @@ export const TransactionTable: FC<Props> = ({
             key={state.status}
             options={['Accepted / Rejected', 'Accepted', 'Rejected']}
             selected={
-              state.status == 'Accepted / Rejected' ? 0 : state.status == 'Accepted' ? 1 : 2
+              state.status == 'Accepted / Rejected'
+                ? 0
+                : state.status == 'Accepted'
+                ? 1
+                : 2
             }
             onSelect={(
               selected: 'Accepted' | 'Rejected' | 'Accepted / Rejected',
@@ -874,7 +888,8 @@ export const TransactionTable: FC<Props> = ({
         actions: [
           {
             label: 'search',
-            onClick: () => dispatch({ type: 'setSearching', data: true }),
+            onClick: () =>
+              dispatch({ type: ACTIONS.SET_SEARCHING, data: true }),
           },
         ],
       },
@@ -944,7 +959,7 @@ export const TransactionTable: FC<Props> = ({
         );
       }
       await TransactionClientService.Delete(state.transactionToDelete);
-      dispatch({ type: 'setTransactionToDelete', data: undefined });
+      dispatch({ type: ACTIONS.SET_TRANSACTION_TO_DELETE, data: undefined });
       await resetTransactions();
       await refresh();
     } catch (err) {
@@ -1076,7 +1091,7 @@ export const TransactionTable: FC<Props> = ({
     if (state.searching) {
       load();
       resetTransactions();
-      dispatch({ type: 'setSearching', data: false });
+      dispatch({ type: ACTIONS.SET_SEARCHING, data: false });
     }
   }, [
     load,
@@ -1091,7 +1106,10 @@ export const TransactionTable: FC<Props> = ({
         <Modal
           open
           onClose={() =>
-            dispatch({ type: 'setImageWaiverTypePopupOpen', data: false })
+            dispatch({
+              type: ACTIONS.SET_IMAGE_WAIVER_TYPE_POPUP_OPEN,
+              data: false,
+            })
           }
         >
           <Form<PopupType>
@@ -1099,7 +1117,10 @@ export const TransactionTable: FC<Props> = ({
             key={state.imageWaiverTypeFormData.toString()}
             title={'Specify Type for Document - ' + state.imageNameToSave}
             onChange={changed => {
-              dispatch({ type: 'setImageWaiverTypeFormData', data: changed });
+              dispatch({
+                type: ACTIONS.SET_IMAGE_WAIVER_TYPE_FORM_DATA,
+                data: changed,
+              });
             }}
             schema={[
               [
@@ -1121,7 +1142,7 @@ export const TransactionTable: FC<Props> = ({
               ],
             ]}
             onSave={async saved => {
-              dispatch({ type: 'setLoading', data: true });
+              dispatch({ type: ACTIONS.SET_LOADING, data: true });
               if (
                 !state.fileData ||
                 !state.transactionToSave ||
@@ -1134,7 +1155,7 @@ export const TransactionTable: FC<Props> = ({
                     state.transactionToSave === undefined
                   }, imageNameToSave: ${state.imageNameToSave === undefined} `,
                 );
-                dispatch({ type: 'setLoading', data: false });
+                dispatch({ type: ACTIONS.SET_LOADING, data: false });
                 return;
               }
               await handleSaveFileToBucket(
@@ -1144,15 +1165,24 @@ export const TransactionTable: FC<Props> = ({
                 saved.invoiceWaiverType,
                 state.transactionToSave,
               );
-              dispatch({ type: 'setLoading', data: false });
-              dispatch({ type: 'setImageWaiverTypePopupOpen', data: false });
-              dispatch({ type: 'setImageNameToSave', data: undefined });
-              dispatch({ type: 'setFileData', data: undefined });
+              dispatch({ type: ACTIONS.SET_LOADING, data: false });
+              dispatch({
+                type: ACTIONS.SET_IMAGE_WAIVER_TYPE_POPUP_OPEN,
+                data: false,
+              });
+              dispatch({
+                type: ACTIONS.SET_IMAGE_NAME_TO_SAVE,
+                data: undefined,
+              });
+              dispatch({ type: ACTIONS.SET_FILE_DATA, data: undefined });
               await resetTransactions();
               load();
             }}
             onClose={() =>
-              dispatch({ type: 'setImageWaiverTypePopupOpen', data: false })
+              dispatch({
+                type: ACTIONS.SET_IMAGE_WAIVER_TYPE_POPUP_OPEN,
+                data: false,
+              })
             }
             submitLabel="Upload"
             data={state.imageWaiverTypeFormData}
@@ -1173,7 +1203,10 @@ export const TransactionTable: FC<Props> = ({
         <ConfirmDelete
           open={state.transactionToDelete != undefined}
           onClose={() =>
-            dispatch({ type: 'setTransactionToDelete', data: undefined })
+            dispatch({
+              type: ACTIONS.SET_TRANSACTION_TO_DELETE,
+              data: undefined,
+            })
           }
           onConfirm={() => handleDeleteTransaction()}
           kind="this transaction"
@@ -1193,7 +1226,7 @@ export const TransactionTable: FC<Props> = ({
             onSave={saved => {
               saved.setId(state.transactionToEdit!.getId());
               handleUpdateTransaction(saved);
-              dispatch({ type: 'setSearching', data: true });
+              dispatch({ type: ACTIONS.SET_SEARCHING, data: true });
             }}
             onClose={() => handleSetTransactionToEdit(undefined)}
           />
@@ -1244,7 +1277,7 @@ export const TransactionTable: FC<Props> = ({
       <PlainForm
         data={state.transactionFilter}
         onChange={handleSetFilter}
-        onSubmit={() => dispatch({ type: 'setSearching', data: true })}
+        onSubmit={() => dispatch({ type: ACTIONS.SET_SEARCHING, data: true })}
         onEnter={true}
         schema={SCHEMA}
         className="PayrollFilter"
@@ -1282,7 +1315,7 @@ export const TransactionTable: FC<Props> = ({
           maxWidth={1000}
           onClose={() =>
             dispatch({
-              type: 'setPendingUploadPhoto',
+              type: ACTIONS.SET_PENDING_UPLOAD_PHOTO,
               data: undefined,
             })
           }
@@ -1292,7 +1325,7 @@ export const TransactionTable: FC<Props> = ({
             loggedUserId={loggedUserId}
             onClose={() =>
               dispatch({
-                type: 'setPendingUploadPhoto',
+                type: ACTIONS.SET_PENDING_UPLOAD_PHOTO,
                 data: undefined,
               })
             }
@@ -1310,26 +1343,27 @@ export const TransactionTable: FC<Props> = ({
         }
         hoverable={false}
         onSaveRowButton={async saved => {
-          dispatch({ type: 'setLoading', data: true });
+          dispatch({ type: ACTIONS.SET_LOADING, data: true });
           let result = await handleSaveFromRowButton(saved);
           handleSetCreatingTransaction(false);
           // This is where the data would be uploaded alongside the transaction
 
-          dispatch({ type: 'setLoading', data: false });
+          dispatch({ type: ACTIONS.SET_LOADING, data: false });
           if ((saved as any)['image']) {
             dispatch({
-              type: 'setImageWaiverTypePopupOpen',
+              type: ACTIONS.SET_IMAGE_WAIVER_TYPE_POPUP_OPEN,
               data: true,
             });
-            dispatch({ type: 'setTransactionToSave', data: result });
+            dispatch({ type: ACTIONS.SET_TRANSACTION_TO_SAVE, data: result });
             dispatch({
-              type: 'setImageNameToSave',
+              type: ACTIONS.SET_IMAGE_NAME_TO_SAVE,
               data: (saved as any)['image'],
             });
           }
         }}
         rowButton={{
-          onFileLoad: data => dispatch({ type: 'setFileData', data: data }),
+          onFileLoad: data =>
+            dispatch({ type: ACTIONS.SET_FILE_DATA, data: data }),
           externalButtonClicked: state.creatingTransaction,
           externalButton: true,
           type: new Transaction(),
@@ -1545,7 +1579,7 @@ export const TransactionTable: FC<Props> = ({
                               size="small"
                               onClick={() =>
                                 dispatch({
-                                  type: 'setPendingUploadPhoto',
+                                  type: ACTIONS.SET_PENDING_UPLOAD_PHOTO,
                                   data: selectorParam.txn,
                                 })
                               }
@@ -1651,7 +1685,7 @@ export const TransactionTable: FC<Props> = ({
                               size="small"
                               onClick={() =>
                                 dispatch({
-                                  type: 'setTransactionToDelete',
+                                  type: ACTIONS.SET_TRANSACTION_TO_DELETE,
                                   data: selectorParam.txn,
                                 })
                               }
