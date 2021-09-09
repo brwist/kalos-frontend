@@ -91,7 +91,8 @@ export class TransactionUserView extends React.PureComponent<props, state> {
   async fetchTxns(statusID: number) {
     const reqObj = new Transaction();
     reqObj.setOwnerId(this.props.userID);
-
+    reqObj.addNotEquals('VendorCategory');
+    reqObj.setVendorCategory("'Receipt','PickTicket','Invoice'");
     reqObj.setPageNumber(this.state.page);
     reqObj.setStatusId(statusID);
     /* if (
