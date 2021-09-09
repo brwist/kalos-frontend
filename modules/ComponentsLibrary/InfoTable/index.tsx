@@ -228,7 +228,7 @@ export const InfoTable = ({
               }) as any,
               [
                 {
-                  label: 'Add Image',
+                  label: 'Add Image / Document',
                   name: 'image',
                   type: 'file',
                   onFileLoad: (data: string) => {
