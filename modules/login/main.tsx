@@ -10,6 +10,9 @@ import Grid from '@material-ui/core/Grid';
 import { ENDPOINT } from '../../constants';
 import { Dashboard } from '../Dashboard/main';
 import ReactDOM from 'react-dom';
+import { connect , Provider} from 'react-redux';
+import { loggedIn, selectLoggedUser } from './loginSlice';
+import store from '../../App/store';
 
 interface props {
   onSuccess?(): void;
@@ -21,7 +24,7 @@ interface state {
   };
 }
 
-export class Login extends React.PureComponent<props, state> {
+class Login extends React.PureComponent<props, state> {
   private LogClient: ActivityLogClient;
   private UserClient: UserClient;
   private LoginInput: RefObject<HTMLInputElement>;
@@ -93,44 +96,54 @@ export class Login extends React.PureComponent<props, state> {
   handlePasswordEnter = this.enterListener('password');
   handlePasswordChange = this.handleValueChange('password');
 
+  logged = (id,username,password)=>{
+    this.props.dispatch(
+      loggedIn({
+        id: id,
+        userName:username,
+        password:password,
+    }));
+  }
   async handleLogin() {
-    // Not working for local side
-    // try {
-    //   const userData = new User();
-    //   const username = this.LoginInput.current!.value;
-    //   const password = this.PwdInput.current!.value;
-    //   userData.setLogin(username);
-    //   userData.setPwd(password);
-    //   await this.LogClient.GetToken(username, password);
-    //   const user = await this.UserClient.Get(userData);
-    //   const log = new ActivityLog();
-    //   log.setActivityName(
-    //     `${user.getFirstname()} ${user.getLastname()} authenticated`,
-    //   );
-      
-    //   log.setUserId(user.getId());
-    //   await this.LogClient.Create(log);
-    //   if (this.props.onSuccess) {
-    //     this.props.onSuccess();
-    //   }
-    // } catch (err) {
-    //   console.log(err);
-    // }
-
-    try{
+    try {
       const userData = new User();
       const username = this.LoginInput.current!.value;
       const password = this.PwdInput.current!.value;
       userData.setLogin(username);
       userData.setPwd(password);
-      const u = new UserClient(ENDPOINT);
-      u.GetToken(username, password).then(() => {
-        ReactDOM.render(<Dashboard userId={103285} withHeader  withSideMenu />, document.getElementById('root'));
-        // ReactDOM.render(<ComponentsLibrary />, document.getElementById('root'));
-      });
-    }catch(err){
+      await this.LogClient.GetToken(username, password);
+      const user = await this.UserClient.Get(userData);
+      const log = new ActivityLog();
+      log.setActivityName(
+        `${user.getFirstname()} ${user.getLastname()} authenticated`,
+      );
+      
+      log.setUserId(user.getId());
+      this.logged(user.getId(),username,password);
+      await this.LogClient.Create(log);
+      if (this.props.onSuccess) {
+        // this.props.onSuccess();
+        ReactDOM.render(<Provider store={store}><Dashboard userId={user.getId()} withHeader /></Provider>, document.getElementById('root'));
+      }
+    } catch (err) {
       console.log(err);
     }
+
+    // for local side testing
+    //try{
+    //   const userData = new User();
+    //   const username = this.LoginInput.current!.value;
+    //   const password = this.PwdInput.current!.value;
+      // userData.setLogin(username);
+      // userData.setPwd(password);
+      // this.logged(userData.getId(),username,password);
+      // const u = new UserClient(ENDPOINT);
+      // u.GetToken(username, password).then(() => {
+      //   ReactDOM.render(<Provider store={store}><Dashboard userId={103285} withHeader /></Provider>, document.getElementById('root'));
+      // });
+    // }catch(err){
+    //   console.log(err);
+    // }
   }
 
   focusNext() {
@@ -165,3 +178,4 @@ export class Login extends React.PureComponent<props, state> {
     );
   }
 }
+export default connect(null,null)(Login);
