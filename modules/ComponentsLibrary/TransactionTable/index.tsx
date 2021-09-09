@@ -19,7 +19,12 @@ import RejectIcon from '@material-ui/icons/ThumbDownSharp';
 import SubmitIcon from '@material-ui/icons/ThumbUpSharp';
 import { format, parseISO } from 'date-fns';
 import React, { FC, useCallback, useEffect, useReducer } from 'react';
-import { ENDPOINT, NULL_TIME, OPTION_ALL } from '../../../constants';
+import {
+  ENDPOINT,
+  NULL_TIME,
+  OPTION_ALL,
+  WaiverTypes,
+} from '../../../constants';
 import { FilterType, reducer } from './reducer';
 import {
   makeFakeRows,
@@ -66,6 +71,7 @@ import { ConfirmDelete } from '../ConfirmDelete';
 import { UploadPhotoToExistingTransaction } from '../UploadPhotoToExistingTransaction';
 import { File } from '@kalos-core/kalos-rpc/File';
 import { ActivityLog } from '@kalos-core/kalos-rpc/ActivityLog';
+import { Form } from '../Form';
 
 export interface Props {
   loggedUserId: number;
@@ -81,6 +87,11 @@ export interface Props {
   hasActions?: boolean;
   key?: any;
 }
+
+export type PopupType = {
+  documentType: 'PickTicket' | 'Receipt' | 'Invoice';
+  invoiceWaiverType: number;
+};
 
 type SelectorParams = {
   txn: Transaction;
@@ -144,6 +155,13 @@ export const TransactionTable: FC<Props> = ({
     universalSearch: undefined,
     searching: false,
     fileData: undefined,
+    imageWaiverTypePopupOpen: false,
+    imageWaiverTypeFormData: {
+      documentType: 'Receipt',
+      invoiceWaiverType: 0,
+    },
+    transactionToSave: undefined,
+    imageNameToSave: undefined,
   });
   const {
     transactionFilter,
@@ -169,6 +187,10 @@ export const TransactionTable: FC<Props> = ({
     status,
     searching,
     fileData,
+    imageWaiverTypePopupOpen,
+    imageWaiverTypeFormData,
+    transactionToSave,
+    imageNameToSave,
   } = state;
 
   const handleSetTransactionToEdit = useCallback(
@@ -1073,7 +1095,13 @@ export const TransactionTable: FC<Props> = ({
   }, [state.transactionToDelete, refresh, resetTransactions]);
 
   const handleSaveFileToBucket = useCallback(
-    async (fileData: string, fileName: string, transaction: Transaction) => {
+    async (
+      fileData: string,
+      fileName: string,
+      fileDescription: 'Receipt' | 'PickTicket' | 'Invoice',
+      invoiceWaiverType: number | undefined,
+      transaction: Transaction,
+    ) => {
       const ext = getFileExt(fileName);
       const name = `${transaction!.getId()}-${transaction.getDescription()}-${Math.floor(
         Date.now() / 1000,
@@ -1114,10 +1142,14 @@ export const TransactionTable: FC<Props> = ({
           const uploadFile = await FileClientService.Create(fReq);
 
           const tDoc = new TransactionDocument();
+          tDoc.setDescription(fileDescription);
+          if (invoiceWaiverType) tDoc.setTypeId(invoiceWaiverType);
+          if (fileDescription != 'Invoice') {
+            tDoc.setTypeId(1);
+          }
           if (transaction) tDoc.setTransactionId(transaction.getId());
           tDoc.setReference(nameWithoutId);
           tDoc.setFileId(uploadFile.getId());
-          tDoc.setTypeId(1);
           await TransactionDocumentClientService.Create(tDoc);
         } else {
           alert('An error occurred while uploading the file to the S3 bucket.');
@@ -1191,6 +1223,74 @@ export const TransactionTable: FC<Props> = ({
   }, [load, loaded, searching, changingPage, resetTransactions]);
   return (
     <ErrorBoundary>
+      {imageWaiverTypePopupOpen && (
+        <Modal
+          open
+          onClose={() =>
+            dispatch({ type: 'setImageWaiverTypePopupOpen', data: false })
+          }
+        >
+          <Form<PopupType>
+            key={imageWaiverTypeFormData.toString()}
+            title={'Specify Type for Document - ' + imageNameToSave}
+            onChange={changed => {
+              dispatch({ type: 'setImageWaiverTypeFormData', data: changed });
+            }}
+            schema={[
+              [
+                {
+                  name: 'documentType',
+                  label: 'Document Type',
+                  options: ['PickTicket', 'Receipt', 'Invoice'],
+                  required: true,
+                },
+                {
+                  name: 'invoiceWaiverType',
+                  label: 'Waiver Type',
+                  options: WaiverTypes,
+                  required: imageWaiverTypeFormData.documentType == 'Invoice',
+                  invisible: imageWaiverTypeFormData.documentType !== 'Invoice',
+                },
+              ],
+            ]}
+            onSave={async saved => {
+              console.log(
+                `fileData: ${fileData === undefined}, transactionToSave: ${
+                  transactionToSave === undefined
+                }, imageNameToSave: ${imageNameToSave === undefined} `,
+              );
+              if (!fileData || !transactionToSave || !imageNameToSave) {
+                console.error(
+                  `Not proceeding with image save. Undefined values: fileData: ${
+                    fileData === undefined
+                  }, transactionToSave: ${
+                    transactionToSave === undefined
+                  }, imageNameToSave: ${imageNameToSave === undefined} `,
+                );
+                return;
+              }
+              await handleSaveFileToBucket(
+                fileData,
+                imageNameToSave,
+                saved.documentType,
+                saved.invoiceWaiverType,
+                transactionToSave,
+              );
+
+              dispatch({ type: 'setImageWaiverTypePopupOpen', data: false });
+              dispatch({ type: 'setImageNameToSave', data: undefined });
+              dispatch({ type: 'setFileData', data: undefined });
+              await resetTransactions();
+              load();
+            }}
+            onClose={() =>
+              dispatch({ type: 'setImageWaiverTypePopupOpen', data: false })
+            }
+            submitLabel="Upload"
+            data={imageWaiverTypeFormData}
+          />
+        </Modal>
+      )}
       {loading ? <Loader /> : <> </>}
       {error && (
         <Alert
@@ -1319,8 +1419,9 @@ export const TransactionTable: FC<Props> = ({
             ? [
                 {
                   label: 'New Transaction',
-                  onClick: () =>
-                    handleSetCreatingTransaction(!state.creatingTransaction),
+                  onClick: () => {
+                    handleSetCreatingTransaction(!state.creatingTransaction);
+                  },
                 },
                 {
                   label: 'Merge Transactions',
@@ -1366,8 +1467,18 @@ export const TransactionTable: FC<Props> = ({
           handleSetCreatingTransaction(false);
           // This is where the data would be uploaded alongside the transaction
 
-          if (!fileData || !result) return;
-          handleSaveFileToBucket(fileData, (saved as any)['image'], result);
+          console.log('Image: ', (saved as any)['image']);
+          if ((saved as any)['image']) {
+            dispatch({
+              type: 'setImageWaiverTypePopupOpen',
+              data: true,
+            });
+            dispatch({ type: 'setTransactionToSave', data: result });
+            dispatch({
+              type: 'setImageNameToSave',
+              data: (saved as any)['image'],
+            });
+          }
         }}
         rowButton={{
           onFileLoad: data => dispatch({ type: 'setFileData', data: data }),
