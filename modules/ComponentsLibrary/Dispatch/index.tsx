@@ -134,7 +134,7 @@ export const DispatchDashboard: React.FC<Props> = function DispatchDashboard({
     call.setDateTargetList(['date_started', 'date_ended']);
     call.setJobTypeIdList(state.jobTypes.toString());
     if (state.isResidential) {
-      call.setPropertyIsResidential(1);
+      call.setIsresidential(1);
     }
     try {
       const calls = await DispatchClientService.GetDispatchCalls(call);
