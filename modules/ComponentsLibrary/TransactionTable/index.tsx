@@ -7,6 +7,7 @@ import {
   TransactionActivity,
   TransactionActivityClient,
 } from '@kalos-core/kalos-rpc/TransactionActivity';
+
 import { User } from '@kalos-core/kalos-rpc/User';
 import IconButton from '@material-ui/core/IconButton';
 import AssignmentIndIcon from '@material-ui/icons/AssignmentInd';
@@ -14,6 +15,7 @@ import CheckIcon from '@material-ui/icons/CheckCircleSharp';
 import CloseIcon from '@material-ui/icons/Close';
 import UploadIcon from '@material-ui/icons/CloudUploadSharp';
 import DoneIcon from '@material-ui/icons/Done';
+import Save from '@material-ui/icons/Save';
 import CopyIcon from '@material-ui/icons/FileCopySharp';
 import RejectIcon from '@material-ui/icons/ThumbDownSharp';
 import SubmitIcon from '@material-ui/icons/ThumbUpSharp';
@@ -111,6 +113,7 @@ let filter: FilterType = {
   amount: undefined,
   billingRecorded: false,
   universalSearch: undefined,
+  processed: false,
 };
 
 let assigned: AssignedEmployeeType = {
@@ -311,6 +314,9 @@ export const TransactionTable: FC<Props> = ({
     }
     if (state.transactionFilter.isRejected) {
       req.setStatusId(4);
+    }
+    if (state.transactionFilter.processed) {
+      req.setStatusId(5);
     }
     if (state.transactionFilter.vendor)
       req.setVendor(`%${state.transactionFilter.vendor}%`);
@@ -522,7 +528,16 @@ export const TransactionTable: FC<Props> = ({
       await refresh();
     }
   };
-
+  const updateStatusProcessed = async (txn: Transaction) => {
+    const ok = confirm(
+      `Are you sure you want to mark this transaction as Processed?`,
+    );
+    if (ok) {
+      await makeUpdateStatus(txn.getId(), 5, 'Recorded and Processed');
+      await resetTransactions();
+      await refresh();
+    }
+  };
   const forceAccept = async (txn: Transaction) => {
     const ok = confirm(
       `Are you sure you want to mark this transaction as accepted?`,
@@ -600,6 +615,7 @@ export const TransactionTable: FC<Props> = ({
     filter.amount = d.amount;
     filter.billingRecorded = d.billingRecorded;
     filter.universalSearch = d.universalSearch;
+    filter.processed = d.processed;
     dispatch({ type: ACTIONS.SET_TRANSACTION_FILTER, data: filter });
   }, []);
 
@@ -883,7 +899,12 @@ export const TransactionTable: FC<Props> = ({
       },
       {
         name: 'billingRecorded',
-        label: 'Was processed?',
+        label: 'Was Approved/Rejected?',
+        type: 'checkbox',
+      },
+      {
+        name: 'processed',
+        label: 'Was Processed?',
         type: 'checkbox',
       },
     ],
@@ -1726,6 +1747,22 @@ export const TransactionTable: FC<Props> = ({
                               <AssignmentIndIcon />
                             </IconButton>
                           </Tooltip>,
+                          selectorParam.txn.getStatusId() === 3 &&
+                            loggedUserId === 98217 && (
+                              <Tooltip
+                                key="Process"
+                                content="Mark As Processed"
+                              >
+                                <IconButton
+                                  size="small"
+                                  onClick={() =>
+                                    updateStatusProcessed(selectorParam.txn)
+                                  }
+                                >
+                                  <Save />
+                                </IconButton>
+                              </Tooltip>
+                            ),
                           <Tooltip key="delete" content="Delete this task">
                             <IconButton
                               size="small"
