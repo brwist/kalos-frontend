@@ -907,6 +907,7 @@ export const TransactionTable: FC<Props> = ({
       newTxn.setJobId(saved['Job #']);
       newTxn.setAmount(saved['Amount']);
       newTxn.setVendor(saved['Vendor']);
+      newTxn.setStatusId(2);
       newTxn.setVendorCategory('Receipt');
 
       let res: Transaction | undefined;
@@ -1421,7 +1422,7 @@ export const TransactionTable: FC<Props> = ({
             onClick: () => handleChangeSort('order_number'),
           },
           {
-            name: 'Purchaser',
+            name: 'Creator',
             dir:
               sortBy == 'owner_id'
                 ? sortDir != ' '
