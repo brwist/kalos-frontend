@@ -30,8 +30,11 @@ import { User } from '@kalos-core/kalos-rpc/User';
 import { PageWrapper } from '../../PageWrapper/main';
 import { SectionBar } from '../SectionBar';
 import { PlainForm, Schema } from '../PlainForm';
-import { addDays, format } from 'date-fns';
-import { debounce } from 'lodash';
+import addDays from 'date-fns/esm/addDays';
+import format from 'date-fns/esm/format';
+import setHours from 'date-fns/esm/setHours';
+import setMinutes from 'date-fns/esm/setMinutes';
+import  debounce from 'lodash/debounce';
 import { DragDropContext } from 'react-beautiful-dnd';
 import { Confirm } from '../Confirm';
 import { Modal } from '../Modal';
@@ -45,7 +48,7 @@ import Grid from '@material-ui/core/Grid';
 import Button  from '@material-ui/core/Button';
 import { Alert } from '../Alert';
 import UndoRounded from '@material-ui/icons/UndoRounded';
-import CircularProgress from '@material-ui/core/CircularProgress';
+import parseISO from 'date-fns/esm/parseISO';
 import { Loader } from '../../Loader/main';
 
 
@@ -55,9 +58,12 @@ export interface Props {
 
 const initialFormData: FormData = {
   dateStart: format(new Date(), 'yyyy-MM-dd'),
+  timeStart: format(setHours(setMinutes(new Date(), 0), 0), 'yyyy-MM-dd HH:mm'),
   dateEnd: format(addDays(new Date(), 1), 'yyyy-MM-dd'),
+  timeEnd: format(setHours(setMinutes(new Date(), 45), 23), 'yyyy-MM-dd HH:mm'),
   departmentIds: [],
   jobTypes: [],
+  isResidential: 0,
 };
 
 const initialState: State = {
@@ -71,6 +77,9 @@ const initialState: State = {
   jobTypeList: [],
   callStartDate: initialFormData.dateStart,
   callEndDate: initialFormData.dateEnd,
+  callStartTime: initialFormData.timeStart.substring(11),
+  callEndTime: initialFormData.timeEnd.substring(11),
+  isResidential: initialFormData.isResidential,
   formData: initialFormData,
   notIncludedJobTypes: [],
   openModal: false,
@@ -97,6 +106,8 @@ export const DispatchDashboard: React.FC<Props> = function DispatchDashboard({
     const dr = new DateRange();
     dr.setStart('2012-01-01');
     dr.setEnd(format(new Date(), 'yyyy-MM-dd'));
+    console.log(parseISO(format(setHours(setMinutes(new Date(), 45), 23), 'yyyy-MM-dd h:mm a')));
+    console.log();
     tech.setDateRange(dr);
     if (state.departmentIds.length) {
       tech.setDepartmentList(state.departmentIds.toString());
@@ -107,7 +118,7 @@ export const DispatchDashboard: React.FC<Props> = function DispatchDashboard({
       const techs = await DispatchClientService.GetDispatchableTechnicians(tech);
       const availableTechs = techs.getResultsList().filter(tech => tech.getActivity() != 'Dismissed');
       const dismissedTechs = techs.getResultsList().filter(tech => tech.getActivity() === 'Dismissed');
-      console.log('Dispatch Tech Success');
+      // console.log('Dispatch Tech Success');
       return {available: availableTechs, dismissed: dismissedTechs};
     } catch (err) {
       console.error(
@@ -122,17 +133,25 @@ export const DispatchDashboard: React.FC<Props> = function DispatchDashboard({
     call.setDateRangeList(['>=', state.callStartDate, '<=', state.callEndDate]);
     call.setDateTargetList(['date_started', 'date_ended']);
     call.setJobTypeIdList(state.jobTypes.toString());
+    if (state.isResidential) {
+      call.setPropertyIsResidential(1);
+    }
     try {
       const calls = await DispatchClientService.GetDispatchCalls(call);
-      console.log('Dispatch Call Success');
-      return {calls: calls.getResultsList()};
+      // console.log('Dispatch Call Success');
+      const callResults = calls.getResultsList();
+      const filteredCalls = callResults.filter(call => 
+        call.getDateStarted().concat(' ', call.getTimeStarted()) >= state.callStartDate.concat(' ', state.callStartTime) &&
+        call.getDateEnded().concat(' ', call.getTimeEnded()) <= state.callEndDate.concat(' ', state.callEndTime));
+      console.log(filteredCalls);  
+      return {calls: filteredCalls};
     } catch (err) {
       console.error(
         `An error occurred while getting Dispatch Calls: ${err}`
       );
       return {calls: []};
     }
-  }, [state.jobTypes, state.callStartDate, state.callEndDate]);
+  }, [state.jobTypes, state.callStartDate, state.callStartTime, state.callEndDate, state.callEndTime, state.isResidential]);
 
   const getDepartments = async() => {
     const departmentReq = new TimesheetDepartment();
@@ -147,7 +166,7 @@ export const DispatchDashboard: React.FC<Props> = function DispatchDashboard({
       if (!displayedDepartments.length) {
         displayedDepartments = departments.getResultsList().filter(dep => dep.getId() === userData.getEmployeeDepartmentId()); 
       }
-      console.log('Department Success');
+      // console.log('Department Success');
       return {departments: displayedDepartments, defaultValues: displayedDepartments.map(dep => dep.getId())};
     } catch (err) {
       console.error(
@@ -162,7 +181,7 @@ export const DispatchDashboard: React.FC<Props> = function DispatchDashboard({
     try {
       const jobTypes = await JobTypeClientService.BatchGet(jobTypeReq);
       const displayedJobTypes = jobTypes.getResultsList().filter(jobType => !state.notIncludedJobTypes.includes(jobType.getId()));
-      console.log('Job Type Success');
+      // console.log('Job Type Success');
       return {jobTypes: displayedJobTypes};
     } catch (err) {
       console.error(
@@ -177,7 +196,7 @@ export const DispatchDashboard: React.FC<Props> = function DispatchDashboard({
     newKey.setTextId('google_maps');
     try {
       const googleKey = await ApiKeyClientService.Get(newKey);
-      console.log('API Key success');
+      // console.log('API Key success');
       return {googleKey: googleKey.getApiKey()};
     } catch (err) {
       console.error(
@@ -228,8 +247,10 @@ export const DispatchDashboard: React.FC<Props> = function DispatchDashboard({
 
   const handleChange = async (formData: FormData) => {
     setProcessing(true);
-    const callDateStart = formData.dateStart.replace('00:00', '');
-    const callDateEnd = formData.dateEnd.replace('00:00', '');
+    const callDateStart = formData.dateStart.replace(' 00:00', '');
+    const callDateEnd = formData.dateEnd.replace(' 00:00', '');
+    const callTimeStart = formData.timeStart.substring(11);
+    const callTimeEnd = formData.timeEnd.substring(11);
     if (state.departmentIds.length != formData.departmentIds.length || !state.departmentIds.every((val, index) => val === formData.departmentIds[index])) {
       dispatchDashboard({
         type: 'updateTechParameters',
@@ -241,13 +262,20 @@ export const DispatchDashboard: React.FC<Props> = function DispatchDashboard({
     if (state.jobTypes.length != formData.jobTypes.length 
     || !state.jobTypes.every((val, index) => val === formData.jobTypes[index])
     || state.callStartDate != callDateStart
-    || state.callEndDate != callDateEnd) {
+    || state.callEndDate != callDateEnd
+    || state.callStartTime != callTimeStart
+    || state.callEndTime != callTimeEnd
+    || state.isResidential != formData.isResidential) {
+      console.log(formData);
       dispatchDashboard({
         type: 'updateCallParameters',
         data: {
           jobTypes: formData.jobTypes,
           callDateStarted: callDateStart,
-          callDateEnded: callDateEnd
+          callDateEnded: callDateEnd,
+          callTimeStarted: callTimeStart,
+          callTimeEnded: callTimeEnd,
+          isResidential: formData.isResidential,
         }
       });
     }
@@ -343,13 +371,10 @@ export const DispatchDashboard: React.FC<Props> = function DispatchDashboard({
         assignment.setId(results[event].getId());
         EventAssignmentClientService.Delete(assignment);
       }
-
-
       for (let id in idArray) {
         assignment.setUserId(Number(idArray[id]));
         await EventAssignmentClientService.Create(assignment);
       }
-
       await EventClientService.Update(event);
       SlackClientService.Dispatch(state.selectedCall.getId(), state.selectedTech.getUserId(), loggedUserId);
     } catch (err) {
@@ -415,16 +440,6 @@ export const DispatchDashboard: React.FC<Props> = function DispatchDashboard({
   const SCHEMA_PRINT: Schema<FormData> = [
     [
       {
-        name: 'dateStart',
-        label: 'Calls Start Date',
-        type: 'mui-date',
-      },
-      {
-        name: 'dateEnd',
-        label: 'Call End Date',
-        type: 'mui-date',
-      },
-      {
         name: 'departmentIds',
         label: 'Department(s)',
         options: state.departmentList.map(dl => ({
@@ -446,6 +461,36 @@ export const DispatchDashboard: React.FC<Props> = function DispatchDashboard({
         type: 'multiselect',
         invisible: state.jobTypeList.length <= 1 ? true : undefined,
       },
+      {
+        name: 'isResidential',
+        label: 'Residential Only',
+        type: 'checkbox',
+      },
+    ],
+    [
+      {
+        name: 'dateStart',
+        label: 'Call Start Date',
+        type: 'mui-date',
+      },
+      {
+        name: 'timeStart',
+        label: 'Call Start Time',
+        type: 'mui-time',
+      },
+      {
+        name: 'dateEnd',
+        label: 'Call End Date',
+        type: 'mui-date',
+      },
+      {
+        name: 'timeEnd',
+        label: 'Call End Time',
+        type: 'mui-time',
+      },
+    ],
+    [
+      
     ],
   ];
 
@@ -468,7 +513,7 @@ export const DispatchDashboard: React.FC<Props> = function DispatchDashboard({
 
   useEffect(() => {
     setDropDownValues();
-    console.log('drop down use effect');
+    // console.log('drop down use effect');
   }, []);
 
   return (

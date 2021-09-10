@@ -168,7 +168,7 @@ export const DispatchCalls: FC<props> = props => {
                     <TableCell align="center">
                       {call.getPropertyCity()}
                     </TableCell>
-                    <TableCell align="center">{call.getCustName()}</TableCell>
+                    <TableCell align="center">{call.getUserBusinessname().length ? call.getUserBusinessname() : call.getCustName()}</TableCell>
                     <TableCell align="center">
                       {call.getDescription().length >= 200
                         ? call.getDescription().slice(0, 150).concat(' ...')
