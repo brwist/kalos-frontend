@@ -18,6 +18,8 @@ import CopyIcon from '@material-ui/icons/FileCopySharp';
 import RejectIcon from '@material-ui/icons/ThumbDownSharp';
 import SubmitIcon from '@material-ui/icons/ThumbUpSharp';
 import { format, parseISO } from 'date-fns';
+import { Event } from '@kalos-core/kalos-rpc/Event';
+import { PopoverComponent } from '../Popover';
 import React, { FC, useCallback, useEffect, useReducer } from 'react';
 import {
   ENDPOINT,
@@ -31,6 +33,7 @@ import {
   OrderDir,
   TimesheetDepartmentClientService,
   timestamp,
+  EventClientService,
   TransactionClientService,
   UserClientService,
   TransactionActivityClientService,
@@ -642,7 +645,36 @@ export const TransactionTable: FC<Props> = ({
     },
     [refresh, loggedUserId, state.page],
   );
-
+  const getJobNumberInfo = async (number: number) => {
+    let returnString = ['No Job Info Found'];
+    if (number != 0) {
+      try {
+        console.log('we got called to get info');
+        const eventReq = new Event();
+        eventReq.setId(number);
+        const res = await EventClientService.Get(eventReq);
+        const descritpion = 'Job Description: ' + res.getDescription();
+        const customer =
+          'Customer: ' +
+          (res.getCustomer() === undefined
+            ? 'No Customer '
+            : `${res
+                .getCustomer()!
+                .getFirstname()} ${res.getCustomer()!.getLastname()}`);
+        const property =
+          'Property: ' +
+          (res.getProperty() === undefined
+            ? 'No Property'
+            : `${res
+                .getProperty()!
+                .getAddress()} ${res.getProperty()!.getCity()}`);
+        returnString = [descritpion, customer, property];
+      } catch (error) {
+        console.log('Not a number');
+      }
+    }
+    return returnString;
+  };
   const handleChangeSort = (newSort: string) => {
     let newSortDir: OrderDir | ' ' | undefined;
 
@@ -1526,7 +1558,19 @@ export const TransactionTable: FC<Props> = ({
                         : undefined,
                     },
                     {
-                      value: selectorParam.txn.getJobId(),
+                      value:
+                        selectorParam.txn.getJobId() != 0 ? (
+                          <PopoverComponent
+                            buttonLabel={selectorParam.txn
+                              .getJobId()
+                              .toString()}
+                            onClick={() =>
+                              getJobNumberInfo(selectorParam.txn.getJobId())
+                            }
+                          ></PopoverComponent>
+                        ) : (
+                          0
+                        ),
                       onClick: isSelector
                         ? () => setTransactionChecked(idx)
                         : undefined,
