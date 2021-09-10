@@ -413,23 +413,22 @@ export class TransactionAdminView extends React.Component<props, state> {
     reqObj = this.applyFilters(reqObj);
     reqObj.setPageNumber(this.state.page);
     reqObj.setIsActive(1);
-    this.setState(
-      { isLoading: true },
-      await (async () => {
-        let res: TransactionList;
-        if (this.state.search !== '') {
-          reqObj.setSearchPhrase(`%${this.state.search}%`);
-          res = await this.TxnClient.Search(reqObj);
-        } else {
-          res = await this.TxnClient.BatchGet(reqObj);
-        }
-        this.setState({
-          transactions: res.getResultsList(),
-          count: res.getTotalCount(),
-          isLoading: false,
-        });
-      }),
-    );
+    reqObj.addNotEquals('VendorCategory');
+    reqObj.setVendorCategory("'Receipt','PickTicket','Invoice'");
+    this.setState({ isLoading: true });
+    let res: TransactionList;
+    if (this.state.search !== '') {
+      console.log('search');
+      reqObj.setSearchPhrase(`%${this.state.search}%`);
+      res = await this.TxnClient.Search(reqObj);
+    } else {
+      console.log('batch get');
+      res = await this.TxnClient.BatchGet(reqObj);
+    }
+    this.setState({ transactions: res.getResultsList() });
+    this.setState({ count: res.getTotalCount() });
+    this.setState({ isLoading: false });
+    console.log(res);
   }
 
   setSort(sortBy: sortString) {
