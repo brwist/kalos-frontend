@@ -4,9 +4,12 @@ import { TimesheetDepartment } from '@kalos-core/kalos-rpc/TimesheetDepartment';
 
 export type FormData = {
   dateStart: string;
+  timeStart: string;
   dateEnd: string;
+  timeEnd: string;
   departmentIds: number[];
   jobTypes: number[];
+  isResidential: number;
 };
 export interface State {
   techs: DispatchableTech[];
@@ -19,6 +22,9 @@ export interface State {
   jobTypeList: JobType[];
   callStartDate: string;
   callEndDate: string;
+  callStartTime: string;
+  callEndTime: string;
+  isResidential: number;
   formData: FormData;
   notIncludedJobTypes: number[];
   openModal: boolean;
@@ -49,7 +55,10 @@ export type Action =
   | { type: 'updateCallParameters'; data: {
     jobTypes: number[],
     callDateStarted: string,
-    callDateEnded: string
+    callDateEnded: string,
+    callTimeStarted: string,
+    callTimeEnded: string,
+    isResidential: number,
   }}
   | { type: 'setDepartmentList'; data: TimesheetDepartment[] }
   | { type: 'setJobTypeList'; data: JobType[] }
@@ -109,6 +118,9 @@ export const reducer = (state: State, action: Action) => {
         jobTypes: action.data.jobTypes,
         callStartDate: action.data.callDateStarted,
         callEndDate: action.data.callDateEnded,
+        callStartTime: action.data.callTimeStarted,
+        callEndTime: action.data.callTimeEnded,
+        isResidential: action.data.isResidential,
       };
     case 'setDepartmentList':
       return {
