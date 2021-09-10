@@ -10,6 +10,8 @@ export type State = {
   roles: PermissionGroup[] | undefined;
   privileges: PermissionGroup[] | undefined;
   departments: PermissionGroup[] | undefined;
+  openRemovePermission: boolean;
+  openAddPermission: boolean;
 };
 
 export type Action =
@@ -19,7 +21,9 @@ export type Action =
   | { type: 'setLoaded'; data: boolean }
   | { type: 'setRoles'; data: PermissionGroup[] }
   | { type: 'setPrivileges'; data: PermissionGroup[] }
-  | { type: 'setDepartments'; data: PermissionGroup[] };
+  | { type: 'setDepartments'; data: PermissionGroup[] }
+  | { type: 'setOpenRemovePermission'; data: boolean }
+  | { type: 'setOpenAddPermission'; data: boolean };
 
 export const reducer = (state: State, action: Action) => {
   switch (action.type) {
@@ -70,6 +74,21 @@ export const reducer = (state: State, action: Action) => {
       return {
         ...state,
         departments: data,
+      };
+    }
+    case 'setOpenRemovePermission': {
+      const data = action.data;
+      console.log('got called to updatae', action.data);
+      return {
+        ...state,
+        openRemovePermission: data,
+      };
+    }
+    case 'setOpenAddPermission': {
+      const data = action.data;
+      return {
+        ...state,
+        openAddPermission: data,
       };
     }
 

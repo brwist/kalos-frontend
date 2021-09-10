@@ -1,4 +1,8 @@
 import { User } from '@kalos-core/kalos-rpc/User';
+import {
+  PermissionGroup,
+  PermissionGroupUser,
+} from '@kalos-core/kalos-rpc/compiled-protos/user_pb';
 import React, { FC, useState, useEffect, useCallback, useReducer } from 'react';
 import { UserClientService } from '../../../helpers';
 import { reducer } from './reducer';
@@ -9,7 +13,10 @@ import { Title } from '@material-ui/icons';
 import { VerticalTabs } from '../VerticalTabs';
 import Tab from '@material-ui/core/Tab';
 import { makeStyles } from '@material-ui/core/styles';
-
+import IconButton from '@material-ui/core/IconButton';
+import Delete from '@material-ui/icons/Delete';
+import { Confirm } from '../Confirm';
+import { Modal } from '../Modal';
 interface Props {
   userId: number;
   loggedUserId: number;
@@ -31,6 +38,8 @@ export const EmployeePermissions: FC<Props> = ({
     privileges: undefined,
     roles: undefined,
     departments: undefined,
+    openAddPermission: false,
+    openRemovePermission: false,
   });
   const {
     userData,
@@ -40,7 +49,19 @@ export const EmployeePermissions: FC<Props> = ({
     roles,
     privileges,
     departments,
+    openRemovePermission,
+    openAddPermission,
   } = state;
+  const AddPermission = async () => {
+    const req = new PermissionGroupUser();
+    UserClientService.AddUserToPermissionGroup(req);
+  };
+  const RemovePermissionFromUser = async (permissionGroup: PermissionGroup) => {
+    const req = new PermissionGroupUser();
+    req.setUserId(userId);
+    req.setPermissionGroupId(permissionGroup.getId());
+    UserClientService.RemoveUserFromPermissionGroup(req);
+  };
   const load = useCallback(async () => {
     if (loggedUserData == undefined) {
       const req = new User();
@@ -146,6 +167,20 @@ export const EmployeePermissions: FC<Props> = ({
                           },
                           {
                             value: privilege.getDescription(),
+                            actions: [
+                              <IconButton
+                                key="view"
+                                onClick={() =>
+                                  dispatch({
+                                    type: 'setOpenRemovePermission',
+                                    data: true,
+                                  })
+                                }
+                                size="small"
+                              >
+                                <Delete />
+                              </IconButton>,
+                            ],
                           },
                         ];
                       })
@@ -156,6 +191,40 @@ export const EmployeePermissions: FC<Props> = ({
           },
         ]}
       ></VerticalTabs>
+      <Modal
+        open={openAddPermission}
+        onClose={() => dispatch({ type: 'setOpenAddPermission', data: false })}
+      >
+        <Confirm
+          title="Confirm something"
+          open={openAddPermission}
+          onClose={() =>
+            dispatch({ type: 'setOpenAddPermission', data: false })
+          }
+          onConfirm={() => alert('Confirmed')}
+          submitLabel="Confirm"
+        >
+          Are you sure you want to do it?
+        </Confirm>
+      </Modal>
+      <Modal
+        open={openRemovePermission}
+        onClose={() =>
+          dispatch({ type: 'setOpenRemovePermission', data: false })
+        }
+      >
+        <Confirm
+          title="Remove Permission"
+          open={openRemovePermission}
+          onClose={() =>
+            dispatch({ type: 'setOpenRemovePermission', data: false })
+          }
+          onConfirm={() => alert('Confirmed')}
+          submitLabel="Confirm"
+        >
+          Are you sure you want to do it?
+        </Confirm>
+      </Modal>
     </SectionBar>
   ) : (
     <Loader></Loader>
