@@ -1,33 +1,22 @@
-import React, { FC, useState, useCallback, useEffect } from 'react';
+import React, { FC, useState, useCallback } from 'react';
 import Alert from '@material-ui/lab/Alert';
 import { Form, Schema } from '../Form';
-import {
-  Transaction,
-  TransactionClient,
-} from '@kalos-core/kalos-rpc/Transaction';
+import { Transaction } from '@kalos-core/kalos-rpc/Transaction';
 import { TransactionAccountList } from '@kalos-core/kalos-rpc/TransactionAccount';
 import {
-  uploadFileToS3Bucket,
   getFileExt,
-  getMimeType,
   SUBJECT_TAGS_TRANSACTIONS,
   timestamp,
-  TransactionDocumentClientService,
-  FileClientService,
-  ActivityLogClientService,
   TransactionActivityClientService,
+  TransactionClientService,
+  uploadPhotoToExistingTransaction,
 } from '../../../helpers';
 import './styles.less';
-import { ENDPOINT } from '../../../constants';
 import { RoleType } from '../Payroll';
 import { SUBJECT_TAGS_ACCOUNTS_PAYABLE } from '@kalos-core/kalos-rpc/S3File';
-import { File } from '@kalos-core/kalos-rpc/File';
-import { TransactionDocument } from '@kalos-core/kalos-rpc/TransactionDocument';
 import { Confirm } from '../Confirm';
-import { ActivityLog } from '@kalos-core/kalos-rpc/ActivityLog';
 import { format } from 'date-fns';
 import { TransactionActivity } from '@kalos-core/kalos-rpc/TransactionActivity';
-import { InsertChartOutlinedRounded } from '@material-ui/icons';
 
 interface Props {
   loggedUserId: number;
@@ -142,10 +131,10 @@ export const UploadPhotoTransaction: FC<Props> = ({
       newTransaction.setDepartmentId(data.department);
       newTransaction.setOrderNumber(data.orderNumber);
       newTransaction.setInvoiceNumber(data.invoiceNumber);
-      const insertRecord = new TransactionClient(ENDPOINT);
+
       let insert: Transaction | undefined = undefined;
       try {
-        insert = await insertRecord.Create(newTransaction);
+        insert = await TransactionClientService.Create(newTransaction);
       } catch (err) {
         console.error(
           `An error occurred while uploading a transaction: ${err}`,
@@ -166,111 +155,30 @@ export const UploadPhotoTransaction: FC<Props> = ({
           );
         }
       }
+
+      if (!insert) {
+        console.error(
+          `No transaction to upload a photo for, as the call to TransactionClientService.Create was unsuccessful. Returning.`,
+        );
+        return;
+      }
+
       if (data.file) {
         const ext = getFileExt(data.file);
         const name = `${insert!.getId()}-${data.description}-${Math.floor(
           Date.now() / 1000,
         )}.${ext}`;
-        const nameWithoutId = `${data.description}-${Math.floor(
-          Date.now() / 1000,
-        )}.${ext}`;
-        console.log(name);
 
-        let initialDocumentLength = 0;
-        // Get how many docs there are
-        try {
-          initialDocumentLength = (
-            await TransactionDocumentClientService.byTransactionID(
-              insert!.getId(),
-            )
-          ).length;
-        } catch (err) {
-          console.error(
-            `An error occurred while getting the amount of items in the bucket: ${err}`,
-          );
-          alert(
-            'An error occurred while double-checking that the file exists.',
-          );
-        }
-
-        let status;
-        try {
-          console.log('UPLOADING TO BUCKET');
-          status = await uploadFileToS3Bucket(name, fileData, bucket, data.tag);
-          console.log(`UPLOADED WITH STATUS '${status}'`);
-          if (status === 'ok') {
-            const fReq = new File();
-            fReq.setBucket(bucket);
-            fReq.setName(name);
-            fReq.setMimeType(data.file);
-            fReq.setOwnerId(loggedUserId);
-            const uploadFile = await FileClientService.Create(fReq);
-
-            const tDoc = new TransactionDocument();
-            if (insert) tDoc.setTransactionId(insert.getId());
-            tDoc.setReference(nameWithoutId);
-            tDoc.setFileId(uploadFile.getId());
-            tDoc.setTypeId(1);
-            await TransactionDocumentClientService.Create(tDoc);
-            setSaving(false);
-            setSaved(true);
-            setFormKey(formKey + 1);
-          } else {
-            setError(true);
-            alert(
-              'An error occurred while uploading the file to the S3 bucket.',
-            );
-            try {
-              let log = new ActivityLog();
-              log.setActivityDate(format(new Date(), 'yyyy-MM-dd hh:mm:ss'));
-              log.setUserId(loggedUserId);
-              log.setActivityName(
-                `ERROR : An error occurred while uploading a file to the S3 bucket ${bucket} (Status came back as ${status}). File name: ${name}`,
-              );
-              await ActivityLogClientService.Create(log);
-            } catch (err) {
-              console.error(
-                `An error occurred while uploading an activity log for an error in an S3 bucket: ${err}`,
-              );
-            }
-          }
-          try {
-            const docs = await TransactionDocumentClientService.byTransactionID(
-              insert!.getId(),
-            );
-            if (docs.length <= initialDocumentLength) {
-              alert(
-                'Upload was unsuccessful, please contact the webtech team.',
-              );
-              return;
-            }
-            console.log('DOC LENGTH WAS GOOD FROM CHECK: ', docs.length);
-          } catch (err) {
-            console.error(
-              `An error occurred while double-checking that the file which was just uploaded exists: ${err}`,
-            );
-            alert(
-              'An error occurred while double-checking that the file exists. Please retry the upload, and if the problem persists, please contact the webtech team.',
-            );
-          }
-        } catch (err) {
-          console.error(
-            `An error occurred while uploading the file to S3: ${err}`,
-          );
-          try {
-            let log = new ActivityLog();
-            log.setActivityDate(format(new Date(), 'yyyy-MM-dd hh:mm:ss'));
-            log.setUserId(loggedUserId);
-            log.setActivityName(
-              `ERROR : An error occurred while uploading a file to the S3 bucket ${bucket}. File name: ${name}. Error: ${err}`,
-            );
-            await ActivityLogClientService.Create(log);
-          } catch (err) {
-            console.error(
-              `An error occurred while uploading an activity log for an error in an S3 bucket: ${err}`,
-            );
-          }
-        }
+         await uploadPhotoToExistingTransaction(
+          name,
+          undefined,
+          fileData,
+          insert,
+          loggedUserId,
+        );
+        setSaving(false);
+        setSaved(true);
+        setFormKey(formKey + 1);
       } else {
         setSaving(false);
         setSaved(true);
@@ -279,7 +187,7 @@ export const UploadPhotoTransaction: FC<Props> = ({
 
       if (onUpload) onUpload();
     },
-    [fileData, setSaving, setFormKey, formKey, bucket, loggedUserId, onUpload],
+    [loggedUserId, onUpload, fileData, formKey],
   );
 
   const handleSetValidateJobNumber = useCallback(
@@ -367,6 +275,7 @@ export const UploadPhotoTransaction: FC<Props> = ({
       },
     ],
   ] as Schema<Entry>;
+  console.log('its opening');
   return (
     <>
       {validateJobNumber && (
