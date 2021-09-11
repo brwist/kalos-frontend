@@ -168,13 +168,13 @@ export const UploadPhotoTransaction: FC<Props> = ({
         const name = `${insert!.getId()}-${data.description}-${Math.floor(
           Date.now() / 1000,
         )}.${ext}`;
-
-         await uploadPhotoToExistingTransaction(
+        await uploadPhotoToExistingTransaction(
           name,
           undefined,
           fileData,
           insert,
           loggedUserId,
+          1,
         );
         setSaving(false);
         setSaved(true);
