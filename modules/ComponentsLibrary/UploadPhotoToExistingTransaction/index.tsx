@@ -1,12 +1,10 @@
-import React, { FC, useState, useCallback, useEffect } from 'react';
+import React, { FC, useState, useCallback } from 'react';
 import Alert from '@material-ui/lab/Alert';
 
 import { Form, Schema } from '../Form';
 import {
   Transaction,
-  TransactionClient,
 } from '@kalos-core/kalos-rpc/Transaction';
-import { TransactionAccountList } from '@kalos-core/kalos-rpc/TransactionAccount';
 import {
   uploadFileToS3Bucket,
   getFileExt,
@@ -15,9 +13,8 @@ import {
   ActivityLogClientService,
 } from '../../../helpers';
 import './styles.less';
-import { ENDPOINT, WaiverTypes } from '../../../constants';
+import { WaiverTypes } from '../../../constants';
 import { RoleType } from '../Payroll';
-import { SUBJECT_TAGS_ACCOUNTS_PAYABLE } from '@kalos-core/kalos-rpc/S3File';
 import { File } from '@kalos-core/kalos-rpc/File';
 import { TransactionDocument } from '@kalos-core/kalos-rpc/TransactionDocument';
 import { ActivityLog } from '@kalos-core/kalos-rpc/ActivityLog';

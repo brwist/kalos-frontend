@@ -6,7 +6,6 @@ import {
 import { TxnCard } from './card';
 import { Loader } from '../../Loader/main';
 import { S3Client } from '@kalos-core/kalos-rpc/S3File';
-import { getEditDistance } from '../../../helpers';
 import { ENDPOINT } from '../../../constants';
 import { parseISO } from 'date-fns/esm';
 import { RoleType } from '../../ComponentsLibrary/Payroll';

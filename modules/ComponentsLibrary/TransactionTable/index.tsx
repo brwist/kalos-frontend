@@ -45,6 +45,7 @@ import {
   uploadFileToS3Bucket,
   FileClientService,
   ActivityLogClientService,
+  uploadPhotoToExistingTransaction,
 } from '../../../helpers';
 import { AltGallery } from '../../AltGallery/main';
 import { Tooltip } from '../../ComponentsLibrary/Tooltip';
@@ -452,6 +453,7 @@ export const TransactionTable: FC<Props> = ({
     state.transactionFilter.employeeId,
     state.transactionFilter.isAccepted,
     state.transactionFilter.isRejected,
+    state.transactionFilter.processed,
     state.transactionFilter.universalSearch,
     state.transactionFilter.vendor,
   ]);
@@ -674,16 +676,16 @@ export const TransactionTable: FC<Props> = ({
           'Customer: ' +
           (res.getCustomer() === undefined
             ? 'No Customer '
-            : `${res
+            : `${res.getCustomer()!.getFirstname()} ${res
                 .getCustomer()!
-                .getFirstname()} ${res.getCustomer()!.getLastname()}`);
+                .getLastname()}`);
         const property =
           'Property: ' +
           (res.getProperty() === undefined
             ? 'No Property'
-            : `${res
+            : `${res.getProperty()!.getAddress()} ${res
                 .getProperty()!
-                .getAddress()} ${res.getProperty()!.getCity()}`);
+                .getCity()}`);
         returnString = [descritpion, customer, property];
       } catch (error) {
         console.log('Not a number');
@@ -1022,118 +1024,6 @@ export const TransactionTable: FC<Props> = ({
     }
   }, [state.transactionToDelete, refresh, resetTransactions]);
 
-  const handleSaveFileToBucket = useCallback(
-    async (
-      fileData: string,
-      fileName: string,
-      fileDescription: 'Receipt' | 'PickTicket' | 'Invoice',
-      invoiceWaiverType: number | undefined,
-      transaction: Transaction,
-    ) => {
-      const ext = getFileExt(fileName);
-      const name = `${transaction!.getId()}-${transaction.getDescription()}-${Math.floor(
-        Date.now() / 1000,
-      )}.${ext}`;
-      const nameWithoutId = `${transaction.getDescription()}-${Math.floor(
-        Date.now() / 1000,
-      )}.${ext}`;
-
-      let initialDocumentLength = 0;
-      // Get how many docs there are
-      try {
-        initialDocumentLength = (
-          await TransactionDocumentClientService.byTransactionID(
-            transaction!.getId(),
-          )
-        ).length;
-      } catch (err) {
-        console.error(
-          `An error occurred while getting the amount of items in the bucket: ${err}`,
-        );
-        alert('An error occurred while double-checking that the file exists.');
-      }
-
-      let status;
-      try {
-        status = await uploadFileToS3Bucket(
-          name,
-          fileData,
-          'kalos-transactions',
-          transaction.getVendorCategory(),
-        );
-        if (status === 'ok') {
-          const fReq = new File();
-          fReq.setBucket('kalos-transactions');
-          fReq.setName(name);
-          fReq.setMimeType(name);
-          fReq.setOwnerId(loggedUserId);
-          const uploadFile = await FileClientService.Create(fReq);
-
-          const tDoc = new TransactionDocument();
-          tDoc.setDescription(fileDescription);
-          if (invoiceWaiverType) tDoc.setTypeId(invoiceWaiverType);
-          if (fileDescription != 'Invoice') {
-            tDoc.setTypeId(1);
-          }
-          if (transaction) tDoc.setTransactionId(transaction.getId());
-          tDoc.setReference(nameWithoutId);
-          tDoc.setFileId(uploadFile.getId());
-          await TransactionDocumentClientService.Create(tDoc);
-        } else {
-          alert('An error occurred while uploading the file to the S3 bucket.');
-          try {
-            let log = new ActivityLog();
-            log.setActivityDate(format(new Date(), 'yyyy-MM-dd hh:mm:ss'));
-            log.setUserId(loggedUserId);
-            log.setActivityName(
-              `ERROR : An error occurred while uploading a file to the S3 bucket ${'kalos-transactions'} (Status came back as ${status}). File name: ${name}`,
-            );
-            await ActivityLogClientService.Create(log);
-          } catch (err) {
-            console.error(
-              `An error occurred while uploading an activity log for an error in an S3 bucket: ${err}`,
-            );
-          }
-        }
-        try {
-          const docs = await TransactionDocumentClientService.byTransactionID(
-            transaction!.getId(),
-          );
-          if (docs.length <= initialDocumentLength) {
-            alert('Upload was unsuccessful, please contact the webtech team.');
-            return;
-          }
-          console.log('DOC LENGTH WAS GOOD FROM CHECK: ', docs.length);
-        } catch (err) {
-          console.error(
-            `An error occurred while double-checking that the file which was just uploaded exists: ${err}`,
-          );
-          alert(
-            'An error occurred while double-checking that the file exists. Please retry the upload, and if the problem persists, please contact the webtech team.',
-          );
-        }
-      } catch (err) {
-        console.error(
-          `An error occurred while uploading the file to S3: ${err}`,
-        );
-        try {
-          let log = new ActivityLog();
-          log.setActivityDate(format(new Date(), 'yyyy-MM-dd hh:mm:ss'));
-          log.setUserId(loggedUserId);
-          log.setActivityName(
-            `ERROR : An error occurred while uploading a file to the S3 bucket ${'kalos-transactions'}. File name: ${name}. Error: ${err}`,
-          );
-          await ActivityLogClientService.Create(log);
-        } catch (err) {
-          console.error(
-            `An error occurred while uploading an activity log for an error in an S3 bucket: ${err}`,
-          );
-        }
-      }
-    },
-    [loggedUserId],
-  );
-
   useEffect(() => {
     if (!state.loaded) {
       load();
@@ -1213,12 +1103,13 @@ export const TransactionTable: FC<Props> = ({
                 dispatch({ type: ACTIONS.SET_LOADING, data: false });
                 return;
               }
-              await handleSaveFileToBucket(
-                state.fileData,
+              await uploadPhotoToExistingTransaction(
                 state.imageNameToSave,
                 saved.documentType,
-                saved.invoiceWaiverType,
+                state.fileData,
                 state.transactionToSave,
+                loggedUserId,
+                saved.invoiceWaiverType,
               );
               dispatch({ type: ACTIONS.SET_LOADING, data: false });
               dispatch({
