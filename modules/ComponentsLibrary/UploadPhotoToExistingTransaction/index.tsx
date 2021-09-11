@@ -2,23 +2,14 @@ import React, { FC, useState, useCallback } from 'react';
 import Alert from '@material-ui/lab/Alert';
 
 import { Form, Schema } from '../Form';
+import { Transaction } from '@kalos-core/kalos-rpc/Transaction';
 import {
-  Transaction,
-} from '@kalos-core/kalos-rpc/Transaction';
-import {
-  uploadFileToS3Bucket,
   getFileExt,
-  TransactionDocumentClientService,
-  FileClientService,
-  ActivityLogClientService,
+  uploadPhotoToExistingTransaction,
 } from '../../../helpers';
 import './styles.less';
 import { WaiverTypes } from '../../../constants';
 import { RoleType } from '../Payroll';
-import { File } from '@kalos-core/kalos-rpc/File';
-import { TransactionDocument } from '@kalos-core/kalos-rpc/TransactionDocument';
-import { ActivityLog } from '@kalos-core/kalos-rpc/ActivityLog';
-import { format } from 'date-fns';
 
 interface Props {
   loggedUserId: number;
@@ -32,7 +23,7 @@ interface Props {
 
 type Entry = {
   file: string;
-  description: string;
+  description: 'Receipt' | 'PickTicket' | 'Invoice';
   invoiceWaiverType: number;
 };
 
@@ -50,7 +41,7 @@ export const UploadPhotoToExistingTransaction: FC<Props> = ({
   const [error, setError] = useState<boolean>(false);
   const [formData, setFormData] = useState<Entry>({
     file: '',
-    description: '',
+    description: 'Receipt',
     invoiceWaiverType: 1,
   });
   const [nameValidationError, setNameValidationError] = useState<
@@ -80,115 +71,19 @@ export const UploadPhotoToExistingTransaction: FC<Props> = ({
         const name = `${transactionPassed.getId()}-${data.file}-${Math.floor(
           Date.now() / 1000,
         )}.${ext}`;
-        const nameWithoutId = `${data.file}-${Math.floor(
-          Date.now() / 1000,
-        )}.${ext}`;
         console.log(name);
 
-        let initialDocumentLength = 0;
-        // Get how many docs there are
-        try {
-          initialDocumentLength = (
-            await TransactionDocumentClientService.byTransactionID(
-              transactionPassed.getId(),
-            )
-          ).length;
-        } catch (err) {
-          console.error(
-            `An error occurred while getting the amount of items in the bucket: ${err}`,
-          );
-          alert(
-            'An error occurred while double-checking that the file exists.',
-          );
-        }
-
-        let status;
-        try {
-          console.log('UPLOADING TO BUCKET');
-          status = await uploadFileToS3Bucket(
-            name,
-            fileData,
-            'kalos-transactions',
-          );
-          console.log(`UPLOADED WITH STATUS '${status}'`);
-          if (status === 'ok') {
-            const fReq = new File();
-            fReq.setBucket('kalos-transactions');
-            fReq.setName(name);
-
-            fReq.setMimeType(data.file);
-            fReq.setOwnerId(loggedUserId);
-            const uploadFile = await FileClientService.Create(fReq);
-
-            const tDoc = new TransactionDocument();
-            tDoc.setDescription(data.description);
-            tDoc.setTypeId(data.invoiceWaiverType);
-            if (data.description != 'Invoice') {
-              tDoc.setTypeId(1);
-            }
-            tDoc.setTransactionId(transactionPassed.getId());
-            tDoc.setReference(nameWithoutId);
-            tDoc.setFileId(uploadFile.getId());
-            await TransactionDocumentClientService.Create(tDoc);
-            setSaving(false);
-            setSaved(true);
-            setFormKey(formKey + 1);
-          } else {
-            setError(true);
-            alert(
-              'An error occurred while uploading the file to the S3 bucket.',
-            );
-            try {
-              let log = new ActivityLog();
-              log.setActivityDate(format(new Date(), 'yyyy-MM-dd hh:mm:ss'));
-              log.setUserId(loggedUserId);
-              log.setActivityName(
-                `ERROR : An error occurred while uploading a file to the S3 bucket ${'kalos-transactions'} (Status came back as ${status}). File name: ${name}`,
-              );
-              await ActivityLogClientService.Create(log);
-            } catch (err) {
-              console.error(
-                `An error occurred while uploading an activity log for an error in an S3 bucket: ${err}`,
-              );
-            }
-          }
-          try {
-            const docs = await TransactionDocumentClientService.byTransactionID(
-              transactionPassed.getId(),
-            );
-            if (docs.length <= initialDocumentLength) {
-              alert(
-                'Upload was unsuccessful, please contact the webtech team.',
-              );
-              return;
-            }
-            console.log('DOC LENGTH WAS GOOD FROM CHECK: ', docs.length);
-          } catch (err) {
-            console.error(
-              `An error occurred while double-checking that the file which was just uploaded exists: ${err}`,
-            );
-            alert(
-              'An error occurred while double-checking that the file exists. Please retry the upload, and if the problem persists, please contact the webtech team.',
-            );
-          }
-        } catch (err) {
-          console.error(
-            `An error occurred while uploading the file to S3: ${err}`,
-          );
-          try {
-            let log = new ActivityLog();
-            log.setActivityDate(format(new Date(), 'yyyy-MM-dd hh:mm:ss'));
-            log.setUserId(loggedUserId);
-            log.setActivityName(
-              `ERROR : An error occurred while uploading a file to the S3 bucket ${'kalos-transactions'}. File name: ${name}. Error: ${err}`,
-            );
-            await ActivityLogClientService.Create(log);
-          } catch (err) {
-            console.error(
-              `An error occurred while uploading an activity log for an error in an S3 bucket: ${err}`,
-            );
-          }
-        }
+        uploadPhotoToExistingTransaction(
+          name,
+          data.description,
+          fileData,
+          transactionPassed,
+          loggedUserId,
+          data.invoiceWaiverType,
+        );
+        setSaving(false);
+        setSaved(true);
+        setFormKey(formKey + 1);
       } else {
         setSaving(false);
         setSaved(true);
