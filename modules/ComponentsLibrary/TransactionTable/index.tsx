@@ -155,13 +155,6 @@ export const TransactionTable: FC<Props> = ({
     imageNameToSave: undefined,
   });
 
-  const handleSetTransactionToEdit = useCallback(
-    (transaction: Transaction | undefined) => {
-      dispatch({ type: ACTIONS.SET_TRANSACTION_TO_EDIT, data: transaction });
-    },
-    [],
-  );
-
   // For emails
   const getRejectTxnBody = (
     reason: string,
@@ -288,11 +281,6 @@ export const TransactionTable: FC<Props> = ({
     refresh();
   };
 
-  const handleChangePage = useCallback((pageNumberToChangeTo: number) => {
-    dispatch({ type: ACTIONS.SET_PAGE, data: pageNumberToChangeTo });
-    dispatch({ type: ACTIONS.SET_CREATING_TRANSACTION, data: false });
-    dispatch({ type: ACTIONS.SET_CHANGING_PAGE, data: true });
-  }, []);
   const resetTransactions = useCallback(async () => {
     let req = new Transaction();
     req.setOrderBy(sortBy ? sortBy : 'timestamp');
@@ -354,7 +342,8 @@ export const TransactionTable: FC<Props> = ({
             data: res.getTotalCount(),
           });
 
-          handleChangePage(0);
+          dispatch({ type: ACTIONS.SET_PAGE, data: 0 });
+          dispatch({ type: ACTIONS.SET_CHANGING_PAGE, data: true });
         }
       } catch (err) {
         try {
@@ -436,7 +425,6 @@ export const TransactionTable: FC<Props> = ({
     const temp = transactions.map(txn => txn);
     dispatch({ type: ACTIONS.SET_TRANSACTIONS, data: temp });
   }, [
-    handleChangePage,
     loggedUserId,
     state.page,
     state.totalTransactions,
@@ -555,12 +543,6 @@ export const TransactionTable: FC<Props> = ({
     document.body.removeChild(el);
   }, []);
 
-  const handleSetError = useCallback(
-    (error: string | undefined) =>
-      dispatch({ type: ACTIONS.SET_ERROR, data: error }),
-    [],
-  );
-
   const handleSetAssigningUser = useCallback(
     (isAssigningUser: boolean, transactionId: number) => {
       if (isAssigningUser) {
@@ -577,15 +559,6 @@ export const TransactionTable: FC<Props> = ({
         },
       });
     },
-    [],
-  );
-
-  const handleSetAssignedEmployee = useCallback(
-    assignedEmployee =>
-      dispatch({
-        type: ACTIONS.SET_ASSIGNED_EMPLOYEE,
-        data: assignedEmployee,
-      }),
     [],
   );
 
@@ -614,7 +587,7 @@ export const TransactionTable: FC<Props> = ({
     dispatch({ type: ACTIONS.SET_TRANSACTION_FILTER, data: filter });
   }, []);
 
-  const handleUpdateTransaction = useCallback(
+  const updateTransaction = useCallback(
     async (transactionToSave: Transaction) => {
       try {
         let log = new TransactionActivity();
@@ -686,7 +659,7 @@ export const TransactionTable: FC<Props> = ({
     }
     return returnString;
   };
-  const handleChangeSort = (newSort: string) => {
+  const changeSort = (newSort: string) => {
     let newSortDir: OrderDir | ' ' | undefined;
 
     if (newSort == sortBy) {
@@ -707,26 +680,6 @@ export const TransactionTable: FC<Props> = ({
 
     refresh();
   };
-
-  const handleSetCreatingTransaction = useCallback(
-    (isCreatingTransaction: boolean) => {
-      dispatch({
-        type: ACTIONS.SET_CREATING_TRANSACTION,
-        data: isCreatingTransaction,
-      });
-    },
-    [],
-  );
-
-  const handleSetMergingTransaction = useCallback(
-    (isMergingTransaction: boolean) => {
-      dispatch({
-        type: ACTIONS.SET_MERGING_TRANSACTION,
-        data: isMergingTransaction,
-      });
-    },
-    [],
-  );
 
   const handleAssignEmployee = useCallback(
     async (employeeIdToAssign: number | undefined, transactionId: number) => {
@@ -944,7 +897,7 @@ export const TransactionTable: FC<Props> = ({
     ],
   ];
 
-  const handleSaveFromRowButton = useCallback(
+  const saveFromRowButton = useCallback(
     async (saved: any) => {
       let newTxn = new Transaction();
       newTxn.setTimestamp(saved['Date']);
@@ -1001,11 +954,11 @@ export const TransactionTable: FC<Props> = ({
     [loggedUserId, resetTransactions, refresh],
   );
 
-  const handleDeleteTransaction = useCallback(async () => {
+  const deleteTransaction = useCallback(async () => {
     try {
       if (state.transactionToDelete === undefined) {
         throw new Error(
-          'There is no transaction to delete defined in state, yet handleDeleteTransaction was called.',
+          'There is no transaction to delete defined in state, yet deleteTransaction was called.',
         );
       }
       await TransactionClientService.Delete(state.transactionToDelete);
@@ -1132,7 +1085,7 @@ export const TransactionTable: FC<Props> = ({
       {state.error && (
         <Alert
           open={state.error != undefined}
-          onClose={() => handleSetError(undefined)}
+          onClose={() => dispatch({ type: ACTIONS.SET_ERROR, data: undefined })}
           title="Error"
         >
           {state.error}
@@ -1147,7 +1100,7 @@ export const TransactionTable: FC<Props> = ({
               data: undefined,
             })
           }
-          onConfirm={() => handleDeleteTransaction()}
+          onConfirm={() => deleteTransaction()}
           kind="this transaction"
           name=""
           title="Delete"
@@ -1158,16 +1111,23 @@ export const TransactionTable: FC<Props> = ({
       {state.transactionToEdit && (
         <Modal
           open={true}
-          onClose={() => handleSetTransactionToEdit(undefined)}
+          onClose={() =>
+            dispatch({ type: ACTIONS.SET_TRANSACTION_TO_EDIT, data: undefined })
+          }
         >
           <EditTransaction
             transactionInput={state.transactionToEdit}
             onSave={saved => {
               saved.setId(state.transactionToEdit!.getId());
-              handleUpdateTransaction(saved);
+              updateTransaction(saved);
               dispatch({ type: ACTIONS.SET_SEARCHING, data: true });
             }}
-            onClose={() => handleSetTransactionToEdit(undefined)}
+            onClose={() =>
+              dispatch({
+                type: ACTIONS.SET_TRANSACTION_TO_EDIT,
+                data: undefined,
+              })
+            }
           />
         </Modal>
       )}
@@ -1192,7 +1152,10 @@ export const TransactionTable: FC<Props> = ({
           <PlainForm
             data={assigned}
             onChange={(type: AssignedEmployeeType) =>
-              handleSetAssignedEmployee(type.employeeId)
+              dispatch({
+                type: ACTIONS.SET_ASSIGNED_EMPLOYEE,
+                data: type.employeeId,
+              })
             }
             schema={SCHEMA_ASSIGN_USER}
             className="PayrollFilter"
@@ -1202,11 +1165,21 @@ export const TransactionTable: FC<Props> = ({
       {state.mergingTransaction ? (
         <Modal
           open={state.mergingTransaction}
-          onClose={() => handleSetMergingTransaction(false)}
+          onClose={() =>
+            dispatch({
+              type: ACTIONS.SET_MERGING_TRANSACTION,
+              data: false,
+            })
+          }
         >
           <CompareTransactions
             loggedUserId={loggedUserId}
-            onClose={() => handleSetMergingTransaction(false)}
+            onClose={() =>
+              dispatch({
+                type: ACTIONS.SET_MERGING_TRANSACTION,
+                data: false,
+              })
+            }
             onMerge={() => resetTransactions()}
           />
         </Modal>
@@ -1229,7 +1202,10 @@ export const TransactionTable: FC<Props> = ({
           count: state.totalTransactions,
           rowsPerPage: 50,
           page: state.page,
-          onPageChange: number => handleChangePage(number),
+          onPageChange: number => {
+            dispatch({ type: ACTIONS.SET_PAGE, data: number });
+            dispatch({ type: ACTIONS.SET_CHANGING_PAGE, data: true });
+          },
         }}
         actions={
           hasActions
@@ -1248,12 +1224,19 @@ export const TransactionTable: FC<Props> = ({
                 {
                   label: 'New Transaction',
                   onClick: () => {
-                    handleSetCreatingTransaction(!state.creatingTransaction);
+                    dispatch({
+                      type: ACTIONS.SET_CREATING_TRANSACTION,
+                      data: !state.creatingTransaction,
+                    });
                   },
                 },
                 {
                   label: 'Merge Transactions',
-                  onClick: () => handleSetMergingTransaction(true), // makes merge popup come up
+                  onClick: () =>
+                    dispatch({
+                      type: ACTIONS.SET_MERGING_TRANSACTION,
+                      data: true,
+                    }), // makes merge popup come up
                 },
               ]
             : []
@@ -1295,8 +1278,11 @@ export const TransactionTable: FC<Props> = ({
         hoverable={false}
         onSaveRowButton={async saved => {
           dispatch({ type: ACTIONS.SET_LOADING, data: true });
-          let result = await handleSaveFromRowButton(saved);
-          handleSetCreatingTransaction(false);
+          let result = await saveFromRowButton(saved);
+          dispatch({
+            type: ACTIONS.SET_CREATING_TRANSACTION,
+            data: false,
+          });
           // This is where the data would be uploaded alongside the transaction
 
           dispatch({ type: ACTIONS.SET_LOADING, data: false });
@@ -1358,7 +1344,7 @@ export const TransactionTable: FC<Props> = ({
                   ? sortDir
                   : undefined
                 : undefined,
-            onClick: () => handleChangeSort('timestamp'),
+            onClick: () => changeSort('timestamp'),
           },
           {
             name: 'Order #',
@@ -1368,7 +1354,7 @@ export const TransactionTable: FC<Props> = ({
                   ? sortDir
                   : undefined
                 : undefined,
-            onClick: () => handleChangeSort('order_number'),
+            onClick: () => changeSort('order_number'),
           },
           {
             name: 'Creator',
@@ -1378,7 +1364,7 @@ export const TransactionTable: FC<Props> = ({
                   ? sortDir
                   : undefined
                 : undefined,
-            onClick: () => handleChangeSort('owner_id'),
+            onClick: () => changeSort('owner_id'),
           },
           {
             name: 'Department',
@@ -1388,7 +1374,7 @@ export const TransactionTable: FC<Props> = ({
                   ? sortDir
                   : undefined
                 : undefined,
-            onClick: () => handleChangeSort('department_id'),
+            onClick: () => changeSort('department_id'),
           },
           {
             name: 'Job #',
@@ -1398,7 +1384,7 @@ export const TransactionTable: FC<Props> = ({
                   ? sortDir
                   : undefined
                 : undefined,
-            onClick: () => handleChangeSort('job_id'),
+            onClick: () => changeSort('job_id'),
           },
           {
             name: 'Amount',
@@ -1408,7 +1394,7 @@ export const TransactionTable: FC<Props> = ({
                   ? sortDir
                   : undefined
                 : undefined,
-            onClick: () => handleChangeSort('amount'),
+            onClick: () => changeSort('amount'),
           },
           {
             name: 'Vendor',
@@ -1418,7 +1404,7 @@ export const TransactionTable: FC<Props> = ({
                   ? sortDir
                   : undefined
                 : undefined,
-            onClick: () => handleChangeSort('vendor'),
+            onClick: () => changeSort('vendor'),
           },
           { name: 'Actions' },
           {
@@ -1531,7 +1517,10 @@ export const TransactionTable: FC<Props> = ({
                             <IconButton
                               size="small"
                               onClick={() =>
-                                handleSetTransactionToEdit(selectorParam.txn)
+                                dispatch({
+                                  type: ACTIONS.SET_TRANSACTION_TO_EDIT,
+                                  data: selectorParam.txn,
+                                })
                               }
                             >
                               <LineWeightIcon />

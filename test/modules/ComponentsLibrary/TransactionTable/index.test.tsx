@@ -23,7 +23,7 @@ import Constants = require('../../../test-constants/constants');
 
 describe('ComponentsLibrary', () => {
   describe('TransactionTable', () => {
-    describe('<TransactionTable loggedUserId={98217} />', () => {
+    describe('<TransactionTable loggedUserId={98217} hasActions />', () => {
       let wrapper: Enzyme.ReactWrapper;
       before(() => {
         Stubs.setupStubs(
@@ -53,7 +53,7 @@ describe('ComponentsLibrary', () => {
         req.setFieldMaskList(['IsBillingRecorded']);
         req.setOrderBy('vendor, timestamp');
         req.setOrderDir('ASC');
-        req.setVendorCategory("'PickTicket','Receipt'");
+        req.setVendorCategory("'PickTicket','Receipt','Invoice'");
         req.setDocumentsList([]);
         req.setActivityLogList([]);
         // @ts-expect-error
@@ -97,7 +97,10 @@ describe('ComponentsLibrary', () => {
 
       beforeEach(() => {
         wrapper = Enzyme.mount(
-          <TransactionTableModule.TransactionTable loggedUserId={98217} />,
+          <TransactionTableModule.TransactionTable
+            loggedUserId={98217}
+            hasActions
+          />,
         );
       });
 
@@ -121,6 +124,19 @@ describe('ComponentsLibrary', () => {
               .filterWhere(result => result.text() !== 'TEST ORDER NUMBER')
               .first(),
           ).to.be.lengthOf(1);
+        });
+
+        describe('New Transaction button', () => {
+          it('has a "New Transaction" button', async () => {
+            await Constants.ReRenderAfterLoad(200);
+            wrapper.update();
+            Chai.expect(
+              wrapper
+                .find('.MuiButton-label')
+                .filterWhere(button => button.text() === 'New Transaction')
+                .first(),
+            ).to.be.lengthOf(1);
+          });
         });
 
         describe('Table row', () => {
