@@ -12,17 +12,24 @@ export type State = {
   departments: PermissionGroup[] | undefined;
   openRemovePermission: boolean;
   openAddPermission: boolean;
+  activeTab: string;
+  pendingRemovePermission: PermissionGroup | undefined;
 };
 
 export type Action =
-  | { type: 'setUser'; data: User }
+  | { type: 'setUser'; data: User | undefined }
   | { type: 'setLoggedUser'; data: User }
   | { type: 'setInit'; data: boolean }
   | { type: 'setLoaded'; data: boolean }
   | { type: 'setRoles'; data: PermissionGroup[] }
   | { type: 'setPrivileges'; data: PermissionGroup[] }
   | { type: 'setDepartments'; data: PermissionGroup[] }
-  | { type: 'setOpenRemovePermission'; data: boolean }
+  | { type: 'setActiveTab'; data: string }
+  | {
+      type: 'setOpenRemovePermission';
+      flag: boolean;
+      pendingPermissionGroup: PermissionGroup | undefined;
+    }
   | { type: 'setOpenAddPermission'; data: boolean };
 
 export const reducer = (state: State, action: Action) => {
@@ -77,11 +84,12 @@ export const reducer = (state: State, action: Action) => {
       };
     }
     case 'setOpenRemovePermission': {
-      const data = action.data;
-      console.log('got called to updatae', action.data);
+      const flag = action.flag;
+      const req = action.pendingPermissionGroup;
       return {
         ...state,
-        openRemovePermission: data,
+        openRemovePermission: flag,
+        pendingRemovePermission: req,
       };
     }
     case 'setOpenAddPermission': {
@@ -91,7 +99,14 @@ export const reducer = (state: State, action: Action) => {
         openAddPermission: data,
       };
     }
-
+    case 'setActiveTab': {
+      const data = action.data;
+      console.log(data);
+      return {
+        ...state,
+        activeTab: data,
+      };
+    }
     default:
       return state;
   }
