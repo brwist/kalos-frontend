@@ -76,6 +76,7 @@ export interface PlainFormProps<T> extends Style {
 interface Props<T> extends PlainFormProps<T> {
   onChange: (data: T) => void;
   onSubmit?: () => void;
+  onEnter?: boolean;
   validations?: Validation;
 }
 
@@ -93,6 +94,7 @@ export const PlainForm: <T>(
       compact = false,
       fullWidth = false,
       error,
+      onEnter,
       validations = {},
       className = '',
       children,
@@ -162,6 +164,15 @@ export const PlainForm: <T>(
             onSubmit();
           }
         }}
+        onKeyUp={event => {
+          if (event.key === 'Enter') {
+            event.stopPropagation();
+            event.preventDefault();
+            if (onSubmit && onEnter) {
+              onSubmit();
+            }
+          }
+        }}
       >
         {error && (
           <Typography className="PlainFormError" component="div">
@@ -191,7 +202,8 @@ export const PlainForm: <T>(
         {schema.map((fields, idx) => (
           <div key={idx} className="PlainFormGroup">
             {fields.map((props, idx2) => {
-              if (props.invisible) return <> </>;
+              if (props.invisible)
+                return <React.Fragment key={idx2}></React.Fragment>;
               const { name } = props;
               return (
                 <Field

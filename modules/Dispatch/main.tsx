@@ -5,7 +5,7 @@ import { PageWrapper, PageWrapperProps } from '../PageWrapper/main';
 // add any prop types here
 
 export const Dispatch: FC<Props & PageWrapperProps> = props => (
-  <PageWrapper {...props} userID={props.userID}>
+  <PageWrapper {...props} userID={props.loggedUserId} withHeader>
     <DispatchDashboard {...props} />
   </PageWrapper>
 );

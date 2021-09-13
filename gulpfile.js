@@ -614,7 +614,7 @@ const NAMED_EXPORTS = {
   'node_modules/@material-ui/core/node_modules/react-is/index.js'  :  ['isFragment'],
   'node_modules/@material-ui/lab/node_modules/react-is/index.js'  :  ['isFragment'],
 
-  'node_modules/lodash/lodash.js'  :  ['delay'],
+  'node_modules/lodash/lodash.js'  :  ['delay', 'debounce'],
   'node_modules/@kalos-core/kalos-rpc/compiled-protos/dispatch_pb.js'  :  [
     'DispatchableTechList',
     'DispatchableTech',
@@ -844,6 +844,10 @@ const NAMED_EXPORTS = {
   ],
   'node_modules/@kalos-core/kalos-rpc/compiled-protos/spiff_tool_admin_action_pb.js':
     ['SpiffToolAdminAction', 'SpiffToolAdminActionList'],
+  'node_modules/@kalos-core/kalos-rpc/compiled-protos/slack_pb.js': [
+    'DispatchReq',
+    'DMReq',
+  ],
   'node_modules/@kalos-core/kalos-rpc/compiled-protos/stock_vendor_pb.js': [
     'StockVendor',
     'StockVendorList',
@@ -967,7 +971,7 @@ const NAMED_EXPORTS = {
     'Group',
     'GroupList',
   ],
-  'node_modules/react-is/index.js': ['ForwardRef', 'isFragment', 'Memo'],
+  'node_modules/react-is/index.js': ['ForwardRef', 'isFragment', 'Memo', 'isValidElementType', 'isContextConsumer'],
   'node_modules/tslib/tslib.js': ['__awaiter', '__generator', '__extends'],
   'node_modules/@kalos-core/kalos-rpc/compiled-protos/predict_pb.js': [
     'TransactionData',

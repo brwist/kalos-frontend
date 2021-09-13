@@ -6,7 +6,6 @@ import {
 import { TxnCard } from './card';
 import { Loader } from '../../Loader/main';
 import { S3Client } from '@kalos-core/kalos-rpc/S3File';
-import { getEditDistance } from '../../../helpers';
 import { ENDPOINT } from '../../../constants';
 import { parseISO } from 'date-fns/esm';
 import { RoleType } from '../../ComponentsLibrary/Payroll';
@@ -91,7 +90,6 @@ export class TransactionUserView extends React.PureComponent<props, state> {
   async fetchTxns(statusID: number) {
     const reqObj = new Transaction();
     reqObj.setOwnerId(this.props.userID);
-
     reqObj.setPageNumber(this.state.page);
     reqObj.setStatusId(statusID);
     /* if (

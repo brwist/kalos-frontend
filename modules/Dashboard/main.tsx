@@ -466,6 +466,25 @@ export class Dashboard extends React.PureComponent<props, state> {
                           },
                         ]
                       : []),
+                    ...(currentUser.getId() === 213 || currentUser.getId() === 3490
+                      ? [
+                          {
+                            value: (
+                              <>
+                                <br />
+                                <br />
+                                <br />
+                                <Button
+                                  label="Go To New Dispatch"
+                                  disabled={isLoading}
+                                  onClick={() =>
+                                    (document.location.href = `https://app.kalosflorida.com/index.cfm?action=admin:dispatch.dispatch_mode`)
+                                  }
+                                />
+                              </>
+                            )
+                          }
+                      ]: [])
                   ],
                 ]
           }

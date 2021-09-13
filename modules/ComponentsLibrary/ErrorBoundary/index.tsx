@@ -6,15 +6,17 @@ interface Props {
 
 interface State {
   hasError: boolean;
+  error: Error | undefined;
 }
 
 export class ErrorBoundary extends Component<Props, State> {
   public state: State = {
     hasError: false,
+    error: undefined,
   };
 
-  public static getDerivedStateFromError(_: Error): State {
-    return { hasError: true };
+  public static getDerivedStateFromError(err: Error): State {
+    return { hasError: true, error: err };
   }
 
   public componentDidCatch(error: Error, errorInfo: ErrorInfo) {
@@ -22,11 +24,29 @@ export class ErrorBoundary extends Component<Props, State> {
   }
 
   public render() {
+    console.log('Rendering an error boundary');
+
     if (this.state.hasError) {
       return (
         <>
-          <h1>An error occurred.</h1>
-          <h2>Please report this to the webtech team in #webtech on Slack.</h2>
+          <h1 style={{ textAlign: 'center' }}>Whoops! We had an error.</h1>
+          <h2 style={{ textAlign: 'center' }}>
+            Please report this to the webtech team in{' '}
+            <a href="https://kalos-services.slack.com/archives/C0NDWN8TT">
+              #webtech
+            </a>{' '}
+            on Slack.
+          </h2>
+          <h2>
+            Error:{' '}
+            {this.state.error !== undefined
+              ? `${this.state.error.message} (${this.state.error.name})`
+              : ''}
+          </h2>
+          <h4>Please include this stacktrace in a screenshot: </h4>
+          <h4 style={{ color: 'red' }}>
+            {this.state.error !== undefined ? this.state.error.stack : ''}
+          </h4>
         </>
       );
     }
