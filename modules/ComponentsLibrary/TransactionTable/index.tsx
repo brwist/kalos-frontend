@@ -7,7 +7,7 @@ import {
   TransactionActivity,
   TransactionActivityClient,
 } from '@kalos-core/kalos-rpc/TransactionActivity';
-
+import CheckCircleOutlineIcon from '@material-ui/icons/CheckCircleOutline';
 import { User } from '@kalos-core/kalos-rpc/User';
 import IconButton from '@material-ui/core/IconButton';
 import AssignmentIndIcon from '@material-ui/icons/AssignmentInd';
@@ -667,16 +667,16 @@ export const TransactionTable: FC<Props> = ({
           'Customer: ' +
           (res.getCustomer() === undefined
             ? 'No Customer '
-            : `${res.getCustomer()!.getFirstname()} ${res
+            : `${res
                 .getCustomer()!
-                .getLastname()}`);
+                .getFirstname()} ${res.getCustomer()!.getLastname()}`);
         const property =
           'Property: ' +
           (res.getProperty() === undefined
             ? 'No Property'
-            : `${res.getProperty()!.getAddress()} ${res
+            : `${res
                 .getProperty()!
-                .getCity()}`);
+                .getAddress()} ${res.getProperty()!.getCity()}`);
         returnString = [descritpion, customer, property];
       } catch (error) {
         console.log('Not a number');
@@ -1607,6 +1607,7 @@ export const TransactionTable: FC<Props> = ({
                             : []),
                           <Tooltip key="submit" content={'Mark as accepted'}>
                             <IconButton
+                              disabled={selectorParam.txn.getStatusId() === 5}
                               size="small"
                               onClick={() => updateStatus(selectorParam.txn)}
                             >
@@ -1636,6 +1637,7 @@ export const TransactionTable: FC<Props> = ({
                                 content="Mark As Processed"
                               >
                                 <IconButton
+                                  key="ProcessIcon"
                                   size="small"
                                   onClick={() =>
                                     updateStatusProcessed(selectorParam.txn)
@@ -1663,6 +1665,7 @@ export const TransactionTable: FC<Props> = ({
                             confirmFn={reason =>
                               dispute(reason, selectorParam.txn)
                             }
+                            disabled={selectorParam.txn.getStatusId() === 5}
                             text="Reject transaction"
                             prompt="Enter reason for rejection: "
                             Icon={RejectIcon}
@@ -1709,6 +1712,17 @@ export const TransactionTable: FC<Props> = ({
                                 </IconButton>
                               </Tooltip>
                             </>
+                          ) : (
+                            <> </>
+                          )}
+                          {selectorParam.txn.getStatusId() === 5 ? (
+                            <Tooltip key="processed" content="Processesd">
+                              <IconButton size="small">
+                                <CheckCircleOutlineIcon
+                                  style={{ color: 'green' }}
+                                />
+                              </IconButton>
+                            </Tooltip>
                           ) : (
                             <> </>
                           )}
