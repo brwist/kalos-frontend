@@ -40,11 +40,6 @@ import {
   UserClientService,
   TransactionActivityClientService,
   EmailClientService,
-  TransactionDocumentClientService,
-  getFileExt,
-  uploadFileToS3Bucket,
-  FileClientService,
-  ActivityLogClientService,
   uploadPhotoToExistingTransaction,
 } from '../../../helpers';
 import { AltGallery } from '../../AltGallery/main';
@@ -67,12 +62,9 @@ import DeleteIcon from '@material-ui/icons/Delete';
 import { EditTransaction } from '../EditTransaction';
 import { TimesheetDepartment } from '@kalos-core/kalos-rpc/TimesheetDepartment';
 import { StatusPicker } from './components/StatusPicker';
-import { TransactionDocument } from '@kalos-core/kalos-rpc/TransactionDocument';
 import { ErrorBoundary } from '../ErrorBoundary';
 import { ConfirmDelete } from '../ConfirmDelete';
 import { UploadPhotoToExistingTransaction } from '../UploadPhotoToExistingTransaction';
-import { File } from '@kalos-core/kalos-rpc/File';
-import { ActivityLog } from '@kalos-core/kalos-rpc/ActivityLog';
 import { Form } from '../Form';
 import { ACTIONS } from './reducer';
 
@@ -128,7 +120,6 @@ export const TransactionTable: FC<Props> = ({
   onDeselect,
   hasActions,
 }) => {
-  const FileInput = React.createRef<HTMLInputElement>();
   const [state, dispatch] = useReducer(reducer, {
     transactionFilter: filter,
     transactions: undefined,
