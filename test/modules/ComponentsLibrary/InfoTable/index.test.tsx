@@ -62,28 +62,6 @@ describe('ComponentsLibrary', () => {
             it('outputs the correct results', () => {});
           });
         });
-        describe('fields', () => {
-          it('has the correct number of fields for the columns', () => {
-            let burger = wrapper.find('.Actions');
-            burger.simulate('click');
-            wrapper
-              .find('.MuiButton-label')
-              .filterWhere(label => label.text() === 'Add New Row')
-              .simulate('click');
-            wrapper.update();
-            console.log('DEBUG: ', wrapper.debug());
-            Chai.expect(
-              wrapper
-                .find('.MuiFormLabel-root')
-                .filterWhere(label => label.text() === 'Column 1'),
-            ).to.be.lengthOf(2);
-            Chai.expect(
-              wrapper
-                .find('label')
-                .filterWhere(label => label.text() === 'Column 2'),
-            ).to.be.lengthOf(2);
-          });
-        });
       });
     });
   });

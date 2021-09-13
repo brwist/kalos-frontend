@@ -53,7 +53,7 @@ describe('ComponentsLibrary', () => {
         req.setFieldMaskList(['IsBillingRecorded']);
         req.setOrderBy('vendor, timestamp');
         req.setOrderDir('ASC');
-        req.setVendorCategory("'PickTicket','Receipt'");
+        req.setVendorCategory("'PickTicket','Receipt','Invoice'");
         req.setDocumentsList([]);
         req.setActivityLogList([]);
         // @ts-expect-error
