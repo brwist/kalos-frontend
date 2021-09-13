@@ -1238,7 +1238,7 @@ export const TransactionTable: FC<Props> = ({
                   label: 'Toggle Editing Interface',
                   onClick: () =>
                     dispatch({
-                      type: 'setInfoTableMode',
+                      type: ACTIONS.SET_INFO_TABLE_MODE,
                       data:
                         state.infoTableMode === 'overview'
                           ? 'editing'

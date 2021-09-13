@@ -93,6 +93,7 @@ export enum ACTIONS {
   SET_IMAGE_WAIVER_TYPE_FORM_DATA = 'setImageWaiverTypeFormData',
   SET_TRANSACTION_TO_SAVE = 'setTransactionToSave',
   SET_IMAGE_NAME_TO_SAVE = 'setImageNameToSave',
+  SET_INFO_TABLE_MODE = 'setInfoTableMode',
 }
 
 export type Action =
@@ -155,7 +156,7 @@ export type Action =
       data: string | undefined;
     }
   | {
-      type: 'setInfoTableMode';
+      type: ACTIONS.SET_INFO_TABLE_MODE;
       data: Modes;
     };
 
@@ -331,6 +332,9 @@ export const reducer = (state: State, action: Action) => {
     case ACTIONS.SET_IMAGE_NAME_TO_SAVE:
       console.log('setting image name to save');
       return { ...state, imageNameToSave: action.data };
+    case ACTIONS.SET_INFO_TABLE_MODE:
+      console.log('setting info table mode');
+      return { ...state, infoTableMode: action.data };
     default:
       return state;
   }
