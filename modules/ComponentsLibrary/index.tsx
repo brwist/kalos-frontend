@@ -106,7 +106,9 @@ import UploadPhoto from './UploadPhoto/examples';
 import UploadPhotoTransaction from './UploadPhotoTransaction/examples';
 import WarrantyReport from './WarrantyReport/examples';
 import WeekPicker from './WeekPicker/examples';
-import LoginForm from '../../App/index';
+import { Provider,useSelector } from 'react-redux';
+import store from '../../App/store';
+import { selectLoggedUser } from '../login/loginSlice';
 
 import './styles.less';
 import { UserClient } from '@kalos-core/kalos-rpc/User';
@@ -115,9 +117,8 @@ import { ENDPOINT } from '../../constants';
 const DEFAULT_COMPONENT_IDX = 0;
 
 const COMPONENTS = {
-  Actions,
-  LoginForm,
   Dashboard,
+  Actions,
   ActivityLogReport,
   AddLog,
   AddNewButton,
@@ -223,7 +224,7 @@ const COMPONENTS = {
 
 const u = new UserClient(ENDPOINT);
 
-const ComponentsLibrary = () => {
+export const ComponentsLibrary = () => {
   const theme = useTheme();
   const matches = useMediaQuery(theme.breakpoints.down('md'));
   const [component, setComponent] = useState<keyof typeof COMPONENTS>(
@@ -283,5 +284,5 @@ const ComponentsLibrary = () => {
   );
 };
 u.GetToken('test', 'test').then(() => {
-  ReactDOM.render(<ComponentsLibrary />, document.getElementById('root'));
+  ReactDOM.render(<Provider store={store}><ComponentsLibrary /></Provider>, document.getElementById('root'));
 });

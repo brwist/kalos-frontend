@@ -8,11 +8,12 @@ import TextField from '@material-ui/core/TextField';
 import Button from '@material-ui/core/Button';
 import Grid from '@material-ui/core/Grid';
 import { ENDPOINT } from '../../constants';
-import { Dashboard } from '../Dashboard/main';
+import { ComponentsLibrary } from '../ComponentsLibrary';
 import ReactDOM from 'react-dom';
 import { connect , Provider} from 'react-redux';
 import { loggedIn, selectLoggedUser } from './loginSlice';
 import store from '../../App/store';
+// import {App} from '../../index';
 
 interface props {
   onSuccess?(): void;
@@ -122,25 +123,25 @@ class Login extends React.PureComponent<props, state> {
       this.logged(user.getId(),username,password);
       await this.LogClient.Create(log);
       if (this.props.onSuccess) {
-        // this.props.onSuccess();
-        ReactDOM.render(<Provider store={store}><Dashboard userId={user.getId()} withHeader /></Provider>, document.getElementById('root'));
+        this.props.onSuccess();
+       //// ReactDOM.render(<Provider store={store}><App /></Provider>, document.getElementById('root'));
       }
     } catch (err) {
       console.log(err);
     }
 
     // for local side testing
-    //try{
+    // try{
     //   const userData = new User();
     //   const username = this.LoginInput.current!.value;
     //   const password = this.PwdInput.current!.value;
-      // userData.setLogin(username);
-      // userData.setPwd(password);
-      // this.logged(userData.getId(),username,password);
-      // const u = new UserClient(ENDPOINT);
-      // u.GetToken(username, password).then(() => {
-      //   ReactDOM.render(<Provider store={store}><Dashboard userId={103285} withHeader /></Provider>, document.getElementById('root'));
-      // });
+    //   userData.setLogin(username);
+    //   userData.setPwd(password);
+    //   this.logged(userData.getId(),username,password);
+    //   // const u = new UserClient(ENDPOINT);
+    //   // u.GetToken(username, password).then(() => {
+    //   //   ReactDOM.render(<Provider store={store}><ComponentsLibrary /></Provider>, document.getElementById('root'));
+    //   // });
     // }catch(err){
     //   console.log(err);
     // }
