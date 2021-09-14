@@ -41,6 +41,7 @@ import {
   TransactionActivityClientService,
   EmailClientService,
   uploadPhotoToExistingTransaction,
+  DevlogClientService,
 } from '../../../helpers';
 import { AltGallery } from '../../AltGallery/main';
 import { Tooltip } from '../../ComponentsLibrary/Tooltip';
@@ -67,6 +68,7 @@ import { ConfirmDelete } from '../ConfirmDelete';
 import { UploadPhotoToExistingTransaction } from '../UploadPhotoToExistingTransaction';
 import { Form } from '../Form';
 import { ACTIONS } from './reducer';
+import { Devlog } from '@kalos-core/kalos-rpc/Devlog';
 
 export interface Props {
   loggedUserId: number;
@@ -315,17 +317,16 @@ export const TransactionTable: FC<Props> = ({
         res = await TransactionClientService.Search(req);
       } catch (err) {
         try {
-          let errLog = new TransactionActivity();
+          let errLog = new Devlog();
           errLog.setTimestamp(format(new Date(), 'yyyy-MM-dd hh:mm:ss'));
           errLog.setUserId(loggedUserId);
           errLog.setDescription(
-            `ERROR : An error occurred while using universal search: ${err}`,
+            `An error occurred while using universal search: ${err}`,
           );
-          await TransactionActivityClientService.Create(errLog);
+          errLog.setErrorSeverity(1);
+          const result = await DevlogClientService.Create(errLog);
         } catch (errActivity) {
-          console.error(
-            `An error occurred while using universal search: ${err} `,
-          );
+          console.error(`An error occurred while uploading a dev log: ${err} `);
         }
         console.error(
           `An error occurred while searching for transactions in TransactionTable: ${err}`,
@@ -640,16 +641,16 @@ export const TransactionTable: FC<Props> = ({
           'Customer: ' +
           (res.getCustomer() === undefined
             ? 'No Customer '
-            : `${res
+            : `${res.getCustomer()!.getFirstname()} ${res
                 .getCustomer()!
-                .getFirstname()} ${res.getCustomer()!.getLastname()}`);
+                .getLastname()}`);
         const property =
           'Property: ' +
           (res.getProperty() === undefined
             ? 'No Property'
-            : `${res
+            : `${res.getProperty()!.getAddress()} ${res
                 .getProperty()!
-                .getAddress()} ${res.getProperty()!.getCity()}`);
+                .getCity()}`);
         returnString = [descritpion, customer, property];
       } catch (error) {
         console.log('Not a number');
