@@ -35,7 +35,10 @@ export const CharityReport: FC<Props> = ({ month, onClose }) => {
     items: [],
   });
   const dispatch = useDispatch();
+    const charityReportlist = useSelector(selectCharityReport);
+    // const CharityReportlist = selectCharityReports;
   const loadCharityReportData = () =>{
+    if(charityReportlist.length ==1){
     data.items.map(item => {
         dispatch(charityReport({
           technician: item.technician,
@@ -44,6 +47,10 @@ export const CharityReport: FC<Props> = ({ month, onClose }) => {
         }));
       }
     );
+    }else{
+      data.items = charityReportlist;
+      console.log(data.items);
+    }
   };
   const load = useCallback(async () => {
     setLoading(true);
