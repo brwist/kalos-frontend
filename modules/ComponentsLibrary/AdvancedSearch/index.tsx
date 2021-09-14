@@ -248,45 +248,51 @@ export const AdvancedSearch: FC<Props> = ({
     [setPendingAddProperty],
   );
   const dispatch = useDispatch();
+  const advancedSerchedData = useSelector(selectAdvanceEmpDepart);
+  const AdvancedEmployeeDepartment= advancedSerchedData.AdvancedEmployeeDepartment;
+  const AdvancedJobType= advancedSerchedData.AdvancedJobType;
+  const AdvancedJobSubType= advancedSerchedData.AdvancedJobSubType;
   const loadDicts = useCallback(async () => {
-    setLoadingDicts(true);
-    const jobTypes = await JobTypeClientService.loadJobTypes();
-    setJobTypes(jobTypes);
-    const jobSubtypes = await JobSubtypeClientService.loadJobSubtypes();
-    setJobSubtypes(jobSubtypes);
-    setLoadingDicts(false);
-    if (kinds.includes('employees')) {
-      //const departments = await TimesheetDepartmentClientService.loadTimeSheetDepartments();
-      const departmentRequest = new TimesheetDepartment();
-      departmentRequest.setIsActive(1);
-      const departments = (
-        await TimesheetDepartmentClientService.BatchGet(departmentRequest)
-      ).getResultsList();
-      setDepartments(departments);
-      const employeeFunctions = await EmployeeFunctionClientService.loadEmployeeFunctions();
-      setEmployeeFunctions(employeeFunctions);
-      const userReq = new User();
-      userReq.setId(loggedUserId);
-      const loggedUser = await UserClientService.Get(userReq);
-      setIsAdmin(loggedUser.getIsAdmin());
-      departments.map(d => (
-        dispatch(advanceEmpDepart({
-          label: d.getValue()+' - '+ d.getDescription(),
-          value: d.getId(),
-        }))
-      ));
-      jobTypes.map(jt => (
-        dispatch(advanceJobType({
-          label: jt.getName(),
-          value: jt.getId(),
-        }))
-      ));
-      jobSubtypes.map(jst => (
-        dispatch(advanceJobSubType({
-          label: jst.getName(),
-          value: jst.getId(),
-        }))
-      ));
+    if(AdvancedEmployeeDepartment.length==1){     
+      setLoadingDicts(true);
+      const jobTypes = await JobTypeClientService.loadJobTypes();
+      setJobTypes(jobTypes);
+      const jobSubtypes = await JobSubtypeClientService.loadJobSubtypes();
+      setJobSubtypes(jobSubtypes);
+      setLoadingDicts(false);
+      if (kinds.includes('employees')) {
+        //const departments = await TimesheetDepartmentClientService.loadTimeSheetDepartments();
+        const departmentRequest = new TimesheetDepartment();
+        departmentRequest.setIsActive(1);
+        const departments = (
+          await TimesheetDepartmentClientService.BatchGet(departmentRequest)
+        ).getResultsList();
+        setDepartments(departments);
+        const employeeFunctions = await EmployeeFunctionClientService.loadEmployeeFunctions();
+        setEmployeeFunctions(employeeFunctions);
+        const userReq = new User();
+        userReq.setId(loggedUserId);
+        const loggedUser = await UserClientService.Get(userReq);
+        setIsAdmin(loggedUser.getIsAdmin());
+        departments.map(d => (
+          dispatch(advanceEmpDepart({
+            label: d.getValue()+' - '+ d.getDescription(),
+            value: d.getId(),
+          }))
+        ));
+        jobTypes.map(jt => (
+          dispatch(advanceJobType({
+            label: jt.getName(),
+            value: jt.getId(),
+          }))
+        ));
+        jobSubtypes.map(jst => (
+          dispatch(advanceJobSubType({
+            label: jst.getName(),
+            value: jst.getId(),
+          }))
+        ));
+      }
     }
     setFormKey(formKey + 1);
     setLoadedDicts(true);
@@ -838,7 +844,7 @@ export const AdvancedSearch: FC<Props> = ({
           label: 'Job Type',
           options: [
             { label: OPTION_ALL, value: 0 },
-            ...jobTypes.map(jt => ({ label: jt.getName(), value: jt.getId() })),
+            ...AdvancedJobType.map(jt => ({ label: jt.label, value: jt.value })),
           ],
         },
         {
@@ -846,9 +852,9 @@ export const AdvancedSearch: FC<Props> = ({
           label: 'Job Subtype',
           options: [
             { label: OPTION_ALL, value: 0 },
-            ...jobSubtypes.map(jst => ({
-              label: jst.getName(),
-              value: jst.getId(),
+            ...AdvancedJobSubType.map(jst => ({
+              label: jst.label,
+              value: jst.value,
             })),
           ],
         },
@@ -943,9 +949,9 @@ export const AdvancedSearch: FC<Props> = ({
           label: 'Department',
           options: [
             { label: OPTION_ALL, value: -1 },
-            ...departments.map(d => ({
-              label: `${d.getValue()} - ${d.getDescription()}`,
-              value: d.getId(),
+            ...AdvancedEmployeeDepartment.map(d => ({
+              label: d.label,
+              value: d.value,
             })),
           ],
         },
@@ -1034,9 +1040,9 @@ export const AdvancedSearch: FC<Props> = ({
       {
         name: 'getEmployeeDepartmentId',
         label: 'Department',
-        options: departments.map(d => ({
-          label: `${d.getValue()} - ${d.getDescription()}`,
-          value: d.getId(),
+        options: AdvancedEmployeeDepartment.map(d => ({
+          label: d.label,
+          value: d.value,
         })),
         readOnly: true,
       },
@@ -1097,9 +1103,9 @@ export const AdvancedSearch: FC<Props> = ({
       {
         name: 'getEmployeeDepartmentId',
         label: 'Employee Segment',
-        options: departments.map(d => ({
-          label: `${d.getValue()} - ${d.getDescription()}`,
-          value: d.getId(),
+        options: AdvancedEmployeeDepartment.map(d => ({
+          label: d.label,
+          value: d.value,
         })),
         required: true,
       },

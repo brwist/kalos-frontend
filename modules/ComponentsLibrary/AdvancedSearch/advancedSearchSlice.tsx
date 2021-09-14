@@ -38,8 +38,6 @@ export const AdvancedSearchSlice = createSlice({
 
 export const { advanceEmpDepart, advanceJobType,advanceJobSubType } = AdvancedSearchSlice.actions;
 
-export const selectAdvanceEmpDepart = ((state) => state.AdvancedEmployeeDepartment);
-export const selectAdvanceJobType = ((state) => state.AdvancedJobType);
-export const selectAdvanceJobSubType = ((state) => state.AdvancedJobSubType);
+export const selectAdvanceEmpDepart = ((state) => state.advancedSearch);
 
 export default AdvancedSearchSlice.reducer;
