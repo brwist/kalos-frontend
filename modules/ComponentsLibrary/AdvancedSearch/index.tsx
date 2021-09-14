@@ -18,6 +18,7 @@ import SearchIcon from '@material-ui/icons/Search';
 import BuildIcon from '@material-ui/icons/Build';
 import PersonIcon from '@material-ui/icons/Person';
 import AccessTimeIcon from '@material-ui/icons/AccessTime';
+import GroupIcon from '@material-ui/icons/Group';
 import { ActionsProps } from '../Actions';
 import { SectionBar } from '../SectionBar';
 import { PlainForm, Schema, Option } from '../PlainForm';
@@ -36,6 +37,7 @@ import { EmployeeDepartments } from '../EmployeeDepartments';
 import { Form } from '../Form';
 import { SearchFormComponent } from './SearchForm';
 import { PrintPage } from '../PrintPage';
+import { EmployeePermissions } from '../EmployeePermissions';
 import { PrintHeaderSubtitleItem } from '../PrintHeader';
 import { Tooltip } from '../Tooltip';
 import {
@@ -82,6 +84,7 @@ import { TimesheetDepartment } from '@kalos-core/kalos-rpc/TimesheetDepartment';
 import { EmployeeFunction } from '@kalos-core/kalos-rpc/EmployeeFunction';
 
 import './styles.less';
+import { log } from 'console';
 
 type Kind =
   | 'serviceCalls'
@@ -147,6 +150,8 @@ export const AdvancedSearch: FC<Props> = ({
   const [jobTypes, setJobTypes] = useState<JobType[]>([]);
   const [jobSubtypes, setJobSubtypes] = useState<JobSubtype[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
+  const [pendingEditPermissions, setPendingEditPermissions] = useState<User>();
+
   const [loaded, setLoaded] = useState<boolean>(false);
   const [page, setPage] = useState<number>(0);
   const [count, setCount] = useState<number>(0);
@@ -2289,6 +2294,20 @@ export const AdvancedSearch: FC<Props> = ({
                                 <AccessTimeIcon />
                               </IconButton>
                             </Tooltip>,
+                            <Tooltip
+                              key="permission"
+                              content="View/Edit Permissions"
+                              placement="top"
+                            >
+                              <IconButton
+                                size="small"
+                                onClick={() => {
+                                  setPendingEditPermissions(entry);
+                                }}
+                              >
+                                <GroupIcon />
+                              </IconButton>
+                            </Tooltip>,
                           ]
                         : []),
                       <Tooltip
@@ -2730,6 +2749,20 @@ export const AdvancedSearch: FC<Props> = ({
             pendingCustomerDeleting,
           )}
         />
+      )}
+
+      {pendingEditPermissions && (
+        <Modal
+          fullScreen={true}
+          open={pendingEditPermissions != undefined}
+          onClose={() => setPendingEditPermissions(undefined)}
+        >
+          <EmployeePermissions
+            loggedUserId={loggedUserId}
+            userId={pendingEditPermissions.getId()}
+            onClose={() => setPendingEditPermissions(undefined)}
+          ></EmployeePermissions>
+        </Modal>
       )}
       {pendingPropertyViewing && (
         <Modal

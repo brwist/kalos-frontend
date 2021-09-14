@@ -25,6 +25,7 @@ interface Props {
   loggedUserId: number;
   user?: User;
   loggedUser?: User;
+  onClose?: () => void;
 }
 
 export const EmployeePermissions: FC<Props> = ({
@@ -32,6 +33,7 @@ export const EmployeePermissions: FC<Props> = ({
   loggedUserId,
   loggedUser,
   user,
+  onClose,
 }) => {
   const [state, dispatch] = useReducer(reducer, {
     userData: user ? user : undefined,
@@ -292,6 +294,7 @@ export const EmployeePermissions: FC<Props> = ({
           Are you sure you want to remove this Permission?
         </Confirm>
       </Modal>
+      {onClose && <Button label="Close" onClick={onClose}></Button>}
     </SectionBar>
   ) : (
     <Loader></Loader>
