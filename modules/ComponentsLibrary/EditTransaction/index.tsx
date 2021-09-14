@@ -1,10 +1,17 @@
 import { Transaction } from '@kalos-core/kalos-rpc/Transaction';
-import React, { FC, useCallback, useState } from 'react';
-import { NULL_TIME } from '../../../constants';
-import { makeSafeFormObject } from '../../../helpers';
+import React, { FC, useCallback, useState, useEffect } from 'react';
+import { NULL_TIME, ENDPOINT } from '../../../constants';
+import { makeSafeFormObject, TransactionClientService } from '../../../helpers';
 import { Form, Schema } from '../Form';
 import { SUBJECT_TAGS_ACCOUNTS_PAYABLE } from '@kalos-core/kalos-rpc/S3File';
-
+import {
+  TransactionStatusClient,
+  TransactionStatus,
+} from '@kalos-core/kalos-rpc/TransactionStatus';
+import {
+  TransactionAccountClient,
+  TransactionAccount,
+} from '@kalos-core/kalos-rpc/TransactionAccount';
 interface Props {
   transactionInput: Transaction;
   onSave: (saved: Transaction) => void;
@@ -22,6 +29,14 @@ export const EditTransaction: FC<Props> = ({
 }) => {
   const [transaction] = useState<Transaction>(transactionInput);
   const [changed, setChanged] = useState<boolean>(false);
+  const [loading, setLoading] = useState<boolean>(true);
+
+  const [transactionStatuses, setTransactionStatuses] = useState<
+    { label: string; value: number }[]
+  >();
+  const [transactionAccounts, setTransactionAccounts] = useState<
+    { label: string; value: number }[]
+  >();
   const tagsTranslated = [];
   for (let i = 0; i < SUBJECT_TAGS_ACCOUNTS_PAYABLE.length; i++) {
     const tempStruct = {
@@ -30,7 +45,32 @@ export const EditTransaction: FC<Props> = ({
     };
     tagsTranslated.push(tempStruct);
   }
-  console.log(tagsTranslated);
+  useEffect(() => {
+    const txnStatusClient = new TransactionStatusClient(ENDPOINT);
+    const accountClient = new TransactionAccountClient(ENDPOINT);
+    async function getStatuses() {
+      const req = new TransactionStatus();
+      const res = await txnStatusClient.BatchGet(req);
+      const accountRes = await accountClient.BatchGet(new TransactionAccount());
+
+      setTransactionStatuses(
+        res.getResultsList().map(status => ({
+          label: status.getDescription(),
+          value: status.getId(),
+        })),
+      );
+      setTransactionAccounts(
+        accountRes.getResultsList().map(account => ({
+          label: `${account.getId()}-${account.getDescription()}`,
+          value: account.getId(),
+        })),
+      );
+    }
+    if (loading) {
+      setLoading(false);
+      getStatuses();
+    }
+  }, [loading]);
   const handleSetChanged = useCallback(
     (changed: boolean) => setChanged(changed),
     [setChanged],
@@ -41,7 +81,7 @@ export const EditTransaction: FC<Props> = ({
       {
         label: 'Job ID',
         name: 'getJobId',
-        type: 'number',
+        type: 'eventId',
       },
       {
         label: 'Department',
@@ -54,12 +94,13 @@ export const EditTransaction: FC<Props> = ({
       {
         label: 'Owner ID',
         name: 'getOwnerId',
-        type: 'number',
+        type: 'technician',
       },
       {
         label: 'Cost Center ID',
         name: 'getCostCenterId',
         type: 'number',
+        options: transactionAccounts,
       },
       {
         label: 'Amount',
@@ -71,12 +112,13 @@ export const EditTransaction: FC<Props> = ({
       {
         label: 'Assigned Employee Id',
         name: 'getAssignedEmployeeId',
-        type: 'number',
+        type: 'technician',
       },
       {
         label: 'Status ID',
         name: 'getStatusId',
         type: 'number',
+        options: transactionStatuses,
       },
     ],
     [
@@ -97,10 +139,6 @@ export const EditTransaction: FC<Props> = ({
         label: 'Description',
         name: 'getDescription',
         multiline: true,
-      },
-      {
-        label: 'Status',
-        name: 'getStatus',
       },
     ],
     [
