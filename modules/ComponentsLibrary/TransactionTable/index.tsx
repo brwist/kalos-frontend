@@ -1304,7 +1304,7 @@ export const TransactionTable: FC<Props> = ({
               },
               {
                 columnName: 'Job #',
-                columnType: 'number',
+                columnType: 'eventId',
               },
               {
                 columnName: 'Amount',
@@ -1343,7 +1343,7 @@ export const TransactionTable: FC<Props> = ({
             onClick: () => changeSort('order_number'),
           },
           {
-            name: 'Creator',
+            name: 'Purchaser',
             dir:
               sortBy == 'owner_id'
                 ? sortDir != ' '
