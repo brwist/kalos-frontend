@@ -1550,9 +1550,9 @@
   integrity sha512-ZXRY4jNvVgSVQ8DL3LTcakaAtXwTVUxE81hslsyD2AtoXW/wVob10HkOJ1X/pAlcI7D+2YoZKg5do8G/w6RYgA==
 
 "@kalos-core/kalos-rpc@^3.3.7":
-  version "3.5.6"
-  resolved "https://registry.yarnpkg.com/@kalos-core/kalos-rpc/-/kalos-rpc-3.5.6.tgz#ab8cee1e0756131c79d49ca2c441e3284d9caf3e"
-  integrity sha512-ejfUfnbVwiheY7G+R9+4LFDbAfAIcZ7I0jol9GoUF4XSuWC/ugof5PqawxQDB/qlaZDJrnY3meTqhZkAQ6t8fw==
+  version "3.5.8"
+  resolved "https://registry.yarnpkg.com/@kalos-core/kalos-rpc/-/kalos-rpc-3.5.8.tgz#becbed8230961c9396efd0bcdacfdf51f0908600"
+  integrity sha512-OE8rlQ5ohDaXsF4tnQyvIEZDvMTiw+tM3aQHuiVmf8iFyxlykVl6gIm4nRN+5FuH2ekQVvLLv/hDrsKs+nouvw==
   dependencies:
     "@improbable-eng/grpc-web" "^0.9.6"
     "@types/pako" "^1.0.1"
