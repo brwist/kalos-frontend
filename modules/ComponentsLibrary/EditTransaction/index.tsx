@@ -119,6 +119,7 @@ export const EditTransaction: FC<Props> = ({
         name: 'getStatusId',
         type: 'number',
         options: transactionStatuses,
+        disabled: true,
       },
     ],
     [
