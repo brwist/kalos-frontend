@@ -19,6 +19,6 @@ export const PerDiemNeedsAuditingSlice = createSlice({
 
 export const { perDiemNeedsAudit } = PerDiemNeedsAuditingSlice.actions;
 
-export const selectperDiemTechnicians = ((state) => state.technicians);
+export const selectperDiemTechnicians = ((state) => state.perDiemNeedsAudit);
 
 export default PerDiemNeedsAuditingSlice.reducer;

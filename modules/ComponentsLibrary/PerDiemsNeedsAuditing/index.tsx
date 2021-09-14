@@ -34,7 +34,8 @@ import { NULL_TIME } from '@kalos-core/kalos-rpc/constants';
 import { TimesheetDepartment } from '@kalos-core/kalos-rpc/TimesheetDepartment';
 import { User } from '@kalos-core/kalos-rpc/User';
 import { useDispatch, useSelector } from 'react-redux';
-import { perDiemNeedsAudit,selectperDiemTechnician } from './perDiemsNeedsAuditingSlice';
+import { perDiemNeedsAudit, selectperDiemTechnicians } from './perDiemsNeedsAuditingSlice';
+import { pushd } from 'shelljs';
 
 interface Props {
   loggedUserId: number;
@@ -122,17 +123,33 @@ export const PerDiemsNeedsAuditing: FC<Props> = ({ loggedUserId }) => {
   const [formKey, setFormKey] = useState<number>(0);
   const [govPerDiemsByYearMonth, setGovPerDiemsByYearMonth] =
     useState<GovPerDiemsByYearMonth>({});
-    const dispatch = useDispatch();
+  const dispatch = useDispatch();
+  const selectperDiemTechnician = useSelector(selectperDiemTechnicians);
+  const technicianList = selectperDiemTechnician.technicians;
   const initialize = useCallback(async () => {
-    const technicians = await UserClientService.loadTechnicians();
-    setTechnicians(technicians);
-    technicians.map(el => (
-      dispatch(
-        perDiemNeedsAudit({
-          label:UserClientService.getCustomerName(el),
-          value: el.getId(),
-      }))
-    ));
+    if(technicianList.length==1){
+      const technicians = await UserClientService.loadTechnicians();
+      setTechnicians(technicians);
+      technicians.map(el => (
+        dispatch(
+          perDiemNeedsAudit({
+            label:UserClientService.getCustomerName(el),
+            value: el.getId(),
+        }))
+      ));
+      let preloadTechnicians = [{
+        label:null,
+        value:null,
+      }];
+      technicians.map(a=>{
+        preloadTechnicians.push({
+        label:UserClientService.getCustomerName(a),
+        value: a.getId(),
+      })});
+      setTechnicians(preloadTechnicians);
+    }else{
+      setTechnicians(technicianList);
+    }
     let departments: TimesheetDepartment[];
     try {
       departments =
@@ -336,16 +353,16 @@ export const PerDiemsNeedsAuditing: FC<Props> = ({ loggedUserId }) => {
     (printing: boolean) => () => setPrinting(printing),
     [setPrinting],
   );
-  const techniciansOptions: Option[] = useMemo(
-    () => [
-      { label: OPTION_ALL, value: 0 },
-      ...technicians.map(el => ({
-        label: UserClientService.getCustomerName(el),
-        value: el.getId(),
-      })),
-    ],
-    [technicians],
-  );
+  // const techniciansOptions: Option[] = useMemo(
+  //   () => [
+  //     { label: OPTION_ALL, value: 0 },
+  //     ...technicians.map(el => ({
+  //       label: UserClientService.getCustomerName(el),
+  //       value: el.getId(),
+  //     })),
+  //   ],
+  //   [technicians],
+  // );
   const departmentsOptions: Option[] = useMemo(() => {
     return [
       { label: OPTION_ALL, value: 0 },
@@ -365,7 +382,10 @@ export const PerDiemsNeedsAuditing: FC<Props> = ({ loggedUserId }) => {
       {
         name: 'getUserId',
         label: 'Technician',
-        options: techniciansOptions,
+        options: technicians.map(t => ({
+          label: t.label,
+          value: t.value,
+        })),
       },
       {
         name: 'getDepartmentId',
