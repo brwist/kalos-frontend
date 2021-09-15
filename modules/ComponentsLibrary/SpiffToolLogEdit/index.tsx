@@ -187,17 +187,21 @@ export const SpiffToolLogEdit: FC<Props> = ({
   const [documentFile, setDocumentFile] = useState<string>('');
   const [documentSaving, setDocumentSaving] = useState<boolean>(false);
   const dispatch = useDispatch();
+  
+  const SelectSpiffToolTypeList = useSelector(selectspiffToolTypes);
+  const spiffToolTypeList = SelectSpiffToolTypeList.spiffTypes; 
   const load = useCallback(async () => {
     setLoading(true);
     if (type === 'Spiff' && spiffTypes.length === 0) {
+      if(spiffToolTypeList.length==1){
       const spiffTypes = await TaskClientService.loadSpiffTypes();
       setSpiffTypes(spiffTypes);
-      spiffTypes.map(spiffType => {
-        dispatch(spiffToolType({
-          label: escapeText(spiffType.getType()),
-          value: spiffType.getId(),
-        }))
-      });
+      dispatch(spiffToolType(spiffTypes));
+      }else{
+        setSpiffTypes(spiffToolTypeList);
+        console.log("Spifftool loaded");
+      }
+
     }
     const userReq = new User();
     userReq.setId(loggedUserId);
