@@ -143,12 +143,9 @@ export const PropertyInfo: FC<Props> = props => {
       const results = await PropertyClientService.Get(req);
       if (results) {
         const entry = results;
-        const tempEntry = entry;
-        tempEntry.setId(propertyId);
-        setEntry(tempEntry);
-        console.log(entry);
+        setEntry(entry);
         setLoading(false);
-        return tempEntry;
+        return entry;
       }
       setLoading(false);
       return null;
