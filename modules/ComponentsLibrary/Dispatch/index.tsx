@@ -3,8 +3,7 @@ import { DispatchTechs } from './dispatchTechnicians';
 import { DispatchCalls } from './dispatchCalls';
 import { DismissedTechs } from './dismissedTechnicians';
 import { DispatchMap } from './dispatchMap';
-import { State, reducer } from './reducer';
-import { FormData } from './reducer';
+import { State, reducer, FormData } from './reducer';
 import {
   DispatchClientService,
   ActivityLogClientService,
@@ -30,14 +29,16 @@ import { User } from '@kalos-core/kalos-rpc/User';
 import { PageWrapper } from '../../PageWrapper/main';
 import { SectionBar } from '../SectionBar';
 import { PlainForm, Schema } from '../PlainForm';
+import { Confirm } from '../Confirm';
+import { Modal } from '../Modal';
+import { Alert } from '../Alert';
+import { Loader } from '../../Loader/main';
 import addDays from 'date-fns/esm/addDays';
 import format from 'date-fns/esm/format';
 import setHours from 'date-fns/esm/setHours';
 import setMinutes from 'date-fns/esm/setMinutes';
 import  debounce from 'lodash/debounce';
 import { DragDropContext } from 'react-beautiful-dnd';
-import { Confirm } from '../Confirm';
-import { Modal } from '../Modal';
 import Table from '@material-ui/core/Table';
 import TableBody from '@material-ui/core/TableBody';
 import TableContainer from '@material-ui/core/TableContainer';
@@ -46,11 +47,8 @@ import TableHead from '@material-ui/core/TableHead';
 import TableCell from '@material-ui/core/TableCell';
 import Grid from '@material-ui/core/Grid';
 import Button  from '@material-ui/core/Button';
-import { Alert } from '../Alert';
 import UndoRounded from '@material-ui/icons/UndoRounded';
-import parseISO from 'date-fns/esm/parseISO';
-import { Loader } from '../../Loader/main';
-
+import { sample } from 'lodash';
 
 export interface Props {
   loggedUserId: number;
@@ -63,23 +61,16 @@ const initialFormData: FormData = {
   timeEnd: format(setHours(setMinutes(new Date(), 45), 23), 'yyyy-MM-dd HH:mm'),
   departmentIds: [],
   jobTypes: [],
-  isResidential: 0,
+  divisionMulti: [],
 };
 
 const initialState: State = {
   techs: [],
   dismissedTechs: [],
   calls: [],
-  departmentIds: initialFormData.departmentIds,
-  jobTypes: initialFormData.jobTypes,
   departmentList: [],
   defaultDepartmentIds: [],
   jobTypeList: [],
-  callStartDate: initialFormData.dateStart,
-  callEndDate: initialFormData.dateEnd,
-  callStartTime: initialFormData.timeStart.substring(11),
-  callEndTime: initialFormData.timeEnd.substring(11),
-  isResidential: initialFormData.isResidential,
   formData: initialFormData,
   notIncludedJobTypes: [],
   openModal: false,
@@ -94,6 +85,7 @@ const initialState: State = {
   isLoadingCall: false,
   isLoadingMap: true,
   isInitialLoad: true,
+  isLoadingFilters: true,
 };
 
 export const DispatchDashboard: React.FC<Props> = function DispatchDashboard({
@@ -106,11 +98,9 @@ export const DispatchDashboard: React.FC<Props> = function DispatchDashboard({
     const dr = new DateRange();
     dr.setStart('2012-01-01');
     dr.setEnd(format(new Date(), 'yyyy-MM-dd'));
-    console.log(parseISO(format(setHours(setMinutes(new Date(), 45), 23), 'yyyy-MM-dd h:mm a')));
-    console.log();
     tech.setDateRange(dr);
-    if (state.departmentIds.length) {
-      tech.setDepartmentList(state.departmentIds.toString());
+    if (state.formData.departmentIds.length) {
+      tech.setDepartmentList(state.formData.departmentIds.toString());
     } else {
       tech.setDepartmentList(state.defaultDepartmentIds.toString());
     }
@@ -126,24 +116,26 @@ export const DispatchDashboard: React.FC<Props> = function DispatchDashboard({
       );
       return {available: [], dismissed: []};
     }
-  }, [state.departmentIds, state.defaultDepartmentIds]);
+  }, [state.formData.departmentIds, state.defaultDepartmentIds]);
 
   const getCalls = useCallback( async () => {
     const call = new DispatchCall();
-    call.setDateRangeList(['>=', state.callStartDate, '<=', state.callEndDate]);
+    call.setDateRangeList(['>=', state.formData.dateStart, '<=', state.formData.dateEnd]);
     call.setDateTargetList(['date_started', 'date_ended']);
-    call.setJobTypeIdList(state.jobTypes.toString());
-    if (state.isResidential) {
-      call.setIsresidential(1);
+    call.setJobTypeIdList(state.formData.jobTypes.toString());
+    if (state.formData.divisionMulti.length === 1) {
+      call.setIsResidential(1);
+      if (state.formData.divisionMulti[0] === 'Commercial') {
+        call.setNotEqualsList(['IsResidential']);
+      }
     }
     try {
       const calls = await DispatchClientService.GetDispatchCalls(call);
       // console.log('Dispatch Call Success');
       const callResults = calls.getResultsList();
       const filteredCalls = callResults.filter(call => 
-        call.getDateStarted().concat(' ', call.getTimeStarted()) >= state.callStartDate.concat(' ', state.callStartTime) &&
-        call.getDateEnded().concat(' ', call.getTimeEnded()) <= state.callEndDate.concat(' ', state.callEndTime));
-      console.log(filteredCalls);  
+        call.getDateStarted().concat(' ', call.getTimeStarted()) >= state.formData.dateStart.concat(' ', state.formData.timeStart) &&
+        call.getDateEnded().concat(' ', call.getTimeEnded()) <= state.formData.dateEnd.concat(' ', state.formData.timeEnd)); 
       return {calls: filteredCalls};
     } catch (err) {
       console.error(
@@ -151,7 +143,12 @@ export const DispatchDashboard: React.FC<Props> = function DispatchDashboard({
       );
       return {calls: []};
     }
-  }, [state.jobTypes, state.callStartDate, state.callStartTime, state.callEndDate, state.callEndTime, state.isResidential]);
+  }, [
+    state.formData.jobTypes,
+    state.formData.dateStart, state.formData.timeStart,
+    state.formData.dateEnd, state.formData.timeEnd,
+    state.formData.divisionMulti
+  ]);
 
   const getDepartments = async() => {
     const departmentReq = new TimesheetDepartment();
@@ -232,18 +229,22 @@ export const DispatchDashboard: React.FC<Props> = function DispatchDashboard({
       type: 'setLoadingTech',
       data: true
     })
-    if (state.defaultDepartmentIds.length) {
+    if (state.defaultDepartmentIds.length && !state.isLoadingFilters) {
       setTechnicians();
+      console.log('SetTechs Use Effect');
     }
-  }, [setTechnicians, state.defaultDepartmentIds]);
+  }, [setTechnicians, state.defaultDepartmentIds, state.isLoadingFilters]);
 
   useEffect(() => {
     dispatchDashboard({
       type: 'setLoadingCall',
       data: true
     });
-    setCalls();
-  }, [setCalls])
+    if (!state.isLoadingFilters) {
+      setCalls();
+      console.log('SetCalls Use Effect');
+    }
+  }, [setCalls, state.isLoadingFilters])
 
   const handleChange = async (formData: FormData) => {
     setProcessing(true);
@@ -251,34 +252,29 @@ export const DispatchDashboard: React.FC<Props> = function DispatchDashboard({
     const callDateEnd = formData.dateEnd.replace(' 00:00', '');
     const callTimeStart = formData.timeStart.substring(11);
     const callTimeEnd = formData.timeEnd.substring(11);
-    if (state.departmentIds.length != formData.departmentIds.length || !state.departmentIds.every((val, index) => val === formData.departmentIds[index])) {
-      dispatchDashboard({
-        type: 'updateTechParameters',
-        data: {
-          departmentIds: formData.departmentIds
-        }
-      });
+    if (state.formData.departmentIds.length != formData.departmentIds.length
+    || !state.formData.departmentIds.every((val, index) => val === formData.departmentIds[index])) {
+      formData.divisionMulti = [];
+      if (formData.departmentIds.filter(dep => [19,20].includes(dep)).length) {
+        formData.divisionMulti.push('Residential');
+      }
+      if (formData.departmentIds.filter(dep => [17,18].includes(dep)).length) {
+        formData.divisionMulti.push('Commercial');
+      }
     }
-    if (state.jobTypes.length != formData.jobTypes.length 
-    || !state.jobTypes.every((val, index) => val === formData.jobTypes[index])
-    || state.callStartDate != callDateStart
-    || state.callEndDate != callDateEnd
-    || state.callStartTime != callTimeStart
-    || state.callEndTime != callTimeEnd
-    || state.isResidential != formData.isResidential) {
-      console.log(formData);
-      dispatchDashboard({
-        type: 'updateCallParameters',
-        data: {
-          jobTypes: formData.jobTypes,
-          callDateStarted: callDateStart,
-          callDateEnded: callDateEnd,
-          callTimeStarted: callTimeStart,
-          callTimeEnded: callTimeEnd,
-          isResidential: formData.isResidential,
-        }
-      });
-    }
+    const updatedForm : FormData = {
+      dateStart: callDateStart,
+      timeStart: callTimeStart,
+      dateEnd: callDateEnd,
+      timeEnd: callTimeEnd,
+      departmentIds: formData.departmentIds,
+      jobTypes: formData.jobTypes,
+      divisionMulti: formData.divisionMulti,
+    };
+    dispatchDashboard({
+      type: 'setFormData',
+      data: updatedForm,
+    });
   }
 
   const handleUndismissButtonClick = () => {
@@ -427,14 +423,39 @@ export const DispatchDashboard: React.FC<Props> = function DispatchDashboard({
     const jobTypeReq = await getJobTypes();
     const googleApiKey = await getGoogleApiKey();
     dispatchDashboard({
-      type: 'setInitialDropdowns',
+      type: 'setDropdownValuesAndApi',
       data: {
         departmentList: departmentReq.departments,
         defaultDepartmentIds: departmentReq.defaultValues,
         jobTypeList: jobTypeReq.jobTypes,
         googleApiKey: googleApiKey.googleKey,
       }
-    })
+    });
+  }
+
+  const handleFilterSave = () => {
+    const saveFilter : FormData = {
+      dateStart: initialFormData.dateStart, 
+      timeStart: initialFormData.timeStart, 
+      dateEnd: initialFormData.dateEnd, 
+      timeEnd: initialFormData.timeEnd, 
+      departmentIds: state.formData.departmentIds,
+      jobTypes: state.formData.jobTypes,
+      divisionMulti: state.formData.divisionMulti,
+    }
+    window.localStorage.setItem(
+      'DISPATCH_DASHBOARD_FILTER',
+      JSON.stringify(saveFilter),
+    );
+  };
+
+  const handleFilterLoad = () => {
+    // const cachedFilters = window.localStorage.getItem('DISPATCH_DASHBOARD_FILTER',);
+    // if (cachedFilters) {
+    //   dispatchDashboard({type:'setFormData', data:JSON.parse(cachedFilters)});
+    // } else {
+      dispatchDashboard({type:'setFormData', data:initialFormData});
+    // }
   }
 
   const SCHEMA_PRINT: Schema<FormData> = [
@@ -462,9 +483,14 @@ export const DispatchDashboard: React.FC<Props> = function DispatchDashboard({
         invisible: state.jobTypeList.length <= 1 ? true : undefined,
       },
       {
-        name: 'isResidential',
-        label: 'Residential Only',
-        type: 'checkbox',
+        name: 'divisionMulti',
+        label: 'Division(s)',
+        options: ['Residential', 'Commercial'].map(item => ({
+          key: item,
+          label: item,
+          value: item
+        })),
+        type: 'multiselect',
       },
     ],
     [
@@ -513,7 +539,8 @@ export const DispatchDashboard: React.FC<Props> = function DispatchDashboard({
 
   useEffect(() => {
     setDropDownValues();
-    // console.log('drop down use effect');
+    handleFilterLoad();
+    console.log('drop down use effect');
   }, []);
 
   return (
@@ -528,15 +555,35 @@ export const DispatchDashboard: React.FC<Props> = function DispatchDashboard({
       {!state.isInitialLoad && (
         <div>
       <Grid style={{paddingTop:'15px'}}>
+        {!state.isLoadingFilters && (
         <Grid item xs={12} style={{width:'98%', margin:'auto'}}>
           <PlainForm
             schema={SCHEMA_PRINT}
-            data={initialFormData}
+            data={state.formData}
             onChange={debounce(handleChange, 1000)}
           />
         </Grid>
-
-        <Grid item xs={12} style={{width:'98%', margin:'auto'}}>
+        )}
+        {/* <Grid item xs={12}>
+          <Grid container spacing={1} justifyContent='center'>
+            <Grid item xs={2}>
+              <Button size="small" variant="contained" color="primary" style={{width:'80%'}} onClick={() => {console.log(state.formData)}}>
+                Apply
+              </Button>
+            </Grid>
+            <Grid item xs={3}>
+              <Button size="small" variant="contained" color="secondary" style={{width:'80%'}} onClick={handleFilterSave}>
+                Save Non-Date Filters
+              </Button>
+            </Grid>
+            <Grid item xs={3}>
+              <Button size="small" variant="outlined" color="primary" style={{width:'80%'}} onClick={() => {dispatchDashboard({type:'setFormData', data:initialFormData})}}>
+                Reset Filters
+              </Button>
+            </Grid>
+          </Grid>
+        </Grid> */}
+        <Grid item xs={12} style={{width:'98%', margin:'auto', paddingTop:'15px', paddingBottom:'10px'}}>
           <hr style={{borderTop: "3px solid black"}}/>
         </Grid>
 

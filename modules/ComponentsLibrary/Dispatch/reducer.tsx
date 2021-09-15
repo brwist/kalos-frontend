@@ -9,22 +9,15 @@ export type FormData = {
   timeEnd: string;
   departmentIds: number[];
   jobTypes: number[];
-  isResidential: number;
+  divisionMulti: string[];
 };
 export interface State {
   techs: DispatchableTech[];
   dismissedTechs: DispatchableTech[];
   calls: DispatchCall[];
-  departmentIds: number[];
   defaultDepartmentIds: number[];
-  jobTypes: number[];
   departmentList: TimesheetDepartment[];
   jobTypeList: JobType[];
-  callStartDate: string;
-  callEndDate: string;
-  callStartTime: string;
-  callEndTime: string;
-  isResidential: number;
   formData: FormData;
   notIncludedJobTypes: number[];
   openModal: boolean;
@@ -39,6 +32,7 @@ export interface State {
   isLoadingCall: boolean;
   isLoadingMap: boolean;
   isInitialLoad: boolean;
+  isLoadingFilters: boolean;
 }
 
 export type Action =
@@ -49,28 +43,10 @@ export type Action =
   | { type: 'setCalls'; data: {
     calls: DispatchCall[] 
   }}
-  | { type: 'updateTechParameters'; data: {
-    departmentIds: number[] 
-  }}
-  | { type: 'updateCallParameters'; data: {
-    jobTypes: number[],
-    callDateStarted: string,
-    callDateEnded: string,
-    callTimeStarted: string,
-    callTimeEnded: string,
-    isResidential: number,
-  }}
   | { type: 'setDepartmentList'; data: TimesheetDepartment[] }
   | { type: 'setJobTypeList'; data: JobType[] }
   | { type: 'setFormData'; data: FormData }
-  | { type: 'setInitialRender'; data: {
-    techs: DispatchableTech[],
-    calls: DispatchCall[],
-    dismissedTechs: DispatchableTech[],
-    departmentList: TimesheetDepartment[],
-    jobTypeList: JobType[]
-  }}
-  | { type: 'setInitialDropdowns'; data: {
+  | { type: 'setDropdownValuesAndApi'; data: {
     departmentList: TimesheetDepartment[],
     defaultDepartmentIds: number[],
     jobTypeList: JobType[],
@@ -107,21 +83,6 @@ export const reducer = (state: State, action: Action) => {
         calls: action.data.calls,
         isLoadingCall: false,
       };
-    case 'updateTechParameters':
-      return {
-        ...state,
-        departmentIds: action.data.departmentIds,
-      };
-    case 'updateCallParameters':
-      return {
-        ...state,
-        jobTypes: action.data.jobTypes,
-        callStartDate: action.data.callDateStarted,
-        callEndDate: action.data.callDateEnded,
-        callStartTime: action.data.callTimeStarted,
-        callEndTime: action.data.callTimeEnded,
-        isResidential: action.data.isResidential,
-      };
     case 'setDepartmentList':
       return {
         ...state,
@@ -136,17 +97,9 @@ export const reducer = (state: State, action: Action) => {
       return {
         ...state,
         formData: action.data,
+        isLoadingFilters: false,
       };
-    case 'setInitialRender':
-      return {
-        ...state,
-        techs: action.data.techs,
-        calls: action.data.calls,
-        dismissedTechs: action.data.dismissedTechs,
-        departmentList: action.data.departmentList,
-        jobTypeList: action.data.jobTypeList,
-      }
-    case 'setInitialDropdowns':
+    case 'setDropdownValuesAndApi':
       return {
         ...state,
         departmentList: action.data.departmentList,
@@ -187,9 +140,9 @@ export const reducer = (state: State, action: Action) => {
         isLoadingCall: action.data,
       }
     case 'setLoadingMap':
-    return {
-      ...state,
-      isLoadingMap: action.data,
+      return {
+        ...state,
+        isLoadingMap: action.data,
       }
     default:
       return state;

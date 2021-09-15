@@ -23,8 +23,11 @@ import {
   MapClientService,
   PropertiesSort,
   makeSafeFormObject,
+  ActivityLogClientService,
 } from '../../../helpers';
 import './properties.less';
+import { ActivityLog } from '@kalos-core/kalos-rpc/ActivityLog';
+import format from 'date-fns/esm/format';
 
 const PROP_LEVEL = 'Used for property-level billing only';
 
@@ -105,20 +108,40 @@ export const Properties: FC<Props> = props => {
     async (data: Property) => {
       if (editing) {
         setSaving(true);
-        const geo = await MapClientService.loadGeoLocationByAddress(
-          `${data.getAddress()}, ${data.getCity()}, ${data.getState()} ${data.getZip()}`,
-        );
-        if (geo) {
-          data.setGeolocationLat(geo.geolocationLat);
-          data.setGeolocationLng(geo.geolocationLng);
+        try {
+          const geo = await MapClientService.loadGeoLocationByAddress(
+            `${data.getAddress()}, ${data.getCity()}, ${data.getState()} ${data.getZip()}`,
+          );
+          if (geo) {
+            data.setGeolocationLat(geo.geolocationLat);
+            data.setGeolocationLng(geo.geolocationLng);
+          }
+          const property = await PropertyClientService.saveProperty(
+            data,
+            userID,
+            editing.getId() === 0 ? undefined : editing.getId(),
+          );
+          const actLog = new ActivityLog();
+          let actName = ` Property : ${property.getAddress()}`
+          actLog.setPropertyId(property.getId());
+          if (geo) {
+            actLog.setGeolocationLat(geo.geolocationLat);
+            actLog.setGeolocationLng(geo.geolocationLng);
+          } else if (editing.getGeolocationLat() && editing.getGeolocationLng()){
+            actLog.setGeolocationLat(editing.getGeolocationLat());
+            actLog.setGeolocationLng(editing.getGeolocationLng());
+          } else {
+            actName = actName.concat(` (location services disabled)`);
+          }
+          actLog.setActivityName(editing.getId() ? `Edited`.concat(actName) : `Added`.concat(actName));
+          actLog.setActivityDate(format(new Date(), 'yyyy-MM-dd HH:mm:ss'));
+          actLog.setUserId(userID);
+          await ActivityLogClientService.Create(actLog);
+          handleSetEditing()();
+        } catch (err) {
+          console.error(err);
         }
-        await PropertyClientService.saveProperty(
-          data,
-          userID,
-          editing.getId() === 0 ? undefined : editing.getId(),
-        );
         setSaving(false);
-        handleSetEditing()();
         load();
       }
     },
@@ -127,11 +150,21 @@ export const Properties: FC<Props> = props => {
 
   const handleDelete = useCallback(async () => {
     if (deleting) {
-      await PropertyClientService.deletePropertyById(deleting.getId());
-      handleSetDeleting()();
+      const actLog = new ActivityLog();
+      actLog.setPropertyId(deleting.getId());
+      actLog.setActivityName(`Deleted Property : ${deleting.getAddress()}`);
+      actLog.setUserId(userID);
+      actLog.setActivityDate(format(new Date(), 'yyyy-MM-dd HH:mm:ss'));
+      try {
+        await PropertyClientService.deletePropertyById(deleting.getId());
+        await ActivityLogClientService.Create(actLog);
+        handleSetDeleting()();
+      } catch (err) {
+        console.error(err);
+      }
       load();
     }
-  }, [deleting, handleSetDeleting, load]);
+  }, [deleting, handleSetDeleting, load, userID]);
 
   const handleCheckLocation = useCallback(async () => {
     if (editing) {
