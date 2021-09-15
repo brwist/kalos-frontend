@@ -955,6 +955,7 @@ const NAMED_EXPORTS = {
     'CardDataList',
     'CardData',
     'PermissionGroupUser',
+    'PermissionGroup',
   ],
   'node_modules/@kalos-core/kalos-rpc/compiled-protos/vendor_order_pb.js': [
     'VendorOrder',
