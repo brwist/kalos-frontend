@@ -52,6 +52,7 @@ export type FilterData = {
   rejected?: boolean;
   amount?: number;
   billingRecorded: boolean;
+  processed: boolean;
   universalSearch: string | undefined;
 };
 
@@ -70,6 +71,7 @@ export const Payroll: FC<Props> = ({ userID }) => {
     week: OPTION_ALL,
     billingRecorded: false,
     universalSearch: undefined,
+    processed: false,
   });
 
   const handleSetFilter = (d: FilterData) => {

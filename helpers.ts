@@ -14,7 +14,10 @@ import { PropertyClient, Property } from '@kalos-core/kalos-rpc/Property';
 import { EventClient, Event } from '@kalos-core/kalos-rpc/Event';
 import { JobTypeClient } from '@kalos-core/kalos-rpc/JobType';
 import { TimeoffRequestClient } from '@kalos-core/kalos-rpc/TimeoffRequest';
-import { TransactionClient } from '@kalos-core/kalos-rpc/Transaction';
+import {
+  Transaction,
+  TransactionClient,
+} from '@kalos-core/kalos-rpc/Transaction';
 import { TaskEvent, TaskEventClient } from '@kalos-core/kalos-rpc/TaskEvent';
 import { TaskClient } from '@kalos-core/kalos-rpc/Task';
 import { TaskAssignmentClient } from '@kalos-core/kalos-rpc/TaskAssignment';
@@ -44,7 +47,10 @@ import { MetricsClient } from '@kalos-core/kalos-rpc/Metrics';
 import { SpiffToolAdminActionClient } from '@kalos-core/kalos-rpc/SpiffToolAdminAction';
 import { GroupClient } from '@kalos-core/kalos-rpc/Group';
 import { UserGroupLinkClient } from '@kalos-core/kalos-rpc/UserGroupLink';
-import { TransactionDocumentClient } from '@kalos-core/kalos-rpc/TransactionDocument';
+import {
+  TransactionDocument,
+  TransactionDocumentClient,
+} from '@kalos-core/kalos-rpc/TransactionDocument';
 import { InternalDocumentClient } from '@kalos-core/kalos-rpc/InternalDocument';
 import { PDFClient } from '@kalos-core/kalos-rpc/PDF';
 import { DocumentClient } from '@kalos-core/kalos-rpc/Document';
@@ -76,6 +82,8 @@ import { PropLinkClient } from '@kalos-core/kalos-rpc/PropLink';
 import { TransactionAccountClient } from '@kalos-core/kalos-rpc/TransactionAccount';
 import { EventAssignmentClient } from '@kalos-core/kalos-rpc/EventAssignment';
 import { SlackClient } from '@kalos-core/kalos-rpc/Slack';
+import { File } from '@kalos-core/kalos-rpc/File';
+import { DevlogClient } from '@kalos-core/kalos-rpc/Devlog';
 
 export type SimpleFile = {
   key: string;
@@ -144,6 +152,7 @@ export const TransactionAccountClientService = new TransactionAccountClient(
 );
 export const EventAssignmentClientService = new EventAssignmentClient(ENDPOINT);
 export const SlackClientService = new SlackClient(ENDPOINT);
+export const DevlogClientService = new DevlogClient(ENDPOINT)
 
 export const getCFAppUrl = (action: string) => `${BASE_URL}?action=${action}`;
 
@@ -1874,6 +1883,175 @@ const cleanFieldMaskField = (f: string) => {
   console.log(f.slice(3));
   if (f.startsWith('get') || f.startsWith('set')) {
     return f.slice(3);
+  }
+};
+
+const getNumberOfDocumentsForTransaction = async (
+  transactionId: number,
+): Promise<number> => {
+  let initialDocumentLength = 0;
+  // Get how many docs there are
+  try {
+    initialDocumentLength = (
+      await TransactionDocumentClientService.byTransactionID(transactionId)
+    ).length;
+  } catch (err) {
+    console.error(
+      `An error occurred while getting the amount of items in the bucket: ${err}`,
+    );
+    alert('An error occurred while double-checking that the file exists.');
+  }
+
+  return initialDocumentLength;
+};
+
+export const uploadPhotoToExistingTransaction = async (
+  fileName: string,
+  fileDescription: 'Receipt' | 'PickTicket' | 'Invoice' | undefined,
+  fileData: string,
+  existingTransaction: Transaction,
+  loggedUserId: number, // loggedUserId included for logging purposes
+  invoiceWaiverType?: number,
+) => {
+  const ext = getFileExt(fileName);
+  const name = `${existingTransaction!.getId()}-${existingTransaction.getDescription()}-${Math.floor(
+    Date.now() / 1000,
+  )}.${ext}`;
+  const nameWithoutId = `${existingTransaction.getDescription()}-${Math.floor(
+    Date.now() / 1000,
+  )}.${ext}`;
+
+  // Getting initial amount of documents there are for this transaction to ensure that the proper number are present
+  // at the end (checks success of the upload)
+
+  let initialDocumentLength = await getNumberOfDocumentsForTransaction(
+    existingTransaction.getId(),
+  );
+
+  let status;
+
+  try {
+    status = await uploadFileToS3Bucket(
+      name,
+      fileData,
+      'kalos-transactions',
+      existingTransaction.getVendorCategory(),
+    );
+  } catch (err) {
+    console.error(`An error occurred while uploading the file to S3: ${err}`);
+    try {
+      let log = new ActivityLog();
+      log.setActivityDate(format(new Date(), 'yyyy-MM-dd hh:mm:ss'));
+      log.setUserId(loggedUserId);
+      log.setActivityName(
+        `ERROR : An error occurred while uploading a file to the S3 bucket ${'kalos-transactions'}. File name: ${name}. Error: ${err}`,
+      );
+      await ActivityLogClientService.Create(log);
+    } catch (err) {
+      console.error(
+        `An error occurred while uploading an activity log for an error in an S3 bucket: ${err}`,
+      );
+    }
+  }
+
+  if (status === 'ok') {
+    const fReq = new File();
+    fReq.setBucket('kalos-transactions');
+    fReq.setName(name);
+    fReq.setMimeType(name);
+    fReq.setOwnerId(loggedUserId);
+    let uploadFile;
+    try {
+      uploadFile = await FileClientService.Create(fReq);
+    } catch (err) {
+      console.error(`An error occurred while creating a file: ${err}`);
+      try {
+        let log = new ActivityLog();
+        log.setActivityDate(format(new Date(), 'yyyy-MM-dd hh:mm:ss'));
+        log.setUserId(loggedUserId);
+        log.setActivityName(
+          `ERROR : An error occurred while creating a file. File name: ${name}. Error: ${err}`,
+        );
+        await ActivityLogClientService.Create(log);
+      } catch (err) {
+        console.error(
+          `An error occurred while uploading an activity log for a failed file upload: ${err}`,
+        );
+      }
+    }
+
+    if (!uploadFile) {
+      console.error('No file was uploaded - returning.');
+      return;
+    }
+
+    const tDoc = new TransactionDocument();
+    if (fileDescription) tDoc.setDescription(fileDescription);
+    if (invoiceWaiverType) tDoc.setTypeId(invoiceWaiverType);
+    if (fileDescription != 'Invoice') {
+      tDoc.setTypeId(1);
+    }
+    if (existingTransaction) tDoc.setTransactionId(existingTransaction.getId());
+    tDoc.setReference(nameWithoutId);
+    tDoc.setFileId(uploadFile.getId());
+    try {
+      await TransactionDocumentClientService.Create(tDoc);
+    } catch (err) {
+      console.error(
+        `An error occurred while creating a transaction document: ${err}`,
+      );
+      try {
+        let log = new ActivityLog();
+        log.setActivityDate(format(new Date(), 'yyyy-MM-dd hh:mm:ss'));
+        log.setUserId(loggedUserId);
+        log.setActivityName(
+          `ERROR : An error occurred while creating a transaction document. File name: ${name}. Error: ${err}`,
+        );
+        await ActivityLogClientService.Create(log);
+      } catch (err) {
+        console.error(
+          `An error occurred while uploading an activity log for a failed transaction document upload: ${err}`,
+        );
+      }
+    }
+  } else {
+    // status was not "ok"
+    alert('An error occurred while uploading the file to the S3 bucket.');
+    try {
+      let log = new ActivityLog();
+      log.setActivityDate(format(new Date(), 'yyyy-MM-dd hh:mm:ss'));
+      log.setUserId(loggedUserId);
+      log.setActivityName(
+        `ERROR : An error occurred while uploading a file to the S3 bucket ${'kalos-transactions'} (Status came back as ${status}). File name: ${name}`,
+      );
+      await ActivityLogClientService.Create(log);
+    } catch (err) {
+      console.error(
+        `An error occurred while uploading an activity log for an error in an S3 bucket: ${err}`,
+      );
+    }
+  }
+
+  try {
+    const docs = await getNumberOfDocumentsForTransaction(
+      existingTransaction.getId(),
+    );
+
+    // Just double checking that everything worked.
+    if (docs <= initialDocumentLength) {
+      alert(
+        'Upload was unsuccessful, please contact the webtech team if this issue persists.',
+      );
+      return;
+    }
+    console.log('DOC LENGTH WAS GOOD FROM CHECK: ', docs);
+  } catch (err) {
+    console.error(
+      `An error occurred while double-checking that the file which was just uploaded exists: ${err}`,
+    );
+    alert(
+      'An error occurred while double-checking that the file exists. Please retry the upload, and if the problem persists, please contact the webtech team.',
+    );
   }
 };
 

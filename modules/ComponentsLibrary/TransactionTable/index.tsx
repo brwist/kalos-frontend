@@ -7,6 +7,7 @@ import {
   TransactionActivity,
   TransactionActivityClient,
 } from '@kalos-core/kalos-rpc/TransactionActivity';
+import CheckCircleOutlineIcon from '@material-ui/icons/CheckCircleOutline';
 import { User } from '@kalos-core/kalos-rpc/User';
 import IconButton from '@material-ui/core/IconButton';
 import AssignmentIndIcon from '@material-ui/icons/AssignmentInd';
@@ -14,10 +15,13 @@ import CheckIcon from '@material-ui/icons/CheckCircleSharp';
 import CloseIcon from '@material-ui/icons/Close';
 import UploadIcon from '@material-ui/icons/CloudUploadSharp';
 import DoneIcon from '@material-ui/icons/Done';
+import Save from '@material-ui/icons/Save';
 import CopyIcon from '@material-ui/icons/FileCopySharp';
 import RejectIcon from '@material-ui/icons/ThumbDownSharp';
 import SubmitIcon from '@material-ui/icons/ThumbUpSharp';
 import { format, parseISO } from 'date-fns';
+import { Event } from '@kalos-core/kalos-rpc/Event';
+import { PopoverComponent } from '../Popover';
 import React, { FC, useCallback, useEffect, useReducer } from 'react';
 import {
   ENDPOINT,
@@ -31,15 +35,13 @@ import {
   OrderDir,
   TimesheetDepartmentClientService,
   timestamp,
+  EventClientService,
   TransactionClientService,
   UserClientService,
   TransactionActivityClientService,
   EmailClientService,
-  TransactionDocumentClientService,
-  getFileExt,
-  uploadFileToS3Bucket,
-  FileClientService,
-  ActivityLogClientService,
+  uploadPhotoToExistingTransaction,
+  DevlogClientService,
 } from '../../../helpers';
 import { AltGallery } from '../../AltGallery/main';
 import { Tooltip } from '../../ComponentsLibrary/Tooltip';
@@ -61,14 +63,12 @@ import DeleteIcon from '@material-ui/icons/Delete';
 import { EditTransaction } from '../EditTransaction';
 import { TimesheetDepartment } from '@kalos-core/kalos-rpc/TimesheetDepartment';
 import { StatusPicker } from './components/StatusPicker';
-import { TransactionDocument } from '@kalos-core/kalos-rpc/TransactionDocument';
 import { ErrorBoundary } from '../ErrorBoundary';
 import { ConfirmDelete } from '../ConfirmDelete';
 import { UploadPhotoToExistingTransaction } from '../UploadPhotoToExistingTransaction';
-import { File } from '@kalos-core/kalos-rpc/File';
-import { ActivityLog } from '@kalos-core/kalos-rpc/ActivityLog';
 import { Form } from '../Form';
 import { ACTIONS } from './reducer';
+import { Devlog } from '@kalos-core/kalos-rpc/Devlog';
 
 export interface Props {
   loggedUserId: number;
@@ -108,6 +108,7 @@ let filter: FilterType = {
   amount: undefined,
   billingRecorded: false,
   universalSearch: undefined,
+  processed: false,
 };
 
 let assigned: AssignedEmployeeType = {
@@ -121,7 +122,6 @@ export const TransactionTable: FC<Props> = ({
   onDeselect,
   hasActions,
 }) => {
-  const FileInput = React.createRef<HTMLInputElement>();
   const [state, dispatch] = useReducer(reducer, {
     transactionFilter: filter,
     transactions: undefined,
@@ -155,13 +155,6 @@ export const TransactionTable: FC<Props> = ({
     transactionToSave: undefined,
     imageNameToSave: undefined,
   });
-
-  const handleSetTransactionToEdit = useCallback(
-    (transaction: Transaction | undefined) => {
-      dispatch({ type: ACTIONS.SET_TRANSACTION_TO_EDIT, data: transaction });
-    },
-    [],
-  );
 
   // For emails
   const getRejectTxnBody = (
@@ -288,11 +281,6 @@ export const TransactionTable: FC<Props> = ({
     await makeUpdateStatus(txn.getId(), 4, 'rejected', reason);
     refresh();
   };
-
-  const handleChangePage = useCallback((pageNumberToChangeTo: number) => {
-    dispatch({ type: ACTIONS.SET_PAGE, data: pageNumberToChangeTo });
-    dispatch({ type: ACTIONS.SET_CHANGING_PAGE, data: true });
-  }, []);
   const resetTransactions = useCallback(async () => {
     let req = new Transaction();
     req.setOrderBy(sortBy ? sortBy : 'timestamp');
@@ -308,6 +296,9 @@ export const TransactionTable: FC<Props> = ({
     }
     if (state.transactionFilter.isRejected) {
       req.setStatusId(4);
+    }
+    if (state.transactionFilter.processed) {
+      req.setStatusId(5);
     }
     if (state.transactionFilter.vendor)
       req.setVendor(`%${state.transactionFilter.vendor}%`);
@@ -326,17 +317,16 @@ export const TransactionTable: FC<Props> = ({
         res = await TransactionClientService.Search(req);
       } catch (err) {
         try {
-          let errLog = new TransactionActivity();
+          let errLog = new Devlog();
           errLog.setTimestamp(format(new Date(), 'yyyy-MM-dd hh:mm:ss'));
           errLog.setUserId(loggedUserId);
           errLog.setDescription(
-            `ERROR : An error occurred while using universal search: ${err}`,
+            `An error occurred while using universal search: ${err}`,
           );
-          await TransactionActivityClientService.Create(errLog);
+          errLog.setErrorSeverity(1);
+          const result = await DevlogClientService.Create(errLog);
         } catch (errActivity) {
-          console.error(
-            `An error occurred while using universal search: ${err} `,
-          );
+          console.error(`An error occurred while uploading a dev log: ${err} `);
         }
         console.error(
           `An error occurred while searching for transactions in TransactionTable: ${err}`,
@@ -351,7 +341,8 @@ export const TransactionTable: FC<Props> = ({
             data: res.getTotalCount(),
           });
 
-          handleChangePage(0);
+          dispatch({ type: ACTIONS.SET_PAGE, data: 0 });
+          dispatch({ type: ACTIONS.SET_CHANGING_PAGE, data: true });
         }
       } catch (err) {
         try {
@@ -433,7 +424,6 @@ export const TransactionTable: FC<Props> = ({
     const temp = transactions.map(txn => txn);
     dispatch({ type: ACTIONS.SET_TRANSACTIONS, data: temp });
   }, [
-    handleChangePage,
     loggedUserId,
     state.page,
     state.totalTransactions,
@@ -443,6 +433,7 @@ export const TransactionTable: FC<Props> = ({
     state.transactionFilter.employeeId,
     state.transactionFilter.isAccepted,
     state.transactionFilter.isRejected,
+    state.transactionFilter.processed,
     state.transactionFilter.universalSearch,
     state.transactionFilter.vendor,
   ]);
@@ -519,7 +510,16 @@ export const TransactionTable: FC<Props> = ({
       await refresh();
     }
   };
-
+  const updateStatusProcessed = async (txn: Transaction) => {
+    const ok = confirm(
+      `Are you sure you want to mark this transaction as Processed?`,
+    );
+    if (ok) {
+      await makeUpdateStatus(txn.getId(), 5, 'Recorded and Processed');
+      await resetTransactions();
+      await refresh();
+    }
+  };
   const forceAccept = async (txn: Transaction) => {
     const ok = confirm(
       `Are you sure you want to mark this transaction as accepted?`,
@@ -542,12 +542,6 @@ export const TransactionTable: FC<Props> = ({
     document.body.removeChild(el);
   }, []);
 
-  const handleSetError = useCallback(
-    (error: string | undefined) =>
-      dispatch({ type: ACTIONS.SET_ERROR, data: error }),
-    [],
-  );
-
   const handleSetAssigningUser = useCallback(
     (isAssigningUser: boolean, transactionId: number) => {
       if (isAssigningUser) {
@@ -564,15 +558,6 @@ export const TransactionTable: FC<Props> = ({
         },
       });
     },
-    [],
-  );
-
-  const handleSetAssignedEmployee = useCallback(
-    assignedEmployee =>
-      dispatch({
-        type: ACTIONS.SET_ASSIGNED_EMPLOYEE,
-        data: assignedEmployee,
-      }),
     [],
   );
 
@@ -597,10 +582,11 @@ export const TransactionTable: FC<Props> = ({
     filter.amount = d.amount;
     filter.billingRecorded = d.billingRecorded;
     filter.universalSearch = d.universalSearch;
+    filter.processed = d.processed;
     dispatch({ type: ACTIONS.SET_TRANSACTION_FILTER, data: filter });
   }, []);
 
-  const handleUpdateTransaction = useCallback(
+  const updateTransaction = useCallback(
     async (transactionToSave: Transaction) => {
       try {
         let log = new TransactionActivity();
@@ -642,8 +628,37 @@ export const TransactionTable: FC<Props> = ({
     },
     [refresh, loggedUserId, state.page],
   );
-
-  const handleChangeSort = (newSort: string) => {
+  const getJobNumberInfo = async (number: number) => {
+    let returnString = ['No Job Info Found'];
+    if (number != 0) {
+      try {
+        console.log('we got called to get info');
+        const eventReq = new Event();
+        eventReq.setId(number);
+        const res = await EventClientService.Get(eventReq);
+        const descritpion = 'Job Description: ' + res.getDescription();
+        const customer =
+          'Customer: ' +
+          (res.getCustomer() === undefined
+            ? 'No Customer '
+            : `${res.getCustomer()!.getFirstname()} ${res
+                .getCustomer()!
+                .getLastname()}`);
+        const property =
+          'Property: ' +
+          (res.getProperty() === undefined
+            ? 'No Property'
+            : `${res.getProperty()!.getAddress()} ${res
+                .getProperty()!
+                .getCity()}`);
+        returnString = [descritpion, customer, property];
+      } catch (error) {
+        console.log('Not a number');
+      }
+    }
+    return returnString;
+  };
+  const changeSort = (newSort: string) => {
     let newSortDir: OrderDir | ' ' | undefined;
 
     if (newSort == sortBy) {
@@ -664,26 +679,6 @@ export const TransactionTable: FC<Props> = ({
 
     refresh();
   };
-
-  const handleSetCreatingTransaction = useCallback(
-    (isCreatingTransaction: boolean) => {
-      dispatch({
-        type: ACTIONS.SET_CREATING_TRANSACTION,
-        data: isCreatingTransaction,
-      });
-    },
-    [],
-  );
-
-  const handleSetMergingTransaction = useCallback(
-    (isMergingTransaction: boolean) => {
-      dispatch({
-        type: ACTIONS.SET_MERGING_TRANSACTION,
-        data: isMergingTransaction,
-      });
-    },
-    [],
-  );
 
   const handleAssignEmployee = useCallback(
     async (employeeIdToAssign: number | undefined, transactionId: number) => {
@@ -851,7 +846,12 @@ export const TransactionTable: FC<Props> = ({
       },
       {
         name: 'billingRecorded',
-        label: 'Was processed?',
+        label: 'Was Approved/Rejected?',
+        type: 'checkbox',
+      },
+      {
+        name: 'processed',
+        label: 'Was Processed?',
         type: 'checkbox',
       },
     ],
@@ -896,7 +896,7 @@ export const TransactionTable: FC<Props> = ({
     ],
   ];
 
-  const handleSaveFromRowButton = useCallback(
+  const saveFromRowButton = useCallback(
     async (saved: any) => {
       let newTxn = new Transaction();
       newTxn.setTimestamp(saved['Date']);
@@ -953,11 +953,11 @@ export const TransactionTable: FC<Props> = ({
     [loggedUserId, resetTransactions, refresh],
   );
 
-  const handleDeleteTransaction = useCallback(async () => {
+  const deleteTransaction = useCallback(async () => {
     try {
       if (state.transactionToDelete === undefined) {
         throw new Error(
-          'There is no transaction to delete defined in state, yet handleDeleteTransaction was called.',
+          'There is no transaction to delete defined in state, yet deleteTransaction was called.',
         );
       }
       await TransactionClientService.Delete(state.transactionToDelete);
@@ -968,118 +968,6 @@ export const TransactionTable: FC<Props> = ({
       console.error(`An error occurred while deleting a transaction: ${err}`);
     }
   }, [state.transactionToDelete, refresh, resetTransactions]);
-
-  const handleSaveFileToBucket = useCallback(
-    async (
-      fileData: string,
-      fileName: string,
-      fileDescription: 'Receipt' | 'PickTicket' | 'Invoice',
-      invoiceWaiverType: number | undefined,
-      transaction: Transaction,
-    ) => {
-      const ext = getFileExt(fileName);
-      const name = `${transaction!.getId()}-${transaction.getDescription()}-${Math.floor(
-        Date.now() / 1000,
-      )}.${ext}`;
-      const nameWithoutId = `${transaction.getDescription()}-${Math.floor(
-        Date.now() / 1000,
-      )}.${ext}`;
-
-      let initialDocumentLength = 0;
-      // Get how many docs there are
-      try {
-        initialDocumentLength = (
-          await TransactionDocumentClientService.byTransactionID(
-            transaction!.getId(),
-          )
-        ).length;
-      } catch (err) {
-        console.error(
-          `An error occurred while getting the amount of items in the bucket: ${err}`,
-        );
-        alert('An error occurred while double-checking that the file exists.');
-      }
-
-      let status;
-      try {
-        status = await uploadFileToS3Bucket(
-          name,
-          fileData,
-          'kalos-transactions',
-          transaction.getVendorCategory(),
-        );
-        if (status === 'ok') {
-          const fReq = new File();
-          fReq.setBucket('kalos-transactions');
-          fReq.setName(name);
-          fReq.setMimeType(name);
-          fReq.setOwnerId(loggedUserId);
-          const uploadFile = await FileClientService.Create(fReq);
-
-          const tDoc = new TransactionDocument();
-          tDoc.setDescription(fileDescription);
-          if (invoiceWaiverType) tDoc.setTypeId(invoiceWaiverType);
-          if (fileDescription != 'Invoice') {
-            tDoc.setTypeId(1);
-          }
-          if (transaction) tDoc.setTransactionId(transaction.getId());
-          tDoc.setReference(nameWithoutId);
-          tDoc.setFileId(uploadFile.getId());
-          await TransactionDocumentClientService.Create(tDoc);
-        } else {
-          alert('An error occurred while uploading the file to the S3 bucket.');
-          try {
-            let log = new ActivityLog();
-            log.setActivityDate(format(new Date(), 'yyyy-MM-dd hh:mm:ss'));
-            log.setUserId(loggedUserId);
-            log.setActivityName(
-              `ERROR : An error occurred while uploading a file to the S3 bucket ${'kalos-transactions'} (Status came back as ${status}). File name: ${name}`,
-            );
-            await ActivityLogClientService.Create(log);
-          } catch (err) {
-            console.error(
-              `An error occurred while uploading an activity log for an error in an S3 bucket: ${err}`,
-            );
-          }
-        }
-        try {
-          const docs = await TransactionDocumentClientService.byTransactionID(
-            transaction!.getId(),
-          );
-          if (docs.length <= initialDocumentLength) {
-            alert('Upload was unsuccessful, please contact the webtech team.');
-            return;
-          }
-          console.log('DOC LENGTH WAS GOOD FROM CHECK: ', docs.length);
-        } catch (err) {
-          console.error(
-            `An error occurred while double-checking that the file which was just uploaded exists: ${err}`,
-          );
-          alert(
-            'An error occurred while double-checking that the file exists. Please retry the upload, and if the problem persists, please contact the webtech team.',
-          );
-        }
-      } catch (err) {
-        console.error(
-          `An error occurred while uploading the file to S3: ${err}`,
-        );
-        try {
-          let log = new ActivityLog();
-          log.setActivityDate(format(new Date(), 'yyyy-MM-dd hh:mm:ss'));
-          log.setUserId(loggedUserId);
-          log.setActivityName(
-            `ERROR : An error occurred while uploading a file to the S3 bucket ${'kalos-transactions'}. File name: ${name}. Error: ${err}`,
-          );
-          await ActivityLogClientService.Create(log);
-        } catch (err) {
-          console.error(
-            `An error occurred while uploading an activity log for an error in an S3 bucket: ${err}`,
-          );
-        }
-      }
-    },
-    [loggedUserId],
-  );
 
   useEffect(() => {
     if (!state.loaded) {
@@ -1160,12 +1048,13 @@ export const TransactionTable: FC<Props> = ({
                 dispatch({ type: ACTIONS.SET_LOADING, data: false });
                 return;
               }
-              await handleSaveFileToBucket(
-                state.fileData,
+              await uploadPhotoToExistingTransaction(
                 state.imageNameToSave,
                 saved.documentType,
-                saved.invoiceWaiverType,
+                state.fileData,
                 state.transactionToSave,
+                loggedUserId,
+                saved.invoiceWaiverType,
               );
               dispatch({ type: ACTIONS.SET_LOADING, data: false });
               dispatch({
@@ -1195,7 +1084,7 @@ export const TransactionTable: FC<Props> = ({
       {state.error && (
         <Alert
           open={state.error != undefined}
-          onClose={() => handleSetError(undefined)}
+          onClose={() => dispatch({ type: ACTIONS.SET_ERROR, data: undefined })}
           title="Error"
         >
           {state.error}
@@ -1210,7 +1099,7 @@ export const TransactionTable: FC<Props> = ({
               data: undefined,
             })
           }
-          onConfirm={() => handleDeleteTransaction()}
+          onConfirm={() => deleteTransaction()}
           kind="this transaction"
           name=""
           title="Delete"
@@ -1221,16 +1110,23 @@ export const TransactionTable: FC<Props> = ({
       {state.transactionToEdit && (
         <Modal
           open={true}
-          onClose={() => handleSetTransactionToEdit(undefined)}
+          onClose={() =>
+            dispatch({ type: ACTIONS.SET_TRANSACTION_TO_EDIT, data: undefined })
+          }
         >
           <EditTransaction
             transactionInput={state.transactionToEdit}
             onSave={saved => {
               saved.setId(state.transactionToEdit!.getId());
-              handleUpdateTransaction(saved);
+              updateTransaction(saved);
               dispatch({ type: ACTIONS.SET_SEARCHING, data: true });
             }}
-            onClose={() => handleSetTransactionToEdit(undefined)}
+            onClose={() =>
+              dispatch({
+                type: ACTIONS.SET_TRANSACTION_TO_EDIT,
+                data: undefined,
+              })
+            }
           />
         </Modal>
       )}
@@ -1255,7 +1151,10 @@ export const TransactionTable: FC<Props> = ({
           <PlainForm
             data={assigned}
             onChange={(type: AssignedEmployeeType) =>
-              handleSetAssignedEmployee(type.employeeId)
+              dispatch({
+                type: ACTIONS.SET_ASSIGNED_EMPLOYEE,
+                data: type.employeeId,
+              })
             }
             schema={SCHEMA_ASSIGN_USER}
             className="PayrollFilter"
@@ -1265,11 +1164,21 @@ export const TransactionTable: FC<Props> = ({
       {state.mergingTransaction ? (
         <Modal
           open={state.mergingTransaction}
-          onClose={() => handleSetMergingTransaction(false)}
+          onClose={() =>
+            dispatch({
+              type: ACTIONS.SET_MERGING_TRANSACTION,
+              data: false,
+            })
+          }
         >
           <CompareTransactions
             loggedUserId={loggedUserId}
-            onClose={() => handleSetMergingTransaction(false)}
+            onClose={() =>
+              dispatch({
+                type: ACTIONS.SET_MERGING_TRANSACTION,
+                data: false,
+              })
+            }
             onMerge={() => resetTransactions()}
           />
         </Modal>
@@ -1292,7 +1201,10 @@ export const TransactionTable: FC<Props> = ({
           count: state.totalTransactions,
           rowsPerPage: 50,
           page: state.page,
-          onPageChange: number => handleChangePage(number),
+          onPageChange: number => {
+            dispatch({ type: ACTIONS.SET_PAGE, data: number });
+            dispatch({ type: ACTIONS.SET_CHANGING_PAGE, data: true });
+          },
         }}
         actions={
           hasActions
@@ -1300,12 +1212,19 @@ export const TransactionTable: FC<Props> = ({
                 {
                   label: 'New Transaction',
                   onClick: () => {
-                    handleSetCreatingTransaction(!state.creatingTransaction);
+                    dispatch({
+                      type: ACTIONS.SET_CREATING_TRANSACTION,
+                      data: !state.creatingTransaction,
+                    });
                   },
                 },
                 {
                   label: 'Merge Transactions',
-                  onClick: () => handleSetMergingTransaction(true), // makes merge popup come up
+                  onClick: () =>
+                    dispatch({
+                      type: ACTIONS.SET_MERGING_TRANSACTION,
+                      data: true,
+                    }), // makes merge popup come up
                 },
               ]
             : []
@@ -1346,8 +1265,11 @@ export const TransactionTable: FC<Props> = ({
         hoverable={false}
         onSaveRowButton={async saved => {
           dispatch({ type: ACTIONS.SET_LOADING, data: true });
-          let result = await handleSaveFromRowButton(saved);
-          handleSetCreatingTransaction(false);
+          let result = await saveFromRowButton(saved);
+          dispatch({
+            type: ACTIONS.SET_CREATING_TRANSACTION,
+            data: false,
+          });
           // This is where the data would be uploaded alongside the transaction
 
           dispatch({ type: ACTIONS.SET_LOADING, data: false });
@@ -1383,7 +1305,7 @@ export const TransactionTable: FC<Props> = ({
               },
               {
                 columnName: 'Job #',
-                columnType: 'number',
+                columnType: 'eventId',
               },
               {
                 columnName: 'Amount',
@@ -1409,7 +1331,7 @@ export const TransactionTable: FC<Props> = ({
                   ? sortDir
                   : undefined
                 : undefined,
-            onClick: () => handleChangeSort('timestamp'),
+            onClick: () => changeSort('timestamp'),
           },
           {
             name: 'Order #',
@@ -1419,17 +1341,17 @@ export const TransactionTable: FC<Props> = ({
                   ? sortDir
                   : undefined
                 : undefined,
-            onClick: () => handleChangeSort('order_number'),
+            onClick: () => changeSort('order_number'),
           },
           {
-            name: 'Creator',
+            name: 'Purchaser',
             dir:
               sortBy == 'owner_id'
                 ? sortDir != ' '
                   ? sortDir
                   : undefined
                 : undefined,
-            onClick: () => handleChangeSort('owner_id'),
+            onClick: () => changeSort('owner_id'),
           },
           {
             name: 'Department',
@@ -1439,7 +1361,7 @@ export const TransactionTable: FC<Props> = ({
                   ? sortDir
                   : undefined
                 : undefined,
-            onClick: () => handleChangeSort('department_id'),
+            onClick: () => changeSort('department_id'),
           },
           {
             name: 'Job #',
@@ -1449,7 +1371,7 @@ export const TransactionTable: FC<Props> = ({
                   ? sortDir
                   : undefined
                 : undefined,
-            onClick: () => handleChangeSort('job_id'),
+            onClick: () => changeSort('job_id'),
           },
           {
             name: 'Amount',
@@ -1459,7 +1381,7 @@ export const TransactionTable: FC<Props> = ({
                   ? sortDir
                   : undefined
                 : undefined,
-            onClick: () => handleChangeSort('amount'),
+            onClick: () => changeSort('amount'),
           },
           {
             name: 'Vendor',
@@ -1469,7 +1391,7 @@ export const TransactionTable: FC<Props> = ({
                   ? sortDir
                   : undefined
                 : undefined,
-            onClick: () => handleChangeSort('vendor'),
+            onClick: () => changeSort('vendor'),
           },
           { name: 'Actions' },
           {
@@ -1526,7 +1448,19 @@ export const TransactionTable: FC<Props> = ({
                         : undefined,
                     },
                     {
-                      value: selectorParam.txn.getJobId(),
+                      value:
+                        selectorParam.txn.getJobId() != 0 ? (
+                          <PopoverComponent
+                            buttonLabel={selectorParam.txn
+                              .getJobId()
+                              .toString()}
+                            onClick={() =>
+                              getJobNumberInfo(selectorParam.txn.getJobId())
+                            }
+                          ></PopoverComponent>
+                        ) : (
+                          0
+                        ),
                       onClick: isSelector
                         ? () => setTransactionChecked(idx)
                         : undefined,
@@ -1570,7 +1504,10 @@ export const TransactionTable: FC<Props> = ({
                             <IconButton
                               size="small"
                               onClick={() =>
-                                handleSetTransactionToEdit(selectorParam.txn)
+                                dispatch({
+                                  type: ACTIONS.SET_TRANSACTION_TO_EDIT,
+                                  data: selectorParam.txn,
+                                })
                               }
                             >
                               <LineWeightIcon />
@@ -1660,6 +1597,7 @@ export const TransactionTable: FC<Props> = ({
                             : []),
                           <Tooltip key="submit" content={'Mark as accepted'}>
                             <IconButton
+                              disabled={selectorParam.txn.getStatusId() === 5}
                               size="small"
                               onClick={() => updateStatus(selectorParam.txn)}
                             >
@@ -1682,6 +1620,23 @@ export const TransactionTable: FC<Props> = ({
                               <AssignmentIndIcon />
                             </IconButton>
                           </Tooltip>,
+                          selectorParam.txn.getStatusId() === 3 &&
+                            loggedUserId === 98217 && (
+                              <Tooltip
+                                key="Process"
+                                content="Mark As Processed"
+                              >
+                                <IconButton
+                                  key="ProcessIcon"
+                                  size="small"
+                                  onClick={() =>
+                                    updateStatusProcessed(selectorParam.txn)
+                                  }
+                                >
+                                  <Save />
+                                </IconButton>
+                              </Tooltip>
+                            ),
                           <Tooltip key="delete" content="Delete this task">
                             <IconButton
                               size="small"
@@ -1700,6 +1655,7 @@ export const TransactionTable: FC<Props> = ({
                             confirmFn={reason =>
                               dispute(reason, selectorParam.txn)
                             }
+                            disabled={selectorParam.txn.getStatusId() === 5}
                             text="Reject transaction"
                             prompt="Enter reason for rejection: "
                             Icon={RejectIcon}
@@ -1746,6 +1702,17 @@ export const TransactionTable: FC<Props> = ({
                                 </IconButton>
                               </Tooltip>
                             </>
+                          ) : (
+                            <> </>
+                          )}
+                          {selectorParam.txn.getStatusId() === 5 ? (
+                            <Tooltip key="processed" content="Processesd">
+                              <IconButton size="small">
+                                <CheckCircleOutlineIcon
+                                  style={{ color: 'green' }}
+                                />
+                              </IconButton>
+                            </Tooltip>
                           ) : (
                             <> </>
                           )}
