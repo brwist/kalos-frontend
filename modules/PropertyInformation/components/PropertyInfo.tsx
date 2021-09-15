@@ -61,18 +61,22 @@ export const PropertyInfo: FC<Props> = props => {
   const [saving, setSaving] = useState<boolean>(false);
   const [error, setError] = useState<boolean>(false);
   const [deleting, setDeleting] = useState<boolean>(false);
-  const [notificationEditing, setNotificationEditing] =
-    useState<boolean>(false);
-  const [notificationViewing, setNotificationViewing] =
-    useState<boolean>(false);
-  const [editMenuAnchorEl, setEditMenuAnchorEl] =
-    useState<(EventTarget & HTMLElement) | null>(null);
+  const [notificationEditing, setNotificationEditing] = useState<boolean>(
+    false,
+  );
+  const [notificationViewing, setNotificationViewing] = useState<boolean>(
+    false,
+  );
+  const [editMenuAnchorEl, setEditMenuAnchorEl] = useState<
+    (EventTarget & HTMLElement) | null
+  >(null);
   const [linksViewing, setLinksViewing] = useState<boolean>(false);
   const [changingOwner, setChangingOwner] = useState<boolean>(false);
   const [pendingChangeOwner, setPendingChangeOwner] = useState<User>();
   const [merging, setMerging] = useState<boolean>(false);
-  const [pendingMerge, setPendingMerge] =
-    useState<Property & { __user: User }>();
+  const [pendingMerge, setPendingMerge] = useState<
+    Property & { __user: User }
+  >();
 
   const handleSetEditing = useCallback(
     (editing: boolean) => () => setEditing(editing),
@@ -136,12 +140,15 @@ export const PropertyInfo: FC<Props> = props => {
     req.setId(propertyId);
     req.setIsActive(1);
     try {
-      const results = await PropertyClientService.BatchGet(req);
-      if (results.getTotalCount() === 1) {
-        const entry = results.getResultsList()[0];
-        setEntry(entry);
+      const results = await PropertyClientService.Get(req);
+      if (results) {
+        const entry = results;
+        const tempEntry = entry;
+        tempEntry.setId(propertyId);
+        setEntry(tempEntry);
+        console.log(entry);
         setLoading(false);
-        return entry;
+        return tempEntry;
       }
       setLoading(false);
       return null;
@@ -153,7 +160,7 @@ export const PropertyInfo: FC<Props> = props => {
   }, [setLoading, userID, propertyId, setEntry, setError, setUser]);
 
   useEffect(() => {
-    if (!entry.getId()) {
+    if (!entry.getId() && !entry.getUserId()) {
       load();
     }
     if (!viewedAsCustomer && entry.getNotification() !== '') {
@@ -239,7 +246,8 @@ export const PropertyInfo: FC<Props> = props => {
       );
     }
   }, [pendingMerge, setPendingMerge, propertyId]);
-  if (entry.getId() === 0)
+  console.log('entry data', entry);
+  if (entry.getId() === 0 && entry.getUserId() == 0)
     return (
       <>
         <SectionBar title="Property Information">
@@ -280,7 +288,6 @@ export const PropertyInfo: FC<Props> = props => {
     ],
     [{ label: 'Notes', value: entry.getNotes() }],
   ];
-  console.log({ props });
   return (
     <>
       <div className="PropertyInfoPropertiesWrapper">
