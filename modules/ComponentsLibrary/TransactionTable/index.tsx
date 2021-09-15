@@ -165,6 +165,8 @@ export const TransactionTable: FC<Props> = ({
   } = state;
 
   const dispatcher = useDispatch();
+  const employeesListData = useSelector(selectEmployeesList);
+  const employeesList = employeesListData.employeesList;
   const handleSetTransactionToEdit = useCallback(
     (transaction: Transaction | undefined) => {
       dispatch({ type: 'setTransactionToEdit', data: transaction });
@@ -470,19 +472,16 @@ export const TransactionTable: FC<Props> = ({
 
   const load = useCallback(async () => {
     dispatch({ type: 'setLoading', data: true });
-    const employees = await UserClientService.loadTechnicians();
-    let sortedEmployeeList = employees.sort((a, b) =>
-      a.getLastname() > b.getLastname() ? 1 : -1,
-    );
-    dispatch({ type: 'setEmployees', data: sortedEmployeeList });
-
-    employees.map(emp =>{
-      dispatcher(
-        employeeList({
-          label: UserClientService.getCustomerName(emp,)+'(ID: '+emp.getId()+')',
-          value: emp.getId(),
-      }))
-    });
+    if(employeesList.length ==1){
+      const employees = await UserClientService.loadTechnicians();
+      let sortedEmployeeList = employees.sort((a, b) =>
+        a.getLastname() > b.getLastname() ? 1 : -1,
+      );
+      dispatch({ type: 'setEmployees', data: sortedEmployeeList });
+        dispatcher(employeeList(employees));
+  }else{
+    dispatch({ type: 'setEmployees', data: employeesList });
+  }
     const userReq = new User();
     userReq.setId(loggedUserId);
     const user = await UserClientService.Get(userReq);
