@@ -4,6 +4,11 @@ import {
   ActivityLogClientService,
   getRPCFields,
   TransactionClientService,
+  TransactionDocumentClientService,
+  FileClientService,
+  S3ClientService,
+  uploadPhotoToExistingTransaction,
+  SimpleFile,
 } from '../../../helpers';
 import { Modal } from '../Modal';
 import { MergeTable, SelectedChoice } from '../MergeTable';
@@ -14,6 +19,10 @@ import { ActivityLog } from '@kalos-core/kalos-rpc/ActivityLog';
 import { format } from 'date-fns';
 import { TransactionTable } from '../TransactionTable';
 import { Transaction } from '@kalos-core/kalos-rpc/compiled-protos/transaction_pb';
+import { TransactionDocument } from '@kalos-core/kalos-rpc/TransactionDocument';
+import { File } from '@kalos-core/kalos-rpc/File';
+import { FileObject, S3Client, URLObject } from '@kalos-core/kalos-rpc/S3File';
+import { update } from 'lodash';
 
 /*
   Compares transactions with each other and has the ability to create a "diff view" sort of table which shows conflicts in the 
@@ -166,6 +175,15 @@ export const CompareTransactions: FC<Props> = ({
       try {
         setLoading(true);
         let txnMade = await TransactionClientService.Create(transaction);
+        const docList = [];
+        for (let i = 0; i < transactions!.length; i++) {
+          const result = await TransactionDocumentClientService.byTransactionID(
+            transactions![i].getId(),
+          );
+          docList.push(result);
+        }
+        console.log('full doc list', docList);
+        await handleMergeDocuments(docList, txnMade);
         let activityLog = new ActivityLog();
         activityLog.setActivityName(
           `Merged Transactions - IDs: ${transactions!
@@ -180,9 +198,11 @@ export const CompareTransactions: FC<Props> = ({
         await handleSaveActivityLog(activityLog);
         setLoading(false);
         if (onMerge) onMerge();
+        return txnMade.getId();
       } catch (err) {
         console.error(`An error occurred while saving the transaction: ${err}`);
         setUpsertError(err);
+        return 0;
       }
     },
     [
@@ -195,7 +215,43 @@ export const CompareTransactions: FC<Props> = ({
       onMerge,
     ],
   );
-
+  const handleMergeDocuments = async (
+    mergedTransactionDocumentList: TransactionDocument[][],
+    newTransaction: Transaction,
+  ) => {
+    for (let i = 0; i < mergedTransactionDocumentList.length; i++) {
+      let documents = mergedTransactionDocumentList[i];
+      for (let j = 0; j < documents.length; j++) {
+        let req = documents[j];
+        const oldTransaction = req.getTransactionId();
+        //Step 1- Change Transaction Id
+        req.setTransactionId(newTransaction.getId());
+        req.setFieldMaskList(['TransactionId']);
+        await TransactionDocumentClientService.Update(req);
+        //Step 2- Change Name in File Table (change old Job Number to New Job Number)
+        const fileReq = new File();
+        fileReq.setId(req.getFileId());
+        const fileResults = await FileClientService.Get(fileReq);
+        const updateFileReq = new File();
+        updateFileReq.setId(fileResults.getId());
+        const oldName = fileResults.getName();
+        const newName = oldName.replace(
+          oldTransaction.toString(),
+          newTransaction.getId().toString(),
+        );
+        console.log(oldName);
+        console.log(newName);
+        updateFileReq.setName(newName);
+        updateFileReq.setFieldMaskList(['Name']);
+        await FileClientService.Update(updateFileReq);
+        // Move Document in S3, changing Name to New Name
+        await S3ClientService.Move(
+          { bucket: 'kalos-transactions', key: oldName },
+          { bucket: 'kalos-transactions', key: newName },
+        );
+      }
+    }
+  };
   const handleSetSubmissionResults = useCallback(
     async (submissionResults: SelectedChoice[]) => {
       submissionResults.forEach(async result => {
@@ -396,7 +452,6 @@ export const CompareTransactions: FC<Props> = ({
     setTransactionToSave,
     setSameTransactionError,
   ]);
-
   return (
     <>
       {loading && <Loader />}
