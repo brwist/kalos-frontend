@@ -84,7 +84,7 @@ export const PropertyEdit: FC<Props> = ({
         actLog.setUserId(userId);
         actLog.setPropertyId(entry.getId());
         actLog.setActivityDate(format(new Date(), 'yyyy-MM-dd HH:mm:ss'));
-        actLog.setActivityName(`Edited Property : ${entry.getAddress()}`);
+        actLog.setActivityName(`${propertyId != 0 ? 'Edited' : 'Added'} Property : ${entry.getAddress()}`);
         if (entry.getGeolocationLat() && entry.getGeolocationLng()) {
           actLog.setGeolocationLat(entry.getGeolocationLat());
           actLog.setGeolocationLng(entry.getGeolocationLng());

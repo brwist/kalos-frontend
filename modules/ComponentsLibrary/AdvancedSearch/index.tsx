@@ -68,6 +68,7 @@ import {
   EmployeeFunctionClientService,
   TimesheetDepartmentClientService,
   makeSafeFormObject,
+  ActivityLogClientService,
 } from '../../../helpers';
 import {
   ROWS_PER_PAGE,
@@ -85,6 +86,8 @@ import { EmployeeFunction } from '@kalos-core/kalos-rpc/EmployeeFunction';
 
 import './styles.less';
 import { log } from 'console';
+import { ActivityLog } from '@kalos-core/kalos-rpc/ActivityLog';
+import format from 'date-fns/esm/format';
 
 type Kind =
   | 'serviceCalls'
@@ -581,9 +584,19 @@ export const AdvancedSearch: FC<Props> = ({
   const handleDeleteProperty = useCallback(async () => {
     if (pendingPropertyDeleting) {
       const id = pendingPropertyDeleting.getId();
+      const actLog = new ActivityLog();
+      actLog.setUserId(loggedUserId);
+      actLog.setPropertyId(id);
+      actLog.setActivityName(`Deleting Property : ${pendingPropertyDeleting.getAddress()}`);
+      actLog.setActivityDate(format(new Date(), 'yyyy-MM-dd HH:mm:ss'));
       setPendingPropertyDeleting(undefined);
       setLoading(true);
-      await PropertyClientService.deletePropertyById(id);
+      try {
+        await PropertyClientService.deletePropertyById(id);
+        await ActivityLogClientService.Create(actLog);
+      } catch (err) {
+        console.error(err);
+      }
       setLoaded(false);
     }
   }, [
@@ -591,6 +604,7 @@ export const AdvancedSearch: FC<Props> = ({
     setLoaded,
     setPendingPropertyDeleting,
     setLoading,
+    loggedUserId,
   ]);
   const handlePendingEmployeeViewingToggle = useCallback(
     (pendingEmployeeViewing?: User) => () =>
