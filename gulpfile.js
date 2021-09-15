@@ -680,6 +680,7 @@ const NAMED_EXPORTS = {
   ],
   'node_modules/@kalos-core/kalos-rpc/compiled-protos/devlog_pb.js': [
     'Devlog',
+    'DevlogList',
   ],
   'node_modules/@kalos-core/kalos-rpc/compiled-protos/document_pb.js': [
     'Document',
