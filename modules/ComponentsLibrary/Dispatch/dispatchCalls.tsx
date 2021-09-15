@@ -170,9 +170,15 @@ export const DispatchCalls: FC<props> = props => {
                     </TableCell>
                     <TableCell align="center">{call.getUserBusinessname().length ? call.getUserBusinessname() : call.getCustName()}</TableCell>
                     <TableCell align="center">
+                    <a 
+                    target="_blank" 
+                    rel="noreferrer"
+                    href={`/index.cfm?action=admin:service.editServiceCall&id=${call.getId()}&property_id=${call.getPropertyId()}&user_id=${call.getUserId()}`}
+                    >
                       {call.getDescription().length >= 200
                         ? call.getDescription().slice(0, 150).concat(' ...')
                         : call.getDescription()}
+                    </a>
                     </TableCell>
                     <TableCell align="center">{`${call.getJobType()}/${call.getJobSubtype()}`}</TableCell>
                     <TableCell align="center">

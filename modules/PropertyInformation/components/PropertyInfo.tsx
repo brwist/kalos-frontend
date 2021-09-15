@@ -18,11 +18,14 @@ import { ServiceItems } from '../../ComponentsLibrary/ServiceItems';
 import { PropertyEdit } from '../../ComponentsLibrary/PropertyEdit';
 import { ServiceCalls } from './ServiceCalls';
 import {
+  ActivityLogClientService,
   makeFakeRows,
   PropertyClientService,
   UserClientService,
 } from '../../../helpers';
 import './propertyInfo.less';
+import { ActivityLog } from '@kalos-core/kalos-rpc/ActivityLog';
+import format from 'date-fns/esm/format';
 
 const SCHEMA_PROPERTY_NOTIFICATION: Schema<Property> = [
   [
@@ -185,9 +188,19 @@ export const PropertyInfo: FC<Props> = props => {
     // TODO: delete customer related data + redirect somewhere?
     const entry = new Property();
     entry.setId(propertyId);
-    await PropertyClientService.Delete(entry);
+    const actLog = new ActivityLog();
+    actLog.setUserId(userID);
+    actLog.setPropertyId(propertyId);
+    actLog.setActivityName(`Deleted Property : ${propertyId}`);
+    actLog.setActivityDate(format(new Date(), 'yyyy-MM-dd HH:mm:ss'));
+    try {
+      await PropertyClientService.Delete(entry);
+      await ActivityLogClientService.Create(actLog);
+    } catch (err) {
+      console.error(err);
+    }
     setDeleting(false);
-  }, [propertyId, setDeleting]);
+  }, [propertyId, setDeleting, userID]);
 
   const handleChangeOwner = useCallback(async () => {
     if (pendingChangeOwner) {
