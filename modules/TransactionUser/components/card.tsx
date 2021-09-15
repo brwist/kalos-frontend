@@ -358,6 +358,12 @@ export class TxnCard extends React.PureComponent<props, state> {
     severity: 'error' | 'success';
     text: string;
   } {
+    if (txn.getStatusId() === 4) {
+      return {
+        severity: 'error',
+        text: `Rejection Reason: ${this.getRejectionReason()}`,
+      };
+    }
     if (!txn.getCostCenter() || txn.getCostCenter()?.getId() === 0)
       return {
         severity: 'error',
@@ -373,12 +379,7 @@ export class TxnCard extends React.PureComponent<props, state> {
         severity: 'error',
         text: 'Purchases should include a brief description in the notes',
       };
-    if (txn.getStatusId() === 4) {
-      return {
-        severity: 'error',
-        text: `Rejection Reason: ${this.getRejectionReason()}`,
-      };
-    }
+
     return {
       severity: 'success',
       text: 'This transaction is ready for submission',
@@ -801,6 +802,8 @@ function getGalleryData(txn: Transaction): GalleryData[] {
     return {
       key: `${txn.getId()}-${d.getReference()}`,
       bucket: 'kalos-transactions',
+      description: txn.getDescription(),
+      typeId: d.getTypeId(),
     };
   });
 }

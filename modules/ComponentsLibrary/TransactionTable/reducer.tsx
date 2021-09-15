@@ -14,6 +14,7 @@ export interface FilterType {
   amount: number | undefined;
   billingRecorded: boolean;
   universalSearch: string | undefined;
+  processed: boolean;
 }
 
 type SelectorParams = {
