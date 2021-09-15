@@ -11,6 +11,7 @@ import perDiemsNeedsAuditingReducer from '../modules/ComponentsLibrary/PerDiemsN
 import serviceItemsReducer from '../modules/ComponentsLibrary/ServiceItems/serviceItemsSlice';
 import SpiffToolLogEditReducer from '../modules/ComponentsLibrary/SpiffToolLogEdit/spiffToolLogEditSlice';
 import TransactionTableReducer from '../modules/ComponentsLibrary/TransactionTable/transactionTableSlice';
+import fieldSliceReducer from '../modules/ComponentsLibrary/Field/fieldSlice';
 
 export default configureStore({
   reducer: {
@@ -26,5 +27,6 @@ export default configureStore({
     serviceItems:serviceItemsReducer,
     spiffToolLogEdit:SpiffToolLogEditReducer,
     transactionTable:TransactionTableReducer,
+    fieldSlicer:fieldSliceReducer,
   },
 })

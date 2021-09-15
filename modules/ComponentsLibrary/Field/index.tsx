@@ -56,6 +56,8 @@ import { ClassCodePicker, DepartmentPicker } from '../Pickers';
 import { AdvancedSearch } from '../AdvancedSearch';
 import { Event } from '@kalos-core/kalos-rpc/Event';
 import './styles.less';
+import { useDispatch, useSelector } from 'react-redux';
+import { addTechnicians, selectTechnicains } from './fieldSlice';
 
 type SelectOption = {
   getId: () => number;
@@ -176,10 +178,19 @@ export const Field: <T>(
       +(value || '') > 0 ? 1 : -1,
     );
     const [eventIdValue, setEventIdValue] = useState<number>(+(value || ''));
+    const dispatch = useDispatch();
+    const Technicains = useSelector(selectTechnicains);
+    const TechnicainsList = Technicains.technicianList;
     const loadUserTechnicians = useCallback(async () => {
-      const technicians = await UserClientService.loadTechnicians();
+      if(TechnicainsList.length ==1){
+        const technicians = await UserClientService.loadTechnicians();
+        setTechnicians(technicians);
+        dispatch(addTechnicians(technicians));
+      }else{
+        setTechnicians(TechnicainsList);    
+        console.log("Redux Loading Technicianns");
+      }
       setLoadedTechnicians(true);
-      setTechnicians(technicians);
     }, [setLoadedTechnicians, setTechnicians]);
     const handleEventsOpenedToggle = useCallback(
       (opened: boolean) => () => setEventsOpened(opened),
