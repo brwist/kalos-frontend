@@ -1,15 +1,14 @@
 import { createSlice } from '@reduxjs/toolkit';
+import { Event } from '@kalos-core/kalos-rpc/Event';
 
 export const eventsReportSlice = createSlice({
   name: 'eventsReport',
   initialState: {
-    eventsReport:[{ 
-        property: null , customerName: null, job: null, date: null, jobStatus: null, paymentStatus: null,
-    },]
+    eventsReport:Event,
 },
   reducers: {
     eventReport(state, action) {
-      state.eventsReport.push(action.payload)
+      state.eventsReport = (action.payload)
     },
   },
 })

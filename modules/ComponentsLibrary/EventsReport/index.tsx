@@ -64,8 +64,12 @@ export const EventsReport: FC<Props> = ({
     [setTasksOpenEvent],
   );
   const dispatch = useDispatch();
+    const eventsReportData = useSelector(selectEventsReport);
+    const eventsReport = eventsReportData.eventsReport;
+
   const load = useCallback(async () => {
     setLoading(true);
+    if(eventsReport.length ==1 ){
     const filter: EventsFilter = {
       dateStarted: startDate, // TODO: use dateRangeList
       dateEnded: endDate,
@@ -83,7 +87,11 @@ export const EventsReport: FC<Props> = ({
       req: new Event(),
     });
     setEntries(resultsList);
+    dispatch(eventReport(resultsList));
     setCount(totalCount);
+  }else{
+    setEntries(eventsReport);
+  }
     setLoading(false);
   }, [
     setLoading,
@@ -294,14 +302,6 @@ export const EventsReport: FC<Props> = ({
     loading
       ? makeFakeRows(5, 5)
       : entries.map(entry => {
-          dispatch(eventReport({
-            property: getPropertyAddress(entry.getProperty()),
-            customerName: UserClientService.getCustomerName(entry.getCustomer()!),
-            job: entry.getLogJobNumber(),
-            date: formatDate(entry.getDateStarted()),
-            jobStatus: kind === 'jobStatus' ? entry.getLogJobStatus() :null ,
-            paymentStatus: kind != 'jobStatus' ? entry.getLogPaymentStatus():null,
-          }));
           return [
             {
               value: getPropertyAddress(entry.getProperty()),
@@ -347,6 +347,7 @@ export const EventsReport: FC<Props> = ({
             },
           ];
         });
+    
   const EXPORT_COLUMNS = [
     { label: 'Property', value: 'property' },
     { label: 'Customer', value: 'customer' },
