@@ -94,8 +94,6 @@ interface AssignedEmployeeType {
   employeeId: number;
 }
 
-let sortDir: OrderDir | ' ' | undefined = 'ASC'; // Because I can't figure out why this isn't updating with the state
-let sortBy: string | undefined = 'vendor, timestamp';
 // This is outside of state because it was slow inside of state
 
 let filter: FilterType = {
@@ -133,6 +131,8 @@ export const TransactionTable: FC<Props> = ({
     mergingTransaction: false,
     pendingUploadPhoto: undefined,
     role: undefined,
+    orderDir: 'ASC',
+    orderBy: 'vendor, timestamp',
     assigningUser: undefined,
     employees: [],
     departments: [],
@@ -283,11 +283,12 @@ export const TransactionTable: FC<Props> = ({
   };
   const resetTransactions = useCallback(async () => {
     let req = new Transaction();
-    req.setOrderBy(sortBy ? sortBy : 'timestamp');
+    req.setOrderBy(state.orderBy ? state.orderBy : 'timestamp');
     req.setOrderDir(
-      sortDir && sortDir != ' ' ? sortDir : sortDir == ' ' ? 'DESC' : 'DESC',
+      state.orderDir ? state.orderDir : state.orderDir == ' ' ? 'DESC' : 'DESC',
     );
     req.setPageNumber(state.page);
+    console.log('order by---------------------', req.getOrderBy());
 
     req.setIsActive(1);
     req.setVendorCategory("'PickTicket','Receipt','Invoice'");
@@ -433,6 +434,8 @@ export const TransactionTable: FC<Props> = ({
     state.transactionFilter.employeeId,
     state.transactionFilter.isAccepted,
     state.transactionFilter.isRejected,
+    state.orderDir,
+    state.orderBy,
     state.transactionFilter.processed,
     state.transactionFilter.universalSearch,
     state.transactionFilter.vendor,
@@ -641,16 +644,16 @@ export const TransactionTable: FC<Props> = ({
           'Customer: ' +
           (res.getCustomer() === undefined
             ? 'No Customer '
-            : `${res.getCustomer()!.getFirstname()} ${res
+            : `${res
                 .getCustomer()!
-                .getLastname()}`);
+                .getFirstname()} ${res.getCustomer()!.getLastname()}`);
         const property =
           'Property: ' +
           (res.getProperty() === undefined
             ? 'No Property'
-            : `${res.getProperty()!.getAddress()} ${res
+            : `${res
                 .getProperty()!
-                .getCity()}`);
+                .getAddress()} ${res.getProperty()!.getCity()}`);
         returnString = [descritpion, customer, property];
       } catch (error) {
         console.log('Not a number');
@@ -659,25 +662,31 @@ export const TransactionTable: FC<Props> = ({
     return returnString;
   };
   const changeSort = (newSort: string) => {
-    let newSortDir: OrderDir | ' ' | undefined;
-
-    if (newSort == sortBy) {
-      if (sortDir == 'ASC') {
+    let newSortDir: OrderDir | undefined;
+    let sortDir = state.orderDir;
+    if (newSort === state.orderBy) {
+      if (sortDir === 'ASC') {
         newSortDir = 'DESC';
-      } else if (sortDir == 'DESC') {
-        newSortDir = ' ';
-      } else if (sortDir == ' ') {
+      }
+      if (sortDir === 'DESC') {
+        newSortDir = undefined;
+      }
+      if (sortDir === undefined) {
         newSortDir = 'ASC';
       }
     } else {
-      newSortDir = 'DESC';
-      dispatch({ type: ACTIONS.SET_PAGE, data: 0 });
+      newSortDir = 'ASC';
     }
+    dispatch({ type: ACTIONS.SET_PAGE, data: 0 });
 
-    sortBy = newSort;
-    sortDir = newSortDir;
+    console.log('newSort----------', newSort);
+    console.log('newDir----------', newSortDir);
 
-    refresh();
+    dispatch({
+      type: ACTIONS.SET_ORDER,
+      data: { orderBy: newSort, orderDir: newSortDir },
+    });
+    dispatch({ type: ACTIONS.SET_SEARCHING, data: true });
   };
 
   const handleAssignEmployee = useCallback(
@@ -1325,72 +1334,38 @@ export const TransactionTable: FC<Props> = ({
           },
           {
             name: 'Date',
-            dir:
-              sortBy == 'timestamp'
-                ? sortDir != ' '
-                  ? sortDir
-                  : undefined
-                : undefined,
+            dir: state.orderBy == 'timestamp' ? state.orderDir : undefined,
             onClick: () => changeSort('timestamp'),
           },
           {
             name: 'Order #',
-            dir:
-              sortBy == 'order_number'
-                ? sortDir != ' '
-                  ? sortDir
-                  : undefined
-                : undefined,
+            dir: state.orderBy == 'order_number' ? state.orderDir : undefined,
             onClick: () => changeSort('order_number'),
           },
           {
             name: 'Purchaser',
-            dir:
-              sortBy == 'owner_id'
-                ? sortDir != ' '
-                  ? sortDir
-                  : undefined
-                : undefined,
+            dir: state.orderBy == 'owner_id' ? state.orderDir : undefined,
             onClick: () => changeSort('owner_id'),
           },
           {
             name: 'Department',
-            dir:
-              sortBy == 'department_id'
-                ? sortDir != ' '
-                  ? sortDir
-                  : undefined
-                : undefined,
+            dir: state.orderBy == 'department_id' ? state.orderDir : undefined,
             onClick: () => changeSort('department_id'),
           },
           {
             name: 'Job #',
-            dir:
-              sortBy == 'job_id'
-                ? sortDir != ' '
-                  ? sortDir
-                  : undefined
-                : undefined,
+            dir: state.orderBy == 'job_id' ? state.orderDir : undefined,
             onClick: () => changeSort('job_id'),
           },
           {
             name: 'Amount',
-            dir:
-              sortBy == 'amount'
-                ? sortDir != ' '
-                  ? sortDir
-                  : undefined
-                : undefined,
+            dir: state.orderBy == 'amount' ? state.orderDir : undefined,
+
             onClick: () => changeSort('amount'),
           },
           {
             name: 'Vendor',
-            dir:
-              sortBy == 'vendor'
-                ? sortDir != ' '
-                  ? sortDir
-                  : undefined
-                : undefined,
+            dir: state.orderBy == 'vendor' ? state.orderDir : undefined,
             onClick: () => changeSort('vendor'),
           },
           { name: 'Actions' },
