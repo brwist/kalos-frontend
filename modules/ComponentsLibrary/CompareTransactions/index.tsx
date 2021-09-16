@@ -185,7 +185,6 @@ export const CompareTransactions: FC<Props> = ({
           );
           docList.push(result);
         }
-        console.log('full doc list', docList);
         await handleMergeDocuments(docList, txnMade);
         let activityLog = new ActivityLog();
         activityLog.setActivityName(
@@ -226,30 +225,35 @@ export const CompareTransactions: FC<Props> = ({
       let documents = mergedTransactionDocumentList[i];
       for (let j = 0; j < documents.length; j++) {
         //Step 1- Change Transaction Id
-        let req = documents[j];
-        const oldTransaction = req.getTransactionId();
-        req.setTransactionId(newTransaction.getId());
-        req.setFieldMaskList(['TransactionId']);
-        await TransactionDocumentClientService.Update(req);
-        //Step 2- Change Name in File Table (change old Job Number to New Job Number)
-        const fileReq = new File();
-        fileReq.setId(req.getFileId());
-        const fileResults = await FileClientService.Get(fileReq);
-        const updateFileReq = new File();
-        updateFileReq.setId(fileResults.getId());
-        const oldName = fileResults.getName();
-        const newName = oldName.replace(
-          oldTransaction.toString(),
-          newTransaction.getId().toString(),
-        );
-        updateFileReq.setName(newName);
-        updateFileReq.setFieldMaskList(['Name']);
-        await FileClientService.Update(updateFileReq);
-        // Move Document in S3, changing Name to New Name
-        await S3ClientService.Move(
-          { bucket: 'kalos-transactions', key: oldName },
-          { bucket: 'kalos-transactions', key: newName },
-        );
+        try {
+          let req = documents[j];
+          const oldTransaction = req.getTransactionId();
+          req.setTransactionId(newTransaction.getId());
+          req.setFieldMaskList(['TransactionId']);
+          await TransactionDocumentClientService.Update(req);
+          //Step 2- Change Name in File Table (change old Job Number to New Job Number)
+          const fileReq = new File();
+          fileReq.setId(req.getFileId());
+          const fileResults = await FileClientService.Get(fileReq);
+          const updateFileReq = new File();
+          updateFileReq.setId(fileResults.getId());
+          const oldName = fileResults.getName();
+          const newName = oldName.replace(
+            oldTransaction.toString(),
+            newTransaction.getId().toString(),
+          );
+          updateFileReq.setName(newName);
+          updateFileReq.setFieldMaskList(['Name']);
+          await FileClientService.Update(updateFileReq);
+          // Move Document in S3, changing Name to New Name
+          await S3ClientService.Move(
+            { bucket: 'kalos-transactions', key: oldName },
+            { bucket: 'kalos-transactions', key: newName },
+          );
+        } catch (err) {
+          console.error(`An error occurred merging documents: ${err}`);
+          setUpsertError(err);
+        }
       }
     }
   };
