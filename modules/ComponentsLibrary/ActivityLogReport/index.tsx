@@ -6,8 +6,8 @@ import { PrintTable } from '../PrintTable';
 import { PrintHeaderSubtitleItem } from '../PrintHeader';
 import { ExportJSON } from '../ExportJSON';
 import { Button } from '../Button';
-import { useDispatch } from 'react-redux';
-import { logReport } from './logReportSlice';
+import { useDispatch, useSelector } from 'react-redux';
+import { logReport, selectLogReport } from './logReportSlice';
 import {
   makeFakeRows,
   loadActivityLogsByFilter,
@@ -62,6 +62,8 @@ export const ActivityLogReport: FC<Props> = ({
     orderDir: 'DESC',
   });
   const dispatch = useDispatch();
+  const logReports = useSelector(selectLogReport);
+  const logReportList = logReports.logReports;
   const getFilter = useCallback(() => {
     const filter: ActivityLogsFilter = {
       activityDateStart,
@@ -77,13 +79,18 @@ export const ActivityLogReport: FC<Props> = ({
   }, [activityDateStart, activityDateEnd, status]);
   const load = useCallback(async () => {
     setLoading(true);
-    const { results, totalCount } = await loadActivityLogsByFilter({
-      page,
-      filter: getFilter(),
-      sort,
-    });
-    setEntries(results);
-    setCount(totalCount);
+    if((logReportList.length - 1) <= count ){
+      const { results, totalCount } = await loadActivityLogsByFilter({
+        page,
+        filter: getFilter(),
+        sort,
+      });
+      setEntries(results);
+      setCount(totalCount);
+      dispatch(logReport(results));
+    }else{
+      setEntries(logReportList);
+    }
     setLoading(false);
   }, [setLoading, getFilter, sort, page]);
   useEffect(() => {
@@ -193,11 +200,6 @@ export const ActivityLogReport: FC<Props> = ({
           const activityDate = entry.getActivityDate();
           const user = entry.getUser();
           const activityName = entry.getActivityName();
-          dispatch(logReport({
-            date: formatDateTime(activityDate),
-            user: UserClientService.getCustomerName(user!, true),
-            notification:activityName,
-          }));
           return [
             {
               value: formatDateTime(activityDate),

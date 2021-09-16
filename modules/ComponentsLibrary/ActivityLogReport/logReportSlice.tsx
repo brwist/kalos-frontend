@@ -1,18 +1,20 @@
 import { createSlice } from '@reduxjs/toolkit'
+import { ActivityLog } from '@kalos-core/kalos-rpc/ActivityLog';
 
 export const logReportSlice = createSlice({
   name: 'logReport',
-  initialState: [
-    { date: null , user: null, notification: null }
-  ],
+  initialState: {
+    logReports:ActivityLog,
+  },
   reducers: {
     logReport(state, action) {
-      state.push(action.payload)
+      state.logReports = (action.payload)
     },
   },
 })
 
-// Action creators are generated for each case reducer function
 export const { logReport } = logReportSlice.actions;
+
+export const selectLogReport = ((state) => state.logReport);
 
 export default logReportSlice.reducer
