@@ -31,6 +31,8 @@ import {
   PerDiem as pd,
 } from '@kalos-core/kalos-rpc/compiled-protos/perdiem_pb';
 import { dateTimePickerDefaultProps } from '@material-ui/pickers/constants/prop-types';
+import { useDispatch, useSelector } from 'react-redux';
+import { addPayrolDeparts, addPayrolEmployees, selectPayrollData } from './payrollSlice';
 
 export type RoleType =
   | 'Manager'
@@ -99,6 +101,10 @@ export const Payroll: FC<Props> = ({ userID }) => {
     ],
     [],
   );
+  const dispatch = useDispatch();
+  const payrollData = useSelector(selectPayrollData);
+  const payrollDeparts = payrollData.payrolDeparts;
+  const payrollEmployees = payrollData.payrolEmployees;
   const handleSelectNewWeek = useCallback(
     async dateString => {
       let ids: number[] | undefined = [];
@@ -132,15 +138,25 @@ export const Payroll: FC<Props> = ({ userID }) => {
   const init = useCallback(async () => {
     const depReq = new TimesheetDepartment();
     depReq.setIsActive(1);
-    const departments = await (
-      await TimesheetDepartmentClientService.BatchGet(depReq)
-    ).getResultsList();
-    setDepartments(departments);
-    const employees = await UserClientService.loadTechnicians();
-    let sortedEmployeeList = employees.sort((a, b) =>
-      a.getLastname() > b.getLastname() ? 1 : -1,
-    );
-    setEmployees(sortedEmployeeList);
+    if(payrollDeparts.length == 1){
+      const departments = await (
+        await TimesheetDepartmentClientService.BatchGet(depReq)
+      ).getResultsList();
+      setDepartments(departments);
+      dispatch(addPayrolDeparts(departments));
+    }else{
+      setDepartments(payrollDeparts);
+    }
+    if(payrollEmployees.length == 1){
+      const employees = await UserClientService.loadTechnicians();
+      let sortedEmployeeList = employees.sort((a, b) =>
+        a.getLastname() > b.getLastname() ? 1 : -1,
+      );
+      setEmployees(sortedEmployeeList);
+      dispatch(addPayrolEmployees(sortedEmployeeList));
+    }else{
+      setEmployees(payrollEmployees);
+    }
     handleSelectNewWeek('-- All --');
     const loggedUser = await UserClientService.loadUserById(userID);
     setLoggedUser(loggedUser);

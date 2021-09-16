@@ -12,6 +12,7 @@ import serviceItemsReducer from '../modules/ComponentsLibrary/ServiceItems/servi
 import SpiffToolLogEditReducer from '../modules/ComponentsLibrary/SpiffToolLogEdit/spiffToolLogEditSlice';
 import TransactionTableReducer from '../modules/ComponentsLibrary/TransactionTable/transactionTableSlice';
 import fieldSliceReducer from '../modules/ComponentsLibrary/Field/fieldSlice';
+import payrollReducer from '../modules/ComponentsLibrary/Payroll/payrollSlice';
 
 export default configureStore({
   reducer: {
@@ -28,5 +29,6 @@ export default configureStore({
     spiffToolLogEdit:SpiffToolLogEditReducer,
     transactionTable:TransactionTableReducer,
     fieldSlicer:fieldSliceReducer,
+    payrollSlicer:payrollReducer,
   },
 })
