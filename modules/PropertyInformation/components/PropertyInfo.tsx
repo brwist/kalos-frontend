@@ -220,6 +220,7 @@ export const PropertyInfo: FC<Props> = props => {
     [
       setSaving,
       userID,
+      entry,
       propertyId,
       setEntry,
       setEditing,
