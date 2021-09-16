@@ -129,7 +129,10 @@ export const CompareTransactions: FC<Props> = ({
         txn.setActivityLogString(undefined);
         // @ts-expect-error
         txn.setCardUsed(undefined);
-
+        // @ts-expect-error
+        txn.setCostCenterString(undefined);
+        // @ts-expect-error
+        txn.setAssignedEmployeeName(undefined);
         // End of ignoring private fields
 
         await TransactionClientService.Update(txn);
@@ -222,9 +225,9 @@ export const CompareTransactions: FC<Props> = ({
     for (let i = 0; i < mergedTransactionDocumentList.length; i++) {
       let documents = mergedTransactionDocumentList[i];
       for (let j = 0; j < documents.length; j++) {
+        //Step 1- Change Transaction Id
         let req = documents[j];
         const oldTransaction = req.getTransactionId();
-        //Step 1- Change Transaction Id
         req.setTransactionId(newTransaction.getId());
         req.setFieldMaskList(['TransactionId']);
         await TransactionDocumentClientService.Update(req);
@@ -239,8 +242,6 @@ export const CompareTransactions: FC<Props> = ({
           oldTransaction.toString(),
           newTransaction.getId().toString(),
         );
-        console.log(oldName);
-        console.log(newName);
         updateFileReq.setName(newName);
         updateFileReq.setFieldMaskList(['Name']);
         await FileClientService.Update(updateFileReq);
