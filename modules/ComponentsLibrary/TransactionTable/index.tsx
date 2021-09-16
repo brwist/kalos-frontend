@@ -288,7 +288,6 @@ export const TransactionTable: FC<Props> = ({
       state.orderDir ? state.orderDir : state.orderDir == ' ' ? 'DESC' : 'DESC',
     );
     req.setPageNumber(state.page);
-    console.log('order by---------------------', req.getOrderBy());
 
     req.setIsActive(1);
     req.setVendorCategory("'PickTicket','Receipt','Invoice'");
@@ -635,7 +634,6 @@ export const TransactionTable: FC<Props> = ({
     let returnString = ['No Job Info Found'];
     if (number != 0) {
       try {
-        console.log('we got called to get info');
         const eventReq = new Event();
         eventReq.setId(number);
         const res = await EventClientService.Get(eventReq);
@@ -678,9 +676,6 @@ export const TransactionTable: FC<Props> = ({
       newSortDir = 'ASC';
     }
     dispatch({ type: ACTIONS.SET_PAGE, data: 0 });
-
-    console.log('newSort----------', newSort);
-    console.log('newDir----------', newSortDir);
 
     dispatch({
       type: ACTIONS.SET_ORDER,
