@@ -1,6 +1,6 @@
 import React, { FC } from 'react';
 import { PageWrapper, PageWrapperProps } from '../PageWrapper/main';
-import { EmployeePermissions } from '../ComponentsLibrary/EmployeePermissions';
+import { PermissionsManager as PermissionsManagerComponent } from '../ComponentsLibrary/PermissionsManager';
 // add any prop types here
 interface props {
   userID: number;
@@ -12,9 +12,9 @@ interface state {}
 export const PermissionsManager: FC<props & PageWrapperProps> = props => (
   <PageWrapper {...props} userID={props.userID}>
     <h1>PermissionsManager!</h1>
-    <EmployeePermissions
-      userId={props.userID}
+    <PermissionsManagerComponent
       loggedUserId={props.userID}
-    ></EmployeePermissions>
+      onClose={() => console.log('yo')}
+    ></PermissionsManagerComponent>
   </PageWrapper>
 );
