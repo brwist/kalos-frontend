@@ -36,7 +36,6 @@ export const AddPermission: FC<Props> = ({
     permissionsLoaded: [],
     selectedPermissions: { permissionIds: [] },
   });
-  const loggedUserIsSU = loggedUserPermissions.find(p => p.getName() === 'SU');
   const { init, loaded, permissionsLoaded, selectedPermissions } = state;
   console.log('disable mui?', limitMultiSelect);
   const SCHEMA_PRINT: Schema<FormData> = [
@@ -77,15 +76,21 @@ export const AddPermission: FC<Props> = ({
     if (permissionType.toLowerCase().includes('role')) {
       req.setType('role');
     }
+    const loggedUserIsSU = loggedUserPermissions.find(
+      p => p.getName() === 'SU',
+    );
+
     const res = await UserClientService.BatchGetPermission(req);
     const resultList = res.getResultsList();
-    const filteredList = resultList.filter(function (e) {
+    let filteredList = resultList.filter(function (e) {
       return userPermissions.find(a => a.getId() === e.getId()) === undefined;
     });
-
+    if (loggedUserIsSU === undefined) {
+      filteredList = filteredList.filter(p => p.getName() != 'SU');
+    }
     dispatch({ type: 'setPermissionsLoaded', data: filteredList });
     dispatch({ type: 'setLoaded', data: true });
-  }, [permissionType, userPermissions]);
+  }, [permissionType, loggedUserPermissions, userPermissions]);
   useEffect(() => {
     if (init) {
       load();
