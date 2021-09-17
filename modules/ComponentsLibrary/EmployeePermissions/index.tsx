@@ -19,7 +19,7 @@ import { Confirm } from '../Confirm';
 import { Modal } from '../Modal';
 import { AddPermission } from '../AddPermission';
 import { Button } from '../Button';
-import { act } from 'react-test-renderer';
+import { Tooltip } from '@material-ui/core';
 interface Props {
   userId: number;
   loggedUserId: number;
@@ -43,9 +43,11 @@ export const EmployeePermissions: FC<Props> = ({
     privileges: undefined,
     roles: undefined,
     departments: undefined,
+    isSU: false,
     openAddPermission: false,
     openRemovePermission: false,
     pendingRemovePermission: undefined,
+    isOwnerSU: false,
     activeTab: 'Role',
   });
   const {
@@ -60,6 +62,8 @@ export const EmployeePermissions: FC<Props> = ({
     openAddPermission,
     pendingRemovePermission,
     activeTab,
+    isOwnerSU,
+    isSU,
   } = state;
   const RemovePermissionFromUser = async (permissionGroup: PermissionGroup) => {
     const req = new PermissionGroupUser();
@@ -85,7 +89,14 @@ export const EmployeePermissions: FC<Props> = ({
       const req = new User();
       req.setId(loggedUserId);
       const result = await UserClientService.Get(req);
+      const loggedPrivileges = result
+        .getPermissionGroupsList()
+        .find(p => p.getName() === 'SU');
       dispatch({ type: 'setLoggedUser', data: result });
+      dispatch({
+        type: 'setIsSU',
+        data: loggedPrivileges === undefined ? false : true,
+      });
     }
     if (userData == undefined) {
       console.log('our user is undefined');
@@ -103,9 +114,14 @@ export const EmployeePermissions: FC<Props> = ({
       const privileges = result
         .getPermissionGroupsList()
         .filter(p => p.getType() === 'privilege');
+      const isSU = privileges.find(p => p.getName() == 'SU');
       dispatch({ type: 'setRoles', data: roles });
       dispatch({ type: 'setPrivileges', data: privileges });
       dispatch({ type: 'setDepartments', data: departments });
+      dispatch({
+        type: 'setOwnerIsSU',
+        data: isSU === undefined ? false : true,
+      });
     }
     dispatch({ type: 'setLoaded', data: true });
   }, [loggedUserId, userId, loggedUserData, userData]);
@@ -132,19 +148,29 @@ export const EmployeePermissions: FC<Props> = ({
                     {
                       value: role.getDescription(),
                       actions: [
-                        <IconButton
-                          key="view"
-                          onClick={() =>
-                            dispatch({
-                              type: 'setOpenRemovePermission',
-                              flag: true,
-                              pendingPermissionGroup: role,
-                            })
+                        <Tooltip
+                          key="roleDelete"
+                          title={
+                            isSU
+                              ? 'Delete Role'
+                              : 'You lack Permission to Edit Roles'
                           }
-                          size="small"
                         >
-                          <Delete />
-                        </IconButton>,
+                          <IconButton
+                            key="view"
+                            onClick={() =>
+                              dispatch({
+                                type: 'setOpenRemovePermission',
+                                flag: true,
+                                pendingPermissionGroup: role,
+                              })
+                            }
+                            disabled={!isSU}
+                            size="small"
+                          >
+                            <Delete />
+                          </IconButton>
+                        </Tooltip>,
                       ],
                     },
                   ];
@@ -172,7 +198,7 @@ export const EmployeePermissions: FC<Props> = ({
                       value: department.getDescription(),
                       actions: [
                         <IconButton
-                          key="view"
+                          key={'view' + department.getId()}
                           onClick={() =>
                             dispatch({
                               type: 'setOpenRemovePermission',
@@ -219,6 +245,7 @@ export const EmployeePermissions: FC<Props> = ({
                             })
                           }
                           size="small"
+                          disabled={privilege.getName() == 'SU' && !isOwnerSU}
                         >
                           <Delete />
                         </IconButton>,
@@ -238,13 +265,18 @@ export const EmployeePermissions: FC<Props> = ({
       uncollapsable={true}
     >
       <Button
-        label={`Add ${activeTab}`}
+        label={
+          activeTab.includes('Role') && roles && roles.length > 0
+            ? 'Permission Limit Reached'
+            : `Add ${activeTab}`
+        }
         onClick={() =>
           dispatch({
             type: 'setOpenAddPermission',
             data: true,
           })
         }
+        disabled={activeTab.includes('Role') && roles && roles.length > 0}
       ></Button>
       <VerticalTabs
         onChange={e =>
@@ -262,10 +294,11 @@ export const EmployeePermissions: FC<Props> = ({
       >
         <AddPermission
           userId={userId}
+          loggedUserPermissions={loggedUserData!.getPermissionGroupsList()}
           permissionType={activeTab}
+          limitMultiSelect={activeTab.includes('Role')}
           userPermissions={userData.getPermissionGroupsList()}
           onClose={refreshPermissions}
-          //roleOfLoggedUser={loggedUser?.getPermissionGroupsList()}
         ></AddPermission>
       </Modal>
       <Modal
