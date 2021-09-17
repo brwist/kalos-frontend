@@ -15,18 +15,20 @@ import { RoleType } from '../Payroll';
 import { PlainForm } from '../PlainForm';
 interface Props {
   userId: number;
-  //roleOfLoggedUser: RoleType;
   permissionType: string;
   userPermissions: PermissionGroup[];
+  loggedUserPermissions: PermissionGroup[];
+  limitMultiSelect: boolean;
   onClose?: () => void;
 }
 
 export const AddPermission: FC<Props> = ({
   userId,
-  //roleOfLoggedUser,
+  loggedUserPermissions,
   permissionType,
   userPermissions,
   onClose,
+  limitMultiSelect,
 }) => {
   const [state, dispatch] = useReducer(reducer, {
     init: true,
@@ -34,8 +36,9 @@ export const AddPermission: FC<Props> = ({
     permissionsLoaded: [],
     selectedPermissions: { permissionIds: [] },
   });
+  const loggedUserIsSU = loggedUserPermissions.find(p => p.getName() === 'SU');
   const { init, loaded, permissionsLoaded, selectedPermissions } = state;
-
+  console.log('disable mui?', limitMultiSelect);
   const SCHEMA_PRINT: Schema<FormData> = [
     [
       {
@@ -46,7 +49,7 @@ export const AddPermission: FC<Props> = ({
           label: permission.getName() + '-' + permission.getDescription(),
           value: permission.getId(),
         })),
-        type: 'multiselect',
+        type: limitMultiSelect ? 'number' : 'multiselect',
       },
     ],
   ];

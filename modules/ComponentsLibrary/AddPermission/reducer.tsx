@@ -1,6 +1,7 @@
 import { User } from '@kalos-core/kalos-rpc/User';
 import { UserClientService } from '../../../helpers';
 import { PermissionGroup } from '@kalos-core/kalos-rpc/compiled-protos/user_pb';
+import { isArray } from 'lodash';
 export type FormData = {
   permissionIds: number[];
 };
@@ -41,7 +42,12 @@ export const reducer = (state: State, action: Action) => {
       };
     }
     case 'setSelectedPermissions': {
-      const data = action.data;
+      let data = action.data;
+      if (!isArray(data.permissionIds)) {
+        let tempData = data.permissionIds;
+        data.permissionIds = [tempData];
+      }
+      console.log('selected permissions', data);
       return {
         ...state,
         selectedPermissions: data,

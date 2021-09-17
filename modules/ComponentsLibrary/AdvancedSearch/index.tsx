@@ -2366,11 +2366,10 @@ export const AdvancedSearch: FC<Props> = ({
                           ]
                         : []),
                         */
-                      ...(loggedUser &&
-                      loggedUser
+                      ...(loggedUser
                         .getPermissionGroupsList()
                         .findIndex(p => p.getName() == 'PermissionManager') !=
-                        -1
+                      -1
                         ? [
                             <Tooltip
                               key="permission"
@@ -2524,6 +2523,7 @@ export const AdvancedSearch: FC<Props> = ({
       deletableCustomers,
       handlePendingCustomerDeletingToggle,
       employeeImages,
+      loggedUser,
       handlePendingEmployeeViewingToggle,
       isAdmin,
       editableEmployees,

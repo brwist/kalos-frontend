@@ -13,6 +13,8 @@ export type State = {
   openRemovePermission: boolean;
   openAddPermission: boolean;
   activeTab: string;
+  isSU: boolean;
+  isOwnerSU: boolean;
   pendingRemovePermission: PermissionGroup | undefined;
 };
 
@@ -25,6 +27,8 @@ export type Action =
   | { type: 'setPrivileges'; data: PermissionGroup[] }
   | { type: 'setDepartments'; data: PermissionGroup[] }
   | { type: 'setActiveTab'; data: string }
+  | { type: 'setIsSU'; data: boolean }
+  | { type: 'setOwnerIsSU'; data: boolean }
   | {
       type: 'setOpenRemovePermission';
       flag: boolean;
@@ -105,6 +109,22 @@ export const reducer = (state: State, action: Action) => {
       return {
         ...state,
         activeTab: data,
+      };
+    }
+    case 'setIsSU': {
+      const data = action.data;
+      console.log(data);
+      return {
+        ...state,
+        isSU: data,
+      };
+    }
+    case 'setOwnerIsSU': {
+      const data = action.data;
+      console.log(data);
+      return {
+        ...state,
+        isOwnerSU: data,
       };
     }
     default:
