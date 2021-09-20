@@ -12,6 +12,8 @@ import setHours from 'date-fns/esm/setHours';
 import parseISO from 'date-fns/esm/parseISO';
 import { Droppable } from 'react-beautiful-dnd';
 import CircularProgress from '@material-ui/core/CircularProgress';
+import { InfoTable } from '../InfoTable';
+import { makeFakeRows } from '../../../helpers'
 
 interface props {
   userID: number;
@@ -54,9 +56,10 @@ export const DispatchCalls: FC<props> = props => {
         </TableBody>
       </Table>
       {props.loading && (
-        <div style={{textAlign: 'center', paddingTop: '20px'}}>
-          <CircularProgress />
-        </div>
+        // <div style={{textAlign: 'center', paddingTop: '20px'}}>
+        //   <CircularProgress />
+        // </div>
+        <InfoTable data={makeFakeRows(7,3)} loading />
       )}
       {!props.loading && (
       <Table>

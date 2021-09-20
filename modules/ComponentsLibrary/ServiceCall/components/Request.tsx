@@ -159,8 +159,17 @@ export const Request: FC<Props> = forwardRef(
           {
             label: 'Sector',
             name: 'getIsResidential',
+            required: false,
+            options: [{label: 'Residential', value: 1}],
+            defaultLabel: 'Commercial',
+            displayEmpty: true,
+            forceShrinkLabel: true,
+          },
+          {
+            label: 'Department',
+            name: 'getDepartmentId',
             required: true,
-            options: RESIDENTIAL_OPTIONS,
+            type: 'department',
           },
           {
             label: 'Amount Quoted',
@@ -243,6 +252,7 @@ export const Request: FC<Props> = forwardRef(
     useEffect(() => {
       if (!initSchemaCalled) {
         setInitSchemaCalled(true);
+        // console.log('test');
         const fields = SCHEMA.map(item =>
           item.map(({ name }) => name).filter(name => name),
         ).reduce((aggr, item) => [...aggr, ...item], []);
