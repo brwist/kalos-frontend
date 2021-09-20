@@ -27,19 +27,22 @@ import {
 import './styles.less';
 
 const PendingBillingClientService = new PendingBillingClient(ENDPOINT);
-
-const SCHEMA_PROPERTY_NOTIFICATION: Schema<User> = [
+interface Notification {
+  notification: string;
+  id: number;
+}
+const SCHEMA_NOTIFICATION: Schema<Notification> = [
   [
     {
       label: 'Notification',
-      name: 'getNotification',
+      name: 'notification',
       required: true,
       multiline: true,
     },
   ],
   [
     {
-      name: 'getId',
+      name: 'id',
       type: 'hidden',
     },
   ],
@@ -173,14 +176,23 @@ export const CustomerInformation: FC<Props> = ({
   );
 
   const handleSave = useCallback(
-    async (data: User) => {
+    async (data: Notification) => {
       setSaving(true);
-      const temp = makeSafeFormObject(data, new User());
-      const customer = await UserClientService.saveUser(temp, userID);
-      setCustomer(customer);
-      setSaving(false);
-      setEditing(false);
-      handleSetNotificationEditing(false)();
+      const temp = customer;
+      temp.setNotification(data.notification);
+      temp.setFieldMaskList(['Notification']);
+      temp.setId(data.id);
+      if (temp) {
+        const entry = await UserClientService.saveUser(temp, userID);
+        setCustomer(entry);
+        setSaving(false);
+        setEditing(false);
+        setNotificationEditing(false);
+      } else {
+        setSaving(false);
+        setEditing(false);
+        setNotificationEditing(false);
+      }
     },
     [setSaving, userID, setCustomer, setEditing, handleSetNotificationEditing],
   );
@@ -431,7 +443,7 @@ export const CustomerInformation: FC<Props> = ({
           handleSetNotificationEditing(false)();
         }}
       >
-        <Form<User>
+        <Form<Notification>
           title={
             notificationViewing
               ? 'Customer Notification'
@@ -439,8 +451,11 @@ export const CustomerInformation: FC<Props> = ({
                   customer.getNotification() === '' ? 'Add' : 'Edit'
                 } Customer Notification`
           }
-          schema={SCHEMA_PROPERTY_NOTIFICATION}
-          data={customer}
+          schema={SCHEMA_NOTIFICATION}
+          data={{
+            notification: customer.getNotification(),
+            id: customer.getId(),
+          }}
           onSave={handleSave}
           onClose={() => {
             handleSetNotificationViewing(false)();
@@ -464,7 +479,7 @@ export const CustomerInformation: FC<Props> = ({
                     variant: 'outlined',
                     onClick: () => {
                       handleSetNotificationViewing(false)();
-                      handleSave(new User());
+                      handleSave({ notification: '', id: customer.getId() });
                     },
                   },
                 ]

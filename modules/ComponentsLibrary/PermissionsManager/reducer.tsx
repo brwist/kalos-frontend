@@ -8,12 +8,10 @@ export type State = {
   roles: PermissionGroup[] | undefined;
   privileges: PermissionGroup[] | undefined;
   departments: PermissionGroup[] | undefined;
-  openRemovePermission: boolean;
-  openAddPermission: boolean;
   activeTab: string;
   isSU: boolean;
   isOwnerSU: boolean;
-  pendingRemovePermission: PermissionGroup | undefined;
+  viewPermission: PermissionGroup | undefined;
 };
 
 export type Action =
@@ -26,12 +24,9 @@ export type Action =
   | { type: 'setIsSU'; data: boolean }
   | { type: 'setOwnerIsSU'; data: boolean }
   | {
-      type: 'setOpenRemovePermission';
-      flag: boolean;
-      pendingPermissionGroup: PermissionGroup | undefined;
-    }
-  | { type: 'setOpenAddPermission'; data: boolean };
-
+      type: 'setViewPermission';
+      data: PermissionGroup | undefined;
+    };
 export const reducer = (state: State, action: Action) => {
   switch (action.type) {
     case 'setInit': {
@@ -69,22 +64,6 @@ export const reducer = (state: State, action: Action) => {
         departments: data,
       };
     }
-    case 'setOpenRemovePermission': {
-      const flag = action.flag;
-      const req = action.pendingPermissionGroup;
-      return {
-        ...state,
-        openRemovePermission: flag,
-        pendingRemovePermission: req,
-      };
-    }
-    case 'setOpenAddPermission': {
-      const data = action.data;
-      return {
-        ...state,
-        openAddPermission: data,
-      };
-    }
     case 'setActiveTab': {
       const data = action.data;
       console.log(data);
@@ -99,6 +78,14 @@ export const reducer = (state: State, action: Action) => {
       return {
         ...state,
         isSU: data,
+      };
+    }
+    case 'setViewPermission': {
+      const data = action.data;
+      console.log(data);
+      return {
+        ...state,
+        viewPermission: data,
       };
     }
     case 'setOwnerIsSU': {
