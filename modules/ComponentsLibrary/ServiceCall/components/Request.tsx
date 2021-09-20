@@ -56,6 +56,9 @@ export const Request: FC<Props> = forwardRef(
   ) => {
     const [initSchemaCalled, setInitSchemaCalled] = useState<boolean>(false);
     const [resetId, setResetId] = useState<number>(0);
+    if (serviceItem.getId() === 0 || serviceItem.getId() === undefined) {
+      serviceItem.setDepartmentId(19);
+    }
     const handleChange = useCallback(
       (data: Event) => {
         //const { jobTypeId, jobSubtypeId, logJobStatus } = data;
@@ -160,7 +163,7 @@ export const Request: FC<Props> = forwardRef(
             label: 'Sector',
             name: 'getIsResidential',
             required: false,
-            options: [{label: 'Residential', value: 1}],
+            options: [{ label: 'Residential', value: 1 }],
             defaultLabel: 'Commercial',
             displayEmpty: true,
             forceShrinkLabel: true,
