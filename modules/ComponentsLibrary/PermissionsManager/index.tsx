@@ -15,10 +15,9 @@ import Tab from '@material-ui/core/Tab';
 import { Schema } from '../Form';
 import { makeStyles } from '@material-ui/core/styles';
 import IconButton from '@material-ui/core/IconButton';
-import Delete from '@material-ui/icons/Delete';
+import Search from '@material-ui/icons/Search';
 import { Confirm } from '../Confirm';
 import { Modal } from '../Modal';
-import { AddPermission } from '../AddPermission';
 import { Button } from '../Button';
 import { Tooltip } from '@material-ui/core';
 interface Props {
@@ -42,9 +41,7 @@ export const PermissionsManager: FC<Props> = ({ loggedUserId, onClose }) => {
     roles: undefined,
     departments: undefined,
     isSU: false,
-    openAddPermission: false,
-    openRemovePermission: false,
-    pendingRemovePermission: undefined,
+    viewPermission: undefined,
     isOwnerSU: false,
     activeTab: 'Roles',
   });
@@ -54,9 +51,7 @@ export const PermissionsManager: FC<Props> = ({ loggedUserId, onClose }) => {
     roles,
     privileges,
     departments,
-    openRemovePermission,
-    openAddPermission,
-    pendingRemovePermission,
+    viewPermission,
     activeTab,
     isOwnerSU,
     isSU,
@@ -87,7 +82,7 @@ export const PermissionsManager: FC<Props> = ({ loggedUserId, onClose }) => {
     ],
   ];
   const refreshPermissions = () => {
-    dispatch({ type: 'setOpenAddPermission', data: false });
+    dispatch({ type: 'setViewPermission', data: undefined });
     dispatch({ type: 'setInit', data: true });
   };
 
@@ -142,14 +137,13 @@ export const PermissionsManager: FC<Props> = ({ loggedUserId, onClose }) => {
                             key="view"
                             onClick={() =>
                               dispatch({
-                                type: 'setOpenRemovePermission',
-                                flag: true,
-                                pendingPermissionGroup: role,
+                                type: 'setViewPermission',
+                                data: role,
                               })
                             }
                             size="small"
                           >
-                            <Delete />
+                            <Search />
                           </IconButton>
                         </Tooltip>,
                       ],
@@ -182,14 +176,13 @@ export const PermissionsManager: FC<Props> = ({ loggedUserId, onClose }) => {
                           key={'view' + department.getId()}
                           onClick={() =>
                             dispatch({
-                              type: 'setOpenRemovePermission',
-                              flag: true,
-                              pendingPermissionGroup: department,
+                              type: 'setViewPermission',
+                              data: department,
                             })
                           }
                           size="small"
                         >
-                          <Delete />
+                          <Search />
                         </IconButton>,
                       ],
                     },
@@ -220,15 +213,14 @@ export const PermissionsManager: FC<Props> = ({ loggedUserId, onClose }) => {
                           key="view"
                           onClick={() =>
                             dispatch({
-                              type: 'setOpenRemovePermission',
-                              flag: true,
-                              pendingPermissionGroup: privilege,
+                              type: 'setViewPermission',
+                              data: privilege,
                             })
                           }
                           size="small"
                           disabled={privilege.getName() == 'SU' && !isOwnerSU}
                         >
-                          <Delete />
+                          <Search />
                         </IconButton>,
                       ],
                     },
@@ -253,30 +245,15 @@ export const PermissionsManager: FC<Props> = ({ loggedUserId, onClose }) => {
         tabs={tabs}
       ></VerticalTabs>
       <Modal
-        open={openRemovePermission}
+        open={viewPermission != undefined}
         onClose={() =>
           dispatch({
-            type: 'setOpenRemovePermission',
-            flag: false,
-            pendingPermissionGroup: undefined,
+            type: 'setViewPermission',
+            data: undefined,
           })
         }
       >
-        <Confirm
-          title="Remove Permission"
-          open={openRemovePermission}
-          onClose={() =>
-            dispatch({
-              type: 'setOpenRemovePermission',
-              flag: false,
-              pendingPermissionGroup: undefined,
-            })
-          }
-          onConfirm={() => console.log('We would like to delete a permission')}
-          submitLabel="Confirm"
-        >
-          Are you sure you want to remove this Permission?
-        </Confirm>
+        Show List of stuff here
       </Modal>
       {onClose && <Button key="close" label="Close" onClick={onClose}></Button>}
     </SectionBar>
