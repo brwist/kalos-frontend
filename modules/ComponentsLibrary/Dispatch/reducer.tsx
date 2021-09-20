@@ -9,13 +9,14 @@ export type FormData = {
   timeEnd: string;
   departmentIds: number[];
   jobTypes: number[];
-  divisionMulti: string[];
+  divisionMulti: number[];
 };
 export interface State {
   techs: DispatchableTech[];
   dismissedTechs: DispatchableTech[];
   calls: DispatchCall[];
   defaultDepartmentIds: number[];
+  defaultSectorIds: number[];
   departmentList: TimesheetDepartment[];
   jobTypeList: JobType[];
   formData: FormData;
@@ -49,6 +50,7 @@ export type Action =
   | { type: 'setDropdownValuesAndApi'; data: {
     departmentList: TimesheetDepartment[],
     defaultDepartmentIds: number[],
+    defaultSectorIds: number[],
     jobTypeList: JobType[],
     googleApiKey: string,
   }}
@@ -104,6 +106,7 @@ export const reducer = (state: State, action: Action) => {
         ...state,
         departmentList: action.data.departmentList,
         defaultDepartmentIds: action.data.defaultDepartmentIds,
+        defaultSectorIds: action.data.defaultSectorIds,
         jobTypeList: action.data.jobTypeList,
         googleApiKey: action.data.googleApiKey,
         isLoadingMap: false,
