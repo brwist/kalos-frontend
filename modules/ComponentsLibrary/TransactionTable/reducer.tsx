@@ -3,6 +3,7 @@ import { Transaction } from '@kalos-core/kalos-rpc/Transaction';
 import { TransactionActivity } from '@kalos-core/kalos-rpc/TransactionActivity';
 import { User } from '@kalos-core/kalos-rpc/User';
 import { RoleType } from '../Payroll';
+import { OrderDir } from '../../../helpers';
 
 export interface FilterType {
   departmentId: number;
@@ -21,6 +22,7 @@ type SelectorParams = {
   txn: Transaction;
   totalCount: number;
 };
+
 export type State = {
   transactionFilter: FilterType;
   transactions: SelectorParams[] | undefined;
@@ -29,6 +31,8 @@ export type State = {
   transactionToEdit: Transaction | undefined;
   transactionToDelete: Transaction | undefined;
   loading: boolean;
+  orderBy: string;
+  orderDir: OrderDir | undefined;
   changingPage: boolean;
   loaded: boolean;
   creatingTransaction: boolean;
@@ -70,6 +74,7 @@ export enum ACTIONS {
   SET_TRANSACTION_TO_EDIT = 'setTransactionToEdit',
   SET_LOADING = 'setLoading',
   SET_LOADED = 'setLoaded',
+  SET_ORDER = 'setOrder',
   SET_CHANGING_PAGE = 'setChangingPage',
   SET_MERGING_TRANSACTION = 'setMergingTransaction',
   SET_SEARCHING = 'setSearching',
@@ -106,6 +111,10 @@ export type Action =
   | { type: ACTIONS.SET_SEARCHING; data: boolean }
   | { type: ACTIONS.SET_ROLE; data: RoleType }
   | { type: ACTIONS.SET_CREATING_TRANSACTION; data: boolean }
+  | {
+      type: ACTIONS.SET_ORDER;
+      data: { orderBy: string; orderDir: OrderDir | undefined };
+    }
   | { type: ACTIONS.SET_EMPLOYEES; data: User[] }
   | { type: ACTIONS.SET_PENDING_UPLOAD_PHOTO; data: Transaction | undefined }
   | { type: ACTIONS.SET_PAGE; data: number }
@@ -302,6 +311,13 @@ export const reducer = (state: State, action: Action) => {
       return {
         ...state,
         searching: action.data,
+      };
+    case ACTIONS.SET_ORDER:
+      console.log('setting order');
+      return {
+        ...state,
+        orderBy: action.data.orderBy,
+        orderDir: action.data.orderDir,
       };
     case ACTIONS.SET_PENDING_UPLOAD_PHOTO:
       console.log('setting pending upload:', action.data);
