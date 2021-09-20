@@ -9,7 +9,6 @@ import { reducer } from './reducer';
 import { Loader } from '../../Loader/main';
 import { InfoTable } from '../../ComponentsLibrary/InfoTable';
 import { SectionBar } from '../../ComponentsLibrary/SectionBar';
-import { Title } from '@material-ui/icons';
 import { VerticalTabs } from '../VerticalTabs';
 import Tab from '@material-ui/core/Tab';
 import { Schema } from '../Form';
@@ -40,6 +39,7 @@ export const PermissionsManager: FC<Props> = ({ loggedUserId, onClose }) => {
     privileges: undefined,
     roles: undefined,
     departments: undefined,
+    fetchedPermissions: undefined,
     isSU: false,
     viewPermission: undefined,
     isOwnerSU: false,
@@ -53,11 +53,12 @@ export const PermissionsManager: FC<Props> = ({ loggedUserId, onClose }) => {
     departments,
     viewPermission,
     activeTab,
+    fetchedPermissions,
     isOwnerSU,
     isSU,
   } = state;
 
-  const SCHEMA: Schema<PermissionData> = [
+  const Schema: Schema<PermissionData> = [
     [
       {
         name: 'permissionName',
@@ -77,7 +78,7 @@ export const PermissionsManager: FC<Props> = ({ loggedUserId, onClose }) => {
       {
         name: 'permissionType',
         label: 'Permission Type',
-        options: ['department', 'role', ''],
+        type: 'text',
       },
     ],
   ];
@@ -85,9 +86,13 @@ export const PermissionsManager: FC<Props> = ({ loggedUserId, onClose }) => {
     dispatch({ type: 'setViewPermission', data: undefined });
     dispatch({ type: 'setInit', data: true });
   };
-
+  const fetchUsersWithPermission = async (permissionId: number) => {
+    const req = new PermissionGroupUser();
+    req.setPermissionGroupId(permissionId);
+    const result = await UserClientService.BatchGetPermissionGroupUser(req);
+    dispatch({ type: 'setFetchedPermissions', data: result.getResultsList() });
+  };
   const load = useCallback(async () => {
-    console.log('we are here');
     const req = new PermissionGroup();
     req.setIsActive(true);
     const result = await UserClientService.BatchGetPermission(req);
@@ -135,12 +140,13 @@ export const PermissionsManager: FC<Props> = ({ loggedUserId, onClose }) => {
                         <Tooltip key="roleDelete" title={'Delete Role'}>
                           <IconButton
                             key="view"
-                            onClick={() =>
+                            onClick={() => {
+                              fetchUsersWithPermission(role.getId());
                               dispatch({
                                 type: 'setViewPermission',
                                 data: role,
-                              })
-                            }
+                              });
+                            }}
                             size="small"
                           >
                             <Search />
@@ -174,12 +180,13 @@ export const PermissionsManager: FC<Props> = ({ loggedUserId, onClose }) => {
                       actions: [
                         <IconButton
                           key={'view' + department.getId()}
-                          onClick={() =>
+                          onClick={() => {
+                            fetchUsersWithPermission(department.getId());
                             dispatch({
                               type: 'setViewPermission',
                               data: department,
-                            })
-                          }
+                            });
+                          }}
                           size="small"
                         >
                           <Search />
@@ -211,12 +218,13 @@ export const PermissionsManager: FC<Props> = ({ loggedUserId, onClose }) => {
                       actions: [
                         <IconButton
                           key="view"
-                          onClick={() =>
+                          onClick={() => {
+                            fetchUsersWithPermission(privilege.getId());
                             dispatch({
                               type: 'setViewPermission',
                               data: privilege,
-                            })
-                          }
+                            });
+                          }}
                           size="small"
                           disabled={privilege.getName() == 'SU' && !isOwnerSU}
                         >
@@ -245,15 +253,47 @@ export const PermissionsManager: FC<Props> = ({ loggedUserId, onClose }) => {
         tabs={tabs}
       ></VerticalTabs>
       <Modal
-        open={viewPermission != undefined}
-        onClose={() =>
+        open={viewPermission != undefined && fetchedPermissions != undefined}
+        onClose={() => {
           dispatch({
             type: 'setViewPermission',
             data: undefined,
-          })
-        }
+          });
+          dispatch({
+            type: 'setFetchedPermissions',
+            data: undefined,
+          });
+        }}
       >
-        Show List of stuff here
+        <InfoTable
+          columns={[
+            { name: 'User' },
+            { name: 'Permission' },
+            { name: 'Permission Type' },
+          ]}
+          styles={{ width: '100%' }}
+          loading={fetchedPermissions == undefined}
+          data={
+            fetchedPermissions
+              ? fetchedPermissions.map(permission => {
+                  return [
+                    {
+                      value:
+                        permission.getUserFirstname() +
+                        ' ' +
+                        permission.getUserLastname(),
+                    },
+                    {
+                      value: permission.getPermissionGroupName(),
+                    },
+                    {
+                      value: permission.getPermissionGroupType(),
+                    },
+                  ];
+                })
+              : []
+          }
+        />
       </Modal>
       {onClose && <Button key="close" label="Close" onClick={onClose}></Button>}
     </SectionBar>
