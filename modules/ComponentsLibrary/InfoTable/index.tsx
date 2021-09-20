@@ -113,7 +113,7 @@ export const InfoTable = ({
     });
   }
 
-  console.log('adding row: ', state.isAddingRow);
+  // console.log('adding row: ', state.isAddingRow);
   return (
     <div
       className={clsx('InfoTable', className)}

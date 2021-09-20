@@ -11,6 +11,8 @@ import differenceInMinutes from 'date-fns/esm/differenceInMinutes';
 import parseISO from 'date-fns/esm/parseISO';
 import DeleteOutlineIcon from '@material-ui/icons/DeleteOutline';
 import CircularProgress from '@material-ui/core/CircularProgress';
+import { InfoTable } from '../InfoTable';
+import { makeFakeRows } from '../../../helpers'
 
 
 interface props {
@@ -29,9 +31,10 @@ export const DispatchTechs: FC<props> = props => {
   return (
     <div>
       {props.loading && (
-        <div style={{textAlign: 'center', paddingTop: '20px'}}>
-          <CircularProgress />
-        </div>
+        // <div style={{textAlign: 'center', paddingTop: '20px'}}>
+        //   <CircularProgress />
+        // </div>
+        <InfoTable data={makeFakeRows(5,3)} loading />
       )}
       {!props.loading && (
       <TableContainer>
