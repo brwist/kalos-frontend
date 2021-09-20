@@ -33,12 +33,12 @@ import { Confirm } from '../Confirm';
 import { Modal } from '../Modal';
 import { Alert } from '../Alert';
 import { Loader } from '../../Loader/main';
+import { DragDropContext } from 'react-beautiful-dnd';
 import addDays from 'date-fns/esm/addDays';
 import format from 'date-fns/esm/format';
 import setHours from 'date-fns/esm/setHours';
 import setMinutes from 'date-fns/esm/setMinutes';
-import  debounce from 'lodash/debounce';
-import { DragDropContext } from 'react-beautiful-dnd';
+import debounce from 'lodash/debounce';
 import Table from '@material-ui/core/Table';
 import TableBody from '@material-ui/core/TableBody';
 import TableContainer from '@material-ui/core/TableContainer';
@@ -48,10 +48,11 @@ import TableCell from '@material-ui/core/TableCell';
 import Grid from '@material-ui/core/Grid';
 import Button  from '@material-ui/core/Button';
 import UndoRounded from '@material-ui/icons/UndoRounded';
-import { sample } from 'lodash';
 
 export interface Props {
   loggedUserId: number;
+  testUserId?: number;
+  disableSlack?: boolean;
 }
 
 const initialFormData: FormData = {
@@ -70,6 +71,7 @@ const initialState: State = {
   calls: [],
   departmentList: [],
   defaultDepartmentIds: [],
+  defaultSectorIds: [],
   jobTypeList: [],
   formData: initialFormData,
   notIncludedJobTypes: [],
@@ -90,6 +92,8 @@ const initialState: State = {
 
 export const DispatchDashboard: React.FC<Props> = function DispatchDashboard({
   loggedUserId,
+  testUserId,
+  disableSlack,
 }) {
   const [state, dispatchDashboard] = useReducer(reducer, initialState);
 
@@ -123,11 +127,10 @@ export const DispatchDashboard: React.FC<Props> = function DispatchDashboard({
     call.setDateRangeList(['>=', state.formData.dateStart, '<=', state.formData.dateEnd]);
     call.setDateTargetList(['date_started', 'date_ended']);
     call.setJobTypeIdList(state.formData.jobTypes.toString());
-    if (state.formData.divisionMulti.length === 1) {
-      call.setIsResidential(1);
-      if (state.formData.divisionMulti[0] === 'Commercial') {
-        call.setNotEqualsList(['IsResidential']);
-      }
+    if (state.formData.divisionMulti.length) {
+      call.setSectorGroupList(state.formData.divisionMulti.toString());
+    } else {
+      call.setSectorGroupList(state.defaultSectorIds.toString());
     }
     try {
       const calls = await DispatchClientService.GetDispatchCalls(call);
@@ -135,7 +138,10 @@ export const DispatchDashboard: React.FC<Props> = function DispatchDashboard({
       const callResults = calls.getResultsList();
       const filteredCalls = callResults.filter(call => 
         call.getDateStarted().concat(' ', call.getTimeStarted()) >= state.formData.dateStart.concat(' ', state.formData.timeStart) &&
-        call.getDateEnded().concat(' ', call.getTimeEnded()) <= state.formData.dateEnd.concat(' ', state.formData.timeEnd)); 
+        call.getDateEnded().concat(' ', call.getTimeEnded()) <= state.formData.dateEnd.concat(' ', state.formData.timeEnd) 
+        && ( state.formData.divisionMulti.length === 0 ||
+        state.formData.divisionMulti.includes(call.getSectorGroup()))
+      ); 
       return {calls: filteredCalls};
     } catch (err) {
       console.error(
@@ -147,7 +153,8 @@ export const DispatchDashboard: React.FC<Props> = function DispatchDashboard({
     state.formData.jobTypes,
     state.formData.dateStart, state.formData.timeStart,
     state.formData.dateEnd, state.formData.timeEnd,
-    state.formData.divisionMulti
+    state.formData.divisionMulti,
+    state.defaultSectorIds,
   ]);
 
   const getDepartments = async() => {
@@ -203,15 +210,27 @@ export const DispatchDashboard: React.FC<Props> = function DispatchDashboard({
     }
   }
 
+  const getSectorGroups = (departments: TimesheetDepartment[]) => {
+    const department = departments.map(dep => dep.getSectorGroup())
+    const defaultSectors = department.filter((c,index) => {
+      return department.indexOf(c) === index;
+    });
+    initialFormData.divisionMulti = defaultSectors;
+    return defaultSectors;
+  }
+
   const setTechnicians = useCallback( async() => {
     const techs = await getTechnicians();
-      dispatchDashboard({
-        type: 'setTechs',
-        data: {
-          availableTechs: techs.available,
-          dismissedTechs: techs.dismissed
-        }
-      });
+    if (techs.dismissed.length === 0) {
+      resetModal();
+    }
+    dispatchDashboard({
+      type: 'setTechs',
+      data: {
+        availableTechs: techs.available,
+        dismissedTechs: techs.dismissed
+      }
+    });
   }, [getTechnicians]);
 
   const setCalls = useCallback( async() => {
@@ -255,12 +274,12 @@ export const DispatchDashboard: React.FC<Props> = function DispatchDashboard({
     if (state.formData.departmentIds.length != formData.departmentIds.length
     || !state.formData.departmentIds.every((val, index) => val === formData.departmentIds[index])) {
       formData.divisionMulti = [];
-      if (formData.departmentIds.filter(dep => [19,20].includes(dep)).length) {
-        formData.divisionMulti.push('Residential');
-      }
-      if (formData.departmentIds.filter(dep => [17,18].includes(dep)).length) {
-        formData.divisionMulti.push('Commercial');
-      }
+      state.departmentList
+        .filter(dep => formData.departmentIds.includes(dep.getId()))
+        .forEach(dep => !formData.divisionMulti.includes(dep.getSectorGroup()) ? formData.divisionMulti.push(dep.getSectorGroup()) : formData.divisionMulti);
+    }
+    if (!formData.divisionMulti.length) {
+      formData.divisionMulti = state.defaultSectorIds;
     }
     const updatedForm : FormData = {
       dateStart: callDateStart,
@@ -307,7 +326,7 @@ export const DispatchDashboard: React.FC<Props> = function DispatchDashboard({
     try{
       await ActivityLogClientService.Create(actLog);
       await ServicesRenderedClientService.Create(service);
-      SlackClientService.DirectMessageUser(state.selectedTech.getUserId(), `Go Home, ${state.selectedTech.getTechname()}`);
+      if (!disableSlack) SlackClientService.DirectMessageUser(testUserId ? 103939 : state.selectedTech.getUserId(), `Go Home, ${state.selectedTech.getTechname()}`);
     } catch (err) {
       console.error(
         `An error occurred while creating the Activity Log and Service Rendered for the dismissal: ${err}`
@@ -331,11 +350,10 @@ export const DispatchDashboard: React.FC<Props> = function DispatchDashboard({
     service.setEventId(124362);
     service.setDatetime(format(new Date(), 'yyyy-MM-dd HH:mm:ss'));
     service.setTimeStarted(format(new Date(), 'yyyy-MM-dd HH:mm:ss'));
-
     try{
       await ActivityLogClientService.Create(actLog);
       await ServicesRenderedClientService.Create(service);
-      SlackClientService.DirectMessageUser(tech.getUserId(), `False Alarm, ${tech.getTechname()}!  I need you back on the schedule!`);
+      if (!disableSlack) SlackClientService.DirectMessageUser(testUserId ? 103939 : tech.getUserId(), `False Alarm, ${tech.getTechname()}!  I need you back on the schedule!`);
     } catch (err) {
       console.error(
         `An error occured while create the Activity Log and Service Rendered for the Un-Dismissal: ${err}`
@@ -372,7 +390,7 @@ export const DispatchDashboard: React.FC<Props> = function DispatchDashboard({
         await EventAssignmentClientService.Create(assignment);
       }
       await EventClientService.Update(event);
-      SlackClientService.Dispatch(state.selectedCall.getId(), state.selectedTech.getUserId(), loggedUserId);
+      if (!disableSlack) SlackClientService.Dispatch(state.selectedCall.getId(), testUserId ? 103939 : state.selectedTech.getUserId(), loggedUserId);
     } catch (err) {
       console.error(
         `An error occurred while updating the Event Assignment and Event: ${err}`
@@ -420,6 +438,7 @@ export const DispatchDashboard: React.FC<Props> = function DispatchDashboard({
 
   const setDropDownValues = async () => {
     const departmentReq = await getDepartments();
+    const defaultSectors = getSectorGroups(departmentReq.departments.filter(dep => departmentReq.defaultValues.includes(dep.getId())));
     const jobTypeReq = await getJobTypes();
     const googleApiKey = await getGoogleApiKey();
     dispatchDashboard({
@@ -427,6 +446,7 @@ export const DispatchDashboard: React.FC<Props> = function DispatchDashboard({
       data: {
         departmentList: departmentReq.departments,
         defaultDepartmentIds: departmentReq.defaultValues,
+        defaultSectorIds: defaultSectors,
         jobTypeList: jobTypeReq.jobTypes,
         googleApiKey: googleApiKey.googleKey,
       }
@@ -465,7 +485,7 @@ export const DispatchDashboard: React.FC<Props> = function DispatchDashboard({
         label: 'Department(s)',
         options: state.departmentList.map(dl => ({
           key: dl.getId() + dl.getDescription(),
-          label: dl.getDescription(),
+          label: `${dl.getValue()} - ${dl.getDescription()}`,
           value: dl.getId(),
         })),
         type: 'multiselect',
@@ -485,12 +505,13 @@ export const DispatchDashboard: React.FC<Props> = function DispatchDashboard({
       {
         name: 'divisionMulti',
         label: 'Division(s)',
-        options: ['Residential', 'Commercial'].map(item => ({
+        options: ['Residential', 'Commercial Light', 'Commercial Heavy'].map((item, index) => ({
           key: item,
           label: item,
-          value: item
+          value: index + 1
         })),
         type: 'multiselect',
+        invisible: state.defaultSectorIds.length <= 1 ? true : undefined,
       },
     ],
     [
@@ -540,7 +561,7 @@ export const DispatchDashboard: React.FC<Props> = function DispatchDashboard({
   useEffect(() => {
     setDropDownValues();
     handleFilterLoad();
-    console.log('drop down use effect');
+    // console.log('drop down use effect');
   }, []);
 
   return (
@@ -564,13 +585,9 @@ export const DispatchDashboard: React.FC<Props> = function DispatchDashboard({
           />
         </Grid>
         )}
+        {/* Commented out for when they ask for filter saving */}
         {/* <Grid item xs={12}>
           <Grid container spacing={1} justifyContent='center'>
-            <Grid item xs={2}>
-              <Button size="small" variant="contained" color="primary" style={{width:'80%'}} onClick={() => {console.log(state.formData)}}>
-                Apply
-              </Button>
-            </Grid>
             <Grid item xs={3}>
               <Button size="small" variant="contained" color="secondary" style={{width:'80%'}} onClick={handleFilterSave}>
                 Save Non-Date Filters

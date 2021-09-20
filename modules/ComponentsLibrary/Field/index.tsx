@@ -56,6 +56,7 @@ import { ClassCodePicker, DepartmentPicker } from '../Pickers';
 import { AdvancedSearch } from '../AdvancedSearch';
 import { Event } from '@kalos-core/kalos-rpc/Event';
 import './styles.less';
+import { RadioGroup } from '@material-ui/core';
 
 type SelectOption = {
   getId: () => number;
@@ -152,6 +153,10 @@ export const Field: <T>(
       compact = false,
       technicianAsEmployee = false,
       white = false,
+      defaultValue = '',
+      displayEmpty = false,
+      forceShrinkLabel = false,
+      defaultLabel = '',
 
       minutesStep = 15,
       ...props
@@ -770,7 +775,12 @@ export const Field: <T>(
             disabled={disabled}
             error={error}
           >
-            <InputLabel id={id}>{inputLabel}</InputLabel>
+            {forceShrinkLabel && (
+              <InputLabel id={id} shrink={forceShrinkLabel}>{inputLabel}</InputLabel>  
+            )}
+            {!forceShrinkLabel && (
+              <InputLabel id={id}>{inputLabel}</InputLabel>
+            )}
             <Select
               labelId={id}
               id={`${name}-select`}
@@ -779,6 +789,7 @@ export const Field: <T>(
               value={value}
               readOnly={readOnly}
               multiple={type === 'multiselect'}
+              displayEmpty={displayEmpty}
               renderValue={
                 type === 'multiselect'
                   ? selected => {
@@ -788,6 +799,11 @@ export const Field: <T>(
                   : undefined
               }
             >
+              {displayEmpty && (
+                <MenuItem value='' style={{fontWeight:'bold'}}>
+                  {defaultLabel}
+                </MenuItem>
+              )}
               {options.map(option => {
                 const isStringOption = typeof option === 'string';
                 const label = isStringOption
@@ -865,7 +881,11 @@ export const Field: <T>(
           <DepartmentPicker
             className={clsx('FieldInput', { compact, disabled })}
             withinForm
-            renderItem={renderSelectOptions}
+            renderItem={i => (
+              <option value={i.getId()} key={`${i.getId()}-${i.getDescription()}`}>
+                {i.getValue()} - {i.getDescription()}
+              </option>
+            )}
             selected={props.value as unknown as number}
             onSelect={handleChange}
             disabled={disabled}

@@ -50,6 +50,10 @@ export type SchemaProps<T> = {
   technicianAsEmployee?: boolean;
   minutesStep?: number;
   invisible?: boolean;
+  defaultValue?: string | number;
+  displayEmpty?: boolean;
+  forceShrinkLabel?: boolean;
+  defaultLabel?: string;
 };
 
 export type Schema<T> = SchemaProps<T>[][];
