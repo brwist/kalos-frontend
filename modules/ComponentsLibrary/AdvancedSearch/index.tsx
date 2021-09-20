@@ -148,6 +148,8 @@ export const AdvancedSearch: FC<Props> = ({
   propertyCustomerId = 0,
 }) => {
   const [isAdmin, setIsAdmin] = useState<number>(0);
+  const [loggedUser, setLoggedUser] = useState<User>(new User());
+
   const [loadedDicts, setLoadedDicts] = useState<boolean>(false);
   const [loadingDicts, setLoadingDicts] = useState<boolean>(false);
   const [jobTypes, setJobTypes] = useState<JobType[]>([]);
@@ -253,6 +255,11 @@ export const AdvancedSearch: FC<Props> = ({
     const jobSubtypes = await JobSubtypeClientService.loadJobSubtypes();
     setJobSubtypes(jobSubtypes);
     setLoadingDicts(false);
+    const userReq = new User();
+    userReq.setId(loggedUserId);
+    const loggedUser = await UserClientService.Get(userReq);
+    setLoggedUser(loggedUser);
+
     if (kinds.includes('employees')) {
       //const departments = await TimesheetDepartmentClientService.loadTimeSheetDepartments();
       const departmentRequest = new TimesheetDepartment();
@@ -263,9 +270,7 @@ export const AdvancedSearch: FC<Props> = ({
       setDepartments(departments);
       const employeeFunctions = await EmployeeFunctionClientService.loadEmployeeFunctions();
       setEmployeeFunctions(employeeFunctions);
-      const userReq = new User();
-      userReq.setId(loggedUserId);
-      const loggedUser = await UserClientService.Get(userReq);
+
       setIsAdmin(loggedUser.getIsAdmin());
     }
     setFormKey(formKey + 1);
@@ -587,7 +592,9 @@ export const AdvancedSearch: FC<Props> = ({
       const actLog = new ActivityLog();
       actLog.setUserId(loggedUserId);
       actLog.setPropertyId(id);
-      actLog.setActivityName(`Deleting Property : ${pendingPropertyDeleting.getAddress()}`);
+      actLog.setActivityName(
+        `Deleting Property : ${pendingPropertyDeleting.getAddress()}`,
+      );
       actLog.setActivityDate(format(new Date(), 'yyyy-MM-dd HH:mm:ss'));
       setPendingPropertyDeleting(undefined);
       setLoading(true);
@@ -915,7 +922,6 @@ export const AdvancedSearch: FC<Props> = ({
     ],
     [searchActions],
   );
-  console.log('departments', departments);
   const SCHEMA_EMPLOYEES: Schema<UsersFilter> = useMemo(
     () => [
       [
@@ -2308,20 +2314,6 @@ export const AdvancedSearch: FC<Props> = ({
                                 <AccessTimeIcon />
                               </IconButton>
                             </Tooltip>,
-                            <Tooltip
-                              key="permission"
-                              content="View/Edit Permissions"
-                              placement="top"
-                            >
-                              <IconButton
-                                size="small"
-                                onClick={() => {
-                                  setPendingEditPermissions(entry);
-                                }}
-                              >
-                                <GroupIcon />
-                              </IconButton>
-                            </Tooltip>,
                           ]
                         : []),
                       <Tooltip
@@ -2374,6 +2366,27 @@ export const AdvancedSearch: FC<Props> = ({
                           ]
                         : []),
                         */
+                      ...(loggedUser
+                        .getPermissionGroupsList()
+                        .findIndex(p => p.getName() == 'PermissionManager') !=
+                      -1
+                        ? [
+                            <Tooltip
+                              key="permission"
+                              content="View/Edit Permissions"
+                              placement="top"
+                            >
+                              <IconButton
+                                size="small"
+                                onClick={() => {
+                                  setPendingEditPermissions(entry);
+                                }}
+                              >
+                                <GroupIcon />
+                              </IconButton>
+                            </Tooltip>,
+                          ]
+                        : []),
                     ],
                   },
                 ];
@@ -2510,6 +2523,7 @@ export const AdvancedSearch: FC<Props> = ({
       deletableCustomers,
       handlePendingCustomerDeletingToggle,
       employeeImages,
+      loggedUser,
       handlePendingEmployeeViewingToggle,
       isAdmin,
       editableEmployees,

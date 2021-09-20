@@ -20,25 +20,31 @@ import { ServiceCalls } from './ServiceCalls';
 import {
   ActivityLogClientService,
   makeFakeRows,
+  makeSafeFormObject,
   PropertyClientService,
   UserClientService,
 } from '../../../helpers';
 import './propertyInfo.less';
 import { ActivityLog } from '@kalos-core/kalos-rpc/ActivityLog';
 import format from 'date-fns/esm/format';
+import { templateSettings } from 'lodash';
 
-const SCHEMA_PROPERTY_NOTIFICATION: Schema<Property> = [
+export interface ProptertyNotification {
+  notification: string;
+  id: number;
+}
+const SCHEMA_PROPERTY_NOTIFICATION: Schema<ProptertyNotification> = [
   [
     {
       label: 'Notification',
-      name: 'setNotification',
+      name: 'notification',
       required: true,
       multiline: true,
     },
   ],
   [
     {
-      name: 'setId',
+      name: 'id',
       type: 'hidden',
     },
   ],
@@ -188,6 +194,39 @@ export const PropertyInfo: FC<Props> = props => {
     ],
   );
 
+  const handleSaveNotification = useCallback(
+    async (data: ProptertyNotification) => {
+      setSaving(true);
+      const temp = entry;
+      temp.setNotification(data.notification);
+      temp.setFieldMaskList(['Notification']);
+      temp.setId(data.id);
+      if (temp) {
+        const entry = await PropertyClientService.saveProperty(
+          temp,
+          userID,
+          propertyId,
+        );
+        setEntry(entry);
+        setSaving(false);
+        setEditing(false);
+        setNotificationEditing(false);
+      } else {
+        setSaving(false);
+        setEditing(false);
+        setNotificationEditing(false);
+      }
+    },
+    [
+      setSaving,
+      userID,
+      entry,
+      propertyId,
+      setEntry,
+      setEditing,
+      setNotificationEditing,
+    ],
+  );
   const handleDelete = useCallback(async () => {
     // TODO: delete customer related data + redirect somewhere?
     const entry = new Property();
@@ -392,7 +431,7 @@ export const PropertyInfo: FC<Props> = props => {
           handleSetNotificationEditing(false)();
         }}
       >
-        <Form<Property>
+        <Form<ProptertyNotification>
           title={
             notificationViewing
               ? 'Property Notification'
@@ -401,8 +440,8 @@ export const PropertyInfo: FC<Props> = props => {
                 } Property Notification`
           }
           schema={SCHEMA_PROPERTY_NOTIFICATION}
-          data={entry}
-          onSave={handleSave}
+          data={{ notification: entry.getNotification(), id: propertyId }}
+          onSave={handleSaveNotification}
           onClose={() => {
             handleSetNotificationViewing(false)();
             handleSetNotificationEditing(false)();
@@ -425,9 +464,8 @@ export const PropertyInfo: FC<Props> = props => {
                     variant: 'outlined',
                     onClick: () => {
                       handleSetNotificationViewing(false)();
-                      let newProp = new Property();
-                      newProp.setNotification('');
-                      handleSave(newProp);
+                      let newProp = { notification: '', id: propertyId };
+                      handleSaveNotification(newProp);
                     },
                   },
                 ]
