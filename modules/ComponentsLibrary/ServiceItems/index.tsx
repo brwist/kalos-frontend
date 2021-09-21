@@ -156,6 +156,7 @@ export const ServiceItems: FC<Props> = props => {
   const handleAddMaterial = useCallback(() => {
     const newMaterial = new Material();
     newMaterial.setId(Date.now());
+    console.log('we are adding');
     const newMaterials = [...materials, newMaterial];
     setMaterials(newMaterials);
   }, [materials, setMaterials]);
@@ -569,8 +570,20 @@ export const ServiceItems: FC<Props> = props => {
 
   const handleEditing = useCallback(
     (editing?: ServiceItem) => async () => {
-      setEditing(editing);
-      if (editing && editing.getId()) {
+      console.log(editing);
+      if (editing === undefined) {
+        console.log('we set it to undefined');
+        setEditing(undefined);
+      }
+
+      if (editing && typeof editing.getId === 'function') {
+        console.log('we got an acutal value');
+        setEditing(editing);
+      } else if (editing != undefined) {
+        console.log('we are creating a new one');
+        setEditing(new ServiceItem());
+      }
+      if (editing && typeof editing.getId === 'function') {
         const entry = new Material();
         entry.setServiceItemId(editing.getId());
         setLoadingMaterials(true);
@@ -768,7 +781,11 @@ export const ServiceItems: FC<Props> = props => {
         </Modal>
       )}
       {editing && (
-        <Modal open onClose={handleEditing()} fullScreen={!viewedAsCustomer}>
+        <Modal
+          open
+          onClose={handleEditing(undefined)}
+          fullScreen={!viewedAsCustomer}
+        >
           <div className="ServiceItemsModal">
             <Form<ServiceItem>
               title={`${
@@ -777,7 +794,7 @@ export const ServiceItems: FC<Props> = props => {
               schema={SCHEMA}
               data={editing}
               onSave={handleSave}
-              onClose={handleEditing()}
+              onClose={handleEditing(undefined)}
               disabled={saving}
               className="ServiceItemsForm"
               readOnly={viewedAsCustomer}
