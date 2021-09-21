@@ -1,0 +1,28 @@
+/*
+    ! Please write your tests here (failing first) and green them as development progresses. 
+*/
+
+export {};
+
+import TransactionUserModule = require('../../../modules/${title}/main');
+import React = require('react');
+import Enzyme = require('enzyme');
+
+import Chai = require('chai');
+
+describe('${title}', () => {
+  describe('<${title} userID={100153} />', () => {
+    let wrapper: Enzyme.ReactWrapper;
+    before(() => {
+      wrapper = Enzyme.mount(
+        <TransactionUserModule.default userID={8418} />,
+      );
+    });
+    after(() => {
+      wrapper.unmount();
+    });
+    it('renders a loader when loading', () => {
+      throw new Error("Testing is not implemented yet for the module ${title}")
+    });
+  });
+});

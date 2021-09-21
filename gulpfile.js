@@ -179,6 +179,7 @@ export const ${title}: React.FC<props> = function ${title}({ userID }) {
   return (
     <PageWrapper userID={userID}>
       <h1>${title}!</h1>
+      <h2>Tests were also created in /test for this module, please implement them!</h2>
     </PageWrapper>
   );
 };
@@ -610,19 +611,27 @@ const NAMED_EXPORTS = {
   'node_modules/@improbable-eng/grpc-web/dist/grpc-web-client.umd.js': ['grpc'],
   'node_modules/@kalos-core/kalos-rpc/node_modules/@improbable-eng/grpc-web/dist/grpc-web-client.umd.js':
     ['grpc'],
-  'node_modules/@material-ui/utils/node_modules/react-is/index.js'  :  ['ForwardRef','Memo','isFragment'],
-  'node_modules/@material-ui/core/node_modules/react-is/index.js'  :  ['isFragment'],
-  'node_modules/@material-ui/lab/node_modules/react-is/index.js'  :  ['isFragment'],
+  'node_modules/@material-ui/utils/node_modules/react-is/index.js': [
+    'ForwardRef',
+    'Memo',
+    'isFragment',
+  ],
+  'node_modules/@material-ui/core/node_modules/react-is/index.js': [
+    'isFragment',
+  ],
+  'node_modules/@material-ui/lab/node_modules/react-is/index.js': [
+    'isFragment',
+  ],
 
-  'node_modules/lodash/lodash.js'  :  ['delay', 'debounce','isArray'],
-  'node_modules/@kalos-core/kalos-rpc/compiled-protos/dispatch_pb.js'  :  [
+  'node_modules/lodash/lodash.js': ['delay', 'debounce', 'isArray'],
+  'node_modules/@kalos-core/kalos-rpc/compiled-protos/dispatch_pb.js': [
     'DispatchableTechList',
     'DispatchableTech',
     'DispatchCall',
     'DispatchCallBack',
     'DispatchCallTime',
     'DispatchCallCount',
-    'DispatchFirstCall'
+    'DispatchFirstCall',
   ],
   'node_modules/@kalos-core/kalos-rpc/compiled-protos/kalosmaps_pb.js': [
     'Place',
@@ -977,7 +986,13 @@ const NAMED_EXPORTS = {
     'Group',
     'GroupList',
   ],
-  'node_modules/react-is/index.js': ['ForwardRef', 'isFragment', 'Memo', 'isValidElementType', 'isContextConsumer'],
+  'node_modules/react-is/index.js': [
+    'ForwardRef',
+    'isFragment',
+    'Memo',
+    'isValidElementType',
+    'isContextConsumer',
+  ],
   'node_modules/tslib/tslib.js': ['__awaiter', '__generator', '__extends'],
   'node_modules/@kalos-core/kalos-rpc/compiled-protos/predict_pb.js': [
     'TransactionData',
