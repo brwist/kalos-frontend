@@ -1,0 +1,21 @@
+import React, { useReducer, FC } from 'react';
+import { PageWrapper } from '../PageWrapper/main';
+import { reducer } from './reducer';
+
+// add any prop types here
+interface props {
+  userID: number; 
+}
+
+export const ${title}: FC<props> = function ${title}({ userID }) {
+  const [state, dispatch] = useReducer(reducer, {
+    isLoaded: false
+  }); 
+
+  return (
+    <PageWrapper userID={userID}>
+      <h1>${title}!</h1>
+      <h2>Tests were also created in /test for this module, please implement them!</h2>
+    </PageWrapper>
+  );
+};
