@@ -19,6 +19,7 @@ import BuildIcon from '@material-ui/icons/Build';
 import PersonIcon from '@material-ui/icons/Person';
 import AccessTimeIcon from '@material-ui/icons/AccessTime';
 import GroupIcon from '@material-ui/icons/Group';
+import RateReviewOutlined from '@material-ui/icons/RateReviewOutlined';
 import { ActionsProps } from '../Actions';
 import { SectionBar } from '../SectionBar';
 import { PlainForm, Schema, Option } from '../PlainForm';
@@ -88,6 +89,7 @@ import './styles.less';
 import { log } from 'console';
 import { ActivityLog } from '@kalos-core/kalos-rpc/ActivityLog';
 import format from 'date-fns/esm/format';
+import { ServiceRequest } from '../ServiceCall/requestIndex';
 
 type Kind =
   | 'serviceCalls'
@@ -205,6 +207,7 @@ export const AdvancedSearch: FC<Props> = ({
   const [saving, setSaving] = useState<boolean>(false);
   const [pendingEventAdding, setPendingEventAdding] = useState<boolean>(false);
   const [pendingEventEditing, setPendingEventEditing] = useState<Event>();
+  const [pendingEventEditingNew, setPendingEventEditingNew] = useState<Event>();
   const [pendingEventDeleting, setPendingEventDeleting] = useState<Event>();
   const [employeeUploadedPhoto, setEmployeeUploadedPhoto] = useState<string>(
     '',
@@ -543,6 +546,11 @@ export const AdvancedSearch: FC<Props> = ({
       // setPendingEventEditing(pendingEventEditing); // TODO restore when EditServiceCall is finished
     },
     [],
+  );
+  const handlePendingEventEditingNewToggle = useCallback(
+    (pendingEventEditingNew?: Event) => () => 
+      setPendingEventEditingNew(pendingEventEditingNew),
+    [setPendingEventEditingNew],
   );
   const handlePendingEventDeletingToggle = useCallback(
     (pendingEventDeleting?: Event) => () =>
@@ -2025,35 +2033,59 @@ export const AdvancedSearch: FC<Props> = ({
                         ...(onSelectEvent
                           ? []
                           : [
-                              <IconButton
-                                key="edit"
-                                size="small"
-                                onClick={
-                                  () => {
-                                    window.open(
-                                      cfURL(
-                                        'service.editServiceCall',
-                                        `&id=${entry.getId()}&user_id=${property?.getUserId()}&property_id=${entry.getPropertyId()}`,
-                                      ),
-                                    );
-                                    /* TODO: complete edit service call module */
-                                  } /*handlePendingEventEditingToggle(entry)*/
-                                }
+                              <Tooltip
+                                key="cfEditSC"
+                                content="Edit Service Call"
+                                placement="top"
                               >
-                                <EditIcon />
-                              </IconButton>,
+                                <IconButton
+                                  key="edit"
+                                  size="small"
+                                  onClick={
+                                    () => {
+                                      window.open(
+                                        cfURL(
+                                          'service.editServiceCall',
+                                          `&id=${entry.getId()}&user_id=${property?.getUserId()}&property_id=${entry.getPropertyId()}`,
+                                        ),
+                                      );
+                                      /* TODO: complete edit service call module */
+                                    } /*handlePendingEventEditingToggle(entry)*/
+                                  }
+                                >
+                                  <EditIcon />
+                                </IconButton>
+                              </Tooltip>,
+                              <Tooltip
+                                key="jsxEditSC"
+                                content="Edit Service Request"
+                                placement="top">
+                                <IconButton
+                                  key="editNew"
+                                  size="small"
+                                  onClick={handlePendingEventEditingNewToggle(entry,)}   
+                                  >
+                                  <RateReviewOutlined />
+                                </IconButton>
+                              </Tooltip>,
                             ]),
                         ...(deletableEvents
                           ? [
-                              <IconButton
-                                key="delete"
-                                size="small"
-                                onClick={handlePendingEventDeletingToggle(
-                                  entry,
-                                )}
+                              <Tooltip
+                                key="deleteSC"
+                                content="Delete Service Call"
+                                placement="top"
                               >
-                                <DeleteIcon />
-                              </IconButton>,
+                                <IconButton
+                                  key="delete"
+                                  size="small"
+                                  onClick={handlePendingEventDeletingToggle(
+                                    entry,
+                                  )}
+                                >
+                                  <DeleteIcon />
+                                </IconButton>
+                              </Tooltip>,
                             ]
                           : []),
                       ],
@@ -2516,6 +2548,7 @@ export const AdvancedSearch: FC<Props> = ({
       handleSelectEvent,
       handlePendingCustomerViewingToggle,
       handlePendingPropertyViewingToggle,
+      handlePendingEventEditingNewToggle,
       deletableEvents,
       handlePendingEventDeletingToggle,
       editableCustomers,
@@ -2727,6 +2760,18 @@ export const AdvancedSearch: FC<Props> = ({
             userID={pendingEventEditing.getCustomer()?.getId() || 0}
             propertyId={pendingEventEditing.getPropertyId()}
             onClose={handlePendingEventEditingToggle(undefined)}
+            onSave={reload}
+          />
+        </Modal>
+      )}
+      {pendingEventEditingNew && (
+        <Modal open onClose={handlePendingEventEditingNewToggle(undefined)} fullScreen>
+          <ServiceRequest
+            loggedUserId={loggedUserId}
+            serviceCallId={pendingEventEditingNew.getId()}
+            userID={pendingEventEditingNew.getCustomer()?.getId() || 0}
+            propertyId={pendingEventEditingNew.getPropertyId()}
+            onClose={handlePendingEventEditingNewToggle(undefined)}
             onSave={reload}
           />
         </Modal>
