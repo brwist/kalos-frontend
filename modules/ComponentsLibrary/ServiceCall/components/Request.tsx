@@ -48,6 +48,7 @@ export const Request: FC<Props> = forwardRef(
       disabled,
       jobTypeOptions,
       jobSubtypeOptions,
+      jobTypeSubtypes,
       onChange,
       onValid,
       onInitSchema,
@@ -56,9 +57,6 @@ export const Request: FC<Props> = forwardRef(
   ) => {
     const [initSchemaCalled, setInitSchemaCalled] = useState<boolean>(false);
     const [resetId, setResetId] = useState<number>(0);
-    if (serviceItem.getId() === 0 || serviceItem.getId() === undefined) {
-      serviceItem.setDepartmentId(19);
-    }
     const handleChange = useCallback(
       (data: Event) => {
         //const { jobTypeId, jobSubtypeId, logJobStatus } = data;
@@ -112,7 +110,10 @@ export const Request: FC<Props> = forwardRef(
         onValid,
       ],
     );
-    const handleSetValid = useCallback(() => onValid(true), [onValid]);
+    const handleSetValid = useCallback(() => {
+      onValid(true)}
+      ,[onValid]
+    );
     const callbackOriginalOptions: Option[] = useMemo(
       () => [
         { label: OPTION_BLANK, value: 0 },
@@ -255,7 +256,6 @@ export const Request: FC<Props> = forwardRef(
     useEffect(() => {
       if (!initSchemaCalled) {
         setInitSchemaCalled(true);
-        // console.log('test');
         const fields = SCHEMA.map(item =>
           item.map(({ name }) => name).filter(name => name),
         ).reduce((aggr, item) => [...aggr, ...item], []);
