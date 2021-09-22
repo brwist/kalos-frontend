@@ -1,6 +1,10 @@
 import { User } from '@kalos-core/kalos-rpc/User';
 import { UserClientService } from '../../../helpers';
-import { PermissionGroup } from '@kalos-core/kalos-rpc/compiled-protos/user_pb';
+import {
+  PermissionGroup,
+  PermissionGroupUserList,
+  PermissionGroupUser,
+} from '@kalos-core/kalos-rpc/compiled-protos/user_pb';
 
 export type State = {
   init: boolean;
@@ -11,6 +15,7 @@ export type State = {
   activeTab: string;
   isSU: boolean;
   isOwnerSU: boolean;
+  fetchedPermissions: PermissionGroupUser[] | undefined;
   viewPermission: PermissionGroup | undefined;
 };
 
@@ -20,6 +25,7 @@ export type Action =
   | { type: 'setRoles'; data: PermissionGroup[] }
   | { type: 'setPrivileges'; data: PermissionGroup[] }
   | { type: 'setDepartments'; data: PermissionGroup[] }
+  | { type: 'setFetchedPermissions'; data: PermissionGroupUser[] | undefined }
   | { type: 'setActiveTab'; data: string }
   | { type: 'setIsSU'; data: boolean }
   | { type: 'setOwnerIsSU'; data: boolean }
@@ -94,6 +100,14 @@ export const reducer = (state: State, action: Action) => {
       return {
         ...state,
         isOwnerSU: data,
+      };
+    }
+    case 'setFetchedPermissions': {
+      const data = action.data;
+      console.log(data);
+      return {
+        ...state,
+        fetchedPermissions: data,
       };
     }
     default:
