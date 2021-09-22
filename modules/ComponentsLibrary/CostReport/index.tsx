@@ -326,7 +326,7 @@ export const CostReport: FC<Props> = ({ serviceCallId }) => {
           ['Meals', usd(totalMeals)],
           ['Lodging', usd(totalLodging)],
           ['Tasks Billable', usd(totalTasksBillable)],
-          // ['Trips Total', usd(tripsTotal)],
+          ['Trips Total', usd(tripsTotal)],
           [
             '',
             <strong key="stronk">
