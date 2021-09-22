@@ -5,7 +5,10 @@ import {
   PermissionGroupUserList,
   PermissionGroupUser,
 } from '@kalos-core/kalos-rpc/compiled-protos/user_pb';
-
+export type FormData = {
+  userIds: number[];
+  permissionId: number;
+};
 export type State = {
   init: boolean;
   loaded: boolean;
@@ -15,9 +18,17 @@ export type State = {
   activeTab: string;
   isSU: boolean;
   isOwnerSU: boolean;
+  removePermission: PermissionGroupUser | undefined;
   fetchedPermissions: PermissionGroupUser[] | undefined;
   viewPermission: PermissionGroup | undefined;
+  fetchedUsersWithoutPermission: userOption[] | undefined;
+  selectedUsers: FormData;
 };
+export interface userOption {
+  label: string;
+  value: number;
+  permissionId: number;
+}
 
 export type Action =
   | { type: 'setInit'; data: boolean }
@@ -26,9 +37,12 @@ export type Action =
   | { type: 'setPrivileges'; data: PermissionGroup[] }
   | { type: 'setDepartments'; data: PermissionGroup[] }
   | { type: 'setFetchedPermissions'; data: PermissionGroupUser[] | undefined }
+  | { type: 'setFetchedUsersWithoutPermission'; data: userOption[] | undefined }
   | { type: 'setActiveTab'; data: string }
+  | { type: 'setSelectedUsers'; data: FormData }
   | { type: 'setIsSU'; data: boolean }
   | { type: 'setOwnerIsSU'; data: boolean }
+  | { type: 'setRemovePermission'; data: PermissionGroupUser | undefined }
   | {
       type: 'setViewPermission';
       data: PermissionGroup | undefined;
@@ -108,6 +122,32 @@ export const reducer = (state: State, action: Action) => {
       return {
         ...state,
         fetchedPermissions: data,
+      };
+    }
+    case 'setRemovePermission': {
+      const data = action.data;
+      console.log(data);
+      return {
+        ...state,
+        removePermission: data,
+      };
+    }
+    case 'setFetchedUsersWithoutPermission': {
+      const data = action.data;
+      console.log('setting users without permission');
+      console.log(data);
+      return {
+        ...state,
+        fetchedUsersWithoutPermission: data,
+      };
+    }
+    case 'setSelectedUsers': {
+      const data = action.data;
+      console.log('setting user');
+      console.log(data);
+      return {
+        ...state,
+        selectedUsers: data,
       };
     }
     default:
