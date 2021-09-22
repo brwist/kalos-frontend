@@ -14,6 +14,8 @@ import './addServiceCall.less';
 import { User, UsersFilter } from '@kalos-core/kalos-rpc/User';
 import { Property } from '@kalos-core/kalos-rpc/Property';
 export type Props = Pick<CustomerItemProps, 'loggedUserId'> & {
+  propertyId?: number;
+  userId?: number;
   onClose?: () => void;
   onSave?: () => void;
   asProject?: boolean;
@@ -21,7 +23,7 @@ export type Props = Pick<CustomerItemProps, 'loggedUserId'> & {
 };
 
 export const AddServiceCall: FC<Props> = props => {
-  const { loggedUserId, onClose, onSave, asProject = false } = props;
+  const { propertyId = 0, userId = 0, loggedUserId, onClose, onSave, asProject = false } = props;
   const [addCustomer, setAddCustomer] = useState<boolean>(false);
   const [customerOpened, setCustomerOpened] = useState<User>();
   const [propertyOpened, setPropertyOpened] = useState<User>();
@@ -194,7 +196,7 @@ export const AddServiceCall: FC<Props> = props => {
           />
         </Modal>
       )}
-      {serviceCallOpened && (
+      {(serviceCallOpened || (propertyId > 0 && userId > 0)) && (
         <Modal open onClose={handleServiceCallClose} fullScreen>
           <div className="AddServiceCallWrapper">
             <div className="AddServiceCallHeader">
@@ -206,8 +208,8 @@ export const AddServiceCall: FC<Props> = props => {
             </div>
             <div className="AddServiceCallContent">
               <ServiceCall
-                propertyId={serviceCallOpened.getId()}
-                userID={serviceCallOpened.getUserId()}
+                propertyId={serviceCallOpened ? serviceCallOpened.getId() : propertyId}
+                userID={serviceCallOpened ? serviceCallOpened.getUserId() : userId}
                 loggedUserId={loggedUserId}
                 onSave={onSave}
                 asProject={asProject}
