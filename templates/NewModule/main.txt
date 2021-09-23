@@ -1,3 +1,9 @@
+/* 
+
+  Design Specification: 
+
+*/
+
 import React, { useReducer, useEffect, useCallback, FC } from 'react';
 import { PageWrapper } from '../PageWrapper/main';
 import { reducer, ACTIONS } from './reducer';
