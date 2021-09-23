@@ -15,10 +15,13 @@ import { Schema } from '../Form';
 import { makeStyles } from '@material-ui/core/styles';
 import IconButton from '@material-ui/core/IconButton';
 import Search from '@material-ui/icons/Search';
+import Add from '@material-ui/icons/Add';
+import Delete from '@material-ui/icons/Delete';
+import { userOption, FormData } from './reducer';
 import { Confirm } from '../Confirm';
 import { Modal } from '../Modal';
 import { Button } from '../Button';
-import { Tooltip } from '@material-ui/core';
+import { PlainForm } from '../PlainForm';
 interface Props {
   loggedUserId: number;
   onClose: () => void;
@@ -38,10 +41,13 @@ export const PermissionsManager: FC<Props> = ({ loggedUserId, onClose }) => {
     loaded: false,
     privileges: undefined,
     roles: undefined,
+    selectedUsers: { userIds: [], permissionId: 0 },
     departments: undefined,
     fetchedPermissions: undefined,
     isSU: false,
+    fetchedUsersWithoutPermission: undefined,
     viewPermission: undefined,
+    removePermission: undefined,
     isOwnerSU: false,
     activeTab: 'Roles',
   });
@@ -51,47 +57,110 @@ export const PermissionsManager: FC<Props> = ({ loggedUserId, onClose }) => {
     roles,
     privileges,
     departments,
+    fetchedUsersWithoutPermission,
     viewPermission,
     activeTab,
+    selectedUsers,
+    removePermission,
     fetchedPermissions,
     isOwnerSU,
     isSU,
   } = state;
 
-  const Schema: Schema<PermissionData> = [
-    [
-      {
-        name: 'permissionName',
-        label: 'Permission Name',
-        type: 'text',
-      },
-    ],
-    [
-      {
-        name: 'permissionDescription',
-        label: 'Description of Permission',
-        type: 'text',
-        multiline: true,
-      },
-    ],
-    [
-      {
-        name: 'permissionType',
-        label: 'Permission Type',
-        type: 'text',
-      },
-    ],
-  ];
   const refreshPermissions = () => {
     dispatch({ type: 'setViewPermission', data: undefined });
+    dispatch({ type: 'setRemovePermission', data: undefined });
     dispatch({ type: 'setInit', data: true });
+  };
+  const RemovePermissionFromUser = async (removeReq: PermissionGroupUser) => {
+    const req = new PermissionGroupUser();
+    req.setUserId(removeReq.getUserId());
+    req.setPermissionGroupId(removeReq.getPermissionGroupId());
+    await UserClientService.RemoveUserFromPermissionGroup(req);
+    refreshPermissions();
   };
   const fetchUsersWithPermission = async (permissionId: number) => {
     const req = new PermissionGroupUser();
     req.setPermissionGroupId(permissionId);
+    req.setNotEqualsList(['PermissionGroupUserId']);
+    req.setPermissionGroupUserId(0);
     const result = await UserClientService.BatchGetPermissionGroupUser(req);
     dispatch({ type: 'setFetchedPermissions', data: result.getResultsList() });
   };
+  const fetchUsersWithoutPermission = async (
+    permissionId: number,
+    permissionType: string,
+  ) => {
+    const req = new PermissionGroupUser();
+    req.setPermissionGroupId(permissionId);
+    req.setPermissionGroupUserId(0);
+
+    const result = (
+      await UserClientService.BatchGetPermissionGroupUser(req)
+    ).getResultsList();
+    if (permissionType === 'role') {
+      //we should find every user with a role, and filter them out
+      const roleReq = new PermissionGroupUser();
+      roleReq.setPermissionGroupUserId(0);
+      roleReq.setPermissionGroupType('role');
+      roleReq.setNotEqualsList(['PermissionGroupUserId']);
+      const roleResult = (
+        await UserClientService.BatchGetPermissionGroupUser(roleReq)
+      ).getResultsList();
+      console.log(roleResult);
+      const filteredResults = result.filter(r => {
+        const temp = roleResult.find(j => j.getUserId() === r.getUserId());
+        if (temp) {
+          return false;
+        } else {
+          return true;
+        }
+      });
+      console.log(filteredResults);
+      const mappedResults = filteredResults.map(r => ({
+        label: r.getUserFirstname() + ' ' + r.getUserLastname(),
+        value: r.getUserId(),
+        permissionId: permissionId,
+      }));
+      dispatch({
+        type: 'setFetchedUsersWithoutPermission',
+        data: mappedResults,
+      });
+    } else {
+      const mappedResults = result.map(r => ({
+        label: r.getUserFirstname() + ' ' + r.getUserLastname(),
+        value: r.getUserId(),
+        permissionId: permissionId,
+      }));
+      dispatch({
+        type: 'setFetchedUsersWithoutPermission',
+        data: mappedResults,
+      });
+    }
+  };
+  const AddPermission = async (usersToAdd: number[], permissionId: number) => {
+    for (let i = 0; i < usersToAdd.length; i++) {
+      const req = new PermissionGroupUser();
+      req.setUserId(usersToAdd[i]);
+      req.setPermissionGroupId(permissionId);
+      await UserClientService.AddUserToPermissionGroup(req);
+      dispatch({ type: 'setFetchedUsersWithoutPermission', data: undefined });
+      dispatch({
+        type: 'setSelectedUsers',
+        data: { userIds: [], permissionId: 0 },
+      });
+    }
+  };
+  const SCHEMA_PRINT: Schema<FormData> = [
+    [
+      {
+        name: 'userIds',
+        label: 'User(s)',
+        type: 'multiselect',
+        options: fetchedUsersWithoutPermission,
+      },
+    ],
+  ];
   const load = useCallback(async () => {
     const req = new PermissionGroup();
     req.setIsActive(true);
@@ -103,7 +172,12 @@ export const PermissionsManager: FC<Props> = ({ loggedUserId, onClose }) => {
     const privileges = result
       .getResultsList()
       .filter(p => p.getType() === 'privilege');
-    const isSU = privileges.find(p => p.getName() == 'SU');
+    const loggedUserReq = new User();
+    loggedUserReq.setId(loggedUserId);
+    const loggedUserResult = await UserClientService.Get(loggedUserReq);
+    const isSU = loggedUserResult
+      .getPermissionGroupsList()
+      .find(p => p.getName() === 'SU');
     dispatch({ type: 'setRoles', data: roles });
     dispatch({ type: 'setPrivileges', data: privileges });
     dispatch({ type: 'setDepartments', data: departments });
@@ -137,21 +211,35 @@ export const PermissionsManager: FC<Props> = ({ loggedUserId, onClose }) => {
                     {
                       value: role.getDescription(),
                       actions: [
-                        <Tooltip key="roleDelete" title={'Delete Role'}>
-                          <IconButton
-                            key="view"
-                            onClick={() => {
-                              fetchUsersWithPermission(role.getId());
-                              dispatch({
-                                type: 'setViewPermission',
-                                data: role,
-                              });
-                            }}
-                            size="small"
-                          >
-                            <Search />
-                          </IconButton>
-                        </Tooltip>,
+                        <IconButton
+                          key="view"
+                          onClick={() => {
+                            fetchUsersWithPermission(role.getId());
+                            dispatch({
+                              type: 'setViewPermission',
+                              data: role,
+                            });
+                          }}
+                          size="small"
+                        >
+                          <Search />
+                        </IconButton>,
+                        <IconButton
+                          key="Add"
+                          onClick={() => {
+                            dispatch({
+                              type: 'setSelectedUsers',
+                              data: {
+                                userIds: [],
+                                permissionId: role.getId(),
+                              },
+                            });
+                            fetchUsersWithoutPermission(role.getId(), 'role');
+                          }}
+                          size="small"
+                        >
+                          <Add />
+                        </IconButton>,
                       ],
                     },
                   ];
@@ -191,6 +279,25 @@ export const PermissionsManager: FC<Props> = ({ loggedUserId, onClose }) => {
                         >
                           <Search />
                         </IconButton>,
+                        <IconButton
+                          key="Add"
+                          onClick={() => {
+                            dispatch({
+                              type: 'setSelectedUsers',
+                              data: {
+                                userIds: [],
+                                permissionId: department.getId(),
+                              },
+                            });
+                            fetchUsersWithoutPermission(
+                              department.getId(),
+                              'department',
+                            );
+                          }}
+                          size="small"
+                        >
+                          <Add />
+                        </IconButton>,
                       ],
                     },
                   ];
@@ -229,6 +336,26 @@ export const PermissionsManager: FC<Props> = ({ loggedUserId, onClose }) => {
                           disabled={privilege.getName() == 'SU' && !isOwnerSU}
                         >
                           <Search />
+                        </IconButton>,
+                        <IconButton
+                          key="Add"
+                          onClick={() => {
+                            dispatch({
+                              type: 'setSelectedUsers',
+                              data: {
+                                userIds: [],
+                                permissionId: privilege.getId(),
+                              },
+                            });
+                            fetchUsersWithoutPermission(
+                              privilege.getId(),
+                              'privilege',
+                            );
+                          }}
+                          size="small"
+                          disabled={privilege.getName() == 'SU' && !isOwnerSU}
+                        >
+                          <Add />
                         </IconButton>,
                       ],
                     },
@@ -288,13 +415,88 @@ export const PermissionsManager: FC<Props> = ({ loggedUserId, onClose }) => {
                     },
                     {
                       value: permission.getPermissionGroupType(),
+                      actions: [
+                        <IconButton
+                          key="view"
+                          disabled={
+                            permission.getPermissionGroupType() === 'role' &&
+                            !isSU
+                          }
+                          onClick={() => {
+                            dispatch({
+                              type: 'setRemovePermission',
+                              data: permission,
+                            });
+                          }}
+                          size="small"
+                        >
+                          <Delete />
+                        </IconButton>,
+                      ],
                     },
                   ];
                 })
               : []
           }
         />
+        <Modal
+          open={removePermission != undefined}
+          onClose={() =>
+            dispatch({
+              type: 'setRemovePermission',
+              data: undefined,
+            })
+          }
+        >
+          <Confirm
+            title="Remove Permission"
+            open={removePermission != undefined}
+            onClose={() =>
+              dispatch({
+                type: 'setRemovePermission',
+                data: undefined,
+              })
+            }
+            onConfirm={() => RemovePermissionFromUser(removePermission!)}
+            submitLabel="Confirm"
+          >
+            Are you sure you want to remove this Permission?
+          </Confirm>
+        </Modal>
       </Modal>
+      <Modal
+        open={fetchedUsersWithoutPermission != undefined}
+        onClose={() =>
+          dispatch({
+            type: 'setFetchedUsersWithoutPermission',
+            data: undefined,
+          })
+        }
+      >
+        <SectionBar title="Add Permission" uncollapsable={true}>
+          <PlainForm
+            schema={SCHEMA_PRINT}
+            data={selectedUsers}
+            onChange={e =>
+              dispatch({
+                type: 'setSelectedUsers',
+                data: {
+                  userIds: e.userIds,
+                  permissionId: selectedUsers.permissionId,
+                },
+              })
+            }
+          ></PlainForm>
+          <Button
+            disabled={selectedUsers.userIds.length == 0}
+            label={'Add Selected Permissions'}
+            onClick={() =>
+              AddPermission(selectedUsers.userIds, selectedUsers.permissionId)
+            }
+          ></Button>
+        </SectionBar>
+      </Modal>
+
       {onClose && <Button key="close" label="Close" onClick={onClose}></Button>}
     </SectionBar>
   ) : (

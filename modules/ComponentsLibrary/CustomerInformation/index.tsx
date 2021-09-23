@@ -159,11 +159,18 @@ export const CustomerInformation: FC<Props> = ({
   ]);
 
   const handleSetNotificationEditing = useCallback(
-    (notificationEditing: boolean) => () =>
-      setNotificationEditing(notificationEditing),
+    (notificationEditing: boolean) => () => {
+      setNotificationEditing(notificationEditing);
+    },
     [setNotificationEditing],
   );
-
+  const handleResetGroups = useCallback(async () => {
+    const groupLinks = await UserGroupLinkClientService.loadUserGroupLinksByUserId(
+      userID,
+    );
+    setGroupLinks(groupLinks);
+    setGroupLinksInitial(groupLinks);
+  }, [userID]);
   const handleSetNotificationViewing = useCallback(
     (notificationViewing: boolean) => () =>
       setNotificationViewing(notificationViewing),
@@ -428,6 +435,7 @@ export const CustomerInformation: FC<Props> = ({
             setCustomer(customer);
             setEditing(false);
             handleSetNotificationEditing(false);
+            handleResetGroups();
           }}
           onClose={handleToggleEditing}
           customer={customer}
