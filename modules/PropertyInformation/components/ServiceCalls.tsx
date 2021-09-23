@@ -31,6 +31,7 @@ import {
 import { OPTION_BLANK } from '../../../constants';
 import './serviceCalls.less';
 import { Contract } from '@kalos-core/kalos-rpc/Contract';
+import { AddServiceCall } from '../../AddServiceCallGeneral/components/AddServiceCall';
 
 interface Props {
   className?: string;
@@ -50,6 +51,7 @@ interface State {
   deletingEntry?: Event;
   viewingEntry?: Event;
   addingCustomerEntry?: Event;
+  addingServiceCall?: boolean;
   orderByFields: (keyof Event)[];
   orderByDBField: string;
   dir: OrderDir;
@@ -74,6 +76,7 @@ export class ServiceCalls extends PureComponent<Props, State> {
       deletingEntry: undefined,
       viewingEntry: undefined,
       addingCustomerEntry: undefined,
+      addingServiceCall: false,
       dir: 'DESC',
       orderByFields: ['getDateStarted'],
       orderByDBField: 'date_started',
@@ -202,13 +205,16 @@ export class ServiceCalls extends PureComponent<Props, State> {
 
   setAddingCustomerEntry = (addingCustomerEntry?: Event) => () =>
     this.setState({ addingCustomerEntry });
-
+  
   toggleConfirmingAdded = () =>
     this.setState({ confirmingAdded: !this.state.confirmingAdded });
 
   handleChangePage = (page: number) => {
     this.setState({ page }, this.load);
   };
+
+  handleServiceCallAddToggle = () =>
+    this.setState({addingServiceCall: !this.state.addingServiceCall });
 
   handleRowClick = (id: number) => () => {
     const { userID, propertyId } = this.props;
@@ -521,12 +527,7 @@ export class ServiceCalls extends PureComponent<Props, State> {
               : [
                   {
                     label: 'Add Service Call',
-                    url: [
-                      '/index.cfm?action=admin:service.addserviceCall',
-                      `user_id=${userID}`,
-                      `property_id=${propertyId}`,
-                      'unique=207D906B-05C0-B58E-B451566171C79356', // FIXME set proper unique
-                    ].join('&'),
+                    onClick: this.handleServiceCallAddToggle,
                   },
                 ]
           }
@@ -811,6 +812,14 @@ export class ServiceCalls extends PureComponent<Props, State> {
               {this.state.showText}
             </div>
           </Modal>
+        )}
+        {this.state.addingServiceCall && (
+          <AddServiceCall
+            loggedUserId={userID}
+            propertyId={propertyId}
+            userId={userID}
+            onClose={this.handleServiceCallAddToggle}
+          />
         )}
       </div>
     );

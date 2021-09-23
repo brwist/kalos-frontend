@@ -68,7 +68,6 @@ export const EmployeePermissions: FC<Props> = ({
   const RemovePermissionFromUser = async (permissionGroup: PermissionGroup) => {
     const req = new PermissionGroupUser();
     req.setUserId(userId);
-    console.log('here to remove pls');
     req.setPermissionGroupId(permissionGroup.getId());
     console.log(req);
     await UserClientService.RemoveUserFromPermissionGroup(req);

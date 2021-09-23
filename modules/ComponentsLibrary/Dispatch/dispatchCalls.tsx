@@ -28,7 +28,6 @@ interface props {
 
 export const DispatchCalls: FC<props> = props => {
   useEffect(() => {
-    console.log('dispatch call use effect');
   }, [props.calls]);
 
   return (
@@ -39,19 +38,19 @@ export const DispatchCalls: FC<props> = props => {
           <TableRow>
             {/* Temporarily using hardcoded for variable for Estimated End */}
             <TableCell
-              align="right"
+              align="center"
               style={{ fontWeight: 'bolder', fontSize: '16px' }}
-              width="50%"
+              width="100%"
             >
               Service Calls Remaining: {props.calls.length}
             </TableCell>
-            <TableCell
+            {/* <TableCell
               align="left"
               style={{ fontWeight: 'bolder', fontSize: '16px' }}
               width="50%"
             >
               Estimated End of Day: {props.calls.length === 0 ? format(new Date(), 'h:mm a') : `N/A`}
-            </TableCell>
+            </TableCell> */}
           </TableRow>
         </TableBody>
       </Table>
