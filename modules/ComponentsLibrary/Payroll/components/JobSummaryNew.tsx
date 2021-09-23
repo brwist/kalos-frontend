@@ -270,8 +270,9 @@ export const JobSummaryNew: FC<Props> = ({ loggedUserId, onClose }) => {
     }
     if (!d.jobNumber) {
       d.jobNumber = 0;
+      dispatch({ type: 'setDownloadFullButton', value: true });
     }
-
+    console.log(d.jobNumber);
     setFilter(d);
     setLoading(true);
     // {departmentId: 18, week: undefined, employeeId: undefined}
