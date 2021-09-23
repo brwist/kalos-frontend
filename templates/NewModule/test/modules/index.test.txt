@@ -1,0 +1,44 @@
+/*
+    ! Please write your tests here (failing first) and make them pass as development progresses.
+    This ensures the spec is followed and that there can be no regression in the component. 
+*/
+
+/* 
+
+  Design Specification: 
+
+*/ 
+
+export {};
+
+import TITLE_HERE = require('../../../modules/TITLE_HERE/main');
+import React = require('react');
+import Enzyme = require('enzyme');
+
+import Chai = require('chai');
+
+describe('TITLE_HERE', () => {
+  describe('<TITLE_HERE userID={100153} />', () => {
+    let wrapper: Enzyme.ReactWrapper; 
+    before(() => {
+      wrapper = Enzyme.mount(
+        <TITLE_HERE.TITLE_HERE userID={8418} />,
+      );
+    });
+    after(() => {
+      wrapper.unmount();
+    });
+
+    it('renders correctly', () => {
+      Chai.expect(wrapper.text().includes('TITLE_HERE works!')).to.equal(true);      
+    })
+
+    describe('Loading', () => {
+      it('renders a loader when loading', () => {
+        throw new Error("Testing is not implemented yet for the module TITLE_HERE");
+      });
+    })
+
+    // Rest of the spec tests here, make them pass as you go
+  });
+});

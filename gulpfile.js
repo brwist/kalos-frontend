@@ -68,19 +68,61 @@ async function create() {
   if (!name) {
     name = await textPrompt('Module name: ');
   }
+
+  if (name.includes('_') || name.includes('-')) {
+    error(
+      'React components should adhere to Pascal case and should not contain the characters "_" or "-".',
+    );
+    return;
+  }
+
+  sh.cd('templates/NewModule');
+
+  // Get the text from the template files
+  const indexJS = sh
+    .cat(['index.txt'])
+    .sed(new RegExp('TITLE_HERE', 'g'), name);
+  const mainJS = sh.cat(['main.txt']).sed(new RegExp('TITLE_HERE', 'g'), name);
+  const reducerJS = sh
+    .cat(['reducer.txt'])
+    .sed(new RegExp('TITLE_HERE', 'g'), name);
+  const html = sh
+    .cat(['index.html.txt'])
+    .sed(new RegExp('TITLE_HERE', 'g'), name);
+
+  sh.cd('test/modules');
+
+  const testJS = sh
+    .cat(['index.test.txt'])
+    .sed(new RegExp('TITLE_HERE', 'g'), name);
+
+  sh.cd('../../../../');
+
+  sh.cd('test');
+
+  sh.mkdir(`modules/${name}`);
+  sh.cd(`modules/${name}`);
+  sh.touch('index.test.tsx');
+  testJS.to('index.test.tsx');
+
+  info(`Test file created in: ${sh.pwd()}`);
+
+  sh.cd('../../../');
+
   sh.mkdir(`modules/${name}`);
   sh.cd(`modules/${name}`);
   sh.touch('index.html');
   sh.touch('index.tsx');
   sh.touch('main.tsx');
-  const html = new sh.ShellString(htmlTemplate(name));
-  const mainJS = new sh.ShellString(mainTemplate(name));
-  const indexJS = new sh.ShellString(indexTemplate(name));
+  sh.touch('reducer.tsx');
   html.to('index.html');
   indexJS.to('index.tsx');
   mainJS.to('main.tsx');
+  reducerJS.to('reducer.tsx');
 
-  // TODO: Add prompt for updating MODULE_MAP in constants
+  info(`Module files created in: ${sh.pwd()}`);
+
+  warn("Don't forget to update MODULE_MAP in constants!");
 }
 
 /**
@@ -179,6 +221,7 @@ export const ${title}: React.FC<props> = function ${title}({ userID }) {
   return (
     <PageWrapper userID={userID}>
       <h1>${title}!</h1>
+      <h2>Tests were also created in /test for this module, please implement them!</h2>
     </PageWrapper>
   );
 };
@@ -610,19 +653,27 @@ const NAMED_EXPORTS = {
   'node_modules/@improbable-eng/grpc-web/dist/grpc-web-client.umd.js': ['grpc'],
   'node_modules/@kalos-core/kalos-rpc/node_modules/@improbable-eng/grpc-web/dist/grpc-web-client.umd.js':
     ['grpc'],
-  'node_modules/@material-ui/utils/node_modules/react-is/index.js'  :  ['ForwardRef','Memo','isFragment'],
-  'node_modules/@material-ui/core/node_modules/react-is/index.js'  :  ['isFragment'],
-  'node_modules/@material-ui/lab/node_modules/react-is/index.js'  :  ['isFragment'],
+  'node_modules/@material-ui/utils/node_modules/react-is/index.js': [
+    'ForwardRef',
+    'Memo',
+    'isFragment',
+  ],
+  'node_modules/@material-ui/core/node_modules/react-is/index.js': [
+    'isFragment',
+  ],
+  'node_modules/@material-ui/lab/node_modules/react-is/index.js': [
+    'isFragment',
+  ],
 
-  'node_modules/lodash/lodash.js'  :  ['delay', 'debounce','isArray'],
-  'node_modules/@kalos-core/kalos-rpc/compiled-protos/dispatch_pb.js'  :  [
+  'node_modules/lodash/lodash.js': ['delay', 'debounce', 'isArray'],
+  'node_modules/@kalos-core/kalos-rpc/compiled-protos/dispatch_pb.js': [
     'DispatchableTechList',
     'DispatchableTech',
     'DispatchCall',
     'DispatchCallBack',
     'DispatchCallTime',
     'DispatchCallCount',
-    'DispatchFirstCall'
+    'DispatchFirstCall',
   ],
   'node_modules/@kalos-core/kalos-rpc/compiled-protos/kalosmaps_pb.js': [
     'Place',
@@ -977,7 +1028,13 @@ const NAMED_EXPORTS = {
     'Group',
     'GroupList',
   ],
-  'node_modules/react-is/index.js': ['ForwardRef', 'isFragment', 'Memo', 'isValidElementType', 'isContextConsumer'],
+  'node_modules/react-is/index.js': [
+    'ForwardRef',
+    'isFragment',
+    'Memo',
+    'isValidElementType',
+    'isContextConsumer',
+  ],
   'node_modules/tslib/tslib.js': ['__awaiter', '__generator', '__extends'],
   'node_modules/@kalos-core/kalos-rpc/compiled-protos/predict_pb.js': [
     'TransactionData',
