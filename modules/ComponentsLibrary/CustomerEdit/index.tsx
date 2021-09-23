@@ -124,7 +124,7 @@ export const CustomerEdit: FC<Props> = ({
     [
       {
         label: 'Billing Terms',
-        name: 'setBillingTerms',
+        name: 'getBillingTerms',
         options: BILLING_TERMS_OPTIONS,
       },
       {
@@ -204,18 +204,27 @@ export const CustomerEdit: FC<Props> = ({
     async (data: User) => {
       setSaving(true);
       const temp = makeSafeFormObject(data, new User());
-      const customer = await UserClientService.saveUser(temp, userId);
-      setCustomer(customer);
-      setUserId(customer.getId());
-      await saveGroupLinks(groupLinks, groupLinksInitial, customer.getId());
-      setSaving(false);
-      if (onSave) {
-        onSave(customer);
+      if (temp.getFieldMaskList().length > 0) {
+        const result = await UserClientService.saveUser(temp, userId);
+        setCustomer(result);
+        setUserId(result.getId());
+        await saveGroupLinks(groupLinks, groupLinksInitial, result.getId());
+        setSaving(false);
+        if (onSave) {
+          onSave(result);
+        }
+      } else {
+        await saveGroupLinks(groupLinks, groupLinksInitial, customer.getId());
+        setSaving(false);
+        if (onSave) {
+          onSave(customer);
+        }
       }
     },
     [
       setSaving,
       userId,
+      customer,
       setCustomer,
       groupLinks,
       groupLinksInitial,
@@ -225,13 +234,16 @@ export const CustomerEdit: FC<Props> = ({
   );
   const handleChangeLinkGroup = useCallback(
     (groupId: number) => (value: Value) => {
+      console.log('changing');
       const newGroupLink = new UserGroupLink();
       newGroupLink.setGroupId(groupId);
       newGroupLink.setUserId(userId);
+      console.log('new link', newGroupLink);
       const newGroupLinks = value
         ? [...groupLinks, newGroupLink]
         : groupLinks.filter(item => item.getGroupId() !== groupId);
       setGroupLinks(newGroupLinks);
+      console.log('new group links', newGroupLinks);
     },
     [groupLinks, userId, setGroupLinks],
   );
@@ -257,11 +269,14 @@ export const CustomerEdit: FC<Props> = ({
               {groups.map(g => (
                 <div key={g.getId()} className="CustomerEditGroup">
                   <Field
+                    key={g.getId() + g.getName()}
                     label={g.getName()}
                     type="checkbox"
                     onChange={handleChangeLinkGroup(g.getId())}
                     value={
-                      groupLinks.find(g => g.getGroupId() === g.getId()) ? 1 : 0
+                      groupLinks.find(group => group.getGroupId() === g.getId())
+                        ? 1
+                        : 0
                     }
                     name={`group_${g.getId()}`}
                     disabled={saving}
