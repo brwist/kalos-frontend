@@ -155,12 +155,6 @@ export const Request: FC<Props> = forwardRef(
         ],
         [
           {
-            label: 'Payment Type',
-            name: 'getLogPaymentType',
-            required: true,
-            options: PAYMENT_TYPE_LIST,
-          },
-          {
             label: 'Sector',
             name: 'getIsResidential',
             required: false,
@@ -176,23 +170,19 @@ export const Request: FC<Props> = forwardRef(
             type: 'department',
           },
           {
-            label: 'Amount Quoted',
-            name: 'getAmountQuoted',
-            startAdornment: '$',
-          },
-          {
-            label: 'Diagnostic Quoted',
-            name: 'getDiagnosticQuoted',
-            type: 'checkbox',
-          },
-        ],
-        [
-          {
             label: 'Job Status',
             name: 'getLogJobStatus',
             required: true,
             options: JOB_STATUS_OPTIONS,
           },
+          {
+            label: 'Technician Assigned',
+            name: 'getLogTechnicianAssigned',
+            type: 'technicians',
+            required: false,
+          },
+        ],
+        [
           {
             label: 'Job Type',
             name: 'getJobTypeId',
@@ -204,14 +194,26 @@ export const Request: FC<Props> = forwardRef(
             name: 'getJobSubtypeId',
             options: jobSubtypeOptions,
           },
+        ],
+        [
           {
-            label: 'Priority',
-            name: 'getHighPriority',
+            label: 'Payment Type',
+            name: 'getLogPaymentType',
             required: true,
-            type: 'checkbox',
+            options: PAYMENT_TYPE_LIST,
+          },
+          {
+            label: 'Amount Quoted',
+            name: 'getAmountQuoted',
+            startAdornment: '$',
           },
         ],
         [
+          {
+            label: 'Diagnostic Quoted',
+            name: 'getDiagnosticQuoted',
+            type: 'checkbox',
+          },
           {
             label: 'Is LMPC?',
             name: 'getIsLmpc',
@@ -228,14 +230,25 @@ export const Request: FC<Props> = forwardRef(
             options: callbackOriginalOptions,
             disabled: !isCallback,
           },
+        ],
+        [
+          {
+            label: 'High Priority?',
+            name: 'getHighPriority',
+            required: true,
+            type: 'checkbox',
+          },
+          {},
           {},
         ],
         [
           {
-            label: 'Technician Assigned',
-            name: 'getLogTechnicianAssigned',
-            type: 'technicians',
+            label: 'Brief Description',
+            name: 'getName',
+            description: 'Used on Calendar',
+            helperText: 'Used on Calendar',
             required: true,
+            multiline: true,
           },
           {
             label: 'Service Needed',
@@ -247,7 +260,25 @@ export const Request: FC<Props> = forwardRef(
             label: 'Service Call Notes',
             name: 'getLogNotes',
             description: 'For internal use',
+            helperText: 'For Internal Use',
             multiline: true,
+          },
+        ],
+        [
+          {
+            label: 'Property',
+            name: 'getPropertyId',
+            invisible: true,
+          },
+          {
+            label: 'Job Number',
+            name: 'getLogJobNumber',
+            invisible: true,
+          },
+          {
+            label: 'ID',
+            name: 'getId',
+            invisible: true,
           },
         ],
       ],
