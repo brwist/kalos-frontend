@@ -16,6 +16,7 @@ import { Property } from '@kalos-core/kalos-rpc/Property';
 export type Props = Pick<CustomerItemProps, 'loggedUserId'> & {
   propertyId?: number;
   userId?: number;
+  openServiceCall?: boolean
   onClose?: () => void;
   onSave?: () => void;
   asProject?: boolean;
@@ -23,11 +24,12 @@ export type Props = Pick<CustomerItemProps, 'loggedUserId'> & {
 };
 
 export const AddServiceCall: FC<Props> = props => {
-  const { propertyId = 0, userId = 0, loggedUserId, onClose, onSave, asProject = false } = props;
+  const { propertyId = 0, userId = 0, openServiceCall = false, loggedUserId, onClose, onSave, asProject = false } = props;
   const [addCustomer, setAddCustomer] = useState<boolean>(false);
   const [customerOpened, setCustomerOpened] = useState<User>();
   const [propertyOpened, setPropertyOpened] = useState<User>();
   const [serviceCallOpened, setServiceCallOpened] = useState<Property>();
+  const [defaultServiceCallOpen, setDefaultServiceCallOpen] = useState<boolean>(openServiceCall);
   const [loaded, setLoaded] = useState<boolean>(true);
   const [loading, setLoading] = useState<boolean>(false);
   const [page, setPage] = useState<number>(0);
@@ -101,7 +103,10 @@ export const AddServiceCall: FC<Props> = props => {
     [setPropertyOpened],
   );
   const handleServiceCallClose = useCallback(
-    () => setServiceCallOpened(undefined),
+    () => {
+      setServiceCallOpened(undefined);
+      setDefaultServiceCallOpen(false);
+    },
     [setServiceCallOpened],
   );
   const handleSetCustomerOpened = useCallback(
@@ -196,7 +201,7 @@ export const AddServiceCall: FC<Props> = props => {
           />
         </Modal>
       )}
-      {(serviceCallOpened || (propertyId > 0 && userId > 0)) && (
+      {(serviceCallOpened || defaultServiceCallOpen) && (
         <Modal open onClose={handleServiceCallClose} fullScreen>
           <div className="AddServiceCallWrapper">
             <div className="AddServiceCallHeader">

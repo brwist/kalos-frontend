@@ -316,29 +316,38 @@ const handleSaveInvoice = useCallback(async() => {
     setSaving(true);
     setLoading(true);
     const temp = entry;
-    if (serviceCallId) {
-      console.log('saving existing ID');
-      temp.setId(serviceCallId);
-      temp.addFieldMask('Id');
-      if(saveInvoice) {
-        temp.setIsGeneratedInvoice(saveInvoice);
-        temp.addFieldMask('IsGeneratedInvoice');
-        const res = await EventClientService.Update(temp);
-      }
-      else {
-        await EventClientService.Update(temp);
-      }
-      console.log('finished Update');
-    } else {
-        const res = await EventClientService.Create(temp);
+    let res = new Event();
+    try {
+      if (serviceCallId){
+        console.log('saving existing ID');
+        if(saveInvoice) {
+          console.log('saving invoice');
+          temp.setIsGeneratedInvoice(saveInvoice);
+          temp.addFieldMask('IsGeneratedInvoice');
+          await EventClientService.Update(temp);
+        }
+        else {
+          await EventClientService.Update(temp);
+        }
+      } else {
         console.log('creating new one');
-        setEntry(res);
-      if (!serviceCallId) {
-        console.log('no service call Id');
-        setServiceCallId(res.getId());
-        await loadEntry(res.getId());
-        await loadServicesRenderedData(res.getId());
+        temp.setPropertyId(propertyId);
+        res = await EventClientService.Create(temp);
+        const newEvent = new Event();
+        newEvent.setId(res.getId());
+        newEvent.setLogJobNumber(`${format(new Date(), 'yy')}-${res.getId()}`);
+        newEvent.setFieldMaskList(['Id', 'LogJobNumber']);
+        await EventClientService.Update(newEvent);
       }
+    } catch (err) {
+      console.error(err);
+    }
+    console.log('finished Update');
+    if (!serviceCallId) {
+      console.log('no service call Id');
+      setServiceCallId(res.getId());
+      await loadEntry(res.getId());
+      await loadServicesRenderedData(res.getId());
     }
 
     setSaving(false);

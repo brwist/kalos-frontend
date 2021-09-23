@@ -827,6 +827,7 @@ export class ServiceCalls extends PureComponent<Props, State> {
             loggedUserId={userID}
             propertyId={propertyId}
             userId={userID}
+            openServiceCall={true}
             onClose={this.handleServiceCallAddToggle}
           />
         )}
