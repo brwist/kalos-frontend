@@ -36,13 +36,13 @@ export const TITLE_HERE: FC<props> = function TITLE_HERE({ userID }) {
 
     return () => {
       cleanup(); 
-    }
+    };
   }, [load, cleanup]);
 
   return (
     <PageWrapper userID={userID} withHeader>
       <h1>TITLE_HERE works!</h1>
-      <h2>Frontend unit tests were also created for this module automatically, implement them in /test/TITLE_HERE!</h2>
+      <h2>Frontend unit tests were also created for this module automatically, implement them in /test/modules/TITLE_HERE!</h2>
       <h2>Some resources to get you started with unit testing in Mocha with Enzyme: </h2>
       <ul>
         <li><a href="https://www.robinwieruch.de/react-testing-mocha-chai-enzyme-sinon">This article</a> is extremely long, but it <strong>MOSTLY</strong> shows you how to do what we aim to do</li>
