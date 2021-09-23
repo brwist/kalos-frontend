@@ -89,16 +89,15 @@ export const CostReport: FC<Props> = ({ serviceCallId }) => {
         .filter(row => row.getServiceCallId() === serviceCallId);
       arr[i].setRowsList(tempRowList);
     }
-    /*
-    let allTrips: Trip[] = [];
-    arr.forEach(pd =>
-      pd.getRowsList().forEach(row => {
-        allTrips.push(...row.getTripsList());
-      }),
-    );
+
+    const tripReq = new Trip();
+    tripReq.setIsActive(true);
+    tripReq.setJobNumber(serviceCallId);
+    const allTrips = await (
+      await PerDiemClientService.BatchGetTrips(tripReq)
+    ).getResultsList();
 
     setTrips(allTrips);
-    */
 
     const lodgings = await PerDiemClientService.loadPerDiemsLodging(arr); // first # is per diem id
     setLodgings(lodgings);
@@ -107,23 +106,19 @@ export const CostReport: FC<Props> = ({ serviceCallId }) => {
       true,
     );
     setTransactions(transactions);
-    /*
+
     let allTripsTotal = 0;
-    arr.forEach(perDiem => {
-      perDiem.getRowsList().forEach(row => {
-        row.getTripsList().forEach(trip => {
-          // Subtracting 30 miles flat from trip distance in accordance
-          // with reimbursement from home rule
-          allTripsTotal +=
-            trip.getDistanceInMiles() > 30 && trip.getHomeTravel()
-              ? (trip.getDistanceInMiles() - 30) * IRS_SUGGESTED_MILE_FACTOR
-              : trip.getDistanceInMiles() * IRS_SUGGESTED_MILE_FACTOR;
-        });
-      });
+    allTrips.forEach(trip => {
+      // Subtracting 30 miles flat from trip distance in accordance
+      // with reimbursement from home rule
+      allTripsTotal +=
+        trip.getDistanceInMiles() > 30 && trip.getHomeTravel()
+          ? (trip.getDistanceInMiles() - 30) * IRS_SUGGESTED_MILE_FACTOR
+          : trip.getDistanceInMiles() * IRS_SUGGESTED_MILE_FACTOR;
     });
 
     setTripsTotal(allTripsTotal);
-*/
+
     setPerDiems(arr);
   }, [serviceCallId, setPerDiems, setLodgings]);
 
@@ -331,7 +326,7 @@ export const CostReport: FC<Props> = ({ serviceCallId }) => {
           ['Meals', usd(totalMeals)],
           ['Lodging', usd(totalLodging)],
           ['Tasks Billable', usd(totalTasksBillable)],
-          // ['Trips Total', usd(tripsTotal)],
+          ['Trips Total', usd(tripsTotal)],
           [
             '',
             <strong key="stronk">

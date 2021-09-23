@@ -239,16 +239,18 @@ export const ServiceCall: FC<Props> = props => {
         }),
       );
 
-      promises.push(
-        new Promise<void>(async resolve => {
-          const req = new Event();
-          req.setId(serviceCallId);
-          const entry = await EventClientService.Get(req);
-          console.log('entry', entry);
-          setEntry(entry);
-          resolve();
-        }),
-      );
+      if (serviceCallId) {
+        promises.push(
+          new Promise<void>(async resolve => {
+            const req = new Event();
+            req.setId(serviceCallId);
+            const entry = await EventClientService.Get(req);
+            console.log('entry', entry);
+            setEntry(entry);
+            resolve();
+          }),
+        );
+      }
 
       promises.push(
         new Promise<void>(async resolve => {

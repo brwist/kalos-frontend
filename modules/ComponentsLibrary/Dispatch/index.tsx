@@ -436,7 +436,7 @@ export const DispatchDashboard: React.FC<Props> = function DispatchDashboard({
     }})
   }
 
-  const setDropDownValues = async () => {
+  const setInitialValues = async () => {
     const departmentReq = await getDepartments();
     const defaultSectors = getSectorGroups(departmentReq.departments.filter(dep => departmentReq.defaultValues.includes(dep.getId())));
     const jobTypeReq = await getJobTypes();
@@ -559,7 +559,7 @@ export const DispatchDashboard: React.FC<Props> = function DispatchDashboard({
   }
 
   useEffect(() => {
-    setDropDownValues();
+    setInitialValues();
     handleFilterLoad();
     // console.log('drop down use effect');
   }, []);
