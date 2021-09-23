@@ -42,12 +42,16 @@ export const TITLE_HERE: FC<props> = function TITLE_HERE({ userID }) {
   return (
     <PageWrapper userID={userID} withHeader>
       <h1>TITLE_HERE works!</h1>
-      <h2>Frontend unit tests were also created for this module automatically, implement them in /test/modules/TITLE_HERE!</h2>
+      <h2>About this boilerplate</h2>
+      <ul>
+        <li>Frontend unit tests were created for this module automatically in /test/modules/TITLE_HERE</li>
+        <li><div style="color: red">The loader test is failing by default, </div>this is intentional (so that a loader is always present in new components)</li> 
+      </ul>
       <h2>Some resources to get you started with unit testing in Mocha with Enzyme: </h2>
       <ul>
         <li><a href="https://www.robinwieruch.de/react-testing-mocha-chai-enzyme-sinon">This article</a> is extremely long, but it <strong>MOSTLY</strong> shows you how to do what we aim to do</li>
         <li>There is a readme in /test that goes into how to get started from a technical standpoint in our current setup</li>
-        <li>/modules/ComponentsLibrary/Test was the component that I unit-tested on call during our meeting, and /test/modules/ComponentsLibrary/Test is where the corresponding tests are located</li>
+        <li>/modules/ComponentsLibrary/Test is the component that was unit-tested on call during our meeting, and /test/modules/ComponentsLibrary/Test is where its corresponding tests are located</li>
       </ul> 
     </PageWrapper>
   );
