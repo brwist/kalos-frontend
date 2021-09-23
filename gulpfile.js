@@ -72,12 +72,33 @@ async function create() {
   sh.cd('templates/NewModule');
 
   // Get the text from the template files
-  const indexJS = sh.cat(['index.txt']).sed('TITLE_HERE', name);
-  const mainJS = sh.cat(['main.txt']).sed('TITLE_HERE', name);
-  const reducerJS = sh.cat(['reducer.txt']).sed('TITLE_HERE', name);
-  const html = sh.cat(['index.html.txt']).sed('TITLE_HERE', name);
+  const indexJS = sh
+    .cat(['index.txt'])
+    .sed(new RegExp('TITLE_HERE', 'g'), name);
+  const mainJS = sh.cat(['main.txt']).sed(new RegExp('TITLE_HERE', 'g'), name);
+  const reducerJS = sh
+    .cat(['reducer.txt'])
+    .sed(new RegExp('TITLE_HERE', 'g'), name);
+  const html = sh
+    .cat(['index.html.txt'])
+    .sed(new RegExp('TITLE_HERE', 'g'), name);
 
-  sh.cd('../../');
+  sh.cd('test/modules');
+
+  const testJS = sh
+    .cat(['index.test.txt'])
+    .sed(new RegExp('TITLE_HERE', 'g'), name);
+
+  sh.cd('../../../../');
+
+  sh.cd('test');
+
+  sh.mkdir(`modules/${name}`);
+  sh.cd(`modules/${name}`);
+  sh.touch('index.test.tsx');
+  testJS.to('index.test.tsx');
+
+  sh.cd('../../../');
 
   sh.mkdir(`modules/${name}`);
   sh.cd(`modules/${name}`);
