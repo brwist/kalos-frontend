@@ -1,21 +1,39 @@
-import React, { useReducer, FC } from 'react';
+import React, { useReducer, useEffect, useCallback, FC } from 'react';
 import { PageWrapper } from '../PageWrapper/main';
-import { reducer } from './reducer';
+import { reducer, ACTIONS } from './reducer';
 
 // add any prop types here
 interface props {
   userID: number; 
 }
 
-export const ${title}: FC<props> = function ${title}({ userID }) {
-  const [state, dispatch] = useReducer(reducer, {
+export const TITLE_HERE: FC<props> = function TITLE_HERE({ userID }) {
+  const [state, dispatch] = useReducer(reducer, { 
     isLoaded: false
-  }); 
+  });
+
+  const load = useCallback(() => {
+    // RPCs that are in here should be stubbed in the tests at least 9 times out of 10. 
+    // This ensures that the fake data gets "loaded" instantly and the tests can progress quickly and without RPC errors 
+    // For some examples, check out /test/modules/Teams or /test/modules/Payroll
+
+    dispatch({type: ACTIONS.SET_LOADED, data: true})
+  }, [])
+
+  useEffect(() => {
+    load()
+  }, [load])
 
   return (
-    <PageWrapper userID={userID}>
-      <h1>${title}!</h1>
-      <h2>Tests were also created in /test for this module, please implement them!</h2>
+    <PageWrapper userID={userID} withHeader>
+      <h1>TITLE_HERE works!</h1>
+      <h2>Frontend unit tests were also created for this module, implement them in /test/TITLE_HERE!</h2>
+      <h2>Some resources to get you started with unit testing in Mocha with Enzyme: </h2>
+      <ul>
+        <li><a href="https://www.robinwieruch.de/react-testing-mocha-chai-enzyme-sinon">This article</a> is extremely long, but it <strong>MOSTLY</strong> shows you how to do what we aim to do</li>
+        <li>There is a readme in /test that goes into how to get started from a technical standpoint in our current setup</li>
+        <li>/modules/ComponentsLibrary/Test was the component that I unit-tested on call during our meeting, and /test/modules/ComponentsLibrary/Test is where the corresponding tests are located</li>
+      </ul> 
     </PageWrapper>
   );
 };

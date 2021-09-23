@@ -4,14 +4,14 @@
 
 export {};
 
-import TransactionUserModule = require('../../../modules/${title}/main');
+import TransactionUserModule = require('../../../modules/TITLE_HERE/main');
 import React = require('react');
 import Enzyme = require('enzyme');
 
 import Chai = require('chai');
 
-describe('${title}', () => {
-  describe('<${title} userID={100153} />', () => {
+describe('TITLE_HERE', () => {
+  describe('<TITLE_HERE userID={100153} />', () => {
     let wrapper: Enzyme.ReactWrapper;
     before(() => {
       wrapper = Enzyme.mount(
@@ -22,7 +22,7 @@ describe('${title}', () => {
       wrapper.unmount();
     });
     it('renders a loader when loading', () => {
-      throw new Error("Testing is not implemented yet for the module ${title}")
+      throw new Error("Testing is not implemented yet for the module TITLE_HERE")
     });
   });
 });

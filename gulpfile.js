@@ -68,17 +68,27 @@ async function create() {
   if (!name) {
     name = await textPrompt('Module name: ');
   }
+
+  sh.cd('templates/NewModule');
+
+  // Get the text from the template files
+  const indexJS = sh.cat(['index.txt']).sed('TITLE_HERE', name);
+  const mainJS = sh.cat(['main.txt']).sed('TITLE_HERE', name);
+  const reducerJS = sh.cat(['reducer.txt']).sed('TITLE_HERE', name);
+  const html = sh.cat(['index.html.txt']).sed('TITLE_HERE', name);
+
+  sh.cd('../../');
+
   sh.mkdir(`modules/${name}`);
   sh.cd(`modules/${name}`);
   sh.touch('index.html');
   sh.touch('index.tsx');
   sh.touch('main.tsx');
-  const html = new sh.ShellString(htmlTemplate(name));
-  const mainJS = new sh.ShellString(mainTemplate(name));
-  const indexJS = new sh.ShellString(indexTemplate(name));
+  sh.touch('reducer.tsx');
   html.to('index.html');
   indexJS.to('index.tsx');
   mainJS.to('main.tsx');
+  reducerJS.to('reducer.tsx');
 
   // TODO: Add prompt for updating MODULE_MAP in constants
 }
