@@ -19,8 +19,9 @@ interface props {
   userID: number;
   techs: DispatchableTech[];
   dismissedTechs: DispatchableTech[];
-  handleMapRecenter: (center: {lat: number, lng: number}, zoom: number) => void;
+  handleMapRecenter?: (center: {lat: number, lng: number}, zoom: number) => void;
   loading: boolean;
+  isFirstCall?: boolean;
 }
 
 export const DispatchTechs: FC<props> = props => {
@@ -42,9 +43,9 @@ export const DispatchTechs: FC<props> = props => {
           <TableHead>
             <TableRow key="TechHeader" style={{fontWeight: "bold"}}>
               <TableCell align="center" style={{fontWeight: "bolder", fontSize: "16px"}}>Name</TableCell>
-              <TableCell align="center" style={{fontWeight: "bolder", fontSize: "16px"}}>Status</TableCell>
-              <TableCell align="center" style={{fontWeight: "bolder", fontSize: "16px"}}>Location</TableCell>
-              <TableCell align="center" style={{fontWeight: "bolder", fontSize: "16px"}}>Time On Status</TableCell>
+              <TableCell align="center" style={{fontWeight: "bolder", fontSize: "16px", display:props.isFirstCall?'none':''}}>Status</TableCell>
+              <TableCell align="center" style={{fontWeight: "bolder", fontSize: "16px", display:props.isFirstCall?'none':''}}>Location</TableCell>
+              <TableCell align="center" style={{fontWeight: "bolder", fontSize: "16px", display:props.isFirstCall?'none':''}}>Time On Status</TableCell>
               <TableCell align="center" style={{fontWeight: "bolder", fontSize: "16px"}}>Hours Worked</TableCell>
             </TableRow>
           </TableHead>
@@ -74,14 +75,14 @@ export const DispatchTechs: FC<props> = props => {
                           <TableRow
                             key={`tech_id_${tech.getUserId}`}
                             hover={true}
-                            onClick={() => props.handleMapRecenter({lat: techLatitude, lng: techLongitude}, 12)}
+                            onClick={props.handleMapRecenter ? () => props.handleMapRecenter!({lat: techLatitude, lng: techLongitude}, 12) : () => {}}
                             ref={dragProvided.innerRef}
                             style={{backgroundColor: snapshot.draggingOver ? 'blue' : 'white'}}
                             {...dragProvided.draggableProps}
                             {...dragProvided.dragHandleProps}
                           >
                             <TableCell align="center">{tech.getTechname()}</TableCell>
-                            <TableCell align="center">
+                            <TableCell align="center" style={{display:props.isFirstCall?'none':''}}>
                               {tech.getActivity() != 'Standby' ? (
                                 <a
                                   target="_blank"
@@ -94,12 +95,12 @@ export const DispatchTechs: FC<props> = props => {
                                 tech.getActivity()
                               )}
                             </TableCell>
-                            <TableCell align="center">
+                            <TableCell align="center" style={{display:props.isFirstCall?'none':''}}>
                               {tech.getPropertyCity() === '0'
                                 ? 'Not Known'
                                 : tech.getPropertyCity()}
                             </TableCell>
-                            <TableCell align="center">{timeOnHours >= 10 ? String(timeOnHours) : `0${timeOnHours}`}:{timeOnMinutes >= 10 ? String(timeOnMinutes) : `0${timeOnMinutes}`}</TableCell>
+                            <TableCell align="center" style={{display:props.isFirstCall?'none':''}}>{timeOnHours >= 10 ? String(timeOnHours) : `0${timeOnHours}`}:{timeOnMinutes >= 10 ? String(timeOnMinutes) : `0${timeOnMinutes}`}</TableCell>
                             <TableCell align="center">{hoursWorked >= 10 ? String(hoursWorked) : `0${hoursWorked}`}:{minutesWorked >= 10 ? String(minutesWorked) : `0${minutesWorked}`}</TableCell>
                           </TableRow>
                         )}
@@ -134,10 +135,10 @@ export const DispatchTechs: FC<props> = props => {
                       borderStyle: "solid"
                     }}     
                   >
-                    <TableCell style={{color: snapshot.isDraggingOver ? 'white' : '#711313', margin:'auto', fontSize:'16px', fontWeight:'bold', textAlign:'right', width:'60%'}}>
-                      {`Dismiss Technician`}
+                    <TableCell style={{color: snapshot.isDraggingOver ? 'white' : '#711313', margin:'auto', fontSize:'16px', fontWeight:'bold', textAlign:!props.isFirstCall?'right':'center', width:'60%'}}>
+                      {!props.isFirstCall?`Dismiss Technician`:'Set Technician As Off Tomorrow'}
                     </TableCell>
-                    <TableCell style={{color: snapshot.isDraggingOver ? 'white' : '#711313', alignItems:'left'}}>
+                    <TableCell style={{color: snapshot.isDraggingOver ? 'white' : '#711313', alignItems:'left', display:props.isFirstCall?'none':''}}>
                       <DeleteOutlineIcon
                         style={{fontSize:'40'}}
                       />
