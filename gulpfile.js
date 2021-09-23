@@ -69,6 +69,13 @@ async function create() {
     name = await textPrompt('Module name: ');
   }
 
+  if (name.includes('_') || name.includes('-')) {
+    error(
+      'React components should adhere to Pascal case and should not contain the characters "_" or "-".',
+    );
+    return;
+  }
+
   sh.cd('templates/NewModule');
 
   // Get the text from the template files
@@ -98,6 +105,8 @@ async function create() {
   sh.touch('index.test.tsx');
   testJS.to('index.test.tsx');
 
+  info(`Test file created in: ${sh.pwd()}`);
+
   sh.cd('../../../');
 
   sh.mkdir(`modules/${name}`);
@@ -111,7 +120,9 @@ async function create() {
   mainJS.to('main.tsx');
   reducerJS.to('reducer.tsx');
 
-  // TODO: Add prompt for updating MODULE_MAP in constants
+  info(`Module files created in: ${sh.pwd()}`);
+
+  warn("Don't forget to update MODULE_MAP in constants!");
 }
 
 /**
