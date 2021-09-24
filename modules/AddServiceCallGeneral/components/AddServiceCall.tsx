@@ -106,7 +106,9 @@ export const AddServiceCall: FC<Props> = props => {
     () => {
       setServiceCallOpened(undefined);
       setDefaultServiceCallOpen(false);
-      onClose;
+      if (onClose) {
+        onClose();
+      }
     },
     [setServiceCallOpened, onClose],
   );
