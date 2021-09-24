@@ -32,6 +32,8 @@ import { OPTION_BLANK } from '../../../constants';
 import './serviceCalls.less';
 import { Contract } from '@kalos-core/kalos-rpc/Contract';
 import { AddServiceCall } from '../../AddServiceCallGeneral/components/AddServiceCall';
+import { ServiceRequest } from '../../ComponentsLibrary/ServiceCall/requestIndex';
+import RateReviewOutlined from '@material-ui/icons/RateReviewOutlined';
 
 interface Props {
   className?: string;
@@ -52,6 +54,8 @@ interface State {
   viewingEntry?: Event;
   addingCustomerEntry?: Event;
   addingServiceCall?: boolean;
+  editingServiceCall: boolean;
+  serviceCallId: number;
   orderByFields: (keyof Event)[];
   orderByDBField: string;
   dir: OrderDir;
@@ -77,6 +81,8 @@ export class ServiceCalls extends PureComponent<Props, State> {
       viewingEntry: undefined,
       addingCustomerEntry: undefined,
       addingServiceCall: false,
+      editingServiceCall: false,
+      serviceCallId: 0,
       dir: 'DESC',
       orderByFields: ['getDateStarted'],
       orderByDBField: 'date_started',
@@ -214,16 +220,24 @@ export class ServiceCalls extends PureComponent<Props, State> {
   };
 
   handleServiceCallAddToggle = () =>
-    this.setState({addingServiceCall: !this.state.addingServiceCall });
+    this.setState({ addingServiceCall: !this.state.addingServiceCall });
 
-  handleRowClick = (id: number) => () => {
+  handleServiceCallEditToggle = () =>
+    this.setState({ editingServiceCall: !this.state.editingServiceCall });
+
+  handleRowClick = (id: number, newEdit?: boolean) => () => {
     const { userID, propertyId } = this.props;
-    window.location.href = [
-      '/index.cfm?action=admin:service.editServiceCall',
-      `id=${id}`,
-      `user_id=${userID}`,
-      `property_id=${propertyId}`,
-    ].join('&');
+    this.setState({ serviceCallId: id});
+    if (newEdit) {
+      this.handleServiceCallEditToggle();
+    } else {
+      window.location.href = [
+        '/index.cfm?action=admin:service.editServiceCall',
+        `id=${id}`,
+        `user_id=${userID}`,
+        `property_id=${propertyId}`,
+      ].join('&');
+    }
   };
 
   handleCustomerAddEvent = async (formData: Event) => {
@@ -442,6 +456,13 @@ export class ServiceCalls extends PureComponent<Props, State> {
             {
               value: entry.getContractNumber(),
               actions: [
+                <IconButton
+                  key={'newEdit'}
+                  size="small"
+                  onClick={handleRowClick(entry.getId(), true)}
+                >
+                  <RateReviewOutlined />
+                </IconButton>,
                 <IconButton
                   key={2}
                   style={{ marginLeft: 4 }}
@@ -830,6 +851,16 @@ export class ServiceCalls extends PureComponent<Props, State> {
             openServiceCall={true}
             onClose={this.handleServiceCallAddToggle}
           />
+        )}
+        {this.state.editingServiceCall && (
+          <Modal open onClose={this.handleServiceCallEditToggle} fullScreen>
+            <ServiceRequest
+              loggedUserId={userID}
+              propertyId={propertyId!}
+              userID={userID}
+              serviceCallId={this.state.serviceCallId}
+            />
+          </Modal>
         )}
       </div>
     );
