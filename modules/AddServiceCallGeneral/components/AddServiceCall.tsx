@@ -106,8 +106,9 @@ export const AddServiceCall: FC<Props> = props => {
     () => {
       setServiceCallOpened(undefined);
       setDefaultServiceCallOpen(false);
+      onClose;
     },
-    [setServiceCallOpened],
+    [setServiceCallOpened, onClose],
   );
   const handleSetCustomerOpened = useCallback(
     (customerOpened?: User) => setCustomerOpened(customerOpened),
