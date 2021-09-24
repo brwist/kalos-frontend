@@ -704,7 +704,9 @@ const NAMED_EXPORTS = {
   'node_modules/@material-ui/lab/node_modules/react-is/index.js': [
     'isFragment',
   ],
-
+  'node_modules/react-redux/node_modules/react-is/index.js': [
+    'isValidElementType',
+  ],
   'node_modules/lodash/lodash.js': ['delay', 'debounce', 'isArray'],
   'node_modules/@kalos-core/kalos-rpc/compiled-protos/dispatch_pb.js': [
     'DispatchableTechList',
