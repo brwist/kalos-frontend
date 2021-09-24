@@ -37,7 +37,7 @@ export const TITLE_HERE: FC<props> = function TITLE_HERE() {
   }, [load, cleanup]);
 
   return ( 
-    <React.Fragment className='.TITLE_HERE'>
+    <> 
       <h1>TITLE_HERE works!</h1>
       <h2>About this boilerplate</h2>
       <ul>
@@ -50,6 +50,6 @@ export const TITLE_HERE: FC<props> = function TITLE_HERE() {
         <li>There is a readme in /test that goes into how to get started from a technical standpoint in our current setup</li>
         <li>/modules/ComponentsLibrary/Test is the component that was unit-tested on call during our meeting, and /test/modules/ComponentsLibrary/Test is where its corresponding tests are located</li>
       </ul> 
-    <React.Fragment/>
+    </>
   );
 };
