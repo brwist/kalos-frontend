@@ -79,9 +79,18 @@ async function create() {
   let isComponent = false;
   if (process.argv[5]) {
     switch (process.argv[5].replace(/-/g, '').toLowerCase()) {
-      case 'component' || 'c':
+      case 'component':
         isComponent = true;
         break;
+      case 'c':
+        isComponent = true;
+        break;
+      default:
+        warn(
+          `Unknown flag passed ${process.argv[5]
+            .replace(/-/g, '')
+            .toLowerCase()} - creating as a module. For a component instead, run "yarn make --ComponentName --C" or "yarn make --ComponentName --Component".`,
+        );
     }
   }
 

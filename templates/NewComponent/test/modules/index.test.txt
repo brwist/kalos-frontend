@@ -33,12 +33,6 @@ describe('TITLE_HERE', () => {
       Chai.expect(wrapper.text().includes('TITLE_HERE works!')).to.equal(true);      
     })
 
-    describe('Loading', () => {
-      it('renders a loader when loading', () => {
-        throw new Error("Testing is not implemented yet for the module TITLE_HERE");
-      });
-    })
-
     // Rest of the spec tests here, make them pass as you go
   });
 });
