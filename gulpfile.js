@@ -61,7 +61,7 @@ async function clean() {
 /**
  * Creates a new local module, module name should be passed as flag
  *
- * e.g. `yarn create --MyModule`
+ * e.g. `yarn make --MyModule`
  */
 async function create() {
   let name = titleCase(process.argv[4].replace(/-/g, ''));
@@ -76,19 +76,42 @@ async function create() {
     return;
   }
 
-  sh.cd('templates/NewModule');
+  let isComponent = false;
+  if (process.argv[5]) {
+    switch (process.argv[5].replace(/-/g, '').toLowerCase()) {
+      case 'component':
+        isComponent = true;
+        break;
+      case 'c':
+        isComponent = true;
+        break;
+      default:
+        warn(
+          `Unknown flag passed ${process.argv[5]
+            .replace(/-/g, '')
+            .toLowerCase()} - creating as a module. For a component instead, run "yarn make --ComponentName --C" or "yarn make --ComponentName --Component".`,
+        );
+    }
+  }
+
+  isComponent ? sh.cd('templates/NewComponent') : sh.cd('templates/NewModule');
 
   // Get the text from the template files
   const indexJS = sh
     .cat(['index.txt'])
     .sed(new RegExp('TITLE_HERE', 'g'), name);
-  const mainJS = sh.cat(['main.txt']).sed(new RegExp('TITLE_HERE', 'g'), name);
+  const mainJS = isComponent
+    ? null
+    : sh.cat(['main.txt']).sed(new RegExp('TITLE_HERE', 'g'), name);
   const reducerJS = sh
     .cat(['reducer.txt'])
     .sed(new RegExp('TITLE_HERE', 'g'), name);
-  const html = sh
-    .cat(['index.html.txt'])
-    .sed(new RegExp('TITLE_HERE', 'g'), name);
+  const examplesJS = isComponent
+    ? sh.cat(['examples.txt']).sed(new RegExp('TITLE_HERE', 'g'), name)
+    : null;
+  const html = isComponent
+    ? null
+    : sh.cat(['index.html.txt']).sed(new RegExp('TITLE_HERE', 'g'), name);
 
   sh.cd('test/modules');
 
@@ -100,29 +123,46 @@ async function create() {
 
   sh.cd('test');
 
-  sh.mkdir(`modules/${name}`);
-  sh.cd(`modules/${name}`);
+  isComponent
+    ? sh.mkdir(`modules/ComponentsLibrary/${name}`)
+    : sh.mkdir(`modules/${name}`);
+  isComponent
+    ? sh.cd(`modules/ComponentsLibrary/${name}`)
+    : sh.cd(`modules/${name}`);
   sh.touch('index.test.tsx');
   testJS.to('index.test.tsx');
 
   info(`Test file created in: ${sh.pwd()}`);
 
-  sh.cd('../../../');
+  isComponent ? sh.cd('../../../../') : sh.cd('../../../');
 
-  sh.mkdir(`modules/${name}`);
-  sh.cd(`modules/${name}`);
-  sh.touch('index.html');
+  isComponent
+    ? sh.mkdir(`modules/ComponentsLibrary/${name}`)
+    : sh.mkdir(`modules/${name}`);
+  isComponent
+    ? sh.cd(`modules/ComponentsLibrary/${name}`)
+    : sh.cd(`modules/${name}`);
+  if (!isComponent) {
+    sh.touch('index.html');
+    sh.touch('main.tsx');
+    html.to('index.html');
+    mainJS.to('main.tsx');
+  } else {
+    sh.touch('examples.tsx');
+    examplesJS.to('examples.tsx');
+  }
   sh.touch('index.tsx');
-  sh.touch('main.tsx');
   sh.touch('reducer.tsx');
-  html.to('index.html');
   indexJS.to('index.tsx');
-  mainJS.to('main.tsx');
   reducerJS.to('reducer.tsx');
 
   info(`Module files created in: ${sh.pwd()}`);
 
-  warn("Don't forget to update MODULE_MAP in constants!");
+  isComponent
+    ? warn(
+        "Don't forget to add the component to the ComponentsLibrary index file, otherwise it won't show up when the Components Library is run! (/modules/ComponentsLibrary/index.tsx)",
+      )
+    : warn("Don't forget to update MODULE_MAP in constants!");
 }
 
 /**
