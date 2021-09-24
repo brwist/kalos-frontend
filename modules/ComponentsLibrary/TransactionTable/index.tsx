@@ -1007,11 +1007,12 @@ export const TransactionTable: FC<Props> = ({
     load,
     resetTransactions,
     state.changingPage,
+    refresh,
     state.loaded,
     state.searching,
   ]);
   return (
-    <ErrorBoundary>
+    <ErrorBoundary key="ErrorBoundary">
       {state.imageWaiverTypePopupOpen && (
         <Modal
           open
@@ -1404,81 +1405,108 @@ export const TransactionTable: FC<Props> = ({
                 try {
                   return [
                     {
-                      value: txnWithId.length == 1 ? 'SELECTED' : '',
+                      value: (
+                        <div key="selected">
+                          {txnWithId.length == 1 ? 'SELECTED' : ''}
+                        </div>
+                      ),
                       invisible: !isSelector,
                     },
                     {
-                      value:
-                        selectorParam.txn.getTimestamp() != NULL_TIME &&
-                        selectorParam.txn.getTimestamp() !=
-                          '0000-00-00 00:00:00'
-                          ? format(
-                              new Date(
-                                parseISO(selectorParam.txn.getTimestamp()),
-                              ),
-                              'yyyy-MM-dd',
-                            )
-                          : '-',
+                      value: (
+                        <div key="Time">
+                          {selectorParam.txn.getTimestamp() != NULL_TIME &&
+                          selectorParam.txn.getTimestamp() !=
+                            '0000-00-00 00:00:00'
+                            ? format(
+                                new Date(
+                                  parseISO(selectorParam.txn.getTimestamp()),
+                                ),
+                                'yyyy-MM-dd',
+                              )
+                            : '-'}
+                        </div>
+                      ),
                       onClick: isSelector
                         ? () => setTransactionChecked(idx)
                         : undefined,
                     },
                     {
-                      value: `${selectorParam.txn.getOrderNumber()}`,
+                      value: (
+                        <div key="orderNumber">{`${selectorParam.txn.getOrderNumber()}`}</div>
+                      ),
+                      key: '',
                       onClick: isSelector
                         ? () => setTransactionChecked(idx)
                         : undefined,
                     },
                     {
-                      value: `${selectorParam.txn.getOwnerName()} (${selectorParam.txn.getOwnerId()})`,
+                      value: (
+                        <div key="OwnernameValue">{`${selectorParam.txn.getOwnerName()} (${selectorParam.txn.getOwnerId()})`}</div>
+                      ),
                       onClick: isSelector
                         ? () => setTransactionChecked(idx)
                         : undefined,
                     },
                     {
-                      value: `${selectorParam.txn
-                        .getDepartment()
-                        ?.getDescription()}`,
+                      value: (
+                        <div key="departmentValue">{`${selectorParam.txn
+                          .getDepartment()
+                          ?.getDescription()}`}</div>
+                      ),
                       onClick: isSelector
                         ? () => setTransactionChecked(idx)
                         : undefined,
                     },
                     {
-                      value:
-                        selectorParam.txn.getJobId() != 0 ? (
-                          <PopoverComponent
-                            buttonLabel={selectorParam.txn
-                              .getJobId()
-                              .toString()}
-                            onClick={() =>
-                              getJobNumberInfo(selectorParam.txn.getJobId())
-                            }
-                          ></PopoverComponent>
-                        ) : (
-                          0
-                        ),
+                      value: (
+                        <div key="JobIdValue">
+                          {selectorParam.txn.getJobId() != 0 ? (
+                            <PopoverComponent
+                              buttonLabel={selectorParam.txn
+                                .getJobId()
+                                .toString()}
+                              onClick={() =>
+                                getJobNumberInfo(selectorParam.txn.getJobId())
+                              }
+                            ></PopoverComponent>
+                          ) : (
+                            0
+                          )}
+                        </div>
+                      ),
                       onClick: isSelector
                         ? () => setTransactionChecked(idx)
                         : undefined,
                     },
                     {
-                      value: `${selectorParam.txn
-                        .getCostCenter()
-                        ?.getId()}-${selectorParam.txn
-                        .getCostCenter()
-                        ?.getDescription()}`,
+                      value: (
+                        <div key="CostCenterValue">{`${selectorParam.txn
+                          .getCostCenter()
+                          ?.getId()}-${selectorParam.txn
+                          .getCostCenter()
+                          ?.getDescription()}`}</div>
+                      ),
                       onClick: isSelector
                         ? () => setTransactionChecked(idx)
                         : undefined,
                     },
                     {
-                      value: `$ ${prettyMoney(selectorParam.txn.getAmount())}`,
+                      value: (
+                        <div key="AmountValue">
+                          `$ ${prettyMoney(selectorParam.txn.getAmount())}`
+                        </div>
+                      ),
                       onClick: isSelector
                         ? () => setTransactionChecked(idx)
                         : undefined,
                     },
                     {
-                      value: selectorParam.txn.getVendor(),
+                      value: (
+                        <div key="VendorValue">
+                          {selectorParam.txn.getVendor()}
+                        </div>
+                      ),
                       onClick: isSelector
                         ? () => setTransactionChecked(idx)
                         : undefined,
@@ -1488,6 +1516,7 @@ export const TransactionTable: FC<Props> = ({
                         [
                           <Tooltip key="copy" content="Copy data to clipboard">
                             <IconButton
+                              key="copyIcon"
                               size="small"
                               onClick={() =>
                                 copyToClipboard(
@@ -1508,6 +1537,7 @@ export const TransactionTable: FC<Props> = ({
                             content="Edit this transaction"
                           >
                             <IconButton
+                              key="editIcon"
                               size="small"
                               onClick={() =>
                                 dispatch({
@@ -1521,6 +1551,7 @@ export const TransactionTable: FC<Props> = ({
                           </Tooltip>,
                           <Tooltip key="upload" content="Upload File">
                             <IconButton
+                              key={'uploadIcon'}
                               size="small"
                               onClick={() =>
                                 dispatch({
@@ -1585,6 +1616,7 @@ export const TransactionTable: FC<Props> = ({
                                   }
                                 >
                                   <IconButton
+                                    key="auditIcon"
                                     size="small"
                                     onClick={
                                       loggedUserId === 1734
@@ -1603,6 +1635,7 @@ export const TransactionTable: FC<Props> = ({
                             : []),
                           <Tooltip key="submit" content={'Mark as accepted'}>
                             <IconButton
+                              key="submitIcon"
                               disabled={selectorParam.txn.getStatusId() === 5}
                               size="small"
                               onClick={() => updateStatus(selectorParam.txn)}
@@ -1615,6 +1648,7 @@ export const TransactionTable: FC<Props> = ({
                             content="Assign an employee to this task"
                           >
                             <IconButton
+                              key="assignIcon"
                               size="small"
                               onClick={() =>
                                 handleSetAssigningUser(
@@ -1645,6 +1679,7 @@ export const TransactionTable: FC<Props> = ({
                             ),
                           <Tooltip key="delete" content="Delete this task">
                             <IconButton
+                              key="deleteIcon"
                               size="small"
                               onClick={() =>
                                 dispatch({
@@ -1674,10 +1709,10 @@ export const TransactionTable: FC<Props> = ({
                     },
                     {
                       actions: [
-                        <>
+                        <div key="Actions">
                           {selectorParam.txn.getStatusId() === 3 ? (
                             <Tooltip key="accepted" content="Accepted">
-                              <IconButton size="small">
+                              <IconButton size="small" key={'doneIcon'}>
                                 <DoneIcon />
                               </IconButton>
                             </Tooltip>
@@ -1685,7 +1720,7 @@ export const TransactionTable: FC<Props> = ({
                             <> </>
                           )}
                           {selectorParam.txn.getStatusId() == 4 ? (
-                            <>
+                            <div key="rectionReason">
                               <Tooltip
                                 key="rejected"
                                 content={`Rejected ${state.transactionActivityLogs
@@ -1703,17 +1738,17 @@ export const TransactionTable: FC<Props> = ({
                                         )})`,
                                   )}`}
                               >
-                                <IconButton size="small">
+                                <IconButton size="small" key="closeIcon">
                                   <CloseIcon />
                                 </IconButton>
                               </Tooltip>
-                            </>
+                            </div>
                           ) : (
                             <> </>
                           )}
                           {selectorParam.txn.getStatusId() === 5 ? (
                             <Tooltip key="processed" content="Processesd">
-                              <IconButton size="small">
+                              <IconButton size="small" key="checkCircleIcon">
                                 <CheckCircleOutlineIcon
                                   style={{ color: 'green' }}
                                 />
@@ -1722,7 +1757,7 @@ export const TransactionTable: FC<Props> = ({
                           ) : (
                             <> </>
                           )}
-                        </>,
+                        </div>,
                       ],
                     },
                   ];
