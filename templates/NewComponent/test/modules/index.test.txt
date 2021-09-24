@@ -11,18 +11,18 @@
 
 export {};
 
-import TITLE_HERE = require('../../../modules/TITLE_HERE/main');
+import TITLE_HERE = require('../../../../modules/ComponentsLibrary/TITLE_HERE/main');
 import React = require('react');
 import Enzyme = require('enzyme');
 
 import Chai = require('chai');
 
 describe('TITLE_HERE', () => {
-  describe('<TITLE_HERE userID={8418} />', () => {
-    let wrapper: Enzyme.ReactWrapper;
+  describe('<TITLE_HERE />', () => {
+    let wrapper: Enzyme.ReactWrapper; 
     before(() => {
       wrapper = Enzyme.mount(
-        <TITLE_HERE.TITLE_HERE userID={8418} />,
+        <TITLE_HERE.TITLE_HERE />,
       );
     });
     after(() => {
