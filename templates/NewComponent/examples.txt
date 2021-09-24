@@ -1,6 +1,6 @@
 import React from 'react';
 import { TITLE_HERE } from './';
-import { ExampleTitle } from '../../helpers';
+import { ExampleTitle } from '../helpers';
 
 export default () => (
   <>
