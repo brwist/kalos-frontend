@@ -178,7 +178,7 @@ export const ServiceRequest: FC<Props> = props => {
     { label: OPTION_BLANK, value: 0 },
     ...state.jobTypeSubtypes
       .filter(jobTypeId => jobTypeId.getJobTypeId() === state.entry.getJobTypeId())
-      .map((jobSubtypeId, index) => ({
+      .map(jobSubtypeId => ({
         value: jobSubtypeId.getJobSubtypeId(),
         label: 
           state.jobSubtypes
@@ -252,8 +252,6 @@ export const ServiceRequest: FC<Props> = props => {
     }});
     const temp = state.entry;
     console.log('saving existing ID');
-    temp.setId(serviceCallId);
-    temp.addFieldMask('Id');
     try {
       await EventClientService.Update(temp);
       console.log('finished Update');
@@ -270,7 +268,6 @@ export const ServiceRequest: FC<Props> = props => {
     }
   }, [
     state.entry,
-    serviceCallId,
     onSave,
   ]);
 
