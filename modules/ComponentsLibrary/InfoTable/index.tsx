@@ -18,7 +18,7 @@ import './styles.less';
 import { Props as ButtonProps } from '../Button';
 import { ACTIONS, Reducer } from './reducer';
 import { PlainForm } from '../PlainForm';
-import { Type } from '../Field';
+import { Type, Options } from '../Field';
 type Styles = {
   loading?: boolean;
   error?: boolean;
@@ -65,7 +65,11 @@ interface Props extends Styles {
     // Information about the columns to use
     columnDefinition: {
       columnsToIgnore: string[];
-      columnTypeOverrides: { columnName: string; columnType: Type }[];
+      columnTypeOverrides: {
+        columnName: string;
+        columnType: Type;
+        options?: Options;
+      }[];
     };
     externalButton?: boolean;
     externalButtonClicked?: boolean; // Was an external button clicked that triggers this? (While true, makes the row appear)
@@ -223,6 +227,12 @@ export const InfoTable = ({
                     columnType?.length === 1
                       ? columnType![0].columnType
                       : 'text',
+                  options:
+                    columnType?.length === 1
+                      ? columnType![0].options
+                        ? columnType![0].options
+                        : undefined
+                      : undefined,
                 };
               }) as any,
               [
