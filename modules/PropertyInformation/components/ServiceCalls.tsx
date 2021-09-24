@@ -849,11 +849,11 @@ export class ServiceCalls extends PureComponent<Props, State> {
             propertyId={propertyId}
             userId={userID}
             openServiceCall={true}
-            onClose={this.handleServiceCallAddToggle}
+            onClose={() => {this.load(); this.handleServiceCallAddToggle;}}
           />
         )}
         {this.state.editingServiceCall && (
-          <Modal open onClose={this.handleServiceCallEditToggle} fullScreen>
+          <Modal open onClose={() => {this.handleServiceCallEditToggle; this.load();}} fullScreen>
             <ServiceRequest
               loggedUserId={userID}
               propertyId={propertyId!}
