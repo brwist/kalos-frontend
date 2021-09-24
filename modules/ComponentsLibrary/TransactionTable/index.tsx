@@ -20,6 +20,7 @@ import CopyIcon from '@material-ui/icons/FileCopySharp';
 import RejectIcon from '@material-ui/icons/ThumbDownSharp';
 import SubmitIcon from '@material-ui/icons/ThumbUpSharp';
 import { format, parseISO } from 'date-fns';
+import { TransactionAccount } from '@kalos-core/kalos-rpc/TransactionAccount';
 import { Event } from '@kalos-core/kalos-rpc/Event';
 import { PopoverComponent } from '../Popover';
 import React, { FC, useCallback, useEffect, useReducer } from 'react';
@@ -42,6 +43,7 @@ import {
   EmailClientService,
   uploadPhotoToExistingTransaction,
   DevlogClientService,
+  TransactionAccountClientService,
 } from '../../../helpers';
 import { AltGallery } from '../../AltGallery/main';
 import { Tooltip } from '../../ComponentsLibrary/Tooltip';
@@ -125,6 +127,7 @@ export const TransactionTable: FC<Props> = ({
     transactions: undefined,
     totalTransactions: 0,
     transactionActivityLogs: [],
+    costCenters: [{ label: 'temp', value: 0 }],
     transactionToEdit: undefined,
     loading: true,
     creatingTransaction: false,
@@ -447,6 +450,17 @@ export const TransactionTable: FC<Props> = ({
       a.getLastname() > b.getLastname() ? 1 : -1,
     );
     dispatch({ type: ACTIONS.SET_EMPLOYEES, data: sortedEmployeeList });
+    const accountRes = await TransactionAccountClientService.BatchGet(
+      new TransactionAccount(),
+    );
+
+    dispatch({
+      type: ACTIONS.SET_COST_CENTERS,
+      data: accountRes.getResultsList().map(account => ({
+        label: `${account.getId()}-${account.getDescription()}`,
+        value: account.getId(),
+      })),
+    });
 
     const userReq = new User();
     userReq.setId(loggedUserId);
@@ -830,6 +844,7 @@ export const TransactionTable: FC<Props> = ({
           })),
         ],
       },
+
       {
         name: 'employeeId',
         label: 'Select Employee',
@@ -909,6 +924,7 @@ export const TransactionTable: FC<Props> = ({
       newTxn.setOwnerId(loggedUserId);
       newTxn.setDepartmentId(saved['Department']);
       newTxn.setJobId(saved['Job #']);
+      newTxn.setCostCenterId(saved['Cost Center ID']);
       newTxn.setAmount(saved['Amount']);
       newTxn.setVendor(saved['Vendor']);
       newTxn.setStatusId(2);
@@ -1312,6 +1328,11 @@ export const TransactionTable: FC<Props> = ({
                 columnType: 'eventId',
               },
               {
+                columnName: 'Cost Center ID',
+                columnType: 'number',
+                options: state.costCenters,
+              },
+              {
                 columnName: 'Amount',
                 columnType: 'number',
               },
@@ -1351,6 +1372,11 @@ export const TransactionTable: FC<Props> = ({
             name: 'Job #',
             dir: state.orderBy == 'job_id' ? state.orderDir : undefined,
             onClick: () => changeSort('job_id'),
+          },
+          {
+            name: 'Cost Center ID',
+            dir: state.orderBy == 'cost_center_id' ? state.orderDir : undefined,
+            onClick: () => changeSort('cost_center_id'),
           },
           {
             name: 'Amount',
@@ -1431,6 +1457,16 @@ export const TransactionTable: FC<Props> = ({
                         ) : (
                           0
                         ),
+                      onClick: isSelector
+                        ? () => setTransactionChecked(idx)
+                        : undefined,
+                    },
+                    {
+                      value: `${selectorParam.txn
+                        .getCostCenter()
+                        ?.getId()}-${selectorParam.txn
+                        .getCostCenter()
+                        ?.getDescription()}`,
                       onClick: isSelector
                         ? () => setTransactionChecked(idx)
                         : undefined,
