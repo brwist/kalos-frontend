@@ -146,35 +146,39 @@ export const AddServiceCall: FC<Props> = props => {
   const title = asProject ? 'New Project' : 'New Service Call';
   return (
     <div>
-      <SectionBar
-        title={title}
-        pagination={{
-          count,
-          rowsPerPage: ROWS_PER_PAGE,
-          onPageChange: handlePageChange,
-          page,
-        }}
-        actions={onClose ? [{ label: 'Close', onClick: onClose }] : []}
-        fixedActions
-      />
-      <SearchForm
-        onSearch={handleSearch}
-        onReset={handleReset}
-        onAddCustomer={handleToggleAddCustomer(true)}
-      />
-      {loading ? (
-        <InfoTable data={makeFakeRows()} loading />
-      ) : (
-        entries.map(entry => (
-          <CustomerItem
-            key={entry.getId()}
-            customer={entry}
-            {...props}
-            onAddServiceCall={setServiceCallOpened}
-            onCustomerClick={handleSetCustomerOpened}
-            onAddProperty={handleAddProperty}
+      {!openServiceCall && (
+        <>
+          <SectionBar
+            title={title}
+            pagination={{
+              count,
+              rowsPerPage: ROWS_PER_PAGE,
+              onPageChange: handlePageChange,
+              page,
+            }}
+            actions={onClose ? [{ label: 'Close', onClick: onClose }] : []}
+            fixedActions
           />
-        ))
+          <SearchForm
+            onSearch={handleSearch}
+            onReset={handleReset}
+            onAddCustomer={handleToggleAddCustomer(true)}
+          />
+          {loading ? (
+            <InfoTable data={makeFakeRows()} loading />
+          ) : (
+            entries.map(entry => (
+              <CustomerItem
+                key={entry.getId()}
+                customer={entry}
+                {...props}
+                onAddServiceCall={setServiceCallOpened}
+                onCustomerClick={handleSetCustomerOpened}
+                onAddProperty={handleAddProperty}
+              />
+            ))
+          )}
+        </>
       )}
       {customerOpened && (
         <Modal open onClose={handleCustomerClose} fullScreen>
