@@ -19,6 +19,8 @@ import { OPTION_ALL } from '../../../constants';
 import { User } from '@kalos-core/kalos-rpc/User';
 import { TimesheetDepartment } from '@kalos-core/kalos-rpc/TimesheetDepartment';
 import { PermissionsManager } from '../PermissionsManager';
+import { VehicleView } from '../../VehicleView/main';
+import { userInfo } from 'os';
 
 // add any prop types here
 interface props {
@@ -152,6 +154,10 @@ export const DepartmentDashboard: FC<props> = function DepartmentDashboard({
                     onClose={() => console.log('No close pls')}
                   ></PermissionsManager>
                 ),
+              },
+              {
+                label: 'Vehicle Management',
+                content: <VehicleView userID={userId}></VehicleView>,
               },
             ]}
           />
