@@ -28,7 +28,7 @@ describe('NewContract', () => {
     });
 
     it('renders correctly', () => {
-      Chai.expect(wrapper.text().includes('NewContract works!')).to.equal(true);
+      Chai.expect(wrapper.text().includes('New Contract')).to.equal(true);
     });
 
     describe('New Contract Section', () => {
