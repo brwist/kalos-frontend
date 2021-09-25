@@ -42,6 +42,8 @@ Describe and It should be used as per Mocha's guides. When testing methods and f
 
 The structure of folders inside of the test folder should mimic the project's layout as closely as possible.
 
+Leave tests that have not been touched in a "skipped" state rather than failing (you can do this by just not providing a callback for an it function, or by doing it.skip). This keeps the output clean and free from "Not Implemented" errors, and is also the recommended way to handle things by the Mocha team.
+
 # Style for Imports
 
 If importing a module, for example Event, try to name it "EventModule" (putting Module after the module name) unless importing from a protobuffer.
