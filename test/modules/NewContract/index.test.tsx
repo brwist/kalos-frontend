@@ -7,7 +7,7 @@
 
   Design Specification: 
 
-*/ 
+*/
 
 export {};
 
@@ -21,24 +21,96 @@ describe('NewContract', () => {
   describe('<NewContract userID={8418} />', () => {
     let wrapper: Enzyme.ReactWrapper;
     before(() => {
-      wrapper = Enzyme.mount(
-        <NewContract.NewContract userID={8418} />,
-      );
+      wrapper = Enzyme.mount(<NewContract.NewContract userID={8418} />);
     });
     after(() => {
       wrapper.unmount();
     });
 
     it('renders correctly', () => {
-      Chai.expect(wrapper.text().includes('NewContract works!')).to.equal(true);      
-    })
+      Chai.expect(wrapper.text().includes('NewContract works!')).to.equal(true);
+    });
 
-    describe('Loading', () => {
-      it('renders a loader when loading', () => {
-        throw new Error("Testing is not implemented yet for the module NewContract");
+    describe('New Contract Section', () => {
+      it('exists', () => {
+        Chai.expect(wrapper.find('.NewContract')).to.be.lengthOf(1);
       });
-    })
 
-    // Rest of the spec tests here, make them pass as you go
+      describe('Start Date Field', () => {
+        it('Contains a start date field', () => {
+          throw new Error('Not implemented');
+        });
+
+        it('is required', () => {
+          throw new Error('Not implemented');
+        });
+      });
+
+      describe('End Date Field', () => {
+        it('Contains an end date field', () => {
+          throw new Error('Not implemented');
+        });
+        it('is required', () => {
+          throw new Error('Not implemented');
+        });
+      });
+
+      describe('Frequency Field', () => {
+        it('Contains a frequency field', () => {
+          throw new Error('Not implemented');
+        });
+        it('is required', () => {
+          throw new Error('Not implemented');
+        });
+      });
+
+      describe('Billing Section', () => {
+        it('Contains a billing section', () => {
+          throw new Error('Not implemented');
+        });
+        it('is required', () => {
+          throw new Error('Not implemented');
+        });
+      });
+
+      describe('Payment Type Section', () => {
+        it('Contains a payment type section', () => {
+          throw new Error('Not implemented');
+        });
+        it('is required', () => {
+          throw new Error('Not implemented');
+        });
+      });
+
+      describe('Payment Status Section', () => {
+        it('Contains a payment status section', () => {
+          throw new Error('Not implemented');
+        });
+        it('is required', () => {
+          throw new Error('Not implemented');
+        });
+      });
+
+      describe('Payment Terms Section', () => {
+        it('Contains a payment terms section', () => {
+          throw new Error('Not implemented');
+        });
+      });
+
+      describe('Notes Section', () => {
+        it('Contains a notes section', () => {
+          throw new Error('Not implemented');
+        });
+      });
+
+      describe('Property Selector Section', () => {
+        it('Contains a property selector', () => {
+          throw new Error('Not implemented');
+        });
+        it('is required', () => {
+          throw new Error('Not implemented');
+        });
+      });
+    });
   });
 });
