@@ -5,6 +5,7 @@
 */
 
 import React, { useReducer, useEffect, useCallback, FC } from 'react';
+import { SectionBar } from '../ComponentsLibrary/SectionBar';
 import { PageWrapper } from '../PageWrapper/main';
 import { reducer, ACTIONS } from './reducer';
 
@@ -34,7 +35,10 @@ export const NewContract: FC<props> = function NewContract({ userID }) {
 
   return (
     <PageWrapper userID={userID} withHeader>
-      <>Testing</>
+      <SectionBar
+        title="New Contract"
+        actions={[{ label: 'Cancel', onClick: () => alert('Cancel') }]}
+      ></SectionBar>
     </PageWrapper>
   );
 };
