@@ -17,14 +17,32 @@ import Enzyme = require('enzyme');
 
 import Chai = require('chai');
 
+let saves = false;
+let closes = false;
+
 describe('NewContract', () => {
   describe('<NewContract userID={8418} />', () => {
     let wrapper: Enzyme.ReactWrapper;
     before(() => {
-      wrapper = Enzyme.mount(<NewContract.NewContract userID={8418} />);
+      wrapper = Enzyme.mount(
+        <NewContract.NewContract
+          userID={8418}
+          onSave={() => {
+            saves = true;
+          }}
+          onClose={() => {
+            closes = true;
+          }}
+        />,
+      );
     });
     after(() => {
       wrapper.unmount();
+    });
+    afterEach(() => {
+      // Reset these after each test
+      saves = false;
+      closes = false;
     });
 
     it('renders correctly', () => {
@@ -36,27 +54,57 @@ describe('NewContract', () => {
         Chai.expect(wrapper.find({ title: 'New Contract' })).to.be.lengthOf(1);
       });
 
-      it('contains a cancel button', () => {
-        Chai.expect(
+      describe('cancel button', () => {
+        it('contains a cancel button', () => {
+          Chai.expect(
+            wrapper
+              .find('.MuiButton-label')
+              .filterWhere(button => button.text() === 'Cancel'),
+          ).to.be.lengthOf(1);
+        });
+
+        it('fires an onClose off when clicked', () => {
           wrapper
             .find('.MuiButton-label')
-            .filterWhere(button => button.text() === 'Cancel'),
-        ).to.be.lengthOf(1);
+            .filterWhere(button => button.text() === 'Cancel')
+            .simulate('click');
+          Chai.expect(closes).to.be.equal(true);
+        });
       });
 
       describe('Start Date Field', () => {
-        it('Contains a start date field');
+        it('Contains a start date field', () => {
+          Chai.expect(wrapper.text().includes('Start Date')).to.be.equal(true);
+        });
 
-        it('is required');
+        it('is required', () => {
+          Chai.expect(
+            wrapper.find({ label: 'Start Date' }).find({ required: true }),
+          ).to.be.lengthOf(1);
+        });
 
-        it('is a date selector');
+        it('is a date selector', () => {
+          Chai.expect(
+            wrapper.find({ type: 'date' }).find({ label: 'Start Date' }),
+          ).to.be.lengthOf(1);
+        });
       });
 
       describe('End Date Field', () => {
-        it('Contains an end date field');
-        it('is required');
+        it('Contains an end date field', () => {
+          Chai.expect(wrapper.text().includes('End Date')).to.be.equal(true);
+        });
+        it('is required', () => {
+          Chai.expect(
+            wrapper.find({ label: 'End Date' }).find({ required: true }),
+          ).to.be.lengthOf(1);
+        });
 
-        it('is a date selector');
+        it('is a date selector', () => {
+          Chai.expect(
+            wrapper.find({ type: 'date' }).find({ label: 'End Date' }),
+          ).to.be.lengthOf(1);
+        });
       });
 
       describe('Frequency Field', () => {
