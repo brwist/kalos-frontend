@@ -24,8 +24,6 @@ export class ErrorBoundary extends Component<Props, State> {
   }
 
   public render() {
-    console.log('Rendering an error boundary');
-
     if (this.state.hasError) {
       return (
         <>

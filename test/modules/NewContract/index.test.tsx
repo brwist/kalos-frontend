@@ -44,6 +44,10 @@ describe('NewContract', () => {
         it('is required', () => {
           throw new Error('Not implemented');
         });
+
+        it('is a date selector', () => {
+          throw new Error('Not implemented');
+        });
       });
 
       describe('End Date Field', () => {
@@ -51,6 +55,10 @@ describe('NewContract', () => {
           throw new Error('Not implemented');
         });
         it('is required', () => {
+          throw new Error('Not implemented');
+        });
+
+        it('is a date selector', () => {
           throw new Error('Not implemented');
         });
       });
@@ -62,6 +70,28 @@ describe('NewContract', () => {
         it('is required', () => {
           throw new Error('Not implemented');
         });
+
+        describe('dropdown', () => {
+          it('has a monthly setting', () => {
+            throw new Error('Not implemented');
+          });
+
+          it('has a bi-monthly setting', () => {
+            throw new Error('Not implemented');
+          });
+
+          it('has a quarterly setting', () => {
+            throw new Error('Not implemented');
+          });
+
+          it('has a bi-annual setting', () => {
+            throw new Error('Not implemented');
+          });
+
+          it('has a yearly setting', () => {
+            throw new Error('Not implemented');
+          });
+        });
       });
 
       describe('Billing Section', () => {
@@ -71,6 +101,15 @@ describe('NewContract', () => {
         it('is required', () => {
           throw new Error('Not implemented');
         });
+
+        describe('dropdown', () => {
+          it('has a site setting', () => {
+            throw new Error('Not implemented');
+          });
+          it('has a group setting', () => {
+            throw new Error('Not implemented');
+          });
+        });
       });
 
       describe('Payment Type Section', () => {
@@ -78,6 +117,9 @@ describe('NewContract', () => {
           throw new Error('Not implemented');
         });
         it('is required', () => {
+          throw new Error('Not implemented');
+        });
+        it('has a payment type dropdown', () => {
           throw new Error('Not implemented');
         });
       });
@@ -89,16 +131,39 @@ describe('NewContract', () => {
         it('is required', () => {
           throw new Error('Not implemented');
         });
+        describe('dropdown', () => {
+          // Pending billed cancelled paid
+          it('has a pending setting', () => {
+            throw new Error('Not implemented');
+          });
+          it('has a billed setting', () => {
+            throw new Error('Not implemented');
+          });
+          it('has a cancelled setting', () => {
+            throw new Error('Not implemented');
+          });
+          it('has a paid setting', () => {
+            throw new Error('Not implemented');
+          });
+        });
       });
 
       describe('Payment Terms Section', () => {
         it('Contains a payment terms section', () => {
           throw new Error('Not implemented');
         });
+
+        it('is a single-line field', () => {
+          throw new Error('Not implemented');
+        });
       });
 
       describe('Notes Section', () => {
         it('Contains a notes section', () => {
+          throw new Error('Not implemented');
+        });
+
+        it('is a multi-line field', () => {
           throw new Error('Not implemented');
         });
       });
@@ -108,6 +173,9 @@ describe('NewContract', () => {
           throw new Error('Not implemented');
         });
         it('is required', () => {
+          throw new Error('Not implemented');
+        });
+        it('is a checkbox selection field', () => {
           throw new Error('Not implemented');
         });
       });
