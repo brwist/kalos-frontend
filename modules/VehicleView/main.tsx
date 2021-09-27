@@ -4,10 +4,11 @@ import { Vehicle } from '@kalos-core/kalos-rpc/compiled-protos/user_pb';
 import { UserClientService, makeSafeFormObject } from '../../helpers';
 import { Form, Schema } from '../ComponentsLibrary/Form';
 import { InfoTable, Columns } from '../ComponentsLibrary/InfoTable';
-
+import { SectionBar } from '../ComponentsLibrary/SectionBar';
 // add any prop types here
 interface props {
   userID: number;
+  disableWrapper?: boolean;
 }
 
 const SCHEMA_VEHICLE: Schema<Vehicle> = [
@@ -97,7 +98,7 @@ export const VehicleView: React.FC<props> = function VehicleView({ userID }) {
   ];
 
   return (
-    <PageWrapper userID={userID} withHeader>
+    <SectionBar title={'Vehicles'}>
       {activeVehicle.getId() !== 0 && (
         <Form<Vehicle>
           schema={SCHEMA_VEHICLE}
@@ -110,6 +111,6 @@ export const VehicleView: React.FC<props> = function VehicleView({ userID }) {
         />
       )}
       <InfoTable data={vehicles.map(vehicleToColumn)} columns={tableColumns} />
-    </PageWrapper>
+    </SectionBar>
   );
 };
