@@ -258,17 +258,16 @@ export const ServiceRequest: FC<Props> = props => {
     } catch (err) {
       console.error(err);
     }
-    serviceCall({type: 'setSaveServiceCall', data: {
-      saving: false,
-      loading: false,
-      pendingSave: false,
-    }})
     if (onSave) {
       onSave();
+    }
+    if (onClose) {
+      onClose();
     }
   }, [
     state.entry,
     onSave,
+    onClose,
   ]);
 
   useEffect(() => {

@@ -370,6 +370,9 @@ const handleSaveInvoice = useCallback(async() => {
     if (onSave) {
       onSave();
     }
+    if (onClose) {
+      onClose();
+    }
   }, [
     entry,
     serviceCallId,
@@ -378,6 +381,7 @@ const handleSaveInvoice = useCallback(async() => {
     setSaving,
     setLoading,
     onSave,
+    onClose,
     loadEntry,
     loadServicesRenderedData,
   ]);
