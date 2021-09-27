@@ -19,8 +19,7 @@ import { OPTION_ALL } from '../../../constants';
 import { User } from '@kalos-core/kalos-rpc/User';
 import { TimesheetDepartment } from '@kalos-core/kalos-rpc/TimesheetDepartment';
 import { PermissionsManager } from '../PermissionsManager';
-import { VehicleView } from '../../VehicleView/main';
-import { userInfo } from 'os';
+import { VehicleView } from '../VehicleView/index';
 
 // add any prop types here
 interface props {
@@ -81,7 +80,7 @@ export const DepartmentDashboard: FC<props> = function DepartmentDashboard({
 
     const depReq = new TimesheetDepartment();
     depReq.setIsActive(1);
-    const departments = await (
+    const departments = (
       await TimesheetDepartmentClientService.BatchGet(depReq)
     ).getResultsList();
 

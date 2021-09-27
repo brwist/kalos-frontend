@@ -1,10 +1,13 @@
 import React from 'react';
-import { PageWrapper } from '../PageWrapper/main';
+import { PageWrapper } from '../../PageWrapper/main';
 import { Vehicle } from '@kalos-core/kalos-rpc/compiled-protos/user_pb';
-import { UserClientService, makeSafeFormObject } from '../../helpers';
-import { Form, Schema } from '../ComponentsLibrary/Form';
-import { InfoTable, Columns } from '../ComponentsLibrary/InfoTable';
-import { SectionBar } from '../ComponentsLibrary/SectionBar';
+import { UserClientService, makeSafeFormObject } from '../../../helpers';
+import { Form, Schema } from '../Form';
+import { reducer, ACTIONS } from './reducer';
+import { InfoTable, Columns } from '../InfoTable';
+import { SectionBar } from '../SectionBar';
+import { useReducer } from 'react';
+import { Modal } from '../Modal';
 // add any prop types here
 interface props {
   userID: number;
@@ -24,21 +27,25 @@ const SCHEMA_VEHICLE: Schema<Vehicle> = [
 ];
 
 export const VehicleView: React.FC<props> = function VehicleView({ userID }) {
-  const [vehicles, setVehicles] = React.useState<Vehicle[]>([]);
-  const [activeVehicle, setActiveVehicle] = React.useState<Vehicle>(
-    new Vehicle(),
-  );
-
   const fetchVehicles = async function fetchVehicles() {
-    setVehicles(
-      (
-        await UserClientService.BatchGetVehicles(new Vehicle())
-      ).getResultsList(),
-    );
+    const results = (
+      await UserClientService.BatchGetVehicles(new Vehicle())
+    ).getResultsList();
+    dispatch({ type: ACTIONS.SET_VEHICLES, data: results });
   };
-
+  const [state, dispatch] = useReducer(reducer, {
+    loading: true,
+    orderBy: 'id',
+    page: 0,
+    loaded: false,
+    creatingVehicle: false,
+    changingPage: false,
+    vehicles: [],
+    activeVehicle: undefined,
+  });
   // TODO turn this into a form instead of a canned onClick function
-  const createVehicle = async function createVehicle() {
+  const openCreateVehicle = async function createVehicle() {
+    /*
     const v = new Vehicle();
     v.setIsActive(1);
     v.setOwnerId(8418);
@@ -49,24 +56,40 @@ export const VehicleView: React.FC<props> = function VehicleView({ userID }) {
       console.log(err);
     }
     await fetchVehicles();
+    */
+    dispatch({ type: ACTIONS.SET_CREATING_VEHICLE, data: true });
   };
-
+  const createVehicle = async function createVehicle() {
+    /*
+    const v = new Vehicle();
+    v.setIsActive(1);
+    v.setOwnerId(8418);
+    try {
+      const id = await UserClientService.CreateVehicle(v);
+      console.log({ id });
+    } catch (err) {
+      console.log(err);
+    }
+    await fetchVehicles();
+    */
+    dispatch({ type: ACTIONS.SET_CREATING_VEHICLE, data: true });
+  };
   React.useEffect(() => {
     fetchVehicles();
   }, []);
 
   const makeSetActiveVehicle = function handleSetActiveVehicle(v: Vehicle) {
-    return () => setActiveVehicle(v);
+    return () => dispatch({ type: ACTIONS.SET_ACTIVE_VEHICLE, data: v });
   };
 
   const closeForm = function closeForm() {
-    setActiveVehicle(new Vehicle());
+    dispatch({ type: ACTIONS.SET_ACTIVE_VEHICLE, data: new Vehicle() });
   };
 
   const updateVehicle = async function updateVehicle(data: Vehicle) {
     try {
       await UserClientService.UpdateVehicle(
-        makeSafeFormObject(data, activeVehicle),
+        makeSafeFormObject(data, state.activeVehicle!),
       );
     } catch (err) {
       console.log(err);
@@ -93,24 +116,45 @@ export const VehicleView: React.FC<props> = function VehicleView({ userID }) {
     { name: 'Engine' },
     {
       name: 'Identification Number',
-      actions: [{ label: 'New Vehicle', onClick: createVehicle }],
+      actions: [{ label: 'New Vehicle', onClick: openCreateVehicle }],
     },
   ];
 
   return (
     <SectionBar title={'Vehicles'}>
-      {activeVehicle.getId() !== 0 && (
+      {state.activeVehicle && state.activeVehicle.getId() !== 0 && (
         <Form<Vehicle>
           schema={SCHEMA_VEHICLE}
           onClose={closeForm}
-          data={activeVehicle}
+          data={state.activeVehicle}
           onSave={updateVehicle}
           submitLabel="Change"
           cancelLabel="Close"
           title="Edit Vehicle"
         />
       )}
-      <InfoTable data={vehicles.map(vehicleToColumn)} columns={tableColumns} />
+      <Modal
+        onClose={() =>
+          dispatch({ type: ACTIONS.SET_CREATING_VEHICLE, data: false })
+        }
+        open={state.creatingVehicle}
+      >
+        <Form<Vehicle>
+          schema={SCHEMA_VEHICLE}
+          onClose={() =>
+            dispatch({ type: ACTIONS.SET_CREATING_VEHICLE, data: false })
+          }
+          data={new Vehicle()}
+          onSave={createVehicle}
+          submitLabel="Create"
+          cancelLabel="Close"
+          title="Create Vehicle"
+        />
+      </Modal>
+      <InfoTable
+        data={state.vehicles.map(vehicleToColumn)}
+        columns={tableColumns}
+      />
     </SectionBar>
   );
 };
