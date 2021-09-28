@@ -9,6 +9,7 @@ export type State = {
   vehicles: Vehicle[];
   activeVehicle: Vehicle | undefined;
   creatingVehicle: boolean;
+  vehicleCount: number;
 };
 
 export enum ACTIONS {
@@ -19,6 +20,7 @@ export enum ACTIONS {
   SET_PAGE = 'setPage',
   SET_ACTIVE_VEHICLE = 'setActiveVehicle',
   SET_VEHICLES = 'setVehicles',
+  SET_VEHICLES_COUNT = 'setVehiclesCount',
   SET_CREATING_VEHICLE = 'setCreatingVehicle',
 }
 
@@ -28,6 +30,7 @@ export type Action =
   | { type: ACTIONS.SET_CHANGING_PAGE; data: boolean }
   | { type: ACTIONS.SET_CREATING_VEHICLE; data: boolean }
   | { type: ACTIONS.SET_ORDER_BY; data: string }
+  | { type: ACTIONS.SET_VEHICLES_COUNT; data: number }
   | { type: ACTIONS.SET_ACTIVE_VEHICLE; data: Vehicle | undefined }
   | { type: ACTIONS.SET_VEHICLES; data: Vehicle[] }
   | { type: ACTIONS.SET_PAGE; data: number };
@@ -80,6 +83,13 @@ export const reducer = (state: State, action: Action) => {
       return {
         ...state,
         creatingVehicle: action.data,
+      };
+    }
+    case ACTIONS.SET_VEHICLES_COUNT: {
+      console.log('setting vehicle count ');
+      return {
+        ...state,
+        vehicleCount: action.data,
       };
     }
     default:

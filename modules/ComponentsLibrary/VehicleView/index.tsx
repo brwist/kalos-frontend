@@ -6,8 +6,9 @@ import { Form, Schema } from '../Form';
 import { reducer, ACTIONS } from './reducer';
 import { InfoTable, Columns } from '../InfoTable';
 import { SectionBar } from '../SectionBar';
-import { useReducer } from 'react';
+import { useCallback, useReducer } from 'react';
 import { Modal } from '../Modal';
+import { ROWS_PER_PAGE } from '../../../constants';
 // add any prop types here
 interface props {
   userID: number;
@@ -27,12 +28,6 @@ const SCHEMA_VEHICLE: Schema<Vehicle> = [
 ];
 
 export const VehicleView: React.FC<props> = function VehicleView({ userID }) {
-  const fetchVehicles = async function fetchVehicles() {
-    const results = (
-      await UserClientService.BatchGetVehicles(new Vehicle())
-    ).getResultsList();
-    dispatch({ type: ACTIONS.SET_VEHICLES, data: results });
-  };
   const [state, dispatch] = useReducer(reducer, {
     loading: true,
     orderBy: 'id',
@@ -41,42 +36,40 @@ export const VehicleView: React.FC<props> = function VehicleView({ userID }) {
     creatingVehicle: false,
     changingPage: false,
     vehicles: [],
+    vehicleCount: 0,
     activeVehicle: undefined,
   });
-  // TODO turn this into a form instead of a canned onClick function
-  const openCreateVehicle = async function createVehicle() {
-    /*
-    const v = new Vehicle();
-    v.setIsActive(1);
-    v.setOwnerId(8418);
-    try {
-      const id = await UserClientService.CreateVehicle(v);
-      console.log({ id });
-    } catch (err) {
-      console.log(err);
-    }
-    await fetchVehicles();
-    */
+  const fetchVehicles = useCallback(async () => {
+    const req = new Vehicle();
+    req.setPageNumber(state.page);
+    const results = await UserClientService.BatchGetVehicles(req);
+    dispatch({ type: ACTIONS.SET_VEHICLES, data: results.getResultsList() });
+    dispatch({
+      type: ACTIONS.SET_VEHICLES_COUNT,
+      data: results.getTotalCount(),
+    });
+  }, [state.page]);
+  const openCreateVehicle = () => {
     dispatch({ type: ACTIONS.SET_CREATING_VEHICLE, data: true });
   };
-  const createVehicle = async function createVehicle() {
-    /*
-    const v = new Vehicle();
-    v.setIsActive(1);
-    v.setOwnerId(8418);
+  const createVehicle = async function createVehicle(v: Vehicle) {
+    const temp = makeSafeFormObject(v, new Vehicle());
+    temp.setIsActive(1);
+    temp.setOwnerId(103285);
+
     try {
-      const id = await UserClientService.CreateVehicle(v);
+      console.log(temp);
+      const id = await UserClientService.CreateVehicle(temp);
       console.log({ id });
     } catch (err) {
       console.log(err);
     }
+    dispatch({ type: ACTIONS.SET_CREATING_VEHICLE, data: false });
     await fetchVehicles();
-    */
-    dispatch({ type: ACTIONS.SET_CREATING_VEHICLE, data: true });
   };
   React.useEffect(() => {
     fetchVehicles();
-  }, []);
+  }, [fetchVehicles]);
 
   const makeSetActiveVehicle = function handleSetActiveVehicle(v: Vehicle) {
     return () => dispatch({ type: ACTIONS.SET_ACTIVE_VEHICLE, data: v });
@@ -97,7 +90,11 @@ export const VehicleView: React.FC<props> = function VehicleView({ userID }) {
     closeForm();
     await fetchVehicles();
   };
-
+  const handlePageChange = useCallback((page: number) => {
+    dispatch({ type: ACTIONS.SET_PAGE, data: page });
+    dispatch({ type: ACTIONS.SET_CHANGING_PAGE, data: true });
+    dispatch({ type: ACTIONS.SET_CHANGING_PAGE, data: false });
+  }, []);
   const vehicleToColumn = function vehicleToColumn(v: Vehicle) {
     const setAsActive = makeSetActiveVehicle(v);
     return [
@@ -121,7 +118,15 @@ export const VehicleView: React.FC<props> = function VehicleView({ userID }) {
   ];
 
   return (
-    <SectionBar title={'Vehicles'}>
+    <SectionBar
+      title={'Vehicles'}
+      pagination={{
+        count: state.vehicleCount,
+        page: state.page,
+        onPageChange: handlePageChange,
+        rowsPerPage: ROWS_PER_PAGE,
+      }}
+    >
       {state.activeVehicle && state.activeVehicle.getId() !== 0 && (
         <Form<Vehicle>
           schema={SCHEMA_VEHICLE}
@@ -145,7 +150,7 @@ export const VehicleView: React.FC<props> = function VehicleView({ userID }) {
             dispatch({ type: ACTIONS.SET_CREATING_VEHICLE, data: false })
           }
           data={new Vehicle()}
-          onSave={createVehicle}
+          onSave={v => createVehicle(v)}
           submitLabel="Create"
           cancelLabel="Close"
           title="Create Vehicle"

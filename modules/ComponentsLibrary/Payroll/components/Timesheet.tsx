@@ -85,8 +85,24 @@ export const Timesheet: FC<Props> = ({
     const getTimesheets = createTimesheetFetchFunction(filter, type);
     const results = await getTimesheets();
     const resultsList = results.getResultsList();
+    const loadedUsers = (
+      await UserClientService.loadUsersByIds(
+        resultsList.map(e => e.getTechnicianUserId()),
+      )
+    ).getResultsList();
+    for (let i = 0; i < resultsList.length; i++) {
+      for (let j = 0; j < loadedUsers.length; j++) {
+        if (resultsList[i].getTechnicianUserId() === loadedUsers[j].getId()) {
+          //we found the user, lets get the acutal department
+          resultsList[i].setDepartmentName(
+            `${loadedUsers[j].getDepartment()!.getValue()} - ${loadedUsers[j]
+              .getDepartment()!
+              .getDescription()}`,
+          );
+        }
+      }
+    }
 
-    const tempResults = [];
     if (
       departmentId &&
       departmentId != 0 &&
@@ -203,6 +219,7 @@ export const Timesheet: FC<Props> = ({
     },
     [load],
   );
+
   const createEmptyTimesheetLine = useCallback(
     async (emptyTimesheetLine?: TimesheetLine) => {
       if (emptyTimesheetLine) {
