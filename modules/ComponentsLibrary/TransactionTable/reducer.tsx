@@ -33,6 +33,7 @@ export type State = {
   loading: boolean;
   orderBy: string;
   orderDir: OrderDir | undefined;
+  costCenters: { label: string; value: number }[];
   changingPage: boolean;
   loaded: boolean;
   creatingTransaction: boolean;
@@ -79,6 +80,7 @@ export enum ACTIONS {
   SET_MERGING_TRANSACTION = 'setMergingTransaction',
   SET_SEARCHING = 'setSearching',
   SET_ROLE = 'setRole',
+  SET_COST_CENTERS = 'setCostCenters',
   SET_CREATING_TRANSACTION = 'setCreatingTransaction',
   SET_EMPLOYEES = 'setEmployees',
   SET_PENDING_UPLOAD_PHOTO = 'setPendingUploadPhoto',
@@ -140,6 +142,10 @@ export type Action =
   | {
       type: ACTIONS.SET_UNIVERSAL_SEARCH;
       data: string | undefined;
+    }
+  | {
+      type: ACTIONS.SET_COST_CENTERS;
+      data: { label: string; value: number }[];
     }
   | {
       type: ACTIONS.SET_FILE_DATA;
@@ -285,6 +291,13 @@ export const reducer = (state: State, action: Action) => {
       return {
         ...state,
         status: action.data,
+      };
+    }
+    case ACTIONS.SET_COST_CENTERS: {
+      console.log('setting cost centers ');
+      return {
+        ...state,
+        costCenters: action.data,
       };
     }
     case ACTIONS.SET_LOADED: {

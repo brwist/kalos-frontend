@@ -137,8 +137,8 @@ export const DispatchDashboard: React.FC<Props> = function DispatchDashboard({
       // console.log('Dispatch Call Success');
       const callResults = calls.getResultsList();
       const filteredCalls = callResults.filter(call => 
-        call.getDateStarted().concat(' ', call.getTimeStarted()) >= state.formData.dateStart.concat(' ', state.formData.timeStart) &&
-        call.getDateEnded().concat(' ', call.getTimeEnded()) <= state.formData.dateEnd.concat(' ', state.formData.timeEnd) 
+        `${call.getDateStarted()} ${call.getTimeStarted()}` >= `${state.formData.dateStart} ${state.formData.timeStart.substring(11)}` &&
+        `${call.getDateEnded()} ${call.getTimeEnded()}` <= `${state.formData.dateEnd} ${state.formData.timeEnd.substring(11)}` 
         && ( state.formData.divisionMulti.length === 0 ||
         state.formData.divisionMulti.includes(call.getSectorGroup()))
       ); 
@@ -213,7 +213,7 @@ export const DispatchDashboard: React.FC<Props> = function DispatchDashboard({
   const getSectorGroups = (departments: TimesheetDepartment[]) => {
     const department = departments.map(dep => dep.getSectorGroup())
     const defaultSectors = department.filter((c,index) => {
-      return department.indexOf(c) === index;
+      return department.indexOf(c) === index && c !== 0;
     });
     initialFormData.divisionMulti = defaultSectors;
     return defaultSectors;
@@ -259,18 +259,18 @@ export const DispatchDashboard: React.FC<Props> = function DispatchDashboard({
       type: 'setLoadingCall',
       data: true
     });
-    if (!state.isLoadingFilters) {
+    if (state.defaultSectorIds.length && !state.isLoadingFilters) {
       setCalls();
       console.log('SetCalls Use Effect');
     }
-  }, [setCalls, state.isLoadingFilters])
+  }, [setCalls, state.defaultSectorIds, state.isLoadingFilters])
 
   const handleChange = async (formData: FormData) => {
     setProcessing(true);
     const callDateStart = formData.dateStart.replace(' 00:00', '');
     const callDateEnd = formData.dateEnd.replace(' 00:00', '');
-    const callTimeStart = formData.timeStart.substring(11);
-    const callTimeEnd = formData.timeEnd.substring(11);
+    const callTimeStart = formData.timeStart;
+    const callTimeEnd = formData.timeEnd;
     if (state.formData.departmentIds.length != formData.departmentIds.length
     || !state.formData.departmentIds.every((val, index) => val === formData.departmentIds[index])) {
       formData.divisionMulti = [];
@@ -504,7 +504,7 @@ export const DispatchDashboard: React.FC<Props> = function DispatchDashboard({
       },
       {
         name: 'divisionMulti',
-        label: 'Division(s)',
+        label: 'Sectors(s)',
         options: ['Residential', 'Commercial Light', 'Commercial Heavy'].map((item, index) => ({
           key: item,
           label: item,

@@ -250,6 +250,21 @@ export const ServiceCall: FC<Props> = props => {
             resolve();
           }),
         );
+      } else {
+        promises.push(
+          new Promise<void>(async resolve => {
+            const req = new Event();
+            req.setIsResidential(1);
+            req.setDateStarted(format(new Date(), 'yyyy-MM-dd'));
+            req.setDateEnded(format(new Date(), 'yyyy-MM-dd'));
+            const property = await PropertyClientService.loadPropertyByID(
+              propertyId,
+            );
+            req.setName(`${property.getAddress()} ${property.getCity()}, ${property.getState()} ${property.getZip()}`);
+            setEntry(req);
+            resolve();
+          }),
+        );
       }
 
       promises.push(
@@ -355,16 +370,22 @@ const handleSaveInvoice = useCallback(async() => {
     if (onSave) {
       onSave();
     }
+    if (onClose) {
+      onClose();
+    }
   }, [
     entry,
     serviceCallId,
-    setEntry,
+    propertyId,
+    saveInvoice,
     setSaving,
     setLoading,
     onSave,
+    onClose,
     loadEntry,
     loadServicesRenderedData,
   ]);
+
   const saveProject = useCallback(
     async (data: Event) => {
       setSaving(true);
