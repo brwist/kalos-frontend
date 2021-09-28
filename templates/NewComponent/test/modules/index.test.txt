@@ -16,23 +16,24 @@ import React = require('react');
 import Enzyme = require('enzyme');
 
 import Chai = require('chai');
+describe('ComponentsLibrary', () => {
+  describe('TITLE_HERE', () => {
+    describe('<TITLE_HERE />', () => {
+      let wrapper: Enzyme.ReactWrapper; 
+      before(() => {
+        wrapper = Enzyme.mount(
+          <TITLE_HERE.TITLE_HERE />,
+        );
+      });
+      after(() => {
+        wrapper.unmount();
+      });
 
-describe('TITLE_HERE', () => {
-  describe('<TITLE_HERE />', () => {
-    let wrapper: Enzyme.ReactWrapper; 
-    before(() => {
-      wrapper = Enzyme.mount(
-        <TITLE_HERE.TITLE_HERE />,
-      );
+      it('renders correctly', () => {
+        Chai.expect(wrapper.text().includes('TITLE_HERE works!')).to.equal(true);      
+      })
+
+      // Rest of the spec tests here, make them pass as you go
     });
-    after(() => {
-      wrapper.unmount();
-    });
-
-    it('renders correctly', () => {
-      Chai.expect(wrapper.text().includes('TITLE_HERE works!')).to.equal(true);      
-    })
-
-    // Rest of the spec tests here, make them pass as you go
-  });
+  })
 });

@@ -144,6 +144,18 @@ const FilterDrawer = ({ open, toggleDrawer }: Props) => {
     );
     toggleDrawer(false);
   };
+  const handleClear = () => {
+    const temp = {
+      customers: [],
+      jobType: 0,
+      jobSubType: 0,
+      zip: [],
+      propertyUse: [],
+      techIds: '0',
+    };
+    dispatch({ type: 'resetFilters', value: temp });
+    changeFilters(temp);
+  };
 
   const handleReset = () => {
     dispatch({ type: 'resetFilters', value: initialFilters });
@@ -262,6 +274,12 @@ const FilterDrawer = ({ open, toggleDrawer }: Props) => {
             label="Save"
             className="ServiceCalendarFilterDrawerButton"
             onClick={handleSave}
+            fullWidth
+          />
+          <Button
+            label="Clear"
+            className="ServiceCalendarFilterDrawerButton"
+            onClick={handleClear}
             fullWidth
           />
         </div>
