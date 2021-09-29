@@ -6,6 +6,7 @@
 
 import { Contract } from '@kalos-core/kalos-rpc/Contract';
 import React, { useReducer, useEffect, useCallback, FC } from 'react';
+import { PAYMENT_TYPE_OPTIONS } from '../../CustomerDetails/components/ContractInfo';
 import { Form, Schema } from '../Form';
 import { SectionBar } from '../SectionBar';
 import { reducer, ACTIONS, FREQUENCIES, BILLING_OPTIONS } from './reducer';
@@ -46,6 +47,14 @@ const NEW_CONTRACT_SCHEMA: Schema<Contract> = [
       label: 'Group Billing',
       options: Object.values(BILLING_OPTIONS),
       name: 'getGroupBilling',
+      required: true,
+    },
+  ],
+  [
+    {
+      label: 'Payment Type',
+      options: PAYMENT_TYPE_OPTIONS,
+      name: 'getPaymentType',
       required: true,
     },
   ],

@@ -20,6 +20,7 @@ import {
   BILLING_OPTIONS,
   FREQUENCIES,
 } from '../../../../modules/ComponentsLibrary/NewContract/reducer';
+import { PAYMENT_TYPE_OPTIONS } from '../../../../modules/CustomerDetails/components/ContractInfo';
 
 let saves = false;
 let closes = false;
@@ -206,9 +207,28 @@ describe('ComponentsLibrary', () => {
         });
 
         describe('Payment Type Section', () => {
-          it('Contains a payment type section');
-          it('is required');
-          it('has a payment type dropdown');
+          it('Contains a payment type section', () => {
+            Chai.expect(wrapper.text().includes('Payment Type')).to.be.equal(
+              true,
+            );
+          });
+          it('is required', () => {
+            Chai.expect(
+              wrapper.find({ label: 'Payment Type' }).find({ required: true }),
+            ).to.be.lengthOf(1);
+          });
+          describe('dropdown', () => {
+            it('has every payment type', () => {
+              Chai.expect(
+                PAYMENT_TYPE_OPTIONS.filter(option =>
+                  wrapper
+                    .find({ label: 'Payment Type' })
+                    .text()
+                    .includes(option as string),
+                ),
+              ).to.be.lengthOf(0);
+            });
+          });
         });
 
         describe('Payment Status Section', () => {
