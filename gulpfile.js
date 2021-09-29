@@ -28,16 +28,22 @@ let minify = process.argv[5];
  * Serves all modules to localhost:1234 via parcel
  */
 async function start() {
+  info(
+    'Starting the module via Parcel alongside the test suite in watch mode.',
+  );
   try {
     const target = titleCase(process.argv[4].replace(/-/g, ''));
-    sh.exec(`parcel modules/${target}/index.html`);
-    console.log(`parcel modules/${target}/index.html`);
+    sh.exec(
+      `( yarn test-watch --reporter-options consoleReporter=list,quiet=true & parcel modules/${target}/index.html; )`,
+    );
   } catch (err) {
     error(err);
     try {
       const branch = (await getBranch()).replace(/\n/g, '');
       console.log(`awaiting parcel modules/${branch}/index.html`);
-      sh.exec(`parcel modules/${branch}/index.html`);
+      sh.exec(
+        `( yarn test-watch --reporter-options consoleReporter=list,quiet=true & parcel modules/${branch}/index.html; )`,
+      );
     } catch (err) {
       error(err);
       error('Failed to determine target from branch or CLI flags');
