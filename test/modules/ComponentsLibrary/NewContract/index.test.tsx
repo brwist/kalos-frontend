@@ -262,15 +262,32 @@ describe('ComponentsLibrary', () => {
         });
 
         describe('Payment Terms Section', () => {
-          it('Contains a payment terms section');
+          it('Contains a payment terms section', () => {
+            Chai.expect(wrapper.text().includes('Payment Terms')).to.be.equal(
+              true,
+            );
+          });
 
-          it('is a single-line field');
+          it('is a single-line field', () => {
+            Chai.expect(
+              wrapper.find({ label: 'Payment Status' }).find({ type: 'text' }),
+            ).to.be.lengthOf(2); // 2 elements with type text are generated per text field
+          });
         });
 
         describe('Notes Section', () => {
-          it('Contains a notes section');
+          it('Contains a notes section', () => {
+            Chai.expect(wrapper.text().includes('Notes')).to.be.equal(true);
+          });
 
-          it('is a multi-line field');
+          it('is a multi-line field', () => {
+            Chai.expect(
+              wrapper
+                .find({ label: 'Notes' })
+                .find({ type: 'text' })
+                .find({ multiline: true }),
+            ).to.be.lengthOf(7); // 7 elements with type text are generated per each multiline text field
+          });
         });
 
         describe('Property Selector Section', () => {

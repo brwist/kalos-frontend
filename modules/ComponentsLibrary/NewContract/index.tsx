@@ -69,6 +69,21 @@ const NEW_CONTRACT_SCHEMA: Schema<Contract> = [
       required: true,
     },
   ],
+  [
+    {
+      label: 'Payment Terms',
+      type: 'text',
+      name: 'getPaymentTerms',
+    },
+  ],
+  [
+    {
+      label: 'Notes',
+      type: 'text',
+      multiline: true,
+      name: 'getNotes',
+    },
+  ],
 ];
 
 export const NewContract: FC<props> = ({ onSave, onClose }) => {
