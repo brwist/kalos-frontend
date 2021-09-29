@@ -53,6 +53,7 @@ import LodgingByZipCode from './LodgingByZipCode/examples';
 import ManagerTimeoffs from './ManagerTimeoffs/examples';
 import MergeTable from './MergeTable/examples';
 import Modal from './Modal/examples';
+import NewContract from './NewContract/examples';
 import Payroll from './Payroll/examples';
 import PDFInvoice from './PDFInvoice/examples';
 import PDFMaker from './PDFMaker/examples';
@@ -163,6 +164,7 @@ const COMPONENTS = {
   ManagerTimeoffs,
   MergeTable,
   Modal,
+  NewContract,
   Payroll,
   PDFInvoice,
   PDFMaker,
