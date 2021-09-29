@@ -8,7 +8,7 @@ import { Contract } from '@kalos-core/kalos-rpc/Contract';
 import React, { useReducer, useEffect, useCallback, FC } from 'react';
 import { Form, Schema } from '../Form';
 import { SectionBar } from '../SectionBar';
-import { reducer, ACTIONS, FREQUENCIES } from './reducer';
+import { reducer, ACTIONS, FREQUENCIES, BILLING_OPTIONS } from './reducer';
 
 interface props {
   userID: number;
@@ -38,7 +38,15 @@ const NEW_CONTRACT_SCHEMA: Schema<Contract> = [
       label: 'Frequency',
       options: Object.values(FREQUENCIES),
       name: 'getFrequency',
-      required: true
+      required: true,
+    },
+  ],
+  [
+    {
+      label: 'Group Billing',
+      options: Object.values(BILLING_OPTIONS),
+      name: 'getGroupBilling',
+      required: true,
     },
   ],
 ];
