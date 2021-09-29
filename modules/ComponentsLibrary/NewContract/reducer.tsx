@@ -10,6 +10,14 @@ export enum ACTIONS {
   SET_CONTRACT_DATA = 'setContractData',
 }
 
+export enum FREQUENCIES {
+  SEMIANNUAL = 'Semi-Annual',
+  ANNUAL = 'Annual',
+  MONTHLY = 'Monthly',
+  BIMONTHLY = 'Bi-Monthly',
+  QUARTERLY = 'Quarterly',
+}
+
 export type Action =
   | { type: ACTIONS.SET_LOADED; data: boolean }
   | {

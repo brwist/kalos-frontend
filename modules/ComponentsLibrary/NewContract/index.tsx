@@ -8,7 +8,7 @@ import { Contract } from '@kalos-core/kalos-rpc/Contract';
 import React, { useReducer, useEffect, useCallback, FC } from 'react';
 import { Form, Schema } from '../Form';
 import { SectionBar } from '../SectionBar';
-import { reducer, ACTIONS } from './reducer';
+import { reducer, ACTIONS, FREQUENCIES } from './reducer';
 
 interface props {
   userID: number;
@@ -31,6 +31,14 @@ const NEW_CONTRACT_SCHEMA: Schema<Contract> = [
       type: 'date',
       name: 'getDateEnded',
       required: true,
+    },
+  ],
+  [
+    {
+      label: 'Frequency',
+      options: Object.values(FREQUENCIES),
+      name: 'getFrequency',
+      required: true
     },
   ],
 ];
