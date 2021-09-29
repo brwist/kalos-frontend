@@ -11,8 +11,11 @@ export const SpiffLog: FC<Props> = props => (
     <SpiffTool
       type="Spiff"
       {...props}
+      loggedUserId={props.loggedUserId}
+      ownerId={props.loggedUserId}
       needsManagerAction={false}
       needsPayrollAction={false}
+      needsAuditAction={false}
     />
   </PageWrapper>
 );
