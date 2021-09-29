@@ -31,6 +31,20 @@ async function start() {
   info(
     'Starting the module via Parcel alongside the test suite in watch mode.',
   );
+
+  try {
+    const res = sh.test('-f', `./modules/${target}/index.html`);
+    if (res == false) throw new Error(`Failed to determine target`);
+  } catch (err) {
+    error(
+      `Failed to determine target. Attemped at: modules/${target}/index.html.`,
+    );
+    warn(
+      `Are you sure this is a module and not a component? You can use "yarn start --ComponentsLibrary" to view a list of components.`,
+    );
+    return;
+  }
+
   try {
     const target = titleCase(process.argv[4].replace(/-/g, ''));
     sh.exec(
