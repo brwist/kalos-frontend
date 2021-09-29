@@ -17,7 +17,7 @@
     "test-coverage": "nyc ts-mocha --recursive -r ./test/test-setup/setup.ts -r esm -r ignore-styles -r mock-local-storage",
     "test": "ts-mocha --recursive -r ./test/test-setup/setup.ts -r esm -r ignore-styles -r mock-local-storage --reporter mochawesome",
     "test-watch": "ts-mocha --grep RPC --invert --recursive -r ./test/test-setup/setup.ts -r esm -r ignore-styles  -r mock-local-storage -w --reporter mochawesome",
-    "test-watch-parallel": "ts-mocha --parallel --grep RPC --invert --recursive -r ./test/test-setup/setup.ts -r esm -r ignore-styles  -r mock-local-storage -w"
+    "test-watch-parallel": "ts-mocha --parallel --grep RPC --invert --recursive -r ./test/test-setup/setup.ts -r esm -r ignore-styles  -r mock-local-storage -w --reporter mochawesome"
   },
   "author": "Robert Milejczak <robbie@kalosflorida.com>",
   "license": "MIT",
