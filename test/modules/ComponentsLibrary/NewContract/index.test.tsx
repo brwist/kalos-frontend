@@ -16,6 +16,7 @@ import React = require('react');
 import Enzyme = require('enzyme');
 
 import Chai = require('chai');
+import { FREQUENCIES } from '../../../../modules/ComponentsLibrary/NewContract/reducer';
 
 let saves = false;
 let closes = false;
@@ -112,19 +113,60 @@ describe('ComponentsLibrary', () => {
         });
 
         describe('Frequency Field', () => {
-          it('Contains a frequency field');
-          it('is required');
+          it('Contains a frequency field', () => {
+            Chai.expect(wrapper.text().includes('Frequency')).to.be.equal(true);
+          });
+          it('is required', () => {
+            Chai.expect(
+              wrapper.find({ label: 'Frequency' }).find({ required: true }),
+            ).to.be.lengthOf(1);
+          });
 
           describe('dropdown', () => {
-            it('has a monthly setting');
+            it('has a monthly setting', () => {
+              Chai.expect(
+                wrapper
+                  .find({ label: 'Frequency' })
+                  .prop('options')
+                  .includes(FREQUENCIES.MONTHLY),
+              ).to.be.equal(true);
+            });
 
-            it('has a bi-monthly setting');
+            it('has a bi-monthly setting', () => {
+              Chai.expect(
+                wrapper
+                  .find({ label: 'Frequency' })
+                  .prop('options')
+                  .includes(FREQUENCIES.BIMONTHLY),
+              ).to.be.equal(true);
+            });
 
-            it('has a quarterly setting');
+            it('has a quarterly setting', () => {
+              Chai.expect(
+                wrapper
+                  .find({ label: 'Frequency' })
+                  .prop('options')
+                  .includes(FREQUENCIES.QUARTERLY),
+              ).to.be.equal(true);
+            });
 
-            it('has a bi-annual setting');
+            it('has a semi-annual setting', () => {
+              Chai.expect(
+                wrapper
+                  .find({ label: 'Frequency' })
+                  .prop('options')
+                  .includes(FREQUENCIES.SEMIANNUAL),
+              ).to.be.equal(true);
+            });
 
-            it('has a yearly setting');
+            it('has a yearly setting', () => {
+              Chai.expect(
+                wrapper
+                  .find({ label: 'Frequency' })
+                  .prop('options')
+                  .includes(FREQUENCIES.ANNUAL),
+              ).to.be.equal(true);
+            });
           });
         });
 
