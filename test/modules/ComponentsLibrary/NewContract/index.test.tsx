@@ -16,7 +16,10 @@ import React = require('react');
 import Enzyme = require('enzyme');
 
 import Chai = require('chai');
-import { FREQUENCIES } from '../../../../modules/ComponentsLibrary/NewContract/reducer';
+import {
+  BILLING_OPTIONS,
+  FREQUENCIES,
+} from '../../../../modules/ComponentsLibrary/NewContract/reducer';
 
 let saves = false;
 let closes = false;
@@ -170,13 +173,35 @@ describe('ComponentsLibrary', () => {
           });
         });
 
-        describe('Billing Section', () => {
-          it('Contains a billing section');
-          it('is required');
+        describe('Group Billing Section', () => {
+          it('Contains a group billing section', () => {
+            Chai.expect(wrapper.text().includes('Group Billing')).to.be.equal(
+              true,
+            );
+          });
+          it('is required', () => {
+            Chai.expect(
+              wrapper.find({ label: 'Group Billing' }).find({ required: true }),
+            ).to.be.lengthOf(1);
+          });
 
           describe('dropdown', () => {
-            it('has a site setting');
-            it('has a group setting');
+            it('has a site setting', () => {
+              Chai.expect(
+                wrapper
+                  .find({ label: 'Group Billing' })
+                  .prop('options')
+                  .includes(BILLING_OPTIONS.SITE),
+              ).to.be.equal(true);
+            });
+            it('has a group setting', () => {
+              Chai.expect(
+                wrapper
+                  .find({ label: 'Group Billing' })
+                  .prop('options')
+                  .includes(BILLING_OPTIONS.GROUP),
+              ).to.be.equal(true);
+            });
           });
         });
 

@@ -18,6 +18,11 @@ export enum FREQUENCIES {
   QUARTERLY = 'Quarterly',
 }
 
+export enum BILLING_OPTIONS {
+  SITE = 'Site',
+  GROUP = 'Group',
+}
+
 export type Action =
   | { type: ACTIONS.SET_LOADED; data: boolean }
   | {
