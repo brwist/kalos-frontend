@@ -3,11 +3,13 @@ import { PageWrapper } from '../../PageWrapper/main';
 import { Vehicle } from '@kalos-core/kalos-rpc/compiled-protos/user_pb';
 import { UserClientService, makeSafeFormObject } from '../../../helpers';
 import { Form, Schema } from '../Form';
-import { reducer, ACTIONS } from './reducer';
+import { reducer, ACTIONS, assignmentData } from './reducer';
 import { InfoTable, Columns } from '../InfoTable';
 import { SectionBar } from '../SectionBar';
 import { useCallback, useReducer } from 'react';
 import { Modal } from '../Modal';
+import IconButton from '@material-ui/core/IconButton';
+import PersonAdd from '@material-ui/icons/PersonAdd';
 import { ROWS_PER_PAGE } from '../../../constants';
 // add any prop types here
 interface props {
@@ -27,6 +29,12 @@ const SCHEMA_VEHICLE: Schema<Vehicle> = [
   ],
 ];
 
+const SCHEMA_ASSIGNMENT: Schema<assignmentData> = [
+  [
+    { name: 'userId', label: 'Assigned Employee' },
+    { name: 'departmentId', label: 'Assigned Department' },
+  ],
+];
 export const VehicleView: React.FC<props> = function VehicleView({ userID }) {
   const [state, dispatch] = useReducer(reducer, {
     loading: true,
@@ -36,12 +44,14 @@ export const VehicleView: React.FC<props> = function VehicleView({ userID }) {
     creatingVehicle: false,
     changingPage: false,
     vehicles: [],
+    assigningVehicle: undefined,
     vehicleCount: 0,
     activeVehicle: undefined,
   });
   const fetchVehicles = useCallback(async () => {
     const req = new Vehicle();
     req.setPageNumber(state.page);
+    req.setIsActive(1);
     const results = await UserClientService.BatchGetVehicles(req);
     dispatch({ type: ACTIONS.SET_VEHICLES, data: results.getResultsList() });
     dispatch({
@@ -102,7 +112,21 @@ export const VehicleView: React.FC<props> = function VehicleView({ userID }) {
       { value: v.getModel(), onClick: setAsActive },
       { value: v.getYear(), onClick: setAsActive },
       { value: v.getEngine(), onClick: setAsActive },
-      { value: v.getIdentificationNumber(), onClick: setAsActive },
+      {
+        value: v.getIdentificationNumber(),
+        onClick: setAsActive,
+        actions: [
+          <IconButton
+            key="assignStuff"
+            size="small"
+            onClick={() =>
+              dispatch({ type: ACTIONS.SET_ASSIGNING_VEHICLE, data: v })
+            }
+          >
+            <PersonAdd />
+          </IconButton>,
+        ],
+      },
     ];
   };
 
@@ -154,6 +178,27 @@ export const VehicleView: React.FC<props> = function VehicleView({ userID }) {
           submitLabel="Create"
           cancelLabel="Close"
           title="Create Vehicle"
+        />
+      </Modal>
+      <Modal
+        onClose={() =>
+          dispatch({ type: ACTIONS.SET_ASSIGNING_VEHICLE, data: undefined })
+        }
+        open={state.assigningVehicle != undefined}
+      >
+        <Form<assignmentData>
+          schema={SCHEMA_ASSIGNMENT}
+          onClose={() =>
+            dispatch({ type: ACTIONS.SET_ASSIGNING_VEHICLE, data: undefined })
+          }
+          data={{
+            userId: state.assigningVehicle!.getOwnerId(),
+            departmentId: state.assigningVehicle!.getDepartmentId(),
+          }}
+          onSave={e => console.log(e)}
+          submitLabel="Assign"
+          cancelLabel="Close"
+          title="Assign Employee/Department to Vehicle"
         />
       </Modal>
       <InfoTable

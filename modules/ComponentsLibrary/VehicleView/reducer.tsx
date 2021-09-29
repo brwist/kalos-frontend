@@ -10,6 +10,7 @@ export type State = {
   activeVehicle: Vehicle | undefined;
   creatingVehicle: boolean;
   vehicleCount: number;
+  assigningVehicle: Vehicle | undefined;
 };
 
 export enum ACTIONS {
@@ -22,14 +23,19 @@ export enum ACTIONS {
   SET_VEHICLES = 'setVehicles',
   SET_VEHICLES_COUNT = 'setVehiclesCount',
   SET_CREATING_VEHICLE = 'setCreatingVehicle',
+  SET_ASSIGNING_VEHICLE = 'setAssigningVehicle',
 }
-
+export type assignmentData = {
+  userId: number;
+  departmentId: number;
+};
 export type Action =
   | { type: ACTIONS.SET_LOADING; data: boolean }
   | { type: ACTIONS.SET_LOADED; data: boolean }
   | { type: ACTIONS.SET_CHANGING_PAGE; data: boolean }
   | { type: ACTIONS.SET_CREATING_VEHICLE; data: boolean }
   | { type: ACTIONS.SET_ORDER_BY; data: string }
+  | { type: ACTIONS.SET_ASSIGNING_VEHICLE; data: Vehicle | undefined }
   | { type: ACTIONS.SET_VEHICLES_COUNT; data: number }
   | { type: ACTIONS.SET_ACTIVE_VEHICLE; data: Vehicle | undefined }
   | { type: ACTIONS.SET_VEHICLES; data: Vehicle[] }
@@ -90,6 +96,13 @@ export const reducer = (state: State, action: Action) => {
       return {
         ...state,
         vehicleCount: action.data,
+      };
+    }
+    case ACTIONS.SET_ASSIGNING_VEHICLE: {
+      console.log('setting assignment ');
+      return {
+        ...state,
+        assigning: action.data,
       };
     }
     default:
