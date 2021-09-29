@@ -82,6 +82,24 @@ describe('ComponentsLibrary', () => {
           });
         });
 
+        describe('save button', () => {
+          it('contains a save button', () => {
+            Chai.expect(
+              wrapper
+                .find('.MuiButton-label')
+                .filterWhere(button => button.text() === 'Save'),
+            ).to.be.lengthOf(1);
+          });
+
+          it('fires an onSave off when clicked', () => {
+            wrapper
+              .find('.MuiButton-label')
+              .filterWhere(button => button.text() === 'Save')
+              .simulate('click');
+            Chai.expect(saves).to.be.equal(true);
+          });
+        });
+
         describe('Start Date Field', () => {
           it('Contains a start date field', () => {
             Chai.expect(wrapper.text().includes('Start Date')).to.be.equal(

@@ -48,7 +48,7 @@ async function start() {
   try {
     const target = titleCase(process.argv[4].replace(/-/g, ''));
     sh.exec(
-      `( yarn test -w -grep ${target} --reporter-options consoleReporter=min,quiet=true & parcel modules/${target}/index.html; )`,
+      `( yarn test --colors -w -grep ${target} --reporter-options consoleReporter=min,quiet=true & parcel modules/${target}/index.html; )`,
     );
   } catch (err) {
     error(err);
@@ -56,7 +56,7 @@ async function start() {
       const branch = (await getBranch()).replace(/\n/g, '');
       console.log(`awaiting parcel modules/${branch}/index.html`);
       sh.exec(
-        `( yarn test -w -grep ${target} --reporter-options consoleReporter=min,quiet=true & parcel modules/${branch}/index.html; )`,
+        `( yarn test --colors -w -grep ${target} --reporter-options consoleReporter=min,quiet=true & parcel modules/${branch}/index.html; )`,
       );
     } catch (err) {
       error(err);

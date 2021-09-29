@@ -6,6 +6,7 @@
 
 import { Contract } from '@kalos-core/kalos-rpc/Contract';
 import React, { useReducer, useEffect, useCallback, FC } from 'react';
+import { makeSafeFormObject } from '../../../helpers';
 import {
   PAYMENT_STATUS_OPTIONS,
   PAYMENT_TYPE_OPTIONS,
@@ -98,10 +99,6 @@ export const NewContract: FC<props> = ({ onSave, onClose }) => {
 
   const cleanup = useCallback(() => {}, []);
 
-  const save = useCallback(() => {
-    onSave(state.contractData);
-  }, [onSave, state.contractData]);
-
   useEffect(() => {
     load();
 
@@ -113,13 +110,40 @@ export const NewContract: FC<props> = ({ onSave, onClose }) => {
   return (
     <SectionBar
       title="New Contract"
-      actions={[{ label: 'Cancel', onClick: () => onClose() }]}
+      actions={[
+        { label: 'Cancel', onClick: () => onClose() },
+        { label: 'Save', onClick: () => onSave(state.contractData) },
+      ]}
     >
-      <Form
+      <Form<Contract>
         schema={NEW_CONTRACT_SCHEMA}
         data={state.contractData}
-        onSave={() => save()}
+        onSave={contractData => onSave(contractData)}
         onClose={() => onClose()}
+        onChange={contractData => {
+          let req = makeSafeFormObject(contractData, new Contract());
+          switch (req.getFrequency() as any) {
+            case FREQUENCIES.MONTHLY:
+              req.setFrequency(30);
+              break;
+            case FREQUENCIES.BIMONTHLY:
+              req.setFrequency(60);
+              break;
+            case FREQUENCIES.QUARTERLY:
+              req.setFrequency(90);
+              break;
+            case FREQUENCIES.SEMIANNUAL:
+              req.setFrequency(182);
+              break;
+            case FREQUENCIES.ANNUAL:
+              req.setFrequency(365);
+              break;
+          }
+          dispatch({
+            type: ACTIONS.SET_CONTRACT_DATA,
+            data: req,
+          });
+        }}
       />
     </SectionBar>
   );

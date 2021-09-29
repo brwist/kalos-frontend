@@ -7,7 +7,7 @@ export default () => (
     <ExampleTitle>Default</ExampleTitle>
     <NewContract
       userID={8428}
-      onSave={() => alert('Would save')}
+      onSave={contractData => console.log('Saved: ', contractData)}
       onClose={() => alert('Would close')}
     />
   </>
