@@ -146,6 +146,7 @@ export const SpiffTool: FC<Props> = ({
   const [pendingPayroll, setPendingPayroll] = useState<Task>();
   const [pendingPayrollReject, setPendingPayrollReject] = useState<Task>();
   const [pendingAudit, setPendingAudit] = useState<Task>();
+  const [pendingAdd, setPendingAdd] = useState<boolean>(false);
 
   const [serviceCallEditing, setServiceCallEditing] = useState<TaskEventData>();
   const [unlinkedSpiffJobNumber, setUnlinkedSpiffJobNumber] = useState<string>(
@@ -156,6 +157,9 @@ export const SpiffTool: FC<Props> = ({
     label: escapeText(type.getType()),
     value: type.getId(),
   }));
+  const handleToggleAdd = useCallback(() => setPendingAdd(!pendingAdd), [
+    pendingAdd,
+  ]);
   const SPIFF_EXT: { [key: number]: string } = spiffTypes.reduce(
     (aggr, id) => ({ ...aggr, [id.getId()]: id.getExt() }),
     {},
@@ -431,6 +435,59 @@ export const SpiffTool: FC<Props> = ({
     },
     [loggedUserId, editing, setSaving, setEditing, type, load],
   );
+  const handleSaveNewSpiff = useCallback(
+    async (data: Task) => {
+      setSaving(true);
+      const now = timestamp();
+      const req = makeSafeFormObject(data, new Task());
+      req.setTimeCreated(now);
+      req.setTimeDue(now);
+      req.setPriorityId(2);
+      req.setExternalCode('user');
+      req.setCreatorUserId(loggedUserId);
+      req.setBillableType('Spiff');
+      req.setStatusId(1);
+      //req.addFieldMask('AdminActionId');
+      let tempEvent;
+      try {
+        tempEvent = await EventClientService.LoadEventByServiceCallID(
+          parseInt(req.getSpiffJobNumber()),
+        );
+      } catch (err) {
+        console.error(
+          `An error occurred while loading event by server: ${err}`,
+        );
+        return;
+      }
+      if (!tempEvent) {
+        console.error(
+          `No tempEvent variable was set to set spiff address with, aborting save.`,
+        );
+        return;
+      }
+      req.setSpiffAddress(
+        tempEvent.getProperty()?.getAddress() === undefined
+          ? tempEvent.getCustomer()?.getAddress() === undefined
+            ? ''
+            : tempEvent.getCustomer()!.getAddress()
+          : tempEvent.getProperty()!.getAddress(),
+      );
+
+      req.setSpiffJobNumber(tempEvent.getLogJobNumber());
+      req.setFieldMaskList([]);
+      const res = await TaskClientService.Create(req);
+      const id = res.getId();
+      const updateReq = new Task();
+      updateReq.setId(id);
+      updateReq.setFieldMaskList(['AdminActionId']);
+      updateReq.setAdminActionId(0);
+      await TaskClientService.Update(updateReq);
+      setSaving(false);
+      setPendingAdd(false);
+      await load();
+    },
+    [loggedUserId, load],
+  );
   const handleSaveExtended = useCallback(async () => {
     if (extendedEditing) {
       setExtendedEditing(undefined);
@@ -448,7 +505,7 @@ export const SpiffTool: FC<Props> = ({
                 ? MONTHS_OPTIONS[0]
                 : WEEK_OPTIONS[0]
               ).value as string,
-              technician: ownerId ? ownerId : loggedUserId,
+              technician: form.technician,
             }
           : {}),
       });
@@ -456,15 +513,7 @@ export const SpiffTool: FC<Props> = ({
         setSearchFormKey(searchFormKey + 1);
       }
     },
-    [
-      searchForm,
-      setSearchFormKey,
-      loggedUserId,
-      ownerId,
-      searchFormKey,
-      MONTHS_OPTIONS,
-      WEEK_OPTIONS,
-    ],
+    [searchForm, setSearchFormKey, searchFormKey, MONTHS_OPTIONS, WEEK_OPTIONS],
   );
   const handleMakeSearch = useCallback(() => setLoaded(false), [setLoaded]);
   const handleResetSearch = useCallback(() => {
@@ -553,7 +602,7 @@ export const SpiffTool: FC<Props> = ({
     () => setUnlinkedSpiffJobNumber(''),
     [setUnlinkedSpiffJobNumber],
   );
-  const isAdmin = loggedInUser && !!loggedInUser.getIsAdmin(); // FIXME isSpiffAdmin correct?
+  const isAdmin = userRole != undefined;
   useEffect(() => {
     if (!loaded) {
       setLoaded(true);
@@ -583,7 +632,7 @@ export const SpiffTool: FC<Props> = ({
               name: 'getExternalId',
               label: 'Technician',
               type: 'technician',
-              disabled: role != 'Manager' ? true : false,
+              disabled: userRole != 'Manager' ? true : false,
             },
             {
               name: 'getTimeDue',
@@ -598,7 +647,12 @@ export const SpiffTool: FC<Props> = ({
               type: 'number',
               required: true,
             },
-            { name: 'getSpiffJobNumber', label: 'Job Number', required: true },
+            {
+              name: 'getSpiffJobNumber',
+              label: 'Job #',
+              type: 'eventId',
+              required: true,
+            },
             {
               name: 'getDatePerformed',
               label: 'Date Performed',
@@ -696,6 +750,7 @@ export const SpiffTool: FC<Props> = ({
   };
   const makeNewTask = useCallback(() => {
     const newTask = new Task();
+
     newTask.setTimeDue(timestamp());
     if (type === 'Spiff') {
       newTask.setDatePerformed(timestamp());
@@ -705,8 +760,13 @@ export const SpiffTool: FC<Props> = ({
     } else {
       newTask.setToolpurchaseDate(timestamp());
     }
+    if (!isAdmin && ownerId) {
+      newTask.setExternalId(ownerId);
+    } else {
+      newTask.setExternalId(loggedUserId);
+    }
     return newTask;
-  }, [type, SPIFF_TYPES_OPTIONS]);
+  }, [type, SPIFF_TYPES_OPTIONS, isAdmin, ownerId, loggedUserId]);
 
   const data: Data = loading
     ? makeFakeRows(type === 'Spiff' ? 9 : 7, 3)
@@ -725,7 +785,7 @@ export const SpiffTool: FC<Props> = ({
             ? [
                 needsManagerAction ? (
                   <IconButton
-                    key={2}
+                    key={1}
                     size="small"
                     onClick={handleClickAddStatus(entry)}
                     disabled={
@@ -739,7 +799,7 @@ export const SpiffTool: FC<Props> = ({
                   <React.Fragment />
                 ),
                 <IconButton
-                  key={0}
+                  key={2}
                   size="small"
                   onClick={handleSetExtendedEditing(entry)}
                 >
@@ -758,7 +818,7 @@ export const SpiffTool: FC<Props> = ({
                 ),
                 needsPayrollAction ? (
                   <IconButton
-                    key={3}
+                    key={4}
                     size="small"
                     onClick={handlePendingPayrollToggleReject(entry)}
                   >
@@ -769,7 +829,7 @@ export const SpiffTool: FC<Props> = ({
                 ),
                 needsAuditAction ? (
                   <IconButton
-                    key={3}
+                    key={5}
                     size="small"
                     onClick={handlePendingAuditToggle(entry)}
                   >
@@ -780,7 +840,8 @@ export const SpiffTool: FC<Props> = ({
                 ),
                 role != 'Payroll' && role != 'Auditor' ? (
                   <IconButton
-                    key={1}
+                    key={6}
+                    disabled={entry.getActionsList()[0] ? true : false}
                     size="small"
                     onClick={handleSetDeleting(entry)}
                   >
@@ -841,7 +902,10 @@ export const SpiffTool: FC<Props> = ({
             value:
               type === 'Spiff' ? (
                 entry.getEvent() && entry.getEvent()!.getId() ? (
-                  <Link onClick={handleOpenServiceCallOld(entry)}>
+                  <Link
+                    onClick={handleOpenServiceCallOld(entry)}
+                    key={entry.getSpiffJobNumber()}
+                  >
                     {entry.getSpiffJobNumber()}
                   </Link>
                 ) : (
@@ -953,6 +1017,7 @@ export const SpiffTool: FC<Props> = ({
         ? [
             {
               name: 'technician' as const,
+
               label: 'Technician',
               options: [
                 ...technicians.map(tech => ({
@@ -976,6 +1041,7 @@ export const SpiffTool: FC<Props> = ({
         actions: [
           { label: 'Reset', variant: 'outlined', onClick: handleResetSearch },
           { label: 'Search', onClick: handleMakeSearch },
+          { label: 'Spiff Apply', onClick: handleToggleAdd },
         ],
       },
     ],
@@ -1003,43 +1069,6 @@ export const SpiffTool: FC<Props> = ({
       )}
       <SectionBar
         title={type === 'Spiff' ? 'Spiff Report' : 'Tool Purchases'}
-        actions={
-          role === 'Manager' || role !== 'Payroll'
-            ? [
-                //{
-                //label: 'Add Spiff',
-                //onClick: handleSetEditing(makeNewTask()),
-                //},
-                // {
-                //   label: 'Process Payroll',
-                //   onClick: () => handleSetPayrollOpen(true),
-                // },
-                ...(onClose
-                  ? [
-                      {
-                        label: 'Close',
-                        onClick: onClose,
-                      },
-                    ]
-                  : []),
-              ]
-            : [
-                /*
-                {
-                  label: 'Add',
-                  onClick: handleSetEditing(makeNewTask()),
-                },
-                */
-                ...(onClose
-                  ? [
-                      {
-                        label: 'Close',
-                        onClick: onClose,
-                      },
-                    ]
-                  : []),
-              ]
-        }
         fixedActions
         pagination={{
           count,
@@ -1072,6 +1101,7 @@ export const SpiffTool: FC<Props> = ({
           <SpiffToolLogEdit
             onClose={handleSetExtendedEditing()}
             data={extendedEditing}
+            role={userRole != undefined ? userRole : ''}
             loading={loading}
             userId={ownerId}
             loggedUserId={loggedUserId}
@@ -1146,6 +1176,18 @@ export const SpiffTool: FC<Props> = ({
         >
           Are you sure you want complete Auditing for this Spiff/Tool?
         </Confirm>
+      )}
+      {pendingAdd && (
+        <Modal open onClose={handleToggleAdd}>
+          <Form<Task>
+            title="Add Spiff Request"
+            schema={SCHEMA}
+            onClose={handleToggleAdd}
+            data={makeNewTask()}
+            onSave={handleSaveNewSpiff}
+            disabled={saving}
+          />
+        </Modal>
       )}
     </div>
   );

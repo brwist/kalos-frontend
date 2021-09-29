@@ -104,6 +104,7 @@ interface Props {
   type: 'Spiff' | 'Tool';
   loggedUserId: number;
   userId?: number;
+  role: string;
   onClose: () => void;
   onSave: () => void;
   onStatusChange: () => void;
@@ -166,6 +167,7 @@ export const SpiffToolLogEdit: FC<Props> = ({
   onClose,
   onSave,
   onStatusChange,
+  role,
   loading: loadingInitial,
   cancelLabel = 'Cancel',
   statusEditing: statusEditingInitial,
@@ -500,19 +502,23 @@ export const SpiffToolLogEdit: FC<Props> = ({
         return [
           {
             value: formatDate(entry.getDecisionDate()),
-            onClick: handleSetStatusEditing(entry),
+            onClick:
+              role == 'Manager' ? handleSetStatusEditing(entry) : undefined,
           },
           {
             value: entry.getReviewedBy(),
-            onClick: handleSetStatusEditing(entry),
+            onClick:
+              role == 'Manager' ? handleSetStatusEditing(entry) : undefined,
           },
           {
             value: <SpiffStatus status={entry.getStatus()} />,
-            onClick: handleSetStatusEditing(entry),
+            onClick:
+              role == 'Manager' ? handleSetStatusEditing(entry) : undefined,
           },
           {
             value: entry.getReason(),
-            onClick: handleSetStatusEditing(entry),
+            onClick:
+              role == 'Manager' ? handleSetStatusEditing(entry) : undefined,
           },
           {
             value: '',
@@ -522,7 +528,7 @@ export const SpiffToolLogEdit: FC<Props> = ({
                 key={0}
                 size="small"
                 onClick={handleSetStatusEditing(entry)}
-                disabled={saving}
+                disabled={saving || role != 'Manager'}
               >
                 <EditIcon />
               </IconButton>,
@@ -530,7 +536,7 @@ export const SpiffToolLogEdit: FC<Props> = ({
                 key={1}
                 size="small"
                 onClick={handleSetStatusDeleting(entry)}
-                disabled={saving}
+                disabled={saving || role != 'Manager'}
               >
                 <DeleteIcon />
               </IconButton>,
@@ -555,7 +561,7 @@ export const SpiffToolLogEdit: FC<Props> = ({
           {
             label: 'Approve/Reject/Revoke',
             onClick: handleSetStatusEditing(getStatusFormInit()),
-            disabled: saving,
+            disabled: saving || role != 'Manager',
           },
         ]}
         fixedActions
