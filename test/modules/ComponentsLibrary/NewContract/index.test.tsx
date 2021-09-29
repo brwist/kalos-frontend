@@ -20,7 +20,10 @@ import {
   BILLING_OPTIONS,
   FREQUENCIES,
 } from '../../../../modules/ComponentsLibrary/NewContract/reducer';
-import { PAYMENT_TYPE_OPTIONS } from '../../../../modules/CustomerDetails/components/ContractInfo';
+import {
+  PAYMENT_TYPE_OPTIONS,
+  PAYMENT_STATUS_OPTIONS,
+} from '../../../../modules/CustomerDetails/components/ContractInfo';
 
 let saves = false;
 let closes = false;
@@ -232,14 +235,29 @@ describe('ComponentsLibrary', () => {
         });
 
         describe('Payment Status Section', () => {
-          it('Contains a payment status section');
-          it('is required');
+          it('Contains a payment status section', () => {
+            Chai.expect(wrapper.text().includes('Payment Status')).to.be.equal(
+              true,
+            );
+          });
+          it('is required', () => {
+            Chai.expect(
+              wrapper
+                .find({ label: 'Payment Status' })
+                .find({ required: true }),
+            ).to.be.lengthOf(1);
+          });
           describe('dropdown', () => {
-            // Pending billed cancelled paid
-            it('has a pending setting');
-            it('has a billed setting');
-            it('has a cancelled setting');
-            it('has a paid setting');
+            it('has every payment status', () => {
+              Chai.expect(
+                PAYMENT_STATUS_OPTIONS.filter(option =>
+                  wrapper
+                    .find({ label: 'Payment Type' })
+                    .text()
+                    .includes(option as string),
+                ),
+              ).to.be.lengthOf(0);
+            });
           });
         });
 

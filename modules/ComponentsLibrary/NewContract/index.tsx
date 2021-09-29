@@ -6,7 +6,10 @@
 
 import { Contract } from '@kalos-core/kalos-rpc/Contract';
 import React, { useReducer, useEffect, useCallback, FC } from 'react';
-import { PAYMENT_TYPE_OPTIONS } from '../../CustomerDetails/components/ContractInfo';
+import {
+  PAYMENT_STATUS_OPTIONS,
+  PAYMENT_TYPE_OPTIONS,
+} from '../../CustomerDetails/components/ContractInfo';
 import { Form, Schema } from '../Form';
 import { SectionBar } from '../SectionBar';
 import { reducer, ACTIONS, FREQUENCIES, BILLING_OPTIONS } from './reducer';
@@ -55,6 +58,14 @@ const NEW_CONTRACT_SCHEMA: Schema<Contract> = [
       label: 'Payment Type',
       options: PAYMENT_TYPE_OPTIONS,
       name: 'getPaymentType',
+      required: true,
+    },
+  ],
+  [
+    {
+      label: 'Payment Status',
+      options: PAYMENT_STATUS_OPTIONS,
+      name: 'getPaymentStatus',
       required: true,
     },
   ],

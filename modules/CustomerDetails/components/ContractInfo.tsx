@@ -47,7 +47,7 @@ export const PAYMENT_TYPE_OPTIONS: Options = [
   'Charity',
 ];
 
-const PAYMENT_STATUS_OPTIONS: Options = [
+export const PAYMENT_STATUS_OPTIONS: Options = [
   'Pending',
   'Billed',
   'Canceled',
