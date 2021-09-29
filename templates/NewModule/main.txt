@@ -1,6 +1,6 @@
 /* 
 
-  Design Specification: 
+  Design Specification: TODO add spec
 
 */
 
@@ -13,7 +13,7 @@ interface props {
   userID: number; 
 }
 
-export const TITLE_HERE: FC<props> = function TITLE_HERE({ userID }) {
+export const TITLE_HERE: FC<props> = ({ userID }) => {
   const [state, dispatch] = useReducer(reducer, { 
     isLoaded: false,
   });
