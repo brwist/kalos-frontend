@@ -191,10 +191,14 @@ export const VehicleView: React.FC<props> = function VehicleView({ userID }) {
           onClose={() =>
             dispatch({ type: ACTIONS.SET_ASSIGNING_VEHICLE, data: undefined })
           }
-          data={{
-            userId: state.assigningVehicle!.getOwnerId(),
-            departmentId: state.assigningVehicle!.getDepartmentId(),
-          }}
+          data={
+            state.assigningVehicle
+              ? {
+                  userId: state.assigningVehicle!.getOwnerId(),
+                  departmentId: state.assigningVehicle!.getDepartmentId(),
+                }
+              : { userId: userID, departmentId: 15 }
+          }
           onSave={e => console.log(e)}
           submitLabel="Assign"
           cancelLabel="Close"
