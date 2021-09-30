@@ -5,6 +5,6 @@ import { ExampleTitle } from '../helpers';
 export default () => (
   <>
     <ExampleTitle>Default</ExampleTitle>
-    <PropertyTable />
+    <PropertyTable contractId={6} />
   </>
 );
