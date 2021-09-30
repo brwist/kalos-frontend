@@ -4,85 +4,93 @@
 
 */
 
+import { Devlog } from '@kalos-core/kalos-rpc/Devlog';
+import { Property } from '@kalos-core/kalos-rpc/Property';
+import format from 'date-fns/format';
 import React, { useReducer, useEffect, useCallback, FC } from 'react';
+import { DevlogClientService, PropertyClientService } from '../../../helpers';
+import { Form, Schema } from '../Form';
 import { reducer, ACTIONS } from './reducer';
+import { Loader } from '../../Loader/main';
 
 // add any prop types here
 interface props {
-  contractId: number;
+  userId: number;
+  onSave: (propertiesSaved: Property[]) => any;
+  onClose: (currentProperties?: Property[]) => any;
 }
 
-export const PropertyTable: FC<props> = ({ contractId }) => {
+export const PropertyTable: FC<props> = ({ userId, onSave, onClose }) => {
   const [state, dispatch] = useReducer(reducer, {
     isLoaded: false,
+    propertiesSelected: [],
+    propertiesLoaded: [],
   });
 
-  const load = useCallback(() => {
+  const SCHEMA: Schema<Property[]> = [
+    [
+      {
+        label: 'Properties',
+        type: 'multiselect',
+        options: state.propertiesLoaded.map(property => property.getAddress()),
+      },
+    ],
+  ];
+
+  const load = useCallback(async () => {
+    try {
+      let req = new Property();
+      req.setUserId(userId);
+      console.log('Batch getting for properties');
+      const res = await PropertyClientService.BatchGet(req);
+      console.log('Got res for properties: ', res.getResultsList());
+      dispatch({
+        type: ACTIONS.SET_PROPERTIES_LOADED,
+        data: res.getResultsList(),
+      });
+    } catch (err) {
+      console.error(
+        `An error occurred while getting properties from the property client service: ${err}`,
+      );
+      try {
+        let devlog = new Devlog();
+        devlog.setTimestamp(format(new Date(), 'yyyy-MM-dd hh:mm:ss'));
+        devlog.setUserId(userId);
+        devlog.setErrorSeverity(0);
+        const errRes = await DevlogClientService.Create(devlog);
+        console.log(`Successfully created dev log with id: ${errRes.getId()}`);
+      } catch (err) {
+        console.error(`Failed to create error log: ${err}`);
+      }
+    }
     dispatch({ type: ACTIONS.SET_LOADED, data: true });
-  }, []);
+  }, [userId]);
 
   const cleanup = useCallback(() => {}, []);
 
   useEffect(() => {
-    load();
+    if (!state.isLoaded) load();
 
     return () => {
       cleanup();
     };
-  }, [load, cleanup]);
+  }, [load, cleanup, state.isLoaded]);
 
   return (
     <>
-      <h1>PropertyTable works!</h1>
-      <h2>Checklist</h2>
-      <ul>
-        <li>
-          Please add more tests for your component as you write your
-          functionality (preferably to a spec or design document of some kind)
-        </li>
-        <li>
-          Please ensure your component can properly display errors (for a good
-          example, look at errors in <code>InfoTable</code>)
-        </li>
-        <li>
-          Please link your design doc / spec at the top of this file inside the
-          comments (and in the test file as well in the same place)
-        </li>
-      </ul>
-      <h2>About this boilerplate</h2>
-      <ul>
-        <li>
-          Frontend unit tests were created for this module automatically in{' '}
-          <code>/test/modules/ComponentsLibrary/PropertyTable</code>
-        </li>
-        <li>
-          You can see the templates for <code>yarn make</code> inside{' '}
-          <code>/templates</code>
-        </li>
-      </ul>
-      <h2>
-        Some resources to get you started with unit testing in Mocha with
-        Enzyme:{' '}
-      </h2>
-      <ul>
-        <li>
-          <a href="https://www.robinwieruch.de/react-testing-mocha-chai-enzyme-sinon">
-            This article
-          </a>{' '}
-          is extremely long, but it <strong>MOSTLY</strong> shows you how to do
-          what we aim to do
-        </li>
-        <li>
-          There is a readme in <code>/test</code> that goes into how to get
-          started from a technical standpoint in our current setup
-        </li>
-        <li>
-          <code>/modules/ComponentsLibrary/Test</code> is the component that was
-          unit-tested on call during our meeting, and{' '}
-          <code>/test/modules/ComponentsLibrary/Test</code> is where its
-          corresponding tests are located
-        </li>
-      </ul>
+      {!state.isLoaded && <Loader />}
+      <Form<Property[]>
+        data={state.propertiesSelected}
+        schema={SCHEMA}
+        onSave={propertiesSaved => onSave(propertiesSaved)}
+        onClose={() => onClose(state.propertiesSelected)}
+        onChange={currentProperties =>
+          dispatch({
+            type: ACTIONS.SET_PROPERTIES_SELECTED,
+            data: currentProperties,
+          })
+        }
+      />
     </>
   );
 };
