@@ -1,13 +1,19 @@
 import React from 'react';
 import { PageWrapper } from '../../PageWrapper/main';
 import { Vehicle } from '@kalos-core/kalos-rpc/compiled-protos/user_pb';
-import { UserClientService, makeSafeFormObject } from '../../../helpers';
+import {
+  UserClientService,
+  makeSafeFormObject,
+  TimesheetLineClientService,
+  TimesheetDepartmentClientService,
+} from '../../../helpers';
 import { Form, Schema } from '../Form';
 import { reducer, ACTIONS, assignmentData } from './reducer';
 import { InfoTable, Columns } from '../InfoTable';
 import { SectionBar } from '../SectionBar';
 import { useCallback, useReducer } from 'react';
 import { Modal } from '../Modal';
+import { TimesheetDepartment } from '@kalos-core/kalos-rpc/TimesheetDepartment';
 import IconButton from '@material-ui/core/IconButton';
 import PersonAdd from '@material-ui/icons/PersonAdd';
 import { ROWS_PER_PAGE } from '../../../constants';
@@ -47,18 +53,29 @@ export const VehicleView: React.FC<props> = function VehicleView({ userID }) {
     assigningVehicle: undefined,
     vehicleCount: 0,
     activeVehicle: undefined,
+    departments: [],
+    users: [],
   });
   const fetchVehicles = useCallback(async () => {
     const req = new Vehicle();
     req.setPageNumber(state.page);
     req.setIsActive(1);
     const results = await UserClientService.BatchGetVehicles(req);
+    const users = await UserClientService.loadTechnicians();
+    const departmentReq = new TimesheetDepartment();
+    departmentReq.setIsActive(1);
+    const departments = (
+      await TimesheetDepartmentClientService.BatchGet(departmentReq)
+    ).getResultsList();
+    dispatch({ type: ACTIONS.SET_USERS, data: users });
+    dispatch({ type: ACTIONS.SET_DEPARTMENTS, data: departments });
     dispatch({ type: ACTIONS.SET_VEHICLES, data: results.getResultsList() });
     dispatch({
       type: ACTIONS.SET_VEHICLES_COUNT,
       data: results.getTotalCount(),
     });
   }, [state.page]);
+
   const openCreateVehicle = () => {
     dispatch({ type: ACTIONS.SET_CREATING_VEHICLE, data: true });
   };
@@ -88,7 +105,23 @@ export const VehicleView: React.FC<props> = function VehicleView({ userID }) {
   const closeForm = function closeForm() {
     dispatch({ type: ACTIONS.SET_ACTIVE_VEHICLE, data: new Vehicle() });
   };
+  const assignUserAndDepartment = async (data: assignmentData) => {
+    const req = new Vehicle();
+    req.setOwnerId(data.userId);
+    req.setDepartmentId(data.departmentId);
+    req.setId(data.vehicleId);
+    req.setFieldMaskList(['OwnerId', 'DepartmentId']);
+    console.log('updating assigned', req);
 
+    try {
+      await UserClientService.UpdateVehicle(req);
+    } catch (err) {
+      console.log('There was an error with updating the vehicle owner', err);
+    }
+    dispatch({ type: ACTIONS.SET_ASSIGNING_VEHICLE, data: undefined });
+
+    await fetchVehicles();
+  };
   const updateVehicle = async function updateVehicle(data: Vehicle) {
     try {
       await UserClientService.UpdateVehicle(
@@ -107,11 +140,23 @@ export const VehicleView: React.FC<props> = function VehicleView({ userID }) {
   }, []);
   const vehicleToColumn = function vehicleToColumn(v: Vehicle) {
     const setAsActive = makeSetActiveVehicle(v);
+    const department = state.departments.find(
+      department => v.getDepartmentId() === department.getId(),
+    );
+    const departmentString =
+      department === undefined ? 'No Department' : department.getDescription();
+    const user = state.users.find(user => v.getOwnerId() === user.getId());
+    const userString = user
+      ? `${user.getFirstname()} ${user.getLastname()} `
+      : 'No Employee';
+
     return [
       { value: v.getMake(), onClick: setAsActive },
       { value: v.getModel(), onClick: setAsActive },
       { value: v.getYear(), onClick: setAsActive },
       { value: v.getEngine(), onClick: setAsActive },
+      { value: departmentString, onClick: setAsActive },
+      { value: userString, onClick: setAsActive },
       {
         value: v.getIdentificationNumber(),
         onClick: setAsActive,
@@ -135,8 +180,10 @@ export const VehicleView: React.FC<props> = function VehicleView({ userID }) {
     { name: 'Model' },
     { name: 'Year' },
     { name: 'Engine' },
+    { name: 'Department' },
+    { name: 'Assigned User' },
     {
-      name: 'Identification Number',
+      name: 'VIN Number',
       actions: [{ label: 'New Vehicle', onClick: openCreateVehicle }],
     },
   ];
@@ -181,32 +228,37 @@ export const VehicleView: React.FC<props> = function VehicleView({ userID }) {
           title="Create Vehicle"
         />
       </Modal>
-      <Modal
-        key="AssignmentModal"
-        onClose={() =>
-          dispatch({ type: ACTIONS.SET_ASSIGNING_VEHICLE, data: undefined })
-        }
-        open={state.assigningVehicle != undefined ? true : false}
-      >
-        <Form<assignmentData>
-          schema={SCHEMA_ASSIGNMENT}
+      {state.assigningVehicle && state.assigningVehicle.getId() != 0 && (
+        <Modal
+          key="AssignmentModal"
           onClose={() =>
             dispatch({ type: ACTIONS.SET_ASSIGNING_VEHICLE, data: undefined })
           }
-          data={
-            state.assigningVehicle
-              ? {
-                  userId: state.assigningVehicle!.getOwnerId(),
-                  departmentId: state.assigningVehicle!.getDepartmentId(),
-                }
-              : { userId: userID, departmentId: 15 }
-          }
-          onSave={e => console.log(e)}
-          submitLabel="Assign"
-          cancelLabel="Close"
-          title="Assign Employee/Department to Vehicle"
-        />
-      </Modal>
+          open
+        >
+          <Form<assignmentData>
+            schema={SCHEMA_ASSIGNMENT}
+            onClose={() =>
+              dispatch({ type: ACTIONS.SET_ASSIGNING_VEHICLE, data: undefined })
+            }
+            data={{
+              userId: state.assigningVehicle.getOwnerId(),
+              departmentId: state.assigningVehicle.getDepartmentId(),
+              vehicleId: state.assigningVehicle.getId(),
+            }}
+            onSave={e =>
+              assignUserAndDepartment({
+                userId: e.userId,
+                departmentId: e.departmentId,
+                vehicleId: state.assigningVehicle!.getId(),
+              })
+            }
+            submitLabel="Assign"
+            cancelLabel="Close"
+            title="Assign Employee/Department to Vehicle"
+          />
+        </Modal>
+      )}
       <InfoTable
         data={state.vehicles.map(vehicleToColumn)}
         columns={tableColumns}
