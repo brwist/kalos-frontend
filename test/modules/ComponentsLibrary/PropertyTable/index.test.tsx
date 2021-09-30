@@ -1,13 +1,8 @@
-/*
-    ! Please write your tests here (failing first) and make them pass as development progresses.
-    This ensures the spec is followed and that there can be no regression in the component. 
-*/
-
 /* 
 
-  Design Specification: TODO add spec
+  Design Specification: Property Pane at https://app.kalosflorida.com/index.cfm?action=admin:contracts.contractnew&contract_id=3365
  
-*/ 
+*/
 
 export {};
 
@@ -19,21 +14,37 @@ import Chai = require('chai');
 describe('ComponentsLibrary', () => {
   describe('PropertyTable', () => {
     describe('<PropertyTable />', () => {
-      let wrapper: Enzyme.ReactWrapper; 
+      let wrapper: Enzyme.ReactWrapper;
       before(() => {
-        wrapper = Enzyme.mount(
-          <PropertyTable.PropertyTable />,
-        );
+        wrapper = Enzyme.mount(<PropertyTable.PropertyTable contractId={69} />);
       });
       after(() => {
         wrapper.unmount();
       });
 
       it('renders correctly', () => {
-        Chai.expect(wrapper.text().includes('PropertyTable works!')).to.equal(true);      
-      })
+        Chai.expect(wrapper.text().includes('PropertyTable works!')).to.equal(
+          true,
+        );
+      });
 
-      // Rest of the spec tests here, make them pass as you go
+      describe('Table', () => {
+        describe('Items', () => {
+          it('renders the items that were loaded correctly', () => {
+            Chai.expect(wrapper.find('.Property')).to.be.lengthOf(3);
+          });
+          it('are in a list of checkboxes', () => {
+            Chai.expect(wrapper.find({ type: 'multiselect' })).to.be.lengthOf(
+              3,
+            );
+          });
+        });
+
+        describe('Error handling', () => {
+          it('shows an error screen if loading fails for any reason');
+          it('sends off a devlog in the case of an error');
+        });
+      });
     });
-  })
+  });
 });
