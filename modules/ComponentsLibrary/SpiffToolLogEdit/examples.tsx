@@ -26,6 +26,7 @@ export default () => {
       <ExampleTitle>Spiff</ExampleTitle>
       <SpiffToolLogEdit
         data={results[0]!}
+        role=""
         loggedUserId={101253}
         type="Spiff"
         onClose={() => console.log('CLOSE')}
@@ -38,6 +39,7 @@ export default () => {
         data={results[1]!}
         loggedUserId={101253}
         type="Tool"
+        role=""
         onClose={() => console.log('CLOSE')}
         onSave={() => console.log('SAVE')}
         onStatusChange={() => console.log('UPSERT STATUS')}
