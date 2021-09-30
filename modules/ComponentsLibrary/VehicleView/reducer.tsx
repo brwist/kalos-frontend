@@ -100,9 +100,10 @@ export const reducer = (state: State, action: Action) => {
     }
     case ACTIONS.SET_ASSIGNING_VEHICLE: {
       console.log('setting assignment ');
+      console.log(action.data);
       return {
         ...state,
-        assigning: action.data,
+        assigningVehicle: action.data,
       };
     }
     default:
