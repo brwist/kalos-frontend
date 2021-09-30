@@ -435,6 +435,34 @@ export const SpiffTool: FC<Props> = ({
     },
     [loggedUserId, editing, setSaving, setEditing, type, load],
   );
+  const handleSaveNewTool = useCallback(
+    async (data: Task) => {
+      setSaving(true);
+      const now = timestamp();
+      const req = makeSafeFormObject(data, new Task());
+      req.setTimeCreated(now);
+      req.setTimeDue(now);
+      req.setPriorityId(2);
+      req.setSpiffToolId('');
+      req.setExternalCode('user');
+      req.setCreatorUserId(loggedUserId);
+      req.setBillableType('Tool Purchase');
+      req.setStatusId(1);
+      //req.addFieldMask('AdminActionId');
+      req.setFieldMaskList([]);
+      const res = await TaskClientService.Create(req);
+      const id = res.getId();
+      const updateReq = new Task();
+      updateReq.setId(id);
+      updateReq.setFieldMaskList(['AdminActionId']);
+      updateReq.setAdminActionId(0);
+      await TaskClientService.Update(updateReq);
+      setSaving(false);
+      setPendingAdd(false);
+      await load();
+    },
+    [loggedUserId, load],
+  );
   const handleSaveNewSpiff = useCallback(
     async (data: Task) => {
       setSaving(true);
@@ -443,6 +471,8 @@ export const SpiffTool: FC<Props> = ({
       req.setTimeCreated(now);
       req.setTimeDue(now);
       req.setPriorityId(2);
+      req.setSpiffToolId('');
+
       req.setExternalCode('user');
       req.setCreatorUserId(loggedUserId);
       req.setBillableType('Spiff');
@@ -677,6 +707,12 @@ export const SpiffTool: FC<Props> = ({
       : [
           [
             {
+              name: 'getExternalId',
+              label: 'Technician',
+              type: 'technician',
+              disabled: userRole != 'Manager' ? true : false,
+            },
+            {
               name: 'getTimeDue',
               label: 'Claim Date',
               readOnly: true,
@@ -701,7 +737,7 @@ export const SpiffTool: FC<Props> = ({
             { name: 'getReferenceNumber', label: 'Reference #' },
             {
               name: 'getBriefDescription',
-              label: 'Description',
+              label: 'Tool Description',
               multiline: true,
             },
           ],
@@ -1041,7 +1077,6 @@ export const SpiffTool: FC<Props> = ({
         actions: [
           { label: 'Reset', variant: 'outlined', onClick: handleResetSearch },
           { label: 'Search', onClick: handleMakeSearch },
-          { label: 'Spiff Apply', onClick: handleToggleAdd },
         ],
       },
     ],
@@ -1069,6 +1104,12 @@ export const SpiffTool: FC<Props> = ({
       )}
       <SectionBar
         title={type === 'Spiff' ? 'Spiff Report' : 'Tool Purchases'}
+        actions={[
+          {
+            label: type === 'Spiff' ? 'Spiff Apply' : 'Tool Apply',
+            onClick: handleToggleAdd,
+          },
+        ]}
         fixedActions
         pagination={{
           count,
@@ -1180,11 +1221,11 @@ export const SpiffTool: FC<Props> = ({
       {pendingAdd && (
         <Modal open onClose={handleToggleAdd}>
           <Form<Task>
-            title="Add Spiff Request"
+            title={type === 'Spiff' ? 'Add Spiff Request' : 'Add Tool Purchase'}
             schema={SCHEMA}
             onClose={handleToggleAdd}
             data={makeNewTask()}
-            onSave={handleSaveNewSpiff}
+            onSave={type == 'Spiff' ? handleSaveNewSpiff : handleSaveNewTool}
             disabled={saving}
           />
         </Modal>
