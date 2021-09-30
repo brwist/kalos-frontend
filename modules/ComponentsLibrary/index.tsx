@@ -73,6 +73,7 @@ import ProjectDetail from './ProjectDetail/examples';
 import Projects from './Projects/examples';
 import PromptPaymentReport from './PromptPaymentReport/examples';
 import PropertyEdit from './PropertyEdit/examples';
+import PropertyTable from './PropertyTable/examples';
 import QuoteSelector from './QuoteSelector/examples';
 import Reports from './Reports/examples';
 import RotatedImage from './RotatedImage/examples';
@@ -184,6 +185,7 @@ const COMPONENTS = {
   Projects,
   PromptPaymentReport,
   PropertyEdit,
+  PropertyTable,
   QuoteSelector,
   Reports,
   RotatedImage,
