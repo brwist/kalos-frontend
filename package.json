@@ -15,8 +15,8 @@
     "less": "lessc styles/index.less styles/main.css",
     "upload": "gulp -LL upload",
     "test-coverage": "nyc ts-mocha --recursive -r ./test/test-setup/setup.ts -r esm -r ignore-styles -r mock-local-storage",
-    "test": "ts-mocha --recursive -r ./test/test-setup/setup.ts -r esm -r ignore-styles -r mock-local-storage",
-    "test-watch": "ts-mocha --grep RPC --invert --recursive -r ./test/test-setup/setup.ts -r esm -r ignore-styles  -r mock-local-storage -w",
+    "test": "ts-mocha --recursive -r ./test/test-setup/setup.ts -r esm -r ignore-styles -r mock-local-storage --reporter mochawesome",
+    "test-watch": "ts-mocha --grep RPC --invert --recursive -r ./test/test-setup/setup.ts -r esm -r ignore-styles  -r mock-local-storage -w --reporter mochawesome",
     "test-watch-parallel": "ts-mocha --parallel --grep RPC --invert --recursive -r ./test/test-setup/setup.ts -r esm -r ignore-styles  -r mock-local-storage -w"
   },
   "author": "Robert Milejczak <robbie@kalosflorida.com>",
@@ -69,6 +69,7 @@
     "ignore-styles": "^5.0.1",
     "jsdom": "^16.6.0",
     "less": "^3.10.3",
+    "mochawesome": "^6.2.2",
     "mock-local-storage": "^1.1.17",
     "nyc": "^15.1.0",
     "react-test-renderer": "^17.0.1",
