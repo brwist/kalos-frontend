@@ -1,5 +1,6 @@
 import { Vehicle } from '@kalos-core/kalos-rpc/compiled-protos/user_pb';
-
+import { TimesheetDepartment } from '@kalos-core/kalos-rpc/TimesheetDepartment';
+import { User } from '@kalos-core/kalos-rpc/User';
 export type State = {
   loading: boolean;
   orderBy: string;
@@ -11,6 +12,8 @@ export type State = {
   creatingVehicle: boolean;
   vehicleCount: number;
   assigningVehicle: Vehicle | undefined;
+  departments: TimesheetDepartment[];
+  users: User[];
 };
 
 export enum ACTIONS {
@@ -24,10 +27,13 @@ export enum ACTIONS {
   SET_VEHICLES_COUNT = 'setVehiclesCount',
   SET_CREATING_VEHICLE = 'setCreatingVehicle',
   SET_ASSIGNING_VEHICLE = 'setAssigningVehicle',
+  SET_DEPARTMENTS = 'setDepartments',
+  SET_USERS = 'setUsers',
 }
 export type assignmentData = {
   userId: number;
   departmentId: number;
+  vehicleId: number;
 };
 export type Action =
   | { type: ACTIONS.SET_LOADING; data: boolean }
@@ -39,6 +45,8 @@ export type Action =
   | { type: ACTIONS.SET_VEHICLES_COUNT; data: number }
   | { type: ACTIONS.SET_ACTIVE_VEHICLE; data: Vehicle | undefined }
   | { type: ACTIONS.SET_VEHICLES; data: Vehicle[] }
+  | { type: ACTIONS.SET_DEPARTMENTS; data: TimesheetDepartment[] }
+  | { type: ACTIONS.SET_USERS; data: User[] }
   | { type: ACTIONS.SET_PAGE; data: number };
 
 export const reducer = (state: State, action: Action) => {
@@ -99,11 +107,25 @@ export const reducer = (state: State, action: Action) => {
       };
     }
     case ACTIONS.SET_ASSIGNING_VEHICLE: {
-      console.log('setting assignment ');
-      console.log(action.data);
+      console.log('setting assignment ', action.data);
       return {
         ...state,
         assigningVehicle: action.data,
+      };
+    }
+    case ACTIONS.SET_DEPARTMENTS: {
+      console.log('setting departments ');
+      return {
+        ...state,
+        departments: action.data,
+      };
+    }
+
+    case ACTIONS.SET_USERS: {
+      console.log('setting users ');
+      return {
+        ...state,
+        users: action.data,
       };
     }
     default:
