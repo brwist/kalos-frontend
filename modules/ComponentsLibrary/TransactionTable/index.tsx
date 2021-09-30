@@ -990,6 +990,10 @@ export const TransactionTable: FC<Props> = ({
   }, [state.transactionToDelete, refresh, resetTransactions]);
 
   useEffect(() => {
+    async function refreshEverything() {
+      await load();
+      await resetTransactions();
+    }
     if (!state.loaded) {
       load();
       resetTransactions();
@@ -999,8 +1003,7 @@ export const TransactionTable: FC<Props> = ({
       resetTransactions();
     }
     if (state.searching) {
-      load();
-      resetTransactions();
+      refreshEverything();
       dispatch({ type: ACTIONS.SET_SEARCHING, data: false });
     }
   }, [
@@ -1011,6 +1014,7 @@ export const TransactionTable: FC<Props> = ({
     state.loaded,
     state.searching,
   ]);
+
   return (
     <ErrorBoundary key="ErrorBoundary">
       {state.imageWaiverTypePopupOpen && (

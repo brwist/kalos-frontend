@@ -31,8 +31,8 @@ const SCHEMA_VEHICLE: Schema<Vehicle> = [
 
 const SCHEMA_ASSIGNMENT: Schema<assignmentData> = [
   [
-    { name: 'userId', label: 'Assigned Employee' },
-    { name: 'departmentId', label: 'Assigned Department' },
+    { name: 'userId', label: 'Assigned Employee', type: 'technician' },
+    { name: 'departmentId', label: 'Assigned Department', type: 'department' },
   ],
 ];
 export const VehicleView: React.FC<props> = function VehicleView({ userID }) {
@@ -163,6 +163,7 @@ export const VehicleView: React.FC<props> = function VehicleView({ userID }) {
         />
       )}
       <Modal
+        key="CreateModal"
         onClose={() =>
           dispatch({ type: ACTIONS.SET_CREATING_VEHICLE, data: false })
         }
@@ -181,10 +182,11 @@ export const VehicleView: React.FC<props> = function VehicleView({ userID }) {
         />
       </Modal>
       <Modal
+        key="AssignmentModal"
         onClose={() =>
           dispatch({ type: ACTIONS.SET_ASSIGNING_VEHICLE, data: undefined })
         }
-        open={state.assigningVehicle != undefined}
+        open={state.assigningVehicle != undefined ? true : false}
       >
         <Form<assignmentData>
           schema={SCHEMA_ASSIGNMENT}
