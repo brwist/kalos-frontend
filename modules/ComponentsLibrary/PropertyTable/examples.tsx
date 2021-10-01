@@ -9,6 +9,7 @@ export default () => (
       userId={22}
       onSave={saved => console.log('Would save: ', saved)}
       onClose={() => alert('Would close')}
+      onChange={changed => console.log('Changed: ', changed)}
     />
   </>
 );

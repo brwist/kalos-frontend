@@ -13,26 +13,36 @@ import { Form, Schema } from '../Form';
 import { reducer, ACTIONS } from './reducer';
 import { Loader } from '../../Loader/main';
 
-// add any prop types here
 interface props {
   userId: number;
   onSave: (propertiesSaved: Property[]) => any;
   onClose: (currentProperties?: Property[]) => any;
+  onChange?: (currentProperties?: Property[]) => any;
 }
 
-export const PropertyTable: FC<props> = ({ userId, onSave, onClose }) => {
+type Properties = {
+  propertyArray: Property[];
+};
+
+export const PropertyTable: FC<props> = ({
+  userId,
+  onSave,
+  onClose,
+  onChange,
+}) => {
   const [state, dispatch] = useReducer(reducer, {
     isLoaded: false,
     propertiesSelected: [],
     propertiesLoaded: [],
   });
 
-  const SCHEMA: Schema<Property[]> = [
+  const SCHEMA: Schema<Properties> = [
     [
       {
         label: 'Properties',
         type: 'multiselect',
         options: state.propertiesLoaded.map(property => property.getAddress()),
+        name: 'propertyArray',
       },
     ],
   ];
@@ -79,17 +89,19 @@ export const PropertyTable: FC<props> = ({ userId, onSave, onClose }) => {
   return (
     <>
       {!state.isLoaded && <Loader />}
-      <Form<Property[]>
-        data={state.propertiesSelected}
+      <Form<Properties>
+        key={state.isLoaded.toString()}
+        data={{ propertyArray: state.propertiesSelected }}
         schema={SCHEMA}
-        onSave={propertiesSaved => onSave(propertiesSaved)}
+        onSave={propertiesSaved => onSave(propertiesSaved.propertyArray)}
         onClose={() => onClose(state.propertiesSelected)}
-        onChange={currentProperties =>
+        onChange={currentProperties => {
+          if (onChange) onChange(currentProperties.propertyArray);
           dispatch({
             type: ACTIONS.SET_PROPERTIES_SELECTED,
-            data: currentProperties,
-          })
-        }
+            data: currentProperties.propertyArray,
+          });
+        }}
       />
     </>
   );
