@@ -20,7 +20,10 @@ import CopyIcon from '@material-ui/icons/FileCopySharp';
 import RejectIcon from '@material-ui/icons/ThumbDownSharp';
 import SubmitIcon from '@material-ui/icons/ThumbUpSharp';
 import { format, parseISO } from 'date-fns';
-import { TransactionAccount } from '@kalos-core/kalos-rpc/TransactionAccount';
+import {
+  TransactionAccount,
+  TransactionAccountList,
+} from '@kalos-core/kalos-rpc/TransactionAccount';
 import { Event } from '@kalos-core/kalos-rpc/Event';
 import { PopoverComponent } from '../Popover';
 import React, { FC, useCallback, useEffect, useReducer } from 'react';
@@ -61,7 +64,7 @@ import { PlainForm, Schema } from '../PlainForm';
 import { SectionBar } from '../SectionBar';
 import LineWeightIcon from '@material-ui/icons/LineWeight';
 import DeleteIcon from '@material-ui/icons/Delete';
-
+import { UploadPhotoTransaction } from '../UploadPhotoTransaction';
 import { EditTransaction } from '../EditTransaction';
 import { TimesheetDepartment } from '@kalos-core/kalos-rpc/TimesheetDepartment';
 import { StatusPicker } from './components/StatusPicker';
@@ -126,6 +129,7 @@ export const TransactionTable: FC<Props> = ({
     transactionFilter: filter,
     transactions: undefined,
     totalTransactions: 0,
+    costCenterData: new TransactionAccountList(),
     transactionActivityLogs: [],
     costCenters: [{ label: 'temp', value: 0 }],
     transactionToEdit: undefined,
@@ -140,6 +144,7 @@ export const TransactionTable: FC<Props> = ({
     employees: [],
     departments: [],
     page: 0,
+    openUploadPhotoTransaction: false,
     selectedTransactions: [],
     transactionToDelete: undefined,
     assignedEmployee: undefined,
@@ -453,6 +458,7 @@ export const TransactionTable: FC<Props> = ({
     const accountRes = await TransactionAccountClientService.BatchGet(
       new TransactionAccount(),
     );
+    dispatch({ type: ACTIONS.SET_COST_CENTER_DATA, data: accountRes });
 
     dispatch({
       type: ACTIONS.SET_COST_CENTERS,
@@ -1232,7 +1238,8 @@ export const TransactionTable: FC<Props> = ({
           },
         }}
         actions={
-          hasActions
+          hasActions &&
+          (state.role == 'AccountsPayable' || state.role == 'Manager')
             ? [
                 {
                   label: 'New Transaction',
@@ -1252,7 +1259,18 @@ export const TransactionTable: FC<Props> = ({
                     }), // makes merge popup come up
                 },
               ]
-            : []
+            : [
+                {
+                  label:
+                    'Upload Pick Ticket, Invoice, or Non Credit Card Receipt',
+                  onClick: () =>
+                    dispatch({
+                      type: ACTIONS.SET_OPEN_UPLOAD_PHOTO_TRANSACTION,
+                      data: true,
+                    }),
+                  fixed: true,
+                },
+              ]
         }
       />
       {state.pendingUploadPhoto && (
@@ -1498,7 +1516,7 @@ export const TransactionTable: FC<Props> = ({
                     {
                       value: (
                         <div key="AmountValue">
-                          `$ ${prettyMoney(selectorParam.txn.getAmount())}`
+                          ${prettyMoney(selectorParam.txn.getAmount())}
                         </div>
                       ),
                       onClick: isSelector
@@ -1516,57 +1534,63 @@ export const TransactionTable: FC<Props> = ({
                         : undefined,
                     },
                     {
-                      actions: !isSelector ? (
-                        [
-                          <Tooltip key="copy" content="Copy data to clipboard">
-                            <IconButton
-                              key="copyIcon"
-                              size="small"
-                              onClick={() =>
-                                copyToClipboard(
-                                  `${parseISO(
-                                    selectorParam.txn
-                                      .getTimestamp()
-                                      .split(' ')
-                                      .join('T'),
-                                  ).toLocaleDateString()},${selectorParam.txn.getDescription()},${selectorParam.txn.getAmount()},${selectorParam.txn.getOwnerName()},${selectorParam.txn.getVendor()}`,
-                                )
-                              }
+                      actions:
+                        !isSelector &&
+                        (state.role == 'AccountsPayable' ||
+                          state.role == 'Manager') ? (
+                          [
+                            <Tooltip
+                              key="copy"
+                              content="Copy data to clipboard"
                             >
-                              <CopyIcon />
-                            </IconButton>
-                          </Tooltip>,
-                          <Tooltip
-                            key="editAll"
-                            content="Edit this transaction"
-                          >
-                            <IconButton
-                              key="editIcon"
-                              size="small"
-                              onClick={() =>
-                                dispatch({
-                                  type: ACTIONS.SET_TRANSACTION_TO_EDIT,
-                                  data: selectorParam.txn,
-                                })
-                              }
+                              <IconButton
+                                key="copyIcon"
+                                size="small"
+                                onClick={() =>
+                                  copyToClipboard(
+                                    `${parseISO(
+                                      selectorParam.txn
+                                        .getTimestamp()
+                                        .split(' ')
+                                        .join('T'),
+                                    ).toLocaleDateString()},${selectorParam.txn.getDescription()},${selectorParam.txn.getAmount()},${selectorParam.txn.getOwnerName()},${selectorParam.txn.getVendor()}`,
+                                  )
+                                }
+                              >
+                                <CopyIcon />
+                              </IconButton>
+                            </Tooltip>,
+                            <Tooltip
+                              key="editAll"
+                              content="Edit this transaction"
                             >
-                              <LineWeightIcon />
-                            </IconButton>
-                          </Tooltip>,
-                          <Tooltip key="upload" content="Upload File">
-                            <IconButton
-                              key={'uploadIcon'}
-                              size="small"
-                              onClick={() =>
-                                dispatch({
-                                  type: ACTIONS.SET_PENDING_UPLOAD_PHOTO,
-                                  data: selectorParam.txn,
-                                })
-                              }
-                            >
-                              <UploadIcon />
+                              <IconButton
+                                key="editIcon"
+                                size="small"
+                                onClick={() =>
+                                  dispatch({
+                                    type: ACTIONS.SET_TRANSACTION_TO_EDIT,
+                                    data: selectorParam.txn,
+                                  })
+                                }
+                              >
+                                <LineWeightIcon />
+                              </IconButton>
+                            </Tooltip>,
+                            <Tooltip key="upload" content="Upload File">
+                              <IconButton
+                                key={'uploadIcon'}
+                                size="small"
+                                onClick={() =>
+                                  dispatch({
+                                    type: ACTIONS.SET_PENDING_UPLOAD_PHOTO,
+                                    data: selectorParam.txn,
+                                  })
+                                }
+                              >
+                                <UploadIcon />
 
-                              {/*<input
+                                {/*<input
                                 type="file" 
                                 ref={FileInput}
                                 
@@ -1585,130 +1609,170 @@ export const TransactionTable: FC<Props> = ({
                                 }}
                                 style={{ display: 'none' }}
                               />*/}
-                            </IconButton>
-                          </Tooltip>,
-                          <AltGallery
-                            key="Gallery"
-                            fileList={[]}
-                            title="Transaction Uploads"
-                            text="View Photos and Documents"
-                            transactionID={selectorParam.txn.getId()}
-                            iconButton
-                            canDelete={true}
-                          />,
-                          <TxnLog
-                            key="txnLog"
-                            iconButton
-                            txnID={selectorParam.txn.getId()}
-                          />,
-                          <TxnNotes
-                            key="viewNotes"
-                            iconButton
-                            text="View notes"
-                            notes={selectorParam.txn.getNotes()}
-                            disabled={selectorParam.txn.getNotes() === ''}
-                          />,
-                          ...([9928, 9646, 1734].includes(loggedUserId)
-                            ? [
-                                <Tooltip
-                                  key="audit"
-                                  content={
-                                    selectorParam.txn.getIsAudited() &&
-                                    loggedUserId !== 1734
-                                      ? 'This transaction has already been audited'
-                                      : 'Mark as correct'
-                                  }
-                                >
-                                  <IconButton
-                                    key="auditIcon"
-                                    size="small"
-                                    onClick={
-                                      loggedUserId === 1734
-                                        ? () => forceAccept(selectorParam.txn)
-                                        : () => auditTxn(selectorParam.txn)
-                                    }
-                                    disabled={
+                              </IconButton>
+                            </Tooltip>,
+                            <AltGallery
+                              key="Gallery"
+                              fileList={[]}
+                              title="Transaction Uploads"
+                              text="View Photos and Documents"
+                              transactionID={selectorParam.txn.getId()}
+                              iconButton
+                              canDelete={true}
+                            />,
+                            <TxnLog
+                              key="txnLog"
+                              iconButton
+                              txnID={selectorParam.txn.getId()}
+                            />,
+                            <TxnNotes
+                              key="viewNotes"
+                              iconButton
+                              text="View notes"
+                              notes={selectorParam.txn.getNotes()}
+                              disabled={selectorParam.txn.getNotes() === ''}
+                            />,
+                            ...([9928, 9646, 1734].includes(loggedUserId)
+                              ? [
+                                  <Tooltip
+                                    key="audit"
+                                    content={
                                       selectorParam.txn.getIsAudited() &&
                                       loggedUserId !== 1734
+                                        ? 'This transaction has already been audited'
+                                        : 'Mark as correct'
                                     }
                                   >
-                                    <CheckIcon />
-                                  </IconButton>
-                                </Tooltip>,
-                              ]
-                            : []),
-                          <Tooltip key="submit" content={'Mark as accepted'}>
-                            <IconButton
-                              key="submitIcon"
-                              disabled={selectorParam.txn.getStatusId() === 5}
-                              size="small"
-                              onClick={() => updateStatus(selectorParam.txn)}
-                            >
-                              <SubmitIcon />
-                            </IconButton>
-                          </Tooltip>,
-                          <Tooltip
-                            key="assign"
-                            content="Assign an employee to this task"
-                          >
-                            <IconButton
-                              key="assignIcon"
-                              size="small"
-                              onClick={() =>
-                                handleSetAssigningUser(
-                                  true,
-                                  selectorParam.txn.getId(),
-                                )
-                              }
-                            >
-                              <AssignmentIndIcon />
-                            </IconButton>
-                          </Tooltip>,
-                          selectorParam.txn.getStatusId() === 3 &&
-                            loggedUserId === 98217 && (
-                              <Tooltip
-                                key="Process"
-                                content="Mark As Processed"
+                                    <IconButton
+                                      key="auditIcon"
+                                      size="small"
+                                      onClick={
+                                        loggedUserId === 1734
+                                          ? () => forceAccept(selectorParam.txn)
+                                          : () => auditTxn(selectorParam.txn)
+                                      }
+                                      disabled={
+                                        selectorParam.txn.getIsAudited() &&
+                                        loggedUserId !== 1734
+                                      }
+                                    >
+                                      <CheckIcon />
+                                    </IconButton>
+                                  </Tooltip>,
+                                ]
+                              : []),
+                            <Tooltip key="submit" content={'Mark as accepted'}>
+                              <IconButton
+                                key="submitIcon"
+                                disabled={selectorParam.txn.getStatusId() === 5}
+                                size="small"
+                                onClick={() => updateStatus(selectorParam.txn)}
                               >
-                                <IconButton
-                                  key="ProcessIcon"
-                                  size="small"
-                                  onClick={() =>
-                                    updateStatusProcessed(selectorParam.txn)
-                                  }
-                                >
-                                  <Save />
-                                </IconButton>
-                              </Tooltip>
-                            ),
-                          <Tooltip key="delete" content="Delete this task">
-                            <IconButton
-                              key="deleteIcon"
-                              size="small"
-                              onClick={() =>
-                                dispatch({
-                                  type: ACTIONS.SET_TRANSACTION_TO_DELETE,
-                                  data: selectorParam.txn,
-                                })
-                              }
+                                <SubmitIcon />
+                              </IconButton>
+                            </Tooltip>,
+                            <Tooltip
+                              key="assign"
+                              content="Assign an employee to this task"
                             >
-                              <DeleteIcon />
-                            </IconButton>
-                          </Tooltip>,
-                          <Prompt
-                            key="reject"
-                            confirmFn={reason =>
-                              dispute(reason, selectorParam.txn)
-                            }
-                            disabled={selectorParam.txn.getStatusId() === 5}
-                            text="Reject transaction"
-                            prompt="Enter reason for rejection: "
-                            Icon={RejectIcon}
-                          />,
-                        ]
-                      ) : (
-                        <> </>
-                      ),
+                              <IconButton
+                                key="assignIcon"
+                                size="small"
+                                onClick={() =>
+                                  handleSetAssigningUser(
+                                    true,
+                                    selectorParam.txn.getId(),
+                                  )
+                                }
+                              >
+                                <AssignmentIndIcon />
+                              </IconButton>
+                            </Tooltip>,
+                            selectorParam.txn.getStatusId() === 3 &&
+                              loggedUserId === 98217 && (
+                                <Tooltip
+                                  key="Process"
+                                  content="Mark As Processed"
+                                >
+                                  <IconButton
+                                    key="ProcessIcon"
+                                    size="small"
+                                    onClick={() =>
+                                      updateStatusProcessed(selectorParam.txn)
+                                    }
+                                  >
+                                    <Save />
+                                  </IconButton>
+                                </Tooltip>
+                              ),
+                            <Tooltip key="delete" content="Delete this task">
+                              <IconButton
+                                key="deleteIcon"
+                                size="small"
+                                onClick={() =>
+                                  dispatch({
+                                    type: ACTIONS.SET_TRANSACTION_TO_DELETE,
+                                    data: selectorParam.txn,
+                                  })
+                                }
+                              >
+                                <DeleteIcon />
+                              </IconButton>
+                            </Tooltip>,
+                            <Prompt
+                              key="reject"
+                              confirmFn={reason =>
+                                dispute(reason, selectorParam.txn)
+                              }
+                              disabled={selectorParam.txn.getStatusId() === 5}
+                              text="Reject transaction"
+                              prompt="Enter reason for rejection: "
+                              Icon={RejectIcon}
+                            />,
+                          ]
+                        ) : (
+                          <div key={'NormalActions'}>
+                            <Tooltip key="upload" content="Upload File">
+                              <IconButton
+                                key={'uploadIcon'}
+                                size="small"
+                                onClick={() =>
+                                  dispatch({
+                                    type: ACTIONS.SET_PENDING_UPLOAD_PHOTO,
+                                    data: selectorParam.txn,
+                                  })
+                                }
+                              >
+                                <UploadIcon />
+                              </IconButton>
+                            </Tooltip>
+                            <AltGallery
+                              key="Gallery"
+                              fileList={[]}
+                              title="Transaction Uploads"
+                              text="View Photos and Documents"
+                              transactionID={selectorParam.txn.getId()}
+                              iconButton
+                            />
+                            <Tooltip
+                              key="editAll"
+                              content="Edit this transaction"
+                            >
+                              <IconButton
+                                key="editIcon"
+                                size="small"
+                                onClick={() =>
+                                  dispatch({
+                                    type: ACTIONS.SET_TRANSACTION_TO_EDIT,
+                                    data: selectorParam.txn,
+                                  })
+                                }
+                              >
+                                <LineWeightIcon />
+                              </IconButton>
+                            </Tooltip>
+                          </div>
+                        ),
                       actionsFullWidth: true,
                     },
                     {
@@ -1773,6 +1837,31 @@ export const TransactionTable: FC<Props> = ({
         }
         loading={state.loading}
       />
+      {state.openUploadPhotoTransaction ? (
+        <Modal
+          open={state.openUploadPhotoTransaction}
+          onClose={() =>
+            dispatch({
+              type: ACTIONS.SET_OPEN_UPLOAD_PHOTO_TRANSACTION,
+              data: false,
+            })
+          }
+        >
+          <UploadPhotoTransaction
+            loggedUserId={loggedUserId}
+            bucket="kalos-transactions"
+            costCenters={state.costCenterData}
+            onClose={() =>
+              dispatch({
+                type: ACTIONS.SET_OPEN_UPLOAD_PHOTO_TRANSACTION,
+                data: false,
+              })
+            }
+          />
+        </Modal>
+      ) : (
+        <></>
+      )}
     </ErrorBoundary>
   );
 };

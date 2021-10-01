@@ -4,6 +4,7 @@ import { TransactionActivity } from '@kalos-core/kalos-rpc/TransactionActivity';
 import { User } from '@kalos-core/kalos-rpc/User';
 import { RoleType } from '../Payroll';
 import { OrderDir } from '../../../helpers';
+import { TransactionAccountList } from '@kalos-core/kalos-rpc/TransactionAccount';
 
 export interface FilterType {
   departmentId: number;
@@ -30,6 +31,7 @@ export type State = {
   transactionActivityLogs: TransactionActivity[];
   transactionToEdit: Transaction | undefined;
   transactionToDelete: Transaction | undefined;
+  costCenterData: TransactionAccountList;
   loading: boolean;
   orderBy: string;
   orderDir: OrderDir | undefined;
@@ -60,6 +62,7 @@ export type State = {
   imageWaiverTypeFormData: PopupType;
   transactionToSave: Transaction | undefined;
   imageNameToSave: string | undefined;
+  openUploadPhotoTransaction: boolean;
 };
 
 export type PopupType = {
@@ -73,6 +76,7 @@ export enum ACTIONS {
   SET_TOTAL_TRANSACTIONS = 'setTotalTransactions',
   SET_TRANSACTION_ACTIVITY_LOGS = 'setTransactionActivityLogs',
   SET_TRANSACTION_TO_EDIT = 'setTransactionToEdit',
+  SET_COST_CENTER_DATA = 'setCostCenterData',
   SET_LOADING = 'setLoading',
   SET_LOADED = 'setLoaded',
   SET_ORDER = 'setOrder',
@@ -97,6 +101,8 @@ export enum ACTIONS {
   SET_IMAGE_WAIVER_TYPE_POPUP_OPEN = 'setImageWaiverTypePopupOpen',
   SET_IMAGE_WAIVER_TYPE_FORM_DATA = 'setImageWaiverTypeFormData',
   SET_TRANSACTION_TO_SAVE = 'setTransactionToSave',
+  SET_OPEN_UPLOAD_PHOTO_TRANSACTION = 'setOpenUploadPhotoTransaction',
+
   SET_IMAGE_NAME_TO_SAVE = 'setImageNameToSave',
 }
 
@@ -148,6 +154,10 @@ export type Action =
       data: { label: string; value: number }[];
     }
   | {
+      type: ACTIONS.SET_COST_CENTER_DATA;
+      data: TransactionAccountList;
+    }
+  | {
       type: ACTIONS.SET_FILE_DATA;
       data: any;
     }
@@ -162,6 +172,10 @@ export type Action =
   | {
       type: ACTIONS.SET_TRANSACTION_TO_SAVE;
       data: Transaction | undefined;
+    }
+  | {
+      type: ACTIONS.SET_OPEN_UPLOAD_PHOTO_TRANSACTION;
+      data: boolean;
     }
   | {
       type: ACTIONS.SET_IMAGE_NAME_TO_SAVE;
@@ -300,6 +314,13 @@ export const reducer = (state: State, action: Action) => {
         costCenters: action.data,
       };
     }
+    case ACTIONS.SET_COST_CENTER_DATA: {
+      console.log('setting cost center data ');
+      return {
+        ...state,
+        costCenterData: action.data,
+      };
+    }
     case ACTIONS.SET_LOADED: {
       return {
         ...state,
@@ -354,6 +375,9 @@ export const reducer = (state: State, action: Action) => {
     case ACTIONS.SET_IMAGE_NAME_TO_SAVE:
       console.log('setting image name to save');
       return { ...state, imageNameToSave: action.data };
+    case ACTIONS.SET_OPEN_UPLOAD_PHOTO_TRANSACTION:
+      console.log('setting upload photo');
+      return { ...state, openUploadPhotoTransaction: action.data };
     default:
       return state;
   }
