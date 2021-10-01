@@ -16,7 +16,13 @@ describe('ComponentsLibrary', () => {
     describe('<PropertyTable />', () => {
       let wrapper: Enzyme.ReactWrapper;
       before(() => {
-        wrapper = Enzyme.mount(<PropertyTable.PropertyTable userId={69} />);
+        wrapper = Enzyme.mount(
+          <PropertyTable.PropertyTable
+            userId={69}
+            onSave={() => {}}
+            onClose={() => {}}
+          />,
+        );
       });
       after(() => {
         wrapper.unmount();
