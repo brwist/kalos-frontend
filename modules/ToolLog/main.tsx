@@ -8,6 +8,13 @@ interface Props extends PageWrapperProps {
 
 export const ToolLog: FC<Props> = props => (
   <PageWrapper {...props} userID={props.loggedUserId}>
-    <SpiffTool type="Tool" {...props} />
+    <SpiffTool
+      type="Tool"
+      loggedUserId={props.loggedUserId}
+      ownerId={props.loggedUserId}
+      needsManagerAction={false}
+      needsPayrollAction={false}
+      needsAuditAction={false}
+    />
   </PageWrapper>
 );
