@@ -39,7 +39,7 @@ export const PropertyTable: FC<props> = ({
   const SCHEMA: Schema<Properties> = [
     [
       {
-        label: 'Properties',
+        label: 'Select Properties',
         type: 'multiselect',
         options: state.propertiesLoaded.map(property => property.getAddress()),
         name: 'propertyArray',

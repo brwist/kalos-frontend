@@ -14,6 +14,7 @@ import {
 import { Form, Schema } from '../Form';
 import { SectionBar } from '../SectionBar';
 import { reducer, ACTIONS, FREQUENCIES, BILLING_OPTIONS } from './reducer';
+import { PropertyTable } from '../PropertyTable/index';
 
 interface props {
   userID: number;
@@ -87,7 +88,7 @@ const NEW_CONTRACT_SCHEMA: Schema<Contract> = [
   ],
 ];
 
-export const NewContract: FC<props> = ({ onSave, onClose }) => {
+export const NewContract: FC<props> = ({ userID, onSave, onClose }) => {
   const [state, dispatch] = useReducer(reducer, {
     isLoaded: false,
     contractData: new Contract(),
@@ -115,36 +116,52 @@ export const NewContract: FC<props> = ({ onSave, onClose }) => {
         { label: 'Save', onClick: () => onSave(state.contractData) },
       ]}
     >
-      <Form<Contract>
-        schema={NEW_CONTRACT_SCHEMA}
-        data={state.contractData}
-        onSave={contractData => onSave(contractData)}
-        onClose={() => onClose()}
-        onChange={contractData => {
-          let req = makeSafeFormObject(contractData, new Contract());
-          switch (req.getFrequency() as any) {
-            case FREQUENCIES.MONTHLY:
-              req.setFrequency(30);
-              break;
-            case FREQUENCIES.BIMONTHLY:
-              req.setFrequency(60);
-              break;
-            case FREQUENCIES.QUARTERLY:
-              req.setFrequency(90);
-              break;
-            case FREQUENCIES.SEMIANNUAL:
-              req.setFrequency(182);
-              break;
-            case FREQUENCIES.ANNUAL:
-              req.setFrequency(365);
-              break;
+      <div style={{ width: '75%', display: 'inline-block' }}>
+        <Form<Contract>
+          schema={NEW_CONTRACT_SCHEMA}
+          data={state.contractData}
+          onSave={contractData => onSave(contractData)}
+          onClose={() => onClose()}
+          onChange={contractData => {
+            let req = makeSafeFormObject(contractData, new Contract());
+            switch (req.getFrequency() as any) {
+              case FREQUENCIES.MONTHLY:
+                req.setFrequency(30);
+                break;
+              case FREQUENCIES.BIMONTHLY:
+                req.setFrequency(60);
+                break;
+              case FREQUENCIES.QUARTERLY:
+                req.setFrequency(90);
+                break;
+              case FREQUENCIES.SEMIANNUAL:
+                req.setFrequency(182);
+                break;
+              case FREQUENCIES.ANNUAL:
+                req.setFrequency(365);
+                break;
+            }
+            dispatch({
+              type: ACTIONS.SET_CONTRACT_DATA,
+              data: req,
+            });
+          }}
+        />
+      </div>
+      <div
+        style={{ width: '20%', display: 'inline-block', verticalAlign: 'top' }}
+      >
+        <PropertyTable
+          userId={userID}
+          onSave={propertyData =>
+            console.log('Saving property data: ', propertyData)
           }
-          dispatch({
-            type: ACTIONS.SET_CONTRACT_DATA,
-            data: req,
-          });
-        }}
-      />
+          onClose={() => {}}
+          onChange={propertyData =>
+            console.log('Changed property data: ', propertyData)
+          }
+        />
+      </div>
     </SectionBar>
   );
 };
