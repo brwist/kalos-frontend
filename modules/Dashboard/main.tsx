@@ -444,9 +444,7 @@ export class Dashboard extends React.PureComponent<props, state> {
                           },
                         ]
                       : []),
-                    ...(currentUser
-                      .getPermissionGroupsList()
-                      .find(p => p.getName() === 'AccountsPayable')
+                    ...(currentUser.getIsEmployee()
                       ? [
                           {
                             value: (
@@ -466,7 +464,8 @@ export class Dashboard extends React.PureComponent<props, state> {
                           },
                         ]
                       : []),
-                    ...(currentUser.getId() === 213 || currentUser.getId() === 3490
+                    ...(currentUser.getId() === 213 ||
+                    currentUser.getId() === 3490
                       ? [
                           {
                             value: (
@@ -482,9 +481,10 @@ export class Dashboard extends React.PureComponent<props, state> {
                                   }
                                 />
                               </>
-                            )
-                          }
-                      ]: [])
+                            ),
+                          },
+                        ]
+                      : []),
                   ],
                 ]
           }
