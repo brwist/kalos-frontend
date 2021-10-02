@@ -1,13 +1,16 @@
 import { Contract } from '@kalos-core/kalos-rpc/Contract';
+import { Property } from '@kalos-core/kalos-rpc/Property';
 
 export type State = {
   isLoaded: boolean;
   contractData: Contract;
+  propertiesSelected: Property[] | undefined;
 };
 
 export enum ACTIONS {
   SET_LOADED = 'setLoaded',
   SET_CONTRACT_DATA = 'setContractData',
+  SET_PROPERTIES_SELECTED = 'setPropertiesSelected',
 }
 
 export enum FREQUENCIES {
@@ -28,6 +31,10 @@ export type Action =
   | {
       type: ACTIONS.SET_CONTRACT_DATA;
       data: Contract;
+    }
+  | {
+      type: ACTIONS.SET_PROPERTIES_SELECTED;
+      data: Property[] | undefined;
     };
 
 export const reducer = (state: State, action: Action) => {
@@ -42,6 +49,12 @@ export const reducer = (state: State, action: Action) => {
       return {
         ...state,
         contractData: action.data,
+      };
+    }
+    case ACTIONS.SET_PROPERTIES_SELECTED: {
+      return {
+        ...state,
+        propertiesSelected: action.data,
       };
     }
     default:
