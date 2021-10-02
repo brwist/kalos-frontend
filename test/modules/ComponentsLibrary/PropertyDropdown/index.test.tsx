@@ -6,7 +6,7 @@
 
 export {};
 
-import PropertyTable = require('../../../../modules/ComponentsLibrary/PropertyTable/index');
+import PropertyTable = require('../../../../modules/ComponentsLibrary/PropertyDropdown/index');
 import PropertyProto = require('@kalos-core/kalos-rpc/Property');
 import React = require('react');
 import Enzyme = require('enzyme');
@@ -21,7 +21,7 @@ describe('ComponentsLibrary', () => {
       let wrapper: Enzyme.ReactWrapper;
       before(() => {
         wrapper = Enzyme.mount(
-          <PropertyTable.PropertyTable
+          <PropertyTable.PropertyDropdown
             userId={69}
             onSave={() => {}}
             onClose={() => {}}

@@ -14,7 +14,7 @@ import {
 import { Form, Schema } from '../Form';
 import { SectionBar } from '../SectionBar';
 import { reducer, ACTIONS, FREQUENCIES, BILLING_OPTIONS } from './reducer';
-import { PropertyTable } from '../PropertyTable/index';
+import { PropertyDropdown } from '../PropertyDropdown/index';
 
 interface props {
   userID: number;
@@ -151,7 +151,7 @@ export const NewContract: FC<props> = ({ userID, onSave, onClose }) => {
       <div
         style={{ width: '20%', display: 'inline-block', verticalAlign: 'top' }}
       >
-        <PropertyTable
+        <PropertyDropdown
           userId={userID}
           onSave={propertyData =>
             console.log('Saving property data: ', propertyData)
