@@ -34,6 +34,7 @@ export const PropertyTable: FC<props> = ({
     isLoaded: false,
     propertiesSelected: [],
     propertiesLoaded: [],
+    error: false,
   });
 
   const SCHEMA: Schema<Properties> = [
@@ -51,7 +52,6 @@ export const PropertyTable: FC<props> = ({
     try {
       let req = new Property();
       req.setUserId(userId);
-      console.log('Batch getting for properties');
       const res = await PropertyClientService.BatchGet(req);
       console.log('Got res for properties: ', res.getResultsList());
       dispatch({
@@ -59,6 +59,7 @@ export const PropertyTable: FC<props> = ({
         data: res.getResultsList(),
       });
     } catch (err) {
+      dispatch({ type: ACTIONS.SET_ERROR, data: true });
       console.error(
         `An error occurred while getting properties from the property client service: ${err}`,
       );
@@ -91,6 +92,7 @@ export const PropertyTable: FC<props> = ({
       {!state.isLoaded && <Loader />}
       <Form<Properties>
         key={state.isLoaded.toString()}
+        error={state.error}
         data={{ propertyArray: state.propertiesSelected }}
         schema={SCHEMA}
         onSave={propertiesSaved => onSave(propertiesSaved.propertyArray)}
