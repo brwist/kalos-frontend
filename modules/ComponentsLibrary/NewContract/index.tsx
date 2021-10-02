@@ -15,11 +15,18 @@ import { Form, Schema } from '../Form';
 import { SectionBar } from '../SectionBar';
 import { reducer, ACTIONS, FREQUENCIES, BILLING_OPTIONS } from './reducer';
 import { PropertyDropdown } from '../PropertyDropdown/index';
+import { Property } from '@kalos-core/kalos-rpc/Property';
+
+export interface Output {
+  contractData: Contract;
+  propertiesSelected: Property[];
+}
 
 interface props {
   userID: number;
   onSave: (savedContract: Contract) => any;
   onClose: () => any;
+  onChange?: (currentData: Output) => any;
 }
 
 const NEW_CONTRACT_SCHEMA: Schema<Contract> = [
@@ -88,10 +95,16 @@ const NEW_CONTRACT_SCHEMA: Schema<Contract> = [
   ],
 ];
 
-export const NewContract: FC<props> = ({ userID, onSave, onClose }) => {
+export const NewContract: FC<props> = ({
+  userID,
+  onSave,
+  onClose,
+  onChange,
+}) => {
   const [state, dispatch] = useReducer(reducer, {
     isLoaded: false,
     contractData: new Contract(),
+    propertiesSelected: [],
   });
 
   const load = useCallback(() => {
@@ -145,6 +158,11 @@ export const NewContract: FC<props> = ({ userID, onSave, onClose }) => {
               type: ACTIONS.SET_CONTRACT_DATA,
               data: req,
             });
+            if (onChange)
+              onChange({
+                contractData: req,
+                propertiesSelected: state.propertiesSelected,
+              } as Output);
           }}
         />
       </div>
@@ -157,9 +175,17 @@ export const NewContract: FC<props> = ({ userID, onSave, onClose }) => {
             console.log('Saving property data: ', propertyData)
           }
           onClose={() => {}}
-          onChange={propertyData =>
-            console.log('Changed property data: ', propertyData)
-          }
+          onChange={propertyData => {
+            dispatch({
+              type: ACTIONS.SET_PROPERTIES_SELECTED,
+              data: propertyData,
+            });
+            if (onChange)
+              onChange({
+                contractData: state.contractData,
+                propertiesSelected: propertyData,
+              } as Output);
+          }}
         />
       </div>
     </SectionBar>
