@@ -53,7 +53,6 @@ export const PropertyTable: FC<props> = ({
       let req = new Property();
       req.setUserId(userId);
       const res = await PropertyClientService.BatchGet(req);
-      console.log('Got res for properties: ', res.getResultsList());
       dispatch({
         type: ACTIONS.SET_PROPERTIES_LOADED,
         data: res.getResultsList(),
@@ -93,6 +92,7 @@ export const PropertyTable: FC<props> = ({
       <Form<Properties>
         key={state.isLoaded.toString()}
         error={state.error}
+        title={state.error ? `An Error Occurred` : undefined}
         data={{ propertyArray: state.propertiesSelected }}
         schema={SCHEMA}
         onSave={propertiesSaved => onSave(propertiesSaved.propertyArray)}
