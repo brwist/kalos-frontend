@@ -1,11 +1,11 @@
 import React from 'react';
-import { PropertyTable } from './';
+import { PropertyDropdown } from '.';
 import { ExampleTitle } from '../helpers';
 
 export default () => (
   <>
     <ExampleTitle>Default</ExampleTitle>
-    <PropertyTable
+    <PropertyDropdown
       userId={22}
       onSave={saved => console.log('Would save: ', saved)}
       onClose={() => alert('Would close')}

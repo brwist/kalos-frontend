@@ -24,7 +24,7 @@ type Properties = {
   propertyArray: Property[];
 };
 
-export const PropertyTable: FC<props> = ({
+export const PropertyDropdown: FC<props> = ({
   userId,
   onSave,
   onClose,
