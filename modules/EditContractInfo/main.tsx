@@ -1,17 +1,17 @@
 /* 
 
-  Design Specification: 
-
+  Design Specification: converting this to React from Coldfusion
+  https://app.kalosflorida.com/index.cfm?action=admin:contracts.edit&contract_id=3365&p=1
+  
 */
 
-import { Contract } from '@kalos-core/kalos-rpc/Contract';
 import React, { useEffect, useCallback, FC } from 'react';
 import { PageWrapper } from '../PageWrapper/main';
-import { EditContractInfo as EditContract } from '../ComponentsLibrary/EditContractInfo/index';
+import { EditContractInfo as EditContract, Output } from '../ComponentsLibrary/EditContractInfo/index';
 // add any prop types here
 interface props {
   userID: number;
-  onSave: (savedContract: Contract) => any;
+  onSave: (savedContract: Output) => any;
   onClose: () => any;
 }
 

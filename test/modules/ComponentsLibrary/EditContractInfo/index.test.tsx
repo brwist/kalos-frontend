@@ -5,8 +5,9 @@
 
 /* 
 
-  Design Specification: 
-
+  Design Specification: converting this to React from Coldfusion
+  https://app.kalosflorida.com/index.cfm?action=admin:contracts.edit&contract_id=3365&p=1
+  
 */
 
 export {};
@@ -96,6 +97,12 @@ describe('ComponentsLibrary', () => {
               .find('.MuiButton-label')
               .filterWhere(button => button.text() === 'Save')
               .simulate('click');
+
+            wrapper
+              .find('.MuiButton-label')
+              .filterWhere(button => button.text() === 'Confirm')
+              .simulate('click');
+
             Chai.expect(saves).to.be.equal(true);
           });
         });
@@ -314,6 +321,8 @@ describe('ComponentsLibrary', () => {
           it('is a checkbox selection field');
         });
       });
+
+      describe('Invoice Data Section', () => {});
     });
   });
 });
