@@ -11,7 +11,7 @@
 
 export {};
 
-import NewContract = require('../../../../modules/ComponentsLibrary/EditContractInfo/index');
+import EditContractInfo = require('../../../../modules/ComponentsLibrary/EditContractInfo/index');
 import React = require('react');
 import Enzyme = require('enzyme');
 
@@ -28,12 +28,12 @@ import {
 let saves = false;
 let closes = false;
 describe('ComponentsLibrary', () => {
-  describe('NewContract', () => {
-    describe('<NewContract userID={8418} />', () => {
+  describe('EditContractInfo', () => {
+    describe('<EditContractInfo userID={8418} />', () => {
       let wrapper: Enzyme.ReactWrapper;
       before(() => {
         wrapper = Enzyme.mount(
-          <NewContract.EditContractInfo
+          <EditContractInfo.EditContractInfo
             userID={8418}
             onSave={() => {
               saves = true;
