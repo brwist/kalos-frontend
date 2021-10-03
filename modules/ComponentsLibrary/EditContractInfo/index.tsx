@@ -1,6 +1,7 @@
 /* 
 
-  Design Specification: 
+  Design Specification: converting this to React from Coldfusion
+  https://app.kalosflorida.com/index.cfm?action=admin:contracts.edit&contract_id=3365&p=1
 
 */
 
@@ -16,6 +17,7 @@ import { SectionBar } from '../SectionBar';
 import { reducer, ACTIONS, FREQUENCIES, BILLING_OPTIONS } from './reducer';
 import { PropertyDropdown } from '../PropertyDropdown/index';
 import { Property } from '@kalos-core/kalos-rpc/Property';
+import { Confirm } from '../Confirm';
 
 export interface Output {
   contractData: Contract;
@@ -24,7 +26,7 @@ export interface Output {
 
 interface props {
   userID: number;
-  onSave: (savedContract: Contract) => any;
+  onSave: (savedContract: Output) => any;
   onClose: () => any;
   onChange?: (currentData: Output) => any;
 }
@@ -105,6 +107,7 @@ export const EditContractInfo: FC<props> = ({
     isLoaded: false,
     contractData: new Contract(),
     propertiesSelected: [],
+    isValidating: false,
   });
 
   const load = useCallback(() => {
@@ -112,6 +115,20 @@ export const EditContractInfo: FC<props> = ({
   }, []);
 
   const cleanup = useCallback(() => {}, []);
+
+  const validateForSave = () => {
+    if (state.propertiesSelected !== undefined) {
+      if (state.propertiesSelected.length <= 0) {
+        dispatch({ type: ACTIONS.SET_VALIDATING, data: true });
+        return;
+      }
+    }
+
+    onSave({
+      contractData: state.contractData,
+      propertiesSelected: state.propertiesSelected,
+    } as Output);
+  };
 
   useEffect(() => {
     load();
@@ -122,72 +139,98 @@ export const EditContractInfo: FC<props> = ({
   }, [load, cleanup]);
 
   return (
-    <SectionBar
-      title="New Contract"
-      actions={[
-        { label: 'Cancel', onClick: () => onClose() },
-        { label: 'Save', onClick: () => onSave(state.contractData) },
-      ]}
-    >
-      <div style={{ width: '75%', display: 'inline-block' }}>
-        <Form<Contract>
-          schema={CONTRACT_SCHEMA}
-          data={state.contractData}
-          onSave={contractData => onSave(contractData)}
-          onClose={() => onClose()}
-          onChange={contractData => {
-            let req = makeSafeFormObject(contractData, new Contract());
-            switch (req.getFrequency() as any) {
-              case FREQUENCIES.MONTHLY:
-                req.setFrequency(30);
-                break;
-              case FREQUENCIES.BIMONTHLY:
-                req.setFrequency(60);
-                break;
-              case FREQUENCIES.QUARTERLY:
-                req.setFrequency(90);
-                break;
-              case FREQUENCIES.SEMIANNUAL:
-                req.setFrequency(182);
-                break;
-              case FREQUENCIES.ANNUAL:
-                req.setFrequency(365);
-                break;
-            }
-            dispatch({
-              type: ACTIONS.SET_CONTRACT_DATA,
-              data: req,
-            });
-            if (onChange)
-              onChange({
-                contractData: req,
-                propertiesSelected: state.propertiesSelected,
-              } as Output);
-          }}
-        />
-      </div>
-      <div
-        style={{ width: '20%', display: 'inline-block', verticalAlign: 'top' }}
-      >
-        <PropertyDropdown
-          userId={userID}
-          onSave={propertyData =>
-            console.log('Saving property data: ', propertyData)
+    <>
+      {state.isValidating && (
+        <Confirm
+          title="Confirm Save"
+          open={true}
+          onClose={() =>
+            dispatch({ type: ACTIONS.SET_VALIDATING, data: false })
           }
-          onClose={() => {}}
-          onChange={propertyData => {
-            dispatch({
-              type: ACTIONS.SET_PROPERTIES_SELECTED,
-              data: propertyData,
-            });
-            if (onChange)
-              onChange({
-                contractData: state.contractData,
-                propertiesSelected: propertyData,
-              } as Output);
+          onConfirm={() => {
+            onSave({
+              contractData: state.contractData,
+              propertiesSelected: state.propertiesSelected,
+            } as Output);
+            dispatch({ type: ACTIONS.SET_VALIDATING, data: false });
           }}
-        />
-      </div>
-    </SectionBar>
+        >
+          There are no properties selected in the properties dropdown. No
+          properties will be associated with the contract. Are you sure you wish
+          to continue?
+        </Confirm>
+      )}
+      <SectionBar
+        title="New Contract"
+        actions={[
+          { label: 'Cancel', onClick: () => onClose() },
+          { label: 'Save', onClick: () => validateForSave() },
+        ]}
+      >
+        <div style={{ width: '75%', display: 'inline-block' }}>
+          <Form<Contract>
+            schema={CONTRACT_SCHEMA}
+            data={state.contractData}
+            onSave={() => validateForSave()}
+            onClose={() => onClose()}
+            onChange={contractData => {
+              let req = makeSafeFormObject(contractData, new Contract());
+              switch (req.getFrequency() as any) {
+                case FREQUENCIES.MONTHLY:
+                  req.setFrequency(30);
+                  break;
+                case FREQUENCIES.BIMONTHLY:
+                  req.setFrequency(60);
+                  break;
+                case FREQUENCIES.QUARTERLY:
+                  req.setFrequency(90);
+                  break;
+                case FREQUENCIES.SEMIANNUAL:
+                  req.setFrequency(182);
+                  break;
+                case FREQUENCIES.ANNUAL:
+                  req.setFrequency(365);
+                  break;
+              }
+              dispatch({
+                type: ACTIONS.SET_CONTRACT_DATA,
+                data: req,
+              });
+              if (onChange)
+                onChange({
+                  contractData: req,
+                  propertiesSelected: state.propertiesSelected,
+                } as Output);
+            }}
+          />
+        </div>
+        <div
+          style={{
+            width: '20%',
+            display: 'inline-block',
+            verticalAlign: 'top',
+          }}
+        >
+          <PropertyDropdown
+            userId={userID}
+            onSave={propertyData =>
+              console.log('Saving property data: ', propertyData)
+            }
+            onClose={() => {}}
+            onChange={propertyData => {
+              dispatch({
+                type: ACTIONS.SET_PROPERTIES_SELECTED,
+                data: propertyData,
+              });
+              if (onChange)
+                onChange({
+                  contractData: state.contractData,
+                  propertiesSelected: propertyData,
+                } as Output);
+            }}
+          />
+        </div>
+      </SectionBar>
+    </>
   );
 };

@@ -5,12 +5,14 @@ export type State = {
   isLoaded: boolean;
   contractData: Contract;
   propertiesSelected: Property[] | undefined;
+  isValidating: boolean;
 };
 
 export enum ACTIONS {
   SET_LOADED = 'setLoaded',
   SET_CONTRACT_DATA = 'setContractData',
   SET_PROPERTIES_SELECTED = 'setPropertiesSelected',
+  SET_VALIDATING = 'setValidating',
 }
 
 export enum FREQUENCIES {
@@ -35,6 +37,10 @@ export type Action =
   | {
       type: ACTIONS.SET_PROPERTIES_SELECTED;
       data: Property[] | undefined;
+    }
+  | {
+      type: ACTIONS.SET_VALIDATING;
+      data: boolean;
     };
 
 export const reducer = (state: State, action: Action) => {
@@ -55,6 +61,12 @@ export const reducer = (state: State, action: Action) => {
       return {
         ...state,
         propertiesSelected: action.data,
+      };
+    }
+    case ACTIONS.SET_VALIDATING: {
+      return {
+        ...state,
+        isValidating: action.data,
       };
     }
     default:
