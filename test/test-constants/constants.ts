@@ -34,16 +34,7 @@ export const GetPathFromName = (
       console.error('Could not get path from name: The scope is not valid.');
   }
 };
-/**
- * @param  {string} output The string to output to the console.
- *
- * This is a wrapper for console.log to be used to clean up output from React components. This will display normally due to being wrapped in <TestLog>.
- * Any other log output will be supressed during testing.
- *
- */
-export const Log = (output: string) => {
-  console.log(`<TestLog>${output}</TestLog>`);
-};
+
 /**
  * This is meant to be awaited in the test. It will allow you time in the test to have the 'loading'
  * take place and resolve all of your mocked promises. Use after every call to BatchGet, Get, etc.
