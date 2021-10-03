@@ -1,13 +1,11 @@
 import React from 'react';
 import ReactDOM from 'react-dom';
-import { NewContract } from './main';
-import { UserClient } from '@kalos-core/kalos-rpc/User';
-import { ENDPOINT } from '../../constants';
+import { EditContractInfo } from './main';
 import { UserClientService } from '../../helpers';
 
 UserClientService.GetToken('test', 'test').then(() => {
   ReactDOM.render(
-    <NewContract
+    <EditContractInfo
       userID={8418}
       onClose={() => {
         alert('Would close');
