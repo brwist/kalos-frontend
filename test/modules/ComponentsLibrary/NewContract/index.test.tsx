@@ -11,7 +11,7 @@
 
 export {};
 
-import NewContract = require('../../../../modules/ComponentsLibrary/NewContract/index');
+import NewContract = require('../../../../modules/ComponentsLibrary/EditContractInfo/index');
 import React = require('react');
 import Enzyme = require('enzyme');
 
@@ -19,7 +19,7 @@ import Chai = require('chai');
 import {
   BILLING_OPTIONS,
   FREQUENCIES,
-} from '../../../../modules/ComponentsLibrary/NewContract/reducer';
+} from '../../../../modules/ComponentsLibrary/EditContractInfo/reducer';
 import {
   PAYMENT_TYPE_OPTIONS,
   PAYMENT_STATUS_OPTIONS,
@@ -33,7 +33,7 @@ describe('ComponentsLibrary', () => {
       let wrapper: Enzyme.ReactWrapper;
       before(() => {
         wrapper = Enzyme.mount(
-          <NewContract.NewContract
+          <NewContract.EditContractInfo
             userID={8418}
             onSave={() => {
               saves = true;

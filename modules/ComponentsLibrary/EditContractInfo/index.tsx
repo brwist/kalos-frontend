@@ -29,7 +29,7 @@ interface props {
   onChange?: (currentData: Output) => any;
 }
 
-const NEW_CONTRACT_SCHEMA: Schema<Contract> = [
+const CONTRACT_SCHEMA: Schema<Contract> = [
   [
     {
       label: 'Start Date',
@@ -95,7 +95,7 @@ const NEW_CONTRACT_SCHEMA: Schema<Contract> = [
   ],
 ];
 
-export const NewContract: FC<props> = ({
+export const EditContractInfo: FC<props> = ({
   userID,
   onSave,
   onClose,
@@ -131,7 +131,7 @@ export const NewContract: FC<props> = ({
     >
       <div style={{ width: '75%', display: 'inline-block' }}>
         <Form<Contract>
-          schema={NEW_CONTRACT_SCHEMA}
+          schema={CONTRACT_SCHEMA}
           data={state.contractData}
           onSave={contractData => onSave(contractData)}
           onClose={() => onClose()}
