@@ -445,26 +445,47 @@ export const TransactionTable: FC<Props> = ({
 
   const load = useCallback(async () => {
     dispatch({ type: ACTIONS.SET_LOADING, data: true });
-    const employees = await UserClientService.loadTechnicians();
-    let sortedEmployeeList = employees.sort((a, b) =>
-      a.getLastname() > b.getLastname() ? 1 : -1,
-    );
-    dispatch({ type: ACTIONS.SET_EMPLOYEES, data: sortedEmployeeList });
-    const accountRes = await TransactionAccountClientService.BatchGet(
-      new TransactionAccount(),
-    );
-
-    dispatch({
-      type: ACTIONS.SET_COST_CENTERS,
-      data: accountRes.getResultsList().map(account => ({
-        label: `${account.getId()}-${account.getDescription()}`,
-        value: account.getId(),
-      })),
-    });
+    let employees;
+    try {
+      employees = await UserClientService.loadTechnicians();
+    } catch (err) {
+      console.error(
+        `An error occurred while loading technicians from the UserClientService: ${err}`,
+      );
+    }
+    if (employees) {
+      let sortedEmployeeList = employees.sort((a, b) =>
+        a.getLastname() > b.getLastname() ? 1 : -1,
+      );
+      dispatch({ type: ACTIONS.SET_EMPLOYEES, data: sortedEmployeeList });
+    }
+    let accountRes;
+    try {
+      accountRes = await TransactionAccountClientService.BatchGet(
+        new TransactionAccount(),
+      );
+    } catch (err) {
+      console.error(
+        `An error occurred while getting transaction accounts: ${err}`,
+      );
+    }
+    if (accountRes)
+      dispatch({
+        type: ACTIONS.SET_COST_CENTERS,
+        data: accountRes.getResultsList().map(account => ({
+          label: `${account.getId()}-${account.getDescription()}`,
+          value: account.getId(),
+        })),
+      });
 
     const userReq = new User();
     userReq.setId(loggedUserId);
-    const user = await UserClientService.Get(userReq);
+    let user;
+    try {
+      user = await UserClientService.Get(userReq);
+    } catch (err) {
+      console.error(`An error occurred while getting a user: ${err}`);
+    }
     let departments;
     try {
       let departmentReq = new TimesheetDepartment();
@@ -479,12 +500,14 @@ export const TransactionTable: FC<Props> = ({
       );
     }
 
-    const role = user
-      .getPermissionGroupsList()
-      .find(p => p.getType() === 'role');
+    if (user) {
+      const role = user
+        .getPermissionGroupsList()
+        .find(p => p.getType() === 'role');
 
-    if (role) {
-      dispatch({ type: ACTIONS.SET_ROLE, data: role.getName() as RoleType });
+      if (role) {
+        dispatch({ type: ACTIONS.SET_ROLE, data: role.getName() as RoleType });
+      }
     }
 
     dispatch({ type: ACTIONS.SET_CHANGING_PAGE, data: false });
@@ -656,16 +679,16 @@ export const TransactionTable: FC<Props> = ({
           'Customer: ' +
           (res.getCustomer() === undefined
             ? 'No Customer '
-            : `${res
+            : `${res.getCustomer()!.getFirstname()} ${res
                 .getCustomer()!
-                .getFirstname()} ${res.getCustomer()!.getLastname()}`);
+                .getLastname()}`);
         const property =
           'Property: ' +
           (res.getProperty() === undefined
             ? 'No Property'
-            : `${res
+            : `${res.getProperty()!.getAddress()} ${res
                 .getProperty()!
-                .getAddress()} ${res.getProperty()!.getCity()}`);
+                .getCity()}`);
         returnString = [descritpion, customer, property];
       } catch (error) {
         console.log('Not a number');

@@ -12,7 +12,6 @@ import Chai = require('chai');
 import Stubs = require('../../../test-setup/stubs'); // ? Sets the auth token up in a one-liner
 import TransactionModule = require('@kalos-core/kalos-rpc/Transaction');
 import LoaderModule = require('../../../../modules/Loader/main');
-import ModalModule = require('../../../../modules/ComponentsLibrary/Modal');
 import EditTransactionModule = require('../../../../modules/ComponentsLibrary/EditTransaction');
 import UserModule = require('@kalos-core/kalos-rpc/User');
 import TransactionActivityModule = require('@kalos-core/kalos-rpc/TransactionActivity');
@@ -21,7 +20,7 @@ import TimesheetDepartmentModule = require('@kalos-core/kalos-rpc/TimesheetDepar
 import TestConstants = require('../../../test-constants/test-response-data');
 import Constants = require('../../../test-constants/constants');
 
-describe('ComponentsLibrary', () => {
+describe.only('ComponentsLibrary', () => {
   describe('TransactionTable', () => {
     describe('<TransactionTable loggedUserId={98217} hasActions />', () => {
       let wrapper: Enzyme.ReactWrapper;
