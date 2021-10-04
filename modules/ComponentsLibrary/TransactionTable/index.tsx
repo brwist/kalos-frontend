@@ -927,7 +927,11 @@ export const TransactionTable: FC<Props> = ({
       newTxn.setTimestamp(saved['Date']);
       newTxn.setOrderNumber(saved['Order #']);
       newTxn.setAssignedEmployeeId(saved['Purchaser']);
-      newTxn.setOwnerId(loggedUserId);
+      if (saved['Purchaser'] != 0 && saved['Purchaser'] != undefined) {
+        newTxn.setOwnerId(newTxn.getAssignedEmployeeId());
+      } else {
+        newTxn.setOwnerId(loggedUserId);
+      }
       newTxn.setDepartmentId(saved['Department']);
       newTxn.setJobId(saved['Job #']);
       newTxn.setCostCenterId(saved['Cost Center ID']);
