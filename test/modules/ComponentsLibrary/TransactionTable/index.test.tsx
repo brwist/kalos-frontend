@@ -17,6 +17,7 @@ import UserModule = require('@kalos-core/kalos-rpc/User');
 import TransactionActivityModule = require('@kalos-core/kalos-rpc/TransactionActivity');
 import TimesheetDepartmentModule = require('@kalos-core/kalos-rpc/TimesheetDepartment');
 import TransactionAccountModule = require('@kalos-core/kalos-rpc/TransactionAccount');
+import DevlogModule = require('@kalos-core/kalos-rpc/Devlog');
 
 import TestConstants = require('../../../test-constants/test-response-data');
 import Constants = require('../../../test-constants/constants');
@@ -107,6 +108,9 @@ describe('ComponentsLibrary', () => {
           transactionAccountList,
           new TransactionAccountModule.TransactionAccount(),
         );
+
+        let devlog = new DevlogModule.Devlog();
+        Stubs.setupStubs('DevlogClientService', 'Create', devlog);
       });
       after(() => {
         Stubs.restoreStubs();
