@@ -105,7 +105,7 @@ let filter: FilterType = {
   departmentId: 0,
   employeeId: 0,
   week: OPTION_ALL,
-  vendor: '',
+  jobNumber: 0,
   isAccepted: false,
   isRejected: false,
   amount: undefined,
@@ -308,8 +308,8 @@ export const TransactionTable: FC<Props> = ({
     if (state.transactionFilter.processed) {
       req.setStatusId(5);
     }
-    if (state.transactionFilter.vendor)
-      req.setVendor(`%${state.transactionFilter.vendor}%`);
+    if (state.transactionFilter.jobNumber)
+      req.setJobId(state.transactionFilter.jobNumber);
     if (state.transactionFilter.departmentId != 0)
       req.setDepartmentId(state.transactionFilter.departmentId);
     if (state.transactionFilter.employeeId != 0)
@@ -445,7 +445,7 @@ export const TransactionTable: FC<Props> = ({
     state.orderBy,
     state.transactionFilter.processed,
     state.transactionFilter.universalSearch,
-    state.transactionFilter.vendor,
+    state.transactionFilter.jobNumber,
   ]);
 
   const load = useCallback(async () => {
@@ -593,12 +593,12 @@ export const TransactionTable: FC<Props> = ({
     if (!d.employeeId) {
       d.employeeId = 0;
     }
-    if (!d.vendor) {
-      d.vendor = '';
+    if (!d.jobNumber) {
+      d.jobNumber = 0;
     }
     filter.departmentId = d.departmentId;
     filter.employeeId = d.employeeId;
-    filter.vendor = d.vendor;
+    filter.jobNumber = d.jobNumber;
     filter.isAccepted = d.accepted ? d.accepted : undefined;
     filter.isRejected = d.rejected ? d.rejected : undefined;
     filter.amount = d.amount;
@@ -902,14 +902,14 @@ export const TransactionTable: FC<Props> = ({
         ),
       },
       {
+        name: 'jobNumber',
+        label: 'Search Job Number',
+        type: 'search',
+      },
+      {
         name: 'amount',
         label: 'Search Amount',
         type: 'text',
-      },
-      {
-        name: 'vendor',
-        label: 'Search Vendor',
-        type: 'search',
         actions: [
           {
             label: 'search',

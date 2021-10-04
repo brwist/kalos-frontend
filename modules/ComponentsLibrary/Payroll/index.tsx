@@ -47,7 +47,7 @@ export type FilterData = {
   departmentId: number;
   employeeId: number;
   week: string;
-  vendor?: string;
+  jobNumber?: number;
   accepted?: boolean;
   rejected?: boolean;
   amount?: number;
