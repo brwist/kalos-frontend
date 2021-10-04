@@ -10,7 +10,7 @@ export interface FilterType {
   departmentId: number;
   employeeId: number;
   week: string;
-  vendor: string;
+  jobNumber: number;
   isAccepted: boolean | undefined;
   isRejected: boolean | undefined;
   amount: number | undefined;
