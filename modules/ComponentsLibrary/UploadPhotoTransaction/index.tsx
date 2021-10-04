@@ -195,7 +195,7 @@ export const UploadPhotoTransaction: FC<Props> = ({
     let newArray = [];
     for (let i = 0; i < a.length; i++) {
       const temp = newArray.find(
-        (b, idx) => b.value === a[i].value && b.label === a[i].label,
+        b => b.value === a[i].value && b.label === a[i].label,
       );
       if (temp == undefined) {
         newArray.push(a[i]);
