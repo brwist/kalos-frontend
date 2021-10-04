@@ -90,6 +90,7 @@ export const PropertyDropdown: FC<props> = ({
     <>
       {!state.isLoaded && <Loader />}
       <Form<Properties>
+        className="PropertyDropdown"
         key={state.isLoaded.toString()}
         error={state.error}
         title={state.error ? `An Error Occurred` : undefined}

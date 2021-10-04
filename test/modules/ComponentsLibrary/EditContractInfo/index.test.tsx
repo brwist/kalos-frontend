@@ -13,6 +13,8 @@
 export {};
 
 import EditContractInfo = require('../../../../modules/ComponentsLibrary/EditContractInfo/index');
+import PropertyDropdownModule = require('../../../../modules/ComponentsLibrary/PropertyDropdown/index');
+
 import React = require('react');
 import Enzyme = require('enzyme');
 import Stubs = require('../../../test-setup/stubs'); // ? Sets the auth token up in a one-liner
@@ -27,6 +29,7 @@ import {
 } from '../../../../modules/CustomerDetails/components/ContractInfo';
 
 import DevlogModule = require('@kalos-core/kalos-rpc/Devlog');
+import { Log } from '../../../test-tools/logging';
 
 let saves = false;
 let closes = false;
@@ -321,14 +324,16 @@ describe('ComponentsLibrary', () => {
           });
         });
 
-        describe('Property Selector Section', () => {
-          it('Contains a property selector');
-          it('is required');
-          it('is a checkbox selection field');
+        describe('Property Dropdown', () => {
+          it('contains a property dropdown', () => {
+            Chai.expect(wrapper.find('.PropertyDropdown')).to.have.lengthOf(2);
+          });
         });
       });
 
-      describe('Invoice Data Section', () => {});
+      describe('Invoice Data Section', () => {
+        it('has an invoice data section');
+      });
     });
   });
 });
