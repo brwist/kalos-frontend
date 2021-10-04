@@ -92,7 +92,7 @@ export const EditTransaction: FC<Props> = ({
     ],
     [
       {
-        label: 'Owner ID',
+        label: 'Purchaser',
         name: 'getOwnerId',
         type: 'technician',
       },
@@ -169,11 +169,6 @@ export const EditTransaction: FC<Props> = ({
       {
         label: 'Is recorded?',
         name: 'getIsRecorded',
-        type: 'checkbox',
-      },
-      {
-        label: 'Is active?',
-        name: 'getIsActive',
         type: 'checkbox',
       },
       {
