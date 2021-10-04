@@ -924,7 +924,15 @@ export const TransactionTable: FC<Props> = ({
   const saveFromRowButton = useCallback(
     async (saved: any) => {
       let newTxn = new Transaction();
-      newTxn.setTimestamp(saved['Date']);
+      let timestamp = saved['Date'];
+      if (timestamp != '') {
+        newTxn.setTimestamp(saved['Date']);
+      } else {
+        console.log('not valid date');
+        const newTimestamp = format(new Date(), 'yyyy-MM-dd hh:mm:ss');
+        console.log('new date', newTimestamp);
+        newTxn.setTimestamp(newTimestamp);
+      }
       newTxn.setOrderNumber(saved['Order #']);
       newTxn.setAssignedEmployeeId(saved['Purchaser']);
       if (saved['Purchaser'] != 0 && saved['Purchaser'] != undefined) {
@@ -1151,6 +1159,7 @@ export const TransactionTable: FC<Props> = ({
         >
           <EditTransaction
             transactionInput={state.transactionToEdit}
+            title="Edit Transaction"
             onSave={saved => {
               saved.setId(state.transactionToEdit!.getId());
               updateTransaction(saved);
