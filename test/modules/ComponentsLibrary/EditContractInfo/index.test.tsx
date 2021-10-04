@@ -15,7 +15,7 @@ export {};
 import EditContractInfo = require('../../../../modules/ComponentsLibrary/EditContractInfo/index');
 import React = require('react');
 import Enzyme = require('enzyme');
-
+import Stubs = require('../../../test-setup/stubs'); // ? Sets the auth token up in a one-liner
 import Chai = require('chai');
 import {
   BILLING_OPTIONS,
@@ -25,6 +25,8 @@ import {
   PAYMENT_TYPE_OPTIONS,
   PAYMENT_STATUS_OPTIONS,
 } from '../../../../modules/CustomerDetails/components/ContractInfo';
+
+import DevlogModule = require('@kalos-core/kalos-rpc/Devlog');
 
 let saves = false;
 let closes = false;
@@ -44,9 +46,13 @@ describe('ComponentsLibrary', () => {
             }}
           />,
         );
+
+        let devlog = new DevlogModule.Devlog();
+        Stubs.setupStubs('DevlogClientService', 'Create', devlog);
       });
       after(() => {
         wrapper.unmount();
+        Stubs.restoreStubs();
       });
       afterEach(() => {
         // Reset these after each test
