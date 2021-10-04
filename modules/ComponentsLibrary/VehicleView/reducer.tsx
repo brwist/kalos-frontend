@@ -14,6 +14,7 @@ export type State = {
   assigningVehicle: Vehicle | undefined;
   departments: TimesheetDepartment[];
   users: User[];
+  deletingVehicle: Vehicle | undefined;
 };
 
 export enum ACTIONS {
@@ -29,6 +30,7 @@ export enum ACTIONS {
   SET_ASSIGNING_VEHICLE = 'setAssigningVehicle',
   SET_DEPARTMENTS = 'setDepartments',
   SET_USERS = 'setUsers',
+  SET_DELETING_VEHICLE = 'setDeletingVehicle',
 }
 export type assignmentData = {
   userId: number;
@@ -47,6 +49,7 @@ export type Action =
   | { type: ACTIONS.SET_VEHICLES; data: Vehicle[] }
   | { type: ACTIONS.SET_DEPARTMENTS; data: TimesheetDepartment[] }
   | { type: ACTIONS.SET_USERS; data: User[] }
+  | { type: ACTIONS.SET_DELETING_VEHICLE; data: Vehicle | undefined }
   | { type: ACTIONS.SET_PAGE; data: number };
 
 export const reducer = (state: State, action: Action) => {
@@ -126,6 +129,13 @@ export const reducer = (state: State, action: Action) => {
       return {
         ...state,
         users: action.data,
+      };
+    }
+    case ACTIONS.SET_DELETING_VEHICLE: {
+      console.log('setting deleting ', action.data);
+      return {
+        ...state,
+        deletingVehicle: action.data,
       };
     }
     default:
