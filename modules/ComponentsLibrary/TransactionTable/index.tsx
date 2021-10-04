@@ -1760,6 +1760,11 @@ export const TransactionTable: FC<Props> = ({
                             >
                               <IconButton
                                 key="editIcon"
+                                disabled={
+                                  selectorParam.txn.getAssignedEmployeeId() !=
+                                    loggedUserId ||
+                                  selectorParam.txn.getOwnerId() != loggedUserId
+                                }
                                 size="small"
                                 onClick={() =>
                                   dispatch({
