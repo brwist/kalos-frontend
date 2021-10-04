@@ -30,7 +30,9 @@ export const getFakeTimesheetDepartments = () => {
   ServiceOther.setManagerId(336);
   ServiceOther.setIsActive(1);
 
-  return [ServiceOther];
+  let tdList = new TimesheetDepartmentModule.TimesheetDepartmentList();
+  tdList.setResultsList([ServiceOther]);
+  return tdList;
 };
 
 export const getFakeTransactionList = () => {

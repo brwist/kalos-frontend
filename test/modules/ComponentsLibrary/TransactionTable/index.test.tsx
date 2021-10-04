@@ -16,11 +16,12 @@ import EditTransactionModule = require('../../../../modules/ComponentsLibrary/Ed
 import UserModule = require('@kalos-core/kalos-rpc/User');
 import TransactionActivityModule = require('@kalos-core/kalos-rpc/TransactionActivity');
 import TimesheetDepartmentModule = require('@kalos-core/kalos-rpc/TimesheetDepartment');
+import TransactionAccountModule = require('@kalos-core/kalos-rpc/TransactionAccount');
 
 import TestConstants = require('../../../test-constants/test-response-data');
 import Constants = require('../../../test-constants/constants');
 
-describe.only('ComponentsLibrary', () => {
+describe('ComponentsLibrary', () => {
   describe('TransactionTable', () => {
     describe('<TransactionTable loggedUserId={98217} hasActions />', () => {
       let wrapper: Enzyme.ReactWrapper;
@@ -88,6 +89,23 @@ describe.only('ComponentsLibrary', () => {
           'BatchGet',
           TestConstants.getFakeActivityLogList(100, 98217),
           transactionActivity,
+        );
+
+        let transactionAccount =
+          new TransactionAccountModule.TransactionAccount();
+        transactionAccount.setId(0);
+        transactionAccount.setIsActive(1);
+        transactionAccount.setPageNumber(0);
+        transactionAccount.setDescription('An account for unit tests');
+
+        let transactionAccountList =
+          new TransactionAccountModule.TransactionAccountList();
+        transactionAccountList.setResultsList([transactionAccount]);
+        Stubs.setupStubs(
+          'TransactionAccountClientService',
+          'BatchGet',
+          transactionAccountList,
+          new TransactionAccountModule.TransactionAccount(),
         );
       });
       after(() => {
