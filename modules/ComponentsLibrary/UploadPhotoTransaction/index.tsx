@@ -170,7 +170,9 @@ export const UploadPhotoTransaction: FC<Props> = ({
         )}.${ext}`;
         await uploadPhotoToExistingTransaction(
           name,
-          undefined,
+          type === 'PickTicket' || type === 'Receipt' || type === 'Invoice'
+            ? type
+            : undefined,
           fileData,
           insert,
           loggedUserId,
@@ -189,7 +191,18 @@ export const UploadPhotoTransaction: FC<Props> = ({
     },
     [loggedUserId, onUpload, fileData, formKey],
   );
-
+  function uniq(a: { label: string; value: string }[]) {
+    let newArray = [];
+    for (let i = 0; i < a.length; i++) {
+      const temp = newArray.find(
+        (b, idx) => b.value === a[i].value && b.label === a[i].label,
+      );
+      if (temp == undefined) {
+        newArray.push(a[i]);
+      }
+    }
+    return newArray;
+  }
   const handleSetValidateJobNumber = useCallback(
     (validate: Entry | undefined) => setValidateJobNumber(validate),
     [setValidateJobNumber],
@@ -209,18 +222,18 @@ export const UploadPhotoTransaction: FC<Props> = ({
   let SCHEMA: Schema<Entry> = [
     [
       {
-        name: 'tag',
-        label: 'Tag',
-        required: role != 'AccountsPayable',
-        options: SUBJECT_TAGS_ACCOUNTS_PAYABLE,
-      },
-    ],
-    [
-      {
         name: 'file',
         label: 'Photo',
         type: 'file',
         onFileLoad: handleFileLoad,
+      },
+    ],
+    [
+      {
+        name: 'tag',
+        label: 'Transaction Type',
+        required: role != 'AccountsPayable',
+        options: uniq(SUBJECT_TAGS_ACCOUNTS_PAYABLE),
       },
     ],
     [
