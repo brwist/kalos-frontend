@@ -231,7 +231,7 @@ export const UploadPhotoTransaction: FC<Props> = ({
     [
       {
         name: 'tag',
-        label: 'Transaction Type',
+        label: 'File Type',
         required: role != 'AccountsPayable',
         options: uniq(SUBJECT_TAGS_ACCOUNTS_PAYABLE),
       },
