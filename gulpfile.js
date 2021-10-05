@@ -89,6 +89,17 @@ async function create() {
     name = await textPrompt('Module name: ');
   }
 
+  let description = await textPrompt('Description (optional): ');
+  if (description === '' || !description) {
+    description = 'None';
+  }
+  let designDocument = await textPrompt('Design Document / Spec (optional): ');
+  if (designDocument === '' || !designDocument) {
+    designDocument = 'None Specified';
+  }
+
+  if (designDocument === 't' || description === 't') return;
+
   if (name.includes('_') || name.includes('-')) {
     error(
       'React components should adhere to Pascal case and should not contain the characters "_" or "-".',
@@ -119,10 +130,16 @@ async function create() {
   // Get the text from the template files
   const indexJS = sh
     .cat(['index.txt'])
-    .sed(new RegExp('TITLE_HERE', 'g'), name);
+    .sed(new RegExp('TITLE_HERE', 'g'), name)
+    .sed(new RegExp('DESCRIPTION', 'g'), description)
+    .sed(new RegExp('DOCUMENT', 'g'), designDocument);
   const mainJS = isComponent
     ? null
-    : sh.cat(['main.txt']).sed(new RegExp('TITLE_HERE', 'g'), name);
+    : sh
+        .cat(['main.txt'])
+        .sed(new RegExp('TITLE_HERE', 'g'), name)
+        .sed(new RegExp('DESCRIPTION', 'g'), description)
+        .sed(new RegExp('DOCUMENT', 'g'), designDocument);
   const reducerJS = sh
     .cat(['reducer.txt'])
     .sed(new RegExp('TITLE_HERE', 'g'), name);
@@ -137,7 +154,9 @@ async function create() {
 
   const testJS = sh
     .cat(['index.test.txt'])
-    .sed(new RegExp('TITLE_HERE', 'g'), name);
+    .sed(new RegExp('TITLE_HERE', 'g'), name)
+    .sed(new RegExp('DESCRIPTION', 'g'), description)
+    .sed(new RegExp('DOCUMENT', 'g'), designDocument);
 
   sh.cd('../../../../');
 
