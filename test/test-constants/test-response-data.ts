@@ -2,6 +2,8 @@ import UserModule = require('@kalos-core/kalos-rpc/User');
 import TransactionModule = require('@kalos-core/kalos-rpc/Transaction');
 import TransactionActivityModule = require('@kalos-core/kalos-rpc/TransactionActivity');
 import TimesheetDepartmentModule = require('@kalos-core/kalos-rpc/TimesheetDepartment/index');
+import PropertyModule = require('@kalos-core/kalos-rpc/Property');
+
 import DateFns = require('date-fns');
 export const getFakeUser = (userId: number) => {
   let TestTesterman = new UserModule.User();
@@ -28,7 +30,9 @@ export const getFakeTimesheetDepartments = () => {
   ServiceOther.setManagerId(336);
   ServiceOther.setIsActive(1);
 
-  return [ServiceOther];
+  let tdList = new TimesheetDepartmentModule.TimesheetDepartmentList();
+  tdList.setResultsList([ServiceOther]);
+  return tdList;
 };
 
 export const getFakeTransactionList = () => {
@@ -64,4 +68,21 @@ export const getFakeActivityLogList = (
   testList.setResultsList([testLog]);
 
   return testList;
+};
+
+export const getFakePropertyList = (userId: number) => {
+  let testProp1 = new PropertyModule.Property();
+  testProp1.setAddress('123 Test St, Test, FL 32792');
+  testProp1.setUserId(userId);
+
+  let testProp2 = new PropertyModule.Property();
+  testProp2.setAddress('1234 Test St, Test, FL 32792');
+  testProp2.setUserId(userId);
+
+  let testProp3 = new PropertyModule.Property();
+  testProp3.setAddress('12345 Test St, Test, FL 32792');
+  testProp3.setUserId(userId);
+
+  let testList = new PropertyModule.PropertyList();
+  testList.setResultsList([testProp1, testProp2, testProp3]);
 };

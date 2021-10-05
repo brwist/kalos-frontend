@@ -14,10 +14,10 @@
     "bust": "gulp -LL bust",
     "less": "lessc styles/index.less styles/main.css",
     "upload": "gulp -LL upload",
-    "test-coverage": "nyc ts-mocha --recursive -r ./test/test-setup/setup.ts -r esm -r ignore-styles -r mock-local-storage",
-    "test": "ts-mocha --recursive -r ./test/test-setup/setup.ts -r esm -r ignore-styles -r mock-local-storage --reporter mochawesome",
-    "test-watch": "ts-mocha --grep RPC --invert --recursive -r ./test/test-setup/setup.ts -r esm -r ignore-styles  -r mock-local-storage -w --reporter mochawesome",
-    "test-watch-parallel": "ts-mocha --parallel --grep RPC --invert --recursive -r ./test/test-setup/setup.ts -r esm -r ignore-styles  -r mock-local-storage -w"
+    "test-coverage": "nyc ts-mocha --recursive -r ./test/test-setup/setup.ts -r esm -r ignore-styles -r mock-local-storage --check-leaks",
+    "test": "ts-mocha --recursive -r ./test/test-setup/setup.ts -r esm -r ignore-styles -r mock-local-storage --reporter mochawesome --check-leaks",
+    "test-watch": "ts-mocha --grep RPC --invert --recursive -r ./test/test-setup/setup.ts -r esm -r ignore-styles  -r mock-local-storage -w --reporter mochawesome --check-leaks",
+    "test-watch-parallel": "ts-mocha --parallel --grep RPC --invert --recursive -r ./test/test-setup/setup.ts -r esm -r ignore-styles  -r mock-local-storage -w --reporter mochawesome --check-leaks"
   },
   "author": "Robert Milejczak <robbie@kalosflorida.com>",
   "license": "MIT",

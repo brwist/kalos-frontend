@@ -45,6 +45,10 @@ It is still in-use at the time of writing, but it may be deprecated soon in favo
 
 The [new database](https://console.aws.amazon.com/rds/home?region=us-east-1#database:id=kalos-dev-auto-prod-backup-open;is-cluster=false) is regularly overwritten by [this DMS task](https://console.aws.amazon.com/dms/v2/home?region=us-east-1#taskDetails/kalos-prod-to-dev-task-open). The task is set to run by a crontab job on [this EC2 instance](https://console.aws.amazon.com/ec2/v2/home?region=us-east-1#InstanceDetails:instanceId=i-0e8555f3af17025c7). The job simply starts the DMS replication task periodically and all of the data from our [production database](https://console.aws.amazon.com/rds/home?region=us-east-1#database:id=kalosnewprod;is-cluster=false) gets backed up into it. This will allow us to work with fresh data from our actual technicians. You can also trigger the DMS task manually if there is an issue being reported on a specific event / piece of data (once this is all hooked up, of course).
 
+#### How do I change the time the task runs or the DMS task?
+
+You can ssh into [this EC2 instance](https://console.aws.amazon.com/ec2/v2/home?region=us-east-1#InstanceDetails:instanceId=i-0e8555f3af17025c7) and then use `crontab -e` to view the task being run (or set a new time). Inside the file being run by crontab should be the command to start the DMS task, where you can change the ARN for the task if you need to.
+
 ### Small Issues
 
 It is possible to upgrade Kalos Core in Kalos Frontend before the dev server is actually ready to handle it. This usually results in "Unknown function" errors. To resolve this, simply wait until the deployment is finished.

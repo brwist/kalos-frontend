@@ -12,11 +12,12 @@ import Chai = require('chai');
 import Stubs = require('../../../test-setup/stubs'); // ? Sets the auth token up in a one-liner
 import TransactionModule = require('@kalos-core/kalos-rpc/Transaction');
 import LoaderModule = require('../../../../modules/Loader/main');
-import ModalModule = require('../../../../modules/ComponentsLibrary/Modal');
 import EditTransactionModule = require('../../../../modules/ComponentsLibrary/EditTransaction');
 import UserModule = require('@kalos-core/kalos-rpc/User');
 import TransactionActivityModule = require('@kalos-core/kalos-rpc/TransactionActivity');
 import TimesheetDepartmentModule = require('@kalos-core/kalos-rpc/TimesheetDepartment');
+import TransactionAccountModule = require('@kalos-core/kalos-rpc/TransactionAccount');
+import DevlogModule = require('@kalos-core/kalos-rpc/Devlog');
 
 import TestConstants = require('../../../test-constants/test-response-data');
 import Constants = require('../../../test-constants/constants');
@@ -90,6 +91,26 @@ describe('ComponentsLibrary', () => {
           TestConstants.getFakeActivityLogList(100, 98217),
           transactionActivity,
         );
+
+        let transactionAccount =
+          new TransactionAccountModule.TransactionAccount();
+        transactionAccount.setId(0);
+        transactionAccount.setIsActive(1);
+        transactionAccount.setPageNumber(0);
+        transactionAccount.setDescription('An account for unit tests');
+
+        let transactionAccountList =
+          new TransactionAccountModule.TransactionAccountList();
+        transactionAccountList.setResultsList([transactionAccount]);
+        Stubs.setupStubs(
+          'TransactionAccountClientService',
+          'BatchGet',
+          transactionAccountList,
+          new TransactionAccountModule.TransactionAccount(),
+        );
+
+        let devlog = new DevlogModule.Devlog();
+        Stubs.setupStubs('DevlogClientService', 'Create', devlog);
       });
       after(() => {
         Stubs.restoreStubs();
