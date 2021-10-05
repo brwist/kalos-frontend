@@ -34,6 +34,7 @@ import CustomerInformation from './CustomerInformation/examples';
 import DeletedServiceCallsReport from './DeletedServiceCallsReport/examples';
 import Documents from './Documents/examples';
 import EditContractInfo from './EditContractInfo/examples';
+import EditInvoiceData from './EditInvoiceData/examples';
 import EditProject from './EditProject/examples';
 import EditTransaction from './EditTransaction/examples';
 import EmployeeDepartments from './EmployeeDepartments/examples';
@@ -146,6 +147,7 @@ const COMPONENTS = {
   DeletedServiceCallsReport,
   Documents,
   EditContractInfo,
+  EditInvoiceData,
   EditProject,
   EditTransaction,
   EmployeeDepartments,
