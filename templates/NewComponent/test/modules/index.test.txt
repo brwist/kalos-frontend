@@ -5,7 +5,9 @@
 
 /* 
 
-  Design Specification: TODO add spec
+  Description: DESCRIPTION
+
+  Design Specification / Document: DOCUMENT
  
 */ 
 
