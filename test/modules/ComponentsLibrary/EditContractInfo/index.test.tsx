@@ -29,7 +29,7 @@ import {
 } from '../../../../modules/CustomerDetails/components/ContractInfo';
 
 import DevlogModule = require('@kalos-core/kalos-rpc/Devlog');
-import { Log } from '../../../test-tools/logging';
+import EditInvoiceDataModule = require('../../../../modules/ComponentsLibrary/EditInvoiceData/index');
 
 let saves = false;
 let closes = false;
@@ -69,9 +69,9 @@ describe('ComponentsLibrary', () => {
 
       describe('New Contract Section', () => {
         it('exists', () => {
-          Chai.expect(wrapper.find({ title: 'New Contract' })).to.be.lengthOf(
-            1,
-          );
+          Chai.expect(
+            wrapper.find({ title: 'New Contract' }).length,
+          ).to.be.greaterThanOrEqual(1);
         });
 
         describe('cancel button', () => {
@@ -79,14 +79,15 @@ describe('ComponentsLibrary', () => {
             Chai.expect(
               wrapper
                 .find('.MuiButton-label')
-                .filterWhere(button => button.text() === 'Cancel'),
-            ).to.be.lengthOf(1);
+                .filterWhere(button => button.text() === 'Cancel').length,
+            ).to.be.greaterThanOrEqual(1);
           });
 
           it('fires an onClose off when clicked', () => {
             wrapper
               .find('.MuiButton-label')
               .filterWhere(button => button.text() === 'Cancel')
+              .first()
               .simulate('click');
             Chai.expect(closes).to.be.equal(true);
           });
@@ -97,19 +98,21 @@ describe('ComponentsLibrary', () => {
             Chai.expect(
               wrapper
                 .find('.MuiButton-label')
-                .filterWhere(button => button.text() === 'Save'),
-            ).to.be.lengthOf(1);
+                .filterWhere(button => button.text() === 'Save').length,
+            ).to.be.greaterThanOrEqual(1);
           });
 
           it('fires an onSave off when clicked', () => {
             wrapper
               .find('.MuiButton-label')
               .filterWhere(button => button.text() === 'Save')
+              .first()
               .simulate('click');
 
             wrapper
               .find('.MuiButton-label')
               .filterWhere(button => button.text() === 'Confirm')
+              .first()
               .simulate('click');
 
             Chai.expect(saves).to.be.equal(true);
@@ -326,13 +329,24 @@ describe('ComponentsLibrary', () => {
 
         describe('Property Dropdown', () => {
           it('contains a property dropdown', () => {
-            Chai.expect(wrapper.find('.PropertyDropdown')).to.have.lengthOf(2);
+            Chai.expect(
+              wrapper.containsMatchingElement(
+                // @ts-expect-error
+                <PropertyDropdownModule.PropertyDropdown />,
+              ),
+            ).to.be.equal(true);
           });
         });
       });
 
       describe('Invoice Data Section', () => {
-        it('has an invoice data section');
+        it('contains an Edit Invoice Data component', () => {
+          Chai.expect(
+            wrapper.containsMatchingElement(
+              <EditInvoiceDataModule.EditInvoiceData />,
+            ),
+          ).to.be.equal(true);
+        });
       });
     });
   });
