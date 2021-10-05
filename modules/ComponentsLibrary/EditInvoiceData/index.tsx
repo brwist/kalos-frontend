@@ -1,6 +1,7 @@
 /* 
 
-  Design Specification: TODO add spec
+  Design Specification: converting this to React from Coldfusion
+  https://app.kalosflorida.com/index.cfm?action=admin:contracts.edit&contract_id=3365&p=1
 
 */
 
