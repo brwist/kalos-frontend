@@ -5,29 +5,39 @@
 
 */
 
+import { Invoice } from '@kalos-core/kalos-rpc/Invoice';
 import React, { useReducer, useEffect, useCallback, FC } from 'react';
+import { Form, Schema } from '../Form';
 import { reducer, ACTIONS } from './reducer';
 
-// add any prop types here
-interface props {}
+interface props {
+  userId: number;
+  onClose: () => any;
+  onSave: (savedInvoice: Invoice) => any;
+  onChange?: (currentData: Invoice) => any;
+}
 
-export const EditInvoiceData: FC<props> = () => {
+const INVOICE_SCHEMA: Schema<Invoice> = [
+  [
+    {
+      label: 'Terms',
+      name: 'getTerms',
+      multiline: true,
+    },
+  ],
+];
+
+export const EditInvoiceData: FC<props> = ({ onClose, onSave, onChange }) => {
   const [state, dispatch] = useReducer(reducer, {
     isLoaded: false,
+    invoiceData: new Invoice(),
   });
 
   const load = useCallback(() => {
-    // RPCs that are in here should be stubbed in the tests at least 9 times out of 10.
-    // This ensures that the fake data gets "loaded" instantly and the tests can progress quickly and without RPC errors
-    // For some examples, check out /test/modules/Teams or /test/modules/Payroll
-
     dispatch({ type: ACTIONS.SET_LOADED, data: true });
   }, []);
 
-  const cleanup = useCallback(() => {
-    // TODO clean up your function calls here (called once the component is unmounted, prevents "Can't perform a React state update on an unmounted component" errors)
-    // This is important for long-term performance of our components
-  }, []);
+  const cleanup = useCallback(() => {}, []);
 
   useEffect(() => {
     load();
@@ -37,5 +47,18 @@ export const EditInvoiceData: FC<props> = () => {
     };
   }, [load, cleanup]);
 
-  return <></>;
+  return (
+    <>
+      <Form<Invoice>
+        data={state.invoiceData}
+        schema={INVOICE_SCHEMA}
+        onClose={() => onClose()}
+        onSave={saved => onSave(saved)}
+        onChange={currentData => {
+          dispatch({ type: ACTIONS.SET_INVOICE_DATA, data: currentData });
+          if (onChange) onChange(currentData);
+        }}
+      />
+    </>
+  );
 };

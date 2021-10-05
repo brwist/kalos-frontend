@@ -19,27 +19,49 @@ import Chai = require('chai');
 
 import LogModule = require('../../../test-tools/logging');
 
+const component = (
+  <EditInvoiceData.EditInvoiceData
+    userId={8418}
+    onClose={() => {}}
+    onSave={() => {}}
+  />
+);
+
 describe('ComponentsLibrary', () => {
   describe('EditInvoiceData', () => {
-    describe('<EditInvoiceData />', () => {
+    describe(`<EditInvoiceData${Object.keys(component.props).map(
+      key =>
+        ` ${key}={${
+          typeof component.props[key] === 'string'
+            ? `"${component.props[key]}"`
+            : component.props[key]
+        }}`,
+    )} />`, () => {
       let wrapper: Enzyme.ReactWrapper;
       before(() => {
-        wrapper = Enzyme.mount(<EditInvoiceData.EditInvoiceData />);
+        wrapper = Enzyme.mount(component);
       });
       after(() => {
         wrapper.unmount();
       });
 
       it('renders correctly', () => {
-        Chai.expect(
-          wrapper.containsMatchingElement(<EditInvoiceData.EditInvoiceData />),
-        ).to.equal(true);
+        Chai.expect(wrapper.containsMatchingElement(component)).to.equal(true);
       });
 
       describe('Form', () => {
         describe('Terms field', () => {
-          it('should have a "Terms" field');
-          it('should be multiline');
+          it('should have a "Terms" field', () => {
+            Chai.expect(wrapper.find({ label: 'Terms' }).exists()).to.be.true;
+          });
+          it('should be multiline', () => {
+            Chai.expect(
+              wrapper
+                .find({ label: 'Terms' })
+                .find({ multiline: true })
+                .exists(),
+            ).to.be.true;
+          });
         });
 
         describe('Services Performed fields', () => {
