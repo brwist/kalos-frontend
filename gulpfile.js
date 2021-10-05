@@ -98,8 +98,6 @@ async function create() {
     designDocument = 'None Specified';
   }
 
-  if (designDocument === 't' || description === 't') return;
-
   if (name.includes('_') || name.includes('-')) {
     error(
       'React components should adhere to Pascal case and should not contain the characters "_" or "-".',
