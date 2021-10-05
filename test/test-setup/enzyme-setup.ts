@@ -3,6 +3,7 @@ import Adapter from '@wojtekmaj/enzyme-adapter-react-17';
 import jsdom from 'jsdom';
 // @ts-ignore
 import Storage from 'dom-storage';
+import { format } from 'date-fns';
 
 const copyProps = (src: any, target: any) => {
   const props = Object.getOwnPropertyNames(src)
@@ -10,8 +11,6 @@ const copyProps = (src: any, target: any) => {
     .map(prop => Object.getOwnPropertyDescriptor(src, prop));
   Object.defineProperties(target, props as any);
 };
-
-const oldLog = console.log;
 
 const setUpDomEnvironment = () => {
   const { JSDOM } = jsdom;
@@ -26,16 +25,67 @@ const setUpDomEnvironment = () => {
     userAgent: 'node.js',
   } as Navigator;
   global.console = {
-    // log: (output: any) => {
-    //   let out = output.replace('<TestLog>', '');
-    //   out = out.replace('</TestLog>', '');
-    //   output.startsWith('<TestLog>') && output.endsWith('</TestLog>')
-    //     ? oldLog(out)
-    //     : undefined;
-    // }, // In case we need fine-grained control over this, we can have it later
-    log: console.log,
-    error: console.error,
-    warn: console.warn,
+    log: (data: any[]) => {
+      if (
+        String(data).startsWith('<TestLog>') &&
+        String(data).endsWith('</TestLog>')
+      ) {
+        let date = new Date();
+        console.info(
+          `[${format(date, 'hh:mm:ss')}:${date
+            .getMilliseconds()
+            .toString()
+            .padStart(3, '0')}]`,
+          String(data).replace('<TestLog>', '').replace('</TestLog>', ''),
+          '\x1b[0m',
+        );
+      }
+    },
+    error: (data: any[]) => {
+      if (String(data).includes('[mocha]')) {
+        console.info(data);
+        return;
+      }
+
+      let date = new Date();
+      console.info(
+        `[${format(date, 'hh:mm:ss')}:${date
+          .getMilliseconds()
+          .toString()
+          .padStart(3, '0')}]`,
+        '\x1b[31m',
+        `[ERROR]`,
+        data,
+        '\x1b[0m',
+      );
+      if (String(data).includes('missing authorization token')) {
+        console.warn(
+          `[WARNING] Did you forget to set up a stub for an RPC (Possibly ${String(
+            data,
+          )
+            .substring(
+              String(data).indexOf('route') + 6,
+              String(data).indexOf('requires'),
+            )
+            .replace('/', ' ')
+            .replace('/', '.')
+            .trim()})?`,
+          '\x1b[0m',
+        );
+      }
+    },
+    warn: (data: any[]) => {
+      let date = new Date();
+      console.info(
+        `[${format(date, 'hh:mm:ss')}:${date
+          .getMilliseconds()
+          .toString()
+          .padStart(3, '0')}]`,
+        '\x1b[33m',
+        data,
+        '\x1b[0m',
+      );
+    },
     info: console.info,
     debug: console.debug,
   } as Console;

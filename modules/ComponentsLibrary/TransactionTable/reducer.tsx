@@ -185,7 +185,6 @@ export type Action =
 export const reducer = (state: State, action: Action) => {
   switch (action.type) {
     case ACTIONS.SET_TRANSACTION_FILTER: {
-      console.log('we got filter', action.data);
       return {
         ...state,
         transactionFilter: action.data,
@@ -204,111 +203,95 @@ export const reducer = (state: State, action: Action) => {
       };
     }
     case ACTIONS.SET_TRANSACTION_ACTIVITY_LOGS: {
-      console.log(action.data);
       return {
         ...state,
         transactionActivityLogs: action.data,
       };
     }
     case ACTIONS.SET_TRANSACTION_TO_EDIT: {
-      console.log('setting edit');
       return {
         ...state,
         transactionToEdit: action.data,
       };
     }
     case ACTIONS.SET_LOADING: {
-      console.log('setting loading');
       return {
         ...state,
         loading: action.data,
       };
     }
     case ACTIONS.SET_CREATING_TRANSACTION: {
-      console.log('setting creating transactions');
       return {
         ...state,
         creatingTransaction: action.data,
       };
     }
     case ACTIONS.SET_MERGING_TRANSACTION: {
-      console.log('setting merging transactions');
       return {
         ...state,
         mergingTransaction: action.data,
       };
     }
     case ACTIONS.SET_ROLE: {
-      console.log('setting role');
       return {
         ...state,
         role: action.data,
       };
     }
     case ACTIONS.SET_ASSIGNING_USER: {
-      console.log('setting assigning user');
       return {
         ...state,
         assigningUser: action.data,
       };
     }
     case ACTIONS.SET_EMPLOYEES: {
-      console.log('setting employees');
       return {
         ...state,
         employees: action.data,
       };
     }
     case ACTIONS.SET_DEPARTMENTS: {
-      console.log('setting department');
       return {
         ...state,
         departments: action.data,
       };
     }
     case ACTIONS.SET_TRANSACTION_TO_DELETE:
-      console.log('setting transaction to delete');
       return {
         ...state,
         transactionToDelete: action.data,
       };
     case ACTIONS.SET_SELECTED_TRANSACTIONS: {
-      console.log('setting selected department');
       return {
         ...state,
         selectedTransactions: action.data,
       };
     }
     case ACTIONS.SET_PAGE: {
-      console.log('setting page');
       return {
         ...state,
         page: action.data,
       };
     }
     case ACTIONS.SET_ASSIGNED_EMPLOYEE: {
-      console.log('setting assigned Employee');
       return {
         ...state,
         assignedEmployee: action.data,
       };
     }
     case ACTIONS.SET_ERROR: {
-      console.log('setting error ');
       return {
         ...state,
         error: action.data,
       };
     }
     case ACTIONS.SET_STATUS: {
-      console.log('setting status ');
       return {
         ...state,
         status: action.data,
       };
     }
     case ACTIONS.SET_COST_CENTERS: {
-      console.log('setting cost centers ');
       return {
         ...state,
         costCenters: action.data,
@@ -328,52 +311,41 @@ export const reducer = (state: State, action: Action) => {
       };
     }
     case ACTIONS.SET_CHANGING_PAGE: {
-      console.log('setting changing page ');
       return {
         ...state,
         changingPage: action.data,
       };
     }
     case ACTIONS.SET_UNIVERSAL_SEARCH:
-      console.log('setting universal search');
       return {
         ...state,
         universalSearch: action.data,
       };
     case ACTIONS.SET_SEARCHING:
-      console.log('setting searching');
       return {
         ...state,
         searching: action.data,
       };
     case ACTIONS.SET_ORDER:
-      console.log('setting order');
       return {
         ...state,
         orderBy: action.data.orderBy,
         orderDir: action.data.orderDir,
       };
     case ACTIONS.SET_PENDING_UPLOAD_PHOTO:
-      console.log('setting pending upload:', action.data);
-      console.log(action.data);
       return {
         ...state,
         pendingUploadPhoto: action.data,
       };
     case ACTIONS.SET_FILE_DATA:
-      console.log('setting file data');
       return { ...state, fileData: action.data };
     case ACTIONS.SET_IMAGE_WAIVER_TYPE_POPUP_OPEN:
-      console.log('setting image waiver type popup open');
       return { ...state, imageWaiverTypePopupOpen: action.data };
     case ACTIONS.SET_IMAGE_WAIVER_TYPE_FORM_DATA:
-      console.log('setting image waiver type form data');
       return { ...state, imageWaiverTypeFormData: action.data };
     case ACTIONS.SET_TRANSACTION_TO_SAVE:
-      console.log('setting transaction to save');
       return { ...state, transactionToSave: action.data };
     case ACTIONS.SET_IMAGE_NAME_TO_SAVE:
-      console.log('setting image name to save');
       return { ...state, imageNameToSave: action.data };
     case ACTIONS.SET_OPEN_UPLOAD_PHOTO_TRANSACTION:
       console.log('setting upload photo');

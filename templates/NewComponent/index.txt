@@ -1,7 +1,9 @@
 /* 
 
-  Design Specification: 
+  Description: DESCRIPTION
 
+  Design Specification / Document: DOCUMENT
+  
 */
 
 import React, { useReducer, useEffect, useCallback, FC } from 'react';
@@ -10,7 +12,7 @@ import { reducer, ACTIONS } from './reducer';
 // add any prop types here
 interface props { }
 
-export const TITLE_HERE: FC<props> = function TITLE_HERE() {
+export const TITLE_HERE: FC<props> = () => {
   const [state, dispatch] = useReducer(reducer, { 
     isLoaded: false,
   });

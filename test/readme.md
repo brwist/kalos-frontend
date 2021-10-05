@@ -15,6 +15,14 @@ Enzyme is a Javascript testing utility for React which helps validate components
 When writing the tests out, ensure that you wrap all tests in a decent Describe block (or multiple of them). This helps ensure the CLI output is clean and legible.
 See more about Describe, It and the various hooks here: https://samwize.com/2014/02/08/a-guide-to-mochas-describe-it-and-setup-hooks/
 
+# A Note About Logging
+
+`console.log` will _not_ work in our testing setup. This is by design - all normal logs in our components are ignored for the sake of clarity in the command line.
+
+Instead of using `console.log`, use `Log` in `/test-tools/logging.ts` to actually see output. This simply wraps the output and allows that to be shown in the CLI. Please take care to not push tests which contain logging, as all team members will see them while running tests and the interface will slowly be cluttered.
+
+`Log` is imported in templates automatically when `yarn make` is used to create them.
+
 # RPCs and Testing
 
 For now, be careful with this functionality - it can take down the dev server and is more along the lines of integration testing.
@@ -41,6 +49,8 @@ Describe and It should be used as per Mocha's guides. When testing methods and f
 - "." should prefix static methods and properties
 
 The structure of folders inside of the test folder should mimic the project's layout as closely as possible.
+
+Leave tests that have not been touched in a "skipped" state rather than failing (you can do this by just not providing a callback for an it function, or by doing it.skip). This keeps the output clean and free from "Not Implemented" errors, and is also the recommended way to handle things by the Mocha team.
 
 # Style for Imports
 
