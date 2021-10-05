@@ -53,6 +53,7 @@ interface props {
   fetchFn(): void;
   toggleLoading(cb?: () => void): Promise<void>;
   loggedUserId: number;
+  allCostCenters?: boolean;
 }
 
 interface state {
@@ -583,7 +584,8 @@ export class TxnCard extends React.PureComponent<props, state> {
 
   render() {
     const { txn, pendingAddFromGallery, pendingAddFromSingleFile } = this.state;
-    const { isManager, userID } = this.props;
+    const { isManager, userID, allCostCenters } = this.props;
+    console.log('should we see allCostCenters?', allCostCenters);
     const t = txn;
     let subheader = `${t.getDescription().split(' ')[0]} - ${t.getVendor()}`;
 
@@ -665,7 +667,7 @@ export class TxnCard extends React.PureComponent<props, state> {
               selected={t.getCostCenterId()}
               sort={costCenterSortByPopularity}
               filter={
-                !isManager
+                !isManager && !allCostCenters
                   ? a => ALLOWED_ACCOUNT_IDS.includes(a.getId())
                   : undefined
               }

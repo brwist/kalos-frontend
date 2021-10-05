@@ -36,6 +36,7 @@ import {
   usd,
   timestamp,
   SpiffToolAdminActionClientService,
+  makeFakeRows,
 } from '../../../helpers';
 import { reducer } from './reducer';
 import { NULL_TIME_VALUE } from '../Timesheet/constants';
@@ -322,15 +323,7 @@ export const CostSummary: FC<Props> = ({
       const action = new SpiffToolAdminAction();
       req.setPayrollProcessed(false);
       req.setExternalId(userId);
-      const startDate = '0001-01-01';
-      const endDayForSpiffs = format(addDays(startDay, 11), 'yyyy-MM-dd');
       if (spiffType === 'Spiff') {
-        /*
-        const startDate = '0001-01-01';
-        const endDayForSpiffs = format(addDays(startDay, 11), 'yyyy-MM-dd');
-        req.setDateRangeList(['>=', startDate, '<', endDayForSpiffs]);
-        req.setDateTargetList(['time_created', 'time_created']);
-      */
         const startDate = '0001-01-01';
         const endDayForSpiffs = format(addDays(startDay, 11), 'yyyy-MM-dd');
         action.setDateRangeList(['>=', startDate, '<', endDayForSpiffs]);
@@ -351,26 +344,23 @@ export const CostSummary: FC<Props> = ({
         req.setBillableType('Tool Purchase');
       }
       req.setWithoutLimit(true);
-      const results = (
-        await new TaskClient(ENDPOINT).BatchGet(req)
-      ).getResultsList();
+      const results = (await TaskClientService.BatchGet(req)).getResultsList();
       //Here, we'll run another request for revoked, and if it pops up, we will remove the approved,
       //and treat the value as a negative
       const revokeReq = req;
       const revokeAction = action;
       revokeAction.setStatus(3);
       revokeReq.setSearchAction(revokeAction);
+
       const revokeResults = (
-        await new TaskClient(ENDPOINT).BatchGet(revokeReq)
+        await TaskClientService.BatchGet(revokeReq)
       ).getResultsList();
+
       for (let i = 0; i < revokeResults.length; i++) {
-        for (let j = 0; j < results.length; j++) {
-          if (revokeResults[i].getId() === results[j].getId()) {
-            const amount = revokeResults[i].getSpiffAmount();
-            revokeResults[i].setSpiffAmount(amount - 2 * amount);
-            results[j].setSpiffAmount(revokeResults[i].getSpiffAmount());
-          }
-        }
+        const amount = revokeResults[i].getSpiffAmount();
+        const negativeAmount = amount - 2 * amount;
+        revokeResults[i].setSpiffAmount(negativeAmount);
+        results.push(revokeResults[i]);
       }
       let spiffTotal = 0;
       let toolTotal = 0;
@@ -412,7 +402,7 @@ export const CostSummary: FC<Props> = ({
         formatDateFns(endOfWeek(new Date())),
       ]);
       action.setDateTargetList(['date_processed', 'date_processed']);
-
+      action.setStatus(1);
       req.setSearchAction(action);
 
       const tempResults = (
@@ -431,21 +421,22 @@ export const CostSummary: FC<Props> = ({
       revokeAction.setStatus(3);
       revokeReq.setSearchAction(revokeAction);
       const revokeResults = (
-        await new TaskClient(ENDPOINT).BatchGet(revokeReq)
+        await TaskClientService.BatchGet(revokeReq)
       ).getResultsList();
+
       for (let i = 0; i < revokeResults.length; i++) {
-        for (let j = 0; j < results.length; j++) {
-          if (revokeResults[i].getId() === results[j].getId()) {
-            const amount = revokeResults[i].getSpiffAmount();
-            revokeResults[i].setSpiffAmount(amount - 2 * amount);
-            results[j].setSpiffAmount(revokeResults[i].getSpiffAmount());
-          }
-        }
+        const amount = revokeResults[i].getSpiffAmount();
+        console.log('found a processed revoked spiff');
+        const negativeAmount = amount - 2 * amount;
+        revokeResults[i].setSpiffAmount(negativeAmount);
+        results.push(revokeResults[i]);
       }
+      console.log(results);
       let spiffTotal = 0;
       let toolTotal = 0;
       for (let i = 0; i < results.length; i++) {
         if (spiffType == 'Spiff') {
+          console.log(results[i].getSpiffAmount());
           spiffTotal += results[i].getSpiffAmount();
         } else {
           toolTotal += results[i].getToolpurchaseCost();
@@ -737,28 +728,33 @@ export const CostSummary: FC<Props> = ({
           { name: 'Trips Total Last Week' },
           { name: 'Total Spiffs Last Week' },
         ]}
-        data={[
-          [
-            {
-              value: formatDateFns(startDay),
-            },
-            {
-              value: totalHoursProcessed,
-            },
-            {
-              value: usd(totalPerDiemProcessed.totalLodging),
-            },
-            {
-              value: usd(totalPerDiemProcessed.totalMeals),
-            },
-            {
-              value: totalTripsProcessed.totalDistance.toFixed(2) + ' miles',
-            },
-            {
-              value: usd(totalSpiffsProcessed),
-            },
-          ],
-        ]}
+        data={
+          loaded
+            ? [
+                [
+                  {
+                    value: formatDateFns(startDay),
+                  },
+                  {
+                    value: totalHoursProcessed,
+                  },
+                  {
+                    value: usd(totalPerDiemProcessed.totalLodging),
+                  },
+                  {
+                    value: usd(totalPerDiemProcessed.totalMeals),
+                  },
+                  {
+                    value:
+                      totalTripsProcessed.totalDistance.toFixed(2) + ' miles',
+                  },
+                  {
+                    value: usd(totalSpiffsProcessed),
+                  },
+                ],
+              ]
+            : makeFakeRows(5, 1)
+        }
       ></InfoTable>
 
       <SectionBar
@@ -817,7 +813,7 @@ export const CostSummary: FC<Props> = ({
                     },
                   ];
                 })
-              : []
+              : makeFakeRows(5, 1)
           }
         />
       </SectionBar>

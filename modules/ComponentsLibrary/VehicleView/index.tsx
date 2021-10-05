@@ -17,6 +17,9 @@ import { TimesheetDepartment } from '@kalos-core/kalos-rpc/TimesheetDepartment';
 import IconButton from '@material-ui/core/IconButton';
 import PersonAdd from '@material-ui/icons/PersonAdd';
 import { ROWS_PER_PAGE } from '../../../constants';
+import { Confirm } from '../Confirm';
+import Delete from '@material-ui/icons/Delete';
+import { Int32 } from '@kalos-core/kalos-rpc/compiled-protos/common_pb';
 // add any prop types here
 interface props {
   userID: number;
@@ -55,6 +58,7 @@ export const VehicleView: React.FC<props> = function VehicleView({ userID }) {
     activeVehicle: undefined,
     departments: [],
     users: [],
+    deletingVehicle: undefined,
   });
   const fetchVehicles = useCallback(async () => {
     const req = new Vehicle();
@@ -122,6 +126,18 @@ export const VehicleView: React.FC<props> = function VehicleView({ userID }) {
 
     await fetchVehicles();
   };
+  const DeleteVehicle = async (data: Vehicle) => {
+    const temp = new Int32();
+    temp.setValue(data.getId());
+    try {
+      await UserClientService.DeleteVehicle(temp);
+    } catch (err) {
+      console.log('There was an error with deleting the vehicle', err);
+    }
+    dispatch({ type: ACTIONS.SET_DELETING_VEHICLE, data: undefined });
+
+    await fetchVehicles();
+  };
   const updateVehicle = async function updateVehicle(data: Vehicle) {
     try {
       await UserClientService.UpdateVehicle(
@@ -169,6 +185,14 @@ export const VehicleView: React.FC<props> = function VehicleView({ userID }) {
             }
           >
             <PersonAdd />
+          </IconButton>,
+          <IconButton
+            key="deleteVehicle"
+            onClick={() =>
+              dispatch({ type: ACTIONS.SET_DELETING_VEHICLE, data: v })
+            }
+          >
+            <Delete />
           </IconButton>,
         ],
       },
@@ -258,6 +282,18 @@ export const VehicleView: React.FC<props> = function VehicleView({ userID }) {
             title="Assign Employee/Department to Vehicle"
           />
         </Modal>
+      )}
+      {state.deletingVehicle != undefined && (
+        <Confirm
+          onClose={() =>
+            dispatch({ type: ACTIONS.SET_DELETING_VEHICLE, data: undefined })
+          }
+          open={state.deletingVehicle != undefined}
+          onConfirm={() => DeleteVehicle(state.deletingVehicle!)}
+          submitLabel={'Delete Vehicle'}
+        >
+          Are you sure you want to delete this Vehicle?
+        </Confirm>
       )}
       <InfoTable
         data={state.vehicles.map(vehicleToColumn)}
