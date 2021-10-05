@@ -30,13 +30,18 @@ const Transaction: FC<Props> = props => {
   const { userID } = props;
   const [loaded, setLoaded] = useState<boolean>(false);
   const [loading, setLoading] = useState<boolean>(true);
-  const [uploadPhotoTransactionOpen, setUploadPhotoTransactionOpen] =
-    useState<boolean>(false);
+  const [
+    uploadPhotoTransactionOpen,
+    setUploadPhotoTransactionOpen,
+  ] = useState<boolean>(false);
   const [user, setUser] = useState<User>();
   const [costCenters, setCostCenters] = useState<TransactionAccountList>();
   const [isManager, setIsManager] = useState<boolean>(false);
-  const [toggleAddTransaction, setToggleAddTransaction] =
-    useState<boolean>(false);
+  const [allCostCenters, setAllCostCenters] = useState<boolean>(false);
+
+  const [toggleAddTransaction, setToggleAddTransaction] = useState<boolean>(
+    false,
+  );
   const [managerDepartmentIds, setManagerDepartmentIds] = useState<number[]>(
     [],
   );
@@ -79,6 +84,12 @@ const Transaction: FC<Props> = props => {
       setRole(foundRole.getName() as RoleType);
     }
     const isManager = await managerCheck(user);
+    const allCostCenters = user
+      .getPermissionGroupsList()
+      .find(p => p.getType() === 'privilege' && p.getName() == 'AllCostCenters')
+      ? true
+      : false;
+    setAllCostCenters(allCostCenters);
     const groupDepartments = user
       .getPermissionGroupsList()
       .filter(group => group.getType() === 'department');
@@ -99,6 +110,7 @@ const Transaction: FC<Props> = props => {
       load();
     }
   }, [loaded, setLoaded, load, user]);
+
   const handleToggleAddTransaction = (value: boolean) => {
     setToggleAddTransaction(value);
   };
@@ -166,6 +178,7 @@ const Transaction: FC<Props> = props => {
             isManager={isManager}
             role={role}
             loggedUserId={userID}
+            allCostCenters={allCostCenters ? true : false}
           />
         </React.Fragment>
       )}

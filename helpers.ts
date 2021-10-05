@@ -152,7 +152,7 @@ export const TransactionAccountClientService = new TransactionAccountClient(
 );
 export const EventAssignmentClientService = new EventAssignmentClient(ENDPOINT);
 export const SlackClientService = new SlackClient(ENDPOINT);
-export const DevlogClientService = new DevlogClient(ENDPOINT)
+export const DevlogClientService = new DevlogClient(ENDPOINT);
 
 export const getCFAppUrl = (action: string) => `${BASE_URL}?action=${action}`;
 
@@ -437,17 +437,15 @@ function formatDate(date: string) {
  * @returns format Day (ie. Tue)
  */
 function formatDay(datetime: string) {
-  return (
-    {
-      0: 'Sun',
-      1: 'Mon',
-      2: 'Tue',
-      3: 'Wed',
-      4: 'Thu',
-      5: 'Fri',
-      6: 'Sat',
-    } as { [key: number]: string }
-  )[new Date(datetime.substr(0, 10)).getDay()];
+  return ({
+    0: 'Sun',
+    1: 'Mon',
+    2: 'Tue',
+    3: 'Wed',
+    4: 'Thu',
+    5: 'Fri',
+    6: 'Sat',
+  } as { [key: number]: string })[new Date(datetime.substr(0, 10)).getDay()];
 }
 
 /**
@@ -1377,6 +1375,8 @@ export const loadEventsByFilter = async ({
   if (businessname) {
     u.setBusinessname(`%${businessname}%`);
   }
+  console.log(req);
+  req.setIsActive(1);
   req.setProperty(p);
   req.setCustomer(u);
   if (page === -1) {

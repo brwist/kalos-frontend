@@ -1099,12 +1099,15 @@ export const SpiffTool: FC<Props> = ({
             ]}
             fixedActions
           />
-          <Payroll userID={loggedUserId}></Payroll>
         </Modal>
       )}
       <SectionBar
         title={type === 'Spiff' ? 'Spiff Report' : 'Tool Purchases'}
         actions={[
+          {
+            label: 'Close',
+            onClick: onClose ? onClose : undefined,
+          },
           {
             label: type === 'Spiff' ? 'Spiff Apply' : 'Tool Apply',
             onClick: handleToggleAdd,

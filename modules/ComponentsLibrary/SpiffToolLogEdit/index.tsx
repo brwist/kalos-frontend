@@ -378,7 +378,7 @@ export const SpiffToolLogEdit: FC<Props> = ({
         updateTask.setId(data.getId());
         updateTask.setAdminActionId(res);
 
-        if (statusEditing.getStatus() === 3) {
+        if (adminActionNew.getStatus() === 3) {
           //if the Spiff has been revoke, we need payroll to
           //process it again, Cost Summary will treat it as a negative value
           updateTask.setPayrollProcessed(false);
