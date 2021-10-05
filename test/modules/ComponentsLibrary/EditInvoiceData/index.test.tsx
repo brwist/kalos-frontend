@@ -7,7 +7,7 @@
 
   Design Specification: TODO add spec
  
-*/ 
+*/
 
 export {};
 
@@ -21,21 +21,21 @@ import LogModule = require('../../../test-tools/logging');
 describe('ComponentsLibrary', () => {
   describe('EditInvoiceData', () => {
     describe('<EditInvoiceData />', () => {
-      let wrapper: Enzyme.ReactWrapper; 
+      let wrapper: Enzyme.ReactWrapper;
       before(() => {
-        wrapper = Enzyme.mount(
-          <EditInvoiceData.EditInvoiceData />,
-        );
+        wrapper = Enzyme.mount(<EditInvoiceData.EditInvoiceData />);
       });
       after(() => {
         wrapper.unmount();
       });
 
       it('renders correctly', () => {
-        Chai.expect(wrapper.text().includes('EditInvoiceData works!')).to.equal(true);      
-      })
+        Chai.expect(
+          wrapper.containsMatchingElement(<EditInvoiceData.EditInvoiceData />),
+        ).to.equal(true);
+      });
 
       // Rest of the spec tests here, make them pass as you go
     });
-  })
+  });
 });

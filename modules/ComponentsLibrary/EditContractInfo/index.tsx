@@ -18,6 +18,7 @@ import { reducer, ACTIONS, FREQUENCIES, BILLING_OPTIONS } from './reducer';
 import { PropertyDropdown } from '../PropertyDropdown/index';
 import { Property } from '@kalos-core/kalos-rpc/Property';
 import { Confirm } from '../Confirm';
+import { EditInvoiceData } from '../EditInvoiceData';
 
 export interface Output {
   contractData: Contract;
@@ -230,6 +231,15 @@ export const EditContractInfo: FC<props> = ({
             }}
           />
         </div>
+      </SectionBar>
+      <SectionBar
+        title="New Contract"
+        actions={[
+          { label: 'Cancel', onClick: () => onClose() },
+          { label: 'Save', onClick: () => validateForSave() },
+        ]}
+      >
+        <EditInvoiceData />
       </SectionBar>
     </>
   );
