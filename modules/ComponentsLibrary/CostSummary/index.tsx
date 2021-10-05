@@ -360,20 +360,29 @@ export const CostSummary: FC<Props> = ({
         const amount = revokeResults[i].getSpiffAmount();
         const negativeAmount = amount - 2 * amount;
         revokeResults[i].setSpiffAmount(negativeAmount);
-        results.push(revokeResults[i]);
+      }
+      for (let i = 0; i < results.length; i++) {
+        if (
+          revokeResults.find(
+            revoke => revoke.getId() === results[i].getId(),
+          ) === undefined
+        ) {
+          //remove duplicates
+          revokeResults.push(results[i]);
+        }
       }
       let spiffTotal = 0;
       let toolTotal = 0;
       for (let i = 0; i < results.length; i++) {
         if (spiffType == 'Spiff') {
-          spiffTotal += results[i].getSpiffAmount();
+          spiffTotal += revokeResults[i].getSpiffAmount();
         } else {
-          toolTotal += results[i].getToolpurchaseCost();
+          toolTotal += revokeResults[i].getToolpurchaseCost();
         }
       }
       if (spiffType === 'Spiff') {
         if (dateType === 'Weekly') {
-          dispatch({ type: 'updateSpiffs', data: results });
+          dispatch({ type: 'updateSpiffs', data: revokeResults });
         }
         return spiffTotal;
       } else {
@@ -393,7 +402,6 @@ export const CostSummary: FC<Props> = ({
       } else {
         req.setBillableType('Tool Purchase');
       }
-      const results = [];
 
       action.setDateRangeList([
         '>=',
@@ -405,14 +413,9 @@ export const CostSummary: FC<Props> = ({
       action.setStatus(1);
       req.setSearchAction(action);
 
-      const tempResults = (
+      const results = (
         await new TaskClient(ENDPOINT).BatchGet(req)
       ).getResultsList();
-      if (tempResults.length > 0) {
-        for (let j = 0; j < tempResults.length; j++) {
-          results.push(tempResults[j]);
-        }
-      }
 
       //Here, we'll run another request for revoked, and if it pops up, we will remove the approved,
       //and treat the value as a negative
@@ -429,12 +432,21 @@ export const CostSummary: FC<Props> = ({
         console.log('found a processed revoked spiff');
         const negativeAmount = amount - 2 * amount;
         revokeResults[i].setSpiffAmount(negativeAmount);
-        results.push(revokeResults[i]);
       }
-      console.log(results);
+      for (let i = 0; i < results.length; i++) {
+        if (
+          revokeResults.find(
+            revoke => revoke.getId() === results[i].getId(),
+          ) === undefined
+        ) {
+          //remove duplicates
+          revokeResults.push(results[i]);
+        }
+      }
       let spiffTotal = 0;
       let toolTotal = 0;
-      for (let i = 0; i < results.length; i++) {
+
+      for (let i = 0; i < revokeResults.length; i++) {
         if (spiffType == 'Spiff') {
           console.log(results[i].getSpiffAmount());
           spiffTotal += results[i].getSpiffAmount();
