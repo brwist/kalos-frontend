@@ -22,7 +22,9 @@ const component = (<TITLE_HERE.TITLE_HERE />);
 
 describe('ComponentsLibrary', () => {
   describe('TITLE_HERE', () => {
-    describe('<TITLE_HERE />', () => {
+    describe(`<TITLE_HERE ${Object.keys(component.props).map(
+    key => `${key}={${component.props[key]}}`,
+  )}/>`, () => {
       let wrapper: Enzyme.ReactWrapper; 
       before(() => {
         wrapper = Enzyme.mount(
