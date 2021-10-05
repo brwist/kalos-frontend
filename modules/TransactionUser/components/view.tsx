@@ -18,6 +18,7 @@ interface props {
   departmentList?: number[];
   userName: string;
   isManager: boolean;
+  allCostCenters?: boolean;
   role?: RoleType;
   loggedUserId: number;
 }
@@ -41,6 +42,7 @@ export class TransactionUserView extends React.PureComponent<props, state> {
       isLoading: false,
       transactions: [],
       totalCount: 0,
+
       role: this.props.role,
     };
     this.TxnClient = new TransactionClient(ENDPOINT);
@@ -175,6 +177,7 @@ export class TransactionUserView extends React.PureComponent<props, state> {
             userName={this.props.userName}
             userDepartmentID={this.props.departmentId}
             fetchFn={this.fetchAllTxns}
+            allCostCenters={this.props.allCostCenters}
             toggleLoading={this.toggleLoading}
             isManager={this.props.isManager}
             loggedUserId={this.props.loggedUserId}
