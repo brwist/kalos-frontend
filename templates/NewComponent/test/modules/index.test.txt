@@ -18,21 +18,23 @@ import Chai = require('chai');
 
 import LogModule = require('../../../test-tools/logging');
 
+const component = (<TITLE_HERE.TITLE_HERE />);
+
 describe('ComponentsLibrary', () => {
   describe('TITLE_HERE', () => {
     describe('<TITLE_HERE />', () => {
       let wrapper: Enzyme.ReactWrapper; 
       before(() => {
         wrapper = Enzyme.mount(
-          <TITLE_HERE.TITLE_HERE />,
+          component,
         );
       });
       after(() => {
         wrapper.unmount();
       });
-
+ 
       it('renders correctly', () => {
-        Chai.expect(wrapper.text().includes('TITLE_HERE works!')).to.equal(true);      
+        Chai.expect(wrapper.containsMatchingElement(component)).to.equal(true);      
       })
 
       // Rest of the spec tests here, make them pass as you go

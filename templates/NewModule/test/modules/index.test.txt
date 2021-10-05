@@ -18,12 +18,14 @@ import Chai = require('chai');
 
 import LogModule = require('../../test-tools/logging');
 
+const component = (<TITLE_HERE.TITLE_HERE userID={8418} />);
+
 describe('TITLE_HERE', () => {
   describe('<TITLE_HERE userID={8418} />', () => {
     let wrapper: Enzyme.ReactWrapper;
     before(() => {
       wrapper = Enzyme.mount(
-        <TITLE_HERE.TITLE_HERE userID={8418} />,
+        component,
       );
     });
     after(() => {
@@ -31,7 +33,7 @@ describe('TITLE_HERE', () => {
     });
 
     it('renders correctly', () => {
-      Chai.expect(wrapper.text().includes('TITLE_HERE works!')).to.equal(true);      
+      Chai.expect(wrapper.containsMatchingElement(component)).to.equal(true);      
     })
 
     describe('Loading', () => {
