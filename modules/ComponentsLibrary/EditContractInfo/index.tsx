@@ -239,7 +239,17 @@ export const EditContractInfo: FC<props> = ({
           { label: 'Save', onClick: () => validateForSave() },
         ]}
       >
-        <EditInvoiceData />
+        <EditInvoiceData
+          userId={userID}
+          onClose={() => onClose()}
+          onSave={savedInvoice => validateForSave()}
+          onChange={currentData => {
+            console.log(
+              'Make sure to assign this to the stuff to save, and then save that as well! ',
+              currentData,
+            );
+          }}
+        />
       </SectionBar>
     </>
   );
