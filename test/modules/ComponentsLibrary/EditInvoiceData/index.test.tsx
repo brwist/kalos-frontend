@@ -36,7 +36,21 @@ describe('ComponentsLibrary', () => {
         ).to.equal(true);
       });
 
-      // Rest of the spec tests here, make them pass as you go
+      describe('Form', () => {
+        describe('Terms field', () => {
+          it('should have a "Terms" field');
+          it('should be multiline');
+        });
+
+        describe('Services Performed fields', () => {
+          it('should have multiple Services Performed fields');
+          it('should have a grand total field');
+
+          describe('Services Performed field', () => {
+            it('should have a Total Amount field');
+          });
+        });
+      });
     });
   });
 });
