@@ -21,6 +21,8 @@ See more about Describe, It and the various hooks here: https://samwize.com/2014
 
 Instead of using `console.log`, use `Log` in `/test-tools/logging.ts` to actually see output. This simply wraps the output and allows that to be shown in the CLI. Please take care to not push tests which contain logging, as all team members will see them while running tests and the interface will slowly be cluttered.
 
+`Log` is imported in templates automatically when `yarn make` is used to create them.
+
 # RPCs and Testing
 
 For now, be careful with this functionality - it can take down the dev server and is more along the lines of integration testing.

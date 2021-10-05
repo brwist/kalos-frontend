@@ -14,8 +14,9 @@ export {};
 import TITLE_HERE = require('../../../modules/TITLE_HERE/main');
 import React = require('react');
 import Enzyme = require('enzyme');
-
 import Chai = require('chai');
+
+import LogModule = require('../../test-tools/logging');
 
 describe('TITLE_HERE', () => {
   describe('<TITLE_HERE userID={8418} />', () => {
