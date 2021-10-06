@@ -119,6 +119,8 @@ function getModuleType(typeArg) {
       return 'test-only';
     case 't':
       return 'test-only';
+    case 'testonly':
+      return ModuleTypes['Module']; // Testonly should already be recorded as true, we can act as if it's a module
     default:
       warn(
         `Unknown flag passed ${process.argv[5]
@@ -142,7 +144,9 @@ function replaceKeywords(fileToWorkOn, userSpecsInput, nameOfModule) {
  */
 async function create() {
   let name = titleCase(process.argv[4].replace(/-/g, ''));
-  let testOnly = titleCase(process.argv[6].replace(/-/g, '')) === 'testonly';
+  let testOnly =
+    titleCase(process.argv[6].replace(/-/g, '')) === 'testonly' ||
+    titleCase(process.argv[5].replace(/-/g, '')) === 'testonly'; // so that module doesn't have a need for extra flag
   if (!name) {
     name = await textPrompt('Module name: ');
   }
