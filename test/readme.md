@@ -15,6 +15,12 @@ Enzyme is a Javascript testing utility for React which helps validate components
 When writing the tests out, ensure that you wrap all tests in a decent Describe block (or multiple of them). This helps ensure the CLI output is clean and legible.
 See more about Describe, It and the various hooks here: https://samwize.com/2014/02/08/a-guide-to-mochas-describe-it-and-setup-hooks/
 
+You can also use `yarn make` to generate the test template for existing modules and components.
+
+For modules: `yarn make --ModuleName --test-only`
+
+For components: `yarn make --ComponentName --component --test-only`
+
 # A Note About Logging
 
 `console.log` will _not_ work in our testing setup. This is by design - all normal logs in our components are ignored for the sake of clarity in the command line.

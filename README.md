@@ -31,13 +31,19 @@ Development should occur on the master branch. All modules should be title case 
 yarn make --ModuleName
 ```
 
-This will creates a new module and generates some boilerplate files. You can then run `yarn start --ModuleName` and visit `localhost:1234` in your browser. All changes will be reflected in the browser via hot module replacement.
+This will creates a new module and generates some boilerplate files, including a test file. You can then run `yarn start --ModuleName` and visit `localhost:1234` in your browser. `yarn start` will also display all relevant test results for the module in watch mode. All changes will be reflected in the browser via hot module replacement, and tests will also re-run on change.
+
+You can do the same with components like so using the `--component` flag:
+
+```
+yarn make --ComponentName --component
+```
+
+Lastly, you can also create tests for existing modules by adding the `--test-only` flag to the end.
 
 ## Debugging
 
-Debugging can be done with the excellent extension [Debugger for Chrome](https://marketplace.visualstudio.com/items?itemName=msjsdiag.debugger-for-chrome). Simply quit all running instances of Chrome and press F5, and the project should load in your current Chrome profile with debugging enabled via the extension.
-
-Make sure that all instances of Chrome are actually closed and stopped first, otherwise it may fail to attach.
+Debugging can be done with VS Code by pressing F5.
 
 ## Development Concerns
 
@@ -66,6 +72,8 @@ Style is not a major concern for us. We use `prettier` in our IDEs but don't muc
 ### Functional vs Class Components
 
 While class components are preferred for larger components with many methods, whatever style works best for you is acceptable.
+
+Functional components should almost always use a reducer to reduce complexity within the file.
 
 ## Backend API
 
