@@ -172,7 +172,7 @@ describe('ComponentsLibrary', () => {
         describe('Table row', () => {
           describe('Actions', () => {
             describe('"Copy Data to Clipboard" button', () => {
-              it('has an icon to Copy Data to Clipboard', async () => {
+              it.skip('has an icon to Copy Data to Clipboard', async () => {
                 await Constants.ReRenderAfterLoad();
                 wrapper.update();
                 Chai.expect(
@@ -204,7 +204,7 @@ describe('ComponentsLibrary', () => {
                     .simulate('click');
                 });
 
-                it('can be clicked to open a modal with an EditTransaction component in it', async () => {
+                it.skip('can be clicked to open a modal with an EditTransaction component in it', async () => {
                   wrapper.update();
 
                   Chai.expect(
@@ -215,7 +215,7 @@ describe('ComponentsLibrary', () => {
                   ).to.be.equal(true);
                 });
 
-                it('has a functional "CANCEL" button', () => {
+                it.skip('has a functional "CANCEL" button', () => {
                   wrapper
                     .find('span')
                     .findWhere(span => span.text() === 'Cancel')
@@ -225,7 +225,7 @@ describe('ComponentsLibrary', () => {
                   Chai.expect(wrapper.find({ open: true })).to.be.lengthOf(0);
                 });
 
-                it('has a disabled "Save" button when first opened', () => {
+                it.skip('has a disabled "Save" button when first opened', () => {
                   // Checking to ensure the button is disabled
                   Chai.expect(
                     wrapper
@@ -249,7 +249,7 @@ describe('ComponentsLibrary', () => {
               });
             });
 
-            describe('"Delete this task" button', () => {
+            describe.skip('"Delete this task" button', () => {
               it('has an icon to Delete this task', async () => {
                 await Constants.ReRenderAfterLoad();
                 wrapper.update();
@@ -271,7 +271,7 @@ describe('ComponentsLibrary', () => {
               });
             });
 
-            describe('"View activity log" button', () => {
+            describe.skip('"View activity log" button', () => {
               it('has an icon to View activity log', async () => {
                 await Constants.ReRenderAfterLoad();
                 wrapper.update();
@@ -281,7 +281,7 @@ describe('ComponentsLibrary', () => {
               });
             });
 
-            describe('"View Notes" button', () => {
+            describe.skip('"View Notes" button', () => {
               it('has an icon to View notes', async () => {
                 await Constants.ReRenderAfterLoad();
                 wrapper.update();
@@ -291,7 +291,7 @@ describe('ComponentsLibrary', () => {
               });
             });
 
-            describe('"Mark as accepted" button', () => {
+            describe.skip('"Mark as accepted" button', () => {
               it('has an icon to Mark as accepted', async () => {
                 await Constants.ReRenderAfterLoad();
                 wrapper.update();
@@ -301,7 +301,7 @@ describe('ComponentsLibrary', () => {
               });
             });
 
-            describe('"Assign an employee to this task" button', () => {
+            describe.skip('"Assign an employee to this task" button', () => {
               it('has an icon to Assign an employee to this task', async () => {
                 await Constants.ReRenderAfterLoad();
                 wrapper.update();
@@ -313,7 +313,7 @@ describe('ComponentsLibrary', () => {
               });
             });
 
-            describe('"Reject transaction" button', () => {
+            describe.skip('"Reject transaction" button', () => {
               it('has an icon to Reject transaction', async () => {
                 await Constants.ReRenderAfterLoad();
                 wrapper.update();
