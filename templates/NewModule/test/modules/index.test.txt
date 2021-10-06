@@ -46,9 +46,7 @@ describe('TITLE_HERE', () => {
     })
 
     describe('Loading', () => {
-      it('renders a loader when loading', () => {
-        throw new Error("Testing is not implemented yet for the module TITLE_HERE");
-      });
+      it('renders a loader when loading'); // Implement here
     })
 
     // Rest of the spec tests here, make them pass as you go
