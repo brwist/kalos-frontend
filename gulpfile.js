@@ -231,7 +231,7 @@ async function create() {
 
   info(`Module files created in: ${sh.pwd()}`);
 
-  isComponent
+  moduleType === ModuleTypes['Component']
     ? warn(
         "Don't forget to add the component to the ComponentsLibrary index file, otherwise it won't show up when the Components Library is run! (/modules/ComponentsLibrary/index.tsx)",
       )
