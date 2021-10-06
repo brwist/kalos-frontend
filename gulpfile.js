@@ -103,7 +103,6 @@ function validateModuleName(name) {
 const ModuleTypes = {
   Component: 'component',
   Module: 'module',
-  TestOnly: 'test-only' | 'testonly',
 };
 
 function getModuleType(typeArg) {
@@ -143,6 +142,7 @@ function replaceKeywords(fileToWorkOn, userSpecsInput, nameOfModule) {
  */
 async function create() {
   let name = titleCase(process.argv[4].replace(/-/g, ''));
+  let testOnly = titleCase(process.argv[6].replace(/-/g, '')) === 'testonly';
   if (!name) {
     name = await textPrompt('Module name: ');
   }
@@ -205,6 +205,8 @@ async function create() {
   testJS.to('index.test.tsx');
 
   info(`Test file created in: ${sh.pwd()}`);
+
+  if (testOnly) return; // Work is done here
 
   switch (moduleType) {
     case ModuleTypes['Component']:
