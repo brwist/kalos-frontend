@@ -78,7 +78,7 @@ async function clean() {
   }
 }
 
-function getDescriptionAndDocument() {
+async function getDescriptionAndDocument() {
   let description = await textPrompt('Description (optional): ');
   if (description === '' || !description) {
     description = 'None';
@@ -131,7 +131,7 @@ function getModuleType(typeArg) {
 
 function replaceKeywords(fileToWorkOn, userSpecsInput, nameOfModule) {
   return fileToWorkOn
-    .sed(new RegExp('TITLE_HERE', 'g'), name)
+    .sed(new RegExp('TITLE_HERE', 'g'), nameOfModule)
     .sed(new RegExp('DESCRIPTION', 'g'), userSpecsInput.description)
     .sed(new RegExp('DOCUMENT', 'g'), userSpecsInput.designDocument);
 }
@@ -147,7 +147,7 @@ async function create() {
     name = await textPrompt('Module name: ');
   }
 
-  const userSpecs = getDescriptionAndDocument();
+  const userSpecs = await getDescriptionAndDocument();
 
   const valid = validateModuleName(name);
   if (!valid) return;
