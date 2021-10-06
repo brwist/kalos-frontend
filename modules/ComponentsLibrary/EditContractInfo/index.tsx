@@ -233,7 +233,7 @@ export const EditContractInfo: FC<props> = ({
         </div>
       </SectionBar>
       <SectionBar
-        title="New Contract"
+        title="Invoice Data"
         actions={[
           { label: 'Cancel', onClick: () => onClose() },
           { label: 'Save', onClick: () => validateForSave() },
