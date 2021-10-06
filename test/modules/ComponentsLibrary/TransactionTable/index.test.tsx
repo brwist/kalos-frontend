@@ -18,6 +18,7 @@ import TransactionActivityModule = require('@kalos-core/kalos-rpc/TransactionAct
 import TimesheetDepartmentModule = require('@kalos-core/kalos-rpc/TimesheetDepartment');
 import TransactionAccountModule = require('@kalos-core/kalos-rpc/TransactionAccount');
 import DevlogModule = require('@kalos-core/kalos-rpc/Devlog');
+import UserPB = require('@kalos-core/kalos-rpc/compiled-protos/user_pb');
 
 import TestConstants = require('../../../test-constants/test-response-data');
 import Constants = require('../../../test-constants/constants');
@@ -73,6 +74,10 @@ describe('ComponentsLibrary', () => {
 
         let userReq = new UserModule.User();
         userReq.setId(98217);
+
+        let newUserPermissionGroup = new UserPB.PermissionGroup();
+        newUserPermissionGroup.setType('AccountsPayable');
+        userReq.setPermissionGroupsList([newUserPermissionGroup]);
 
         Stubs.setupStubs(
           'UserClientService',
@@ -147,14 +152,18 @@ describe('ComponentsLibrary', () => {
           ).to.be.lengthOf(1);
         });
 
-        describe('New Transaction button', () => {
-          it('has a "New Transaction" button', async () => {
+        describe('Upload Pick Ticket, Invoice, or Non Credit Card Receipt button', () => {
+          it('has a "Upload Pick Ticket, Invoice, or Non Credit Card Receipt" button because their role is undefined', async () => {
             await Constants.ReRenderAfterLoad(200);
             wrapper.update();
             Chai.expect(
               wrapper
                 .find('.MuiButton-label')
-                .filterWhere(button => button.text() === 'New Transaction')
+                .filterWhere(
+                  button =>
+                    button.text() ===
+                    'Upload Pick Ticket, Invoice, or Non Credit Card Receipt',
+                )
                 .first(),
             ).to.be.lengthOf(1);
           });
