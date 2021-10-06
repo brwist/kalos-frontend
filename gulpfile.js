@@ -78,6 +78,64 @@ async function clean() {
   }
 }
 
+function getDescriptionAndDocument() {
+  let description = await textPrompt('Description (optional): ');
+  if (description === '' || !description) {
+    description = 'None';
+  }
+  let designDocument = await textPrompt('Design Document / Spec (optional): ');
+  if (designDocument === '' || !designDocument) {
+    designDocument = 'None Specified';
+  }
+  return { description, designDocument };
+}
+
+function validateModuleName(name) {
+  if (name.includes('_') || name.includes('-')) {
+    error(
+      'React components should adhere to Pascal case and should not contain the characters "_" or "-".',
+    );
+    return false;
+  }
+  return true;
+}
+
+const ModuleTypes = {
+  Component: 'component',
+  Module: 'module',
+  TestOnly: 'test-only' | 'testonly',
+};
+
+function getModuleType(typeArg) {
+  switch (typeArg.replace(/-/g, '').toLowerCase()) {
+    case ModuleTypes['Component']:
+      return ModuleTypes['Component'];
+    case 'c':
+      return ModuleTypes['Component'];
+    case ModuleTypes['Module']:
+      return ModuleTypes['Module'];
+    case 'm':
+      return ModuleTypes['Module'];
+    case ModuleTypes['TestOnly']:
+      return 'test-only';
+    case 't':
+      return 'test-only';
+    default:
+      warn(
+        `Unknown flag passed ${process.argv[5]
+          .replace(/-/g, '')
+          .toLowerCase()} - creating as a module. For a component instead, run "yarn make --ComponentName --C" or "yarn make --ComponentName --Component".`,
+      );
+  }
+}
+
+function replaceKeywords(fileToWorkOn, userSpecsInput, nameOfModule) {
+  return fileToWorkOn
+    .sed(new RegExp('TITLE_HERE', 'g'), name)
+    .sed(new RegExp('DESCRIPTION', 'g'), userSpecsInput.description)
+    .sed(new RegExp('DOCUMENT', 'g'), userSpecsInput.designDocument);
+}
+
 /**
  * Creates a new local module, module name should be passed as flag
  *
@@ -89,104 +147,82 @@ async function create() {
     name = await textPrompt('Module name: ');
   }
 
-  let description = await textPrompt('Description (optional): ');
-  if (description === '' || !description) {
-    description = 'None';
-  }
-  let designDocument = await textPrompt('Design Document / Spec (optional): ');
-  if (designDocument === '' || !designDocument) {
-    designDocument = 'None Specified';
-  }
+  const userSpecs = getDescriptionAndDocument();
 
-  if (name.includes('_') || name.includes('-')) {
-    error(
-      'React components should adhere to Pascal case and should not contain the characters "_" or "-".',
-    );
-    return;
-  }
+  const valid = validateModuleName(name);
+  if (!valid) return;
 
-  let isComponent = false;
+  let moduleType = ModuleTypes['Module'];
   if (process.argv[5]) {
-    switch (process.argv[5].replace(/-/g, '').toLowerCase()) {
-      case 'component':
-        isComponent = true;
-        break;
-      case 'c':
-        isComponent = true;
-        break;
-      default:
-        warn(
-          `Unknown flag passed ${process.argv[5]
-            .replace(/-/g, '')
-            .toLowerCase()} - creating as a module. For a component instead, run "yarn make --ComponentName --C" or "yarn make --ComponentName --Component".`,
-        );
-    }
+    moduleType = getModuleType(process.argv[5]);
   }
 
-  isComponent ? sh.cd('templates/NewComponent') : sh.cd('templates/NewModule');
+  switch (moduleType) {
+    case ModuleTypes['Module']:
+      sh.cd('templates/NewModule');
+      break;
+    case ModuleTypes['Component']:
+      sh.cd('templates/NewComponent');
+      break;
+  }
 
   // Get the text from the template files
-  const indexJS = sh
-    .cat(['index.txt'])
-    .sed(new RegExp('TITLE_HERE', 'g'), name)
-    .sed(new RegExp('DESCRIPTION', 'g'), description)
-    .sed(new RegExp('DOCUMENT', 'g'), designDocument);
-  const mainJS = isComponent
-    ? null
-    : sh
-        .cat(['main.txt'])
-        .sed(new RegExp('TITLE_HERE', 'g'), name)
-        .sed(new RegExp('DESCRIPTION', 'g'), description)
-        .sed(new RegExp('DOCUMENT', 'g'), designDocument);
-  const reducerJS = sh
-    .cat(['reducer.txt'])
-    .sed(new RegExp('TITLE_HERE', 'g'), name);
-  const examplesJS = isComponent
-    ? sh.cat(['examples.txt']).sed(new RegExp('TITLE_HERE', 'g'), name)
-    : null;
-  const html = isComponent
-    ? null
-    : sh.cat(['index.html.txt']).sed(new RegExp('TITLE_HERE', 'g'), name);
+  const indexJS = replaceKeywords(sh.cat(['index.txt']), userSpecs, name);
+  let mainJS;
+  if (moduleType === ModuleTypes['Module']) {
+    mainJS = replaceKeywords(sh.cat(['main.txt']), userSpecs, name);
+  }
+  const reducerJS = replaceKeywords(sh.cat(['reducer.txt']), userSpecs, name);
+  let examplesJS;
+  if (moduleType === ModuleTypes['Component']) {
+    examplesJS = replaceKeywords(sh.cat(['examples.txt']), userSpecs, name);
+  }
+  let html;
+  if (moduleType === ModuleTypes['Module']) {
+    html = replaceKeywords(sh.cat(['index.html.txt']), userSpecs, name);
+  }
 
   sh.cd('test/modules');
 
-  const testJS = sh
-    .cat(['index.test.txt'])
-    .sed(new RegExp('TITLE_HERE', 'g'), name)
-    .sed(new RegExp('DESCRIPTION', 'g'), description)
-    .sed(new RegExp('DOCUMENT', 'g'), designDocument);
+  const testJS = replaceKeywords(sh.cat(['index.test.txt']), userSpecs, name);
 
   sh.cd('../../../../');
 
   sh.cd('test');
 
-  isComponent
-    ? sh.mkdir(`modules/ComponentsLibrary/${name}`)
-    : sh.mkdir(`modules/${name}`);
-  isComponent
-    ? sh.cd(`modules/ComponentsLibrary/${name}`)
-    : sh.cd(`modules/${name}`);
+  switch (moduleType) {
+    case ModuleTypes['Component']:
+      sh.mkdir(`modules/ComponentsLibrary/${name}`);
+      sh.cd(`modules/ComponentsLibrary/${name}`);
+      break;
+    case ModuleTypes['Module']:
+      sh.mkdir(`modules/${name}`);
+      sh.cd(`modules/${name}`);
+      break;
+  }
+
   sh.touch('index.test.tsx');
   testJS.to('index.test.tsx');
 
   info(`Test file created in: ${sh.pwd()}`);
 
-  isComponent ? sh.cd('../../../../') : sh.cd('../../../');
-
-  isComponent
-    ? sh.mkdir(`modules/ComponentsLibrary/${name}`)
-    : sh.mkdir(`modules/${name}`);
-  isComponent
-    ? sh.cd(`modules/ComponentsLibrary/${name}`)
-    : sh.cd(`modules/${name}`);
-  if (!isComponent) {
-    sh.touch('index.html');
-    sh.touch('main.tsx');
-    html.to('index.html');
-    mainJS.to('main.tsx');
-  } else {
-    sh.touch('examples.tsx');
-    examplesJS.to('examples.tsx');
+  switch (moduleType) {
+    case ModuleTypes['Component']:
+      sh.cd('../../../../');
+      sh.mkdir(`modules/ComponentsLibrary/${name}`);
+      sh.cd(`modules/ComponentsLibrary/${name}`);
+      sh.touch('examples.tsx');
+      examplesJS.to('examples.tsx');
+      break;
+    case ModuleTypes['Module']:
+      sh.cd('../../../');
+      sh.mkdir(`modules/${name}`);
+      sh.cd(`modules/${name}`);
+      sh.touch('index.html');
+      sh.touch('main.tsx');
+      html.to('index.html');
+      mainJS.to('main.tsx');
+      break;
   }
   sh.touch('index.tsx');
   sh.touch('reducer.tsx');
