@@ -65,12 +65,30 @@ describe('ComponentsLibrary', () => {
         });
 
         describe('Services Performed fields', () => {
-          it('should have multiple Services Performed fields');
-          it('should have a grand total field');
-
-          describe('Services Performed field', () => {
-            it('should have a Total Amount field');
+          describe('Services Performed (1) section', () => {
+            it(
+              'should have a Services Performed (1) field for a description of the service performed',
+            );
+            it('should have a Total Amount field for the cost of the service');
           });
+
+          describe('Services Performed (2) section', () => {
+            it(
+              'should have a Services Performed (2) field for a description of the service performed',
+            );
+            it('should have a Total Amount field for the cost of the service');
+          });
+
+          describe('Services Performed (3) section', () => {
+            it(
+              'should have a Services Performed (3) field for a description of the service performed',
+            );
+            it('should have a Total Amount field for the cost of the service');
+          });
+
+          it(
+            'should have a grand total field which sums up the other fields correctly',
+          );
         });
       });
     });

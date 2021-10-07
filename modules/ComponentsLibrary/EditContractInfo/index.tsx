@@ -7,7 +7,11 @@
 
 import { Contract } from '@kalos-core/kalos-rpc/Contract';
 import React, { useReducer, useEffect, useCallback, FC } from 'react';
-import { makeSafeFormObject } from '../../../helpers';
+import {
+  ContractClientService,
+  DevlogClientService,
+  makeSafeFormObject,
+} from '../../../helpers';
 import {
   PAYMENT_STATUS_OPTIONS,
   PAYMENT_TYPE_OPTIONS,
@@ -19,6 +23,9 @@ import { PropertyDropdown } from '../PropertyDropdown/index';
 import { Property } from '@kalos-core/kalos-rpc/Property';
 import { Confirm } from '../Confirm';
 import { EditInvoiceData } from '../EditInvoiceData';
+import { Devlog } from '@kalos-core/kalos-rpc/Devlog';
+import { format } from 'date-fns';
+import { Invoice } from '@kalos-core/kalos-rpc/Invoice';
 
 export interface Output {
   contractData: Contract;
@@ -114,6 +121,39 @@ export const EditContractInfo: FC<props> = ({
   const load = useCallback(() => {
     dispatch({ type: ACTIONS.SET_LOADED, data: true });
   }, []);
+
+  const save = useCallback(
+    async (contractData: Contract, propertiesSelected: Property[]) => {
+      try {
+        let reqContract = contractData;
+        reqContract.setProperties(propertiesSelected.join(','));
+        const res = await ContractClientService.Create(reqContract);
+        console.log('Result of upload: ', res);
+      } catch (err) {
+        console.error(`An error occurred while upserting a contract: ${err}`);
+        try {
+          let devlog = new Devlog();
+          devlog.setUserId(userID);
+          devlog.setTimestamp(format(new Date(), 'yyyy-MM-dd hh:mm:ss'));
+          devlog.setIsError(1);
+          devlog.setDescription(
+            `Failed to upsert a contract with error: ${err}`,
+          );
+          await DevlogClientService.Create(devlog);
+        } catch (err) {
+          console.error(`Failed to upload a devlog: ${err}`);
+        }
+      }
+
+      try {
+        let reqInvoice = new Invoice();
+        console.error('Save invoice here');
+      } catch (err) {
+        console.error(`An error occurred while upserting an invoice: ${err}`);
+      }
+    },
+    [userID],
+  );
 
   const cleanup = useCallback(() => {}, []);
 
