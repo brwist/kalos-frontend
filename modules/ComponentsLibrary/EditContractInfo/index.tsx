@@ -30,6 +30,7 @@ import { Invoice } from '@kalos-core/kalos-rpc/Invoice';
 export interface Output {
   contractData: Contract;
   propertiesSelected: Property[];
+  invoiceData: Invoice;
 }
 
 interface props {
@@ -116,48 +117,66 @@ export const EditContractInfo: FC<props> = ({
     contractData: new Contract(),
     propertiesSelected: [],
     isValidating: false,
+    invoiceData: new Invoice(),
   });
 
   const load = useCallback(() => {
     dispatch({ type: ACTIONS.SET_LOADED, data: true });
   }, []);
 
-  const save = useCallback(
-    async (contractData: Contract, propertiesSelected: Property[]) => {
+  const save = useCallback(async () => {
+    try {
+      let reqContract = state.contractData;
+      if (state.propertiesSelected)
+        reqContract.setProperties(state.propertiesSelected.join(','));
+      //const res = await ContractClientService.Create(reqContract);
+      //console.log('Result of upload: ', res);
+    } catch (err) {
+      console.error(`An error occurred while upserting a contract: ${err}`);
       try {
-        let reqContract = contractData;
-        reqContract.setProperties(propertiesSelected.join(','));
-        const res = await ContractClientService.Create(reqContract);
-        console.log('Result of upload: ', res);
+        let devlog = new Devlog();
+        devlog.setUserId(userID);
+        devlog.setTimestamp(format(new Date(), 'yyyy-MM-dd hh:mm:ss'));
+        devlog.setIsError(1);
+        devlog.setDescription(`Failed to upsert a contract with error: ${err}`);
+        await DevlogClientService.Create(devlog);
       } catch (err) {
-        console.error(`An error occurred while upserting a contract: ${err}`);
-        try {
-          let devlog = new Devlog();
-          devlog.setUserId(userID);
-          devlog.setTimestamp(format(new Date(), 'yyyy-MM-dd hh:mm:ss'));
-          devlog.setIsError(1);
-          devlog.setDescription(
-            `Failed to upsert a contract with error: ${err}`,
-          );
-          await DevlogClientService.Create(devlog);
-        } catch (err) {
-          console.error(`Failed to upload a devlog: ${err}`);
-        }
+        console.error(`Failed to upload a devlog: ${err}`);
       }
+    }
 
-      try {
-        let reqInvoice = new Invoice();
-        console.error('Save invoice here');
-      } catch (err) {
-        console.error(`An error occurred while upserting an invoice: ${err}`);
-      }
-    },
-    [userID],
-  );
+    try {
+      let reqInvoice = new Invoice();
+      console.log('state. invoiceData: ', state.invoiceData);
+      reqInvoice.setServicesperformedrow1(
+        state.invoiceData.getServicesperformedrow1(),
+      );
+      reqInvoice.setTotalamountrow1(state.invoiceData.getTotalamountrow1());
+      reqInvoice.setServicesperformedrow2(
+        state.invoiceData.getServicesperformedrow2(),
+      );
+      reqInvoice.setTotalamountrow2(state.invoiceData.getTotalamountrow2());
+      reqInvoice.setServicesperformedrow3(
+        state.invoiceData.getServicesperformedrow3(),
+      );
+      reqInvoice.setTotalamountrow3(state.invoiceData.getTotalamountrow3());
+      reqInvoice.setServicesperformedrow4(
+        state.invoiceData.getServicesperformedrow4(),
+      );
+      reqInvoice.setTotalamountrow4(state.invoiceData.getTotalamountrow4());
+      reqInvoice.setTerms(state.invoiceData.getTerms());
+      reqInvoice.setUserId(userID);
+      // don't forget to associate the invoice with the contract
+      console.log('Save invoice here', reqInvoice);
+    } catch (err) {
+      console.error(`An error occurred while upserting an invoice: ${err}`);
+    }
+  }, [state.contractData, state.invoiceData, state.propertiesSelected, userID]);
 
   const cleanup = useCallback(() => {}, []);
 
   const validateForSave = () => {
+    console.log('Invoice data: ', state.invoiceData);
     if (state.propertiesSelected !== undefined) {
       if (state.propertiesSelected.length <= 0) {
         dispatch({ type: ACTIONS.SET_VALIDATING, data: true });
@@ -165,9 +184,11 @@ export const EditContractInfo: FC<props> = ({
       }
     }
 
+    save();
     onSave({
       contractData: state.contractData,
       propertiesSelected: state.propertiesSelected,
+      invoiceData: state.invoiceData,
     } as Output);
   };
 
@@ -241,6 +262,7 @@ export const EditContractInfo: FC<props> = ({
                 onChange({
                   contractData: req,
                   propertiesSelected: state.propertiesSelected,
+                  invoiceData: state.invoiceData,
                 } as Output);
             }}
           />
@@ -267,6 +289,7 @@ export const EditContractInfo: FC<props> = ({
                 onChange({
                   contractData: state.contractData,
                   propertiesSelected: propertyData,
+                  invoiceData: state.invoiceData,
                 } as Output);
             }}
           />
@@ -284,6 +307,19 @@ export const EditContractInfo: FC<props> = ({
           onClose={() => onClose()}
           onSave={savedInvoice => validateForSave()}
           onChange={currentData => {
+            dispatch({
+              type: ACTIONS.SET_INVOICE_DATA,
+              data: makeSafeFormObject(currentData, new Invoice()),
+            });
+            if (onChange)
+              onChange({
+                contractData: state.contractData,
+                propertiesSelected:
+                  state.propertiesSelected !== undefined
+                    ? state.propertiesSelected
+                    : [],
+                invoiceData: state.invoiceData,
+              });
             console.log(
               'Make sure to assign this to the stuff to save, and then save that as well! ',
               currentData,
