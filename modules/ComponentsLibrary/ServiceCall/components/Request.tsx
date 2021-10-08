@@ -280,6 +280,11 @@ export const Request: FC<Props> = forwardRef(
             name: 'getId',
             invisible: true,
           },
+          {
+            label: 'Log Version',
+            name: 'getLogVersion',
+            invisible: true,
+          },
         ],
       ],
       [callbackOriginalOptions, isCallback, jobSubtypeOptions, jobTypeOptions],
