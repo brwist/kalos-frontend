@@ -1,3 +1,4 @@
+import { ActivityLogConfig } from '@kalos-core/kalos-rpc/BaseClient';
 import { DispatchableTech, DispatchCall } from '@kalos-core/kalos-rpc/Dispatch';
 import { JobType } from '@kalos-core/kalos-rpc/JobType';
 import { TimesheetDepartment } from '@kalos-core/kalos-rpc/TimesheetDepartment';
@@ -32,8 +33,10 @@ export interface State {
   isLoadingTech: boolean;
   isLoadingCall: boolean;
   isLoadingMap: boolean;
+  isLoadingDismissed: boolean;
   isInitialLoad: boolean;
   isLoadingFilters: boolean;
+  assigneeList: {id: number, name: string}[];
 }
 
 export type Action =
@@ -60,15 +63,21 @@ export type Action =
     selectedTech: DispatchableTech,
     selectedCall: DispatchCall,
     isProcessing: boolean,
+    assigneeList?: {id: number, name: string}[],
   }}
   | { type: 'setCenter'; data: {
     center: {lat: number, lng: number},
     zoom: number
   }}
-  | {type: 'setProcessing'; data: boolean }
+  | {type: 'setProcessing'; data: {
+    loading: boolean,
+    dismissProcessing: boolean,
+  } }
   | {type: 'setLoadingTech'; data: boolean}
   | {type: 'setLoadingCall'; data: boolean}
-  | {type: 'setLoadingMap'; data: boolean};
+  | {type: 'setLoadingMap'; data: boolean}
+  | {type: 'setAssigneeList'; data: {id: number, name: string}[]}
+  ;
 
 export const reducer = (state: State, action: Action) => {
   switch (action.type) {
@@ -120,6 +129,7 @@ export const reducer = (state: State, action: Action) => {
         selectedTech: action.data.selectedTech,
         selectedCall: action.data.selectedCall,
         isProcessing: action.data.isProcessing,
+        assigneeList: action.data.assigneeList ? action.data.assigneeList : [],
       }
     case 'setCenter':
       return {
@@ -130,7 +140,8 @@ export const reducer = (state: State, action: Action) => {
     case 'setProcessing':
       return {
         ...state,
-        isProcessing: action.data,
+        isProcessing: action.data.loading,
+        isLoadingDismissed: action.data.dismissProcessing,
       }
     case 'setLoadingTech':
       return {
@@ -146,6 +157,12 @@ export const reducer = (state: State, action: Action) => {
       return {
         ...state,
         isLoadingMap: action.data,
+      }
+    case 'setAssigneeList':
+      return {
+        ...state,
+        assigneeList: action.data,
+        isProcessing: false,
       }
     default:
       return state;

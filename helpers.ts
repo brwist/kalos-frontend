@@ -84,6 +84,7 @@ import { EventAssignmentClient } from '@kalos-core/kalos-rpc/EventAssignment';
 import { SlackClient } from '@kalos-core/kalos-rpc/Slack';
 import { File } from '@kalos-core/kalos-rpc/File';
 import { DevlogClient } from '@kalos-core/kalos-rpc/Devlog';
+import { FirstCallClient } from '@kalos-core/kalos-rpc/FirstCall';
 
 export type SimpleFile = {
   key: string;
@@ -153,6 +154,7 @@ export const TransactionAccountClientService = new TransactionAccountClient(
 export const EventAssignmentClientService = new EventAssignmentClient(ENDPOINT);
 export const SlackClientService = new SlackClient(ENDPOINT);
 export const DevlogClientService = new DevlogClient(ENDPOINT);
+export const FirstCallClientService = new FirstCallClient(ENDPOINT);
 
 export const getCFAppUrl = (action: string) => `${BASE_URL}?action=${action}`;
 
