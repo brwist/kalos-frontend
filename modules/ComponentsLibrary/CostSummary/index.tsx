@@ -448,7 +448,6 @@ export const CostSummary: FC<Props> = ({
 
       for (let i = 0; i < revokeResults.length; i++) {
         if (spiffType == 'Spiff') {
-          console.log(revokeResults[i].getSpiffAmount());
           spiffTotal += revokeResults[i].getSpiffAmount();
         } else {
           toolTotal += revokeResults[i].getToolpurchaseCost();
