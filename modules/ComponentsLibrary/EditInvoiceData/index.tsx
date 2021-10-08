@@ -25,6 +25,50 @@ const INVOICE_SCHEMA: Schema<Invoice> = [
       multiline: true,
     },
   ],
+  [
+    {
+      label: 'Service Performed (1)',
+      name: 'getServicesperformedrow1',
+    },
+    {
+      label: 'Total Cost (1)',
+      name: 'getTotalamountrow1',
+      type: 'number',
+    },
+  ],
+  [
+    {
+      label: 'Service Performed (2)',
+      name: 'getServicesperformedrow2',
+    },
+    {
+      label: 'Total Cost (2)',
+      name: 'getTotalamountrow2',
+      type: 'number',
+    },
+  ],
+  [
+    {
+      label: 'Service Performed (3)',
+      name: 'getServicesperformedrow3',
+    },
+    {
+      label: 'Total Cost (3)',
+      name: 'getTotalamountrow3',
+      type: 'number',
+    },
+  ],
+  [
+    {
+      label: 'Service Performed (4)',
+      name: 'getServicesperformedrow4',
+    },
+    {
+      label: 'Total Cost (4)',
+      name: 'getTotalamountrow4',
+      type: 'number',
+    },
+  ],
 ];
 
 export const EditInvoiceData: FC<props> = ({ onClose, onSave, onChange }) => {

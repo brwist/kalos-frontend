@@ -1,4 +1,5 @@
 import { Contract } from '@kalos-core/kalos-rpc/Contract';
+import { Invoice } from '@kalos-core/kalos-rpc/Invoice';
 import { Property } from '@kalos-core/kalos-rpc/Property';
 
 export type State = {
@@ -6,6 +7,7 @@ export type State = {
   contractData: Contract;
   propertiesSelected: Property[] | undefined;
   isValidating: boolean;
+  invoiceData: Invoice;
 };
 
 export enum ACTIONS {
@@ -13,6 +15,7 @@ export enum ACTIONS {
   SET_CONTRACT_DATA = 'setContractData',
   SET_PROPERTIES_SELECTED = 'setPropertiesSelected',
   SET_VALIDATING = 'setValidating',
+  SET_INVOICE_DATA = 'setInvoiceData',
 }
 
 export enum FREQUENCIES {
@@ -41,6 +44,10 @@ export type Action =
   | {
       type: ACTIONS.SET_VALIDATING;
       data: boolean;
+    }
+  | {
+      type: ACTIONS.SET_INVOICE_DATA;
+      data: Invoice;
     };
 
 export const reducer = (state: State, action: Action) => {
@@ -67,6 +74,12 @@ export const reducer = (state: State, action: Action) => {
       return {
         ...state,
         isValidating: action.data,
+      };
+    }
+    case ACTIONS.SET_INVOICE_DATA: {
+      return {
+        ...state,
+        invoiceData: action.data,
       };
     }
     default:
