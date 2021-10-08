@@ -49,6 +49,7 @@ export type State = {
   tripsTotal: number;
   tasks: Task[];
   dropDowns: { perDiemId: number; active: number }[];
+  activeTab: string;
 };
 
 export enum ACTIONS {
@@ -66,6 +67,7 @@ export enum ACTIONS {
   SET_TRIPS_TOTAL = 'setTripsTotal',
   SET_TASKS = 'setTasks',
   SET_DROPDOWNS = 'setDropDowns',
+  SET_ACTIVE_TAB = 'setActiveTab',
 }
 
 export type Action =
@@ -82,6 +84,7 @@ export type Action =
   | { type: ACTIONS.SET_TRIPS; data: Trip[] }
   | { type: ACTIONS.SET_TRIPS_TOTAL; data: number }
   | { type: ACTIONS.SET_TASKS; data: Task[] }
+  | { type: ACTIONS.SET_ACTIVE_TAB; data: string }
   | {
       type: ACTIONS.SET_DROPDOWNS;
       data: { perDiemId: number; active: number }[];
@@ -165,6 +168,12 @@ export const reducer = (state: State, action: Action) => {
       return {
         ...state,
         dropDowns: action.data,
+      };
+    }
+    case ACTIONS.SET_ACTIVE_TAB: {
+      return {
+        ...state,
+        activeTab: action.data,
       };
     }
     default:

@@ -25,10 +25,11 @@ import { SectionBar } from '../SectionBar';
 import { InfoTable } from '../InfoTable';
 import { Loader } from '../../Loader/main';
 import Button from '@material-ui/core/Button';
+import { Button as KalosButton } from '../Button';
 import { Trip } from '@kalos-core/kalos-rpc/compiled-protos/perdiem_pb';
 import { Task } from '@kalos-core/kalos-rpc/Task';
 import { differenceInMinutes, parseISO } from 'date-fns';
-import { roundNumber } from '../../../helpers';
+import { roundNumber, downloadCSV } from '../../../helpers';
 import { Tabs } from '../Tabs';
 import ExpandLess from '@material-ui/icons/ExpandLess';
 import ExpandMore from '@material-ui/icons/ExpandMore';
@@ -52,6 +53,13 @@ export const GetTotalTransactions = (transactions: Transaction[]) => {
 
 export const CostReportCSV: FC<Props> = ({ serviceCallId }) => {
   let tripsRendered: Trip[] = [];
+  const tabs = [
+    'JobDetails',
+    'Transactions',
+    'PerDiems',
+    'Timesheets',
+    'Trips',
+  ];
   const [state, dispatch] = useReducer(reducer, {
     loaded: false,
     loading: true,
@@ -67,6 +75,7 @@ export const CostReportCSV: FC<Props> = ({ serviceCallId }) => {
     tasks: [],
     dropDowns: [],
     totalHoursWorked: 0,
+    activeTab: tabs[0],
   });
 
   const totalTasksBillable = state.tasks.reduce(
@@ -145,24 +154,6 @@ export const CostReportCSV: FC<Props> = ({ serviceCallId }) => {
     (aggr, pd) => aggr + pd.getAmount(),
     0,
   );
-
-  const loadPrintData = useCallback(async () => {
-    const eventRes = await PerDiemClientService.loadPerDiemsByEventId(
-      serviceCallId,
-    );
-    // TODO: loadPerDiemsLodging
-    const lodgingRes = await PerDiemClientService.loadPerDiemsLodging(
-      eventRes.getResultsList(),
-    ); // first # is per diem id
-    dispatch({ type: ACTIONS.SET_LODGINGS, data: lodgingRes });
-
-    const transactions = await TransactionClientService.loadTransactionsByEventId(
-      serviceCallId,
-      true,
-    );
-    dispatch({ type: ACTIONS.SET_TRANSACTIONS, data: transactions });
-    dispatch({ type: ACTIONS.SET_PER_DIEMS, data: eventRes.getResultsList() });
-  }, [serviceCallId]);
 
   const loadEvent = useCallback(async () => {
     dispatch({ type: ACTIONS.SET_LOADING_EVENT, data: true });
@@ -252,10 +243,170 @@ export const CostReportCSV: FC<Props> = ({ serviceCallId }) => {
       );
       dispatch({ type: ACTIONS.SET_TOTAL_HOURS_WORKED, data: total });
       dispatch({ type: ACTIONS.SET_LOADING, data: false });
+
       dispatch({ type: ACTIONS.SET_LOADED, data: true });
     });
   }, [loadResources, serviceCallId]);
+  const createReport = (section: string) => {
+    let fullString = '';
+    var find = ',';
+    var re = new RegExp(find, 'g');
+    if (section === 'JobDetails' && state.event) {
+      fullString = ' Full Address , Job Timespan' + `\r\n`;
 
+      const address = getPropertyAddress(state.event.getProperty()).replace(
+        re,
+        '',
+      );
+      fullString =
+        fullString +
+        address +
+        ',' +
+        formatDate(state.event!.getDateStarted()) +
+        formatDate(state.event!.getDateEnded()) +
+        `\r\n`;
+      const costString = `Type, Total \r\n Total Hours Worked ,${state.totalHoursWorked} \r\n
+     Transactions, ${totalTransactions} \r\n  
+     Meals,${totalMeals} \r\n 
+     Lodging,${totalLodging} \r\n 
+     Tasks Billable,${totalTasksBillable} \r\n 
+     Trips Total,${state.tripsTotal} \r\n `;
+      fullString = fullString + costString;
+    }
+    if (section == 'Timesheets') {
+      fullString =
+        ' Technician,Department,Approved By,Time Started,Time Ended,Description,Hours,Notes' +
+        `\r\n`;
+      for (let i = 0; i < state.timesheets.length; i++) {
+        let t = state.timesheets[i];
+        let tempString =
+          t.getTechnicianUserName().replace(',', '') +
+          ',' +
+          t.getDepartmentName().replace(',', '') +
+          ',' +
+          t.getAdminApprovalUserName().replace(',', '') +
+          ',' +
+          t.getTimeStarted().replace(',', '') +
+          ',' +
+          t.getTimeFinished().replace(',', '') +
+          ',' +
+          t.getBriefDescription().replace(',', '') +
+          ',' +
+          t.getHoursWorked() +
+          ',' +
+          t.getNotes().replace(',', '') +
+          `\r\n`;
+        fullString = fullString + tempString;
+      }
+    }
+    if (section == 'Transactions' && state.transactions) {
+      fullString =
+        'Transaction Report' +
+        `\r\n` +
+        ' Department,Owner,Cost Center / Vendor,Date,Amount,Notes' +
+        `\r\n`;
+      for (let i = 0; i < state.transactions.length; i++) {
+        let t = state.transactions[i];
+        let tempString =
+          t.getDepartment()?.getClassification().replace(',', '') +
+          '-' +
+          t.getDepartment()?.getDescription().replace(',', '') +
+          ',' +
+          t.getOwnerName().replace(',', '') +
+          ',' +
+          t.getCostCenter()?.getDescription() +
+          '-' +
+          t.getVendor().replace(',', '') +
+          ',' +
+          formatDate(t.getTimestamp()) +
+          ',' +
+          usd(t.getAmount()) +
+          ',' +
+          t.getNotes().replace(',', '') +
+          `\r\n`;
+        fullString = fullString + tempString;
+      }
+    }
+    if (section == 'PerDiems' && state.transactions) {
+      fullString =
+        ' Department,Owner,Submitted Date,Approved By,Approved Date,Total Meals,Total Lodging,Notes' +
+        `\r\n`;
+      for (let i = 0; i < state.perDiems.length; i++) {
+        let t = state.perDiems[i];
+        const rowsList = t.getRowsList();
+        const totalMeals = MEALS_RATE * rowsList.length;
+        const totalLodging = rowsList.reduce(
+          (aggr, pd) =>
+            aggr + (pd.getMealsOnly() ? 0 : state.lodgings[pd.getId()]),
+          0,
+        );
+        let tempString =
+          TimesheetDepartmentClientService.getDepartmentName(
+            t.getDepartment()!,
+          ).replace(re, '') +
+          ',' +
+          t.getOwnerName() +
+          ',' +
+          (t.getDateSubmitted() != NULL_TIME
+            ? formatDate(t.getDateSubmitted())
+            : '-') +
+          ',' +
+          (t.getApprovedByName() || '-') +
+          ',' +
+          (t.getDateApproved() != NULL_TIME
+            ? formatDate(t.getDateApproved())
+            : '-') +
+          ',' +
+          usd(totalMeals) +
+          ',' +
+          (totalLodging != 0 ? usd(totalLodging) : '-') +
+          ',' +
+          t.getNotes() +
+          `\r\n`;
+        console.log(tempString);
+        fullString = fullString + tempString;
+      }
+    }
+    if (section == 'Trips' && state.transactions) {
+      fullString =
+        ' Date,Origin,Destination,Distance (in Miles),Home Travel ,Cost, Notes' +
+        `\r\n`;
+      for (let i = 0; i < state.trips.length; i++) {
+        let t = state.trips[i];
+        let tempString =
+          formatDate(t.getDate()) +
+          ',' +
+          t.getOriginAddress().replace(re, '') +
+          ',' +
+          t.getDestinationAddress().replace(re, '') +
+          ',' +
+          t.getDistanceInMiles() +
+          ',' +
+          (t.getHomeTravel() == true ? 'Yes' : 'No') +
+          ',' +
+          usd(
+            t.getDistanceInMiles() > 30 && t.getHomeTravel()
+              ? Number(
+                  (
+                    (t.getDistanceInMiles() - 30) *
+                    IRS_SUGGESTED_MILE_FACTOR
+                  ).toFixed(2),
+                )
+              : Number(
+                  (t.getDistanceInMiles() * IRS_SUGGESTED_MILE_FACTOR).toFixed(
+                    2,
+                  ),
+                ),
+          ) +
+          ',' +
+          t.getNotes().replace(re, '') +
+          `\r\n`;
+        fullString = fullString + tempString;
+      }
+    }
+
+    downloadCSV(state.activeTab + ' Report For ' + serviceCallId, fullString);
+  };
   useEffect(() => {
     if (!state.loadedInit) {
       console.log('loading init');
@@ -264,12 +415,12 @@ export const CostReportCSV: FC<Props> = ({ serviceCallId }) => {
     if (state.loadedInit == true && state.loaded === false) {
       console.log('loading');
 
-      dispatch({ type: ACTIONS.SET_LOADED, data: true });
       load();
     }
   }, [state.loadedInit, loadInit, state.loaded, load]);
   /*
    */
+
   return state.loaded ? (
     <div>
       <style>{`
@@ -279,100 +430,110 @@ export const CostReportCSV: FC<Props> = ({ serviceCallId }) => {
 
     }
   `}</style>
+
+      <div hidden={!state.loaded || state.activeTab == 'JobDetails'}>
+        <KalosButton
+          label="Download CSV"
+          onClick={() => {
+            createReport(state.activeTab);
+          }}
+        ></KalosButton>
+      </div>
       <Tabs
+        onChange={e =>
+          dispatch({ type: ACTIONS.SET_ACTIVE_TAB, data: tabs[e] })
+        }
         tabs={[
           {
             label: 'Job Details',
             content: state.event && (
-              <PrintList
-                items={[
-                  <div key="address">
-                    <strong>Address: </strong>
-                    {getPropertyAddress(state.event.getProperty())}
-                  </div>,
-                  <div key="startDate">
-                    <strong>Start Date: </strong>
-                    {formatDate(state.event.getDateStarted())}
-                  </div>,
-                  <div key="endDate">
-                    <strong>End Date: </strong>
-                    {formatDate(state.event.getDateEnded())}
-                  </div>,
-                  <div key="jobNumber">
-                    <strong>Job Number: </strong>
-                    {state.event.getLogJobNumber()}
-                  </div>,
-                ]}
-              />
-            ),
-          },
-          {
-            label: 'Totals',
-            content: (
-              <div key="CostSummary">
-                <InfoTable
-                  columns={[{ name: 'Type' }, { name: 'Total' }]}
-                  data={[
-                    [
-                      {
-                        value: 'Total Hours Worked',
-                      },
+              <div>
+                <PrintList
+                  items={[
+                    <div key="address" style={{ fontSize: '1.0vw' }}>
+                      <strong>Address: </strong>
+                      {getPropertyAddress(state.event.getProperty())}
+                    </div>,
+                    <div key="startDate" style={{ fontSize: '1.0vw' }}>
+                      <strong>Start Date: </strong>
+                      {formatDate(state.event.getDateStarted())}
+                    </div>,
+                    <div key="endDate" style={{ fontSize: '1.0vw' }}>
+                      <strong>End Date: </strong>
+                      {formatDate(state.event.getDateEnded())}
+                    </div>,
+                    <div key="jobNumber" style={{ fontSize: '1.0vw' }}>
+                      <strong>Job Number: </strong>
+                      {state.event.getLogJobNumber()}
+                    </div>,
+                  ]}
+                />
+                <div key="CostSummary">
+                  <InfoTable
+                    columns={[{ name: 'Type' }, { name: 'Total' }]}
+                    data={[
+                      [
+                        {
+                          value: 'Total Hours Worked',
+                        },
 
-                      {
-                        value:
-                          state.totalHoursWorked > 1
-                            ? `${state.totalHoursWorked} hrs`
-                            : state.totalHoursWorked == 0
-                            ? 'None'
-                            : `${state.totalHoursWorked} hr`,
-                      },
-                    ],
-                  ]}
-                />
-                <PrintParagraph tag="h2">Costs</PrintParagraph>
-                <InfoTable
-                  columns={[
-                    { name: 'Type', align: 'left' },
-                    { name: 'Cost', align: 'left' },
-                  ]}
-                  data={[
-                    [
-                      { value: 'Transactions' },
-                      { value: usd(totalTransactions) },
-                    ],
-                    [{ value: 'Meals' }, { value: usd(totalMeals) }],
-                    [{ value: 'Lodging' }, { value: usd(totalLodging) }],
-                    [
-                      { value: 'Tasks Billable' },
-                      { value: usd(totalTasksBillable) },
-                    ],
-                    [
-                      { value: 'Trips Total' },
-                      { value: usd(state.tripsTotal) },
-                    ],
-                    [
-                      {
-                        value: <strong key="stronk">TOTAL:</strong>,
-                      },
-                      {
-                        value: (
-                          <strong key="stronk">
-                            TOTAL:
-                            {usd(
-                              totalMeals +
-                                totalLodging +
-                                totalTransactions +
-                                totalTasksBillable,
-                            )}
-                          </strong>
-                        ),
-                      },
-                    ],
-                  ]}
-                />
+                        {
+                          value:
+                            state.totalHoursWorked > 1
+                              ? `${state.totalHoursWorked} hrs`
+                              : state.totalHoursWorked == 0
+                              ? 'None'
+                              : `${state.totalHoursWorked} hr`,
+                        },
+                      ],
+                    ]}
+                  />
+                  <PrintParagraph tag="h2">Costs</PrintParagraph>
+                  <InfoTable
+                    columns={[
+                      { name: 'Type', align: 'left' },
+                      { name: 'Cost', align: 'left' },
+                    ]}
+                    data={[
+                      [
+                        { value: 'Transactions' },
+                        { value: usd(totalTransactions) },
+                      ],
+                      [{ value: 'Meals' }, { value: usd(totalMeals) }],
+                      [{ value: 'Lodging' }, { value: usd(totalLodging) }],
+                      [
+                        { value: 'Tasks Billable' },
+                        { value: usd(totalTasksBillable) },
+                      ],
+                      [
+                        { value: 'Trips Total' },
+                        { value: usd(state.tripsTotal) },
+                      ],
+                      [
+                        {
+                          value: <strong key="stronk">TOTAL:</strong>,
+                        },
+                        {
+                          value: (
+                            <strong key="stronk">
+                              TOTAL:
+                              {usd(
+                                totalMeals +
+                                  totalLodging +
+                                  totalTransactions +
+                                  totalTasksBillable,
+                              )}
+                            </strong>
+                          ),
+                        },
+                      ],
+                    ]}
+                  />
+                </div>
               </div>
             ),
           },
+
           {
             label: 'Transactions',
             content: (
