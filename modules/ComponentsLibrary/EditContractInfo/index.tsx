@@ -10,6 +10,7 @@ import React, { useReducer, useEffect, useCallback, FC } from 'react';
 import {
   ContractClientService,
   DevlogClientService,
+  InvoiceClientService,
   makeSafeFormObject,
 } from '../../../helpers';
 import {
@@ -26,6 +27,7 @@ import { EditInvoiceData } from '../EditInvoiceData';
 import { Devlog } from '@kalos-core/kalos-rpc/Devlog';
 import { format } from 'date-fns';
 import { Invoice } from '@kalos-core/kalos-rpc/Invoice';
+import { Loader } from '../../Loader/main';
 
 export interface Output {
   contractData: Contract;
@@ -118,6 +120,7 @@ export const EditContractInfo: FC<props> = ({
     propertiesSelected: [],
     isValidating: false,
     invoiceData: new Invoice(),
+    isSaving: false,
   });
 
   const load = useCallback(() => {
@@ -125,17 +128,18 @@ export const EditContractInfo: FC<props> = ({
   }, []);
 
   const save = useCallback(async () => {
+    dispatch({ type: ACTIONS.SET_SAVING, data: true });
     onSave({
       contractData: state.contractData,
       propertiesSelected: state.propertiesSelected,
       invoiceData: state.invoiceData,
     } as Output);
+    let contractRes;
     try {
       let reqContract = state.contractData;
       if (state.propertiesSelected)
         reqContract.setProperties(state.propertiesSelected.join(','));
-      //const res = await ContractClientService.Create(reqContract);
-      //console.log('Result of upload: ', res);
+      contractRes = await ContractClientService.Create(reqContract);
     } catch (err) {
       console.error(`An error occurred while upserting a contract: ${err}`);
       try {
@@ -155,27 +159,45 @@ export const EditContractInfo: FC<props> = ({
       reqInvoice.setServicesperformedrow1(
         state.invoiceData.getServicesperformedrow1(),
       );
-      reqInvoice.setTotalamountrow1(state.invoiceData.getTotalamountrow1());
+      reqInvoice.setTotalamountrow1(
+        `${state.invoiceData.getTotalamountrow1()}`,
+      );
       reqInvoice.setServicesperformedrow2(
         state.invoiceData.getServicesperformedrow2(),
       );
-      reqInvoice.setTotalamountrow2(state.invoiceData.getTotalamountrow2());
+      reqInvoice.setTotalamountrow2(
+        `${state.invoiceData.getTotalamountrow2()}`,
+      );
       reqInvoice.setServicesperformedrow3(
         state.invoiceData.getServicesperformedrow3(),
       );
-      reqInvoice.setTotalamountrow3(state.invoiceData.getTotalamountrow3());
+      reqInvoice.setTotalamountrow3(
+        `${state.invoiceData.getTotalamountrow3()}`,
+      );
       reqInvoice.setServicesperformedrow4(
         state.invoiceData.getServicesperformedrow4(),
       );
-      reqInvoice.setTotalamountrow4(state.invoiceData.getTotalamountrow4());
-      reqInvoice.setTotalamounttotal(state.invoiceData.getTotalamounttotal());
+      reqInvoice.setTotalamountrow4(
+        `${state.invoiceData.getTotalamountrow4()}`,
+      );
+      reqInvoice.setTotalamounttotal(
+        `${state.invoiceData.getTotalamounttotal()}`,
+      );
       reqInvoice.setTerms(state.invoiceData.getTerms());
       reqInvoice.setUserId(userID);
+      reqInvoice.setFieldMaskList([
+        'Totalamountrow1',
+        'Totalamountrow2',
+        'Totalamountrow3',
+        'Totalamountrow4',
+        'Totalamounttotal',
+      ]);
       // don't forget to associate the invoice with the contract
-      console.log('Save invoice here', reqInvoice);
+      let invoiceRes = await InvoiceClientService.Create(reqInvoice);
     } catch (err) {
       console.error(`An error occurred while upserting an invoice: ${err}`);
     }
+    dispatch({ type: ACTIONS.SET_SAVING, data: false });
   }, [
     onSave,
     state.contractData,
@@ -207,6 +229,7 @@ export const EditContractInfo: FC<props> = ({
 
   return (
     <>
+      {state.isSaving || (!state.isLoaded && <Loader />)}
       {state.isValidating && (
         <Confirm
           title="Confirm Save"
@@ -320,7 +343,7 @@ export const EditContractInfo: FC<props> = ({
           onChange={currentData => {
             dispatch({
               type: ACTIONS.SET_INVOICE_DATA,
-              data: currentData,
+              data: makeSafeFormObject(currentData, new Invoice()),
             });
             if (onChange)
               onChange({

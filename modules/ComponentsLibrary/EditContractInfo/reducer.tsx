@@ -8,6 +8,7 @@ export type State = {
   propertiesSelected: Property[] | undefined;
   isValidating: boolean;
   invoiceData: Invoice;
+  isSaving: boolean;
 };
 
 export enum ACTIONS {
@@ -16,6 +17,7 @@ export enum ACTIONS {
   SET_PROPERTIES_SELECTED = 'setPropertiesSelected',
   SET_VALIDATING = 'setValidating',
   SET_INVOICE_DATA = 'setInvoiceData',
+  SET_SAVING = 'setSaving',
 }
 
 export enum FREQUENCIES {
@@ -48,6 +50,10 @@ export type Action =
   | {
       type: ACTIONS.SET_INVOICE_DATA;
       data: Invoice;
+    }
+  | {
+      type: ACTIONS.SET_SAVING;
+      data: boolean;
     };
 
 export const reducer = (state: State, action: Action) => {
@@ -80,6 +86,12 @@ export const reducer = (state: State, action: Action) => {
       return {
         ...state,
         invoiceData: action.data,
+      };
+    }
+    case ACTIONS.SET_SAVING: {
+      return {
+        ...state,
+        isSaving: action.data,
       };
     }
     default:

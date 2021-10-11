@@ -84,6 +84,7 @@ import { EventAssignmentClient } from '@kalos-core/kalos-rpc/EventAssignment';
 import { SlackClient } from '@kalos-core/kalos-rpc/Slack';
 import { File } from '@kalos-core/kalos-rpc/File';
 import { DevlogClient } from '@kalos-core/kalos-rpc/Devlog';
+import { InvoiceClient } from '@kalos-core/kalos-rpc/Invoice';
 
 export type SimpleFile = {
   key: string;
@@ -153,6 +154,7 @@ export const TransactionAccountClientService = new TransactionAccountClient(
 export const EventAssignmentClientService = new EventAssignmentClient(ENDPOINT);
 export const SlackClientService = new SlackClient(ENDPOINT);
 export const DevlogClientService = new DevlogClient(ENDPOINT);
+export const InvoiceClientService = new InvoiceClient(ENDPOINT);
 
 export const getCFAppUrl = (action: string) => `${BASE_URL}?action=${action}`;
 
@@ -437,15 +439,17 @@ function formatDate(date: string) {
  * @returns format Day (ie. Tue)
  */
 function formatDay(datetime: string) {
-  return ({
-    0: 'Sun',
-    1: 'Mon',
-    2: 'Tue',
-    3: 'Wed',
-    4: 'Thu',
-    5: 'Fri',
-    6: 'Sat',
-  } as { [key: number]: string })[new Date(datetime.substr(0, 10)).getDay()];
+  return (
+    {
+      0: 'Sun',
+      1: 'Mon',
+      2: 'Tue',
+      3: 'Wed',
+      4: 'Thu',
+      5: 'Fri',
+      6: 'Sat',
+    } as { [key: number]: string }
+  )[new Date(datetime.substr(0, 10)).getDay()];
 }
 
 /**
