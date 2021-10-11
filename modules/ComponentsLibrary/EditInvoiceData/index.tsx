@@ -115,7 +115,7 @@ export const EditInvoiceData: FC<props> = ({ onClose, onSave, onChange }) => {
           );
           currentDataSafe.setTotalamounttotal(total.toString());
           dispatch({ type: ACTIONS.SET_INVOICE_DATA, data: currentDataSafe });
-          if (onChange) onChange(currentData);
+          if (onChange) onChange(currentDataSafe);
         }}
       />
       <Form<Invoice>
