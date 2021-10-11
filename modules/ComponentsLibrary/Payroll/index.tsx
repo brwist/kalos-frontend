@@ -268,7 +268,7 @@ export const Payroll: FC<Props> = ({ userID }) => {
             />
             {role === 'Manager' && (
               <Button
-                label={'Open Weekly Hours Job Report'}
+                label={'Open Job Report(s)'}
                 onClick={() => setOpenReport(true)}
               ></Button>
             )}

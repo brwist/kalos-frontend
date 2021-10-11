@@ -50,6 +50,7 @@ export type State = {
   tasks: Task[];
   dropDowns: { perDiemId: number; active: number }[];
   activeTab: string;
+  printStatus: 'idle' | 'loading' | 'loaded' | undefined;
 };
 
 export enum ACTIONS {
@@ -68,6 +69,7 @@ export enum ACTIONS {
   SET_TASKS = 'setTasks',
   SET_DROPDOWNS = 'setDropDowns',
   SET_ACTIVE_TAB = 'setActiveTab',
+  SET_PRINT_STATUS = 'setPrintStatus',
 }
 
 export type Action =
@@ -83,6 +85,10 @@ export type Action =
   | { type: ACTIONS.SET_EVENT; data: Event }
   | { type: ACTIONS.SET_TRIPS; data: Trip[] }
   | { type: ACTIONS.SET_TRIPS_TOTAL; data: number }
+  | {
+      type: ACTIONS.SET_PRINT_STATUS;
+      data: 'idle' | 'loading' | 'loaded' | undefined;
+    }
   | { type: ACTIONS.SET_TASKS; data: Task[] }
   | { type: ACTIONS.SET_ACTIVE_TAB; data: string }
   | {
@@ -174,6 +180,12 @@ export const reducer = (state: State, action: Action) => {
       return {
         ...state,
         activeTab: action.data,
+      };
+    }
+    case ACTIONS.SET_PRINT_STATUS: {
+      return {
+        ...state,
+        printStatus: action.data,
       };
     }
     default:
