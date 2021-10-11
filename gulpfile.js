@@ -887,6 +887,10 @@ const NAMED_EXPORTS = {
     'FirstCalls',
     'FirstCallsList',
   ],
+  'node_modules/@kalos-core/kalos-rpc/compiled-protos/first_call_pb.js': [
+    'FirstCall',
+    'FirstCallList',
+  ],
   'node_modules/draft-js/lib/Draft.js': [
     'SelectionState',
     'EditorState',
