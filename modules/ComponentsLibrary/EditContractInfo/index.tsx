@@ -38,79 +38,15 @@ export interface Output {
 
 interface props {
   userID: number;
+  contractID: number;
   onSave: (savedContract: Output) => any;
   onClose: () => any;
   onChange?: (currentData: Output) => any;
 }
 
-const CONTRACT_SCHEMA: Schema<Contract> = [
-  [
-    {
-      label: 'Start Date',
-      type: 'date',
-      name: 'getDateStarted',
-      required: true,
-    },
-  ],
-  [
-    {
-      label: 'End Date',
-      type: 'date',
-      name: 'getDateEnded',
-      required: true,
-    },
-  ],
-  [
-    {
-      label: 'Frequency',
-      options: Object.values(FREQUENCIES),
-      name: 'getFrequency',
-      required: true,
-    },
-  ],
-  [
-    {
-      label: 'Group Billing',
-      options: Object.values(BILLING_OPTIONS),
-      name: 'getGroupBilling',
-      required: true,
-    },
-  ],
-  [
-    {
-      label: 'Payment Type',
-      options: PAYMENT_TYPE_OPTIONS,
-      name: 'getPaymentType',
-      required: true,
-    },
-  ],
-  [
-    {
-      label: 'Payment Status',
-      options: PAYMENT_STATUS_OPTIONS,
-      name: 'getPaymentStatus',
-      required: true,
-    },
-  ],
-  [
-    {
-      label: 'Payment Terms',
-      type: 'text',
-      name: 'getPaymentTerms',
-    },
-  ],
-  [
-    {
-      label: 'Notes',
-      type: 'text',
-      multiline: true,
-      name: 'getNotes',
-    },
-  ],
-];
-
 export const EditContractInfo: FC<props> = ({
   userID,
+  contractID,
   onSave,
   onClose,
   onChange,
@@ -123,11 +59,122 @@ export const EditContractInfo: FC<props> = ({
     invoiceData: new Invoice(),
     isSaving: false,
     error: undefined,
+    fatalError: false,
   });
+  console.log('FREQUENCY: ', state.contractData.getFrequency());
+  console.log(
+    'Group billing: ',
+    state.contractData.getGroupBilling() === 1
+      ? BILLING_OPTIONS.GROUP
+      : BILLING_OPTIONS.SITE,
+  );
 
-  const load = useCallback(() => {
+  const CONTRACT_SCHEMA: Schema<Contract> = [
+    [
+      {
+        label: 'Start Date',
+        type: 'date',
+        name: 'getDateStarted',
+        required: true,
+      },
+    ],
+    [
+      {
+        label: 'End Date',
+        type: 'date',
+        name: 'getDateEnded',
+        required: true,
+      },
+    ],
+    [
+      {
+        label: 'Frequency',
+        options: Object.values(FREQUENCIES),
+        name: 'getFrequency',
+        required: true,
+        defaultValue: FREQUENCIES.SEMIANNUAL,
+      },
+    ],
+    [
+      {
+        label: 'Group Billing',
+        options: Object.values(BILLING_OPTIONS),
+        name: 'getGroupBilling',
+        required: true,
+        defaultValue:
+          state.contractData.getGroupBilling() === 1
+            ? BILLING_OPTIONS.GROUP
+            : BILLING_OPTIONS.SITE,
+      },
+    ],
+    [
+      {
+        label: 'Payment Type',
+        options: PAYMENT_TYPE_OPTIONS,
+        name: 'getPaymentType',
+        required: true,
+      },
+    ],
+    [
+      {
+        label: 'Payment Status',
+        options: PAYMENT_STATUS_OPTIONS,
+        name: 'getPaymentStatus',
+        required: true,
+      },
+    ],
+    [
+      {
+        label: 'Payment Terms',
+        type: 'text',
+        name: 'getPaymentTerms',
+      },
+    ],
+    [
+      {
+        label: 'Notes',
+        type: 'text',
+        multiline: true,
+        name: 'getNotes',
+      },
+    ],
+  ];
+
+  const load = useCallback(async () => {
+    try {
+      let req = new Contract();
+      req.setId(contractID);
+      let res = await ContractClientService.Get(req);
+      if (!res) {
+        console.error(`Contract ${contractID} no longer exists.`);
+        dispatch({
+          type: ACTIONS.SET_ERROR,
+          data: `The contract with the ID provided (${contractID}) no longer exists.`,
+        });
+        dispatch({
+          type: ACTIONS.SET_FATAL_ERROR,
+          data: true,
+        });
+        try {
+          let devlog = new Devlog();
+          devlog.setUserId(userID);
+          devlog.setTimestamp(format(new Date(), 'yyyy-MM-dd hh:mm:ss'));
+          devlog.setIsError(1);
+          devlog.setDescription(
+            `Failed to get a contract with ID ${contractID}: contract no longer appears to exist.`,
+          );
+        } catch (err) {
+          console.error('Failed to upload a devlog.');
+        }
+      }
+
+      dispatch({ type: ACTIONS.SET_CONTRACT_DATA, data: res });
+    } catch (err) {
+      console.error(`An error occurred while loading a contract: ${err}`);
+    }
+
     dispatch({ type: ACTIONS.SET_LOADED, data: true });
-  }, []);
+  }, [contractID, userID]);
 
   const save = useCallback(async () => {
     dispatch({ type: ACTIONS.SET_SAVING, data: true });
@@ -149,7 +196,7 @@ export const EditContractInfo: FC<props> = ({
       );
       reqContract.setUserId(userID);
       reqContract.setDateCreated(format(new Date(), 'yyyy-mm-dd hh:mm:ss'));
-      contractRes = await ContractClientService.Create(reqContract);
+      contractRes = await ContractClientService.Update(reqContract);
     } catch (err) {
       console.error(`An error occurred while upserting a contract: ${err}`);
       error = `${err}`;
@@ -168,7 +215,7 @@ export const EditContractInfo: FC<props> = ({
     if (!contractRes || error) {
       dispatch({
         type: ACTIONS.SET_ERROR,
-        data: `An error occurred while trying to save the contract: \n${error}.\n The contract was not saved, and the invoice will not be saved. Please contact the webtech team.`,
+        data: `An error occurred while trying to save the contract: \n${error}.\n The contract was not saved, and the invoice will not be saved. Please contact the webtech team if this issue persists.`,
       });
       return;
     }
@@ -240,13 +287,14 @@ export const EditContractInfo: FC<props> = ({
   };
 
   useEffect(() => {
-    load();
+    if (!state.isLoaded) load();
 
     return () => {
       cleanup();
     };
-  }, [load, cleanup]);
+  }, [load, cleanup, state.isLoaded]);
 
+  console.log('Contract data: ', state.contractData);
   return (
     <>
       {state.isSaving || (!state.isLoaded && <Loader />)}
@@ -290,6 +338,7 @@ export const EditContractInfo: FC<props> = ({
       >
         <div style={{ width: '75%', display: 'inline-block' }}>
           <Form<Contract>
+            key={state.isLoaded.toString()}
             schema={CONTRACT_SCHEMA}
             data={state.contractData}
             onSave={() => validateForSave()}
