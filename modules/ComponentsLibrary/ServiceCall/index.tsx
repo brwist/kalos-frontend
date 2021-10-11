@@ -372,7 +372,8 @@ const handleSaveInvoice = useCallback(async() => {
         const newEvent = new Event();
         newEvent.setId(res.getId());
         newEvent.setLogJobNumber(logNumber);
-        newEvent.setFieldMaskList(['Id', 'LogJobNumber']);
+        newEvent.setIsResidential(temp.getIsResidential());
+        newEvent.setFieldMaskList(['Id', 'LogJobNumber', 'IsResidential']);
         await EventClientService.Update(newEvent);
         const newActivity = new ActivityLog();
         let activityName = `${logNumber} Added Service Call`;
