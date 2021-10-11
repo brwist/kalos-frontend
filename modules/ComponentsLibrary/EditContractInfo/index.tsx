@@ -28,6 +28,7 @@ import { Devlog } from '@kalos-core/kalos-rpc/Devlog';
 import { format } from 'date-fns';
 import { Invoice } from '@kalos-core/kalos-rpc/Invoice';
 import { Loader } from '../../Loader/main';
+import { Alert } from '../Alert';
 
 export interface Output {
   contractData: Contract;
@@ -121,6 +122,7 @@ export const EditContractInfo: FC<props> = ({
     isValidating: false,
     invoiceData: new Invoice(),
     isSaving: false,
+    error: undefined,
   });
 
   const load = useCallback(() => {
@@ -134,14 +136,23 @@ export const EditContractInfo: FC<props> = ({
       propertiesSelected: state.propertiesSelected,
       invoiceData: state.invoiceData,
     } as Output);
-    let contractRes;
+    let contractRes: Contract | undefined;
+    let error: string = '';
     try {
       let reqContract = state.contractData;
       if (state.propertiesSelected)
         reqContract.setProperties(state.propertiesSelected.join(','));
+      console.log('Req contract: ', reqContract);
+      reqContract.setGroupBilling(
+        // Casting to any because it is set in the form as a string
+        (reqContract.getGroupBilling() as any) === 'Group' ? 1 : 0,
+      );
+      reqContract.setUserId(userID);
+      reqContract.setDateCreated(format(new Date(), 'yyyy-mm-dd hh:mm:ss'));
       contractRes = await ContractClientService.Create(reqContract);
     } catch (err) {
       console.error(`An error occurred while upserting a contract: ${err}`);
+      error = `${err}`;
       try {
         let devlog = new Devlog();
         devlog.setUserId(userID);
@@ -154,8 +165,17 @@ export const EditContractInfo: FC<props> = ({
       }
     }
 
+    if (!contractRes || error) {
+      dispatch({
+        type: ACTIONS.SET_ERROR,
+        data: `An error occurred while trying to save the contract: \n${error}.\n The contract was not saved, and the invoice will not be saved. Please contact the webtech team.`,
+      });
+      return;
+    }
+
     try {
       let reqInvoice = new Invoice();
+      reqInvoice.setContractId(contractRes!.getId());
       reqInvoice.setServicesperformedrow1(
         state.invoiceData.getServicesperformedrow1(),
       );
@@ -230,6 +250,17 @@ export const EditContractInfo: FC<props> = ({
   return (
     <>
       {state.isSaving || (!state.isLoaded && <Loader />)}
+      {state.error && (
+        <Alert
+          title="Error"
+          open={state.error !== undefined}
+          onClose={() => {
+            dispatch({ type: ACTIONS.SET_ERROR, data: undefined });
+          }}
+        >
+          {state.error}
+        </Alert>
+      )}
       {state.isValidating && (
         <Confirm
           title="Confirm Save"
