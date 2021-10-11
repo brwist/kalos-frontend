@@ -343,7 +343,7 @@ export const EditContractInfo: FC<props> = ({
           onChange={currentData => {
             dispatch({
               type: ACTIONS.SET_INVOICE_DATA,
-              data: makeSafeFormObject(currentData, new Invoice()),
+              data: currentData,
             });
             if (onChange)
               onChange({
