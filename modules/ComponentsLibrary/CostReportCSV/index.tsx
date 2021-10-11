@@ -35,6 +35,7 @@ import ExpandLess from '@material-ui/icons/ExpandLess';
 import ExpandMore from '@material-ui/icons/ExpandMore';
 import Collapse from '@material-ui/core/Collapse/Collapse';
 import { PrintHeader } from '../PrintHeader';
+import { PinDrop } from '@material-ui/icons';
 export interface Props {
   serviceCallId: number;
   loggedUserId: number;
@@ -51,7 +52,7 @@ export const GetTotalTransactions = (transactions: Transaction[]) => {
   return transactions.reduce((aggr, txn) => aggr + txn.getAmount(), 0);
 };
 
-export const CostReportCSV: FC<Props> = ({ serviceCallId }) => {
+export const CostReportCSV: FC<Props> = ({ serviceCallId, onClose }) => {
   let tripsRendered: Trip[] = [];
   const tabs = [
     'JobDetails',
@@ -59,6 +60,7 @@ export const CostReportCSV: FC<Props> = ({ serviceCallId }) => {
     'PerDiems',
     'Timesheets',
     'Trips',
+    'Tasks',
   ];
   const [state, dispatch] = useReducer(reducer, {
     loaded: false,
@@ -76,6 +78,7 @@ export const CostReportCSV: FC<Props> = ({ serviceCallId }) => {
     dropDowns: [],
     totalHoursWorked: 0,
     activeTab: tabs[0],
+    printStatus: 'idle',
   });
 
   const totalTasksBillable = state.tasks.reduce(
@@ -154,7 +157,14 @@ export const CostReportCSV: FC<Props> = ({ serviceCallId }) => {
     (aggr, pd) => aggr + pd.getAmount(),
     0,
   );
-
+  const handlePrint = useCallback(async () => {
+    dispatch({ type: ACTIONS.SET_PRINT_STATUS, data: 'loading' });
+    dispatch({ type: ACTIONS.SET_PRINT_STATUS, data: 'loaded' });
+  }, []);
+  const handlePrinted = useCallback(
+    () => dispatch({ type: ACTIONS.SET_PRINT_STATUS, data: 'idle' }),
+    [],
+  );
   const loadEvent = useCallback(async () => {
     dispatch({ type: ACTIONS.SET_LOADING_EVENT, data: true });
 
@@ -209,7 +219,7 @@ export const CostReportCSV: FC<Props> = ({ serviceCallId }) => {
         try {
           let req = new Task();
           req.setEventId(serviceCallId);
-
+          req.setBillable(1);
           const tasks = (
             await TaskClientService.BatchGet(req)
           ).getResultsList();
@@ -243,7 +253,6 @@ export const CostReportCSV: FC<Props> = ({ serviceCallId }) => {
       );
       dispatch({ type: ACTIONS.SET_TOTAL_HOURS_WORKED, data: total });
       dispatch({ type: ACTIONS.SET_LOADING, data: false });
-
       dispatch({ type: ACTIONS.SET_LOADED, data: true });
     });
   }, [loadResources, serviceCallId]);
@@ -252,7 +261,7 @@ export const CostReportCSV: FC<Props> = ({ serviceCallId }) => {
     var find = ',';
     var re = new RegExp(find, 'g');
     if (section === 'JobDetails' && state.event) {
-      fullString = ' Full Address , Job Timespan' + `\r\n`;
+      fullString = ' Type , Cost + `\r\n`';
 
       const address = getPropertyAddress(state.event.getProperty()).replace(
         re,
@@ -271,7 +280,7 @@ export const CostReportCSV: FC<Props> = ({ serviceCallId }) => {
      Lodging,${totalLodging} \r\n 
      Tasks Billable,${totalTasksBillable} \r\n 
      Trips Total,${state.tripsTotal} \r\n `;
-      fullString = fullString + costString;
+      fullString = costString;
     }
     if (section == 'Timesheets') {
       fullString =
@@ -369,7 +378,7 @@ export const CostReportCSV: FC<Props> = ({ serviceCallId }) => {
     }
     if (section == 'Trips' && state.transactions) {
       fullString =
-        ' Date,Origin,Destination,Distance (in Miles),Home Travel ,Cost, Notes' +
+        ' Type,Date ,Destination,Distance (in Miles),Home Travel ,Cost, Notes' +
         `\r\n`;
       for (let i = 0; i < state.trips.length; i++) {
         let t = state.trips[i];
@@ -404,6 +413,31 @@ export const CostReportCSV: FC<Props> = ({ serviceCallId }) => {
         fullString = fullString + tempString;
       }
     }
+    if (section == 'Tasks' && state.tasks) {
+      fullString =
+        'Date Performed,Type,Details,Flat Rate?,Amount, Notes' + `\r\n`;
+      for (let i = 0; i < state.tasks.length; i++) {
+        let t = state.tasks[i];
+        let tempString =
+          formatDate(t.getDatePerformed()) +
+          ',' +
+          t.getBillableType().replace(re, '') +
+          ',' +
+          t.getDetails().replace(re, '') +
+          ',' +
+          t.getFlatRate() +
+          ',' +
+          usd(
+            t.getBillableType() === 'Spiff'
+              ? t.getSpiffAmount()
+              : t.getToolpurchaseCost(),
+          ) +
+          ',' +
+          t.getNotes().replace(re, '') +
+          `\r\n`;
+        fullString = fullString + tempString;
+      }
+    }
 
     downloadCSV(state.activeTab + ' Report For ' + serviceCallId, fullString);
   };
@@ -422,7 +456,7 @@ export const CostReportCSV: FC<Props> = ({ serviceCallId }) => {
    */
 
   return state.loaded ? (
-    <div>
+    <SectionBar key="ReportPage" uncollapsable={true}>
       <style>{`
   .InfoTableItem {
     font-size: 10px;
@@ -430,14 +464,545 @@ export const CostReportCSV: FC<Props> = ({ serviceCallId }) => {
 
     }
   `}</style>
-
-      <div hidden={!state.loaded || state.activeTab == 'JobDetails'}>
+      <div style={{ display: 'inline-block' }}>
+        <PrintPage
+          buttonProps={{
+            label: 'Print Cost Report',
+            loading: state.loading,
+          }}
+          downloadLabel="Download Cost Report"
+          downloadPdfFilename="Cost-Report"
+          headerProps={{ title: 'Project Cost Report' }}
+          onPrint={handlePrint}
+          onPrinted={handlePrinted}
+          status={state.printStatus}
+          key={state.printStatus}
+          className="EditProjectAsideContent"
+        >
+          <PrintParagraph tag="h2" key="eventPDFHeader">
+            Project Details
+          </PrintParagraph>
+          {state.event && (
+            <PrintList
+              key="eventColumns"
+              items={[
+                <>
+                  <strong>Address: </strong>
+                  {getPropertyAddress(state.event.getProperty())}
+                </>,
+                <>
+                  <strong>Start Date: </strong>
+                  {formatDate(state.event.getDateStarted())}
+                </>,
+                <>
+                  <strong>End Date: </strong>
+                  {formatDate(state.event.getDateEnded())}
+                </>,
+                <>
+                  <strong>Job Number: </strong>
+                  {state.event.getLogJobNumber()}
+                </>,
+              ]}
+            />
+          )}
+          <PrintParagraph tag="h2" key="totalHeader1">
+            Summary Info
+          </PrintParagraph>
+          <PrintTable
+            key="totalColumns1"
+            columns={[
+              { title: 'Type', align: 'left' },
+              { title: 'Total', align: 'right' },
+            ]}
+            data={[
+              [
+                'Total Hours Worked',
+                state.totalHoursWorked > 1
+                  ? `${state.totalHoursWorked} hrs`
+                  : state.totalHoursWorked == 0
+                  ? 'None'
+                  : `${state.totalHoursWorked} hr`,
+              ],
+            ]}
+          />
+          <PrintParagraph tag="h2" key="totalHeader2">
+            Costs
+          </PrintParagraph>
+          <PrintTable
+            key="totalColumns2"
+            columns={[
+              { title: 'Type', align: 'left' },
+              { title: 'Cost', align: 'right' },
+            ]}
+            data={[
+              ['Transactions', usd(totalTransactions)],
+              ['Meals', usd(totalMeals)],
+              ['Lodging', usd(totalLodging)],
+              ['Tasks Billable', usd(totalTasksBillable)],
+              ['Trips Total', usd(state.tripsTotal)],
+              [
+                '',
+                <strong key="stronk">
+                  TOTAL:{' '}
+                  {usd(
+                    totalMeals +
+                      totalLodging +
+                      totalTransactions +
+                      totalTasksBillable,
+                  )}
+                </strong>,
+              ],
+            ]}
+          />
+          <PrintParagraph tag="h2" key="transactionColumns">
+            Transactions
+          </PrintParagraph>
+          <PrintTable
+            columns={[
+              {
+                title: 'Department',
+                align: 'left',
+              },
+              {
+                title: 'Owner',
+                align: 'left',
+                widthPercentage: 10,
+              },
+              {
+                title: 'Cost Center / Vendor',
+                align: 'left',
+                widthPercentage: 10,
+              },
+              {
+                title: 'Date',
+                align: 'left',
+                widthPercentage: 10,
+              },
+              {
+                title: 'Amount',
+                align: 'left',
+                widthPercentage: 10,
+              },
+              {
+                title: 'Notes',
+                align: 'right',
+                widthPercentage: 20,
+              },
+            ]}
+            data={state.transactions.map(txn => {
+              return [
+                txn.getDepartment() ? (
+                  <>
+                    {txn.getDepartment()?.getClassification()} -{' '}
+                    {txn.getDepartment()?.getDescription()}
+                  </>
+                ) : (
+                  '-'
+                ),
+                txn.getOwnerName(),
+                <>
+                  {`${txn.getCostCenter()?.getDescription()}` + ' - '}
+                  <br />
+                  {txn.getVendor()}
+                </>,
+                formatDate(txn.getTimestamp()),
+                usd(txn.getAmount()),
+                txn.getNotes(),
+              ];
+            })}
+          />
+          <PrintParagraph tag="h2" key="perDiemColumns">
+            Per Diem
+          </PrintParagraph>
+          {state.perDiems
+            .sort((a, b) =>
+              a.getDateSubmitted() > b.getDateSubmitted() ? -1 : 1,
+            )
+            .map(pd => {
+              const rowsList = pd.getRowsList();
+              const totalMeals = MEALS_RATE * rowsList.length;
+              const totalLodging = rowsList.reduce(
+                (aggr, pd) =>
+                  aggr + (pd.getMealsOnly() ? 0 : state.lodgings[pd.getId()]),
+                0,
+              );
+              if (totalMeals == 0 && totalLodging == 0) {
+                return <></>; // Don't show it
+              }
+              return (
+                <div key={pd.getId() + 'pdf'}>
+                  <PrintParagraph tag="h3">
+                    Per Diem{' '}
+                    {pd.getDateSubmitted().split(' ')[0] !=
+                    NULL_TIME.split(' ')[0]
+                      ? '-'
+                      : ''}{' '}
+                    {pd.getDateSubmitted().split(' ')[0] !=
+                    NULL_TIME.split(' ')[0]
+                      ? pd.getDateSubmitted().split(' ')[0]
+                      : ''}{' '}
+                    {pd.getOwnerName() ? '-' : ''} {pd.getOwnerName()}
+                  </PrintParagraph>
+                  <div
+                    key={'PerDiemTablePDF' + pd.getId()}
+                    style={{
+                      breakInside: 'avoid',
+                      display: 'inline-block',
+                      width: '100%',
+                    }}
+                  >
+                    <PrintTable
+                      columns={[
+                        {
+                          title: 'Department',
+                          align: 'left',
+                        },
+                        {
+                          title: 'Owner',
+                          align: 'left',
+                          widthPercentage: 10,
+                        },
+                        {
+                          title: 'Submitted At',
+                          align: 'left',
+                          widthPercentage: 10,
+                        },
+                        {
+                          title: 'Approved By',
+                          align: 'left',
+                          widthPercentage: 10,
+                        },
+                        {
+                          title: 'Approved At',
+                          align: 'left',
+                          widthPercentage: 10,
+                        },
+                        {
+                          title: 'Total Meals',
+                          align: 'left',
+                          widthPercentage: 10,
+                        },
+                        {
+                          title: 'Total Lodging',
+                          align: 'left',
+                          widthPercentage: 10,
+                        },
+                        {
+                          title: 'Notes',
+                          align: 'right',
+                          widthPercentage: 20,
+                        },
+                      ]}
+                      data={[
+                        [
+                          TimesheetDepartmentClientService.getDepartmentName(
+                            pd.getDepartment()!,
+                          ),
+                          pd.getOwnerName(),
+                          pd.getDateSubmitted() != NULL_TIME
+                            ? formatDate(pd.getDateSubmitted())
+                            : '-' || '-',
+                          pd.getApprovedByName() || '-',
+                          pd.getDateApproved() != NULL_TIME
+                            ? formatDate(pd.getDateApproved())
+                            : '-' || '-',
+                          usd(totalMeals),
+                          totalLodging != 0 ? usd(totalLodging) : '-',
+                          pd.getNotes(),
+                        ],
+                      ]}
+                    />
+                  </div>
+                  <PrintParagraph tag="h4">Per Diem Days</PrintParagraph>
+                  <div
+                    key={'PerDiemDaysPDF'}
+                    style={{
+                      breakInside: 'avoid',
+                      display: 'inline-block',
+                      width: '100%',
+                    }}
+                  >
+                    <PrintTable
+                      columns={[
+                        {
+                          title: 'Date',
+                          align: 'left',
+                        },
+                        {
+                          title: 'Zip Code',
+                          align: 'left',
+                          widthPercentage: 10,
+                        },
+                        {
+                          title: 'Meals Only',
+                          align: 'left',
+                          widthPercentage: 10,
+                        },
+                        {
+                          title: 'Meals',
+                          align: 'left',
+                          widthPercentage: 10,
+                        },
+                        {
+                          title: 'Lodging',
+                          align: 'left',
+                          widthPercentage: 10,
+                        },
+                        {
+                          title: 'Notes',
+                          align: 'right',
+                          widthPercentage: 20,
+                        },
+                      ]}
+                      data={rowsList.map(pdr => {
+                        return [
+                          formatDate(pdr.getDateString()),
+                          pdr.getZipCode(),
+                          pdr.getMealsOnly() ? 'Yes' : 'No',
+                          usd(MEALS_RATE),
+                          state.lodgings[pdr.getId()]
+                            ? usd(state.lodgings[pdr.getId()])
+                            : '-',
+                          pdr.getNotes(),
+                        ];
+                      })}
+                    />
+                  </div>
+                </div>
+              );
+            })}
+          <PrintParagraph tag="h2" key="timesheetsHeader">
+            Timesheet Lines
+          </PrintParagraph>
+          {state.timesheets.map(tsl => {
+            return (
+              <div key={tsl.getId() + 'pdf'}>
+                <PrintTable
+                  columns={[
+                    {
+                      title: 'Technician',
+                      align: 'left',
+                    },
+                    {
+                      title: 'Department',
+                      align: 'left',
+                      widthPercentage: 10,
+                    },
+                    {
+                      title: 'Approved By',
+                      align: 'left',
+                      widthPercentage: 10,
+                    },
+                    {
+                      title: 'Time Started',
+                      align: 'left',
+                      widthPercentage: 10,
+                    },
+                    {
+                      title: 'Time Finished',
+                      align: 'left',
+                      widthPercentage: 10,
+                    },
+                    {
+                      title: 'Brief Description',
+                      align: 'left',
+                      widthPercentage: 10,
+                    },
+                    {
+                      title: 'Hours Worked',
+                      align: 'left',
+                      widthPercentage: 10,
+                    },
+                    {
+                      title: 'Notes',
+                      align: 'right',
+                      widthPercentage: 20,
+                    },
+                  ]}
+                  data={[
+                    [
+                      tsl.getTechnicianUserName() +
+                        ` (${tsl.getTechnicianUserId()})`,
+                      tsl.getDepartmentName(),
+                      tsl.getAdminApprovalUserName(),
+                      formatDate(tsl.getTimeStarted()) || '-',
+                      formatDate(tsl.getTimeFinished()) || '-',
+                      tsl.getBriefDescription(),
+                      tsl.getHoursWorked() != 0
+                        ? tsl.getHoursWorked() > 1
+                          ? `${tsl.getHoursWorked()} hrs`
+                          : `${tsl.getHoursWorked()} hr`
+                        : '-',
+                      tsl.getNotes(),
+                    ],
+                  ]}
+                />
+              </div>
+            );
+          })}
+          <PrintParagraph tag="h2" key="tripsHeader">
+            Related Trips
+          </PrintParagraph>
+          {state.trips &&
+            state.trips.map(trip => {
+              return (
+                <div
+                  key={trip.getId() + 'pdf'}
+                  style={{
+                    breakInside: 'avoid',
+                    display: 'inline-block',
+                    width: '100%',
+                  }}
+                >
+                  <PrintTable
+                    key="tripTable"
+                    columns={[
+                      {
+                        title: 'Date',
+                        align: 'left',
+                      },
+                      {
+                        title: 'Origin Address',
+                        align: 'left',
+                        widthPercentage: 20,
+                      },
+                      {
+                        title: 'Destination Address',
+                        align: 'left',
+                        widthPercentage: 20,
+                      },
+                      {
+                        title: 'Distance (Miles)',
+                        align: 'left',
+                        widthPercentage: 10,
+                      },
+                      {
+                        title: 'Notes',
+                        align: 'left',
+                        widthPercentage: 10,
+                      },
+                      {
+                        title: 'Home Travel',
+                        align: 'right',
+                        widthPercentage: 10,
+                      },
+                      {
+                        title: `Cost (${usd(IRS_SUGGESTED_MILE_FACTOR)}/mi)`,
+                        align: 'right',
+                        widthPercentage: 10,
+                      },
+                      {
+                        title: 'Per Diem Row ID',
+                        align: 'right',
+                        widthPercentage: 10,
+                      },
+                    ]}
+                    data={[
+                      [
+                        formatDate(trip.getDate()),
+                        trip.getOriginAddress(),
+                        trip.getDestinationAddress(),
+                        trip.getDistanceInMiles().toFixed(2),
+                        trip.getNotes(),
+                        trip.getHomeTravel(),
+                        `${usd(
+                          trip.getDistanceInMiles() > 30 && trip.getHomeTravel()
+                            ? Number(
+                                (
+                                  (trip.getDistanceInMiles() - 30) *
+                                  IRS_SUGGESTED_MILE_FACTOR
+                                ).toFixed(2),
+                              )
+                            : Number(
+                                (
+                                  trip.getDistanceInMiles() *
+                                  IRS_SUGGESTED_MILE_FACTOR
+                                ).toFixed(2),
+                              ),
+                        )} ${
+                          trip.getDistanceInMiles() > 30 && trip.getHomeTravel()
+                            ? '(30 miles docked for home travel)'
+                            : ''
+                        }`,
+                        trip.getPerDiemRowId(),
+                      ],
+                    ]}
+                  />
+                </div>
+              );
+            })}
+          <PrintParagraph tag="h2" key="tasksHeader">
+            Billable Tasks
+          </PrintParagraph>
+          {state.tasks &&
+            state.tasks.map(task => {
+              return (
+                <div
+                  key={task.getId() + 'pdf'}
+                  style={{
+                    breakInside: 'avoid',
+                    display: 'inline-block',
+                    width: '100%',
+                  }}
+                >
+                  <PrintTable
+                    key="tripTable"
+                    columns={[
+                      {
+                        title: 'Type',
+                        align: 'left',
+                      },
+                      {
+                        title: 'Date Performed',
+                        align: 'left',
+                        widthPercentage: 20,
+                      },
+                      {
+                        title: 'Details',
+                        align: 'left',
+                        widthPercentage: 20,
+                      },
+                      {
+                        title: 'Flat Rate?',
+                        align: 'left',
+                        widthPercentage: 10,
+                      },
+                      {
+                        title: 'Amount',
+                        align: 'left',
+                        widthPercentage: 10,
+                      },
+                      {
+                        title: 'Notes',
+                        align: 'right',
+                        widthPercentage: 10,
+                      },
+                    ]}
+                    data={[
+                      [
+                        task.getBillableType(),
+                        formatDate(task.getDatePerformed()),
+                        task.getDetails(),
+                        task.getFlatRate(),
+                        task.getBillableType() === 'Spiff'
+                          ? usd(task.getSpiffAmount())
+                          : usd(task.getToolpurchaseCost()),
+                        task.getNotes(),
+                      ],
+                    ]}
+                  />
+                </div>
+              );
+            })}
+        </PrintPage>
         <KalosButton
-          label="Download CSV"
+          style={{ display: 'inline-block' }}
+          label="Download CSV of Page"
           onClick={() => {
             createReport(state.activeTab);
           }}
         ></KalosButton>
+        {onClose && <KalosButton onClick={onClose} label="Close"></KalosButton>}
       </div>
       <Tabs
         onChange={e =>
@@ -961,9 +1526,61 @@ export const CostReportCSV: FC<Props> = ({ serviceCallId }) => {
                 );
               }),
           },
+          {
+            label: 'Billable Tasks',
+            content: (
+              <div key={'TaskDAta'}>
+                <InfoTable
+                  columns={[
+                    {
+                      name: 'Type',
+                      align: 'left',
+                    },
+                    {
+                      name: 'Date Performed',
+                      align: 'left',
+                    },
+                    {
+                      name: 'Details',
+                      align: 'left',
+                    },
+                    {
+                      name: 'Flat Rate?',
+                      align: 'left',
+                    },
+                    {
+                      name: 'Amount',
+                      align: 'left',
+                    },
+                    {
+                      name: 'Notes',
+                      align: 'right',
+                    },
+                  ]}
+                  data={state.tasks.map(task => {
+                    return [
+                      {
+                        value: task.getBillableType(),
+                      },
+                      { value: formatDate(task.getDatePerformed()) },
+                      { value: task.getDetails() },
+                      { value: task.getFlatRate() === 1 ? 'Yes' : 'No' },
+                      {
+                        value:
+                          task.getBillableType() === 'Spiff'
+                            ? usd(task.getSpiffAmount())
+                            : usd(task.getToolpurchaseCost()),
+                      },
+                      { value: task.getNotes() },
+                    ];
+                  })}
+                />
+              </div>
+            ),
+          },
         ]}
       ></Tabs>
-    </div>
+    </SectionBar>
   ) : (
     <Loader></Loader>
   );
