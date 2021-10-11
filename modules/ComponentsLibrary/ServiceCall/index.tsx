@@ -38,7 +38,9 @@ import { Loader } from '../../Loader/main';
 import Typography from '@material-ui/core/Typography';
 import { Alert } from '../Alert';
 import { ActivityLog } from '@kalos-core/kalos-rpc/ActivityLog';
-import { format } from 'date-fns';
+import format from 'date-fns/esm/format';
+import setHours from 'date-fns/esm/setHours';
+import setMinutes from 'date-fns/esm/setMinutes';
 
 const EventClientService = new EventClient(ENDPOINT);
 const UserClientService = new UserClient(ENDPOINT);
@@ -258,6 +260,8 @@ export const ServiceCall: FC<Props> = props => {
             req.setIsResidential(1);
             req.setDateStarted(format(new Date(), 'yyyy-MM-dd'));
             req.setDateEnded(format(new Date(), 'yyyy-MM-dd'));
+            req.setTimeStarted(format(setMinutes(setHours(new Date(), 8), 0), 'HH:mm'));
+            req.setTimeEnded(format(setMinutes(setHours(new Date(), 18), 0), 'HH:mm'));
             const property = await PropertyClientService.loadPropertyByID(
               propertyId,
             );
