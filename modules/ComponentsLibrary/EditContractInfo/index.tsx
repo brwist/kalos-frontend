@@ -125,6 +125,11 @@ export const EditContractInfo: FC<props> = ({
   }, []);
 
   const save = useCallback(async () => {
+    onSave({
+      contractData: state.contractData,
+      propertiesSelected: state.propertiesSelected,
+      invoiceData: state.invoiceData,
+    } as Output);
     try {
       let reqContract = state.contractData;
       if (state.propertiesSelected)
@@ -147,7 +152,6 @@ export const EditContractInfo: FC<props> = ({
 
     try {
       let reqInvoice = new Invoice();
-      console.log('state. invoiceData: ', state.invoiceData);
       reqInvoice.setServicesperformedrow1(
         state.invoiceData.getServicesperformedrow1(),
       );
@@ -164,6 +168,7 @@ export const EditContractInfo: FC<props> = ({
         state.invoiceData.getServicesperformedrow4(),
       );
       reqInvoice.setTotalamountrow4(state.invoiceData.getTotalamountrow4());
+      reqInvoice.setTotalamounttotal(state.invoiceData.getTotalamounttotal());
       reqInvoice.setTerms(state.invoiceData.getTerms());
       reqInvoice.setUserId(userID);
       // don't forget to associate the invoice with the contract
@@ -171,12 +176,17 @@ export const EditContractInfo: FC<props> = ({
     } catch (err) {
       console.error(`An error occurred while upserting an invoice: ${err}`);
     }
-  }, [state.contractData, state.invoiceData, state.propertiesSelected, userID]);
+  }, [
+    onSave,
+    state.contractData,
+    state.invoiceData,
+    state.propertiesSelected,
+    userID,
+  ]);
 
   const cleanup = useCallback(() => {}, []);
 
   const validateForSave = () => {
-    console.log('Invoice data: ', state.invoiceData);
     if (state.propertiesSelected !== undefined) {
       if (state.propertiesSelected.length <= 0) {
         dispatch({ type: ACTIONS.SET_VALIDATING, data: true });
@@ -185,11 +195,6 @@ export const EditContractInfo: FC<props> = ({
     }
 
     save();
-    onSave({
-      contractData: state.contractData,
-      propertiesSelected: state.propertiesSelected,
-      invoiceData: state.invoiceData,
-    } as Output);
   };
 
   useEffect(() => {
@@ -305,11 +310,17 @@ export const EditContractInfo: FC<props> = ({
         <EditInvoiceData
           userId={userID}
           onClose={() => onClose()}
-          onSave={savedInvoice => validateForSave()}
+          onSave={savedInvoice => {
+            dispatch({
+              type: ACTIONS.SET_INVOICE_DATA,
+              data: makeSafeFormObject(savedInvoice, new Invoice()),
+            });
+            validateForSave();
+          }}
           onChange={currentData => {
             dispatch({
               type: ACTIONS.SET_INVOICE_DATA,
-              data: makeSafeFormObject(currentData, new Invoice()),
+              data: currentData,
             });
             if (onChange)
               onChange({
@@ -320,10 +331,6 @@ export const EditContractInfo: FC<props> = ({
                     : [],
                 invoiceData: state.invoiceData,
               });
-            console.log(
-              'Make sure to assign this to the stuff to save, and then save that as well! ',
-              currentData,
-            );
           }}
         />
       </SectionBar>
