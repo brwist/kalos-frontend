@@ -1,5 +1,5 @@
 import { DispatchableTech } from '@kalos-core/kalos-rpc/Dispatch';
-import React, { FC, useEffect } from 'react';
+import React, { FC, useEffect, useState } from 'react';
 import { Draggable, Droppable } from 'react-beautiful-dnd';
 import Table from '@material-ui/core/Table';
 import TableBody from '@material-ui/core/TableBody';
@@ -10,10 +10,8 @@ import TableCell from '@material-ui/core/TableCell';
 import differenceInMinutes from 'date-fns/esm/differenceInMinutes';
 import parseISO from 'date-fns/esm/parseISO';
 import DeleteOutlineIcon from '@material-ui/icons/DeleteOutline';
-import CircularProgress from '@material-ui/core/CircularProgress';
 import { InfoTable } from '../InfoTable';
-import { makeFakeRows } from '../../../helpers'
-
+import { makeFakeRows } from '../../../helpers';
 
 interface props {
   userID: number;
@@ -25,40 +23,56 @@ interface props {
 }
 
 export const DispatchTechs: FC<props> = props => {
+  const {
+    techs,
+    loading,
+    isFirstCall=false,
+  } = props
+
+  const sortTechs = (techs : DispatchableTech[]) => {
+    const sorted = techs.sort((a,b) => (a.getTechname() > b.getTechname()) ? 1 : ((b.getTechname() > a.getTechname()) ? -1 : 0));
+    setSortedTechnicians(sorted);
+  }
+
+  const [sortedTechnicians, setSortedTechnicians] = useState<DispatchableTech[]>([]);
+
   useEffect(() => {
     console.log('dispatch techs use effect');
-  }, [props.dismissedTechs, props.techs]);
+    sortTechs(techs);
+  }, [props.dismissedTechs, techs]);
 
   return (
     <div>
-      {props.loading && (
-        // <div style={{textAlign: 'center', paddingTop: '20px'}}>
-        //   <CircularProgress />
-        // </div>
+      {loading && (
         <InfoTable data={makeFakeRows(5,3)} loading />
       )}
-      {!props.loading && (
-      <TableContainer>
-        <Table>
+      {!loading && (
+      <TableContainer
+        style={{maxHeight:isFirstCall && techs.length > 15 ? '900px': ''}}
+      >
+        <Table stickyHeader>
           <TableHead>
             <TableRow key="TechHeader" style={{fontWeight: "bold"}}>
               <TableCell align="center" style={{fontWeight: "bolder", fontSize: "16px"}}>Name</TableCell>
-              <TableCell align="center" style={{fontWeight: "bolder", fontSize: "16px", display:props.isFirstCall?'none':''}}>Status</TableCell>
-              <TableCell align="center" style={{fontWeight: "bolder", fontSize: "16px", display:props.isFirstCall?'none':''}}>Location</TableCell>
-              <TableCell align="center" style={{fontWeight: "bolder", fontSize: "16px", display:props.isFirstCall?'none':''}}>Time On Status</TableCell>
+              <TableCell align="center" style={{fontWeight: "bolder", fontSize: "16px", display:isFirstCall?'none':''}}>Status</TableCell>
+              <TableCell align="center" style={{fontWeight: "bolder", fontSize: "16px", display:isFirstCall?'none':''}}>Location</TableCell>
+              <TableCell align="center" style={{fontWeight: "bolder", fontSize: "16px", display:isFirstCall?'none':''}}>Time On Status</TableCell>
               <TableCell align="center" style={{fontWeight: "bolder", fontSize: "16px"}}>Hours Worked</TableCell>
             </TableRow>
           </TableHead>
-          <Droppable droppableId="TechDroppable" isDropDisabled={true}>
-            {(provided, snapshop) => (
-              <TableBody ref={provided.innerRef} {...provided.droppableProps}>
-                {!props.techs.length && (
+          <Droppable droppableId="techDroppable" isDropDisabled>
+            {provided => (
+              <TableBody
+                ref={provided.innerRef}
+                {...provided.droppableProps}
+              >
+                {!techs.length && (
                   <TableRow>
-                    <TableCell align="center">No Entries Found!</TableCell>
+                    <TableCell colSpan={5} align="center">No Entries Found!</TableCell>
                   </TableRow>
                 )}
-                {props.techs.length > 0 &&
-                  props.techs.map((tech, index) => {
+                {techs.length > 0 &&
+                  sortedTechnicians.map((tech, index) => {
                     const timeOnHours = Math.floor(differenceInMinutes(new Date(), parseISO(tech.getActivityDate())) / 60);
                     const timeOnMinutes = differenceInMinutes(new Date(), parseISO(tech.getActivityDate())) - timeOnHours * 60;
                     const hoursWorked = Math.floor(tech.getHoursWorked() / 3600);
@@ -67,22 +81,29 @@ export const DispatchTechs: FC<props> = props => {
                     const techLongitude = tech.getGeolocationLng() ? tech.getGeolocationLng() : 0;
                     return (
                       <Draggable
-                        key={tech.getUserId.toString() + tech.getActivityDate()}
-                        draggableId={tech.getUserId().toString()}
+                        key={`${tech.getUserId()}`}
+                        draggableId={`${tech.getUserId()}`}
                         index={index}
                       >
                         {(dragProvided, snapshot) => (
                           <TableRow
-                            key={`tech_id_${tech.getUserId}`}
-                            hover={true}
-                            onClick={props.handleMapRecenter ? () => props.handleMapRecenter!({lat: techLatitude, lng: techLongitude}, 12) : () => {}}
-                            ref={dragProvided.innerRef}
-                            style={{backgroundColor: snapshot.draggingOver ? 'blue' : 'white'}}
                             {...dragProvided.draggableProps}
                             {...dragProvided.dragHandleProps}
+                            key={`tech_id_${tech.getUserId}`}
+                            ref={dragProvided.innerRef}
+                            style={{
+                              backgroundColor: snapshot.draggingOver === 'dismissTech' || snapshot.draggingOver === 'onCallDroppable' ? '#711313' :  snapshot.draggingOver ? 'grey' : snapshot.isDragging ? 'beige' : '',
+                              width:'100%',
+                              height:'auto',
+                              margin:'auto',
+                              ...dragProvided.draggableProps.style,
+                              textAlign:'center',
+                            }}
+                            hover
+                            onClick={props.handleMapRecenter ? () => props.handleMapRecenter!({lat: techLatitude, lng: techLongitude}, 12) : () => {}}
                           >
-                            <TableCell align="center">{tech.getTechname()}</TableCell>
-                            <TableCell align="center" style={{display:props.isFirstCall?'none':''}}>
+                            <TableCell align="center" style={{color: snapshot.draggingOver && snapshot.draggingOver !== "techDroppable" ? 'white' : 'black'}}>{tech.getTechname()}</TableCell>
+                            <TableCell align="center" style={{display:isFirstCall?'none':'', color: snapshot.draggingOver && snapshot.draggingOver !== "techDroppable" ? 'white' : 'black'}}>
                               {tech.getActivity() != 'Standby' ? (
                                 <a
                                   target="_blank"
@@ -95,34 +116,41 @@ export const DispatchTechs: FC<props> = props => {
                                 tech.getActivity()
                               )}
                             </TableCell>
-                            <TableCell align="center" style={{display:props.isFirstCall?'none':''}}>
+                            <TableCell align="center" style={{display:isFirstCall?'none':'', color: snapshot.draggingOver && snapshot.draggingOver !== "techDroppable" ? 'white' : 'black'}}>
                               {tech.getPropertyCity() === '0'
                                 ? 'Not Known'
                                 : tech.getPropertyCity()}
                             </TableCell>
-                            <TableCell align="center" style={{display:props.isFirstCall?'none':''}}>{timeOnHours >= 10 ? String(timeOnHours) : `0${timeOnHours}`}:{timeOnMinutes >= 10 ? String(timeOnMinutes) : `0${timeOnMinutes}`}</TableCell>
-                            <TableCell align="center">{hoursWorked >= 10 ? String(hoursWorked) : `0${hoursWorked}`}:{minutesWorked >= 10 ? String(minutesWorked) : `0${minutesWorked}`}</TableCell>
+                            <TableCell align="center" style={{display:isFirstCall?'none':'', color: snapshot.draggingOver && snapshot.draggingOver !== "techDroppable" ? 'white' : 'black'}}>{timeOnHours >= 10 ? String(timeOnHours) : `0${timeOnHours}`}:{timeOnMinutes >= 10 ? String(timeOnMinutes) : `0${timeOnMinutes}`}</TableCell>
+                            <TableCell align="center" style={{color: snapshot.draggingOver && snapshot.draggingOver !== "techDroppable" ? 'white' : 'black'}}>{hoursWorked >= 10 ? String(hoursWorked) : `0${hoursWorked}`}:{minutesWorked >= 10 ? String(minutesWorked) : `0${minutesWorked}`}</TableCell>
                           </TableRow>
                         )}
                       </Draggable>
                     );
                   })}
                 {provided.placeholder}
-                </TableBody>
+              </TableBody>
             )}
           </Droppable>
-          </Table>
+        </Table>
       </TableContainer>
       )}
 
       <TableContainer style={{paddingTop:'20px'}}>
-        <Droppable droppableId="dismissTech">
+        <Droppable
+          droppableId="dismissTech" 
+          // type="DispatchableTech"
+        >
           {(provided, snapshot) => {
             return (
               <Table
                 ref={provided.innerRef}
                 {...provided.droppableProps}
-                style={{width:'90%', margin:'auto'}} size={'small'}
+                style={{
+                  width:'100%',
+                  margin:'auto'
+                }}
+                size={'small'}
               >
                 <TableHead></TableHead>
                 <TableBody>
@@ -132,7 +160,8 @@ export const DispatchTechs: FC<props> = props => {
                       border: 1,
                       borderWidth: "3px",
                       borderColor: "#711313",
-                      borderStyle: "solid"
+                      borderStyle: "solid",
+                      height:'20px',
                     }}     
                   >
                     <TableCell style={{color: snapshot.isDraggingOver ? 'white' : '#711313', margin:'auto', fontSize:'16px', fontWeight:'bold', textAlign:!props.isFirstCall?'right':'center', width:'60%'}}>

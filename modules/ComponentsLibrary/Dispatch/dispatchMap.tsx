@@ -1,5 +1,6 @@
+/* eslint-disable no-undef */
 import React, { FC, useEffect, useCallback, useState } from 'react';
-import { GoogleMap, LoadScript, Marker } from '@react-google-maps/api';
+import { GoogleMap, LoadScript, Marker, useJsApiLoader } from '@react-google-maps/api';
 import { DispatchableTech, DispatchCall } from '@kalos-core/kalos-rpc/Dispatch';
 import CircularProgress from '@material-ui/core/CircularProgress';
 interface props {
@@ -17,6 +18,12 @@ export const DispatchMap: FC<props> = props => {
 
   const [techMarkers, setTechMarkers] = useState<JSX.Element[]>([])
   const [callMarkers, setCallMarkers] = useState<JSX.Element[]>([])
+  const {
+    isLoaded,
+    loadError
+  } = useJsApiLoader({
+    googleMapsApiKey: props.apiKey
+  });
 
   const buildTechMarkers = useCallback(async () => {
     const markers = props.techs.map(async tech => {
@@ -96,10 +103,12 @@ export const DispatchMap: FC<props> = props => {
   }, [props.calls])
 
   useEffect(() => {
-    buildTechMarkers();
-    buildCallMarkers();
+    if (isLoaded) {
+      buildTechMarkers();
+      buildCallMarkers();
+    }
     console.log('dispatch map use effect');
-  }, [buildTechMarkers, buildCallMarkers]);
+  }, [buildTechMarkers, buildCallMarkers, props.apiKey, isLoaded]);
 
   return (
     <div style={{textAlign: "center"}}>
@@ -108,10 +117,7 @@ export const DispatchMap: FC<props> = props => {
           <CircularProgress />
         </div>
       )}
-      {!props.loading && (
-      <LoadScript
-        googleMapsApiKey={props.apiKey}
-      >
+      {isLoaded && (
         <GoogleMap
           id="dispatch_map"
           mapContainerStyle={{width:"98%", height:`${window.innerHeight * 0.7}px`}}
@@ -122,7 +128,6 @@ export const DispatchMap: FC<props> = props => {
           {techMarkers}
           {callMarkers}
         </GoogleMap>
-      </LoadScript>
       )}
     </div>
   )
