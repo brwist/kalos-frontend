@@ -33,6 +33,7 @@ import {
   UserClientService,
   FirstCallClientService,
   EventClientService,
+  TimesheetDepartmentClientService,
 } from '../../../helpers';
 import { DispatchableTech, DispatchCall } from '@kalos-core/kalos-rpc/Dispatch';
 import { User } from '@kalos-core/kalos-rpc/User';
@@ -52,6 +53,7 @@ import RemoveCircleOutlineTwoTone from '@material-ui/icons/RemoveCircleOutlineTw
 import CircleProgress from '@material-ui/core/CircularProgress';
 import nextSunday from 'date-fns/esm/nextSunday';
 import { AddCircleOutlineTwoTone } from '@material-ui/icons';
+import { TimesheetDepartment } from '@kalos-core/kalos-rpc/TimesheetDepartment';
 
 
 export interface Props {
@@ -106,6 +108,7 @@ const initialState : State = {
   onCallTech: new DispatchableTech(),
   calls: [],
   assignedCalls: [],
+  sectorList: [],
   jobTypeList: [],
   departmentList: [],
   formData: initialFormData,
@@ -134,7 +137,8 @@ const initialState : State = {
   errorMessage: '',
   saveCall: false,
   showAddTech: false,
-  tempAssigneeList: 0,
+  tempAssigneeList: '',
+  refreshCalls: false,
 };
 
 export const FirstCallDashboard: React.FC<Props> = function FirstCallDashboard({
@@ -155,7 +159,6 @@ export const FirstCallDashboard: React.FC<Props> = function FirstCallDashboard({
   }
   const handleAddTechToggle = () => {
     firstCallDashboard({ type: 'setShowAddTech', data: !state.showAddTech });
-    console.log(state.tempAssigneeList)
   }
   const equals = (a : any, b : any) =>
     a.length === b.length &&
@@ -227,7 +230,6 @@ export const FirstCallDashboard: React.FC<Props> = function FirstCallDashboard({
               userId: state.selectedCall.getUserId(),
               notes: state.selectedCall.getNotes(),
             }
-            console.log(state.firstCallCalls.concat(newCall));
             firstCallDashboard({ type: 'setFirstCallCalls', data: state.firstCallCalls.concat(newCall) });
           }
         } else if (firstCall[0].notes !== state.selectedCall.getNotes() || firstCall[0].assigned !== assignedTech) {
@@ -270,7 +272,8 @@ export const FirstCallDashboard: React.FC<Props> = function FirstCallDashboard({
   }
 
   const handleFormDataUpdate = (data : any, timesOnly=false) => {
-    console.log(data);
+    let resetPage = false;
+    let refreshCalls = false;
     const updateFormData : FormData = state.formData;
     if (data.classTime) {
       updateFormData.classTime = data.classTime;
@@ -281,23 +284,31 @@ export const FirstCallDashboard: React.FC<Props> = function FirstCallDashboard({
     if (data.departmentIds) {
       updateFormData.departmentIds = data.departmentIds;
     }
-    if (data.division) {
+    if (data.division && data.division !== state.formData.division) {
       updateFormData.division = data.division;
+      resetPage = true;
     }
     if (data.jobTypes) {
       updateFormData.jobTypes = data.jobTypes;
+      refreshCalls = true;
     }
     if (data.availableTechs) {
       updateFormData.availableTechs = data.availableTechs;
     }
-    firstCallDashboard({ type: 'setFormData', data: updateFormData });
+    firstCallDashboard({ type: 'setFormData', data: {formData: updateFormData} });
+    if (resetPage) {
+      firstCallDashboard({ type: 'setLoaded', data: false });
+    }
+    if (refreshCalls) {
+      firstCallDashboard({ type: 'setRefreshCalls', data: true });
+    }
   }
 
-  const handleCallDetails = async (call : DispatchCall, tech? : string) => {
+  const handleCallDetails = async (call : DispatchCall, techId? : string | DispatchableTech) => {
     let assignees : {id: number, name: string}[] = [];
     let ids = call.getLogTechnicianAssigned().split(',').map(Number);
-    if (tech) {
-      ids = call.getLogTechnicianAssigned().concat(`,${tech}`).split(',').map(Number);
+    if (techId) {
+      ids = call.getLogTechnicianAssigned().concat(`,${techId}`).split(',').map(Number);
     }
     try {
       const userData = await UserClientService.BatchGetUsersByIds(ids);
@@ -333,7 +344,6 @@ export const FirstCallDashboard: React.FC<Props> = function FirstCallDashboard({
       currentAssignees.push({id: id, name: state.techs.filter(tech=>tech.getUserId() === id)[0].getTechname()});
       currentInUse.push(id);
     }
-    console.log(currentInUse);
     currentCall.setLogTechnicianAssigned(currentTechArray.toString());
     firstCallDashboard({
       type: 'setAssigneesAndCall',
@@ -386,7 +396,6 @@ export const FirstCallDashboard: React.FC<Props> = function FirstCallDashboard({
   }
 
   const handleCallUpdate = async () => {
-    console.log("here");
     const updatedCall = new Event();
     updatedCall.setId(state.selectedCall.getId());
     updatedCall.setLogTechnicianAssigned(state.selectedCall.getLogTechnicianAssigned().length ? state.selectedCall.getLogTechnicianAssigned() : "0");
@@ -482,27 +491,11 @@ export const FirstCallDashboard: React.FC<Props> = function FirstCallDashboard({
     }
   }
 
-  const setCalls = async () => {
-    const availableCalls : DispatchCall[] = [];
-    const assignedCalls : DispatchCall[] = [];
-    const calls = await getCalls();
-    calls.forEach(call => {
-      if (call.getLogTechnicianAssigned() === "" || call.getLogTechnicianAssigned() === "0" || call.getLogTechnicianAssigned() === null) {
-        availableCalls.push(call);
-      } else {
-        assignedCalls.push(call);
-      }
-    });
-    console.log('Available', availableCalls);
-    console.log('Assigned', assignedCalls);
-    return {availableCalls, assignedCalls};
-  }
-
-  const getCalls =  async () => {
+  const getCalls =  useCallback(async () => {
     const newCall = new DispatchCall();
     newCall.setDateStarted(`${format(addDays(new Date(), 1), 'yyyy-MM-dd')}%`);
     newCall.setSectorGroupList("1");
-    newCall.setJobTypeIdList("");
+    newCall.setJobTypeIdList(state.formData.jobTypes.toString());
     try {
       const callList = await DispatchClientService.GetDispatchCalls(newCall);
       const filteredCallList = callList.getResultsList()
@@ -515,7 +508,27 @@ export const FirstCallDashboard: React.FC<Props> = function FirstCallDashboard({
       console.error(err);
       return [];
     }
-  }
+  }, [state.formData.jobTypes])
+
+  const setCalls = useCallback(async () => {
+    const availableCalls : DispatchCall[] = [];
+    const assignedCalls : DispatchCall[] = [];
+    const calls = await getCalls();
+    calls.forEach(call => {
+      if (call.getLogTechnicianAssigned() === "" || call.getLogTechnicianAssigned() === "0" || call.getLogTechnicianAssigned() === null) {
+        availableCalls.push(call);
+      } else {
+        assignedCalls.push(call);
+      }
+    });
+    if (state.refreshCalls) {
+      firstCallDashboard({ type: 'setCalls', data: {
+        available: availableCalls,
+        assigned: assignedCalls
+      }})
+    }
+    return {availableCalls, assignedCalls};
+  }, [getCalls, state.refreshCalls])
 
   const getJobTypes = async () => {
     const jobTypeReq = new JobType();
@@ -529,6 +542,31 @@ export const FirstCallDashboard: React.FC<Props> = function FirstCallDashboard({
       return {jobTypes: []};
     }
   }
+
+  const getDepartments = async() => {
+    const departmentReq = new TimesheetDepartment();
+    const user = new User();
+    user.setId(loggedUserId);
+    departmentReq.setIsActive(1);
+    try {
+      const departments = await TimesheetDepartmentClientService.BatchGet(departmentReq);
+      const userData = await UserClientService.Get(user);
+      const userDepartments = userData.getPermissionGroupsList().filter(user => user.getType() === 'department').reduce((aggr, item) => [...aggr, +JSON.parse(item.getFilterData()).value], [] as number[],);
+      let displayedDepartments = departments.getResultsList().filter(dep => userDepartments.includes(dep.getId()));
+      if (!displayedDepartments.length) {
+        displayedDepartments = departments.getResultsList().filter(dep => dep.getId() === userData.getEmployeeDepartmentId()); 
+      }
+      console.log(displayedDepartments);
+      const sectorGroupList = displayedDepartments.map(dep => dep.getSectorGroup());
+      return {sectors: sectorGroupList.filter((c,index) => sectorGroupList.indexOf(c) === index && c !== 0).sort((a,b) => (a > b) ? 1 : ((b > a) ? -1 : 0))};
+    } catch (err) {
+      console.error(
+        `An error occurred while getting Departments: ${err}`
+      );
+      return {sectors: []};
+    }
+  }
+
 
   const getGoogleApiKey = async () => {
     const newKey = new ApiKey();
@@ -569,13 +607,13 @@ export const FirstCallDashboard: React.FC<Props> = function FirstCallDashboard({
   }
 
   const getInitialConstructor = useCallback(async () => {
+    const departments = await getDepartments();
     const techs = getTechs();
     const calls = setCalls();
     const jobTypes = getJobTypes();
     const key = getGoogleApiKey();
     const firstCall = getPreviousFirstCall();
     const results = await Promise.all([techs, calls, jobTypes, key, firstCall]);
-    console.log(results);
     handleFormDataUpdate({
       meetingTime: results[4].firstCall.meeting.start,
       classTime: results[4].firstCall.class.start,
@@ -591,8 +629,9 @@ export const FirstCallDashboard: React.FC<Props> = function FirstCallDashboard({
       isNew: results[4].newFirstCall,
       saveTime: results[4].saveTime,
       firstCallId: results[4].firstCallId,
+      sectorList: departments.sectors,
     };
-  }, [])
+  }, [setCalls])
 
   const load = useCallback(async() => {
     const initialData = await getInitialConstructor();
@@ -613,6 +652,7 @@ export const FirstCallDashboard: React.FC<Props> = function FirstCallDashboard({
         meetingList: meetingList,
         classList: classList,
         offList: initialData.firstCall.manualOff,
+        sectorList: initialData.sectorList,
       }
     })
   },[getInitialConstructor])
@@ -628,7 +668,6 @@ export const FirstCallDashboard: React.FC<Props> = function FirstCallDashboard({
           value: jtl.getId(),
         })),
         type: 'multiselect',
-        // invisible: state.jobTypeList.length <= 1 ? true : undefined,
       },
       {
         name: 'division',
@@ -638,7 +677,7 @@ export const FirstCallDashboard: React.FC<Props> = function FirstCallDashboard({
           label: item,
           value: index + 1
         })),
-        // invisible: state.defaultSectorIds.length <= 1 ? true : undefined,
+        invisible: state.sectorList.length <= 1 ? true : undefined,
       },
     ],
   ];
@@ -666,10 +705,13 @@ export const FirstCallDashboard: React.FC<Props> = function FirstCallDashboard({
     if (!state.loaded) {
       load();
     }
+    if (state.refreshCalls) {
+      setCalls();
+    }
     if (state.save) {
       handleSave();
     }
-  }, [load, state.loaded, state.save, handleSave])
+  }, [load, state.loaded, state.save, handleSave, state.refreshCalls, setCalls])
   return (
     <PageWrapper userID={loggedUserId}>
       <SectionBar 
@@ -683,7 +725,7 @@ export const FirstCallDashboard: React.FC<Props> = function FirstCallDashboard({
             <PlainForm
               schema={DROP_DOWN_SCHEMA}
               data={state.formData}
-              onChange={()=>{}}
+              onChange={(callback)=>{handleFormDataUpdate(callback)}}
                 // debounce(handleChange, 1000)}
             />
           </div>
@@ -885,7 +927,7 @@ export const FirstCallDashboard: React.FC<Props> = function FirstCallDashboard({
                     techs={[]}
                     calls={state.calls.concat(state.assignedCalls)}
                     loading={false}
-                    handleMapClick={()=>{}}
+                    handleMapClick={handleCallDetails}
                     center={state.center}
                     zoom={state.zoom}
                   />
@@ -1061,8 +1103,11 @@ export const FirstCallDashboard: React.FC<Props> = function FirstCallDashboard({
                         }]]}
                         data={state}
                         onChange={(callback)=>{
-                          handleUpdateAssignTech(callback.tempAssigneeList, 'add');
-                          handleAddTechToggle();
+                          if (callback.tempAssigneeList !== ''){
+                            handleUpdateAssignTech(Number(callback.tempAssigneeList), 'add');
+                            callback.tempAssigneeList = '';
+                            handleAddTechToggle();
+                          }
                         }}
                         fullWidth
                       />

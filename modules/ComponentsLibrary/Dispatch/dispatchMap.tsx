@@ -10,7 +10,7 @@ interface props {
   apiKey: string;
   techs: DispatchableTech[];
   calls: DispatchCall[];
-  handleMapClick: (tech: DispatchableTech, call: DispatchCall) => void;
+  handleMapClick: (call: DispatchCall, tech: DispatchableTech) => void;
   loading: boolean;
 }
 
@@ -79,7 +79,7 @@ export const DispatchMap: FC<props> = props => {
           position={{lat: call.getGeolocationLat(), lng: call.getGeolocationLng()}}
           icon={icon}
           label={{text: `${index + 1}`, fontWeight:'bold', fontSize:'15px'}}
-          onClick={() => props.handleMapClick(new DispatchableTech(), call)}
+          onClick={() => props.handleMapClick(call, new DispatchableTech())}
           key={`marker_${call.getId()}`}
         />
         )
@@ -91,7 +91,7 @@ export const DispatchMap: FC<props> = props => {
             position={{lat: results.results[0].geometry.location.lat(), lng: results.results[0].geometry.location.lng()}}
             icon={icon}
             label={{text: `${index + 1}`, fontWeight:'bold', fontSize:'15px'}}
-            onClick={() => props.handleMapClick(new DispatchableTech(), call)}
+            onClick={() => props.handleMapClick(call, new DispatchableTech())}
             key={`marker_${call.getId()}`}
           />
         )

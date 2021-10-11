@@ -68,6 +68,7 @@ export interface State {
   calls: DispatchCall[];
   assignedCalls: DispatchCall[];
   jobTypeList: JobType[];
+  sectorList: number[];
   departmentList: number[];
   formData: FormData;
   googleApiKey: string;
@@ -107,7 +108,8 @@ export interface State {
   errorMessage: string;
   saveCall: boolean;
   showAddTech: boolean;
-  tempAssigneeList: number;
+  tempAssigneeList: string;
+  refreshCalls: boolean;
 }
 
 export type Action = 
@@ -138,6 +140,7 @@ export type Action =
     meetingList: DispatchableTech[],
     classList: DispatchableTech[],
     offList: number[],
+    sectorList: number[],
   }}
   | { type: 'setTimes'; data: {
     meetingTime: string,
@@ -171,7 +174,9 @@ export type Action =
     firstCallId: number,
     isNew: boolean,
   } }
-  | { type: 'setFormData'; data: FormData }
+  | { type: 'setFormData'; data: {
+    formData: FormData,
+  }}
   | { type: 'setFailedSave'; data: {
     save: boolean,
     error: string,
@@ -187,6 +192,7 @@ export type Action =
     selectedCall: DispatchCall,
   }}
   | { type: 'setShowAddTech'; data: boolean }
+  | { type: 'setRefreshCalls'; data: boolean }
 ;
 
 export const reducer = (state: State, action: Action) => {
@@ -210,6 +216,7 @@ export const reducer = (state: State, action: Action) => {
         calls: action.data.available,
         assignedCalls: action.data.assigned,
         saveCall: false,
+        refreshCalls: false,
       }
     case 'setAssignedCalls':
       return {
@@ -250,6 +257,7 @@ export const reducer = (state: State, action: Action) => {
         meetingTechs: action.data.meetingList,
         classTechs: action.data.classList,
         offTechs: action.data.offList,
+        sectorList: action.data.sectorList,
       }
     case 'setTimes':
       return {
@@ -327,7 +335,7 @@ export const reducer = (state: State, action: Action) => {
     case 'setFormData':
       return {
         ...state,
-        formData: action.data,
+        formData: action.data.formData,
       }
     case 'setFailedSave':
       return {
@@ -358,12 +366,16 @@ export const reducer = (state: State, action: Action) => {
         selectedCall: action.data.selectedCall,
         saveCall: true,
         isProcessing: false,
-        tempAssigneeList: 0,
       }
     case 'setShowAddTech':
       return {
         ...state,
         showAddTech: action.data,
+      }
+    case 'setRefreshCalls':
+      return {
+        ...state,
+        refreshCalls: action.data,
       }
     default:
       return {

@@ -480,7 +480,7 @@ export const DispatchDashboard: React.FC<Props> = function DispatchDashboard({
     }
   }
 
-  const handleMapClick = (tech: DispatchableTech, call: DispatchCall) => {
+  const handleMapClick = (call: DispatchCall, tech: DispatchableTech) => {
     dispatchDashboard({ type: 'setModal', data: {
       openModal: true,
       modalKey: 'mapInfo',
