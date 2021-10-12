@@ -23,12 +23,14 @@ import {
   UserClientService,
   TimeoffRequestClientService,
   makeSafeFormObject,
+  TimesheetLineClientService,
 } from '../../../helpers';
 import { OPTION_BLANK, ENDPOINT } from '../../../constants';
 import { EmailClient, EmailConfig } from '@kalos-core/kalos-rpc/Email';
 import { User } from '@kalos-core/kalos-rpc/User';
 import { PTO, TimeoffRequest } from '@kalos-core/kalos-rpc/TimeoffRequest';
 import { datePickerDefaultProps } from '@material-ui/pickers/constants/prop-types';
+import { TimesheetLine } from '@kalos-core/kalos-rpc/TimesheetLine';
 
 export interface Props {
   loggedUserId: number;
@@ -331,6 +333,10 @@ export const TimeOff: FC<Props> = ({
     if (requestOffId) {
       setSaving(true);
       await TimeoffRequestClientService.deleteTimeoffRequestById(requestOffId);
+      const timesheetReq = new TimesheetLine();
+      timesheetReq.setIsActive(1);
+      timesheetReq.setReferenceNumber(`%%PTO-${requestOffId}`);
+      await TimesheetLineClientService.Delete(timesheetReq);
       setSaving(false);
       onSaveOrDelete(data);
     }
