@@ -11,6 +11,7 @@ import {
   TransactionClientService,
   TimesheetDepartmentClientService,
   TaskClientService,
+  TransactionAccountClientService,
 } from '../../../helpers';
 import { reducer, ACTIONS } from './reducer';
 import { PrintList } from '../PrintList';
@@ -36,6 +37,7 @@ import ExpandMore from '@material-ui/icons/ExpandMore';
 import Collapse from '@material-ui/core/Collapse/Collapse';
 import { PrintHeader } from '../PrintHeader';
 import { PinDrop } from '@material-ui/icons';
+import { TransactionAccount } from '@kalos-core/kalos-rpc/TransactionAccount';
 export interface Props {
   serviceCallId: number;
   loggedUserId: number;
@@ -69,10 +71,13 @@ export const CostReportCSV: FC<Props> = ({ serviceCallId, onClose }) => {
     timesheets: [],
     transactions: [],
     lodgings: {},
+    costCenterTotals: {},
     loadingEvent: true,
     loadedInit: false,
     event: undefined,
+    transactionAccounts: [],
     trips: [],
+    costCenterDropDownActive: false,
     tripsTotal: 0,
     tasks: [],
     dropDowns: [],
@@ -121,6 +126,12 @@ export const CostReportCSV: FC<Props> = ({ serviceCallId, onClose }) => {
     ).getResultsList();
 
     dispatch({ type: ACTIONS.SET_TRIPS, data: allTrips });
+    const accountReq = new TransactionAccount();
+    accountReq.setIsActive(1);
+    const accountRes = (
+      await TransactionAccountClientService.BatchGet(accountReq)
+    ).getResultsList();
+    dispatch({ type: ACTIONS.SET_TRANSACTION_ACCOUNTS, data: accountRes });
 
     const lodgings = await PerDiemClientService.loadPerDiemsLodging(arr); // first # is per diem id
     dispatch({ type: ACTIONS.SET_LODGINGS, data: lodgings });
@@ -129,8 +140,20 @@ export const CostReportCSV: FC<Props> = ({ serviceCallId, onClose }) => {
       serviceCallId,
       true,
     );
+    let temp = state.costCenterTotals;
     dispatch({ type: ACTIONS.SET_TRANSACTIONS, data: transactions });
-
+    for (let i = 0; i < transactions.length; i++) {
+      let keyValue = `${transactions[i].getCostCenterId()}-${transactions[i]
+        .getCostCenter()
+        ?.getDescription()}`;
+      if (temp[keyValue]) {
+        temp[keyValue] += transactions[i].getAmount();
+      } else {
+        //
+        temp[keyValue] = transactions[i].getAmount();
+      }
+    }
+    console.log(temp);
     let allTripsTotal = 0;
     allTrips.forEach(trip => {
       // Subtracting 30 miles flat from trip distance in accordance
@@ -262,6 +285,18 @@ export const CostReportCSV: FC<Props> = ({ serviceCallId, onClose }) => {
     var re = new RegExp(find, 'g');
     if (section === 'JobDetails' && state.event) {
       fullString = ' Type , Cost + `\r\n`';
+      let costCenterString = '';
+
+      state.transactionAccounts.map(account => {
+        let findAccount = `${account.getId()}-${account.getDescription()}`;
+        if (state.costCenterTotals[findAccount]) {
+          costCenterString +=
+            findAccount +
+            ' ,' +
+            usd(state.costCenterTotals[findAccount]).toString() +
+            '\r\n';
+        }
+      });
 
       const address = getPropertyAddress(state.event.getProperty()).replace(
         re,
@@ -275,11 +310,13 @@ export const CostReportCSV: FC<Props> = ({ serviceCallId, onClose }) => {
         formatDate(state.event!.getDateEnded()) +
         `\r\n`;
       const costString = `Type, Total \r\n Total Hours Worked ,${state.totalHoursWorked} \r\n
-     Transactions, ${totalTransactions} \r\n  
+     Transactions, ${totalTransactions} \r\n
+     ${costCenterString}
      Meals,${totalMeals} \r\n 
      Lodging,${totalLodging} \r\n 
      Tasks Billable,${totalTasksBillable} \r\n 
      Trips Total,${state.tripsTotal} \r\n `;
+
       fullString = costString;
     }
     if (section == 'Timesheets') {
@@ -454,7 +491,16 @@ export const CostReportCSV: FC<Props> = ({ serviceCallId, onClose }) => {
   }, [state.loadedInit, loadInit, state.loaded, load]);
   /*
    */
+  const costCenterArray = [['', '']];
 
+  state.transactionAccounts.map(account => {
+    let findAccount = `${account.getId()}-${account.getDescription()}`;
+    if (state.costCenterTotals[findAccount]) {
+      let value = [findAccount, usd(state.costCenterTotals[findAccount])];
+      costCenterArray.push(value);
+    }
+  });
+  console.log(costCenterArray);
   return state.loaded ? (
     <SectionBar key="ReportPage" uncollapsable={true}>
       <style>{`
@@ -536,6 +582,18 @@ export const CostReportCSV: FC<Props> = ({ serviceCallId, onClose }) => {
             ]}
             data={[
               ['Transactions', usd(totalTransactions)],
+              [
+                <PrintTable
+                  key="TransactionBreakdownCategory"
+                  columns={[
+                    { title: 'Type', align: 'left' },
+                    { title: 'SubCost', align: 'right' },
+                  ]}
+                  data={costCenterArray.map(costCenter => {
+                    return costCenter;
+                  })}
+                ></PrintTable>,
+              ],
               ['Meals', usd(totalMeals)],
               ['Lodging', usd(totalLodging)],
               ['Tasks Billable', usd(totalTasksBillable)],
@@ -1058,11 +1116,88 @@ export const CostReportCSV: FC<Props> = ({ serviceCallId, onClose }) => {
                     columns={[
                       { name: 'Type', align: 'left' },
                       { name: 'Cost', align: 'left' },
+                      { name: '', align: 'right' },
                     ]}
                     data={[
                       [
-                        { value: 'Transactions' },
-                        { value: usd(totalTransactions) },
+                        {
+                          value: (
+                            <table key="CostCenterCollapseTypesContainer">
+                              Transactions
+                              <Collapse
+                                key={'CostCenterCollapseTypes'}
+                                in={state.costCenterDropDownActive === true}
+                              >
+                                {state.transactionAccounts.map(account => {
+                                  let findAccount = `${account.getId()}-${account.getDescription()}`;
+                                  if (state.costCenterTotals[findAccount]) {
+                                    return (
+                                      <tr
+                                        key={
+                                          'transactionAccountValue' +
+                                          findAccount
+                                        }
+                                      >
+                                        {findAccount}
+                                      </tr>
+                                    );
+                                  }
+                                })}
+                              </Collapse>
+                            </table>
+                          ),
+                        },
+                        {
+                          value: (
+                            <table key="CostCenterCollapseValueHeader">
+                              {usd(totalTransactions)}
+                              <Collapse
+                                key={'CostCenterCollapseValues'}
+                                in={state.costCenterDropDownActive === true}
+                              >
+                                {state.transactionAccounts.map(account => {
+                                  let findAccount = `${account.getId()}-${account.getDescription()}`;
+                                  if (state.costCenterTotals[findAccount]) {
+                                    return (
+                                      <tr
+                                        key={
+                                          'transactionAccountValue' +
+                                          state.costCenterTotals[findAccount]
+                                        }
+                                      >
+                                        {usd(
+                                          state.costCenterTotals[findAccount],
+                                        )}
+                                      </tr>
+                                    );
+                                  }
+                                })}
+                              </Collapse>
+                            </table>
+                          ),
+                        },
+                        {
+                          value: (
+                            <div key="transactionTotalsButton">
+                              <Button
+                                key={'dropDownbuttonTransactions'}
+                                onClick={() => {
+                                  dispatch({
+                                    type:
+                                      ACTIONS.SET_COST_CENTER_DROPDOWN_ACTIVE,
+                                    data: !state.costCenterDropDownActive,
+                                  });
+                                }}
+                              >
+                                {state.costCenterDropDownActive == true ? (
+                                  <ExpandLess></ExpandLess>
+                                ) : (
+                                  <ExpandMore></ExpandMore>
+                                )}
+                              </Button>
+                            </div>
+                          ),
+                        },
                       ],
                       [{ value: 'Meals' }, { value: usd(totalMeals) }],
                       [{ value: 'Lodging' }, { value: usd(totalLodging) }],
@@ -1286,7 +1421,6 @@ export const CostReportCSV: FC<Props> = ({ serviceCallId, onClose }) => {
                               tempDropDowns[dropdown].active = 1;
                             else tempDropDowns[dropdown].active = 0;
                           }
-                          console.log('we are called');
                           console.log(tempDropDowns);
                           dispatch({
                             type: ACTIONS.SET_DROPDOWNS,

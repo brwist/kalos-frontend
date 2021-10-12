@@ -1,38 +1,10 @@
-import { NULL_TIME } from '@kalos-core/kalos-rpc/constants';
 import { TimesheetLine } from '@kalos-core/kalos-rpc/TimesheetLine';
-import React, { FC, useCallback, useEffect, useState } from 'react';
-import { IRS_SUGGESTED_MILE_FACTOR, MEALS_RATE } from '../../../constants';
-import {
-  formatDate,
-  usd,
-  PerDiemClientService,
-  EventClientService,
-  TimesheetLineClientService,
-  TransactionClientService,
-  TimesheetDepartmentClientService,
-  TaskClientService,
-} from '../../../helpers';
-import { PrintList } from '../PrintList';
-import { PrintPage, Status } from '../PrintPage';
-import { PrintParagraph } from '../PrintParagraph';
-import { PrintTable } from '../PrintTable';
-import { getPropertyAddress } from '@kalos-core/kalos-rpc/Property';
 import { PerDiem, PerDiemRow } from '@kalos-core/kalos-rpc/PerDiem';
 import { Transaction } from '@kalos-core/kalos-rpc/Transaction';
 import { Event } from '@kalos-core/kalos-rpc/Event';
-import { SectionBar } from '../SectionBar';
-import { InfoTable } from '../InfoTable';
-import { Loader } from '../../Loader/main';
-import Button from '@material-ui/core/Button';
 import { Trip } from '@kalos-core/kalos-rpc/compiled-protos/perdiem_pb';
 import { Task } from '@kalos-core/kalos-rpc/Task';
-import { differenceInMinutes, parseISO } from 'date-fns';
-import { roundNumber } from '../../../helpers';
-import { Tabs } from '../Tabs';
-import ExpandLess from '@material-ui/icons/ExpandLess';
-import ExpandMore from '@material-ui/icons/ExpandMore';
-import Collapse from '@material-ui/core/Collapse/Collapse';
-import { PrintHeader } from '../PrintHeader';
+import { TransactionAccount } from '@kalos-core/kalos-rpc/TransactionAccount';
 
 export type State = {
   loading: boolean;
@@ -41,6 +13,8 @@ export type State = {
   timesheets: TimesheetLine[];
   transactions: Transaction[];
   lodgings: { [key: number]: number };
+  costCenterTotals: { [key: string]: number };
+  transactionAccounts: TransactionAccount[];
   totalHoursWorked: number;
   loadedInit: boolean;
   event: Event | undefined;
@@ -50,6 +24,7 @@ export type State = {
   tasks: Task[];
   dropDowns: { perDiemId: number; active: number }[];
   activeTab: string;
+  costCenterDropDownActive: boolean;
   printStatus: 'idle' | 'loading' | 'loaded' | undefined;
 };
 
@@ -63,13 +38,16 @@ export enum ACTIONS {
   SET_TOTAL_HOURS_WORKED = 'setTotalHoursWorked',
   SET_LOADED_INIT = 'setLoadedInit',
   SET_EVENT = 'setEvent',
+  SET_COST_CENTER_TOTALS = 'setCostCenterTotals',
   SET_LOADING = 'setLoading',
   SET_TRIPS = 'setTrips',
   SET_TRIPS_TOTAL = 'setTripsTotal',
   SET_TASKS = 'setTasks',
   SET_DROPDOWNS = 'setDropDowns',
+  SET_COST_CENTER_DROPDOWN_ACTIVE = 'setCostCenterDropdownActive',
   SET_ACTIVE_TAB = 'setActiveTab',
   SET_PRINT_STATUS = 'setPrintStatus',
+  SET_TRANSACTION_ACCOUNTS = 'setTransactionAccounts',
 }
 
 export type Action =
@@ -80,10 +58,13 @@ export type Action =
   | { type: ACTIONS.SET_TIMESHEETS; data: TimesheetLine[] }
   | { type: ACTIONS.SET_TRANSACTIONS; data: Transaction[] }
   | { type: ACTIONS.SET_LODGINGS; data: { [key: number]: number } }
+  | { type: ACTIONS.SET_COST_CENTER_TOTALS; data: { [key: string]: number } }
   | { type: ACTIONS.SET_TOTAL_HOURS_WORKED; data: number }
   | { type: ACTIONS.SET_LOADED_INIT; data: boolean }
+  | { type: ACTIONS.SET_COST_CENTER_DROPDOWN_ACTIVE; data: boolean }
   | { type: ACTIONS.SET_EVENT; data: Event }
   | { type: ACTIONS.SET_TRIPS; data: Trip[] }
+  | { type: ACTIONS.SET_TRANSACTION_ACCOUNTS; data: TransactionAccount[] }
   | { type: ACTIONS.SET_TRIPS_TOTAL; data: number }
   | {
       type: ACTIONS.SET_PRINT_STATUS;
@@ -134,6 +115,18 @@ export const reducer = (state: State, action: Action) => {
         lodgings: action.data,
       };
     }
+    case ACTIONS.SET_COST_CENTER_TOTALS: {
+      return {
+        ...state,
+        costCenterTotals: action.data,
+      };
+    }
+    case ACTIONS.SET_TRANSACTION_ACCOUNTS: {
+      return {
+        ...state,
+        transactionAccounts: action.data,
+      };
+    }
     case ACTIONS.SET_TOTAL_HOURS_WORKED: {
       return {
         ...state,
@@ -174,6 +167,12 @@ export const reducer = (state: State, action: Action) => {
       return {
         ...state,
         dropDowns: action.data,
+      };
+    }
+    case ACTIONS.SET_COST_CENTER_DROPDOWN_ACTIVE: {
+      return {
+        ...state,
+        costCenterDropDownActive: action.data,
       };
     }
     case ACTIONS.SET_ACTIVE_TAB: {
