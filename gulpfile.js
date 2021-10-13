@@ -337,63 +337,6 @@ task(clean);
 
 task(create);
 
-function htmlTemplate(title) {
-  return `
-<!DOCTYPE html>
-<html>
-  <head>
-    <title>${title}</title>
-  </head>
-  <body>
-    <div id="root"></div>
-    <script src="index.tsx"></script>
-  </body>
-</html>`.replace('\n', '');
-  // this removes the first instance of a new line from the output string
-  // which allows the document to be written cleanly at the correct tab level
-}
-
-function mainTemplate(title) {
-  title = titleCase(title);
-
-  return `
-import React from 'react';
-import { PageWrapper } from '../PageWrapper/main';
-
-// add any prop types here
-interface props {
-  userID: number;
-}
-
-export const ${title}: React.FC<props> = function ${title}({ userID }) {
-  return (
-    <PageWrapper userID={userID}>
-      <h1>${title}!</h1>
-      <h2>Tests were also created in /test for this module, please implement them!</h2>
-    </PageWrapper>
-  );
-};
-`.replace('\n', '');
-}
-
-function indexTemplate(title) {
-  title = titleCase(title);
-
-  return `
-import React from 'react'
-import ReactDOM from 'react-dom'
-import { ${title} } from './main'
-import { UserClient } from '@kalos-core/kalos-rpc/User'
-import { ENDPOINT } from '../../constants'
-
-const u = new UserClient(ENDPOINT)
-
-u.GetToken('test','test').then(() => {
-  ReactDOM.render(<${title} userID={8418} />, document.getElementById('root'))
-})
-`.replace('\n', '');
-}
-
 function cfmTemplate(title) {
   title = titleCase(title);
   return `
@@ -698,8 +641,13 @@ async function release(target = '') {
     target = titleCase(process.argv[4].replace(/-/g, ''));
   }
 
-  //checkTests();
-  //await runTests(target);
+  checkTests();
+  let response = '';
+  while (response.toLowerCase() !== 'y' && response.toLowerCase() !== 'n') {
+    response = await textPrompt('Would you like to release anyway (y/n)? ');
+  }
+
+  if (response.toLowerCase() === 'n') return;
 
   info('Rolling up build. This may take a moment...');
 
