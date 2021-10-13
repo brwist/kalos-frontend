@@ -52,6 +52,7 @@ export const PropertyDropdown: FC<props> = ({
     try {
       let req = new Property();
       req.setUserId(userId);
+      req.setIsActive(1);
       const res = await PropertyClientService.BatchGet(req);
       dispatch({
         type: ACTIONS.SET_PROPERTIES_LOADED,
@@ -98,8 +99,16 @@ export const PropertyDropdown: FC<props> = ({
         schema={SCHEMA}
         onSave={propertiesSaved => onSave(propertiesSaved.propertyArray)}
         onClose={() => onClose(state.propertiesSelected)}
-        onChange={currentProperties => {
-          if (onChange) onChange(currentProperties.propertyArray);
+        onChange={(currentProperties: any) => {
+          if (onChange)
+            onChange(
+              state.propertiesLoaded.filter(loaded => {
+                for (const prop of currentProperties.propertyArray) {
+                  if (loaded.getAddress() === prop)
+                    return loaded.getAddress() === prop;
+                }
+              }),
+            );
           dispatch({
             type: ACTIONS.SET_PROPERTIES_SELECTED,
             data: currentProperties.propertyArray,
