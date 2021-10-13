@@ -13,6 +13,8 @@ import { Devlog } from '@kalos-core/kalos-rpc/Devlog';
 import {
   DevlogClientService,
 } from '../../helpers';
+import { format } from 'date-fns';
+
 
 // add any prop types here
 interface props {
@@ -41,7 +43,7 @@ export const TITLE_HERE: FC<props> = ({ loggedUserId }) => {
   const handleError = useCallback(async (errorToSet: string) => {
     // This will send out an error devlog automatically when called
     // The idea is that this will be used for any errors which we should be able to look up for debugging
-    
+
     try {
       let errorLog = new Devlog();
       errorLog.setUserId(loggedUserId);
@@ -63,7 +65,7 @@ export const TITLE_HERE: FC<props> = ({ loggedUserId }) => {
     return () => {
       cleanup(); 
     };
-  }, [load, cleanup]);
+  }, [load, cleanup, state.isLoaded]);
 
   return (
     <PageWrapper userID={loggedUserId} withHeader>
