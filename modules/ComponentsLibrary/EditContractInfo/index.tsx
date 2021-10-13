@@ -158,6 +158,7 @@ export const EditContractInfo: FC<props> = ({
           devlog.setDescription(
             `Failed to get a contract with ID ${contractID}: contract no longer appears to exist.`,
           );
+          await DevlogClientService.Create(devlog);
         } catch (err) {
           console.error('Failed to upload a devlog.');
         }
