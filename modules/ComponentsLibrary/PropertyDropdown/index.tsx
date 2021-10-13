@@ -18,6 +18,8 @@ interface props {
   onSave: (propertiesSaved: Property[]) => any;
   onClose: (currentProperties?: Property[]) => any;
   onChange?: (currentProperties?: Property[]) => any;
+  initialPropertiesSelected?: Property[];
+  loading?: boolean;
 }
 
 type Properties = {
@@ -29,11 +31,15 @@ export const PropertyDropdown: FC<props> = ({
   onSave,
   onClose,
   onChange,
+  initialPropertiesSelected,
+  loading,
 }) => {
   const [state, dispatch] = useReducer(reducer, {
-    isLoaded: false,
-    propertiesSelected: [],
-    propertiesLoaded: [],
+    isLoaded: loading ? !loading : false,
+    propertiesSelected:
+      initialPropertiesSelected !== undefined ? initialPropertiesSelected : [],
+    propertiesLoaded:
+      initialPropertiesSelected !== undefined ? initialPropertiesSelected : [],
     error: false,
   });
 
@@ -44,6 +50,9 @@ export const PropertyDropdown: FC<props> = ({
         type: 'multiselect',
         options: state.propertiesLoaded.map(property => property.getAddress()),
         name: 'propertyArray',
+        defaultValue: {
+          propertyArray: initialPropertiesSelected,
+        } as Properties,
       },
     ],
   ];
@@ -74,8 +83,10 @@ export const PropertyDropdown: FC<props> = ({
         console.error(`Failed to create error log: ${err}`);
       }
     }
-    dispatch({ type: ACTIONS.SET_LOADED, data: true });
-  }, [userId]);
+    if (loading !== undefined) {
+      if (loading !== true) dispatch({ type: ACTIONS.SET_LOADED, data: true });
+    }
+  }, [loading, userId]);
 
   const cleanup = useCallback(() => {}, []);
 
