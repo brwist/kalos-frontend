@@ -23,27 +23,7 @@ try {
   console.log(err);
 }
 
-let minify = process.argv[5];
-/**
- * Serves all modules to localhost:1234 via parcel
- */
-async function start() {
-  info(
-    'Starting the module via Parcel alongside the test suite in watch mode.',
-  );
-
-  try {
-    const res = sh.test('-f', `./modules/${target}/index.html`);
-    if (res == false) throw new Error(`Failed to determine target`);
-  } catch (err) {
-    error(
-      `Failed to determine target. Attemped at: modules/${target}/index.html.`,
-    );
-    warn(
-      `Are you sure this is a module and not a component? You can use "yarn start --ComponentsLibrary" to view a list of components.`,
-    );
-    return;
-  }
+function checkTests(target) {
   if (target !== 'ComponentsLibrary') {
     const componentExistsInModules = sh.test(
       '-f',
@@ -68,6 +48,30 @@ async function start() {
       );
     }
   }
+}
+
+/**
+ * Serves all modules to localhost:1234 via parcel
+ */
+async function start() {
+  info(
+    'Starting the module via Parcel alongside the test suite in watch mode.',
+  );
+
+  try {
+    const res = sh.test('-f', `./modules/${target}/index.html`);
+    if (res == false) throw new Error(`Failed to determine target`);
+  } catch (err) {
+    error(
+      `Failed to determine target. Attemped at: modules/${target}/index.html.`,
+    );
+    warn(
+      `Are you sure this is a module and not a component? You can use "yarn start --ComponentsLibrary" to view a list of components.`,
+    );
+    return;
+  }
+
+  checkTests(target);
 
   try {
     const target = titleCase(process.argv[4].replace(/-/g, ''));
@@ -667,17 +671,6 @@ async function googBuild() {
 async function runTests(target) {
   if (sh.exec(`jest /modules/${target}/index.test.* -u`).code != 0) {
     error('Please ensure all unit tests are passing before release.');
-    sh.exit(1);
-  }
-}
-
-function checkTests() {
-  if (
-    sh.exec(`test -n "$(find ./modules/${target}/ -name '*.test.*')"`).code != 0
-  ) {
-    error(
-      `No unit tests are written for the module ${target}. Please write some and retry your release.`,
-    );
     sh.exit(1);
   }
 }
