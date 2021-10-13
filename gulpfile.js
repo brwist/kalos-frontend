@@ -45,6 +45,10 @@ async function start() {
     return;
   }
   if (target !== 'ComponentsLibrary') {
+    const componentExistsInModules = sh.test(
+      '-f',
+      `./modules/ComponentsLibrary/${target}/index.tsx`,
+    );
     const componentIsTested = sh.test(
       '-f',
       `./test/modules/ComponentsLibrary/${target}/index.test.tsx`,
@@ -57,6 +61,10 @@ async function start() {
     } else if (!isTested && componentIsTested) {
       warn(
         `The module you are running has tests in the Components Library (/test/modules/ComponentsLibrary/${target}/index.test.tsx EXISTS), however it does not appear to have module tests (/test/modules/${target}/index.test.tsx NOT FOUND). Please consider creating unit tests for the module to ensure that the component works well in module form.`,
+      );
+    } else if (componentExistsInModules && isTested && !componentIsTested) {
+      warn(
+        `The module you are running is tested (/test/modules/${target}/index.test.tsx EXISTS), however the component by the same name is not tested (/test/modules/ComponentsLibrary/${target}/index.test.tsx NOT FOUND). Please consider creating unit tests for the component to ensure that the component functions correctly.`,
       );
     }
   }
