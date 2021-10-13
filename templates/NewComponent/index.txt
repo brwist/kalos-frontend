@@ -8,6 +8,11 @@
 
 import React, { useReducer, useEffect, useCallback, FC } from 'react';
 import { reducer, ACTIONS } from './reducer';
+import { Devlog } from '@kalos-core/kalos-rpc/Devlog';
+import {
+  DevlogClientService,
+} from '../../../helpers';
+import { format } from 'date-fns';
 
 // add any prop types here
 interface props { }
@@ -15,6 +20,7 @@ interface props { }
 export const TITLE_HERE: FC<props> = () => {
   const [state, dispatch] = useReducer(reducer, { 
     isLoaded: false,
+    error: undefined,
   });
 
   const load = useCallback(() => {
@@ -30,13 +36,32 @@ export const TITLE_HERE: FC<props> = () => {
     // This is important for long-term performance of our components
   }, []);
 
+  const handleError = useCallback(async (errorToSet: string) => {
+    // This will send out an error devlog automatically when called
+    // The idea is that this will be used for any errors which we should be able to look up for debugging
+
+    try {
+      let errorLog = new Devlog();
+      errorLog.setUserId(loggedUserId);
+      errorLog.setTimestamp(format(new Date(), 'yyyy-MM-dd hh:mm:ss'));
+      errorLog.setIsError(1);
+      errorLog.setDescription(
+        `An error occurred in TITLE_HERE: ${errorToSet}`,
+      );
+      await DevlogClientService.Create(errorLog);
+      dispatch({type: ACTIONS.SET_ERROR, data: errorToSet});
+    } catch (err) {
+      console.error(`An error occurred while saving a devlog: ${err}`);
+    }
+  }, [loggedUserId]);
+
   useEffect(() => {
-    load();
+    if (!state.isLoaded) load();
 
     return () => {
       cleanup(); 
     };
-  }, [load, cleanup]);
+  }, [load, cleanup, state.isLoaded]);
 
   return ( 
     <> 
