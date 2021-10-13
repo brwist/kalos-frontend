@@ -15,9 +15,11 @@ import {
 import { format } from 'date-fns';
 
 // add any prop types here
-interface props { }
+interface props { 
+  loggedUserId: number;
+};
 
-export const TITLE_HERE: FC<props> = () => {
+export const TITLE_HERE: FC<props> = ({ loggedUserId }) => {
   const [state, dispatch] = useReducer(reducer, { 
     isLoaded: false,
     error: undefined,
