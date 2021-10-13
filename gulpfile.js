@@ -44,6 +44,14 @@ async function start() {
     );
     return;
   }
+  if (target !== 'ComponentsLibrary') {
+    const isTested = sh.test('-f', `./test/modules/${target}/index.test.tsx`);
+    if (!isTested) {
+      warn(
+        `The module you are running appears to be untested (/test/modules/${target}/index.test.tsx NOT FOUND). Please consider adding unit tests to ensure that the module works as intended.`,
+      );
+    }
+  }
 
   try {
     const target = titleCase(process.argv[4].replace(/-/g, ''));
