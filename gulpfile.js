@@ -45,10 +45,18 @@ async function start() {
     return;
   }
   if (target !== 'ComponentsLibrary') {
+    const componentIsTested = sh.test(
+      '-f',
+      `./test/modules/ComponentsLibrary/${target}/index.test.tsx`,
+    );
     const isTested = sh.test('-f', `./test/modules/${target}/index.test.tsx`);
-    if (!isTested) {
+    if (!isTested && !componentIsTested) {
       warn(
-        `The module you are running appears to be untested (/test/modules/${target}/index.test.tsx NOT FOUND). Please consider adding unit tests to ensure that the module works as intended.`,
+        `The module you are running appears to be untested (/test/modules/${target}/index.test.tsx NOT FOUND). Please consider creating unit tests to ensure that the module works as intended.`,
+      );
+    } else if (!isTested && componentIsTested) {
+      warn(
+        `The module you are running has tests in the Components Library (/test/modules/ComponentsLibrary/${target}/index.test.tsx EXISTS), however it does not appear to have module tests (/test/modules/${target}/index.test.tsx NOT FOUND). Please consider creating unit tests for the module to ensure that the component works well in module form.`,
       );
     }
   }
