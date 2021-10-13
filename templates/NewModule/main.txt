@@ -73,8 +73,9 @@ export const TITLE_HERE: FC<props> = ({ loggedUserId }) => {
       <h2>About this boilerplate</h2>
       <ul>
         <li>Frontend unit tests were created for this module automatically in <code>/test/modules/TITLE_HERE</code></li>
-        <li><div style={{color: "red"}}>The loader test is failing by default for modules, this is intentional (so that a loader is always present in new modules where data must be loaded)</div></li>
+        <li>There is a loader test ready to be implemented in the test file - it will show up as "pending" in Mocha until it is implemented</li>
         <li>You can see the templates for <code>yarn make</code> inside <code>/templates</code></li>
+        <li>Error-handling code was automatically generated as well - please use this whenever an issue occurs (so we can look back on them when an issue arises)</li>
       </ul>
       <h2>Some resources to get you started with unit testing in Mocha with Enzyme: </h2>
       <ul>
