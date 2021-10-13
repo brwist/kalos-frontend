@@ -62,13 +62,6 @@ export const EditContractInfo: FC<props> = ({
     error: undefined,
     fatalError: false,
   });
-  console.log('FREQUENCY: ', state.contractData.getFrequency());
-  console.log(
-    'Group billing: ',
-    state.contractData.getGroupBilling() === 1
-      ? BILLING_OPTIONS.GROUP
-      : BILLING_OPTIONS.SITE,
-  );
 
   const CONTRACT_SCHEMA: Schema<Contract> = [
     [
@@ -229,17 +222,14 @@ export const EditContractInfo: FC<props> = ({
       let reqContract = state.contractData;
       reqContract.setId(contractID);
       if (state.propertiesSelected) {
-        console.log('state.propertiesSelected: ', state.propertiesSelected);
         reqContract.setProperties(
           state.propertiesSelected
             .map(property => {
-              console.log('PROPERTY IS ', property);
               return `${property.getId()}`;
             })
             .join(','),
         );
       }
-      console.log('Req contract: ', reqContract);
       reqContract.setGroupBilling(
         // Casting to any because it is set in the form as a string
         (reqContract.getGroupBilling() as any) === 'Group' ? 1 : 0,
@@ -344,7 +334,6 @@ export const EditContractInfo: FC<props> = ({
     };
   }, [load, cleanup, state.isLoaded]);
 
-  console.log('Contract data: ', state.contractData);
   return (
     <>
       {state.isSaving || (!state.isLoaded && <Loader />)}
@@ -433,25 +422,29 @@ export const EditContractInfo: FC<props> = ({
             verticalAlign: 'top',
           }}
         >
-          <PropertyDropdown
-            userId={userID}
-            onSave={propertyData =>
-              console.log('Saving property data: ', propertyData)
-            }
-            onClose={() => {}}
-            onChange={propertyData => {
-              dispatch({
-                type: ACTIONS.SET_PROPERTIES_SELECTED,
-                data: propertyData,
-              });
-              if (onChange)
-                onChange({
-                  contractData: state.contractData,
-                  propertiesSelected: propertyData,
-                  invoiceData: state.invoiceData,
-                } as Output);
-            }}
-          />
+          {state.isLoaded && (
+            <PropertyDropdown
+              loading={!state.isLoaded}
+              initialPropertiesSelected={state.propertiesSelected}
+              userId={userID}
+              onSave={propertyData =>
+                console.log('Saving property data: ', propertyData)
+              }
+              onClose={() => {}}
+              onChange={propertyData => {
+                dispatch({
+                  type: ACTIONS.SET_PROPERTIES_SELECTED,
+                  data: propertyData,
+                });
+                if (onChange)
+                  onChange({
+                    contractData: state.contractData,
+                    propertiesSelected: propertyData,
+                    invoiceData: state.invoiceData,
+                  } as Output);
+              }}
+            />
+          )}
         </div>
       </SectionBar>
       <SectionBar
