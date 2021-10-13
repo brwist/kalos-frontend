@@ -12,6 +12,7 @@ import {
   DevlogClientService,
   InvoiceClientService,
   makeSafeFormObject,
+  PropertyClientService,
 } from '../../../helpers';
 import {
   PAYMENT_STATUS_OPTIONS,
@@ -141,10 +142,11 @@ export const EditContractInfo: FC<props> = ({
   ];
 
   const load = useCallback(async () => {
+    let res; // contract res
     try {
       let req = new Contract();
       req.setId(contractID);
-      let res = await ContractClientService.Get(req);
+      res = await ContractClientService.Get(req);
       if (!res) {
         console.error(`Contract ${contractID} no longer exists.`);
         dispatch({
@@ -173,6 +175,44 @@ export const EditContractInfo: FC<props> = ({
       console.error(`An error occurred while loading a contract: ${err}`);
     }
 
+    if (!res) {
+      console.error(
+        `Cannot continue with property request without the contract result. Returning.`,
+      );
+      return;
+    }
+
+    let propertiesRes: Property[] = [];
+    try {
+      // Include all the ones with user id the same as given
+      // Select the ones that were selected before
+      let propertiesReq = new Property();
+      propertiesReq.setUserId(userID);
+      propertiesReq.setIsActive(1);
+
+      propertiesRes = await (
+        await PropertyClientService.BatchGet(propertiesReq)
+      ).getResultsList();
+
+      let propertiesSelected: Property[] = [];
+      res
+        .getProperties()
+        .split(',')
+        .forEach(async result => {
+          propertiesSelected.push(
+            ...propertiesRes.filter(property => {
+              return property.getId() === Number(result);
+            }),
+          );
+        });
+
+      dispatch({ type: ACTIONS.SET_PROPERTIES_SELECTED, data: propertiesRes });
+    } catch (err) {
+      console.error(
+        `An error occurred while loading the properties for contract ${contractID} - ${err}`,
+      );
+    }
+
     dispatch({ type: ACTIONS.SET_LOADED, data: true });
   }, [contractID, userID]);
 
@@ -187,15 +227,24 @@ export const EditContractInfo: FC<props> = ({
     let error: string = '';
     try {
       let reqContract = state.contractData;
-      if (state.propertiesSelected)
-        reqContract.setProperties(state.propertiesSelected.join(','));
+      reqContract.setId(contractID);
+      if (state.propertiesSelected) {
+        console.log('state.propertiesSelected: ', state.propertiesSelected);
+        reqContract.setProperties(
+          state.propertiesSelected
+            .map(property => {
+              console.log('PROPERTY IS ', property);
+              return `${property.getId()}`;
+            })
+            .join(','),
+        );
+      }
       console.log('Req contract: ', reqContract);
       reqContract.setGroupBilling(
         // Casting to any because it is set in the form as a string
         (reqContract.getGroupBilling() as any) === 'Group' ? 1 : 0,
       );
-      reqContract.setUserId(userID);
-      reqContract.setDateCreated(format(new Date(), 'yyyy-mm-dd hh:mm:ss'));
+      reqContract.setFieldMaskList(['Properties', 'GroupBilling']);
       contractRes = await ContractClientService.Update(reqContract);
     } catch (err) {
       console.error(`An error occurred while upserting a contract: ${err}`);
@@ -266,6 +315,7 @@ export const EditContractInfo: FC<props> = ({
     }
     dispatch({ type: ACTIONS.SET_SAVING, data: false });
   }, [
+    contractID,
     onSave,
     state.contractData,
     state.invoiceData,
@@ -338,6 +388,7 @@ export const EditContractInfo: FC<props> = ({
       >
         <div style={{ width: '75%', display: 'inline-block' }}>
           <Form<Contract>
+            error={state.fatalError}
             key={state.isLoaded.toString()}
             schema={CONTRACT_SCHEMA}
             data={state.contractData}
