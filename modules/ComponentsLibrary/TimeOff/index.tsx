@@ -9,6 +9,7 @@ import React, {
 import {
   differenceInMinutes,
   parseISO,
+  differenceInHours,
   differenceInCalendarYears,
   differenceInBusinessDays,
   addYears,
@@ -17,6 +18,7 @@ import {
 import { Form, Schema, Options } from '../Form';
 import { SectionBar } from '../../ComponentsLibrary/SectionBar';
 import { ConfirmDelete } from '../ConfirmDelete';
+import { Alert } from '../Alert';
 import {
   roundNumber,
   timestamp,
@@ -61,6 +63,8 @@ export const TimeOff: FC<Props> = ({
   const [pto, setPto] = useState<PTO>();
   const [ptoActualHours, setPtoActualHours] = useState<number>(0);
   const [user, setUser] = useState<User>();
+  const [openAlert, setOpenAlert] = useState<boolean>(false);
+  const [alertDismissed, setAlertDismissed] = useState<boolean>(false);
   const [loggedUser, setLoggedUser] = useState<User>();
   const [formKey, setFormKey] = useState<number>(0);
   const [error, setError] = useState<string>('');
@@ -113,7 +117,41 @@ export const TimeOff: FC<Props> = ({
     [userId],
   );
   const setSafeData = (data: TimeoffRequest) => {
-    setData(makeSafeFormObject(data, new TimeoffRequest()));
+    const temp = makeSafeFormObject(data, new TimeoffRequest());
+    console.log(temp);
+    if (temp.getRequestType() === 9 && alertDismissed == false) {
+      if (pto && user) {
+        let hourDiff = 0;
+        if (
+          temp.getAllDayOff() === 1 &&
+          temp.getTimeStarted() &&
+          temp.getTimeFinished()
+        ) {
+          const date1 = new Date(temp.getTimeStarted());
+          const date2 = new Date(temp.getTimeFinished());
+          hourDiff = (differenceInBusinessDays(date2, date1) + 1) * 8;
+        } else if (
+          temp.getAllDayOff() != 1 &&
+          temp.getTimeStarted() &&
+          temp.getTimeFinished()
+        ) {
+          const date1 = new Date(temp.getTimeStarted());
+          const date2 = new Date(temp.getTimeFinished());
+          hourDiff = differenceInHours(date2, date1);
+        }
+        if (
+          pto.getHoursAvailable() >= user.getAnnualHoursPto() ||
+          hourDiff + pto.getHoursAvailable() > user.getAnnualHoursPto()
+        ) {
+          setOpenAlert(true);
+        }
+      }
+    }
+    setData(temp);
+  };
+  const handleCloseAlert = () => {
+    setAlertDismissed(true);
+    setOpenAlert(false);
   };
   const emailClient = useMemo(() => new EmailClient(ENDPOINT), []);
   const init = useCallback(async () => {
@@ -140,6 +178,35 @@ export const TimeOff: FC<Props> = ({
         setDeleted(true);
         setInitiated(true);
         return;
+      }
+      if (req.getRequestType() === 9 && alertDismissed == false) {
+        if (pto && user) {
+          let hourDiff = 0;
+          if (
+            req.getAllDayOff() === 1 &&
+            req.getTimeStarted() &&
+            req.getTimeFinished()
+          ) {
+            const date1 = new Date(req.getTimeStarted());
+            const date2 = new Date(req.getTimeFinished());
+            hourDiff = (differenceInBusinessDays(date2, date1) + 1) * 8;
+          } else if (
+            req.getAllDayOff() != 1 &&
+            req.getTimeStarted() &&
+            req.getTimeFinished()
+          ) {
+            const date1 = new Date(req.getTimeStarted());
+            const date2 = new Date(req.getTimeFinished());
+            hourDiff = differenceInHours(date2, date1);
+          }
+          if (
+            (pto.getHoursAvailable() >= user.getAnnualHoursPto() ||
+              hourDiff + pto.getHoursAvailable() > user.getAnnualHoursPto()) &&
+            req.getAdminApprovalUserId() == 0
+          ) {
+            setOpenAlert(true);
+          }
+        }
       }
       if (!req.getAdminApprovalUserId()) {
         req.setRequestStatus(1);
@@ -245,7 +312,7 @@ export const TimeOff: FC<Props> = ({
           recipient: manager.getEmail(),
         };
 
-        await emailClient.sendMail(config);
+        //await emailClient.sendMail(config);
       } catch (err) {
         console.log(err);
       }
@@ -314,7 +381,7 @@ export const TimeOff: FC<Props> = ({
         body: emailBody,
         recipient: user!.getEmail(),
       };
-      await emailClient.sendMail(config);
+      //await emailClient.sendMail(config);
     }
     setData(newData);
     if (onAdminSubmit) {
@@ -323,7 +390,7 @@ export const TimeOff: FC<Props> = ({
   }, [
     data,
     onAdminSubmit,
-    emailClient,
+    // emailClient,
     loggedUser,
     user,
     setData,
@@ -335,12 +402,16 @@ export const TimeOff: FC<Props> = ({
       await TimeoffRequestClientService.deleteTimeoffRequestById(requestOffId);
       const timesheetReq = new TimesheetLine();
       timesheetReq.setIsActive(1);
+      if (user) {
+        timesheetReq.setTechnicianUserId(user.getId());
+      }
+      console.log('we called delete');
       timesheetReq.setReferenceNumber(`%%PTO-${requestOffId}`);
       await TimesheetLineClientService.Delete(timesheetReq);
       setSaving(false);
       onSaveOrDelete(data);
     }
-  }, [requestOffId, setSaving, onSaveOrDelete, data]);
+  }, [requestOffId, user, setSaving, onSaveOrDelete, data]);
   const isAdmin =
     loggedUser &&
     loggedUser.getPermissionGroupsList().find(p => p.getType() === 'role');
@@ -355,6 +426,7 @@ export const TimeOff: FC<Props> = ({
         minutesStep: 5,
         required: true,
         disabled: !disabled,
+        onChange: () => setAlertDismissed(false),
       },
       {
         name: 'getTimeFinished',
@@ -363,6 +435,7 @@ export const TimeOff: FC<Props> = ({
         minutesStep: 5,
         required: true,
         disabled: !disabled,
+        onChange: () => setAlertDismissed(false),
       },
       {
         name: 'getAllDayOff',
@@ -372,6 +445,7 @@ export const TimeOff: FC<Props> = ({
           { label: 'Yes', value: 1 },
         ],
         disabled: !disabled,
+        onChange: () => setAlertDismissed(false),
       },
     ],
     [
@@ -511,6 +585,12 @@ export const TimeOff: FC<Props> = ({
           open
         />
       )}
+      <Alert open={openAlert} onClose={handleCloseAlert} title="PTO Error">
+        <div>
+          This Paid Time Off Request will exceed the alloted hours. Please
+          verify your time or contact your manager before submitting.
+        </div>
+      </Alert>
     </>
   );
 };
