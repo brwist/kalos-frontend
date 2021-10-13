@@ -172,7 +172,10 @@ function replaceKeywords(fileToWorkOn, userSpecsInput, nameOfModule) {
  */
 async function create() {
   let name = titleCase(process.argv[4].replace(/-/g, ''));
-  let testOnly = titleCase(process.argv[5].replace(/-/g, '')) === 'Testonly'; // so that module doesn't have a need for extra flag
+  let testOnly;
+  if (process.argv[5]) {
+    testOnly = titleCase(process.argv[5].replace(/-/g, '')) === 'Testonly'; // so that module doesn't have a need for extra flag
+  }
   if (process.argv[6] && !testOnly) {
     testOnly = titleCase(process.argv[6].replace(/-/g, '')) === 'Testonly';
   }
