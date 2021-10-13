@@ -20,7 +20,7 @@ import Chai = require('chai');
 
 import LogModule = require('../../../test-tools/logging');
 
-const component = (<TITLE_HERE.TITLE_HERE />);
+const component = (<TITLE_HERE.TITLE_HERE loggedUserId={8418} />);
 
 describe('ComponentsLibrary', () => {
   describe('TITLE_HERE', () => {
