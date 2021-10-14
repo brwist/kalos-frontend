@@ -244,18 +244,6 @@ export const EditContractInfo: FC<props> = ({
     [contractID, userID],
   );
 
-  const getInvoice = useCallback(async () => {
-    try {
-      let req = new Invoice();
-      req.setContractId(contractID);
-      req.setUserId(userID);
-      let res = await InvoiceClientService.Get(req);
-      dispatch({ type: ACTIONS.SET_INVOICE_DATA, data: res });
-    } catch (err) {
-      console.error(`An error occurred while getting an invoice: ${err}`);
-    }
-  }, [contractID, userID]);
-
   const load = useCallback(async () => {
     let res = await getContract(); // contract res
 
@@ -269,10 +257,8 @@ export const EditContractInfo: FC<props> = ({
 
     await getProperties(res);
 
-    await getInvoice();
-
     dispatch({ type: ACTIONS.SET_LOADED, data: true });
-  }, [getContract, getInvoice, getProperties]);
+  }, [getContract, getProperties]);
 
   const save = useCallback(async () => {
     dispatch({ type: ACTIONS.SET_SAVING, data: true });
@@ -546,8 +532,8 @@ export const EditContractInfo: FC<props> = ({
         ]}
       >
         <EditInvoiceData
-          key={state.isLoaded.toString()}
           userId={userID}
+          contractId={contractID}
           onClose={() => onClose()}
           onSave={savedInvoice => {
             dispatch({
