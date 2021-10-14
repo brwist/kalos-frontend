@@ -134,8 +134,8 @@ export const EditContractInfo: FC<props> = ({
     ],
   ];
 
-  const load = useCallback(async () => {
-    let res; // contract res
+  const getContract = useCallback(async () => {
+    let res;
     try {
       let req = new Contract();
       req.setId(contractID);
@@ -164,51 +164,101 @@ export const EditContractInfo: FC<props> = ({
         }
       }
 
+      switch (res.getFrequency()) {
+        case 30:
+          // @ts-expect-error
+          res.setFrequency(FREQUENCIES.MONTHLY);
+          break;
+        case 60:
+          // @ts-expect-error
+          res.setFrequency(FREQUENCIES.BIMONTHLY);
+          break;
+        case 90:
+          // @ts-expect-error
+          res.setFrequency(FREQUENCIES.QUARTERLY);
+          break;
+        case 182:
+          // @ts-expect-error
+          res.setFrequency(FREQUENCIES.SEMIANNUAL);
+          break;
+        case 365:
+          // @ts-expect-error
+          res.setFrequency(FREQUENCIES.ANNUAL);
+          break;
+      }
+
+      switch (res.getGroupBilling()) {
+        case 0:
+          // @ts-expect-error
+          res.setGroupBilling('Site');
+          break;
+        case 1:
+          // @ts-expect-error
+          res.setGroupBilling('Group');
+          break;
+      }
+
       dispatch({ type: ACTIONS.SET_CONTRACT_DATA, data: res });
     } catch (err) {
       console.error(`An error occurred while loading a contract: ${err}`);
     }
 
+    return res;
+  }, [contractID, userID]);
+
+  const getProperties = useCallback(
+    async (contract: Contract) => {
+      let propertiesRes: Property[] = [];
+      try {
+        let propertiesReq = new Property();
+        propertiesReq.setUserId(userID);
+        propertiesReq.setIsActive(1);
+
+        propertiesRes = (
+          await PropertyClientService.BatchGet(propertiesReq)
+        ).getResultsList();
+
+        let propertiesSelected: Property[] = [];
+        contract
+          .getProperties()
+          .split(',')
+          .forEach(async result => {
+            propertiesSelected.push(
+              ...propertiesRes.filter(property => {
+                return property.getId() === Number(result);
+              }),
+            );
+          });
+
+        dispatch({
+          type: ACTIONS.SET_PROPERTIES_SELECTED,
+          data: propertiesRes,
+        });
+      } catch (err) {
+        console.error(
+          `An error occurred while loading the properties for contract ${contractID} - ${err}`,
+        );
+        dispatch({ type: ACTIONS.SET_FATAL_ERROR, data: true });
+      }
+    },
+    [contractID, userID],
+  );
+
+  const load = useCallback(async () => {
+    let res = await getContract(); // contract res
+
     if (!res) {
       console.error(
         `Cannot continue with property request without the contract result. Returning.`,
       );
+      dispatch({ type: ACTIONS.SET_FATAL_ERROR, data: true });
       return;
     }
 
-    let propertiesRes: Property[] = [];
-    try {
-      // Include all the ones with user id the same as given
-      // Select the ones that were selected before
-      let propertiesReq = new Property();
-      propertiesReq.setUserId(userID);
-      propertiesReq.setIsActive(1);
-
-      propertiesRes = await (
-        await PropertyClientService.BatchGet(propertiesReq)
-      ).getResultsList();
-
-      let propertiesSelected: Property[] = [];
-      res
-        .getProperties()
-        .split(',')
-        .forEach(async result => {
-          propertiesSelected.push(
-            ...propertiesRes.filter(property => {
-              return property.getId() === Number(result);
-            }),
-          );
-        });
-
-      dispatch({ type: ACTIONS.SET_PROPERTIES_SELECTED, data: propertiesRes });
-    } catch (err) {
-      console.error(
-        `An error occurred while loading the properties for contract ${contractID} - ${err}`,
-      );
-    }
+    await getProperties(res);
 
     dispatch({ type: ACTIONS.SET_LOADED, data: true });
-  }, [contractID, userID]);
+  }, [getContract, getProperties]);
 
   const save = useCallback(async () => {
     dispatch({ type: ACTIONS.SET_SAVING, data: true });
