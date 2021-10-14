@@ -244,6 +244,18 @@ export const EditContractInfo: FC<props> = ({
     [contractID, userID],
   );
 
+  const getInvoice = useCallback(async () => {
+    try {
+      let req = new Invoice();
+      req.setContractId(contractID);
+      req.setUserId(userID);
+      let res = await InvoiceClientService.Get(req);
+      dispatch({ type: ACTIONS.SET_INVOICE_DATA, data: res });
+    } catch (err) {
+      console.error(`An error occurred while getting an invoice: ${err}`);
+    }
+  }, [contractID, userID]);
+
   const load = useCallback(async () => {
     let res = await getContract(); // contract res
 
@@ -257,8 +269,10 @@ export const EditContractInfo: FC<props> = ({
 
     await getProperties(res);
 
+    await getInvoice();
+
     dispatch({ type: ACTIONS.SET_LOADED, data: true });
-  }, [getContract, getProperties]);
+  }, [getContract, getInvoice, getProperties]);
 
   const save = useCallback(async () => {
     dispatch({ type: ACTIONS.SET_SAVING, data: true });
@@ -286,6 +300,30 @@ export const EditContractInfo: FC<props> = ({
         (reqContract.getGroupBilling() as any) === 'Group' ? 1 : 0,
       );
       reqContract.setFieldMaskList(['Properties', 'GroupBilling']);
+      console.log('contract: ', reqContract);
+
+      switch (reqContract.getFrequency()) {
+        // @ts-expect-error
+        case FREQUENCIES.MONTHLY:
+          reqContract.setFrequency(30);
+          break;
+        // @ts-expect-error
+        case FREQUENCIES.BIMONTHLY:
+          reqContract.setFrequency(60);
+          break;
+        // @ts-expect-error
+        case FREQUENCIES.QUARTERLY:
+          reqContract.setFrequency(90);
+          break;
+        // @ts-expect-error
+        case FREQUENCIES.SEMIANNUAL:
+          reqContract.setFrequency(182);
+          break;
+        // @ts-expect-error
+        case FREQUENCIES.ANNUAL:
+          reqContract.setFrequency(365);
+          break;
+      }
       contractRes = await ContractClientService.Update(reqContract);
     } catch (err) {
       console.error(`An error occurred while upserting a contract: ${err}`);
@@ -384,6 +422,8 @@ export const EditContractInfo: FC<props> = ({
       cleanup();
     };
   }, [load, cleanup, state.isLoaded]);
+
+  console.log('STATE.INVOICE_DATA: ', state.invoiceData);
 
   return (
     <>
@@ -506,6 +546,7 @@ export const EditContractInfo: FC<props> = ({
         ]}
       >
         <EditInvoiceData
+          key={state.isLoaded.toString()}
           userId={userID}
           onClose={() => onClose()}
           onSave={savedInvoice => {
