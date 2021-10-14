@@ -61,6 +61,7 @@ export const EditContractInfo: FC<props> = ({
     isSaving: false,
     error: undefined,
     fatalError: false,
+    invoiceId: -1,
   });
 
   const CONTRACT_SCHEMA: Schema<Contract> = [
@@ -244,6 +245,27 @@ export const EditContractInfo: FC<props> = ({
     [contractID, userID],
   );
 
+  const doesInvoiceExistAlready = useCallback(async () => {
+    try {
+      let req = new Invoice();
+      req.setContractId(contractID);
+      const res = await InvoiceClientService.BatchGet(req);
+      if (res.getTotalCount() === 0) {
+        return -1;
+      } else if (res.getTotalCount() === 1) {
+        return res.getResultsList()[0].getId();
+      } else {
+        console.error(
+          'More than one invoice associated with this contract - using the first in the array.',
+        );
+        return res.getResultsList()[0].getId();
+      }
+    } catch (err) {
+      console.error(`An error occurred while batch getting invoices: ${err}`);
+      return -1; // return false to be safe
+    }
+  }, [contractID]);
+
   const load = useCallback(async () => {
     let res = await getContract(); // contract res
 
@@ -257,8 +279,13 @@ export const EditContractInfo: FC<props> = ({
 
     await getProperties(res);
 
+    dispatch({
+      type: ACTIONS.SET_INVOICE_ID,
+      data: await doesInvoiceExistAlready(),
+    });
+
     dispatch({ type: ACTIONS.SET_LOADED, data: true });
-  }, [getContract, getProperties]);
+  }, [doesInvoiceExistAlready, getContract, getProperties]);
 
   const save = useCallback(async () => {
     dispatch({ type: ACTIONS.SET_SAVING, data: true });
@@ -374,7 +401,12 @@ export const EditContractInfo: FC<props> = ({
         'Totalamounttotal',
       ]);
       // don't forget to associate the invoice with the contract
-      let invoiceRes = await InvoiceClientService.Create(reqInvoice);
+      if (state.invoiceId === -1) {
+        await InvoiceClientService.Create(reqInvoice);
+      } else {
+        reqInvoice.setId(state.invoiceId);
+        await InvoiceClientService.Update(reqInvoice);
+      }
     } catch (err) {
       console.error(`An error occurred while upserting an invoice: ${err}`);
     }
@@ -384,6 +416,7 @@ export const EditContractInfo: FC<props> = ({
     onSave,
     state.contractData,
     state.invoiceData,
+    state.invoiceId,
     state.propertiesSelected,
     userID,
   ]);

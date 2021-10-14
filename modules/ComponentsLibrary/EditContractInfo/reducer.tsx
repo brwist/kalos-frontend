@@ -11,6 +11,7 @@ export type State = {
   isSaving: boolean;
   error: string | undefined;
   fatalError: boolean; // Contract does not exist, etc.
+  invoiceId: number;
 };
 
 export enum ACTIONS {
@@ -22,6 +23,7 @@ export enum ACTIONS {
   SET_SAVING = 'setSaving',
   SET_ERROR = 'setError',
   SET_FATAL_ERROR = 'setUnrecoverableError',
+  SET_INVOICE_ID = 'setInvoiceId',
 }
 
 export enum FREQUENCIES {
@@ -66,6 +68,10 @@ export type Action =
   | {
       type: ACTIONS.SET_FATAL_ERROR;
       data: true; // Should only be set to true, not set to false. Wouldn't be very "fatal" otherwise
+    }
+  | {
+      type: ACTIONS.SET_INVOICE_ID;
+      data: number;
     };
 
 export const reducer = (state: State, action: Action) => {
@@ -116,6 +122,12 @@ export const reducer = (state: State, action: Action) => {
       return {
         ...state,
         fatalError: action.data,
+      };
+    }
+    case ACTIONS.SET_INVOICE_ID: {
+      return {
+        ...state,
+        isInvoiceNew: action.data,
       };
     }
     default:
