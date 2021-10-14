@@ -26,14 +26,16 @@ import {
   TimeoffRequestClientService,
   makeSafeFormObject,
   TimesheetLineClientService,
+  ActivityLogClientService,
 } from '../../../helpers';
 import { OPTION_BLANK, ENDPOINT } from '../../../constants';
 import { EmailClient, EmailConfig } from '@kalos-core/kalos-rpc/Email';
 import { User } from '@kalos-core/kalos-rpc/User';
 import { PTO, TimeoffRequest } from '@kalos-core/kalos-rpc/TimeoffRequest';
 import { datePickerDefaultProps } from '@material-ui/pickers/constants/prop-types';
-import { TimesheetLine } from '@kalos-core/kalos-rpc/TimesheetLine';
-
+import { ActivityLog } from '@kalos-core/kalos-rpc/ActivityLog';
+import { InfoTable } from '../InfoTable';
+import { zhCN } from 'date-fns/esm/locale';
 export interface Props {
   loggedUserId: number;
   userId?: number;
@@ -65,7 +67,9 @@ export const TimeOff: FC<Props> = ({
   const [user, setUser] = useState<User>();
   const [openAlert, setOpenAlert] = useState<boolean>(false);
   const [alertDismissed, setAlertDismissed] = useState<boolean>(false);
+
   const [loggedUser, setLoggedUser] = useState<User>();
+  const [logData, setLogData] = useState<ActivityLog[]>();
   const [formKey, setFormKey] = useState<number>(0);
   const [error, setError] = useState<string>('');
   const emptyTO = new TimeoffRequest();
@@ -119,7 +123,7 @@ export const TimeOff: FC<Props> = ({
   const setSafeData = (data: TimeoffRequest) => {
     const temp = makeSafeFormObject(data, new TimeoffRequest());
     console.log(temp);
-    if (temp.getRequestType() === 9 && alertDismissed == false) {
+    if (temp.getRequestType() === 9) {
       if (pto && user) {
         let hourDiff = 0;
         if (
@@ -127,26 +131,40 @@ export const TimeOff: FC<Props> = ({
           temp.getTimeStarted() &&
           temp.getTimeFinished()
         ) {
-          const date1 = new Date(temp.getTimeStarted());
-          const date2 = new Date(temp.getTimeFinished());
+          const date1 = new Date(parseISO(temp.getTimeStarted()));
+          const date2 = new Date(parseISO(temp.getTimeFinished()));
+          console.log(temp.getTimeStarted());
+          console.log(temp.getTimeFinished());
+          console.log('we are here all day', date1, date2);
+
           hourDiff = (differenceInBusinessDays(date2, date1) + 1) * 8;
         } else if (
           temp.getAllDayOff() != 1 &&
           temp.getTimeStarted() &&
           temp.getTimeFinished()
         ) {
-          const date1 = new Date(temp.getTimeStarted());
-          const date2 = new Date(temp.getTimeFinished());
+          console.log(temp.getTimeStarted());
+          console.log(temp.getTimeFinished());
+
+          const date1 = new Date(parseISO(temp.getTimeStarted()));
+          const date2 = new Date(parseISO(temp.getTimeFinished()));
+          console.log('we are here', date1, date2);
           hourDiff = differenceInHours(date2, date1);
         }
-        if (
-          pto.getHoursAvailable() >= user.getAnnualHoursPto() ||
-          hourDiff + pto.getHoursAvailable() > user.getAnnualHoursPto()
-        ) {
+        console.log('hourDiff', hourDiff);
+        if (hourDiff + pto.getHoursAvailable() > user.getAnnualHoursPto()) {
           setOpenAlert(true);
+        } else {
+          //we should reset it, if they created one that one was, but then incorrect
+          setAlertDismissed(false);
+          setOpenAlert(false);
         }
       }
+    } else {
+      setAlertDismissed(false);
+      setOpenAlert(false);
     }
+
     setData(temp);
   };
   const handleCloseAlert = () => {
@@ -155,6 +173,7 @@ export const TimeOff: FC<Props> = ({
   };
   const emailClient = useMemo(() => new EmailClient(ENDPOINT), []);
   const init = useCallback(async () => {
+    console.log('called init');
     const types = await TimeoffRequestClientService.getTimeoffRequestTypes();
     setTypeOptions(
       types.map(t => ({ label: t.getRequestType(), value: t.getId() })),
@@ -174,12 +193,17 @@ export const TimeOff: FC<Props> = ({
       const req = await TimeoffRequestClientService.getTimeoffRequestById(
         requestOffId,
       );
+      const logReq = new ActivityLog();
+      logReq.setTimeoffRequestId(requestOffId);
+      setLogData(
+        (await ActivityLogClientService.BatchGet(logReq)).getResultsList(),
+      );
       if (!req) {
         setDeleted(true);
         setInitiated(true);
         return;
       }
-      if (req.getRequestType() === 9 && alertDismissed == false) {
+      if (req.getRequestType() === 9) {
         if (pto && user) {
           let hourDiff = 0;
           if (
@@ -187,27 +211,40 @@ export const TimeOff: FC<Props> = ({
             req.getTimeStarted() &&
             req.getTimeFinished()
           ) {
-            const date1 = new Date(req.getTimeStarted());
-            const date2 = new Date(req.getTimeFinished());
+            const date1 = new Date(parseISO(req.getTimeStarted()));
+            const date2 = new Date(parseISO(req.getTimeFinished()));
+            console.log(req.getTimeStarted());
+            console.log(req.getTimeFinished());
+            console.log('we are here all day', date1, date2);
+
             hourDiff = (differenceInBusinessDays(date2, date1) + 1) * 8;
           } else if (
             req.getAllDayOff() != 1 &&
             req.getTimeStarted() &&
             req.getTimeFinished()
           ) {
-            const date1 = new Date(req.getTimeStarted());
-            const date2 = new Date(req.getTimeFinished());
+            console.log(req.getTimeStarted());
+            console.log(req.getTimeFinished());
+
+            const date1 = new Date(parseISO(req.getTimeStarted()));
+            const date2 = new Date(parseISO(req.getTimeFinished()));
+            console.log('we are here', date1, date2);
             hourDiff = differenceInHours(date2, date1);
           }
-          if (
-            (pto.getHoursAvailable() >= user.getAnnualHoursPto() ||
-              hourDiff + pto.getHoursAvailable() > user.getAnnualHoursPto()) &&
-            req.getAdminApprovalUserId() == 0
-          ) {
+          console.log('hourDiff', hourDiff);
+          if (hourDiff + pto.getHoursAvailable() > user.getAnnualHoursPto()) {
             setOpenAlert(true);
+          } else {
+            //we should reset it, if they created one that one was, but then incorrect
+            setAlertDismissed(false);
+            setOpenAlert(false);
           }
         }
+      } else {
+        setAlertDismissed(false);
+        setOpenAlert(false);
       }
+
       if (!req.getAdminApprovalUserId()) {
         req.setRequestStatus(1);
         req.setAdminApprovalDatetime(timestamp(true));
@@ -271,6 +308,13 @@ export const TimeOff: FC<Props> = ({
       let newData = new TimeoffRequest();
       console.log({ temp });
       console.log({ data });
+      if (loggedUser!.getIsAdmin()) {
+        temp.setRequestStatus(1);
+        temp.setAdminApprovalDatetime(timestamp(true));
+        temp.setReviewedBy(
+          `${loggedUser!.getFirstname()} ${loggedUser!.getLastname()}`,
+        );
+      }
       if (data.getId() === 0 || data.getId().toString() === '') {
         console.log('create');
         newData = await TimeoffRequestClientService.Create(temp);
@@ -316,14 +360,26 @@ export const TimeOff: FC<Props> = ({
       } catch (err) {
         console.log(err);
       }
-
-      if (loggedUser!.getIsAdmin()) {
-        newData.setRequestStatus(1);
-        newData.setAdminApprovalDatetime(timestamp(true));
-        newData.setReviewedBy(
-          `${loggedUser!.getFirstname()} ${loggedUser!.getLastname()}`,
+      const newLog = new ActivityLog();
+      newLog.setTimeoffRequestId(newData.getId());
+      newLog.setUserId(loggedUserId);
+      if (
+        newData.getAdminApprovalUserId() != null &&
+        newData.getAdminApprovalUserId() != 0
+      ) {
+        newLog.setActivityName(
+          `Created and Approved by ${loggedUser?.getFirstname()} ${loggedUser?.getLastname()} ${
+            alertDismissed ? 'Exceeding PTO Alert Dismissed' : ''
+          }`,
+        );
+      } else {
+        newLog.setActivityName(
+          `Created by ${loggedUser?.getFirstname()} ${loggedUser?.getLastname()} ${
+            alertDismissed ? 'Exceeding PTO Alert Dismissed' : ''
+          }`,
         );
       }
+      await ActivityLogClientService.Create(newLog);
       setData(newData);
       setFormKey(formKey + 1);
       setSaving(false);
@@ -333,6 +389,7 @@ export const TimeOff: FC<Props> = ({
       emailClient,
       typeOptions,
       user,
+      alertDismissed,
       onSaveOrDelete,
       setSaving,
       setData,
@@ -374,6 +431,17 @@ export const TimeOff: FC<Props> = ({
 
         `${data.getTimeStarted()} -${data.getTimeFinished()}`,
       );
+
+      const newLog = new ActivityLog();
+      newLog.setTimeoffRequestId(newData.getId());
+      newLog.setActivityName(
+        `Updated with status ${
+          req.getRequestStatus() === 1 ? 'Approved' : 'Not Approved'
+        } by ${loggedUser?.getFirstname()}, ${loggedUser?.getLastname()} ${
+          alertDismissed ? 'Exceeding PTO Alert Dismissed' : ''
+        }`,
+      );
+      await ActivityLogClientService.Create(newLog);
       //@ts-ignore
       const config: EmailConfig = {
         type: 'timeoff',
@@ -400,18 +468,10 @@ export const TimeOff: FC<Props> = ({
     if (requestOffId) {
       setSaving(true);
       await TimeoffRequestClientService.deleteTimeoffRequestById(requestOffId);
-      const timesheetReq = new TimesheetLine();
-      timesheetReq.setIsActive(1);
-      if (user) {
-        timesheetReq.setTechnicianUserId(user.getId());
-      }
-      console.log('we called delete');
-      timesheetReq.setReferenceNumber(`%%PTO-${requestOffId}`);
-      await TimesheetLineClientService.Delete(timesheetReq);
       setSaving(false);
       onSaveOrDelete(data);
     }
-  }, [requestOffId, user, setSaving, onSaveOrDelete, data]);
+  }, [requestOffId, setSaving, onSaveOrDelete, data]);
   const isAdmin =
     loggedUser &&
     loggedUser.getPermissionGroupsList().find(p => p.getType() === 'role');
@@ -426,7 +486,6 @@ export const TimeOff: FC<Props> = ({
         minutesStep: 5,
         required: true,
         disabled: !disabled,
-        onChange: () => setAlertDismissed(false),
       },
       {
         name: 'getTimeFinished',
@@ -435,7 +494,6 @@ export const TimeOff: FC<Props> = ({
         minutesStep: 5,
         required: true,
         disabled: !disabled,
-        onChange: () => setAlertDismissed(false),
       },
       {
         name: 'getAllDayOff',
@@ -444,8 +502,8 @@ export const TimeOff: FC<Props> = ({
           { label: 'No', value: 0 },
           { label: 'Yes', value: 1 },
         ],
+        required: true,
         disabled: !disabled,
-        onChange: () => setAlertDismissed(false),
       },
     ],
     [
@@ -576,6 +634,15 @@ export const TimeOff: FC<Props> = ({
         submitDisabled={submitDisabled}
         error={error}
       />
+      {logData && logData.length >= 1 && (
+        <InfoTable
+          columns={[{ name: 'Log Entry' }, { name: 'Date' }]}
+          data={logData.map(log => [
+            { value: log.getActivityName() },
+            { value: log.getActivityDate() },
+          ])}
+        />
+      )}
       {deleting && (
         <ConfirmDelete
           kind="this Request Off"
@@ -585,7 +652,11 @@ export const TimeOff: FC<Props> = ({
           open
         />
       )}
-      <Alert open={openAlert} onClose={handleCloseAlert} title="PTO Error">
+      <Alert
+        open={openAlert && alertDismissed == false}
+        onClose={handleCloseAlert}
+        title="PTO Error"
+      >
         <div>
           This Paid Time Off Request will exceed the alloted hours. Please
           verify your time or contact your manager before submitting.
