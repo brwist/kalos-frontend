@@ -48,7 +48,13 @@ import TableCell from '@material-ui/core/TableCell';
 import Grid from '@material-ui/core/Grid';
 import Button  from '@material-ui/core/Button';
 import UndoRounded from '@material-ui/icons/UndoRounded';
-
+import List from '@material-ui/core/List/List';
+import ListSubheader from '@material-ui/core/ListSubheader';
+import ListItemIcon from '@material-ui/core/ListItemIcon';
+import ListItemText from '@material-ui/core/ListItemText';
+import RemoveCircleOutlineTwoTone from '@material-ui/icons/RemoveCircleOutlineTwoTone';
+import ListItem from '@material-ui/core/ListItem';
+import CircleProgress from '@material-ui/core/CircularProgress';
 export interface Props {
   loggedUserId: number;
   testUserId?: number;
@@ -86,8 +92,10 @@ const initialState: State = {
   isLoadingTech: false,
   isLoadingCall: false,
   isLoadingMap: true,
+  isLoadingDismissed: false,
   isInitialLoad: true,
   isLoadingFilters: true,
+  assigneeList: [],
 };
 
 export const DispatchDashboard: React.FC<Props> = function DispatchDashboard({
@@ -112,7 +120,6 @@ export const DispatchDashboard: React.FC<Props> = function DispatchDashboard({
       const techs = await DispatchClientService.GetDispatchableTechnicians(tech);
       const availableTechs = techs.getResultsList().filter(tech => tech.getActivity() != 'Dismissed');
       const dismissedTechs = techs.getResultsList().filter(tech => tech.getActivity() === 'Dismissed');
-      // console.log('Dispatch Tech Success');
       return {available: availableTechs, dismissed: dismissedTechs};
     } catch (err) {
       console.error(
@@ -134,7 +141,6 @@ export const DispatchDashboard: React.FC<Props> = function DispatchDashboard({
     }
     try {
       const calls = await DispatchClientService.GetDispatchCalls(call);
-      // console.log('Dispatch Call Success');
       const callResults = calls.getResultsList();
       const filteredCalls = callResults.filter(call => 
         `${call.getDateStarted()} ${call.getTimeStarted()}` >= `${state.formData.dateStart} ${state.formData.timeStart.substring(11)}` &&
@@ -170,7 +176,6 @@ export const DispatchDashboard: React.FC<Props> = function DispatchDashboard({
       if (!displayedDepartments.length) {
         displayedDepartments = departments.getResultsList().filter(dep => dep.getId() === userData.getEmployeeDepartmentId()); 
       }
-      // console.log('Department Success');
       return {departments: displayedDepartments, defaultValues: displayedDepartments.map(dep => dep.getId())};
     } catch (err) {
       console.error(
@@ -185,7 +190,6 @@ export const DispatchDashboard: React.FC<Props> = function DispatchDashboard({
     try {
       const jobTypes = await JobTypeClientService.BatchGet(jobTypeReq);
       const displayedJobTypes = jobTypes.getResultsList().filter(jobType => !state.notIncludedJobTypes.includes(jobType.getId()));
-      // console.log('Job Type Success');
       return {jobTypes: displayedJobTypes};
     } catch (err) {
       console.error(
@@ -200,7 +204,6 @@ export const DispatchDashboard: React.FC<Props> = function DispatchDashboard({
     newKey.setTextId('google_maps');
     try {
       const googleKey = await ApiKeyClientService.Get(newKey);
-      // console.log('API Key success');
       return {googleKey: googleKey.getApiKey()};
     } catch (err) {
       console.error(
@@ -250,7 +253,6 @@ export const DispatchDashboard: React.FC<Props> = function DispatchDashboard({
     })
     if (state.defaultDepartmentIds.length && !state.isLoadingFilters) {
       setTechnicians();
-      console.log('SetTechs Use Effect');
     }
   }, [setTechnicians, state.defaultDepartmentIds, state.isLoadingFilters]);
 
@@ -261,7 +263,6 @@ export const DispatchDashboard: React.FC<Props> = function DispatchDashboard({
     });
     if (state.defaultSectorIds.length && !state.isLoadingFilters) {
       setCalls();
-      console.log('SetCalls Use Effect');
     }
   }, [setCalls, state.defaultSectorIds, state.isLoadingFilters])
 
@@ -337,7 +338,7 @@ export const DispatchDashboard: React.FC<Props> = function DispatchDashboard({
   };
 
   const handleUndismissTech = async (tech : DispatchableTech) => {
-    setProcessing(true);
+    setProcessing(true, true);
     const actLog = new ActivityLog();
     actLog.setUserId(loggedUserId);
     actLog.setPropertyId(19139);
@@ -400,6 +401,59 @@ export const DispatchDashboard: React.FC<Props> = function DispatchDashboard({
     setCalls();
   }
 
+  const handleUnassignTech = async (id: number) => {
+    setProcessing(true);
+    const assignment = new EventAssignment();
+    const event = new Event();
+    assignment.setEventId(state.selectedCall.getId());
+    assignment.setUserId(id);
+    event.setId(state.selectedCall.getId());
+    const idArray = state.assigneeList.map(assignee=>assignee.id).filter(techId => techId !== id).map(String);
+    event.setLogTechnicianAssigned(idArray.length ? idArray.toString() : '0');
+    try {
+      const assignedEvent = await EventAssignmentClientService.Get(assignment);
+      assignment.setId(assignedEvent.getId());
+      EventAssignmentClientService.Delete(assignment);
+    } catch (err) {
+      console.error('Error updating Event Assignment', err);
+    }
+    try {
+      await EventClientService.Update(event);
+    } catch (err) {
+      console.error('Error Updating Event', err);
+    }
+    dispatchDashboard({
+      type: 'setAssigneeList',
+      data: state.assigneeList.filter(assignee => assignee.id !== id)
+    });
+    setCalls();
+  }
+
+  const handleCallDetails = async (call : DispatchCall) => {
+    let assignees : {id: number, name: string}[] = [];
+    const ids = call.getLogTechnicianAssigned().split(',').map(Number);
+    try {
+      const userData = await UserClientService.BatchGetUsersByIds(ids);
+      for (const user of userData.getResultsList()) {
+        assignees.push({id: user.getId(), name: `${user.getFirstname()} ${user.getLastname()}`})
+      }
+      dispatchDashboard({
+        type: 'setModal',
+        data: {
+          openModal: true,
+          modalKey: 'callInfo',
+          selectedTech: new DispatchableTech(),
+          selectedCall: call,
+          isProcessing: false,
+          assigneeList: assignees,
+        }
+      });
+    } catch (err) {
+      console.error('Error Occurred when Getting Assigned Users', err);
+    }
+    
+  }
+
   const handleMapRecenter = async (center: {lat: number, lng: number}, zoom: number, address?: string) => {
     let newCenter = center;
     if (center.lat === 0 && center.lng === 0) {
@@ -426,7 +480,7 @@ export const DispatchDashboard: React.FC<Props> = function DispatchDashboard({
     }
   }
 
-  const handleMapClick = (tech: DispatchableTech, call: DispatchCall) => {
+  const handleMapClick = (call: DispatchCall, tech: DispatchableTech) => {
     dispatchDashboard({ type: 'setModal', data: {
       openModal: true,
       modalKey: 'mapInfo',
@@ -437,18 +491,19 @@ export const DispatchDashboard: React.FC<Props> = function DispatchDashboard({
   }
 
   const setInitialValues = async () => {
-    const departmentReq = await getDepartments();
-    const defaultSectors = getSectorGroups(departmentReq.departments.filter(dep => departmentReq.defaultValues.includes(dep.getId())));
-    const jobTypeReq = await getJobTypes();
-    const googleApiKey = await getGoogleApiKey();
+    const departmentReq = getDepartments();
+    const jobTypeReq = getJobTypes();
+    const googleApiKey = getGoogleApiKey();
+    const results = await Promise.all([departmentReq, jobTypeReq, googleApiKey]);
+    const defaultSectors = getSectorGroups(results[0].departments.filter(dep => results[0].defaultValues.includes(dep.getId())));
     dispatchDashboard({
       type: 'setDropdownValuesAndApi',
       data: {
-        departmentList: departmentReq.departments,
-        defaultDepartmentIds: departmentReq.defaultValues,
+        departmentList: results[0].departments,
+        defaultDepartmentIds: results[0].defaultValues,
         defaultSectorIds: defaultSectors,
-        jobTypeList: jobTypeReq.jobTypes,
-        googleApiKey: googleApiKey.googleKey,
+        jobTypeList: results[1].jobTypes,
+        googleApiKey: results[2].googleKey,
       }
     });
   }
@@ -541,8 +596,14 @@ export const DispatchDashboard: React.FC<Props> = function DispatchDashboard({
     ],
   ];
 
-  const setProcessing = (loading : boolean) => {
-    dispatchDashboard({ type: 'setProcessing', data: loading});
+  const setProcessing = (loading : boolean, dismissProcessing = false) => {
+    dispatchDashboard({
+      type: 'setProcessing',
+      data: {
+        loading,
+        dismissProcessing,
+      }
+    });
   }
 
   const resetModal = () => {
@@ -561,7 +622,6 @@ export const DispatchDashboard: React.FC<Props> = function DispatchDashboard({
   useEffect(() => {
     setInitialValues();
     handleFilterLoad();
-    // console.log('drop down use effect');
   }, []);
 
   return (
@@ -572,7 +632,7 @@ export const DispatchDashboard: React.FC<Props> = function DispatchDashboard({
           opacity={0.5}
         />
       )}
-      <SectionBar title="Dispatch" styles={{backgroundColor: "#711313", color: "white"}} />
+      <SectionBar title="Dispatch" styles={{backgroundColor: "#711313", color: "white", zIndex:3}} />
       {!state.isInitialLoad && (
         <div>
       <Grid style={{paddingTop:'15px'}}>
@@ -622,7 +682,7 @@ export const DispatchDashboard: React.FC<Props> = function DispatchDashboard({
                   openModal: true,
                   modalKey: modalKey,
                   selectedTech: tech!,
-                  selectedCall: call!, 
+                  selectedCall: call, 
                   isProcessing: false,
                 }
               });
@@ -668,6 +728,7 @@ export const DispatchDashboard: React.FC<Props> = function DispatchDashboard({
                   userID={loggedUserId}
                   calls={state.calls}
                   handleMapRecenter={handleMapRecenter}
+                  handleDblClick={handleCallDetails}
                   loading={state.isLoadingCall}
                 />
               </Grid>
@@ -693,6 +754,7 @@ export const DispatchDashboard: React.FC<Props> = function DispatchDashboard({
                 userID={loggedUserId}
                 dismissedTechs={state.dismissedTechs}
                 handleUndismissTech={handleUndismissTech}
+                processingDismissed={state.isLoadingDismissed}
               />
             </Alert>
         )}
@@ -791,7 +853,7 @@ export const DispatchDashboard: React.FC<Props> = function DispatchDashboard({
         }
         {state.modalKey === 'mapInfo' && state.selectedCall.getId() > 0 && (
           <Alert
-          open={true}
+          open
           onClose={resetModal}
           title="Dispatch Call Info"
           label="Close"
@@ -828,6 +890,93 @@ export const DispatchDashboard: React.FC<Props> = function DispatchDashboard({
                 </TableBody>
               </Table>
             </TableContainer>
+          </Alert>
+        )}
+        {state.modalKey === 'callInfo' && (
+          <Alert
+            open
+            onClose={resetModal}
+            title="Call Info"
+            label="Close"
+            maxWidth={(window.innerWidth * .80)}
+          >
+            <div style={{textAlign: "center"}}>
+              <h2>Selected Call</h2>
+            </div>
+
+            <Grid container spacing={3} style={{width:(window.innerWidth * .65)}}>
+              <Grid item xs={6}>
+                <TableContainer style={{width:'100%'}}>
+                  <Table>
+                    <TableHead></TableHead>
+                    <TableBody>
+                      <TableRow>
+                        <TableCell style={{width:"35%", fontWeight:"bold", fontSize:"15px"}}>Location:</TableCell>
+                        <TableCell style={{width:"65%", textAlign:"center"}}>{state.selectedCall.getPropertyCity()}</TableCell>
+                      </TableRow>
+                      <TableRow>
+                        <TableCell style={{width:"35%", fontWeight:"bold", fontSize:"15px"}}>Customer:</TableCell>
+                        <TableCell style={{width:"65%", textAlign:"center"}}>{state.selectedCall.getCustName()}</TableCell>
+                      </TableRow>
+                      <TableRow>
+                        <TableCell style={{fontWeight:"bold", fontSize:"15px"}}>Type:</TableCell>
+                        <TableCell style={{textAlign:"center"}}>{`${state.selectedCall.getJobType()}/${state.selectedCall.getJobSubtype()}`}</TableCell>
+                      </TableRow>
+                      <TableRow>
+                        <TableCell style={{fontWeight:"bold", fontSize:"15px"}}>Description:</TableCell>
+                        <TableCell style={{textAlign:"center"}}>{state.selectedCall.getDescription().length >= 200 ? state.selectedCall.getDescription().slice(0,150).concat(" ...") : state.selectedCall.getDescription()}</TableCell>
+                      </TableRow>
+                    </TableBody>
+                  </Table>
+                </TableContainer>
+              </Grid>
+              <Grid item xs={6} style={{margin:'auto', position:'relative'}}>
+                {state.isProcessing && (
+                  <CircleProgress
+                    style={{
+                      position:'absolute',
+                      left:'50%',
+                      top:'50%',
+                      zIndex:5,
+                      marginLeft:-20,
+                      marginTop:-20,
+                      width:50,
+                      height:50
+                    }}
+                  />
+                )}
+                <List
+                  subheader={
+                    <ListSubheader style={{textAlign:'center', fontSize:'20px', margin:'auto'}}>
+                      Assigned Technicians
+                    </ListSubheader>
+                  }
+                  style={{display:'table',margin:'auto',alignItems:'center', opacity:state.isProcessing?0.2:1}}
+                >
+                  {!state.assigneeList.length && (
+                    <ListItemText style={{textAlign:'center'}}>
+                      No Assigned Technicians
+                    </ListItemText>
+                  )}
+                  {state.assigneeList.length > 0 && state.assigneeList.map((assignee, index) => {
+                    return (
+                      <ListItem
+                        key={index}
+                      >
+                        <ListItemIcon onClick={()=>{if(!state.isProcessing) handleUnassignTech(assignee.id)}}>
+                          <RemoveCircleOutlineTwoTone
+                            color='primary'
+                          />
+                        </ListItemIcon>
+                        <ListItemText>
+                          {assignee.name}
+                        </ListItemText>
+                      </ListItem>
+                    )
+                  })}
+                </List>
+              </Grid>
+            </Grid>
           </Alert>
         )}
       </Modal>

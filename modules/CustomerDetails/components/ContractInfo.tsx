@@ -31,7 +31,7 @@ const BILLING_OPTIONS: Options = [
   { label: 'Group', value: 1 },
 ];
 
-const PAYMENT_TYPE_OPTIONS: Options = [
+export const PAYMENT_TYPE_OPTIONS: Options = [
   'Cash',
   'Check',
   'Credit Card',
@@ -47,7 +47,7 @@ const PAYMENT_TYPE_OPTIONS: Options = [
   'Charity',
 ];
 
-const PAYMENT_STATUS_OPTIONS: Options = [
+export const PAYMENT_STATUS_OPTIONS: Options = [
   'Pending',
   'Billed',
   'Canceled',

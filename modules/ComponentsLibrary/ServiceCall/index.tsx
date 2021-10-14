@@ -17,6 +17,7 @@ import {
   JobTypeSubtypeClientService,
   ServicesRenderedClientService,
   makeSafeFormObject,
+  ActivityLogClientService,
 } from '../../../helpers';
 import { ENDPOINT, OPTION_BLANK } from '../../../constants';
 import { Modal } from '../Modal';
@@ -37,7 +38,9 @@ import { Loader } from '../../Loader/main';
 import Typography from '@material-ui/core/Typography';
 import { Alert } from '../Alert';
 import { ActivityLog } from '@kalos-core/kalos-rpc/ActivityLog';
-import { format } from 'date-fns';
+import format from 'date-fns/esm/format';
+import setHours from 'date-fns/esm/setHours';
+import setMinutes from 'date-fns/esm/setMinutes';
 
 const EventClientService = new EventClient(ENDPOINT);
 const UserClientService = new UserClient(ENDPOINT);
@@ -257,6 +260,8 @@ export const ServiceCall: FC<Props> = props => {
             req.setIsResidential(1);
             req.setDateStarted(format(new Date(), 'yyyy-MM-dd'));
             req.setDateEnded(format(new Date(), 'yyyy-MM-dd'));
+            req.setTimeStarted(format(setMinutes(setHours(new Date(), 8), 0), 'HH:mm'));
+            req.setTimeEnded(format(setMinutes(setHours(new Date(), 18), 0), 'HH:mm'));
             const property = await PropertyClientService.loadPropertyByID(
               propertyId,
             );
@@ -335,24 +340,54 @@ const handleSaveInvoice = useCallback(async() => {
     try {
       if (serviceCallId){
         console.log('saving existing ID');
+        let activityName = `${temp.getLogJobNumber()} Edited Service Call`;
         if(saveInvoice) {
           console.log('saving invoice');
           temp.setIsGeneratedInvoice(saveInvoice);
           temp.addFieldMask('IsGeneratedInvoice');
           await EventClientService.Update(temp);
+          activityName = activityName.concat(` and Invoice`);
         }
         else {
           await EventClientService.Update(temp);
         }
+        const newActivity = new ActivityLog();
+        if (property.getGeolocationLat() && property.getGeolocationLng()) {
+          newActivity.setGeolocationLat(property.getGeolocationLat());
+          newActivity.setGeolocationLng(property.getGeolocationLng());
+        } else {
+          activityName = activityName.concat(` (location services disabled)`);
+          newActivity.setPropertyId(propertyId);
+          newActivity.setActivityDate(format(new Date(), 'yyyy-MM-dd HH:mm:ss'));
+          newActivity.setUserId(userID);
+          newActivity.setActivityName(activityName);
+          await ActivityLogClientService.Create(newActivity);
+        }
       } else {
         console.log('creating new one');
         temp.setPropertyId(propertyId);
+        temp.setLogVersion(1);
         res = await EventClientService.Create(temp);
+        const logNumber = `${format(new Date(), 'yy')}-${res.getId()}`;
         const newEvent = new Event();
         newEvent.setId(res.getId());
-        newEvent.setLogJobNumber(`${format(new Date(), 'yy')}-${res.getId()}`);
-        newEvent.setFieldMaskList(['Id', 'LogJobNumber']);
+        newEvent.setLogJobNumber(logNumber);
+        newEvent.setIsResidential(temp.getIsResidential());
+        newEvent.setFieldMaskList(['Id', 'LogJobNumber', 'IsResidential']);
         await EventClientService.Update(newEvent);
+        const newActivity = new ActivityLog();
+        let activityName = `${logNumber} Added Service Call`;
+        if (property.getGeolocationLat() && property.getGeolocationLng()) {
+          newActivity.setGeolocationLat(property.getGeolocationLat());
+          newActivity.setGeolocationLng(property.getGeolocationLng());
+        } else {
+          activityName = activityName.concat(` (location services disabled)`);
+        }
+        newActivity.setPropertyId(propertyId);
+        newActivity.setActivityDate(format(new Date(), 'yyyy-MM-dd HH:mm:ss'));
+        newActivity.setUserId(userID);
+        newActivity.setActivityName(activityName);
+        await ActivityLogClientService.Create(newActivity);
       }
     } catch (err) {
       console.error(err);
@@ -364,14 +399,14 @@ const handleSaveInvoice = useCallback(async() => {
       await loadEntry(res.getId());
       await loadServicesRenderedData(res.getId());
     }
-
-    setSaving(false);
-    setLoading(false);
     if (onSave) {
       onSave();
     }
     if (onClose) {
       onClose();
+    } else {
+      setSaving(false);
+      setLoading(false);
     }
   }, [
     entry,

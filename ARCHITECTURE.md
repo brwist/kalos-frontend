@@ -16,9 +16,11 @@ Kalos Frontend is split into quite a few folders:
 
 ## About our frontend unit testing setup
 
-Our unit testing setup is a bit weird, but it works. Inside the test folder, we have a mockup of the repository's file structure with tests inside of them based upon the thing being tested.
+Inside the test folder, we have a mockup of the repository's file structure with tests inside of them based upon the thing being tested.
 
-When tests are ran, we run `ts-mocha` in NodeJS. It adds our node_modules into the testing environment (since we integrate our client release into the node_modules folder, it allows for easy stubbing and integration testing if we desire to do so in the future) then runs all of our unit tests. Since it is run inside of Node, we have the testing setup squared away inside the test-setup folder, where setup of our testing dependencies is stored.
+We use `ts-mocha` in NodeJS to run our tests. It adds our node_modules into the testing environment (since we integrate our client release into the node_modules folder, it allows for easy stubbing and integration testing if we desire to do so in the future) then runs all of our unit tests. Since it is run inside of Node, we have the testing setup squared away inside the test-setup folder, where setup of our testing dependencies is stored.
+
+You can read more about testing in /test/readme.md.
 
 ## Relationship to Kalos Core
 
@@ -44,6 +46,10 @@ It is still in-use at the time of writing, but it may be deprecated soon in favo
 ### About the new development database DMS task and setup
 
 The [new database](https://console.aws.amazon.com/rds/home?region=us-east-1#database:id=kalos-dev-auto-prod-backup-open;is-cluster=false) is regularly overwritten by [this DMS task](https://console.aws.amazon.com/dms/v2/home?region=us-east-1#taskDetails/kalos-prod-to-dev-task-open). The task is set to run by a crontab job on [this EC2 instance](https://console.aws.amazon.com/ec2/v2/home?region=us-east-1#InstanceDetails:instanceId=i-0e8555f3af17025c7). The job simply starts the DMS replication task periodically and all of the data from our [production database](https://console.aws.amazon.com/rds/home?region=us-east-1#database:id=kalosnewprod;is-cluster=false) gets backed up into it. This will allow us to work with fresh data from our actual technicians. You can also trigger the DMS task manually if there is an issue being reported on a specific event / piece of data (once this is all hooked up, of course).
+
+#### How do I change the time the task runs or the DMS task?
+
+You can ssh into [this EC2 instance](https://console.aws.amazon.com/ec2/v2/home?region=us-east-1#InstanceDetails:instanceId=i-0e8555f3af17025c7) and then use `crontab -e` to view the task being run (or set a new time). Inside the file being run by crontab should be the command to start the DMS task, where you can change the ARN for the task if you need to.
 
 ### Small Issues
 

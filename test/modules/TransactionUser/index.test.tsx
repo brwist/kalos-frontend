@@ -21,6 +21,6 @@ describe.skip('TransactionUser', () => {
     after(() => {
       wrapper.unmount();
     });
-    it('renders the Edit button because the user is Tim', () => {});
+    it('renders the Edit button because the user is Tim');
   });
 });

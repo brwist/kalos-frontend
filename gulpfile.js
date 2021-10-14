@@ -23,21 +23,69 @@ try {
   console.log(err);
 }
 
-let minify = process.argv[5];
+function checkTests(target) {
+  if (target !== 'ComponentsLibrary') {
+    const componentExistsInModules = sh.test(
+      '-f',
+      `./modules/ComponentsLibrary/${target}/index.tsx`,
+    );
+    const componentIsTested = sh.test(
+      '-f',
+      `./test/modules/ComponentsLibrary/${target}/index.test.tsx`,
+    );
+    const isTested = sh.test('-f', `./test/modules/${target}/index.test.tsx`);
+    if (!isTested && !componentIsTested) {
+      warn(
+        `The module you are running appears to be untested (/test/modules/${target}/index.test.tsx NOT FOUND). Please consider creating unit tests to ensure that the module works as intended.`,
+      );
+    } else if (!isTested && componentIsTested) {
+      warn(
+        `The module you are running has tests in the Components Library (/test/modules/ComponentsLibrary/${target}/index.test.tsx EXISTS), however it does not appear to have module tests (/test/modules/${target}/index.test.tsx NOT FOUND). Please consider creating unit tests for the module to ensure that the component works well in module form.`,
+      );
+    } else if (componentExistsInModules && isTested && !componentIsTested) {
+      warn(
+        `The module you are running is tested (/test/modules/${target}/index.test.tsx EXISTS), however the component by the same name is not tested (/test/modules/ComponentsLibrary/${target}/index.test.tsx NOT FOUND). Please consider creating unit tests for the component to ensure that the component functions correctly.`,
+      );
+    }
+  }
+}
+
 /**
  * Serves all modules to localhost:1234 via parcel
  */
 async function start() {
+  info(
+    'Starting the module via Parcel alongside the test suite in watch mode.',
+  );
+
+  try {
+    const res = sh.test('-f', `./modules/${target}/index.html`);
+    if (res == false) throw new Error(`Failed to determine target`);
+  } catch (err) {
+    error(
+      `Failed to determine target. Attemped at: modules/${target}/index.html.`,
+    );
+    warn(
+      `Are you sure this is a module and not a component? You can use "yarn start --ComponentsLibrary" to view a list of components.`,
+    );
+    return;
+  }
+
+  checkTests(target);
+
   try {
     const target = titleCase(process.argv[4].replace(/-/g, ''));
-    sh.exec(`parcel modules/${target}/index.html`);
-    console.log(`parcel modules/${target}/index.html`);
+    sh.exec(
+      `( yarn test --colors -w -grep ${target} --reporter-options consoleReporter=min,quiet=true & parcel modules/${target}/index.html; )`,
+    );
   } catch (err) {
     error(err);
     try {
       const branch = (await getBranch()).replace(/\n/g, '');
       console.log(`awaiting parcel modules/${branch}/index.html`);
-      sh.exec(`parcel modules/${branch}/index.html`);
+      sh.exec(
+        `( yarn test --colors -w -grep ${target} --reporter-options consoleReporter=min,quiet=true & parcel modules/${branch}/index.html; )`,
+      );
     } catch (err) {
       error(err);
       error('Failed to determine target from branch or CLI flags');
@@ -58,6 +106,65 @@ async function clean() {
   }
 }
 
+async function getDescriptionAndDocument() {
+  let description = await textPrompt('Description (optional): ');
+  if (description === '' || !description) {
+    description = 'None';
+  }
+  let designDocument = await textPrompt('Design Document / Spec (optional): ');
+  if (designDocument === '' || !designDocument) {
+    designDocument = 'None Specified';
+  }
+  return { description, designDocument };
+}
+
+function validateModuleName(name) {
+  if (name.includes('_') || name.includes('-')) {
+    error(
+      'React components should adhere to Pascal case and should not contain the characters "_" or "-".',
+    );
+    return false;
+  }
+  return true;
+}
+
+const ModuleTypes = {
+  Component: 'component',
+  Module: 'module',
+};
+
+function getModuleType(typeArg) {
+  switch (typeArg.replace(/-/g, '').toLowerCase()) {
+    case ModuleTypes['Component']:
+      return ModuleTypes['Component'];
+    case 'c':
+      return ModuleTypes['Component'];
+    case ModuleTypes['Module']:
+      return ModuleTypes['Module'];
+    case 'm':
+      return ModuleTypes['Module'];
+    case ModuleTypes['TestOnly']:
+      return 'test-only';
+    case 't':
+      return 'test-only';
+    case 'testonly':
+      return ModuleTypes['Module']; // Testonly should already be recorded as true, we can act as if it's a module
+    default:
+      warn(
+        `Unknown flag passed ${process.argv[5]
+          .replace(/-/g, '')
+          .toLowerCase()} - creating as a module. For a component instead, run "yarn make --ComponentName --C" or "yarn make --ComponentName --Component".`,
+      );
+  }
+}
+
+function replaceKeywords(fileToWorkOn, userSpecsInput, nameOfModule) {
+  return fileToWorkOn
+    .sed(new RegExp('TITLE_HERE', 'g'), nameOfModule)
+    .sed(new RegExp('DESCRIPTION', 'g'), userSpecsInput.description)
+    .sed(new RegExp('DOCUMENT', 'g'), userSpecsInput.designDocument);
+}
+
 /**
  * Creates a new local module, module name should be passed as flag
  *
@@ -65,91 +172,95 @@ async function clean() {
  */
 async function create() {
   let name = titleCase(process.argv[4].replace(/-/g, ''));
+  let testOnly;
+  if (process.argv[5]) {
+    testOnly = titleCase(process.argv[5].replace(/-/g, '')) === 'Testonly'; // so that module doesn't have a need for extra flag
+  }
+  if (process.argv[6] && !testOnly) {
+    testOnly = titleCase(process.argv[6].replace(/-/g, '')) === 'Testonly';
+  }
   if (!name) {
     name = await textPrompt('Module name: ');
   }
 
-  if (name.includes('_') || name.includes('-')) {
-    error(
-      'React components should adhere to Pascal case and should not contain the characters "_" or "-".',
-    );
-    return;
-  }
+  const userSpecs = await getDescriptionAndDocument();
 
-  let isComponent = false;
+  const valid = validateModuleName(name);
+  if (!valid) return;
+
+  let moduleType = ModuleTypes['Module'];
   if (process.argv[5]) {
-    switch (process.argv[5].replace(/-/g, '').toLowerCase()) {
-      case 'component':
-        isComponent = true;
-        break;
-      case 'c':
-        isComponent = true;
-        break;
-      default:
-        warn(
-          `Unknown flag passed ${process.argv[5]
-            .replace(/-/g, '')
-            .toLowerCase()} - creating as a module. For a component instead, run "yarn make --ComponentName --C" or "yarn make --ComponentName --Component".`,
-        );
-    }
+    moduleType = getModuleType(process.argv[5]);
   }
 
-  isComponent ? sh.cd('templates/NewComponent') : sh.cd('templates/NewModule');
+  switch (moduleType) {
+    case ModuleTypes['Module']:
+      sh.cd('templates/NewModule');
+      break;
+    case ModuleTypes['Component']:
+      sh.cd('templates/NewComponent');
+      break;
+  }
 
   // Get the text from the template files
-  const indexJS = sh
-    .cat(['index.txt'])
-    .sed(new RegExp('TITLE_HERE', 'g'), name);
-  const mainJS = isComponent
-    ? null
-    : sh.cat(['main.txt']).sed(new RegExp('TITLE_HERE', 'g'), name);
-  const reducerJS = sh
-    .cat(['reducer.txt'])
-    .sed(new RegExp('TITLE_HERE', 'g'), name);
-  const examplesJS = isComponent
-    ? sh.cat(['examples.txt']).sed(new RegExp('TITLE_HERE', 'g'), name)
-    : null;
-  const html = isComponent
-    ? null
-    : sh.cat(['index.html.txt']).sed(new RegExp('TITLE_HERE', 'g'), name);
+  const indexJS = replaceKeywords(sh.cat(['index.txt']), userSpecs, name);
+  let mainJS;
+  if (moduleType === ModuleTypes['Module']) {
+    mainJS = replaceKeywords(sh.cat(['main.txt']), userSpecs, name);
+  }
+  const reducerJS = replaceKeywords(sh.cat(['reducer.txt']), userSpecs, name);
+  let examplesJS;
+  if (moduleType === ModuleTypes['Component']) {
+    examplesJS = replaceKeywords(sh.cat(['examples.txt']), userSpecs, name);
+  }
+  let html;
+  if (moduleType === ModuleTypes['Module']) {
+    html = replaceKeywords(sh.cat(['index.html.txt']), userSpecs, name);
+  }
 
   sh.cd('test/modules');
 
-  const testJS = sh
-    .cat(['index.test.txt'])
-    .sed(new RegExp('TITLE_HERE', 'g'), name);
+  const testJS = replaceKeywords(sh.cat(['index.test.txt']), userSpecs, name);
 
   sh.cd('../../../../');
 
   sh.cd('test');
 
-  isComponent
-    ? sh.mkdir(`modules/ComponentsLibrary/${name}`)
-    : sh.mkdir(`modules/${name}`);
-  isComponent
-    ? sh.cd(`modules/ComponentsLibrary/${name}`)
-    : sh.cd(`modules/${name}`);
+  switch (moduleType) {
+    case ModuleTypes['Component']:
+      sh.mkdir(`modules/ComponentsLibrary/${name}`);
+      sh.cd(`modules/ComponentsLibrary/${name}`);
+      break;
+    case ModuleTypes['Module']:
+      sh.mkdir(`modules/${name}`);
+      sh.cd(`modules/${name}`);
+      break;
+  }
+
   sh.touch('index.test.tsx');
   testJS.to('index.test.tsx');
 
   info(`Test file created in: ${sh.pwd()}`);
 
-  isComponent ? sh.cd('../../../../') : sh.cd('../../../');
+  if (testOnly) return; // Work is done here
 
-  isComponent
-    ? sh.mkdir(`modules/ComponentsLibrary/${name}`)
-    : sh.mkdir(`modules/${name}`);
-  isComponent
-    ? sh.cd(`modules/ComponentsLibrary/${name}`)
-    : sh.cd(`modules/${name}`);
-  if (!isComponent) {
-    sh.touch('index.html');
-    sh.touch('main.tsx');
-    html.to('index.html');
-    mainJS.to('main.tsx');
-  } else {
-    sh.touch('examples.tsx');
-    examplesJS.to('examples.tsx');
+  switch (moduleType) {
+    case ModuleTypes['Component']:
+      sh.cd('../../../../');
+      sh.mkdir(`modules/ComponentsLibrary/${name}`);
+      sh.cd(`modules/ComponentsLibrary/${name}`);
+      sh.touch('examples.tsx');
+      examplesJS.to('examples.tsx');
+      break;
+    case ModuleTypes['Module']:
+      sh.cd('../../../');
+      sh.mkdir(`modules/${name}`);
+      sh.cd(`modules/${name}`);
+      sh.touch('index.html');
+      sh.touch('main.tsx');
+      html.to('index.html');
+      mainJS.to('main.tsx');
+      break;
   }
   sh.touch('index.tsx');
   sh.touch('reducer.tsx');
@@ -158,7 +269,7 @@ async function create() {
 
   info(`Module files created in: ${sh.pwd()}`);
 
-  isComponent
+  moduleType === ModuleTypes['Component']
     ? warn(
         "Don't forget to add the component to the ComponentsLibrary index file, otherwise it won't show up when the Components Library is run! (/modules/ComponentsLibrary/index.tsx)",
       )
@@ -228,63 +339,6 @@ task(start);
 task(clean);
 
 task(create);
-
-function htmlTemplate(title) {
-  return `
-<!DOCTYPE html>
-<html>
-  <head>
-    <title>${title}</title>
-  </head>
-  <body>
-    <div id="root"></div>
-    <script src="index.tsx"></script>
-  </body>
-</html>`.replace('\n', '');
-  // this removes the first instance of a new line from the output string
-  // which allows the document to be written cleanly at the correct tab level
-}
-
-function mainTemplate(title) {
-  title = titleCase(title);
-
-  return `
-import React from 'react';
-import { PageWrapper } from '../PageWrapper/main';
-
-// add any prop types here
-interface props {
-  userID: number;
-}
-
-export const ${title}: React.FC<props> = function ${title}({ userID }) {
-  return (
-    <PageWrapper userID={userID}>
-      <h1>${title}!</h1>
-      <h2>Tests were also created in /test for this module, please implement them!</h2>
-    </PageWrapper>
-  );
-};
-`.replace('\n', '');
-}
-
-function indexTemplate(title) {
-  title = titleCase(title);
-
-  return `
-import React from 'react'
-import ReactDOM from 'react-dom'
-import { ${title} } from './main'
-import { UserClient } from '@kalos-core/kalos-rpc/User'
-import { ENDPOINT } from '../../constants'
-
-const u = new UserClient(ENDPOINT)
-
-u.GetToken('test','test').then(() => {
-  ReactDOM.render(<${title} userID={8418} />, document.getElementById('root'))
-})
-`.replace('\n', '');
-}
 
 function cfmTemplate(title) {
   title = titleCase(title);
@@ -567,17 +621,6 @@ async function runTests(target) {
   }
 }
 
-function checkTests() {
-  if (
-    sh.exec(`test -n "$(find ./modules/${target}/ -name '*.test.*')"`).code != 0
-  ) {
-    error(
-      `No unit tests are written for the module ${target}. Please write some and retry your release.`,
-    );
-    sh.exit(1);
-  }
-}
-
 async function buildAll() {
   const moduleList = await getModulesList();
   for (const m of moduleList) {
@@ -601,8 +644,13 @@ async function release(target = '') {
     target = titleCase(process.argv[4].replace(/-/g, ''));
   }
 
-  //checkTests();
-  //await runTests(target);
+  checkTests();
+  let response = '';
+  while (response.toLowerCase() !== 'y' && response.toLowerCase() !== 'n') {
+    response = await textPrompt('Would you like to release anyway (y/n)? ');
+  }
+
+  if (response.toLowerCase() === 'n') return;
 
   info('Rolling up build. This may take a moment...');
 
@@ -806,6 +854,10 @@ const NAMED_EXPORTS = {
   'node_modules/@kalos-core/kalos-rpc/compiled-protos/first_calls_pb.js': [
     'FirstCalls',
     'FirstCallsList',
+  ],
+  'node_modules/@kalos-core/kalos-rpc/compiled-protos/first_call_pb.js': [
+    'FirstCall',
+    'FirstCallList',
   ],
   'node_modules/draft-js/lib/Draft.js': [
     'SelectionState',
