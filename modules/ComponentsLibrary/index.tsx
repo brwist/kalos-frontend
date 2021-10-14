@@ -33,6 +33,8 @@ import CustomerEdit from './CustomerEdit/examples';
 import CustomerInformation from './CustomerInformation/examples';
 import DeletedServiceCallsReport from './DeletedServiceCallsReport/examples';
 import Documents from './Documents/examples';
+import EditContractInfo from './EditContractInfo/examples';
+import EditInvoiceData from './EditInvoiceData/examples';
 import EditProject from './EditProject/examples';
 import EditTransaction from './EditTransaction/examples';
 import EmployeeDepartments from './EmployeeDepartments/examples';
@@ -71,6 +73,7 @@ import PrintTable from './PrintTable/examples';
 import ProjectDetail from './ProjectDetail/examples';
 import Projects from './Projects/examples';
 import PromptPaymentReport from './PromptPaymentReport/examples';
+import PropertyDropdown from './PropertyDropdown/examples';
 import PropertyEdit from './PropertyEdit/examples';
 import QuoteSelector from './QuoteSelector/examples';
 import Reports from './Reports/examples';
@@ -143,6 +146,8 @@ const COMPONENTS = {
   CustomerInformation,
   DeletedServiceCallsReport,
   Documents,
+  EditContractInfo,
+  EditInvoiceData,
   EditProject,
   EditTransaction,
   EmployeeDepartments,
@@ -181,6 +186,7 @@ const COMPONENTS = {
   ProjectDetail,
   Projects,
   PromptPaymentReport,
+  PropertyDropdown,
   PropertyEdit,
   QuoteSelector,
   Reports,

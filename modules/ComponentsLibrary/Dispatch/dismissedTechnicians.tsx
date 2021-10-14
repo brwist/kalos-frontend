@@ -1,5 +1,5 @@
 import { DispatchableTech } from '@kalos-core/kalos-rpc/Dispatch';
-import React, { FC, useEffect } from 'react';
+import React, { FC, useEffect, useState } from 'react';
 import Table from '@material-ui/core/Table';
 import TableBody from '@material-ui/core/TableBody';
 import TableContainer from '@material-ui/core/TableContainer';
@@ -14,13 +14,27 @@ interface props {
   dismissedTechs: DispatchableTech[];
   handleUndismissTech?: (tech: DispatchableTech) => {};
   isFirstCall?: boolean;
+  processingDismissed?: boolean;
 }
 
 export const DismissedTechs: FC<props> = props => {
+  const {
+    userID,
+    dismissedTechs,
+    isFirstCall = false,
+    processingDismissed = false
+  } = props
+
+  const [techs, setTechs] = useState<DispatchableTech[]>([]);
+
+  const sorted = (techs : DispatchableTech[]) => {
+    return techs.sort((a,b) => (a.getTechname() > b.getTechname()) ? 1 : ((b.getTechname() > a.getTechname()) ? -1 : 0));
+  }
 
   useEffect(() => {
     console.log('dismissedTech use effect');
-  }, [props.dismissedTechs]);
+    setTechs(sorted(dismissedTechs));
+  }, [dismissedTechs]);
 
   return (
     <TableContainer>
@@ -28,21 +42,21 @@ export const DismissedTechs: FC<props> = props => {
       <Table>
         <TableHead>
           <TableRow>
-            <TableCell style={{textAlign:'center', fontWeight:'bold', fontSize:'16px'}}>{!props.isFirstCall?'Name':'Off Tomorrow'}</TableCell>
-            <TableCell style={{textAlign:'center', fontWeight:'bold', fontSize:'16px', display:props.isFirstCall?'none':''}}>Dismissed Time</TableCell>
-            <TableCell style={{textAlign:'center', fontWeight:'bold', fontSize:'16px', display:props.isFirstCall?'none':''}}>Hours Worked</TableCell>
+            <TableCell style={{textAlign:'center', fontWeight:'bold', fontSize:'16px'}}>{!isFirstCall?'Name':'Off Tomorrow'}</TableCell>
+            <TableCell style={{textAlign:'center', fontWeight:'bold', fontSize:'16px', display:isFirstCall?'none':''}}>Dismissed Time</TableCell>
+            <TableCell style={{textAlign:'center', fontWeight:'bold', fontSize:'16px', display:isFirstCall?'none':''}}>Hours Worked</TableCell>
           </TableRow>
         </TableHead>
         <TableBody>
-          {props.dismissedTechs && 
-            props.dismissedTechs.map((tech) => {
+          {techs && 
+            techs.map((tech) => {
               const hoursWorked = Math.floor(tech.getHoursWorked() / 3600);
               const minutesWorked = Math.floor((tech.getHoursWorked() - hoursWorked * 3600) / 60);
               return (
-                <TableRow key={tech.getUserId()} hover={true} onClick={props.handleUndismissTech ? ()=> props.handleUndismissTech!(tech) : () => {}}>
+                <TableRow key={tech.getUserId()} hover onClick={props.handleUndismissTech && !processingDismissed ? ()=> props.handleUndismissTech!(tech) : () => {}}>
                   <TableCell style={{textAlign:'center'}}>{tech.getTechname()}</TableCell>
-                  <TableCell style={{textAlign:'center', display:props.isFirstCall?'none':''}}>{format(parseISO(tech.getActivityDate()), 'h:mm aa')}</TableCell>
-                  <TableCell style={{textAlign:'center', display:props.isFirstCall?'none':''}}>{hoursWorked >= 10 ? String(hoursWorked) : `0${hoursWorked}`}:{minutesWorked >= 10 ? String(minutesWorked) : `0${minutesWorked}`}</TableCell>
+                  <TableCell style={{textAlign:'center', display:isFirstCall?'none':''}}>{!isFirstCall ? format(parseISO(tech.getActivityDate()), 'h:mm aa') : ''}</TableCell>
+                  <TableCell style={{textAlign:'center', display:isFirstCall?'none':''}}>{hoursWorked >= 10 ? String(hoursWorked) : `0${hoursWorked}`}:{minutesWorked >= 10 ? String(minutesWorked) : `0${minutesWorked}`}</TableCell>
                 </TableRow>
               )
             })}

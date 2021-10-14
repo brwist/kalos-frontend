@@ -1,10 +1,10 @@
 import React from 'react';
-import { TITLE_HERE } from './';
+import { EditInvoiceData } from './';
 import { ExampleTitle } from '../helpers';
 
 export default () => (
   <>
     <ExampleTitle>Default</ExampleTitle>
-    <TITLE_HERE loggedUserId={8418} />
+    <EditInvoiceData />
   </>
 );

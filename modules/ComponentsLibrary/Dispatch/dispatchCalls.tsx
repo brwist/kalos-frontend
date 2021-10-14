@@ -1,5 +1,5 @@
 import { DispatchCall } from '@kalos-core/kalos-rpc/Dispatch';
-import React, { FC, useEffect } from 'react';
+import React, { Dispatch, FC, useEffect } from 'react';
 import Table from '@material-ui/core/Table';
 import TableRow from '@material-ui/core/TableRow';
 import TableHead from '@material-ui/core/TableHead';
@@ -23,45 +23,59 @@ interface props {
     zoom: number,
     address?: string,
   ) => void;
+  handleDblClick: (call : DispatchCall) => void;
   loading: boolean;
+  showAssigned?: boolean;
+  isFirstCall?: boolean;
+  startingIndex?: number;
 }
 
 export const DispatchCalls: FC<props> = props => {
+  const {
+    userID,
+    calls,
+    loading,
+    showAssigned = true,
+    isFirstCall = false,
+    startingIndex = 0,
+  } = props;
+
   useEffect(() => {
-  }, [props.calls]);
+  }, [calls]);
 
   return (
-    <TableContainer>
+    <TableContainer
+      style={{maxHeight:isFirstCall && calls.length > 15 ? '1200px': ''}}
+    >
       <Table>
         <TableHead></TableHead>
         <TableBody>
           <TableRow>
             {/* Temporarily using hardcoded for variable for Estimated End */}
-            <TableCell
-              align="center"
-              style={{ fontWeight: 'bolder', fontSize: '16px' }}
-              width="100%"
-            >
-              Service Calls Remaining: {props.calls.length}
-            </TableCell>
+            {!isFirstCall &&(
+              <TableCell
+                align="center"
+                style={{ fontWeight: 'bolder', fontSize: '16px' }}
+                width="100%"
+              >
+                Service Calls Remaining: {calls.length}
+              </TableCell>
+            )}
             {/* <TableCell
               align="left"
               style={{ fontWeight: 'bolder', fontSize: '16px' }}
               width="50%"
             >
-              Estimated End of Day: {props.calls.length === 0 ? format(new Date(), 'h:mm a') : `N/A`}
+              Estimated End of Day: {calls.length === 0 ? format(new Date(), 'h:mm a') : `N/A`}
             </TableCell> */}
           </TableRow>
         </TableBody>
       </Table>
-      {props.loading && (
-        // <div style={{textAlign: 'center', paddingTop: '20px'}}>
-        //   <CircularProgress />
-        // </div>
+      {loading && (
         <InfoTable data={makeFakeRows(7,3)} loading />
       )}
-      {!props.loading && (
-      <Table>
+      {!loading && (
+      <Table stickyHeader>
         <TableHead key="Header">
           <TableRow>
             <TableCell
@@ -100,24 +114,26 @@ export const DispatchCalls: FC<props> = props => {
             >
               JobType/Subtype
             </TableCell>
-            <TableCell
-              align="center"
-              style={{ fontWeight: 'bolder', fontSize: '16px', width: '10%' }}
-            >
-              Assigned
-            </TableCell>
+            {showAssigned && (
+              <TableCell
+                align="center"
+                style={{ fontWeight: 'bolder', fontSize: '16px', width: '10%' }}
+              >
+                Assigned
+              </TableCell>
+            )}
           </TableRow>
         </TableHead>
-        {props.calls.length === 0 && (
+        {calls.length === 0 && (
           <TableBody>
             <TableRow>
-              <TableCell style={{textAlign: 'center', width: '15%'}}>
+              <TableCell colSpan={7} style={{textAlign: 'center', width: '15%'}}>
                 No Entries Found!
               </TableCell>
             </TableRow>
           </TableBody>
         )}
-        {props.calls.length > 0 && props.calls.map((call, index) => {
+        {calls.length > 0 && calls.map((call, index) => {
           const dateStarted = format(parseISO(`${call.getDateStarted()} 00:00:00`), 'M/d/yyyy');
           const timeStartArray = call.getTimeStarted().split(':');
           let startHour: number = Number(timeStartArray[0]),
@@ -162,8 +178,9 @@ export const DispatchCalls: FC<props> = props => {
                         call.getPropertyAddress(),
                       )
                     }
+                    onDoubleClick={() => props.handleDblClick(call)}
                   >
-                    <TableCell align="center">{index + 1}</TableCell>
+                    <TableCell align="center">{index + 1 + startingIndex}</TableCell>
                     <TableCell align="center">
                       {`${dateStarted}`} <br></br> {`${format(timeStarted, 'h:mm aa')} - ${format(timeEnded, 'h:mm aa')}`}
                     </TableCell>
@@ -183,11 +200,13 @@ export const DispatchCalls: FC<props> = props => {
                     </a>
                     </TableCell>
                     <TableCell align="center">{`${call.getJobType()}/${call.getJobSubtype()}`}</TableCell>
-                    <TableCell align="center">
-                      {call.getLogTechnicianAssigned() != '0' && call.getLogTechnicianAssigned() != ''
-                        ? call.getAssigned()
-                        : 'Unassigned'}
-                    </TableCell>
+                    {showAssigned && (
+                      <TableCell align="center">
+                        {call.getLogTechnicianAssigned() != '0' && call.getLogTechnicianAssigned() != ''
+                          ? call.getAssigned()
+                          : 'Unassigned'}
+                      </TableCell>
+                    )}
                   </TableRow>
                   {provided.placeholder && false}
                   {/* Come back and Fix Later */}

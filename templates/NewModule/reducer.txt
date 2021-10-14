@@ -1,13 +1,16 @@
 export type State = {
     isLoaded: boolean;
+    error: string | undefined;
 };
 
 export enum ACTIONS {
   SET_LOADED = 'setLoaded',
+  SET_ERROR = 'setError',
 }
 
 export type Action =
   | { type: ACTIONS.SET_LOADED; data: boolean }
+  | { type: ACTIONS.SET_ERROR; data: string | undefined }
   
 
 export const reducer = (state: State, action: Action) => {
@@ -17,6 +20,12 @@ export const reducer = (state: State, action: Action) => {
         ...state,
         isLoaded: action.data, 
       };
+    }
+    case ACTIONS.SET_ERROR: {
+      return {
+        ...state,
+        error: action.data,
+      }
     }
     default:
       return state;

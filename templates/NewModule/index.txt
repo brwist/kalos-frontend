@@ -1,10 +1,8 @@
 import React from 'react'
 import ReactDOM from 'react-dom' 
-import { TITLE_HERE } from './main'
-import { UserClient } from '@kalos-core/kalos-rpc/User'
-import { ENDPOINT } from '../../constants'
+import { TITLE_HERE } from './main' 
 import { UserClientService } from '../../helpers'
 
 UserClientService.GetToken('test','test').then(() => {
-  ReactDOM.render(<TITLE_HERE userID={8418} />, document.getElementById('root'))
+  ReactDOM.render(<TITLE_HERE loggedUserId={8418} />, document.getElementById('root'))
 })
