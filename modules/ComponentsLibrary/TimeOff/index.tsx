@@ -22,6 +22,7 @@ import { Alert } from '../Alert';
 import {
   roundNumber,
   timestamp,
+  formatDate,
   UserClientService,
   TimeoffRequestClientService,
   makeSafeFormObject,
@@ -36,6 +37,7 @@ import { datePickerDefaultProps } from '@material-ui/pickers/constants/prop-type
 import { ActivityLog } from '@kalos-core/kalos-rpc/ActivityLog';
 import { InfoTable } from '../InfoTable';
 import { zhCN } from 'date-fns/esm/locale';
+import { TimeoffRequestType } from '@kalos-core/kalos-rpc/compiled-protos/timeoff_request_pb';
 export interface Props {
   loggedUserId: number;
   userId?: number;
@@ -62,12 +64,14 @@ export const TimeOff: FC<Props> = ({
   const [deleted, setDeleted] = useState<boolean>(false);
   const [saving, setSaving] = useState<boolean>(false);
   const [typeOptions, setTypeOptions] = useState<Options>([]);
+  const [requestTypes, setRequestTypes] = useState<TimeoffRequestType[]>([]);
+
   const [pto, setPto] = useState<PTO>();
   const [ptoActualHours, setPtoActualHours] = useState<number>(0);
   const [user, setUser] = useState<User>();
   const [openAlert, setOpenAlert] = useState<boolean>(false);
   const [alertDismissed, setAlertDismissed] = useState<boolean>(false);
-
+  const [upcomingRequests, setUpcomingRequests] = useState<TimeoffRequest[]>();
   const [loggedUser, setLoggedUser] = useState<User>();
   const [logData, setLogData] = useState<ActivityLog[]>();
   const [formKey, setFormKey] = useState<number>(0);
@@ -133,9 +137,6 @@ export const TimeOff: FC<Props> = ({
         ) {
           const date1 = new Date(parseISO(temp.getTimeStarted()));
           const date2 = new Date(parseISO(temp.getTimeFinished()));
-          console.log(temp.getTimeStarted());
-          console.log(temp.getTimeFinished());
-          console.log('we are here all day', date1, date2);
 
           hourDiff = (differenceInBusinessDays(date2, date1) + 1) * 8;
         } else if (
@@ -143,16 +144,11 @@ export const TimeOff: FC<Props> = ({
           temp.getTimeStarted() &&
           temp.getTimeFinished()
         ) {
-          console.log(temp.getTimeStarted());
-          console.log(temp.getTimeFinished());
-
           const date1 = new Date(parseISO(temp.getTimeStarted()));
           const date2 = new Date(parseISO(temp.getTimeFinished()));
-          console.log('we are here', date1, date2);
           hourDiff = differenceInHours(date2, date1);
         }
-        console.log('hourDiff', hourDiff);
-        if (hourDiff + pto.getHoursAvailable() > user.getAnnualHoursPto()) {
+        if (hourDiff > pto.getHoursAvailable()) {
           setOpenAlert(true);
         } else {
           //we should reset it, if they created one that one was, but then incorrect
@@ -175,6 +171,7 @@ export const TimeOff: FC<Props> = ({
   const init = useCallback(async () => {
     console.log('called init');
     const types = await TimeoffRequestClientService.getTimeoffRequestTypes();
+    setRequestTypes(types);
     setTypeOptions(
       types.map(t => ({ label: t.getRequestType(), value: t.getId() })),
     );
@@ -186,7 +183,19 @@ export const TimeOff: FC<Props> = ({
     setPto(pto);
     const ptoActualHours = await getTimeoffTotals(user.getHireDate());
     setPtoActualHours(ptoActualHours);
+    const upcomingReq = new TimeoffRequest();
+    upcomingReq.setUserId(userId ? userId : loggedUserId);
+    upcomingReq.setDateTargetList(['time_started', 'time_started']);
+    const startDate = format(new Date(), 'yyyy-MM-dd');
+    const endDate = format(addYears(new Date(), 1), 'yyyy-MM-dd');
+    upcomingReq.setDateRangeList(['>=', startDate, '<=', endDate]);
 
+    upcomingReq.setIsActive(1);
+    setUpcomingRequests(
+      (
+        await TimeoffRequestClientService.BatchGet(upcomingReq)
+      ).getResultsList(),
+    );
     const loggedUser = await UserClientService.loadUserById(loggedUserId);
     setLoggedUser(loggedUser);
     if (requestOffId) {
@@ -232,7 +241,7 @@ export const TimeOff: FC<Props> = ({
             hourDiff = differenceInHours(date2, date1);
           }
           console.log('hourDiff', hourDiff);
-          if (hourDiff + pto.getHoursAvailable() > user.getAnnualHoursPto()) {
+          if (hourDiff > pto.getHoursAvailable()) {
             setOpenAlert(true);
           } else {
             //we should reset it, if they created one that one was, but then incorrect
@@ -356,7 +365,7 @@ export const TimeOff: FC<Props> = ({
           recipient: manager.getEmail(),
         };
 
-        //await emailClient.sendMail(config);
+        await emailClient.sendMail(config);
       } catch (err) {
         console.log(err);
       }
@@ -369,13 +378,13 @@ export const TimeOff: FC<Props> = ({
       ) {
         newLog.setActivityName(
           `Created and Approved by ${loggedUser?.getFirstname()} ${loggedUser?.getLastname()} ${
-            alertDismissed ? 'Exceeding PTO Alert Dismissed' : ''
+            alertDismissed ? ', Exceeding PTO Alert Dismissed' : ''
           }`,
         );
       } else {
         newLog.setActivityName(
           `Created by ${loggedUser?.getFirstname()} ${loggedUser?.getLastname()} ${
-            alertDismissed ? 'Exceeding PTO Alert Dismissed' : ''
+            alertDismissed ? ', Exceeding PTO Alert Dismissed' : ''
           }`,
         );
       }
@@ -437,8 +446,8 @@ export const TimeOff: FC<Props> = ({
       newLog.setActivityName(
         `Updated with status ${
           req.getRequestStatus() === 1 ? 'Approved' : 'Not Approved'
-        } by ${loggedUser?.getFirstname()}, ${loggedUser?.getLastname()} ${
-          alertDismissed ? 'Exceeding PTO Alert Dismissed' : ''
+        } by ${loggedUser?.getFirstname()} ${loggedUser?.getLastname()} ${
+          alertDismissed ? ', Exceeding PTO Alert Dismissed' : ''
         }`,
       );
       await ActivityLogClientService.Create(newLog);
@@ -449,7 +458,7 @@ export const TimeOff: FC<Props> = ({
         body: emailBody,
         recipient: user!.getEmail(),
       };
-      //await emailClient.sendMail(config);
+      await emailClient.sendMail(config);
     }
     setData(newData);
     if (onAdminSubmit) {
@@ -458,8 +467,9 @@ export const TimeOff: FC<Props> = ({
   }, [
     data,
     onAdminSubmit,
-    // emailClient,
+    emailClient,
     loggedUser,
+    alertDismissed,
     user,
     setData,
     loggedUserId,
@@ -497,7 +507,7 @@ export const TimeOff: FC<Props> = ({
       },
       {
         name: 'getAllDayOff',
-        label: 'All Days?',
+        label: 'Is This Requeset for Multiple Days?',
         options: [
           { label: 'No', value: 0 },
           { label: 'Yes', value: 1 },
@@ -642,6 +652,34 @@ export const TimeOff: FC<Props> = ({
             { value: log.getActivityDate() },
           ])}
         />
+      )}
+      {upcomingRequests && upcomingRequests.length >= 1 && (
+        <div key="upComing Requests">
+          <h2>Upcoming Requests</h2>
+          <InfoTable
+            columns={[
+              { name: 'Request Type' },
+              { name: 'Start Time' },
+              { name: 'End Time' },
+              { name: 'Status' },
+              { name: 'Reviewer' },
+            ]}
+            data={upcomingRequests.map(req => [
+              {
+                value: requestTypes
+                  .find(type => type.getId() === req.getRequestType())
+                  ?.getRequestType(),
+              },
+              { value: formatDate(req.getTimeStarted()) },
+              { value: formatDate(req.getTimeFinished()) },
+              {
+                value:
+                  req.getRequestStatus() === 1 ? 'Approved' : 'Not Approved',
+              },
+              { value: req.getAdminApprovalUserName() },
+            ])}
+          />
+        </div>
       )}
       {deleting && (
         <ConfirmDelete
