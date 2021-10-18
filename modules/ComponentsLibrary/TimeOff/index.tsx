@@ -72,12 +72,14 @@ export const TimeOff: FC<Props> = ({
   const [openAlert, setOpenAlert] = useState<boolean>(false);
   const [alertDismissed, setAlertDismissed] = useState<boolean>(false);
   const [upcomingRequests, setUpcomingRequests] = useState<TimeoffRequest[]>();
+  const [thisYearsPTOHistory, setthisYearsPTOHistory] = useState<
+    TimeoffRequest[]
+  >();
   const [loggedUser, setLoggedUser] = useState<User>();
   const [logData, setLogData] = useState<ActivityLog[]>();
   const [formKey, setFormKey] = useState<number>(0);
   const [error, setError] = useState<string>('');
-  const emptyTO = new TimeoffRequest();
-  const [data, setData] = useState<TimeoffRequest>(emptyTO);
+  const [data, setData] = useState<TimeoffRequest>(new TimeoffRequest());
   const getTimeoffTotals = useCallback(
     async (hireDate: string) => {
       hireDate = hireDate.replace(/-/g, '/');
@@ -175,33 +177,72 @@ export const TimeOff: FC<Props> = ({
     setTypeOptions(
       types.map(t => ({ label: t.getRequestType(), value: t.getId() })),
     );
-    const user = await UserClientService.loadUserById(userId || loggedUserId);
-    setUser(user);
+    if (!requestOffId) {
+      const user = await UserClientService.loadUserById(userId || loggedUserId);
+      const ptoActualHours = await getTimeoffTotals(user.getHireDate());
+      setPtoActualHours(ptoActualHours);
+      setUser(user);
+      data.setDepartmentCode(user.getEmployeeDepartmentId());
+      const upcomingReq = new TimeoffRequest();
+      upcomingReq.setUserId(user.getId());
+      upcomingReq.setDateTargetList(['time_started', 'time_started']);
+      const startDate = format(new Date(), 'yyyy-MM-dd');
+      const endDate = format(addYears(new Date(), 1), 'yyyy-MM-dd');
+      upcomingReq.setDateRangeList(['>=', startDate, '<=', endDate]);
+
+      upcomingReq.setIsActive(1);
+      setUpcomingRequests(
+        (
+          await TimeoffRequestClientService.BatchGet(upcomingReq)
+        ).getResultsList(),
+      );
+      const ptoReq = new TimeoffRequest();
+      ptoReq.setUserId(user.getId());
+      ptoReq.setRequestType(9);
+      ptoReq.setIsActive(1);
+      setthisYearsPTOHistory(
+        (await TimeoffRequestClientService.BatchGet(ptoReq)).getResultsList(),
+      );
+    }
     const pto = await TimeoffRequestClientService.PTOInquiry(
       userId || loggedUserId,
     );
     setPto(pto);
-    const ptoActualHours = await getTimeoffTotals(user.getHireDate());
-    setPtoActualHours(ptoActualHours);
-    const upcomingReq = new TimeoffRequest();
-    upcomingReq.setUserId(userId ? userId : loggedUserId);
-    upcomingReq.setDateTargetList(['time_started', 'time_started']);
-    const startDate = format(new Date(), 'yyyy-MM-dd');
-    const endDate = format(addYears(new Date(), 1), 'yyyy-MM-dd');
-    upcomingReq.setDateRangeList(['>=', startDate, '<=', endDate]);
 
-    upcomingReq.setIsActive(1);
-    setUpcomingRequests(
-      (
-        await TimeoffRequestClientService.BatchGet(upcomingReq)
-      ).getResultsList(),
-    );
     const loggedUser = await UserClientService.loadUserById(loggedUserId);
     setLoggedUser(loggedUser);
     if (requestOffId) {
       const req = await TimeoffRequestClientService.getTimeoffRequestById(
         requestOffId,
       );
+      if (req) {
+        const userData = await UserClientService.loadUserById(req.getUserId());
+        setUser(userData);
+        const ptoActualHours = await getTimeoffTotals(userData.getHireDate());
+        setPtoActualHours(ptoActualHours);
+        data.setDepartmentCode(userData.getEmployeeDepartmentId());
+        const upcomingReq = new TimeoffRequest();
+        upcomingReq.setUserId(userData.getId());
+        upcomingReq.setDateTargetList(['time_started', 'time_started']);
+        const startDate = format(new Date(), 'yyyy-MM-dd');
+        const endDate = format(addYears(new Date(), 1), 'yyyy-MM-dd');
+        upcomingReq.setDateRangeList(['>=', startDate, '<=', endDate]);
+
+        upcomingReq.setIsActive(1);
+        setUpcomingRequests(
+          (
+            await TimeoffRequestClientService.BatchGet(upcomingReq)
+          ).getResultsList(),
+        );
+        const ptoReq = new TimeoffRequest();
+        ptoReq.setUserId(userData.getId());
+        ptoReq.setRequestType(9);
+        ptoReq.setIsActive(1);
+        setthisYearsPTOHistory(
+          (await TimeoffRequestClientService.BatchGet(ptoReq)).getResultsList(),
+        );
+      }
+
       const logReq = new ActivityLog();
       logReq.setTimeoffRequestId(requestOffId);
       setLogData(
@@ -213,7 +254,7 @@ export const TimeOff: FC<Props> = ({
         return;
       }
       if (req.getRequestType() === 9) {
-        if (pto && user) {
+        if (pto) {
           let hourDiff = 0;
           if (
             req.getAllDayOff() === 1 &&
@@ -222,9 +263,6 @@ export const TimeOff: FC<Props> = ({
           ) {
             const date1 = new Date(parseISO(req.getTimeStarted()));
             const date2 = new Date(parseISO(req.getTimeFinished()));
-            console.log(req.getTimeStarted());
-            console.log(req.getTimeFinished());
-            console.log('we are here all day', date1, date2);
 
             hourDiff = (differenceInBusinessDays(date2, date1) + 1) * 8;
           } else if (
@@ -264,7 +302,6 @@ export const TimeOff: FC<Props> = ({
       setData(req);
       setFormKey(formKey + 1);
     } else {
-      data.setDepartmentCode(user.getEmployeeDepartmentId());
       setData(data);
       setFormKey(formKey + 1);
     }
@@ -507,12 +544,11 @@ export const TimeOff: FC<Props> = ({
       },
       {
         name: 'getAllDayOff',
-        label: 'Is This Requeset for Multiple Days?',
+        label: 'Is This Request for Multiple Days?',
         options: [
           { label: 'No', value: 0 },
           { label: 'Yes', value: 1 },
         ],
-        required: true,
         disabled: !disabled,
       },
     ],
@@ -653,6 +689,34 @@ export const TimeOff: FC<Props> = ({
           ])}
         />
       )}
+      {thisYearsPTOHistory && thisYearsPTOHistory.length >= 1 && (
+        <div key="this year pto">
+          <h2> PTO History</h2>
+          <InfoTable
+            columns={[
+              { name: 'Request Type' },
+              { name: 'Start Time' },
+              { name: 'End Time' },
+              { name: 'Status' },
+              { name: 'Reviewer' },
+            ]}
+            data={thisYearsPTOHistory.map(req => [
+              {
+                value: requestTypes
+                  .find(type => type.getId() === req.getRequestType())
+                  ?.getRequestType(),
+              },
+              { value: formatDate(req.getTimeStarted()) },
+              { value: formatDate(req.getTimeFinished()) },
+              {
+                value:
+                  req.getRequestStatus() === 1 ? 'Approved' : 'Not Approved',
+              },
+              { value: req.getAdminApprovalUserName() },
+            ])}
+          />
+        </div>
+      )}
       {upcomingRequests && upcomingRequests.length >= 1 && (
         <div key="upComing Requests">
           <h2>Upcoming Requests</h2>
@@ -691,7 +755,11 @@ export const TimeOff: FC<Props> = ({
         />
       )}
       <Alert
-        open={openAlert && alertDismissed == false}
+        open={
+          openAlert &&
+          alertDismissed == false &&
+          data.getAdminApprovalUserId() == 0
+        }
         onClose={handleCloseAlert}
         title="PTO Error"
       >
