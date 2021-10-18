@@ -145,8 +145,8 @@ export const DispatchDashboard: React.FC<Props> = function DispatchDashboard({
       const filteredCalls = callResults.filter(call => 
         `${call.getDateStarted()} ${call.getTimeStarted()}` >= `${state.formData.dateStart} ${state.formData.timeStart.substring(11)}` &&
         `${call.getDateEnded()} ${call.getTimeEnded()}` <= `${state.formData.dateEnd} ${state.formData.timeEnd.substring(11)}` 
-        && ( state.formData.divisionMulti.length === 0 ||
-        state.formData.divisionMulti.includes(call.getSectorGroup()))
+        // && ( state.formData.divisionMulti.length === 0 ||
+        // state.formData.divisionMulti.includes(call.getSectorGroup()))
       ); 
       return {calls: filteredCalls};
     } catch (err) {
@@ -163,7 +163,7 @@ export const DispatchDashboard: React.FC<Props> = function DispatchDashboard({
     state.defaultSectorIds,
   ]);
 
-  const getDepartments = async() => {
+  const getDepartments = useCallback(async() => {
     const departmentReq = new TimesheetDepartment();
     const user = new User();
     user.setId(loggedUserId);
@@ -183,9 +183,9 @@ export const DispatchDashboard: React.FC<Props> = function DispatchDashboard({
       );
       return {departments: [], defaultValues: []};
     }
-  }
+  }, [loggedUserId])
 
-  const getJobTypes = async() => {
+  const getJobTypes = useCallback(async() => {
     const jobTypeReq = new JobType();
     try {
       const jobTypes = await JobTypeClientService.BatchGet(jobTypeReq);
@@ -197,7 +197,7 @@ export const DispatchDashboard: React.FC<Props> = function DispatchDashboard({
       );
       return {jobTypes: []};
     }
-  }
+  }, [state.notIncludedJobTypes])
 
   const getGoogleApiKey = async() => {
     const newKey = new ApiKey();
@@ -490,7 +490,7 @@ export const DispatchDashboard: React.FC<Props> = function DispatchDashboard({
     }})
   }
 
-  const setInitialValues = async () => {
+  const setInitialValues = useCallback(async () => {
     const departmentReq = getDepartments();
     const jobTypeReq = getJobTypes();
     const googleApiKey = getGoogleApiKey();
@@ -506,7 +506,7 @@ export const DispatchDashboard: React.FC<Props> = function DispatchDashboard({
         googleApiKey: results[2].googleKey,
       }
     });
-  }
+  }, [getDepartments, getJobTypes])
 
   const handleFilterSave = () => {
     const saveFilter : FormData = {
@@ -620,9 +620,11 @@ export const DispatchDashboard: React.FC<Props> = function DispatchDashboard({
   }
 
   useEffect(() => {
-    setInitialValues();
-    handleFilterLoad();
-  }, []);
+    if (state.isInitialLoad) {
+      setInitialValues();
+      handleFilterLoad();
+    }
+  }, [setInitialValues, state.isInitialLoad]);
 
   return (
     <PageWrapper userID={loggedUserId}>

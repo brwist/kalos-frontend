@@ -45,7 +45,7 @@ export const DispatchCalls: FC<props> = props => {
 
   return (
     <TableContainer
-      style={{maxHeight:isFirstCall && calls.length > 15 ? '1200px': ''}}
+      style={{maxHeight:isFirstCall && calls.length > 11 ? '1200px': ''}}
     >
       <Table>
         <TableHead></TableHead>

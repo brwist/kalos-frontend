@@ -140,7 +140,7 @@ export type Action =
     meetingList: DispatchableTech[],
     classList: DispatchableTech[],
     offList: number[],
-    sectorList: number[],
+    initialFormData: FormData,
   }}
   | { type: 'setTimes'; data: {
     meetingTime: string,
@@ -193,6 +193,7 @@ export type Action =
   }}
   | { type: 'setShowAddTech'; data: boolean }
   | { type: 'setRefreshCalls'; data: boolean }
+  | { type: 'setSectorList'; data: number[] }
 ;
 
 export const reducer = (state: State, action: Action) => {
@@ -257,7 +258,7 @@ export const reducer = (state: State, action: Action) => {
         meetingTechs: action.data.meetingList,
         classTechs: action.data.classList,
         offTechs: action.data.offList,
-        sectorList: action.data.sectorList,
+        formData: action.data.initialFormData,
       }
     case 'setTimes':
       return {
@@ -376,6 +377,11 @@ export const reducer = (state: State, action: Action) => {
       return {
         ...state,
         refreshCalls: action.data,
+      }
+    case 'setSectorList':
+      return {
+        ...state,
+        sectorList: action.data,
       }
     default:
       return {
