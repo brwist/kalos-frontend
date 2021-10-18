@@ -8,7 +8,6 @@ import React, {
   useRef,
   CSSProperties,
   RefObject,
-  ForwardedRef,
   forwardRef,
   JSXElementConstructor,
 } from 'react';
@@ -114,7 +113,7 @@ export interface Props<T> extends SchemaProps<T> {
   style?: CSSProperties;
   compact?: boolean;
   white?: boolean;
-  ref?: RefObject<T> | ForwardedRef<T>;
+  ref?: RefObject<T>;
 }
 
 export const getDefaultValueByType = (type: Type) => {

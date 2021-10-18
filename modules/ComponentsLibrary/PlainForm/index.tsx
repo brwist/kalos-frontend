@@ -5,7 +5,6 @@ import React, {
   ReactNode,
   forwardRef,
   RefObject,
-  ForwardedRef,
   JSXElementConstructor,
 } from 'react';
 import clsx from 'clsx';
@@ -54,6 +53,8 @@ export type SchemaProps<T> = {
   displayEmpty?: boolean;
   forceShrinkLabel?: boolean;
   defaultLabel?: string;
+  minRows?: number;
+  maxRows?: number;
 };
 
 export type Schema<T> = SchemaProps<T>[][];
@@ -73,7 +74,7 @@ export interface PlainFormProps<T> extends Style {
   error?: ReactNode;
   children?: ReactNode;
   className?: string;
-  ref?: RefObject<T> | ForwardedRef<T>;
+  ref?: RefObject<T>;
   inputFieldRefs?: T[];
 }
 
@@ -211,6 +212,7 @@ export const PlainForm: <T>(
               const { name } = props;
               return (
                 <Field
+                // @ts-ignore
                   ref={functionRef => {
                     if (functionRef && !inputFieldRefs?.includes(functionRef)) {
                       if (inputFieldRefs[indexOfInputField]) {

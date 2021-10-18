@@ -54,6 +54,7 @@ import CircleProgress from '@material-ui/core/CircularProgress';
 import nextSunday from 'date-fns/esm/nextSunday';
 import { AddCircleOutlineTwoTone } from '@material-ui/icons';
 import { TimesheetDepartment } from '@kalos-core/kalos-rpc/TimesheetDepartment';
+import { Loader } from '../../Loader/main';
 
 
 export interface Props {
@@ -64,7 +65,7 @@ export interface Props {
 
 const initialFormData : FormData = {
   departmentIds: [],
-  division: 1,
+  division: 0,
   jobTypes: [],
   availableTechs: [],
   meetingTime: format(addDays(setMinutes(setHours(new Date(), 7), 30), 1), 'yyyy-MM-dd HH:mm'),
@@ -271,7 +272,7 @@ export const FirstCallDashboard: React.FC<Props> = function FirstCallDashboard({
     });
   }
 
-  const handleFormDataUpdate = (data : any, timesOnly=false) => {
+  const handleFormDataUpdate = useCallback(async (data : any, timesOnly=false) => {
     let resetPage = false;
     let refreshCalls = false;
     const updateFormData : FormData = state.formData;
@@ -284,13 +285,19 @@ export const FirstCallDashboard: React.FC<Props> = function FirstCallDashboard({
     if (data.departmentIds) {
       updateFormData.departmentIds = data.departmentIds;
     }
-    if (data.division && data.division !== state.formData.division) {
-      updateFormData.division = data.division;
-      resetPage = true;
-    }
-    if (data.jobTypes) {
+    if (data.jobTypes && data.division === state.formData.division) {
       updateFormData.jobTypes = data.jobTypes;
       refreshCalls = true;
+    }
+    if (data.division && data.division !== state.formData.division) {
+      updateFormData.division = data.division;
+      const departmentReq = new TimesheetDepartment();
+      departmentReq.setSectorGroup(data.division);
+      const departments = await TimesheetDepartmentClientService.BatchGet(departmentReq);
+      updateFormData.departmentIds = departments.getResultsList().map(dep => dep.getId());
+      if (state.loaded) {
+        resetPage = true;
+      }
     }
     if (data.availableTechs) {
       updateFormData.availableTechs = data.availableTechs;
@@ -302,7 +309,7 @@ export const FirstCallDashboard: React.FC<Props> = function FirstCallDashboard({
     if (refreshCalls) {
       firstCallDashboard({ type: 'setRefreshCalls', data: true });
     }
-  }
+  }, [state.formData, state.loaded])
 
   const handleCallDetails = async (call : DispatchCall, techId? : string | DispatchableTech) => {
     let assignees : {id: number, name: string}[] = [];
@@ -458,17 +465,17 @@ export const FirstCallDashboard: React.FC<Props> = function FirstCallDashboard({
     state.newFirstCall, state.saveTime
   ])
 
-  const getTechs = async () => {
+  const getTechs = useCallback (async () => {
     const techs = new DispatchableTech();
     const dr = new DateRange();
     dr.setStart('2012-01-01');
     dr.setEnd(format(new Date(), 'yyyy-MM-dd'));
     techs.setDateRange(dr);
-    techs.setDepartmentList('19,20'); //Needs to be based on state.departmentList
+    techs.setDepartmentList(state.formData.departmentIds.toString()); //Needs to be based on state.departmentList
     const users = new User();
     users.setIsActive(1);
     users.setIsHvacTech(1);
-    users.setDepartmentList('19,20'); //Needs to be based on state.departmentList
+    users.setDepartmentList(state.formData.departmentIds.toString()); //Needs to be based on state.departmentList
     try {
       const userList = await UserClientService.BatchGet(users);
       const dispatchableTechs = await DispatchClientService.GetDispatchableTechnicians(techs);
@@ -489,12 +496,12 @@ export const FirstCallDashboard: React.FC<Props> = function FirstCallDashboard({
       console.error(err)
       return {techList: []}
     }
-  }
+  }, [state.formData.departmentIds])
 
   const getCalls =  useCallback(async () => {
     const newCall = new DispatchCall();
     newCall.setDateStarted(`${format(addDays(new Date(), 1), 'yyyy-MM-dd')}%`);
-    newCall.setSectorGroupList("1");
+    newCall.setSectorGroupList(state.formData.division.toString());
     newCall.setJobTypeIdList(state.formData.jobTypes.toString());
     try {
       const callList = await DispatchClientService.GetDispatchCalls(newCall);
@@ -508,7 +515,7 @@ export const FirstCallDashboard: React.FC<Props> = function FirstCallDashboard({
       console.error(err);
       return [];
     }
-  }, [state.formData.jobTypes])
+  }, [state.formData.jobTypes, state.formData.division])
 
   const setCalls = useCallback(async () => {
     const availableCalls : DispatchCall[] = [];
@@ -543,31 +550,6 @@ export const FirstCallDashboard: React.FC<Props> = function FirstCallDashboard({
     }
   }
 
-  const getDepartments = async() => {
-    const departmentReq = new TimesheetDepartment();
-    const user = new User();
-    user.setId(loggedUserId);
-    departmentReq.setIsActive(1);
-    try {
-      const departments = await TimesheetDepartmentClientService.BatchGet(departmentReq);
-      const userData = await UserClientService.Get(user);
-      const userDepartments = userData.getPermissionGroupsList().filter(user => user.getType() === 'department').reduce((aggr, item) => [...aggr, +JSON.parse(item.getFilterData()).value], [] as number[],);
-      let displayedDepartments = departments.getResultsList().filter(dep => userDepartments.includes(dep.getId()));
-      if (!displayedDepartments.length) {
-        displayedDepartments = departments.getResultsList().filter(dep => dep.getId() === userData.getEmployeeDepartmentId()); 
-      }
-      console.log(displayedDepartments);
-      const sectorGroupList = displayedDepartments.map(dep => dep.getSectorGroup());
-      return {sectors: sectorGroupList.filter((c,index) => sectorGroupList.indexOf(c) === index && c !== 0).sort((a,b) => (a > b) ? 1 : ((b > a) ? -1 : 0))};
-    } catch (err) {
-      console.error(
-        `An error occurred while getting Departments: ${err}`
-      );
-      return {sectors: []};
-    }
-  }
-
-
   const getGoogleApiKey = async () => {
     const newKey = new ApiKey();
     newKey.setTextId('google_maps');
@@ -582,7 +564,7 @@ export const FirstCallDashboard: React.FC<Props> = function FirstCallDashboard({
     }
   };
 
-  const getPreviousFirstCall = async () => {
+  const getPreviousFirstCall =useCallback( async () => {
     const firstCall = new FirstCall();
     firstCall.setSector(state.formData.division);
     firstCall.setDateCreated(`${format(new Date(), 'yyyy-MM-dd')} %`);
@@ -604,21 +586,50 @@ export const FirstCallDashboard: React.FC<Props> = function FirstCallDashboard({
       console.error(err);
       return {firstCall: initialFirstCall, newFirstCall: true, firstCallId: 0, saveTime: ''};
     }
-  }
+  }, [state.formData.division])
+
+  const checkDivision = useCallback(async () => {
+    const departmentReq = new TimesheetDepartment();
+    const user = new User();
+    user.setId(loggedUserId);
+    departmentReq.setIsActive(1);
+    try {
+      const departments = await TimesheetDepartmentClientService.BatchGet(departmentReq);
+      const userData = await UserClientService.Get(user);
+      const userDepartments = userData.getPermissionGroupsList().filter(user => user.getType() === 'department').reduce((aggr, item) => [...aggr, +JSON.parse(item.getFilterData()).value], [] as number[],);
+      let filteredDepartments = departments.getResultsList().filter(dep => userDepartments.includes(dep.getId()));
+      if (!filteredDepartments.length) {
+        filteredDepartments = departments.getResultsList().filter(dep => dep.getId() === userData.getEmployeeDepartmentId()); 
+      }
+      const sectorList = filteredDepartments.map(sector => sector.getSectorGroup())
+      const filteredSectorList = sectorList.filter((c,index) => sectorList.indexOf(c) === index && c !== 0)
+        .sort((a,b) => (a > b) ? 1 : ((b > a) ? -1 : 0));
+      if (filteredSectorList.length === 1) {
+        handleFormDataUpdate({division: filteredSectorList[0]});
+      }   
+      firstCallDashboard({
+        type: 'setSectorList',
+        data: sectorList});
+    } catch(err) {
+      console.error(err);
+    }
+  }, [handleFormDataUpdate, loggedUserId])
 
   const getInitialConstructor = useCallback(async () => {
-    const departments = await getDepartments();
     const techs = getTechs();
     const calls = setCalls();
     const jobTypes = getJobTypes();
     const key = getGoogleApiKey();
     const firstCall = getPreviousFirstCall();
     const results = await Promise.all([techs, calls, jobTypes, key, firstCall]);
-    handleFormDataUpdate({
+    const newFormData : FormData = {
+      departmentIds: state.formData.departmentIds,
+      division: state.formData.division,
+      jobTypes: [],
       meetingTime: results[4].firstCall.meeting.start,
       classTime: results[4].firstCall.class.start,
       availableTechs: results[0].techList.filter(tech => !results[4].firstCall.manualOff.includes(tech.getUserId()) && !results[4].firstCall.inUse.includes(tech.getUserId())),
-    });
+    }
     return {
       techs: results[0].techList,
       calls: results[1].availableCalls,
@@ -629,9 +640,9 @@ export const FirstCallDashboard: React.FC<Props> = function FirstCallDashboard({
       isNew: results[4].newFirstCall,
       saveTime: results[4].saveTime,
       firstCallId: results[4].firstCallId,
-      sectorList: departments.sectors,
+      newFormData: newFormData,
     };
-  }, [setCalls])
+  }, [getPreviousFirstCall, getTechs, setCalls, state.formData.departmentIds, state.formData.division])
 
   const load = useCallback(async() => {
     const initialData = await getInitialConstructor();
@@ -652,7 +663,7 @@ export const FirstCallDashboard: React.FC<Props> = function FirstCallDashboard({
         meetingList: meetingList,
         classList: classList,
         offList: initialData.firstCall.manualOff,
-        sectorList: initialData.sectorList,
+        initialFormData: initialData.newFormData,
       }
     })
   },[getInitialConstructor])
@@ -672,16 +683,36 @@ export const FirstCallDashboard: React.FC<Props> = function FirstCallDashboard({
       {
         name: 'division',
         label: 'Sector',
-        options: ['Residential', 'Commercial Light', 'Commercial Heavy'].map((item, index) => ({
-          key: item,
-          label: item,
-          value: index + 1
+        options: [{name:'Residential', value: 1}, {name:'Commercial Light', value: 2}, {name:'Commercial Heavy', value: 3}]
+        .filter(item => state.sectorList.includes(item.value))
+        .map((item) => ({
+          key: item.name,
+          label: item.name,
+          value: item.value
         })),
         invisible: state.sectorList.length <= 1 ? true : undefined,
+        helperText: state.formData.division ? '' : 'Please Select Sector',
       },
     ],
   ];
 
+  const DIVISION_ONLY_SCHEMA : Schema<FormData> = [
+    [
+      {
+        name: 'division',
+        label: 'Sector',
+        options: [{name:'Residential', value: 1}, {name:'Commercial Light', value: 2}, {name:'Commercial Heavy', value: 3}]
+        .filter(item => state.sectorList.includes(item.value))
+        .map((item) => ({
+          key: item.name,
+          label: item.name,
+          value: item.value
+        })),
+        invisible: state.sectorList.length <= 1 ? true : undefined,
+        helperText: state.formData.division ? '' : 'Please Select Sector',
+      },
+    ],
+  ]
   const MEETING_TIME_SCHEMA : Schema<FormData> = [
     [
       {
@@ -702,22 +733,46 @@ export const FirstCallDashboard: React.FC<Props> = function FirstCallDashboard({
 
   useEffect(() => {
     console.log('loaded', state.loaded)
-    if (!state.loaded) {
+    if (state.formData.division === 0) {
+      checkDivision();
+    }
+    if (!state.loaded && state.formData.division !== 0) {
       load();
     }
-    if (state.refreshCalls) {
+    if (state.refreshCalls && state.loaded) {
       setCalls();
     }
     if (state.save) {
       handleSave();
     }
-  }, [load, state.loaded, state.save, handleSave, state.refreshCalls, setCalls])
+  }, [state.loaded, state.save, handleSave, state.refreshCalls, setCalls, load, checkDivision, state.formData.division])
+  
   return (
     <PageWrapper userID={loggedUserId}>
       <SectionBar 
         title="First Calls" 
         styles={{backgroundColor: "#711313", color: "white", zIndex:3}} 
       />
+      {!state.loaded && (
+        <Grid container spacing={1} style={{paddingTop:'20px'}}>
+        <Grid item xs={12}>
+          <div style={{width:'95%', margin:'auto'}}>
+            <PlainForm
+              schema={DIVISION_ONLY_SCHEMA}
+              data={state.formData}
+              onChange={(callback)=>{handleFormDataUpdate(callback)}}
+                // debounce(handleChange, 1000)}
+            />
+          </div>
+        </Grid>
+        </Grid>
+      )}
+      {!state.loaded && state.formData.division !== 0 && (
+        <Loader
+          backgroundColor={'black'}
+          opacity={0.5}
+        />
+      )}
       {state.loaded && (
       <Grid container spacing={1} style={{paddingTop:'20px'}}>
         <Grid item xs={12}>
@@ -955,7 +1010,7 @@ export const FirstCallDashboard: React.FC<Props> = function FirstCallDashboard({
           </Grid>
         </DragDropContext>
       </Grid>
-      )}
+        )}
       <Modal
         open={state.openModal}
         onClose={resetModal}
