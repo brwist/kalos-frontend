@@ -373,7 +373,7 @@ export const CostSummary: FC<Props> = ({
       }
       let spiffTotal = 0;
       let toolTotal = 0;
-      for (let i = 0; i < results.length; i++) {
+      for (let i = 0; i < revokeResults.length; i++) {
         if (spiffType == 'Spiff') {
           spiffTotal += revokeResults[i].getSpiffAmount();
         } else {
@@ -448,10 +448,9 @@ export const CostSummary: FC<Props> = ({
 
       for (let i = 0; i < revokeResults.length; i++) {
         if (spiffType == 'Spiff') {
-          console.log(results[i].getSpiffAmount());
-          spiffTotal += results[i].getSpiffAmount();
+          spiffTotal += revokeResults[i].getSpiffAmount();
         } else {
-          toolTotal += results[i].getToolpurchaseCost();
+          toolTotal += revokeResults[i].getToolpurchaseCost();
         }
       }
       if (spiffType === 'Spiff') {
@@ -533,7 +532,6 @@ export const CostSummary: FC<Props> = ({
       processed: 1,
     };
     const tempTrips = tripsTotal;
-    console.log('data we are sending', tempPerDiem);
     dispatch({
       type: 'updateTotalTripsPerDiemProcessed',
       tripData: tempTrips,

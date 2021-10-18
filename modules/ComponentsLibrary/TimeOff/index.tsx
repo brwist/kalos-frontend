@@ -9,6 +9,7 @@ import React, {
 import {
   differenceInMinutes,
   parseISO,
+  differenceInHours,
   differenceInCalendarYears,
   differenceInBusinessDays,
   addYears,
@@ -17,19 +18,26 @@ import {
 import { Form, Schema, Options } from '../Form';
 import { SectionBar } from '../../ComponentsLibrary/SectionBar';
 import { ConfirmDelete } from '../ConfirmDelete';
+import { Alert } from '../Alert';
 import {
   roundNumber,
   timestamp,
+  formatDate,
   UserClientService,
   TimeoffRequestClientService,
   makeSafeFormObject,
+  TimesheetLineClientService,
+  ActivityLogClientService,
 } from '../../../helpers';
 import { OPTION_BLANK, ENDPOINT } from '../../../constants';
 import { EmailClient, EmailConfig } from '@kalos-core/kalos-rpc/Email';
 import { User } from '@kalos-core/kalos-rpc/User';
 import { PTO, TimeoffRequest } from '@kalos-core/kalos-rpc/TimeoffRequest';
 import { datePickerDefaultProps } from '@material-ui/pickers/constants/prop-types';
-
+import { ActivityLog } from '@kalos-core/kalos-rpc/ActivityLog';
+import { InfoTable } from '../InfoTable';
+import { zhCN } from 'date-fns/esm/locale';
+import { TimeoffRequestType } from '@kalos-core/kalos-rpc/compiled-protos/timeoff_request_pb';
 export interface Props {
   loggedUserId: number;
   userId?: number;
@@ -56,14 +64,22 @@ export const TimeOff: FC<Props> = ({
   const [deleted, setDeleted] = useState<boolean>(false);
   const [saving, setSaving] = useState<boolean>(false);
   const [typeOptions, setTypeOptions] = useState<Options>([]);
+  const [requestTypes, setRequestTypes] = useState<TimeoffRequestType[]>([]);
+
   const [pto, setPto] = useState<PTO>();
   const [ptoActualHours, setPtoActualHours] = useState<number>(0);
   const [user, setUser] = useState<User>();
+  const [openAlert, setOpenAlert] = useState<boolean>(false);
+  const [alertDismissed, setAlertDismissed] = useState<boolean>(false);
+  const [upcomingRequests, setUpcomingRequests] = useState<TimeoffRequest[]>();
+  const [thisYearsPTOHistory, setthisYearsPTOHistory] = useState<
+    TimeoffRequest[]
+  >();
   const [loggedUser, setLoggedUser] = useState<User>();
+  const [logData, setLogData] = useState<ActivityLog[]>();
   const [formKey, setFormKey] = useState<number>(0);
   const [error, setError] = useState<string>('');
-  const emptyTO = new TimeoffRequest();
-  const [data, setData] = useState<TimeoffRequest>(emptyTO);
+  const [data, setData] = useState<TimeoffRequest>(new TimeoffRequest());
   const getTimeoffTotals = useCallback(
     async (hireDate: string) => {
       hireDate = hireDate.replace(/-/g, '/');
@@ -111,22 +127,87 @@ export const TimeOff: FC<Props> = ({
     [userId],
   );
   const setSafeData = (data: TimeoffRequest) => {
-    setData(makeSafeFormObject(data, new TimeoffRequest()));
+    const temp = makeSafeFormObject(data, new TimeoffRequest());
+    console.log(temp);
+    if (temp.getRequestType() === 9) {
+      if (pto && user) {
+        let hourDiff = 0;
+        if (
+          temp.getAllDayOff() === 1 &&
+          temp.getTimeStarted() &&
+          temp.getTimeFinished()
+        ) {
+          const date1 = new Date(parseISO(temp.getTimeStarted()));
+          const date2 = new Date(parseISO(temp.getTimeFinished()));
+
+          hourDiff = (differenceInBusinessDays(date2, date1) + 1) * 8;
+        } else if (
+          temp.getAllDayOff() != 1 &&
+          temp.getTimeStarted() &&
+          temp.getTimeFinished()
+        ) {
+          const date1 = new Date(parseISO(temp.getTimeStarted()));
+          const date2 = new Date(parseISO(temp.getTimeFinished()));
+          hourDiff = differenceInHours(date2, date1);
+        }
+        if (hourDiff > pto.getHoursAvailable()) {
+          setOpenAlert(true);
+        } else {
+          //we should reset it, if they created one that one was, but then incorrect
+          setAlertDismissed(false);
+          setOpenAlert(false);
+        }
+      }
+    } else {
+      setAlertDismissed(false);
+      setOpenAlert(false);
+    }
+
+    setData(temp);
+  };
+  const handleCloseAlert = () => {
+    setAlertDismissed(true);
+    setOpenAlert(false);
   };
   const emailClient = useMemo(() => new EmailClient(ENDPOINT), []);
   const init = useCallback(async () => {
+    console.log('called init');
     const types = await TimeoffRequestClientService.getTimeoffRequestTypes();
+    setRequestTypes(types);
     setTypeOptions(
       types.map(t => ({ label: t.getRequestType(), value: t.getId() })),
     );
-    const user = await UserClientService.loadUserById(userId || loggedUserId);
-    setUser(user);
+    if (!requestOffId) {
+      const user = await UserClientService.loadUserById(userId || loggedUserId);
+      const ptoActualHours = await getTimeoffTotals(user.getHireDate());
+      setPtoActualHours(ptoActualHours);
+      setUser(user);
+      data.setDepartmentCode(user.getEmployeeDepartmentId());
+      const upcomingReq = new TimeoffRequest();
+      upcomingReq.setUserId(user.getId());
+      upcomingReq.setDateTargetList(['time_started', 'time_started']);
+      const startDate = format(new Date(), 'yyyy-MM-dd');
+      const endDate = format(addYears(new Date(), 1), 'yyyy-MM-dd');
+      upcomingReq.setDateRangeList(['>=', startDate, '<=', endDate]);
+
+      upcomingReq.setIsActive(1);
+      setUpcomingRequests(
+        (
+          await TimeoffRequestClientService.BatchGet(upcomingReq)
+        ).getResultsList(),
+      );
+      const ptoReq = new TimeoffRequest();
+      ptoReq.setUserId(user.getId());
+      ptoReq.setRequestType(9);
+      ptoReq.setIsActive(1);
+      setthisYearsPTOHistory(
+        (await TimeoffRequestClientService.BatchGet(ptoReq)).getResultsList(),
+      );
+    }
     const pto = await TimeoffRequestClientService.PTOInquiry(
       userId || loggedUserId,
     );
     setPto(pto);
-    const ptoActualHours = await getTimeoffTotals(user.getHireDate());
-    setPtoActualHours(ptoActualHours);
 
     const loggedUser = await UserClientService.loadUserById(loggedUserId);
     setLoggedUser(loggedUser);
@@ -134,11 +215,83 @@ export const TimeOff: FC<Props> = ({
       const req = await TimeoffRequestClientService.getTimeoffRequestById(
         requestOffId,
       );
+      if (req) {
+        const userData = await UserClientService.loadUserById(req.getUserId());
+        setUser(userData);
+        const ptoActualHours = await getTimeoffTotals(userData.getHireDate());
+        setPtoActualHours(ptoActualHours);
+        data.setDepartmentCode(userData.getEmployeeDepartmentId());
+        const upcomingReq = new TimeoffRequest();
+        upcomingReq.setUserId(userData.getId());
+        upcomingReq.setDateTargetList(['time_started', 'time_started']);
+        const startDate = format(new Date(), 'yyyy-MM-dd');
+        const endDate = format(addYears(new Date(), 1), 'yyyy-MM-dd');
+        upcomingReq.setDateRangeList(['>=', startDate, '<=', endDate]);
+
+        upcomingReq.setIsActive(1);
+        setUpcomingRequests(
+          (
+            await TimeoffRequestClientService.BatchGet(upcomingReq)
+          ).getResultsList(),
+        );
+        const ptoReq = new TimeoffRequest();
+        ptoReq.setUserId(userData.getId());
+        ptoReq.setRequestType(9);
+        ptoReq.setIsActive(1);
+        setthisYearsPTOHistory(
+          (await TimeoffRequestClientService.BatchGet(ptoReq)).getResultsList(),
+        );
+      }
+
+      const logReq = new ActivityLog();
+      logReq.setTimeoffRequestId(requestOffId);
+      setLogData(
+        (await ActivityLogClientService.BatchGet(logReq)).getResultsList(),
+      );
       if (!req) {
         setDeleted(true);
         setInitiated(true);
         return;
       }
+      if (req.getRequestType() === 9) {
+        if (pto) {
+          let hourDiff = 0;
+          if (
+            req.getAllDayOff() === 1 &&
+            req.getTimeStarted() &&
+            req.getTimeFinished()
+          ) {
+            const date1 = new Date(parseISO(req.getTimeStarted()));
+            const date2 = new Date(parseISO(req.getTimeFinished()));
+
+            hourDiff = (differenceInBusinessDays(date2, date1) + 1) * 8;
+          } else if (
+            req.getAllDayOff() != 1 &&
+            req.getTimeStarted() &&
+            req.getTimeFinished()
+          ) {
+            console.log(req.getTimeStarted());
+            console.log(req.getTimeFinished());
+
+            const date1 = new Date(parseISO(req.getTimeStarted()));
+            const date2 = new Date(parseISO(req.getTimeFinished()));
+            console.log('we are here', date1, date2);
+            hourDiff = differenceInHours(date2, date1);
+          }
+          console.log('hourDiff', hourDiff);
+          if (hourDiff > pto.getHoursAvailable()) {
+            setOpenAlert(true);
+          } else {
+            //we should reset it, if they created one that one was, but then incorrect
+            setAlertDismissed(false);
+            setOpenAlert(false);
+          }
+        }
+      } else {
+        setAlertDismissed(false);
+        setOpenAlert(false);
+      }
+
       if (!req.getAdminApprovalUserId()) {
         req.setRequestStatus(1);
         req.setAdminApprovalDatetime(timestamp(true));
@@ -149,7 +302,6 @@ export const TimeOff: FC<Props> = ({
       setData(req);
       setFormKey(formKey + 1);
     } else {
-      data.setDepartmentCode(user.getEmployeeDepartmentId());
       setData(data);
       setFormKey(formKey + 1);
     }
@@ -202,6 +354,13 @@ export const TimeOff: FC<Props> = ({
       let newData = new TimeoffRequest();
       console.log({ temp });
       console.log({ data });
+      if (loggedUser!.getIsAdmin()) {
+        temp.setRequestStatus(1);
+        temp.setAdminApprovalDatetime(timestamp(true));
+        temp.setReviewedBy(
+          `${loggedUser!.getFirstname()} ${loggedUser!.getLastname()}`,
+        );
+      }
       if (data.getId() === 0 || data.getId().toString() === '') {
         console.log('create');
         newData = await TimeoffRequestClientService.Create(temp);
@@ -247,14 +406,26 @@ export const TimeOff: FC<Props> = ({
       } catch (err) {
         console.log(err);
       }
-
-      if (loggedUser!.getIsAdmin()) {
-        newData.setRequestStatus(1);
-        newData.setAdminApprovalDatetime(timestamp(true));
-        newData.setReviewedBy(
-          `${loggedUser!.getFirstname()} ${loggedUser!.getLastname()}`,
+      const newLog = new ActivityLog();
+      newLog.setTimeoffRequestId(newData.getId());
+      newLog.setUserId(loggedUserId);
+      if (
+        newData.getAdminApprovalUserId() != null &&
+        newData.getAdminApprovalUserId() != 0
+      ) {
+        newLog.setActivityName(
+          `Created and Approved by ${loggedUser?.getFirstname()} ${loggedUser?.getLastname()} ${
+            alertDismissed ? ', Exceeding PTO Alert Dismissed' : ''
+          }`,
+        );
+      } else {
+        newLog.setActivityName(
+          `Created by ${loggedUser?.getFirstname()} ${loggedUser?.getLastname()} ${
+            alertDismissed ? ', Exceeding PTO Alert Dismissed' : ''
+          }`,
         );
       }
+      await ActivityLogClientService.Create(newLog);
       setData(newData);
       setFormKey(formKey + 1);
       setSaving(false);
@@ -264,6 +435,7 @@ export const TimeOff: FC<Props> = ({
       emailClient,
       typeOptions,
       user,
+      alertDismissed,
       onSaveOrDelete,
       setSaving,
       setData,
@@ -305,6 +477,17 @@ export const TimeOff: FC<Props> = ({
 
         `${data.getTimeStarted()} -${data.getTimeFinished()}`,
       );
+
+      const newLog = new ActivityLog();
+      newLog.setTimeoffRequestId(newData.getId());
+      newLog.setActivityName(
+        `Updated with status ${
+          req.getRequestStatus() === 1 ? 'Approved' : 'Not Approved'
+        } by ${loggedUser?.getFirstname()} ${loggedUser?.getLastname()} ${
+          alertDismissed ? ', Exceeding PTO Alert Dismissed' : ''
+        }`,
+      );
+      await ActivityLogClientService.Create(newLog);
       //@ts-ignore
       const config: EmailConfig = {
         type: 'timeoff',
@@ -323,6 +506,7 @@ export const TimeOff: FC<Props> = ({
     onAdminSubmit,
     emailClient,
     loggedUser,
+    alertDismissed,
     user,
     setData,
     loggedUserId,
@@ -360,7 +544,7 @@ export const TimeOff: FC<Props> = ({
       },
       {
         name: 'getAllDayOff',
-        label: 'All Days?',
+        label: 'Is This Request for Multiple Days?',
         options: [
           { label: 'No', value: 0 },
           { label: 'Yes', value: 1 },
@@ -496,6 +680,71 @@ export const TimeOff: FC<Props> = ({
         submitDisabled={submitDisabled}
         error={error}
       />
+      {logData && logData.length >= 1 && (
+        <InfoTable
+          columns={[{ name: 'Log Entry' }, { name: 'Date' }]}
+          data={logData.map(log => [
+            { value: log.getActivityName() },
+            { value: log.getActivityDate() },
+          ])}
+        />
+      )}
+      {thisYearsPTOHistory && thisYearsPTOHistory.length >= 1 && (
+        <div key="this year pto">
+          <h2> PTO History</h2>
+          <InfoTable
+            columns={[
+              { name: 'Request Type' },
+              { name: 'Start Time' },
+              { name: 'End Time' },
+              { name: 'Status' },
+              { name: 'Reviewer' },
+            ]}
+            data={thisYearsPTOHistory.map(req => [
+              {
+                value: requestTypes
+                  .find(type => type.getId() === req.getRequestType())
+                  ?.getRequestType(),
+              },
+              { value: formatDate(req.getTimeStarted()) },
+              { value: formatDate(req.getTimeFinished()) },
+              {
+                value:
+                  req.getRequestStatus() === 1 ? 'Approved' : 'Not Approved',
+              },
+              { value: req.getAdminApprovalUserName() },
+            ])}
+          />
+        </div>
+      )}
+      {upcomingRequests && upcomingRequests.length >= 1 && (
+        <div key="upComing Requests">
+          <h2>Upcoming Requests</h2>
+          <InfoTable
+            columns={[
+              { name: 'Request Type' },
+              { name: 'Start Time' },
+              { name: 'End Time' },
+              { name: 'Status' },
+              { name: 'Reviewer' },
+            ]}
+            data={upcomingRequests.map(req => [
+              {
+                value: requestTypes
+                  .find(type => type.getId() === req.getRequestType())
+                  ?.getRequestType(),
+              },
+              { value: formatDate(req.getTimeStarted()) },
+              { value: formatDate(req.getTimeFinished()) },
+              {
+                value:
+                  req.getRequestStatus() === 1 ? 'Approved' : 'Not Approved',
+              },
+              { value: req.getAdminApprovalUserName() },
+            ])}
+          />
+        </div>
+      )}
       {deleting && (
         <ConfirmDelete
           kind="this Request Off"
@@ -505,6 +754,20 @@ export const TimeOff: FC<Props> = ({
           open
         />
       )}
+      <Alert
+        open={
+          openAlert &&
+          alertDismissed == false &&
+          data.getAdminApprovalUserId() == 0
+        }
+        onClose={handleCloseAlert}
+        title="PTO Error"
+      >
+        <div>
+          This Paid Time Off Request will exceed the alloted hours. Please
+          verify your time or contact your manager before submitting.
+        </div>
+      </Alert>
     </>
   );
 };
