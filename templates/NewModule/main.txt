@@ -9,15 +9,22 @@
 import React, { useReducer, useEffect, useCallback, FC } from 'react';
 import { PageWrapper } from '../PageWrapper/main';
 import { reducer, ACTIONS } from './reducer';
+import { Devlog } from '@kalos-core/kalos-rpc/Devlog';
+import {
+  DevlogClientService,
+} from '../../helpers';
+import { format } from 'date-fns';
+
 
 // add any prop types here
 interface props {
-  userID: number; 
+  loggedUserId: number; 
 }
 
-export const TITLE_HERE: FC<props> = ({ userID }) => {
+export const TITLE_HERE: FC<props> = ({ loggedUserId }) => {
   const [state, dispatch] = useReducer(reducer, { 
     isLoaded: false,
+    error: undefined, // use error for boolean checks
   });
 
   const load = useCallback(() => {
@@ -33,22 +40,42 @@ export const TITLE_HERE: FC<props> = ({ userID }) => {
     // This is important for long-term performance of our components
   }, []);
 
+  const handleError = useCallback(async (errorToSet: string) => {
+    // This will send out an error devlog automatically when called
+    // The idea is that this will be used for any errors which we should be able to look up for debugging
+
+    try {
+      let errorLog = new Devlog();
+      errorLog.setUserId(loggedUserId);
+      errorLog.setTimestamp(format(new Date(), 'yyyy-MM-dd hh:mm:ss'));
+      errorLog.setIsError(1);
+      errorLog.setDescription(
+        `An error occurred in TITLE_HERE: ${errorToSet}`,
+      );
+      await DevlogClientService.Create(errorLog);
+      dispatch({type: ACTIONS.SET_ERROR, data: errorToSet});
+    } catch (err) {
+      console.error(`An error occurred while saving a devlog: ${err}`);
+    }
+  }, [loggedUserId]);
+
   useEffect(() => {
-    load();
+    if (!state.isLoaded) load();
 
     return () => {
       cleanup(); 
     };
-  }, [load, cleanup]);
+  }, [load, cleanup, state.isLoaded]);
 
   return (
-    <PageWrapper userID={userID} withHeader>
+    <PageWrapper userID={loggedUserId} withHeader>
       <h1>TITLE_HERE works!</h1>
       <h2>About this boilerplate</h2>
       <ul>
         <li>Frontend unit tests were created for this module automatically in <code>/test/modules/TITLE_HERE</code></li>
-        <li><div style={{color: "red"}}>The loader test is failing by default for modules, this is intentional (so that a loader is always present in new modules where data must be loaded)</div></li>
+        <li>There is a loader test ready to be implemented in the test file - it will show up as "pending" in Mocha until it is implemented</li>
         <li>You can see the templates for <code>yarn make</code> inside <code>/templates</code></li>
+        <li>Error-handling code was automatically generated as well - please use this whenever an issue occurs (so we can look back on them when an issue arises)</li>
       </ul>
       <h2>Some resources to get you started with unit testing in Mocha with Enzyme: </h2>
       <ul>

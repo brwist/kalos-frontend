@@ -12,6 +12,7 @@ import {
   DevlogClientService,
   InvoiceClientService,
   makeSafeFormObject,
+  PropertyClientService,
 } from '../../../helpers';
 import {
   PAYMENT_STATUS_OPTIONS,
@@ -61,13 +62,6 @@ export const EditContractInfo: FC<props> = ({
     error: undefined,
     fatalError: false,
   });
-  console.log('FREQUENCY: ', state.contractData.getFrequency());
-  console.log(
-    'Group billing: ',
-    state.contractData.getGroupBilling() === 1
-      ? BILLING_OPTIONS.GROUP
-      : BILLING_OPTIONS.SITE,
-  );
 
   const CONTRACT_SCHEMA: Schema<Contract> = [
     [
@@ -141,10 +135,11 @@ export const EditContractInfo: FC<props> = ({
   ];
 
   const load = useCallback(async () => {
+    let res; // contract res
     try {
       let req = new Contract();
       req.setId(contractID);
-      let res = await ContractClientService.Get(req);
+      res = await ContractClientService.Get(req);
       if (!res) {
         console.error(`Contract ${contractID} no longer exists.`);
         dispatch({
@@ -163,6 +158,7 @@ export const EditContractInfo: FC<props> = ({
           devlog.setDescription(
             `Failed to get a contract with ID ${contractID}: contract no longer appears to exist.`,
           );
+          await DevlogClientService.Create(devlog);
         } catch (err) {
           console.error('Failed to upload a devlog.');
         }
@@ -171,6 +167,44 @@ export const EditContractInfo: FC<props> = ({
       dispatch({ type: ACTIONS.SET_CONTRACT_DATA, data: res });
     } catch (err) {
       console.error(`An error occurred while loading a contract: ${err}`);
+    }
+
+    if (!res) {
+      console.error(
+        `Cannot continue with property request without the contract result. Returning.`,
+      );
+      return;
+    }
+
+    let propertiesRes: Property[] = [];
+    try {
+      // Include all the ones with user id the same as given
+      // Select the ones that were selected before
+      let propertiesReq = new Property();
+      propertiesReq.setUserId(userID);
+      propertiesReq.setIsActive(1);
+
+      propertiesRes = await (
+        await PropertyClientService.BatchGet(propertiesReq)
+      ).getResultsList();
+
+      let propertiesSelected: Property[] = [];
+      res
+        .getProperties()
+        .split(',')
+        .forEach(async result => {
+          propertiesSelected.push(
+            ...propertiesRes.filter(property => {
+              return property.getId() === Number(result);
+            }),
+          );
+        });
+
+      dispatch({ type: ACTIONS.SET_PROPERTIES_SELECTED, data: propertiesRes });
+    } catch (err) {
+      console.error(
+        `An error occurred while loading the properties for contract ${contractID} - ${err}`,
+      );
     }
 
     dispatch({ type: ACTIONS.SET_LOADED, data: true });
@@ -187,15 +221,21 @@ export const EditContractInfo: FC<props> = ({
     let error: string = '';
     try {
       let reqContract = state.contractData;
-      if (state.propertiesSelected)
-        reqContract.setProperties(state.propertiesSelected.join(','));
-      console.log('Req contract: ', reqContract);
+      reqContract.setId(contractID);
+      if (state.propertiesSelected) {
+        reqContract.setProperties(
+          state.propertiesSelected
+            .map(property => {
+              return `${property.getId()}`;
+            })
+            .join(','),
+        );
+      }
       reqContract.setGroupBilling(
         // Casting to any because it is set in the form as a string
         (reqContract.getGroupBilling() as any) === 'Group' ? 1 : 0,
       );
-      reqContract.setUserId(userID);
-      reqContract.setDateCreated(format(new Date(), 'yyyy-mm-dd hh:mm:ss'));
+      reqContract.setFieldMaskList(['Properties', 'GroupBilling']);
       contractRes = await ContractClientService.Update(reqContract);
     } catch (err) {
       console.error(`An error occurred while upserting a contract: ${err}`);
@@ -266,6 +306,7 @@ export const EditContractInfo: FC<props> = ({
     }
     dispatch({ type: ACTIONS.SET_SAVING, data: false });
   }, [
+    contractID,
     onSave,
     state.contractData,
     state.invoiceData,
@@ -294,7 +335,6 @@ export const EditContractInfo: FC<props> = ({
     };
   }, [load, cleanup, state.isLoaded]);
 
-  console.log('Contract data: ', state.contractData);
   return (
     <>
       {state.isSaving || (!state.isLoaded && <Loader />)}
@@ -338,6 +378,7 @@ export const EditContractInfo: FC<props> = ({
       >
         <div style={{ width: '75%', display: 'inline-block' }}>
           <Form<Contract>
+            error={state.fatalError}
             key={state.isLoaded.toString()}
             schema={CONTRACT_SCHEMA}
             data={state.contractData}
@@ -382,25 +423,29 @@ export const EditContractInfo: FC<props> = ({
             verticalAlign: 'top',
           }}
         >
-          <PropertyDropdown
-            userId={userID}
-            onSave={propertyData =>
-              console.log('Saving property data: ', propertyData)
-            }
-            onClose={() => {}}
-            onChange={propertyData => {
-              dispatch({
-                type: ACTIONS.SET_PROPERTIES_SELECTED,
-                data: propertyData,
-              });
-              if (onChange)
-                onChange({
-                  contractData: state.contractData,
-                  propertiesSelected: propertyData,
-                  invoiceData: state.invoiceData,
-                } as Output);
-            }}
-          />
+          {state.isLoaded && (
+            <PropertyDropdown
+              loading={!state.isLoaded}
+              initialPropertiesSelected={state.propertiesSelected}
+              userId={userID}
+              onSave={propertyData =>
+                console.log('Saving property data: ', propertyData)
+              }
+              onClose={() => {}}
+              onChange={propertyData => {
+                dispatch({
+                  type: ACTIONS.SET_PROPERTIES_SELECTED,
+                  data: propertyData,
+                });
+                if (onChange)
+                  onChange({
+                    contractData: state.contractData,
+                    propertiesSelected: propertyData,
+                    invoiceData: state.invoiceData,
+                  } as Output);
+              }}
+            />
+          )}
         </div>
       </SectionBar>
       <SectionBar

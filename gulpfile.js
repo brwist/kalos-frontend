@@ -23,7 +23,33 @@ try {
   console.log(err);
 }
 
-let minify = process.argv[5];
+function checkTests(target) {
+  if (target !== 'ComponentsLibrary') {
+    const componentExistsInModules = sh.test(
+      '-f',
+      `./modules/ComponentsLibrary/${target}/index.tsx`,
+    );
+    const componentIsTested = sh.test(
+      '-f',
+      `./test/modules/ComponentsLibrary/${target}/index.test.tsx`,
+    );
+    const isTested = sh.test('-f', `./test/modules/${target}/index.test.tsx`);
+    if (!isTested && !componentIsTested) {
+      warn(
+        `The module you are running appears to be untested (/test/modules/${target}/index.test.tsx NOT FOUND). Please consider creating unit tests to ensure that the module works as intended.`,
+      );
+    } else if (!isTested && componentIsTested) {
+      warn(
+        `The module you are running has tests in the Components Library (/test/modules/ComponentsLibrary/${target}/index.test.tsx EXISTS), however it does not appear to have module tests (/test/modules/${target}/index.test.tsx NOT FOUND). Please consider creating unit tests for the module to ensure that the component works well in module form.`,
+      );
+    } else if (componentExistsInModules && isTested && !componentIsTested) {
+      warn(
+        `The module you are running is tested (/test/modules/${target}/index.test.tsx EXISTS), however the component by the same name is not tested (/test/modules/ComponentsLibrary/${target}/index.test.tsx NOT FOUND). Please consider creating unit tests for the component to ensure that the component functions correctly.`,
+      );
+    }
+  }
+}
+
 /**
  * Serves all modules to localhost:1234 via parcel
  */
@@ -44,6 +70,8 @@ async function start() {
     );
     return;
   }
+
+  checkTests(target);
 
   try {
     const target = titleCase(process.argv[4].replace(/-/g, ''));
@@ -144,7 +172,10 @@ function replaceKeywords(fileToWorkOn, userSpecsInput, nameOfModule) {
  */
 async function create() {
   let name = titleCase(process.argv[4].replace(/-/g, ''));
-  let testOnly = titleCase(process.argv[5].replace(/-/g, '')) === 'Testonly'; // so that module doesn't have a need for extra flag
+  let testOnly;
+  if (process.argv[5]) {
+    testOnly = titleCase(process.argv[5].replace(/-/g, '')) === 'Testonly'; // so that module doesn't have a need for extra flag
+  }
   if (process.argv[6] && !testOnly) {
     testOnly = titleCase(process.argv[6].replace(/-/g, '')) === 'Testonly';
   }
@@ -308,63 +339,6 @@ task(start);
 task(clean);
 
 task(create);
-
-function htmlTemplate(title) {
-  return `
-<!DOCTYPE html>
-<html>
-  <head>
-    <title>${title}</title>
-  </head>
-  <body>
-    <div id="root"></div>
-    <script src="index.tsx"></script>
-  </body>
-</html>`.replace('\n', '');
-  // this removes the first instance of a new line from the output string
-  // which allows the document to be written cleanly at the correct tab level
-}
-
-function mainTemplate(title) {
-  title = titleCase(title);
-
-  return `
-import React from 'react';
-import { PageWrapper } from '../PageWrapper/main';
-
-// add any prop types here
-interface props {
-  userID: number;
-}
-
-export const ${title}: React.FC<props> = function ${title}({ userID }) {
-  return (
-    <PageWrapper userID={userID}>
-      <h1>${title}!</h1>
-      <h2>Tests were also created in /test for this module, please implement them!</h2>
-    </PageWrapper>
-  );
-};
-`.replace('\n', '');
-}
-
-function indexTemplate(title) {
-  title = titleCase(title);
-
-  return `
-import React from 'react'
-import ReactDOM from 'react-dom'
-import { ${title} } from './main'
-import { UserClient } from '@kalos-core/kalos-rpc/User'
-import { ENDPOINT } from '../../constants'
-
-const u = new UserClient(ENDPOINT)
-
-u.GetToken('test','test').then(() => {
-  ReactDOM.render(<${title} userID={8418} />, document.getElementById('root'))
-})
-`.replace('\n', '');
-}
 
 function cfmTemplate(title) {
   title = titleCase(title);
@@ -647,17 +621,6 @@ async function runTests(target) {
   }
 }
 
-function checkTests() {
-  if (
-    sh.exec(`test -n "$(find ./modules/${target}/ -name '*.test.*')"`).code != 0
-  ) {
-    error(
-      `No unit tests are written for the module ${target}. Please write some and retry your release.`,
-    );
-    sh.exit(1);
-  }
-}
-
 async function buildAll() {
   const moduleList = await getModulesList();
   for (const m of moduleList) {
@@ -681,8 +644,13 @@ async function release(target = '') {
     target = titleCase(process.argv[4].replace(/-/g, ''));
   }
 
-  //checkTests();
-  //await runTests(target);
+  checkTests();
+  let response = '';
+  while (response.toLowerCase() !== 'y' && response.toLowerCase() !== 'n') {
+    response = await textPrompt('Would you like to release anyway (y/n)? ');
+  }
+
+  if (response.toLowerCase() === 'n') return;
 
   info('Rolling up build. This may take a moment...');
 

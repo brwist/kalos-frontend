@@ -49,7 +49,7 @@ export type SchemaProps<T> = {
   technicianAsEmployee?: boolean;
   minutesStep?: number;
   invisible?: boolean;
-  defaultValue?: string | number;
+  defaultValue?: string | number | T;
   displayEmpty?: boolean;
   forceShrinkLabel?: boolean;
   defaultLabel?: string;
