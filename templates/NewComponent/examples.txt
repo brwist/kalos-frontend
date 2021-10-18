@@ -5,6 +5,6 @@ import { ExampleTitle } from '../helpers';
 export default () => (
   <>
     <ExampleTitle>Default</ExampleTitle>
-    <TITLE_HERE />
+    <TITLE_HERE loggedUserId={8418} />
   </>
 );

@@ -18,6 +18,8 @@ interface props {
   onSave: (propertiesSaved: Property[]) => any;
   onClose: (currentProperties?: Property[]) => any;
   onChange?: (currentProperties?: Property[]) => any;
+  initialPropertiesSelected?: Property[];
+  loading?: boolean;
 }
 
 type Properties = {
@@ -29,11 +31,15 @@ export const PropertyDropdown: FC<props> = ({
   onSave,
   onClose,
   onChange,
+  initialPropertiesSelected,
+  loading,
 }) => {
   const [state, dispatch] = useReducer(reducer, {
-    isLoaded: false,
-    propertiesSelected: [],
-    propertiesLoaded: [],
+    isLoaded: loading ? !loading : false,
+    propertiesSelected:
+      initialPropertiesSelected !== undefined ? initialPropertiesSelected : [],
+    propertiesLoaded:
+      initialPropertiesSelected !== undefined ? initialPropertiesSelected : [],
     error: false,
   });
 
@@ -44,6 +50,9 @@ export const PropertyDropdown: FC<props> = ({
         type: 'multiselect',
         options: state.propertiesLoaded.map(property => property.getAddress()),
         name: 'propertyArray',
+        defaultValue: {
+          propertyArray: initialPropertiesSelected,
+        } as Properties,
       },
     ],
   ];
@@ -52,6 +61,7 @@ export const PropertyDropdown: FC<props> = ({
     try {
       let req = new Property();
       req.setUserId(userId);
+      req.setIsActive(1);
       const res = await PropertyClientService.BatchGet(req);
       dispatch({
         type: ACTIONS.SET_PROPERTIES_LOADED,
@@ -73,8 +83,10 @@ export const PropertyDropdown: FC<props> = ({
         console.error(`Failed to create error log: ${err}`);
       }
     }
-    dispatch({ type: ACTIONS.SET_LOADED, data: true });
-  }, [userId]);
+    if (loading !== undefined) {
+      if (loading !== true) dispatch({ type: ACTIONS.SET_LOADED, data: true });
+    }
+  }, [loading, userId]);
 
   const cleanup = useCallback(() => {}, []);
 
@@ -98,8 +110,16 @@ export const PropertyDropdown: FC<props> = ({
         schema={SCHEMA}
         onSave={propertiesSaved => onSave(propertiesSaved.propertyArray)}
         onClose={() => onClose(state.propertiesSelected)}
-        onChange={currentProperties => {
-          if (onChange) onChange(currentProperties.propertyArray);
+        onChange={(currentProperties: any) => {
+          if (onChange)
+            onChange(
+              state.propertiesLoaded.filter(loaded => {
+                for (const prop of currentProperties.propertyArray) {
+                  if (loaded.getAddress() === prop)
+                    return loaded.getAddress() === prop;
+                }
+              }),
+            );
           dispatch({
             type: ACTIONS.SET_PROPERTIES_SELECTED,
             data: currentProperties.propertyArray,
