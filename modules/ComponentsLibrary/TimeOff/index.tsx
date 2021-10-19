@@ -5,6 +5,7 @@ import React, {
   useCallback,
   CSSProperties,
   useMemo,
+  useReducer,
 } from 'react';
 import {
   differenceInMinutes,
@@ -19,6 +20,7 @@ import { Form, Schema, Options } from '../Form';
 import { SectionBar } from '../../ComponentsLibrary/SectionBar';
 import { ConfirmDelete } from '../ConfirmDelete';
 import { Alert } from '../Alert';
+import { reducer, ACTIONS } from './reducer';
 import {
   roundNumber,
   timestamp,
@@ -36,7 +38,6 @@ import { PTO, TimeoffRequest } from '@kalos-core/kalos-rpc/TimeoffRequest';
 import { datePickerDefaultProps } from '@material-ui/pickers/constants/prop-types';
 import { ActivityLog } from '@kalos-core/kalos-rpc/ActivityLog';
 import { InfoTable } from '../InfoTable';
-import { zhCN } from 'date-fns/esm/locale';
 import { TimeoffRequestType } from '@kalos-core/kalos-rpc/compiled-protos/timeoff_request_pb';
 export interface Props {
   loggedUserId: number;
@@ -59,78 +60,30 @@ export const TimeOff: FC<Props> = ({
   cancelLabel,
   submitDisabled,
 }) => {
-  const [initiated, setInitiated] = useState<boolean>(false);
-  const [deleting, setDeleting] = useState<boolean>(false);
-  const [deleted, setDeleted] = useState<boolean>(false);
-  const [saving, setSaving] = useState<boolean>(false);
-  const [typeOptions, setTypeOptions] = useState<Options>([]);
-  const [requestTypes, setRequestTypes] = useState<TimeoffRequestType[]>([]);
+  const [state, dispatch] = useReducer(reducer, {
+    initiated: false,
+    deleting: false,
+    deleted: false,
+    saving: false,
+    typeOptions: [],
+    requestTypes: [],
+    pto: undefined,
+    user: undefined,
+    openAlert: false,
+    alertDismissed: false,
+    ptoHistory: [],
+    loggedUser: undefined,
+    logData: [],
+    upcomingRequests: [],
+    formKey: 0,
+    error: '',
+    data: new TimeoffRequest(),
+  });
 
-  const [pto, setPto] = useState<PTO>();
-  const [ptoActualHours, setPtoActualHours] = useState<number>(0);
-  const [user, setUser] = useState<User>();
-  const [openAlert, setOpenAlert] = useState<boolean>(false);
-  const [alertDismissed, setAlertDismissed] = useState<boolean>(false);
-  const [upcomingRequests, setUpcomingRequests] = useState<TimeoffRequest[]>();
-  const [thisYearsPTOHistory, setthisYearsPTOHistory] = useState<
-    TimeoffRequest[]
-  >();
-  const [loggedUser, setLoggedUser] = useState<User>();
-  const [logData, setLogData] = useState<ActivityLog[]>();
-  const [formKey, setFormKey] = useState<number>(0);
-  const [error, setError] = useState<string>('');
-  const [data, setData] = useState<TimeoffRequest>(new TimeoffRequest());
-  const getTimeoffTotals = useCallback(
-    async (hireDate: string) => {
-      hireDate = hireDate.replace(/-/g, '/');
-      const today = new Date();
-      const startDay = new Date(hireDate);
-      const yearsToAdd = differenceInCalendarYears(today, startDay);
-      const adjustedStartDay = addYears(startDay, yearsToAdd - 1);
-      const adjustedEndDay = addYears(startDay, yearsToAdd);
-      const startDate = format(adjustedStartDay, 'yyyy-MM-dd');
-      const endDate = format(adjustedEndDay, 'yyyy-MM-dd');
-      const filter = {
-        technicianUserID: userId,
-        requestType: 9,
-        startDate: startDate,
-        endDate: endDate,
-        approved: true,
-      };
-      const results = (
-        await TimeoffRequestClientService.loadTimeoffRequests(filter)
-      ).getResultsList();
-      let total = 0;
-      for (let i = 0; i < results.length; i++) {
-        if (results[i].getAllDayOff() === 0) {
-          const timeFinished = results[i].getTimeFinished();
-          const timeStarted = results[i].getTimeStarted();
-          const subtotal = roundNumber(
-            differenceInMinutes(parseISO(timeFinished), parseISO(timeStarted)) /
-              60,
-          );
-
-          total += subtotal;
-        } else {
-          const timeFinished = results[i].getTimeFinished();
-          const timeStarted = results[i].getTimeStarted();
-          const numberOfDays =
-            differenceInBusinessDays(
-              parseISO(timeFinished),
-              parseISO(timeStarted),
-            ) + 1;
-          total += numberOfDays * 8;
-        }
-      }
-      return total;
-    },
-    [userId],
-  );
   const setSafeData = (data: TimeoffRequest) => {
     const temp = makeSafeFormObject(data, new TimeoffRequest());
-    console.log(temp);
     if (temp.getRequestType() === 9) {
-      if (pto && user) {
+      if (state.pto && state.user) {
         let hourDiff = 0;
         if (
           temp.getAllDayOff() === 1 &&
@@ -150,39 +103,42 @@ export const TimeOff: FC<Props> = ({
           const date2 = new Date(parseISO(temp.getTimeFinished()));
           hourDiff = differenceInHours(date2, date1);
         }
-        if (hourDiff > pto.getHoursAvailable()) {
-          setOpenAlert(true);
+        if (hourDiff > state.pto.getHoursAvailable()) {
+          dispatch({ type: ACTIONS.SET_OPEN_ALERT, data: true });
         } else {
           //we should reset it, if they created one that one was, but then incorrect
-          setAlertDismissed(false);
-          setOpenAlert(false);
+          dispatch({ type: ACTIONS.SET_ALERT_DISMISSED, data: false });
+
+          dispatch({ type: ACTIONS.SET_OPEN_ALERT, data: false });
         }
       }
     } else {
-      setAlertDismissed(false);
-      setOpenAlert(false);
+      dispatch({ type: ACTIONS.SET_ALERT_DISMISSED, data: false });
+      dispatch({ type: ACTIONS.SET_OPEN_ALERT, data: false });
     }
-
-    setData(temp);
+    dispatch({ type: ACTIONS.SET_DATA, data: temp });
   };
   const handleCloseAlert = () => {
-    setAlertDismissed(true);
-    setOpenAlert(false);
+    dispatch({ type: ACTIONS.SET_ALERT_DISMISSED, data: true });
+
+    dispatch({ type: ACTIONS.SET_OPEN_ALERT, data: false });
   };
   const emailClient = useMemo(() => new EmailClient(ENDPOINT), []);
   const init = useCallback(async () => {
     console.log('called init');
     const types = await TimeoffRequestClientService.getTimeoffRequestTypes();
-    setRequestTypes(types);
-    setTypeOptions(
-      types.map(t => ({ label: t.getRequestType(), value: t.getId() })),
-    );
+    dispatch({ type: ACTIONS.SET_REQUEST_TYPES, data: types });
+
+    dispatch({
+      type: ACTIONS.SET_TYPE_OPTIONS,
+      data: types.map(t => ({ label: t.getRequestType(), value: t.getId() })),
+    });
+
     if (!requestOffId) {
       const user = await UserClientService.loadUserById(userId || loggedUserId);
-      const ptoActualHours = await getTimeoffTotals(user.getHireDate());
-      setPtoActualHours(ptoActualHours);
-      setUser(user);
-      data.setDepartmentCode(user.getEmployeeDepartmentId());
+      dispatch({ type: ACTIONS.SET_USER, data: user });
+
+      state.data.setDepartmentCode(user.getEmployeeDepartmentId());
       const upcomingReq = new TimeoffRequest();
       upcomingReq.setUserId(user.getId());
       upcomingReq.setDateTargetList(['time_started', 'time_started']);
@@ -191,38 +147,40 @@ export const TimeOff: FC<Props> = ({
       upcomingReq.setDateRangeList(['>=', startDate, '<=', endDate]);
 
       upcomingReq.setIsActive(1);
-      setUpcomingRequests(
-        (
+      dispatch({
+        type: ACTIONS.SET_UPCOMING_REQUESTS,
+        data: (
           await TimeoffRequestClientService.BatchGet(upcomingReq)
         ).getResultsList(),
-      );
+      });
       const ptoReq = new TimeoffRequest();
       ptoReq.setUserId(user.getId());
       ptoReq.setRequestType(9);
       ptoReq.setIsActive(1);
       ptoReq.setOrderBy('time_started');
       ptoReq.setOrderDir('DESC');
-      setthisYearsPTOHistory(
-        (await TimeoffRequestClientService.BatchGet(ptoReq)).getResultsList(),
-      );
+      dispatch({
+        type: ACTIONS.SET_PTO_HISTORY,
+        data: (
+          await TimeoffRequestClientService.BatchGet(ptoReq)
+        ).getResultsList(),
+      });
     }
     const pto = await TimeoffRequestClientService.PTOInquiry(
       userId || loggedUserId,
     );
-    setPto(pto);
+    dispatch({ type: ACTIONS.SET_PTO, data: pto });
 
     const loggedUser = await UserClientService.loadUserById(loggedUserId);
-    setLoggedUser(loggedUser);
+    dispatch({ type: ACTIONS.SET_LOGGED_USER, data: loggedUser });
     if (requestOffId) {
       const req = await TimeoffRequestClientService.getTimeoffRequestById(
         requestOffId,
       );
       if (req) {
         const userData = await UserClientService.loadUserById(req.getUserId());
-        setUser(userData);
-        const ptoActualHours = await getTimeoffTotals(userData.getHireDate());
-        setPtoActualHours(ptoActualHours);
-        data.setDepartmentCode(userData.getEmployeeDepartmentId());
+        dispatch({ type: ACTIONS.SET_USER, data: userData });
+        state.data.setDepartmentCode(userData.getEmployeeDepartmentId());
         const upcomingReq = new TimeoffRequest();
         upcomingReq.setUserId(userData.getId());
         upcomingReq.setDateTargetList(['time_started', 'time_started']);
@@ -231,30 +189,41 @@ export const TimeOff: FC<Props> = ({
         upcomingReq.setDateRangeList(['>=', startDate, '<=', endDate]);
 
         upcomingReq.setIsActive(1);
-        setUpcomingRequests(
-          (
+        dispatch({
+          type: ACTIONS.SET_UPCOMING_REQUESTS,
+          data: (
             await TimeoffRequestClientService.BatchGet(upcomingReq)
           ).getResultsList(),
-        );
+        });
         const ptoReq = new TimeoffRequest();
         ptoReq.setUserId(userData.getId());
         ptoReq.setRequestType(9);
         ptoReq.setIsActive(1);
         ptoReq.setOrderBy('time_started');
         ptoReq.setOrderDir('DESC');
-        setthisYearsPTOHistory(
-          (await TimeoffRequestClientService.BatchGet(ptoReq)).getResultsList(),
-        );
+        dispatch({
+          type: ACTIONS.SET_PTO_HISTORY,
+          data: (
+            await TimeoffRequestClientService.BatchGet(ptoReq)
+          ).getResultsList(),
+        });
       }
 
       const logReq = new ActivityLog();
       logReq.setTimeoffRequestId(requestOffId);
-      setLogData(
-        (await ActivityLogClientService.BatchGet(logReq)).getResultsList(),
-      );
+
+      dispatch({
+        type: ACTIONS.SET_LOG_DATA,
+        data: (
+          await ActivityLogClientService.BatchGet(logReq)
+        ).getResultsList(),
+      });
+
       if (!req) {
-        setDeleted(true);
-        setInitiated(true);
+        dispatch({ type: ACTIONS.SET_DELETED, data: true });
+
+        dispatch({ type: ACTIONS.SET_INITIATED, data: true });
+
         return;
       }
       if (req.getRequestType() === 9) {
@@ -284,16 +253,16 @@ export const TimeOff: FC<Props> = ({
           }
           console.log('hourDiff', hourDiff);
           if (hourDiff > pto.getHoursAvailable()) {
-            setOpenAlert(true);
+            dispatch({ type: ACTIONS.SET_OPEN_ALERT, data: true });
           } else {
             //we should reset it, if they created one that one was, but then incorrect
-            setAlertDismissed(false);
-            setOpenAlert(false);
+            dispatch({ type: ACTIONS.SET_ALERT_DISMISSED, data: false });
+            dispatch({ type: ACTIONS.SET_OPEN_ALERT, data: false });
           }
         }
       } else {
-        setAlertDismissed(false);
-        setOpenAlert(false);
+        dispatch({ type: ACTIONS.SET_ALERT_DISMISSED, data: false });
+        dispatch({ type: ACTIONS.SET_OPEN_ALERT, data: false });
       }
 
       if (!req.getAdminApprovalUserId()) {
@@ -303,41 +272,27 @@ export const TimeOff: FC<Props> = ({
           `${loggedUser.getFirstname()} ${loggedUser.getLastname()}`,
         );
       }
-      setData(req);
-      setFormKey(formKey + 1);
+      dispatch({ type: ACTIONS.SET_DATA, data: req });
+
+      dispatch({ type: ACTIONS.SET_FORM_KEY, data: state.formKey + 1 });
     } else {
-      setData(data);
-      setFormKey(formKey + 1);
+      dispatch({ type: ACTIONS.SET_FORM_KEY, data: state.formKey + 1 });
     }
-    setInitiated(true);
-  }, [
-    userId,
-    setPto,
-    requestOffId,
-    setData,
-    formKey,
-    setTypeOptions,
-    setDeleted,
-    setInitiated,
-    data,
-    setLoggedUser,
-    getTimeoffTotals,
-    setUser,
-    loggedUserId,
-  ]);
+    dispatch({ type: ACTIONS.SET_INITIATED, data: true });
+  }, [userId, state.data, requestOffId, state.formKey, loggedUserId]);
 
   useEffect(() => {
-    if (!initiated) {
+    if (!state.initiated) {
       init();
     }
-  }, [initiated, init]);
-  const toggleDeleting = useCallback(() => setDeleting(!deleting), [
-    deleting,
-    setDeleting,
-  ]);
+  }, [state.initiated, init]);
+  const toggleDeleting = useCallback(
+    () => dispatch({ type: ACTIONS.SET_DELETING, data: !state.deleting }),
+    [state.deleting],
+  );
   const handleSubmit = useCallback(
     async (formData: TimeoffRequest) => {
-      setError('');
+      dispatch({ type: ACTIONS.SET_ERROR, data: '' });
       const temp = makeSafeFormObject(formData, new TimeoffRequest());
 
       const requestType = temp.getRequestType();
@@ -346,33 +301,36 @@ export const TimeOff: FC<Props> = ({
       if (temp.getAllDayOff() === null) {
         temp.setAllDayOff(0);
       }
-      const userId = user?.getId();
+      const userId = state.user!.getId();
       if (timeFinished < timeStarted) {
-        setError('End Time cannot be before Start Time');
+        dispatch({
+          type: ACTIONS.SET_ERROR,
+          data: 'End Time cannot be before Start Time',
+        });
+
         return;
       }
-      setSaving(true);
+      dispatch({ type: ACTIONS.SET_SAVING, data: true });
       temp.setUserId(userId!);
 
       temp.setUserApprovalDatetime(timestamp());
       let newData = new TimeoffRequest();
-      console.log({ temp });
-      console.log({ data });
-      if (loggedUser!.getIsAdmin()) {
+
+      if (state.loggedUser!.getIsAdmin()) {
         temp.setRequestStatus(1);
         temp.setAdminApprovalDatetime(timestamp(true));
         temp.setReviewedBy(
-          `${loggedUser!.getFirstname()} ${loggedUser!.getLastname()}`,
+          `${state.loggedUser!.getFirstname()} ${state.loggedUser!.getLastname()}`,
         );
       }
-      if (data.getId() === 0 || data.getId().toString() === '') {
+      if (state.data.getId() === 0 || state.data.getId().toString() === '') {
         console.log('create');
         newData = await TimeoffRequestClientService.Create(temp);
       } else {
         console.log('update');
         newData = await TimeoffRequestClientService.Update(temp);
       }
-      const typeName = typeOptions.find(
+      const typeName = state.typeOptions.find(
         //@ts-ignore
         (val: { label: string; value: number }) => {
           if (val.value === +requestType) {
@@ -388,7 +346,7 @@ export const TimeOff: FC<Props> = ({
         const manager = await UserClientService.GetUserManager(req);
 
         const emailBody = getTimeoffRequestEmail(
-          `${user?.getFirstname()} ${user?.getLastname()}`,
+          `${state.user?.getFirstname()} ${state.user?.getLastname()}`,
           getTimeoffTimestamp(
             newData.getTimeStarted(),
             newData.getTimeFinished(),
@@ -418,37 +376,33 @@ export const TimeOff: FC<Props> = ({
         newData.getAdminApprovalUserId() != 0
       ) {
         newLog.setActivityName(
-          `Created and Approved by ${loggedUser?.getFirstname()} ${loggedUser?.getLastname()} ${
-            alertDismissed ? ', Exceeding PTO Alert Dismissed' : ''
+          `Created and Approved by ${state.loggedUser?.getFirstname()} ${state.loggedUser?.getLastname()} ${
+            state.alertDismissed ? ', Exceeding PTO Alert Dismissed' : ''
           }`,
         );
       } else {
         newLog.setActivityName(
-          `Created by ${loggedUser?.getFirstname()} ${loggedUser?.getLastname()} ${
-            alertDismissed ? ', Exceeding PTO Alert Dismissed' : ''
+          `Created by ${state.loggedUser?.getFirstname()} ${state.loggedUser?.getLastname()} ${
+            state.alertDismissed ? ', Exceeding PTO Alert Dismissed' : ''
           }`,
         );
       }
       await ActivityLogClientService.Create(newLog);
-      setData(newData);
-      setFormKey(formKey + 1);
-      setSaving(false);
+      dispatch({ type: ACTIONS.SET_DATA, data: newData });
+      dispatch({ type: ACTIONS.SET_FORM_KEY, data: state.formKey + 1 });
+      dispatch({ type: ACTIONS.SET_SAVING, data: false });
       onSaveOrDelete(newData);
     },
     [
       emailClient,
-      typeOptions,
-      user,
-      alertDismissed,
+      state.typeOptions,
+      state.user,
+      state.alertDismissed,
       onSaveOrDelete,
-      setSaving,
-      setData,
-      setError,
-      loggedUser,
-      setFormKey,
-      formKey,
+      state.loggedUser,
+      state.formKey,
       loggedUserId,
-      data,
+      state.data,
     ],
   );
 
@@ -456,11 +410,11 @@ export const TimeOff: FC<Props> = ({
     const req = new TimeoffRequest();
 
     req.setAdminApprovalUserId(loggedUserId);
-    req.setAdminApprovalDatetime(data.getAdminApprovalDatetime());
-    req.setId(data.getId());
-    req.setReviewedBy(data.getReviewedBy());
-    req.setAdminComments(data.getAdminComments());
-    req.setRequestStatus(data.getRequestStatus());
+    req.setAdminApprovalDatetime(state.data.getAdminApprovalDatetime());
+    req.setId(state.data.getId());
+    req.setReviewedBy(state.data.getReviewedBy());
+    req.setAdminComments(state.data.getAdminComments());
+    req.setRequestStatus(state.data.getRequestStatus());
     req.setFieldMaskList([
       'AdminApprovalUserId',
       'ReviewedBy',
@@ -470,16 +424,16 @@ export const TimeOff: FC<Props> = ({
     ]);
 
     let newData = new TimeoffRequest();
-    if (data.getId() === 0 || data.getId().toString() === '') {
+    if (state.data.getId() === 0 || state.data.getId().toString() === '') {
       newData = await TimeoffRequestClientService.Create(req);
     } else {
       newData = await TimeoffRequestClientService.Update(req);
       const emailBody = getTimeoffRequestStatusEmail(
-        `${loggedUser!.getFirstname()} ${loggedUser!.getLastname()}`,
+        `${state.loggedUser!.getFirstname()} ${state.loggedUser!.getLastname()}`,
         req.getAdminComments(),
         req.getRequestStatus() === 1 ? 'Approved' : 'Not Approved',
 
-        `${data.getTimeStarted()} -${data.getTimeFinished()}`,
+        `${state.data.getTimeStarted()} -${state.data.getTimeFinished()}`,
       );
 
       const newLog = new ActivityLog();
@@ -487,8 +441,8 @@ export const TimeOff: FC<Props> = ({
       newLog.setActivityName(
         `Updated with status ${
           req.getRequestStatus() === 1 ? 'Approved' : 'Not Approved'
-        } by ${loggedUser?.getFirstname()} ${loggedUser?.getLastname()} ${
-          alertDismissed ? ', Exceeding PTO Alert Dismissed' : ''
+        } by ${state.loggedUser?.getFirstname()} ${state.loggedUser?.getLastname()} ${
+          state.alertDismissed ? ', Exceeding PTO Alert Dismissed' : ''
         }`,
       );
       await ActivityLogClientService.Create(newLog);
@@ -497,37 +451,39 @@ export const TimeOff: FC<Props> = ({
         type: 'timeoff',
         subject: 'Timeoff Status Update',
         body: emailBody,
-        recipient: user!.getEmail(),
+        recipient: state.user!.getEmail(),
       };
       await emailClient.sendMail(config);
     }
-    setData(newData);
+    dispatch({ type: ACTIONS.SET_DATA, data: newData });
+
     if (onAdminSubmit) {
       onAdminSubmit(newData);
     }
   }, [
-    data,
+    state.data,
     onAdminSubmit,
     emailClient,
-    loggedUser,
-    alertDismissed,
-    user,
-    setData,
+    state.loggedUser,
+    state.alertDismissed,
+    state.user,
     loggedUserId,
   ]);
   const handleDelete = useCallback(async () => {
     if (requestOffId) {
-      setSaving(true);
+      dispatch({ type: ACTIONS.SET_SAVING, data: true });
       await TimeoffRequestClientService.deleteTimeoffRequestById(requestOffId);
-      setSaving(false);
-      onSaveOrDelete(data);
+      dispatch({ type: ACTIONS.SET_SAVING, data: false });
+      onSaveOrDelete(state.data);
     }
-  }, [requestOffId, setSaving, onSaveOrDelete, data]);
+  }, [requestOffId, onSaveOrDelete, state.data]);
   const isAdmin =
-    loggedUser &&
-    loggedUser.getPermissionGroupsList().find(p => p.getType() === 'role');
-  const disabled = !(data.getId() && isAdmin);
-  const disabledAdmin = disabled || !!data.getAdminApprovalUserId();
+    state.loggedUser &&
+    state.loggedUser
+      .getPermissionGroupsList()
+      .find(p => p.getType() === 'role');
+  const disabled = !(state.data.getId() && isAdmin);
+  const disabledAdmin = disabled || !!state.data.getAdminApprovalUserId();
   const schema: Schema<TimeoffRequest> = [
     [
       {
@@ -584,7 +540,7 @@ export const TimeOff: FC<Props> = ({
             value: 0,
             label: OPTION_BLANK,
           },
-          ...typeOptions,
+          ...state.typeOptions,
         ],
       },
       {
@@ -641,12 +597,12 @@ export const TimeOff: FC<Props> = ({
     ],
   ];
   const css: CSSProperties =
-    pto && user
-      ? pto.getHoursAvailable() > user.getAnnualHoursPto()
+    state.pto && state.user
+      ? state.pto.getHoursAvailable() > state.user.getAnnualHoursPto()
         ? { color: '#d22' }
         : {}
       : {};
-  if (deleted)
+  if (state.deleted)
     return (
       <SectionBar
         title={'Request Time Off '}
@@ -656,44 +612,45 @@ export const TimeOff: FC<Props> = ({
   return (
     <>
       <Form<TimeoffRequest>
-        key={formKey}
-        data={data}
+        key={state.formKey}
+        data={state.data}
         onClose={onCancel}
         onChange={setSafeData}
-        onSave={data.getId() ? toggleDeleting : handleSubmit}
+        onSave={state.data.getId() ? toggleDeleting : handleSubmit}
         schema={schema}
         title={
-          user?.getFirstname()
+          state.user?.getFirstname()
             ? 'Request Time Off for ' +
-              user?.getFirstname() +
+              state.user?.getFirstname() +
               ' ' +
-              user?.getLastname()
+              state.user?.getLastname()
             : 'Request Time Off'
         }
         subtitle={
-          pto && user ? (
+          state.pto && state.user ? (
             <span>
-              PTO Remaining: <span style={css}>{pto.getHoursAvailable()}</span>{' '}
-              of <span style={css}>{user.getAnnualHoursPto()}</span>
+              PTO Remaining:{' '}
+              <span style={css}>{state.pto.getHoursAvailable()}</span> of{' '}
+              <span style={css}>{state.user.getAnnualHoursPto()}</span>
             </span>
           ) : null
         }
-        disabled={!initiated || saving}
-        submitLabel={data.getId() ? 'Delete' : 'Save'}
+        disabled={!state.initiated || state.saving}
+        submitLabel={state.data.getId() ? 'Delete' : 'Save'}
         cancelLabel={cancelLabel}
         submitDisabled={submitDisabled}
-        error={error}
+        error={state.error}
       />
-      {logData && logData.length >= 1 && (
+      {state.logData && state.logData.length >= 1 && (
         <InfoTable
           columns={[{ name: 'Log Entry' }, { name: 'Date' }]}
-          data={logData.map(log => [
+          data={state.logData.map(log => [
             { value: log.getActivityName() },
             { value: log.getActivityDate() },
           ])}
         />
       )}
-      {thisYearsPTOHistory && thisYearsPTOHistory.length >= 1 && (
+      {state.ptoHistory && state.ptoHistory.length >= 1 && (
         <div key="this year pto">
           <h2> PTO History</h2>
           <InfoTable
@@ -704,9 +661,9 @@ export const TimeOff: FC<Props> = ({
               { name: 'Status' },
               { name: 'Reviewer' },
             ]}
-            data={thisYearsPTOHistory.map(req => [
+            data={state.ptoHistory.map(req => [
               {
-                value: requestTypes
+                value: state.requestTypes
                   .find(type => type.getId() === req.getRequestType())
                   ?.getRequestType(),
               },
@@ -721,7 +678,7 @@ export const TimeOff: FC<Props> = ({
           />
         </div>
       )}
-      {upcomingRequests && upcomingRequests.length >= 1 && (
+      {state.upcomingRequests && state.upcomingRequests.length >= 1 && (
         <div key="upComing Requests">
           <h2>Upcoming Requests</h2>
           <InfoTable
@@ -732,9 +689,9 @@ export const TimeOff: FC<Props> = ({
               { name: 'Status' },
               { name: 'Reviewer' },
             ]}
-            data={upcomingRequests.map(req => [
+            data={state.upcomingRequests.map(req => [
               {
-                value: requestTypes
+                value: state.requestTypes
                   .find(type => type.getId() === req.getRequestType())
                   ?.getRequestType(),
               },
@@ -749,7 +706,7 @@ export const TimeOff: FC<Props> = ({
           />
         </div>
       )}
-      {deleting && (
+      {state.deleting && (
         <ConfirmDelete
           kind="this Request Off"
           name=""
@@ -760,9 +717,9 @@ export const TimeOff: FC<Props> = ({
       )}
       <Alert
         open={
-          openAlert &&
-          alertDismissed == false &&
-          data.getAdminApprovalUserId() == 0
+          state.openAlert &&
+          state.alertDismissed == false &&
+          state.data.getAdminApprovalUserId() == 0
         }
         onClose={handleCloseAlert}
         title="PTO Error"
