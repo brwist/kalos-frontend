@@ -4,7 +4,13 @@
         "@babel/preset-typescript"
     ],
     "plugins": [
-        "@babel/transform-runtime"
+        "@babel/transform-runtime",
+        [
+            "@babel/plugin-transform-react-jsx",
+            {
+                "runtime": "automatic"
+            }
+        ]
     ],
     "env": {
         "test": {

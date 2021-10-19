@@ -75,9 +75,8 @@ async function start() {
 
   try {
     const target = titleCase(process.argv[4].replace(/-/g, ''));
-    sh.exec(
-      `( yarn test --colors -w -grep ${target} --reporter-options consoleReporter=min,quiet=true & parcel modules/${target}/index.html; )`,
-    );
+    // yarn test --colors -w -grep ${target} --reporter-options consoleReporter=min,quiet=true &
+    sh.exec(`(  parcel modules/${target}/index.html; )`);
   } catch (err) {
     error(err);
     try {

@@ -24,6 +24,7 @@
   "devDependencies": {
     "@babel/core": "^7.7.7",
     "@babel/plugin-transform-modules-commonjs": "^7.14.5",
+    "@babel/plugin-transform-react-jsx": "^7.14.9",
     "@babel/plugin-transform-runtime": "^7.12.10",
     "@babel/polyfill": "^7.12.1",
     "@babel/preset-env": "^7.12.10",
@@ -33,6 +34,8 @@
     "@babel/register": "^7.14.5",
     "@babel/runtime": "^7.14.6",
     "@improbable-eng/grpc-web-node-http-transport": "^0.14.0",
+    "@parcel/transformer-less": "^2.0.0",
+    "@parcel/transformer-sass": "^2.0.0",
     "@react-pdf/unicode-properties": "^2.2.0",
     "@rollup/plugin-auto-install": "^2.0.0",
     "@rollup/plugin-commonjs": "^11.0.1",

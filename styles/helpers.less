@@ -39,23 +39,23 @@
 
 each(@flex-basis-range, {
   .basis-@{value} {
-    flex-basis: percentage(@value / 100);
+    flex-basis: (percentage(@value / 100));
   }
 })
 
 each(@height-width-range, {
   .w-@{value} {
-    width: percentage(@value / 100);
+    width: (percentage(@value / 100));
 
     &-sm {
       @media screen and (max-width: 768px) {
-        width: percentage(@value / 100);
+        width: (percentage(@value / 100));
       }
     }
 
     &-lg {
       @media screen and (min-width: 768px) {
-        width: percentage(@value / 100);
+        width: (percentage(@value / 100));
       }
     }
   }
@@ -63,17 +63,17 @@ each(@height-width-range, {
 
 each(@height-width-range, {
   .h-@{value} {
-    height: percentage(@value / 100);
+    height: (percentage(@value / 100));
 
     &-sm {
       @media screen and (max-width: 768px) {
-        height: percentage(@value / 100);
+        height: (percentage(@value / 100));
       }
     }
 
     &-lg {
       @media screen and (min-width: 768px) {
-        height: percentage(@value / 100);
+        height: (percentage(@value / 100));
       }
     }
   }
