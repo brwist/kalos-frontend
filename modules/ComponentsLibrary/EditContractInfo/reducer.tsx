@@ -127,7 +127,7 @@ export const reducer = (state: State, action: Action) => {
     case ACTIONS.SET_INVOICE_ID: {
       return {
         ...state,
-        isInvoiceNew: action.data,
+        invoiceId: action.data,
       };
     }
     default:
