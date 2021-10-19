@@ -556,10 +556,7 @@ export const EditContractInfo: FC<props> = ({
       </SectionBar>
       <SectionBar
         title="Invoice Data"
-        actions={[
-          { label: 'Cancel', onClick: () => onClose() },
-          { label: 'Save', onClick: () => validateForSave() },
-        ]}
+        actions={[{ label: 'Cancel', onClick: () => onClose() }]}
       >
         <EditInvoiceData
           userId={userID}
