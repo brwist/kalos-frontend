@@ -313,7 +313,6 @@ export const EditContractInfo: FC<props> = ({
         (reqContract.getGroupBilling() as any) === 'Group' ? 1 : 0,
       );
       reqContract.setFieldMaskList(['Properties', 'GroupBilling']);
-      console.log('contract: ', reqContract);
 
       switch (reqContract.getFrequency()) {
         // @ts-expect-error
@@ -441,8 +440,6 @@ export const EditContractInfo: FC<props> = ({
       cleanup();
     };
   }, [load, cleanup, state.isLoaded]);
-
-  console.log('STATE.INVOICE_DATA: ', state.invoiceData);
 
   return (
     <>
