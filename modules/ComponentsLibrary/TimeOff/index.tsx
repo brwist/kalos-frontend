@@ -200,6 +200,8 @@ export const TimeOff: FC<Props> = ({
       ptoReq.setUserId(user.getId());
       ptoReq.setRequestType(9);
       ptoReq.setIsActive(1);
+      ptoReq.setOrderBy('time_started');
+      ptoReq.setOrderDir('DESC');
       setthisYearsPTOHistory(
         (await TimeoffRequestClientService.BatchGet(ptoReq)).getResultsList(),
       );
@@ -238,6 +240,8 @@ export const TimeOff: FC<Props> = ({
         ptoReq.setUserId(userData.getId());
         ptoReq.setRequestType(9);
         ptoReq.setIsActive(1);
+        ptoReq.setOrderBy('time_started');
+        ptoReq.setOrderDir('DESC');
         setthisYearsPTOHistory(
           (await TimeoffRequestClientService.BatchGet(ptoReq)).getResultsList(),
         );
