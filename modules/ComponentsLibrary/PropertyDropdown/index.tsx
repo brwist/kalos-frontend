@@ -106,7 +106,14 @@ export const PropertyDropdown: FC<props> = ({
         key={state.isLoaded.toString()}
         error={state.error}
         title={state.error ? `An Error Occurred` : undefined}
-        data={{ propertyArray: state.propertiesSelected }}
+        data={{
+          // Passing this as a string instead of a Properties because this allows the data to
+          // get checked as it comes in, assuming it was selected (the two strings get compared in <Field /> in the form)
+          // @ts-ignore
+          propertyArray: state.propertiesSelected.map(property =>
+            property.getAddress(),
+          ),
+        }}
         schema={SCHEMA}
         onSave={propertiesSaved => onSave(propertiesSaved.propertyArray)}
         onClose={() => onClose(state.propertiesSelected)}
