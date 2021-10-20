@@ -224,16 +224,14 @@ export const EditContractInfo: FC<props> = ({
           .getProperties()
           .split(',')
           .forEach(async result => {
-            propertiesSelected.push(
-              ...propertiesRes.filter(property => {
-                return property.getId() === Number(result);
-              }),
-            );
+            const filtered = propertiesRes.filter(property => {
+              return property.getId() === Number(result);
+            });
+            filtered.forEach(f => propertiesSelected.push(f));
           });
-
         dispatch({
           type: ACTIONS.SET_PROPERTIES_SELECTED,
-          data: propertiesRes,
+          data: propertiesSelected,
         });
       } catch (err) {
         console.error(
@@ -302,9 +300,7 @@ export const EditContractInfo: FC<props> = ({
       if (state.propertiesSelected) {
         reqContract.setProperties(
           state.propertiesSelected
-            .map(property => {
-              return `${property.getId()}`;
-            })
+            .map(property => `${property.getId()}`)
             .join(','),
         );
       }

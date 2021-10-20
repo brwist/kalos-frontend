@@ -295,7 +295,6 @@ export const Field: <T>(
           let newValue = type === 'number' ? +value : value;
           if (type === 'date') {
             newValue = (newValue + ' ' + dateTimePart).trim();
-            console.log({ newValue });
           }
           onChange(newValue);
         }
@@ -818,13 +817,6 @@ export const Field: <T>(
                 const Icon = isStringOption
                   ? undefined
                   : (option as Option).icon;
-                console.log('value: ', value);
-                console.log('value option: ', valueOption);
-                console.log(
-                  'Value.indexOf(ValueOption): ',
-                  // @ts-ignore
-                  value.indexOf(valueOption),
-                );
                 return (
                   <MenuItem
                     key={valueOption}

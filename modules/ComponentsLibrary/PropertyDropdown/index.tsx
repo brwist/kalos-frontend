@@ -111,7 +111,7 @@ export const PropertyDropdown: FC<props> = ({
           // get checked as it comes in, assuming it was selected (the two strings get compared in <Field /> in the form)
           // @ts-ignore
           propertyArray: state.propertiesSelected.map(property =>
-            property.getAddress(),
+            property.getAddress ? property.getAddress() : property,
           ),
         }}
         schema={SCHEMA}
