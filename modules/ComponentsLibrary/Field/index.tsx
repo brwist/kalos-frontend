@@ -8,9 +8,9 @@ import React, {
   useRef,
   CSSProperties,
   RefObject,
-  ForwardedRef,
   forwardRef,
   JSXElementConstructor,
+  Ref,
 } from 'react';
 import clsx from 'clsx';
 import { SvgIconProps } from '@material-ui/core/SvgIcon';
@@ -114,7 +114,7 @@ export interface Props<T> extends SchemaProps<T> {
   style?: CSSProperties;
   compact?: boolean;
   white?: boolean;
-  ref?: RefObject<T> | ForwardedRef<T>;
+  ref?: RefObject<T> | Ref<T>;
 }
 
 export const getDefaultValueByType = (type: Type) => {
