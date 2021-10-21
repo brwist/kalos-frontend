@@ -30,6 +30,7 @@ import { format } from 'date-fns';
 import { Invoice } from '@kalos-core/kalos-rpc/Invoice';
 import { Loader } from '../../Loader/main';
 import { Alert } from '../Alert';
+import { Event } from '@kalos-core/kalos-rpc/Event';
 
 export interface Output {
   contractData: Contract;
@@ -64,6 +65,7 @@ export const EditContractInfo: FC<props> = ({
     error: undefined,
     fatalError: false,
     invoiceId: -1,
+    contractEvent: new Event(),
   });
 
   const CONTRACT_SCHEMA: Schema<Contract> = [

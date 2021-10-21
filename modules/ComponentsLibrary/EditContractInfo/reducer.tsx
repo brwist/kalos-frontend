@@ -1,4 +1,5 @@
 import { Contract } from '@kalos-core/kalos-rpc/Contract';
+import { Event } from '@kalos-core/kalos-rpc/Event';
 import { Invoice } from '@kalos-core/kalos-rpc/Invoice';
 import { Property } from '@kalos-core/kalos-rpc/Property';
 
@@ -12,6 +13,7 @@ export type State = {
   error: string | undefined;
   fatalError: boolean; // Contract does not exist, etc.
   invoiceId: number;
+  contractEvent: Event; // Corresponding event for the contract that must be kept in sync with updates
 };
 
 export enum ACTIONS {
@@ -24,6 +26,7 @@ export enum ACTIONS {
   SET_ERROR = 'setError',
   SET_FATAL_ERROR = 'setUnrecoverableError',
   SET_INVOICE_ID = 'setInvoiceId',
+  SET_CONTRACT_EVENT = 'setContractEvent',
 }
 
 export enum FREQUENCIES {
@@ -72,6 +75,10 @@ export type Action =
   | {
       type: ACTIONS.SET_INVOICE_ID;
       data: number;
+    }
+  | {
+      type: ACTIONS.SET_CONTRACT_EVENT;
+      data: Event;
     };
 
 export const reducer = (state: State, action: Action) => {
@@ -128,6 +135,12 @@ export const reducer = (state: State, action: Action) => {
       return {
         ...state,
         invoiceId: action.data,
+      };
+    }
+    case ACTIONS.SET_CONTRACT_EVENT: {
+      return {
+        ...state,
+        contractEvent: action.data,
       };
     }
     default:
