@@ -243,15 +243,10 @@ export const TimeOff: FC<Props> = ({
             req.getTimeStarted() &&
             req.getTimeFinished()
           ) {
-            console.log(req.getTimeStarted());
-            console.log(req.getTimeFinished());
-
             const date1 = new Date(parseISO(req.getTimeStarted()));
             const date2 = new Date(parseISO(req.getTimeFinished()));
-            console.log('we are here', date1, date2);
             hourDiff = differenceInHours(date2, date1);
           }
-          console.log('hourDiff', hourDiff);
           if (hourDiff > pto.getHoursAvailable()) {
             dispatch({ type: ACTIONS.SET_OPEN_ALERT, data: true });
           } else {
@@ -317,6 +312,7 @@ export const TimeOff: FC<Props> = ({
       let newData = new TimeoffRequest();
 
       if (state.loggedUser!.getIsAdmin()) {
+        temp.setAdminApprovalUserId(loggedUserId);
         temp.setRequestStatus(1);
         temp.setAdminApprovalDatetime(timestamp(true));
         temp.setReviewedBy(
