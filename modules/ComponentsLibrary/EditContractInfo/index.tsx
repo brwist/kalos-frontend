@@ -40,7 +40,7 @@ export interface Output {
 interface props {
   userID: number;
   contractID: number;
-  onSaveStarted: (savedContract: Output) => any;
+  onSaveStarted?: (savedContract: Output) => any;
   onSaveFinished?: (savedContract: Output) => any;
   onClose: () => any;
   onChange?: (currentData: Output) => any;
@@ -49,8 +49,8 @@ interface props {
 export const EditContractInfo: FC<props> = ({
   userID,
   contractID,
-  onSaveStarted: onSave,
-  onSaveFinished: onSaved,
+  onSaveStarted,
+  onSaveFinished,
   onClose,
   onChange,
 }) => {
@@ -289,11 +289,12 @@ export const EditContractInfo: FC<props> = ({
 
   const save = useCallback(async () => {
     dispatch({ type: ACTIONS.SET_SAVING, data: true });
-    onSave({
-      contractData: state.contractData,
-      propertiesSelected: state.propertiesSelected,
-      invoiceData: state.invoiceData,
-    } as Output);
+    if (onSaveStarted)
+      onSaveStarted({
+        contractData: state.contractData,
+        propertiesSelected: state.propertiesSelected,
+        invoiceData: state.invoiceData,
+      } as Output);
     let contractRes: Contract | undefined;
     let error: string = '';
     try {
@@ -410,8 +411,8 @@ export const EditContractInfo: FC<props> = ({
       console.error(`An error occurred while upserting an invoice: ${err}`);
     }
     dispatch({ type: ACTIONS.SET_SAVING, data: false });
-    if (onSaved)
-      onSaved({
+    if (onSaveFinished)
+      onSaveFinished({
         contractData: state.contractData,
         propertiesSelected: state.propertiesSelected
           ? state.propertiesSelected
@@ -420,8 +421,8 @@ export const EditContractInfo: FC<props> = ({
       });
   }, [
     contractID,
-    onSave,
-    onSaved,
+    onSaveFinished,
+    onSaveStarted,
     state.contractData,
     state.invoiceData,
     state.invoiceId,
