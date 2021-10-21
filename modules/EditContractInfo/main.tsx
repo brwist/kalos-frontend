@@ -30,7 +30,7 @@ export const EditContractInfo: FC<props> = function NewContract({
 
   return (
     <PageWrapper userID={userID} withHeader>
-      <EditContract userID={userID} onSave={onSave} onClose={onClose} />
+      <EditContract userID={userID} onSaveStarted={onSave} onClose={onClose} />
     </PageWrapper>
   );
 };

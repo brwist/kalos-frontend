@@ -41,7 +41,7 @@ describe('ComponentsLibrary', () => {
         wrapper = Enzyme.mount(
           <EditContractInfo.EditContractInfo
             userID={8418}
-            onSave={() => {
+            onSaveStarted={() => {
               saves = true;
             }}
             onClose={() => {
