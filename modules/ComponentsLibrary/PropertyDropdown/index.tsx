@@ -11,12 +11,11 @@ import React, { useReducer, useEffect, useCallback, FC } from 'react';
 import { DevlogClientService, PropertyClientService } from '../../../helpers';
 import { Form, Schema } from '../Form';
 import { reducer, ACTIONS } from './reducer';
-import { Loader } from '../../Loader/main';
 
 interface props {
   userId: number;
-  onSave: (propertiesSaved: Property[]) => any;
-  onClose: (currentProperties?: Property[]) => any;
+  onSave?: (propertiesSaved: Property[]) => any; // For the future in case we need the onSave or onClose
+  onClose?: (currentProperties?: Property[]) => any;
   onChange?: (currentProperties?: Property[]) => any;
   initialPropertiesSelected?: Property[];
   loading?: boolean;
@@ -100,8 +99,8 @@ export const PropertyDropdown: FC<props> = ({
 
   return (
     <>
-      {!state.isLoaded && <Loader />}
       <Form<Properties>
+        disabled={!state.isLoaded}
         className="PropertyDropdown"
         key={state.isLoaded.toString()}
         error={state.error}
@@ -115,8 +114,12 @@ export const PropertyDropdown: FC<props> = ({
           ),
         }}
         schema={SCHEMA}
-        onSave={propertiesSaved => onSave(propertiesSaved.propertyArray)}
-        onClose={() => onClose(state.propertiesSelected)}
+        onSave={propertiesSaved => {
+          if (onSave) onSave(propertiesSaved.propertyArray);
+        }}
+        onClose={() => {
+          if (onClose) onClose(state.propertiesSelected);
+        }}
         onChange={(currentProperties: any) => {
           if (onChange)
             onChange(

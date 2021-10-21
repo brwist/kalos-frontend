@@ -535,15 +535,12 @@ export const EditContractInfo: FC<props> = ({
             verticalAlign: 'top',
           }}
         >
-          {state.isLoaded && (
+          {
             <PropertyDropdown
+              key={state.isLoaded.toString()}
               loading={!state.isLoaded}
               initialPropertiesSelected={state.propertiesSelected}
               userId={userID}
-              onSave={propertyData =>
-                console.log('Saving property data: ', propertyData)
-              }
-              onClose={() => {}}
               onChange={propertyData => {
                 dispatch({
                   type: ACTIONS.SET_PROPERTIES_SELECTED,
@@ -557,7 +554,7 @@ export const EditContractInfo: FC<props> = ({
                   } as Output);
               }}
             />
-          )}
+          }
         </div>
       </SectionBar>
       <SectionBar
@@ -574,6 +571,21 @@ export const EditContractInfo: FC<props> = ({
               data: makeSafeFormObject(savedInvoice, new Invoice()),
             });
             validateForSave();
+          }}
+          onLoad={loadedData => {
+            dispatch({
+              type: ACTIONS.SET_INVOICE_DATA,
+              data: loadedData,
+            });
+            if (onChange)
+              onChange({
+                contractData: state.contractData,
+                propertiesSelected:
+                  state.propertiesSelected !== undefined
+                    ? state.propertiesSelected
+                    : [],
+                invoiceData: state.invoiceData,
+              });
           }}
           onChange={currentData => {
             dispatch({
