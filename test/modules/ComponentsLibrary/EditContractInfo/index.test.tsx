@@ -40,6 +40,7 @@ describe('ComponentsLibrary', () => {
       before(() => {
         wrapper = Enzyme.mount(
           <EditContractInfo.EditContractInfo
+            contractID={1051}
             userID={8418}
             onSaveStarted={() => {
               saves = true;
@@ -343,6 +344,7 @@ describe('ComponentsLibrary', () => {
         it('contains an Edit Invoice Data component', () => {
           Chai.expect(
             wrapper.containsMatchingElement(
+              // @ts-expect-error
               <EditInvoiceDataModule.EditInvoiceData />,
             ),
           ).to.be.equal(true);

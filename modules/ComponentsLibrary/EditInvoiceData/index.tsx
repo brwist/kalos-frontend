@@ -16,12 +16,14 @@ interface props {
   userId: number;
   onClose: () => any;
   onSave: (savedInvoice: Invoice) => any;
+  onLoad?: (loadedInvoice: Invoice) => any;
   onChange?: (currentData: Invoice) => any;
 }
 
 export const EditInvoiceData: FC<props> = ({
   onClose,
   onSave,
+  onLoad,
   onChange,
   contractId,
   userId,
@@ -92,15 +94,17 @@ export const EditInvoiceData: FC<props> = ({
       req.setUserId(userId);
       let res = await InvoiceClientService.Get(req);
       dispatch({ type: ACTIONS.SET_INVOICE_DATA, data: res });
+      return res;
     } catch (err) {
       console.error(`An error occurred while getting an invoice: ${err}`);
     }
   }, [contractId, userId]);
 
   const load = useCallback(async () => {
-    await getInvoice();
+    const invoice = await getInvoice();
+    if (invoice && onLoad) onLoad(invoice);
     dispatch({ type: ACTIONS.SET_LOADED, data: true });
-  }, [getInvoice]);
+  }, [getInvoice, onLoad]);
 
   const cleanup = useCallback(() => {}, []);
 
