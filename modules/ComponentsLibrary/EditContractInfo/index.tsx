@@ -297,8 +297,8 @@ export const EditContractInfo: FC<props> = ({
       } as Output);
     let contractRes: Contract | undefined;
     let error: string = '';
+    let reqContract = state.contractData;
     try {
-      let reqContract = state.contractData;
       reqContract.setId(contractID);
       if (state.propertiesSelected !== undefined) {
         reqContract.setProperties(
@@ -363,6 +363,9 @@ export const EditContractInfo: FC<props> = ({
 
     try {
       let reqInvoice = new Invoice();
+      reqInvoice.setLogPaymentType(reqContract.getPaymentType());
+      reqInvoice.setLogPaymentStatus(reqContract.getPaymentStatus());
+      reqInvoice.setProperties(reqContract.getProperties());
       reqInvoice.setContractId(contractRes!.getId());
       reqInvoice.setServicesperformedrow1(
         state.invoiceData.getServicesperformedrow1(),
