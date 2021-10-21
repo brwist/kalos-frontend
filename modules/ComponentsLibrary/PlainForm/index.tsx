@@ -54,6 +54,8 @@ export type SchemaProps<T> = {
   displayEmpty?: boolean;
   forceShrinkLabel?: boolean;
   defaultLabel?: string;
+  minRows?: number;
+  maxRows?: number;
 };
 
 export type Schema<T> = SchemaProps<T>[][];

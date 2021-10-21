@@ -249,12 +249,16 @@ export const Request: FC<Props> = forwardRef(
             helperText: 'Used on Calendar',
             required: true,
             multiline: true,
+            minRows: 5,
+            maxRows: 5,
           },
           {
             label: 'Service Needed',
             name: 'getDescription',
             required: true,
             multiline: true,
+            minRows: 5,
+            maxRows: 5,
           },
           {
             label: 'Service Call Notes',
@@ -262,6 +266,8 @@ export const Request: FC<Props> = forwardRef(
             description: 'For internal use',
             helperText: 'For Internal Use',
             multiline: true,
+            minRows: 5,
+            maxRows: 5,
           },
         ],
         [
