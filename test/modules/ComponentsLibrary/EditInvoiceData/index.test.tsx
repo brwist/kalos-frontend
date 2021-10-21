@@ -65,7 +65,7 @@ describe('ComponentsLibrary', () => {
           });
         });
 
-        describe.only('Services Performed fields', () => {
+        describe('Services Performed fields', () => {
           describe('Services Performed (1) section', () => {
             it('should have a Services Performed (1) field for a description of the service performed', () => {
               Chai.expect(
