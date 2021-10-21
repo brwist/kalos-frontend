@@ -297,12 +297,14 @@ export const EditContractInfo: FC<props> = ({
     try {
       let reqContract = state.contractData;
       reqContract.setId(contractID);
-      if (state.propertiesSelected) {
+      if (state.propertiesSelected !== undefined) {
         reqContract.setProperties(
           state.propertiesSelected
             .map(property => `${property.getId()}`)
             .join(','),
         );
+      } else {
+        reqContract.setProperties('');
       }
       reqContract.setGroupBilling(
         // Casting to any because it is set in the form as a string
@@ -459,10 +461,7 @@ export const EditContractInfo: FC<props> = ({
             dispatch({ type: ACTIONS.SET_VALIDATING, data: false })
           }
           onConfirm={() => {
-            onSave({
-              contractData: state.contractData,
-              propertiesSelected: state.propertiesSelected,
-            } as Output);
+            save();
             dispatch({ type: ACTIONS.SET_VALIDATING, data: false });
           }}
         >
