@@ -452,7 +452,7 @@ export const EditContractInfo: FC<props> = ({
 
   return (
     <>
-      {state.isSaving || (!state.isLoaded && <Loader />)}
+      {state.isSaving || !state.isLoaded ? <Loader /> : undefined}
       {state.error && (
         <Alert
           title="Error"
