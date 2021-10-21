@@ -328,12 +328,6 @@ describe('ComponentsLibrary', () => {
           });
         });
 
-        describe('department dropdown', () => {
-          it('contains a department selector');
-
-          it('is a dropdown');
-        });
-
         describe('Property Dropdown', () => {
           it('contains a property dropdown', () => {
             Chai.expect(
