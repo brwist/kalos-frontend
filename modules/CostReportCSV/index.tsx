@@ -1,13 +1,13 @@
 import React from 'react';
 import ReactDOM from 'react-dom';
+import { CostReportCSV } from './main';
 import { UserClient } from '@kalos-core/kalos-rpc/User';
 import { ENDPOINT } from '../../constants';
-import { Timesheet } from './main';
+import { UserClientService } from '../../helpers';
 
-const u = new UserClient(ENDPOINT);
-u.GetToken('test', 'test').then(() => {
+UserClientService.GetToken('test', 'test').then(() => {
   ReactDOM.render(
-    <Timesheet userId={213} timesheetOwnerId={3490} />,
+    <CostReportCSV userID={8418} jobNumber={99775} />,
     document.getElementById('root'),
   );
 });

@@ -9,7 +9,7 @@ const u = new UserClient(ENDPOINT);
 u.GetToken('test', 'test').then(() => {
   ReactDOM.render(
     <AddTimeOff
-      loggedUserId={8418}
+      loggedUserId={213}
       onCancel={() => console.log('Cancel')}
       onSaveOrDelete={data => console.log('Save', data)}
     />,
