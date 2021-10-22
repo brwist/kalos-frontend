@@ -1545,9 +1545,9 @@
   integrity sha512-ZXRY4jNvVgSVQ8DL3LTcakaAtXwTVUxE81hslsyD2AtoXW/wVob10HkOJ1X/pAlcI7D+2YoZKg5do8G/w6RYgA==
 
 "@kalos-core/kalos-rpc@^3.3.7":
-  version "3.5.21"
-  resolved "https://registry.yarnpkg.com/@kalos-core/kalos-rpc/-/kalos-rpc-3.5.21.tgz#63d6e751a186241126fff732b000e2a4ebcd5ca0"
-  integrity sha512-mOMjgz2QM1Cf+qGMcOHWZafGfmeU80CUm7BjpjK7YgRK7Se8BuUn2AF3LMkc+TkSXWqGM5LTp45IjqOyqTEKIQ==
+  version "3.5.22"
+  resolved "https://registry.yarnpkg.com/@kalos-core/kalos-rpc/-/kalos-rpc-3.5.22.tgz#8563bf0b05130ae265f31c4d4f79fb8e3bd1a6ce"
+  integrity sha512-YZg9mO+ow1EMsS9YlOTDhb54atnmf1X2fyVcB4E8VnKivVHbswutS6kVe6vRpNPdnrvc1caWjO0GT3GN+qOYQQ==
   dependencies:
     "@improbable-eng/grpc-web" "^0.9.6"
     "@types/pako" "^1.0.1"
@@ -1750,9 +1750,9 @@
     "@types/yoga-layout" "^1.9.3"
 
 "@rollup/plugin-auto-install@^2.0.0":
-  version "2.1.0"
-  resolved "https://registry.npmjs.org/@rollup/plugin-auto-install/-/plugin-auto-install-2.1.0.tgz"
-  integrity sha512-c0oR8fkzzVVql27oLyqgzcidYpxqqkPcNd126LJneXepTw/6/1TEgCrn83BOFwrg/n4OcFAtHVtUMM0qkkj/ow==
+  version "2.2.0"
+  resolved "https://registry.yarnpkg.com/@rollup/plugin-auto-install/-/plugin-auto-install-2.2.0.tgz#d246c2924fdf475a2c0340b60237b8f4ab952662"
+  integrity sha512-/CZWXfBUbu6livQdjViMmPkm/WEhhrHFL9oRKfgzyXQalThkyk1XvYBNZK81X2ZApXUytd2sbHEPN0Q4ZvrZ0A==
 
 "@rollup/plugin-commonjs@^11.0.1":
   version "11.1.0"
@@ -1959,10 +1959,15 @@
   resolved "https://registry.npmjs.org/@types/google-protobuf/-/google-protobuf-3.15.5.tgz"
   integrity sha512-6bgv24B+A2bo9AfzReeg5StdiijKzwwnRflA8RLd1V4Yv995LeTmo0z69/MPbBDFSiZWdZHQygLo/ccXhMEDgw==
 
-"@types/google.maps@*", "@types/google.maps@3.45.6", "@types/google.maps@^3.45.6":
+"@types/google.maps@*", "@types/google.maps@3.45.6":
   version "3.45.6"
   resolved "https://registry.yarnpkg.com/@types/google.maps/-/google.maps-3.45.6.tgz#441a7bc76424243b307596fc8d282a435a979ebd"
   integrity sha512-BzGzxs8UXFxeP8uN/0nRgGbsbpYQxSCKsv/7S8OitU7wwhfFcqQSm5aAcL1nbwueMiJ/VVmIZKPq69s0kX5W+Q==
+
+"@types/google.maps@^3.45.6":
+  version "3.46.0"
+  resolved "https://registry.yarnpkg.com/@types/google.maps/-/google.maps-3.46.0.tgz#32061ffb918879517a96950855c132d909fbc5b5"
+  integrity sha512-TvrN/+XkDSblCrkx9bJXSrYOrDeUgiPl1ec215vv4mYBuvU3YOAq0XVB32dV6r7ySctqJO1M7aEgVJsJZOgrmQ==
 
 "@types/googlemaps@^3.0.0":
   version "3.43.3"
@@ -8644,9 +8649,9 @@ react-test-renderer@^17.0.0, react-test-renderer@^17.0.1:
     scheduler "^0.20.2"
 
 react-to-print@^2.6.3:
-  version "2.13.0"
-  resolved "https://registry.npmjs.org/react-to-print/-/react-to-print-2.13.0.tgz"
-  integrity sha512-JMX+HrMtBXWDh2ohPT2IeBkaGY4QpFeloXTXBA7hBK7dXJQei/UXMvQqbZHb0rqJwzAHltZ2zXevuSK/ReKI5w==
+  version "2.14.0"
+  resolved "https://registry.yarnpkg.com/react-to-print/-/react-to-print-2.14.0.tgz#376d83391928221e45f4fdf1f7fd02891fc3042d"
+  integrity sha512-R5EbtQY6tqch+Vwoo7hlZ5cZ5Ew81SYessW1Nyb9Uq5njWolwYWyJUh5X7AtGNhVWD6y4ZfyTN+1iW1tR5a84w==
   dependencies:
     prop-types "^15.7.2"
 
