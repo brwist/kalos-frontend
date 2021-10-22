@@ -260,12 +260,18 @@ export const ServiceCall: FC<Props> = props => {
             req.setIsResidential(1);
             req.setDateStarted(format(new Date(), 'yyyy-MM-dd'));
             req.setDateEnded(format(new Date(), 'yyyy-MM-dd'));
-            req.setTimeStarted(format(setMinutes(setHours(new Date(), 8), 0), 'HH:mm'));
-            req.setTimeEnded(format(setMinutes(setHours(new Date(), 18), 0), 'HH:mm'));
+            req.setTimeStarted(
+              format(setMinutes(setHours(new Date(), 8), 0), 'HH:mm'),
+            );
+            req.setTimeEnded(
+              format(setMinutes(setHours(new Date(), 18), 0), 'HH:mm'),
+            );
             const property = await PropertyClientService.loadPropertyByID(
               propertyId,
             );
-            req.setName(`${property.getAddress()} ${property.getCity()}, ${property.getState()} ${property.getZip()}`);
+            req.setName(
+              `${property.getAddress()} ${property.getCity()}, ${property.getState()} ${property.getZip()}`,
+            );
             setEntry(req);
             resolve();
           }),
@@ -320,11 +326,11 @@ export const ServiceCall: FC<Props> = props => {
     },
     [setConfirmedParentId],
   );
-const handleSaveInvoice = useCallback(async() => {
-  setPendingSave(true);
-  setRequestValid(true);
-  setSaveInvoice(true);
-},[setPendingSave, setRequestValid]);
+  const handleSaveInvoice = useCallback(async () => {
+    setPendingSave(true);
+    setRequestValid(true);
+    setSaveInvoice(true);
+  }, [setPendingSave, setRequestValid]);
   const handleSave = useCallback(async () => {
     setPendingSave(true);
     if (tabIdx !== 0) {
@@ -338,17 +344,16 @@ const handleSaveInvoice = useCallback(async() => {
     const temp = entry;
     let res = new Event();
     try {
-      if (serviceCallId){
+      if (serviceCallId) {
         console.log('saving existing ID');
         let activityName = `${temp.getLogJobNumber()} Edited Service Call`;
-        if(saveInvoice) {
+        if (saveInvoice) {
           console.log('saving invoice');
           temp.setIsGeneratedInvoice(saveInvoice);
           temp.addFieldMask('IsGeneratedInvoice');
           await EventClientService.Update(temp);
           activityName = activityName.concat(` and Invoice`);
-        }
-        else {
+        } else {
           await EventClientService.Update(temp);
         }
         const newActivity = new ActivityLog();
@@ -358,8 +363,10 @@ const handleSaveInvoice = useCallback(async() => {
         } else {
           activityName = activityName.concat(` (location services disabled)`);
           newActivity.setPropertyId(propertyId);
-          newActivity.setActivityDate(format(new Date(), 'yyyy-MM-dd HH:mm:ss'));
-          newActivity.setUserId(userID);
+          newActivity.setActivityDate(
+            format(new Date(), 'yyyy-MM-dd HH:mm:ss'),
+          );
+          newActivity.setUserId(loggedUserId);
           newActivity.setActivityName(activityName);
           await ActivityLogClientService.Create(newActivity);
         }
@@ -385,7 +392,7 @@ const handleSaveInvoice = useCallback(async() => {
         }
         newActivity.setPropertyId(propertyId);
         newActivity.setActivityDate(format(new Date(), 'yyyy-MM-dd HH:mm:ss'));
-        newActivity.setUserId(userID);
+        newActivity.setUserId(loggedUserId);
         newActivity.setActivityName(activityName);
         await ActivityLogClientService.Create(newActivity);
       }
