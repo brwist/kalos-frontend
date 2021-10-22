@@ -1099,67 +1099,69 @@ export const CostReportCSV: FC<Props> = ({ serviceCallId, onClose }) => {
                 />
                 <div key="CostSummary">
                   <InfoTable
-                    columns={[{ name: 'Type' }, { name: 'Total' }]}
+                    columns={[
+                      { name: 'Type', align: 'left' },
+                      { name: 'Total', align: 'left' },
+                      { name: '', align: 'right' },
+                    ]}
                     data={[
                       [
                         {
-                          value: 'Total Hours Worked',
-                        },
-
-                        {
-                          value:
-                            state.totalHoursWorked > 1
-                              ? `${state.totalHoursWorked} hrs`
-                              : state.totalHoursWorked == 0
-                              ? 'None'
-                              : `${state.totalHoursWorked} hr`,
-                        },
-                        {
                           value: (
-                            <table key="LaborTypesContainer">
-                              <Collapse
-                                key={'LaborCollapseTypes'}
-                                in={state.laborTotalsDropDownActive === true}
-                              >
-                                {state.classCodes.map(code => {
-                                  let findAccount = code.getId();
-                                  if (state.laborTotals[findAccount]) {
-                                    return (
-                                      <tr key={'laborValue' + findAccount}>
-                                        {code.getDescription()}
-                                      </tr>
-                                    );
-                                  }
-                                })}
-                              </Collapse>
-                            </table>
+                            <div key="laborheader">
+                              Total Hours Worked
+                              <table key="LaborTypesContainer">
+                                <Collapse
+                                  key={'LaborCollapseTypes'}
+                                  in={state.laborTotalsDropDownActive === true}
+                                >
+                                  {state.classCodes.map(code => {
+                                    let findAccount = code.getId();
+                                    if (state.laborTotals[findAccount]) {
+                                      return (
+                                        <tr key={'laborValue' + findAccount}>
+                                          {code.getDescription()}
+                                        </tr>
+                                      );
+                                    }
+                                  })}
+                                </Collapse>
+                              </table>
+                            </div>
                           ),
                         },
                         {
                           value: (
-                            <table key="LaborCollapseValueHeader">
-                              <Collapse
-                                key={'LaborCollapseValues'}
-                                in={state.laborTotalsDropDownActive === true}
-                              >
-                                {state.classCodes.map(code => {
-                                  let findAccount = code.getId();
-                                  if (state.laborTotals[findAccount]) {
-                                    return (
-                                      <tr
-                                        key={
-                                          'laborTotal' +
-                                          state.laborTotals[findAccount] +
-                                          code.getDescription()
-                                        }
-                                      >
-                                        {`${state.laborTotals[findAccount]}hour(s)`}
-                                      </tr>
-                                    );
-                                  }
-                                })}
-                              </Collapse>
-                            </table>
+                            <div key="laborTotalHeader">
+                              {state.totalHoursWorked > 1
+                                ? `${state.totalHoursWorked} hrs`
+                                : state.totalHoursWorked == 0
+                                ? 'None'
+                                : `${state.totalHoursWorked} hr`}
+                              <table key="LaborCollapseValueHeader">
+                                <Collapse
+                                  key={'LaborCollapseValues'}
+                                  in={state.laborTotalsDropDownActive === true}
+                                >
+                                  {state.classCodes.map(code => {
+                                    let findAccount = code.getId();
+                                    if (state.laborTotals[findAccount]) {
+                                      return (
+                                        <tr
+                                          key={
+                                            'laborTotal' +
+                                            state.laborTotals[findAccount] +
+                                            code.getDescription()
+                                          }
+                                        >
+                                          {`${state.laborTotals[findAccount]} hour(s)`}
+                                        </tr>
+                                      );
+                                    }
+                                  })}
+                                </Collapse>
+                              </table>
+                            </div>
                           ),
                         },
                         {
@@ -1275,23 +1277,33 @@ export const CostReportCSV: FC<Props> = ({ serviceCallId, onClose }) => {
                           ),
                         },
                       ],
-                      [{ value: 'Meals' }, { value: usd(totalMeals) }],
-                      [{ value: 'Lodging' }, { value: usd(totalLodging) }],
+                      [
+                        { value: 'Meals' },
+                        { value: usd(totalMeals) },
+                        { value: '' },
+                      ],
+                      [
+                        { value: 'Lodging' },
+                        { value: usd(totalLodging) },
+                        { value: '' },
+                      ],
                       [
                         { value: 'Tasks Billable' },
                         { value: usd(totalTasksBillable) },
+                        { value: '' },
                       ],
                       [
                         { value: 'Trips Total' },
                         { value: usd(state.tripsTotal) },
+                        { value: '' },
                       ],
                       [
                         {
-                          value: <strong key="stronk">TOTAL:</strong>,
+                          value: <strong key="stronk1">TOTAL:</strong>,
                         },
                         {
                           value: (
-                            <strong key="stronk">
+                            <strong key="stronk2">
                               TOTAL:
                               {usd(
                                 totalMeals +
@@ -1302,6 +1314,7 @@ export const CostReportCSV: FC<Props> = ({ serviceCallId, onClose }) => {
                             </strong>
                           ),
                         },
+                        { value: '' },
                       ],
                     ]}
                   />
