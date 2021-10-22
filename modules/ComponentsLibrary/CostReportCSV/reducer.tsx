@@ -5,6 +5,7 @@ import { Event } from '@kalos-core/kalos-rpc/Event';
 import { Trip } from '@kalos-core/kalos-rpc/compiled-protos/perdiem_pb';
 import { Task } from '@kalos-core/kalos-rpc/Task';
 import { TransactionAccount } from '@kalos-core/kalos-rpc/TransactionAccount';
+import { ClassCode, ClassCodeClient } from '@kalos-core/kalos-rpc/ClassCode';
 
 export type State = {
   loading: boolean;
@@ -14,6 +15,7 @@ export type State = {
   transactions: Transaction[];
   lodgings: { [key: number]: number };
   costCenterTotals: { [key: string]: number };
+  laborTotals: { [key: string]: number };
   transactionAccounts: TransactionAccount[];
   totalHoursWorked: number;
   loadedInit: boolean;
@@ -22,9 +24,11 @@ export type State = {
   trips: Trip[];
   tripsTotal: number;
   tasks: Task[];
+  classCodes: ClassCode[];
   dropDowns: { perDiemId: number; active: number }[];
   activeTab: string;
   costCenterDropDownActive: boolean;
+  laborTotalsDropDownActive: boolean;
   printStatus: 'idle' | 'loading' | 'loaded' | undefined;
 };
 
@@ -38,6 +42,7 @@ export enum ACTIONS {
   SET_TOTAL_HOURS_WORKED = 'setTotalHoursWorked',
   SET_LOADED_INIT = 'setLoadedInit',
   SET_EVENT = 'setEvent',
+  SET_CLASS_CODES = 'setClassCodes',
   SET_COST_CENTER_TOTALS = 'setCostCenterTotals',
   SET_LOADING = 'setLoading',
   SET_TRIPS = 'setTrips',
@@ -45,6 +50,8 @@ export enum ACTIONS {
   SET_TASKS = 'setTasks',
   SET_DROPDOWNS = 'setDropDowns',
   SET_COST_CENTER_DROPDOWN_ACTIVE = 'setCostCenterDropdownActive',
+  SET_LABOR_TOTALS_DROPDOWN_ACTIVE = 'setLaborTotalsDropdownActive',
+  SET_LABOR_TOTALS = 'setLaborTotals',
   SET_ACTIVE_TAB = 'setActiveTab',
   SET_PRINT_STATUS = 'setPrintStatus',
   SET_TRANSACTION_ACCOUNTS = 'setTransactionAccounts',
@@ -54,14 +61,17 @@ export type Action =
   | { type: ACTIONS.SET_LOADED; data: boolean }
   | { type: ACTIONS.SET_LOADING; data: boolean }
   | { type: ACTIONS.SET_LOADING_EVENT; data: boolean }
+  | { type: ACTIONS.SET_CLASS_CODES; data: ClassCode[] }
   | { type: ACTIONS.SET_PER_DIEMS; data: PerDiem[] }
   | { type: ACTIONS.SET_TIMESHEETS; data: TimesheetLine[] }
   | { type: ACTIONS.SET_TRANSACTIONS; data: Transaction[] }
   | { type: ACTIONS.SET_LODGINGS; data: { [key: number]: number } }
   | { type: ACTIONS.SET_COST_CENTER_TOTALS; data: { [key: string]: number } }
+  | { type: ACTIONS.SET_LABOR_TOTALS; data: { [key: string]: number } }
   | { type: ACTIONS.SET_TOTAL_HOURS_WORKED; data: number }
   | { type: ACTIONS.SET_LOADED_INIT; data: boolean }
   | { type: ACTIONS.SET_COST_CENTER_DROPDOWN_ACTIVE; data: boolean }
+  | { type: ACTIONS.SET_LABOR_TOTALS_DROPDOWN_ACTIVE; data: boolean }
   | { type: ACTIONS.SET_EVENT; data: Event }
   | { type: ACTIONS.SET_TRIPS; data: Trip[] }
   | { type: ACTIONS.SET_TRANSACTION_ACCOUNTS; data: TransactionAccount[] }
@@ -121,6 +131,12 @@ export const reducer = (state: State, action: Action) => {
         costCenterTotals: action.data,
       };
     }
+    case ACTIONS.SET_LABOR_TOTALS: {
+      return {
+        ...state,
+        setLaborTotals: action.data,
+      };
+    }
     case ACTIONS.SET_TRANSACTION_ACCOUNTS: {
       return {
         ...state,
@@ -175,6 +191,12 @@ export const reducer = (state: State, action: Action) => {
         costCenterDropDownActive: action.data,
       };
     }
+    case ACTIONS.SET_LABOR_TOTALS_DROPDOWN_ACTIVE: {
+      return {
+        ...state,
+        laborTotalsDropDownActive: action.data,
+      };
+    }
     case ACTIONS.SET_ACTIVE_TAB: {
       return {
         ...state,
@@ -185,6 +207,12 @@ export const reducer = (state: State, action: Action) => {
       return {
         ...state,
         printStatus: action.data,
+      };
+    }
+    case ACTIONS.SET_CLASS_CODES: {
+      return {
+        ...state,
+        classCodes: action.data,
       };
     }
     default:
