@@ -13,7 +13,7 @@ export type State = {
   error: string | undefined;
   fatalError: boolean; // Contract does not exist, etc.
   invoiceId: number;
-  contractEvent: Event; // Corresponding event for the contract that must be kept in sync with updates
+  contractEvent: Event[]; // Corresponding event for the contract that must be kept in sync with updates
 };
 
 export enum ACTIONS {
@@ -78,7 +78,7 @@ export type Action =
     }
   | {
       type: ACTIONS.SET_CONTRACT_EVENT;
-      data: Event;
+      data: Event[];
     };
 
 export const reducer = (state: State, action: Action) => {
