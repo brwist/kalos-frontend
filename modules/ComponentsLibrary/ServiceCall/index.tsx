@@ -105,12 +105,10 @@ export const ServiceCall: FC<Props> = props => {
     [],
   );
   const [loggedUser, setLoggedUser] = useState<User>();
-  const [notificationEditing, setNotificationEditing] = useState<boolean>(
-    false,
-  );
-  const [notificationViewing, setNotificationViewing] = useState<boolean>(
-    false,
-  );
+  const [notificationEditing, setNotificationEditing] =
+    useState<boolean>(false);
+  const [notificationViewing, setNotificationViewing] =
+    useState<boolean>(false);
   const [projects, setProjects] = useState<Event[]>([]);
   const [parentId, setParentId] = useState<number | null>(null);
   const [confirmedParentId, setConfirmedParentId] = useState<number | null>(
@@ -170,9 +168,10 @@ export const ServiceCall: FC<Props> = props => {
     [setServicesRendered, serviceCallId],
   );
 
-  const handleSetError = useCallback((error: boolean) => setError(error), [
-    setError,
-  ]);
+  const handleSetError = useCallback(
+    (value: boolean) => setError(value),
+    [setError],
+  );
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -202,9 +201,8 @@ export const ServiceCall: FC<Props> = props => {
 
       promises.push(
         new Promise<void>(async resolve => {
-          const propertyEvents = await EventClientService.loadEventsByPropertyId(
-            propertyId,
-          );
+          const propertyEvents =
+            await EventClientService.loadEventsByPropertyId(propertyId);
           setPropertyEvents(propertyEvents);
           resolve();
         }),
@@ -228,7 +226,8 @@ export const ServiceCall: FC<Props> = props => {
 
       promises.push(
         new Promise<void>(async resolve => {
-          const jobTypeSubtypes = await JobTypeSubtypeClientService.loadJobTypeSubtypes();
+          const jobTypeSubtypes =
+            await JobTypeSubtypeClientService.loadJobTypeSubtypes();
           setJobTypeSubtypes(jobTypeSubtypes);
           resolve();
         }),
@@ -260,12 +259,18 @@ export const ServiceCall: FC<Props> = props => {
             req.setIsResidential(1);
             req.setDateStarted(format(new Date(), 'yyyy-MM-dd'));
             req.setDateEnded(format(new Date(), 'yyyy-MM-dd'));
-            req.setTimeStarted(format(setMinutes(setHours(new Date(), 8), 0), 'HH:mm'));
-            req.setTimeEnded(format(setMinutes(setHours(new Date(), 18), 0), 'HH:mm'));
+            req.setTimeStarted(
+              format(setMinutes(setHours(new Date(), 8), 0), 'HH:mm'),
+            );
+            req.setTimeEnded(
+              format(setMinutes(setHours(new Date(), 18), 0), 'HH:mm'),
+            );
             const property = await PropertyClientService.loadPropertyByID(
               propertyId,
             );
-            req.setName(`${property.getAddress()} ${property.getCity()}, ${property.getState()} ${property.getZip()}`);
+            req.setName(
+              `${property.getAddress()} ${property.getCity()}, ${property.getState()} ${property.getZip()}`,
+            );
             setEntry(req);
             resolve();
           }),
@@ -293,7 +298,7 @@ export const ServiceCall: FC<Props> = props => {
         setLoading(false);
       });
     } catch (e) {
-      handleSetError(e);
+      handleSetError(true);
       setLoaded(true);
       setLoading(false);
     }
@@ -320,11 +325,11 @@ export const ServiceCall: FC<Props> = props => {
     },
     [setConfirmedParentId],
   );
-const handleSaveInvoice = useCallback(async() => {
-  setPendingSave(true);
-  setRequestValid(true);
-  setSaveInvoice(true);
-},[setPendingSave, setRequestValid]);
+  const handleSaveInvoice = useCallback(async () => {
+    setPendingSave(true);
+    setRequestValid(true);
+    setSaveInvoice(true);
+  }, [setPendingSave, setRequestValid]);
   const handleSave = useCallback(async () => {
     setPendingSave(true);
     if (tabIdx !== 0) {
@@ -338,17 +343,16 @@ const handleSaveInvoice = useCallback(async() => {
     const temp = entry;
     let res = new Event();
     try {
-      if (serviceCallId){
+      if (serviceCallId) {
         console.log('saving existing ID');
         let activityName = `${temp.getLogJobNumber()} Edited Service Call`;
-        if(saveInvoice) {
+        if (saveInvoice) {
           console.log('saving invoice');
           temp.setIsGeneratedInvoice(saveInvoice);
           temp.addFieldMask('IsGeneratedInvoice');
           await EventClientService.Update(temp);
           activityName = activityName.concat(` and Invoice`);
-        }
-        else {
+        } else {
           await EventClientService.Update(temp);
         }
         const newActivity = new ActivityLog();
@@ -358,7 +362,9 @@ const handleSaveInvoice = useCallback(async() => {
         } else {
           activityName = activityName.concat(` (location services disabled)`);
           newActivity.setPropertyId(propertyId);
-          newActivity.setActivityDate(format(new Date(), 'yyyy-MM-dd HH:mm:ss'));
+          newActivity.setActivityDate(
+            format(new Date(), 'yyyy-MM-dd HH:mm:ss'),
+          );
           newActivity.setUserId(userID);
           newActivity.setActivityName(activityName);
           await ActivityLogClientService.Create(newActivity);
@@ -411,12 +417,12 @@ const handleSaveInvoice = useCallback(async() => {
   }, [
     entry,
     serviceCallId,
-    propertyId,
-    saveInvoice,
-    setSaving,
-    setLoading,
     onSave,
     onClose,
+    saveInvoice,
+    property,
+    propertyId,
+    userID,
     loadEntry,
     loadServicesRenderedData,
   ]);
