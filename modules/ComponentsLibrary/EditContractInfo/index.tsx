@@ -66,7 +66,7 @@ export const EditContractInfo: FC<props> = ({
     error: undefined,
     fatalError: false,
     invoiceId: -1,
-    contractEvent: [],
+    contractEvents: [],
   });
 
   const CONTRACT_SCHEMA: Schema<Contract> = [
@@ -222,7 +222,7 @@ export const EditContractInfo: FC<props> = ({
         throw new Error('No event / job exists for this contract.');
       } else {
         dispatch({
-          type: ACTIONS.SET_CONTRACT_EVENT,
+          type: ACTIONS.SET_CONTRACT_EVENTS,
           data: res.getResultsList(),
         });
       }
@@ -319,7 +319,7 @@ export const EditContractInfo: FC<props> = ({
 
     await getContractEvent();
 
-    console.log('result of contract event: ', state.contractEvent);
+    console.log('result of contract event: ', state.contractEvents);
 
     await getProperties(res);
 
@@ -334,7 +334,7 @@ export const EditContractInfo: FC<props> = ({
     getContract,
     getContractEvent,
     getProperties,
-    state.contractEvent,
+    state.contractEvents,
   ]);
 
   const saveContract = useCallback(async () => {
@@ -490,12 +490,12 @@ export const EditContractInfo: FC<props> = ({
   );
 
   const saveEvents = useCallback(async () => {
-    state.contractEvent.forEach(async (event) => {
+    state.contractEvents.forEach(async event => {
       try {
         let req = event;
         req.setFieldMaskList(['DepartmentId']);
-      
-        await EventClientService.Update(req)
+
+        await EventClientService.Update(req);
       } catch (err) {
         console.error(
           `An error occurred while updating an event with id ${event.getId()}: ${err}`,
@@ -514,7 +514,7 @@ export const EditContractInfo: FC<props> = ({
         }
       }
     });
-  }, []);
+  }, [state.contractEvents, userID]);
 
   const save = useCallback(async () => {
     dispatch({ type: ACTIONS.SET_SAVING, data: true });
