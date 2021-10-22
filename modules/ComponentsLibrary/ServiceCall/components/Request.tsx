@@ -33,7 +33,6 @@ interface Props {
   propertyEvents: Event[];
   jobTypeOptions: Option[];
   jobSubtypeOptions: Option[];
-  jobTypeSubtypes: JobTypeSubtype[];
   onChange: (serviceItem: Event) => void;
   onValid: (valid: boolean) => void;
   onInitSchema: (fields: string[]) => void;
@@ -48,7 +47,6 @@ export const Request: FC<Props> = forwardRef(
       disabled,
       jobTypeOptions,
       jobSubtypeOptions,
-      jobTypeSubtypes,
       onChange,
       onValid,
       onInitSchema,
@@ -111,9 +109,8 @@ export const Request: FC<Props> = forwardRef(
       ],
     );
     const handleSetValid = useCallback(() => {
-      onValid(true)}
-      ,[onValid]
-    );
+      onValid(true);
+    }, [onValid]);
     const callbackOriginalOptions: Option[] = useMemo(
       () => [
         { label: OPTION_BLANK, value: 0 },
@@ -123,7 +120,7 @@ export const Request: FC<Props> = forwardRef(
         })),
       ],
       [propertyEvents],
-    );
+    ); 
     const isCallback = serviceItem.getIsCallback();
     const SCHEMA: Schema<Event> = useMemo(
       () => [

@@ -12,6 +12,9 @@ import {
   DevlogClientService,
   EventClientService,
   InvoiceClientService,
+  JobSubtypeClientService,
+  JobTypeClientService,
+  JobTypeSubtypeClientService,
   makeSafeFormObject,
   PropertyClientService,
 } from '../../../helpers';
@@ -32,6 +35,8 @@ import { Invoice } from '@kalos-core/kalos-rpc/Invoice';
 import { Loader } from '../../Loader/main';
 import { Alert } from '../Alert';
 import { Event } from '@kalos-core/kalos-rpc/Event';
+import { Request } from '../ServiceCall/components/Request';
+import { OPTION_BLANK } from '../../../constants';
 
 export interface Output {
   contractData: Contract;
@@ -67,6 +72,9 @@ export const EditContractInfo: FC<props> = ({
     fatalError: false,
     invoiceId: -1,
     contractEvents: [],
+    jobTypes: [],
+    jobSubtypes: [],
+    jobTypeSubtypes: [],
   });
 
   const CONTRACT_SCHEMA: Schema<Contract> = [
@@ -285,6 +293,86 @@ export const EditContractInfo: FC<props> = ({
     [contractID, userID],
   );
 
+  const getJobTypes = useCallback(async () => {
+    try {
+      const jobTypes = await JobTypeClientService.loadJobTypes();
+      dispatch({ type: ACTIONS.SET_JOB_TYPES, data: jobTypes });
+    } catch (err) {
+      console.error(`An error occurred while getting job types: ${contractID}`);
+      dispatch({
+        type: ACTIONS.SET_ERROR,
+        data: `Job types failed to load: ${err}`,
+      });
+      try {
+        let devlog = new Devlog();
+        devlog.setUserId(userID);
+        devlog.setTimestamp(format(new Date(), 'yyyy-MM-dd hh:mm:ss'));
+        devlog.setIsError(1);
+        devlog.setDescription(
+          `An error occurred while getting job types: ${contractID}`,
+        );
+        await DevlogClientService.Create(devlog);
+      } catch (err) {
+        console.error('Failed to upload a devlog.');
+      }
+    }
+  }, [contractID, userID]);
+
+  const getJobSubtypes = useCallback(async () => {
+    try {
+      const jobSubtypes = await JobSubtypeClientService.loadJobSubtypes();
+      dispatch({ type: ACTIONS.SET_JOB_SUBTYPES, data: jobSubtypes });
+    } catch (err) {
+      console.error(
+        `An error occurred while getting job subtypes: ${contractID}`,
+      );
+      dispatch({
+        type: ACTIONS.SET_ERROR,
+        data: `Job subtypes failed to load: ${err}`,
+      });
+      try {
+        let devlog = new Devlog();
+        devlog.setUserId(userID);
+        devlog.setTimestamp(format(new Date(), 'yyyy-MM-dd hh:mm:ss'));
+        devlog.setIsError(1);
+        devlog.setDescription(
+          `An error occurred while getting job subtypes: ${contractID}`,
+        );
+        await DevlogClientService.Create(devlog);
+      } catch (err) {
+        console.error('Failed to upload a devlog.');
+      }
+    }
+  }, [contractID, userID]);
+
+  const getJobTypeSubtypes = useCallback(async () => {
+    try {
+      const jobTypeSubtypes =
+        await JobTypeSubtypeClientService.loadJobTypeSubtypes();
+      dispatch({ type: ACTIONS.SET_JOB_TYPE_SUBTYPES, data: jobTypeSubtypes });
+    } catch (err) {
+      console.error(
+        `An error occurred while getting job type subtypes: ${contractID}`,
+      );
+      dispatch({
+        type: ACTIONS.SET_ERROR,
+        data: `Job type subtypes failed to load: ${err}`,
+      });
+      try {
+        let devlog = new Devlog();
+        devlog.setUserId(userID);
+        devlog.setTimestamp(format(new Date(), 'yyyy-MM-dd hh:mm:ss'));
+        devlog.setIsError(1);
+        devlog.setDescription(
+          `An error occurred while getting job type subtypes: ${contractID}`,
+        );
+        await DevlogClientService.Create(devlog);
+      } catch (err) {
+        console.error('Failed to upload a devlog.');
+      }
+    }
+  }, [contractID, userID]);
+
   const doesInvoiceExistAlready = useCallback(async () => {
     try {
       let req = new Invoice();
@@ -319,9 +407,13 @@ export const EditContractInfo: FC<props> = ({
 
     await getContractEvent();
 
-    console.log('result of contract event: ', state.contractEvents);
-
     await getProperties(res);
+
+    await getJobTypes();
+
+    await getJobSubtypes();
+
+    await getJobTypeSubtypes();
 
     dispatch({
       type: ACTIONS.SET_INVOICE_ID,
@@ -333,8 +425,10 @@ export const EditContractInfo: FC<props> = ({
     doesInvoiceExistAlready,
     getContract,
     getContractEvent,
+    getJobSubtypes,
+    getJobTypeSubtypes,
+    getJobTypes,
     getProperties,
-    state.contractEvents,
   ]);
 
   const saveContract = useCallback(async () => {
@@ -717,6 +811,46 @@ export const EditContractInfo: FC<props> = ({
               });
           }}
         />
+      </SectionBar>
+      <SectionBar
+        title="Service Call"
+        actions={[{ label: 'Cancel', onClick: () => onClose() }]}
+      >
+        {/* ! Need to paginate events instead of just using first index */}
+        {/* The property events are not going to be needed as it is not a callback */}
+        {state.isLoaded && state.contractEvents.length > 0 && (
+          <Request
+            loading={!state.isLoaded}
+            disabled={false}
+            serviceItem={state.contractEvents[0]}
+            propertyEvents={[]}
+            jobTypeOptions={state.jobTypes.map(id => ({
+              label: id.getName(),
+              value: id.getId(),
+            }))}
+            jobSubtypeOptions={[
+              { label: OPTION_BLANK, value: 0 },
+              ...state.jobTypeSubtypes
+                .filter(
+                  jobTypeId =>
+                    jobTypeId.getJobTypeId() ===
+                    state.contractEvents[0].getJobTypeId(),
+                )
+                .map(jobSubtypeId => ({
+                  value: jobSubtypeId.getJobSubtypeId(),
+                  label:
+                    state.jobSubtypes
+                      .find(id => id.getId() === jobSubtypeId.getJobSubtypeId())
+                      ?.getName() || '',
+                })),
+            ]}
+            onChange={changed => console.log('Changed: ', changed)}
+            onValid={valid => console.log('Valid: ', valid)}
+            onInitSchema={initSchema =>
+              console.log('Init schema: ', initSchema)
+            }
+          />
+        )}
       </SectionBar>
     </>
   );

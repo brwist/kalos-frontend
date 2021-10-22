@@ -1,6 +1,9 @@
 import { Contract } from '@kalos-core/kalos-rpc/Contract';
 import { Event } from '@kalos-core/kalos-rpc/Event';
 import { Invoice } from '@kalos-core/kalos-rpc/Invoice';
+import { JobSubtype } from '@kalos-core/kalos-rpc/JobSubtype';
+import { JobType } from '@kalos-core/kalos-rpc/JobType';
+import { JobTypeSubtype } from '@kalos-core/kalos-rpc/JobTypeSubtype';
 import { Property } from '@kalos-core/kalos-rpc/Property';
 
 export type State = {
@@ -14,6 +17,9 @@ export type State = {
   fatalError: boolean; // Contract does not exist, etc.
   invoiceId: number;
   contractEvents: Event[]; // Corresponding event for the contract that must be kept in sync with updates
+  jobTypes: JobType[];
+  jobSubtypes: JobSubtype[];
+  jobTypeSubtypes: JobTypeSubtype[];
 };
 
 export enum ACTIONS {
@@ -27,6 +33,9 @@ export enum ACTIONS {
   SET_FATAL_ERROR = 'setUnrecoverableError',
   SET_INVOICE_ID = 'setInvoiceId',
   SET_CONTRACT_EVENTS = 'setContractEvents',
+  SET_JOB_TYPES = 'setJobTypes',
+  SET_JOB_SUBTYPES = 'setJobSubtypes',
+  SET_JOB_TYPE_SUBTYPES = 'setJobTypeSubtypes',
 }
 
 export enum FREQUENCIES {
@@ -79,6 +88,18 @@ export type Action =
   | {
       type: ACTIONS.SET_CONTRACT_EVENTS;
       data: Event[];
+    }
+  | {
+      type: ACTIONS.SET_JOB_TYPES;
+      data: JobType[];
+    }
+  | {
+      type: ACTIONS.SET_JOB_TYPE_SUBTYPES;
+      data: JobTypeSubtype[];
+    }
+  | {
+      type: ACTIONS.SET_JOB_SUBTYPES;
+      data: JobSubtype[];
     };
 
 export const reducer = (state: State, action: Action) => {
@@ -140,7 +161,25 @@ export const reducer = (state: State, action: Action) => {
     case ACTIONS.SET_CONTRACT_EVENTS: {
       return {
         ...state,
-        contractEvent: action.data,
+        contractEvents: action.data,
+      };
+    }
+    case ACTIONS.SET_JOB_TYPES: {
+      return {
+        ...state,
+        jobTypes: action.data,
+      };
+    }
+    case ACTIONS.SET_JOB_SUBTYPES: {
+      return {
+        ...state,
+        jobSubtypes: action.data,
+      };
+    }
+    case ACTIONS.SET_JOB_TYPE_SUBTYPES: {
+      return {
+        ...state,
+        jobTypeSubtypes: action.data,
       };
     }
     default:
