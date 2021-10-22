@@ -10,6 +10,7 @@ import React, { useReducer, useEffect, useCallback, FC } from 'react';
 import {
   ContractClientService,
   DevlogClientService,
+  EventClientService,
   InvoiceClientService,
   makeSafeFormObject,
   PropertyClientService,
@@ -65,7 +66,7 @@ export const EditContractInfo: FC<props> = ({
     error: undefined,
     fatalError: false,
     invoiceId: -1,
-    contractEvent: new Event(),
+    contractEvent: [],
   });
 
   const CONTRACT_SCHEMA: Schema<Contract> = [
@@ -211,6 +212,43 @@ export const EditContractInfo: FC<props> = ({
     return res;
   }, [contractID, userID]);
 
+  const getContractEvent = useCallback(async () => {
+    try {
+      let req = new Event();
+      req.setContractId(contractID);
+      req.setIsActive(1);
+      const res = await EventClientService.BatchGet(req);
+      if (res.getTotalCount() === 0) {
+        throw new Error('No event / job exists for this contract.');
+      } else {
+        dispatch({
+          type: ACTIONS.SET_CONTRACT_EVENT,
+          data: res.getResultsList(),
+        });
+      }
+    } catch (err) {
+      console.error(
+        `An error occurred while looking for an event with corresponding contract with id: ${contractID}`,
+      );
+      dispatch({
+        type: ACTIONS.SET_ERROR,
+        data: `The event for the contract with ID ${contractID} failed to load: ${err}`,
+      });
+      try {
+        let devlog = new Devlog();
+        devlog.setUserId(userID);
+        devlog.setTimestamp(format(new Date(), 'yyyy-MM-dd hh:mm:ss'));
+        devlog.setIsError(1);
+        devlog.setDescription(
+          `An error occurred while looking for an event with corresponding contract with id: ${contractID}`,
+        );
+        await DevlogClientService.Create(devlog);
+      } catch (err) {
+        console.error('Failed to upload a devlog.');
+      }
+    }
+  }, [contractID, userID]);
+
   const getProperties = useCallback(
     async (contract: Contract) => {
       let propertiesRes: Property[] = [];
@@ -279,6 +317,10 @@ export const EditContractInfo: FC<props> = ({
       return;
     }
 
+    await getContractEvent();
+
+    console.log('result of contract event: ', state.contractEvent);
+
     await getProperties(res);
 
     dispatch({
@@ -287,10 +329,15 @@ export const EditContractInfo: FC<props> = ({
     });
 
     dispatch({ type: ACTIONS.SET_LOADED, data: true });
-  }, [doesInvoiceExistAlready, getContract, getProperties]);
+  }, [
+    doesInvoiceExistAlready,
+    getContract,
+    getContractEvent,
+    getProperties,
+    state.contractEvent,
+  ]);
 
-  const save = useCallback(async () => {
-    dispatch({ type: ACTIONS.SET_SAVING, data: true });
+  const saveContract = useCallback(async () => {
     if (onSaveStarted)
       onSaveStarted({
         contractData: state.contractData,
@@ -363,58 +410,82 @@ export const EditContractInfo: FC<props> = ({
       return;
     }
 
-    try {
-      let reqInvoice = new Invoice();
-      reqInvoice.setLogPaymentType(reqContract.getPaymentType());
-      reqInvoice.setLogPaymentStatus(reqContract.getPaymentStatus());
-      reqInvoice.setProperties(reqContract.getProperties());
-      reqInvoice.setContractId(contractRes!.getId());
-      reqInvoice.setServicesperformedrow1(
-        state.invoiceData.getServicesperformedrow1(),
-      );
-      reqInvoice.setTotalamountrow1(
-        `${state.invoiceData.getTotalamountrow1()}`,
-      );
-      reqInvoice.setServicesperformedrow2(
-        state.invoiceData.getServicesperformedrow2(),
-      );
-      reqInvoice.setTotalamountrow2(
-        `${state.invoiceData.getTotalamountrow2()}`,
-      );
-      reqInvoice.setServicesperformedrow3(
-        state.invoiceData.getServicesperformedrow3(),
-      );
-      reqInvoice.setTotalamountrow3(
-        `${state.invoiceData.getTotalamountrow3()}`,
-      );
-      reqInvoice.setServicesperformedrow4(
-        state.invoiceData.getServicesperformedrow4(),
-      );
-      reqInvoice.setTotalamountrow4(
-        `${state.invoiceData.getTotalamountrow4()}`,
-      );
-      reqInvoice.setTotalamounttotal(
-        `${state.invoiceData.getTotalamounttotal()}`,
-      );
-      reqInvoice.setTerms(state.invoiceData.getTerms());
-      reqInvoice.setUserId(userID);
-      reqInvoice.setFieldMaskList([
-        'Totalamountrow1',
-        'Totalamountrow2',
-        'Totalamountrow3',
-        'Totalamountrow4',
-        'Totalamounttotal',
-      ]);
-      // don't forget to associate the invoice with the contract
-      if (state.invoiceId === -1) {
-        await InvoiceClientService.Create(reqInvoice);
-      } else {
-        reqInvoice.setId(state.invoiceId);
-        await InvoiceClientService.Update(reqInvoice);
+    return contractRes;
+  }, [
+    contractID,
+    onSaveStarted,
+    state.contractData,
+    state.invoiceData,
+    state.propertiesSelected,
+    userID,
+  ]);
+
+  const saveInvoice = useCallback(
+    async (contract: Contract) => {
+      try {
+        let reqInvoice = new Invoice();
+        reqInvoice.setLogPaymentType(contract.getPaymentType());
+        reqInvoice.setLogPaymentStatus(contract.getPaymentStatus());
+        reqInvoice.setProperties(contract.getProperties());
+        reqInvoice.setContractId(contract.getId());
+        reqInvoice.setServicesperformedrow1(
+          state.invoiceData.getServicesperformedrow1(),
+        );
+        reqInvoice.setTotalamountrow1(
+          `${state.invoiceData.getTotalamountrow1()}`,
+        );
+        reqInvoice.setServicesperformedrow2(
+          state.invoiceData.getServicesperformedrow2(),
+        );
+        reqInvoice.setTotalamountrow2(
+          `${state.invoiceData.getTotalamountrow2()}`,
+        );
+        reqInvoice.setServicesperformedrow3(
+          state.invoiceData.getServicesperformedrow3(),
+        );
+        reqInvoice.setTotalamountrow3(
+          `${state.invoiceData.getTotalamountrow3()}`,
+        );
+        reqInvoice.setServicesperformedrow4(
+          state.invoiceData.getServicesperformedrow4(),
+        );
+        reqInvoice.setTotalamountrow4(
+          `${state.invoiceData.getTotalamountrow4()}`,
+        );
+        reqInvoice.setTotalamounttotal(
+          `${state.invoiceData.getTotalamounttotal()}`,
+        );
+        reqInvoice.setTerms(state.invoiceData.getTerms());
+        reqInvoice.setUserId(userID);
+        reqInvoice.setFieldMaskList([
+          'Totalamountrow1',
+          'Totalamountrow2',
+          'Totalamountrow3',
+          'Totalamountrow4',
+          'Totalamounttotal',
+        ]);
+        if (state.invoiceId === -1) {
+          await InvoiceClientService.Create(reqInvoice);
+        } else {
+          reqInvoice.setId(state.invoiceId);
+          await InvoiceClientService.Update(reqInvoice);
+        }
+      } catch (err) {
+        console.error(`An error occurred while upserting an invoice: ${err}`);
       }
-    } catch (err) {
-      console.error(`An error occurred while upserting an invoice: ${err}`);
-    }
+    },
+    [state.invoiceData, state.invoiceId, userID],
+  );
+
+  const save = useCallback(async () => {
+    dispatch({ type: ACTIONS.SET_SAVING, data: true });
+
+    const contractResult = await saveContract();
+
+    if (!contractResult) return;
+
+    saveInvoice(contractResult);
+
     dispatch({ type: ACTIONS.SET_SAVING, data: false });
     if (onSaveFinished)
       onSaveFinished({
@@ -425,14 +496,12 @@ export const EditContractInfo: FC<props> = ({
         invoiceData: state.invoiceData,
       });
   }, [
-    contractID,
     onSaveFinished,
-    onSaveStarted,
+    saveContract,
+    saveInvoice,
     state.contractData,
     state.invoiceData,
-    state.invoiceId,
     state.propertiesSelected,
-    userID,
   ]);
 
   const cleanup = useCallback(() => {}, []);
