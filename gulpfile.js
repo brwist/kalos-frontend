@@ -997,6 +997,7 @@ const NAMED_EXPORTS = {
   'node_modules/@kalos-core/kalos-rpc/compiled-protos/slack_pb.js': [
     'DispatchReq',
     'DMReq',
+    'FCReq',
   ],
   'node_modules/@kalos-core/kalos-rpc/compiled-protos/stock_vendor_pb.js': [
     'StockVendor',
