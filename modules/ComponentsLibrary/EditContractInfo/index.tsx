@@ -472,10 +472,49 @@ export const EditContractInfo: FC<props> = ({
         }
       } catch (err) {
         console.error(`An error occurred while upserting an invoice: ${err}`);
+        try {
+          let devlog = new Devlog();
+          devlog.setUserId(userID);
+          devlog.setTimestamp(format(new Date(), 'yyyy-MM-dd hh:mm:ss'));
+          devlog.setIsError(1);
+          devlog.setDescription(
+            `Failed to upsert an invoice with error: ${err}`,
+          );
+          await DevlogClientService.Create(devlog);
+        } catch (err) {
+          console.error(`Failed to upload a devlog: ${err}`);
+        }
       }
     },
     [state.invoiceData, state.invoiceId, userID],
   );
+
+  const saveEvents = useCallback(async () => {
+    state.contractEvent.forEach(async (event) => {
+      try {
+        let req = event;
+        req.setFieldMaskList(['DepartmentId']);
+      
+        await EventClientService.Update(req)
+      } catch (err) {
+        console.error(
+          `An error occurred while updating an event with id ${event.getId()}: ${err}`,
+        );
+        try {
+          let devlog = new Devlog();
+          devlog.setUserId(userID);
+          devlog.setTimestamp(format(new Date(), 'yyyy-MM-dd hh:mm:ss'));
+          devlog.setIsError(1);
+          devlog.setDescription(
+            `Failed to update event with id ${event.getId()} with error: ${err}`,
+          );
+          await DevlogClientService.Create(devlog);
+        } catch (err) {
+          console.error(`Failed to upload a devlog: ${err}`);
+        }
+      }
+    });
+  }, []);
 
   const save = useCallback(async () => {
     dispatch({ type: ACTIONS.SET_SAVING, data: true });
