@@ -14,6 +14,7 @@ interface props {
   dismissedTechs: DispatchableTech[];
   handleUndismissTech?: (tech: DispatchableTech) => {};
   isFirstCall?: boolean;
+  alternateTitle?: string;
   processingDismissed?: boolean;
 }
 
@@ -22,6 +23,7 @@ export const DismissedTechs: FC<props> = props => {
     userID,
     dismissedTechs,
     isFirstCall = false,
+    alternateTitle = "",
     processingDismissed = false
   } = props
 
@@ -32,7 +34,6 @@ export const DismissedTechs: FC<props> = props => {
   }
 
   useEffect(() => {
-    console.log('dismissedTech use effect');
     setTechs(sorted(dismissedTechs));
   }, [dismissedTechs]);
 
@@ -42,7 +43,7 @@ export const DismissedTechs: FC<props> = props => {
       <Table>
         <TableHead>
           <TableRow>
-            <TableCell style={{textAlign:'center', fontWeight:'bold', fontSize:'16px'}}>{!isFirstCall?'Name':'Off Tomorrow'}</TableCell>
+            <TableCell style={{textAlign:'center', fontWeight:'bold', fontSize:'16px'}}>{!alternateTitle.length?'Name':alternateTitle}</TableCell>
             <TableCell style={{textAlign:'center', fontWeight:'bold', fontSize:'16px', display:isFirstCall?'none':''}}>Dismissed Time</TableCell>
             <TableCell style={{textAlign:'center', fontWeight:'bold', fontSize:'16px', display:isFirstCall?'none':''}}>Hours Worked</TableCell>
           </TableRow>
