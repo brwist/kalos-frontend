@@ -13,7 +13,7 @@ export type State = {
   error: string | undefined;
   fatalError: boolean; // Contract does not exist, etc.
   invoiceId: number;
-  contractEvent: Event[]; // Corresponding event for the contract that must be kept in sync with updates
+  contractEvents: Event[]; // Corresponding event for the contract that must be kept in sync with updates
 };
 
 export enum ACTIONS {
@@ -26,7 +26,7 @@ export enum ACTIONS {
   SET_ERROR = 'setError',
   SET_FATAL_ERROR = 'setUnrecoverableError',
   SET_INVOICE_ID = 'setInvoiceId',
-  SET_CONTRACT_EVENT = 'setContractEvent',
+  SET_CONTRACT_EVENTS = 'setContractEvents',
 }
 
 export enum FREQUENCIES {
@@ -77,7 +77,7 @@ export type Action =
       data: number;
     }
   | {
-      type: ACTIONS.SET_CONTRACT_EVENT;
+      type: ACTIONS.SET_CONTRACT_EVENTS;
       data: Event[];
     };
 
@@ -137,7 +137,7 @@ export const reducer = (state: State, action: Action) => {
         invoiceId: action.data,
       };
     }
-    case ACTIONS.SET_CONTRACT_EVENT: {
+    case ACTIONS.SET_CONTRACT_EVENTS: {
       return {
         ...state,
         contractEvent: action.data,
