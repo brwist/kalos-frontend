@@ -37,6 +37,13 @@ import { Alert } from '../Alert';
 import { Event } from '@kalos-core/kalos-rpc/Event';
 import { Request } from '../ServiceCall/components/Request';
 import { OPTION_BLANK } from '../../../constants';
+import {
+  CANCEL_LABEL,
+  CONTRACT_SECTION_NAME,
+  INVOICE_SECTION_NAME,
+  SAVE_LABEL,
+  SERVICE_CALL_SECTION_NAME,
+} from './constants';
 
 export interface Output {
   contractData: Contract;
@@ -690,10 +697,10 @@ export const EditContractInfo: FC<props> = ({
         </Confirm>
       )}
       <SectionBar
-        title="Edit Contract"
+        title={CONTRACT_SECTION_NAME}
         actions={[
-          { label: 'Cancel', onClick: () => onClose() },
-          { label: 'Save', onClick: () => validateForSave() },
+          { label: CANCEL_LABEL, onClick: () => onClose() },
+          { label: SAVE_LABEL, onClick: () => validateForSave() },
         ]}
       >
         <div style={{ width: '75%', display: 'inline-block' }}>
@@ -766,8 +773,8 @@ export const EditContractInfo: FC<props> = ({
         </div>
       </SectionBar>
       <SectionBar
-        title="Invoice Data"
-        actions={[{ label: 'Cancel', onClick: () => onClose() }]}
+        title={INVOICE_SECTION_NAME}
+        actions={[{ label: CANCEL_LABEL, onClick: () => onClose() }]}
       >
         <EditInvoiceData
           userId={userID}
@@ -813,8 +820,8 @@ export const EditContractInfo: FC<props> = ({
         />
       </SectionBar>
       <SectionBar
-        title="Service Call"
-        actions={[{ label: 'Cancel', onClick: () => onClose() }]}
+        title={SERVICE_CALL_SECTION_NAME}
+        actions={[{ label: CANCEL_LABEL, onClick: () => onClose() }]}
       >
         {/* ! Need to paginate events instead of just using first index */}
         {/* The property events are not going to be needed as it is not a callback */}
