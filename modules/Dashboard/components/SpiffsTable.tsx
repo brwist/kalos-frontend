@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import Paper from '@material-ui/core/Paper';
 import { Spiff } from '@kalos-core/kalos-rpc/Task';
 import { SectionBar } from '../../ComponentsLibrary/SectionBar';
@@ -6,13 +6,17 @@ import { InfoTable } from '../../ComponentsLibrary/InfoTable';
 import { Tooltip } from '../../ComponentsLibrary/Tooltip';
 import { makeFakeRows, formatDate, usd } from '../../../helpers';
 import { parseISO } from 'date-fns';
-
+import { Button } from '../../ComponentsLibrary/Button';
+import { SpiffTool } from '../../SpiffToolLogs/components/SpiffTool';
+import { Modal } from '../../ComponentsLibrary/Modal';
 interface SpiffProps {
   spiffs: Spiff[];
   isLoading: boolean;
+  loggedUserId: number;
 }
 
-export const Spiffs = ({ spiffs, isLoading }: SpiffProps) => {
+export const Spiffs = ({ spiffs, isLoading, loggedUserId }: SpiffProps) => {
+  const [openLog, setOpenLog] = useState<boolean>(false);
   return (
     <>
       <Paper
@@ -25,6 +29,10 @@ export const Spiffs = ({ spiffs, isLoading }: SpiffProps) => {
         }}
       >
         <SectionBar title="Spiffs" />
+        <Button
+          label={'Open New Spiff Log'}
+          onClick={() => setOpenLog(true)}
+        ></Button>
         <InfoTable
           columns={[
             { name: 'Claim Date' },
@@ -67,6 +75,22 @@ export const Spiffs = ({ spiffs, isLoading }: SpiffProps) => {
           }
           loading={isLoading}
         />
+
+        <Modal
+          onClose={() => setOpenLog(false)}
+          open={openLog}
+          fullScreen={true}
+        >
+          <SpiffTool
+            type="Spiff"
+            loggedUserId={loggedUserId}
+            ownerId={loggedUserId}
+            needsManagerAction={false}
+            needsPayrollAction={false}
+            needsAuditAction={false}
+            onClose={() => setOpenLog(false)}
+          />
+        </Modal>
       </Paper>
     </>
   );
