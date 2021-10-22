@@ -857,7 +857,6 @@ export const ServiceCall: FC<Props> = props => {
                     loading={loading}
                     jobTypeOptions={jobTypeOptions}
                     jobSubtypeOptions={jobSubtypeOptions}
-                    jobTypeSubtypes={jobTypeSubtypes}
                     onChange={handleChangeEntry}
                     disabled={saving}
                     onValid={setRequestValid}
