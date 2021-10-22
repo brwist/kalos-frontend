@@ -34,14 +34,17 @@ import {
   FirstCallClientService,
   EventClientService,
   TimesheetDepartmentClientService,
+  SlackClientService,
+  TimeoffRequestClientService,
 } from '../../../helpers';
-import { DispatchableTech, DispatchCall } from '@kalos-core/kalos-rpc/Dispatch';
+import { DispatchableTech, DispatchCall} from '@kalos-core/kalos-rpc/Dispatch';
 import { User } from '@kalos-core/kalos-rpc/User';
 import { Event } from '@kalos-core/kalos-rpc/Event';
 import { ApiKey } from '@kalos-core/kalos-rpc/ApiKey';
 import { JobType } from '@kalos-core/kalos-rpc/JobType';
 import { DateRange } from '@kalos-core/kalos-rpc/compiled-protos/common_pb';
 import { FirstCall } from '@kalos-core/kalos-rpc/FirstCall';
+import { TimeoffRequest } from '@kalos-core/kalos-rpc/TimeoffRequest';
 import setSeconds from 'date-fns/esm/setSeconds';
 import TableContainer from '@material-ui/core/TableContainer';
 import List from '@material-ui/core/List';
@@ -52,9 +55,10 @@ import ListItemIcon from '@material-ui/core/ListItemIcon';
 import RemoveCircleOutlineTwoTone from '@material-ui/icons/RemoveCircleOutlineTwoTone';
 import CircleProgress from '@material-ui/core/CircularProgress';
 import nextSunday from 'date-fns/esm/nextSunday';
-import { AddCircleOutlineTwoTone } from '@material-ui/icons';
+import AddCircleOutlineTwoTone from '@material-ui/icons/AddCircleOutlineTwoTone';
 import { TimesheetDepartment } from '@kalos-core/kalos-rpc/TimesheetDepartment';
 import { Loader } from '../../Loader/main';
+
 
 
 export interface Props {
@@ -85,6 +89,7 @@ const initialFirstCall : FirstCallType = {
     list: []
   },
   manualOff: [],
+  scheduledOff: [],
   inUse: [],
   expires: format(addDays(setSeconds(setMinutes(setHours(new Date(), 0), 0), 0), 1), 'yyyy-MM-dd HH:mm:ss'),
   message: '',
@@ -104,6 +109,7 @@ const initialFirstCall : FirstCallType = {
 const initialState : State = {
   techs: [],
   offTechs: [],
+  scheduledOff: [],
   meetingTechs: [],
   classTechs: [],
   onCallTech: new DispatchableTech(),
@@ -128,6 +134,7 @@ const initialState : State = {
   firstCallClass: initialFirstCall.class,
   firstCallInUse: initialFirstCall.inUse,
   firstCallManualOff: initialFirstCall.manualOff,
+  firstCallScheduledOff: initialFirstCall.scheduledOff,
   selectedCall: new DispatchCall(),
   isProcessing: false,
   assigneeList: [],
@@ -168,8 +175,8 @@ export const FirstCallDashboard: React.FC<Props> = function FirstCallDashboard({
   const resetModal = () => {
     switch (state.modalKey) {
       case 'Class': {
-        const techList : number[] = [];
-        state.classTechs.map(tech => techList.push(tech.getUserId()));
+        const techList : {id: number, name: string}[] = [];
+        state.classTechs.map(tech => techList.push({id: tech.getUserId(), name: tech.getTechname()}));
         const data = {
           isTomorrow: state.classTechs ? true : false,
           start: state.formData.classTime,
@@ -181,8 +188,8 @@ export const FirstCallDashboard: React.FC<Props> = function FirstCallDashboard({
         break;
       }
       case 'Meeting': {
-        const techList : number[] = [];
-        state.meetingTechs.map(tech => techList.push(tech.getUserId()));
+        const techList : {id: number, name: string}[] = [];
+        state.meetingTechs.map(tech => techList.push({id: tech.getUserId(), name: tech.getTechname()}));
         const data = {
           isTomorrow: state.meetingTechs ? true : false,
           start: state.formData.meetingTime,
@@ -219,13 +226,14 @@ export const FirstCallDashboard: React.FC<Props> = function FirstCallDashboard({
               id: state.selectedCall.getId(),
               assigned: assignedTech,
               description: state.selectedCall.getDescription(),
-              type: state.selectedCall.getJobType(),
+              jobType: state.selectedCall.getJobType(),
               subType: state.selectedCall.getJobSubtype(),
               start: state.selectedCall.getTimeStarted(),
               end: state.selectedCall.getTimeEnded(),
               propertyId: state.selectedCall.getPropertyId(),
               propertyAddress: state.selectedCall.getPropertyAddress(),
               propertyCity: state.selectedCall.getPropertyCity(),
+              propertyState: state.selectedCall.getPropertyState(),
               custName: state.selectedCall.getCustName(),
               userBusinessName: state.selectedCall.getUserBusinessname(),
               userId: state.selectedCall.getUserId(),
@@ -239,13 +247,14 @@ export const FirstCallDashboard: React.FC<Props> = function FirstCallDashboard({
               id: firstCall[0].id,
               assigned: assignedTech,
               description: firstCall[0].description,
-              type: firstCall[0].type,
+              jobType: firstCall[0].jobType,
               subType: firstCall[0].subType,
               start: firstCall[0].start,
               end: firstCall[0].end,
               propertyId: firstCall[0].propertyId,
               propertyAddress: firstCall[0].propertyAddress,
               propertyCity: firstCall[0].propertyCity,
+              propertyState: firstCall[0].propertyState,
               custName: firstCall[0].custName,
               userBusinessName: firstCall[0].userBusinessName,
               userId: firstCall[0].userId,
@@ -345,13 +354,36 @@ export const FirstCallDashboard: React.FC<Props> = function FirstCallDashboard({
     if (updateType === 'remove') {
       currentTechArray.splice(currentTechArray.findIndex(tech => tech === String(id)),1);
       currentAssignees.splice(currentAssignees.findIndex(assignee => assignee.id === id), 1);
-      currentInUse.splice(currentInUse.findIndex(tech => tech === id));
+      currentInUse.splice(currentInUse.findIndex(tech => tech === id),1);
     } else {
-      currentTechArray.push(String(id));
-      currentAssignees.push({id: id, name: state.techs.filter(tech=>tech.getUserId() === id)[0].getTechname()});
+      if (!currentTechArray.length || (currentTechArray.length === 1 && currentTechArray[0] === "0")) {
+        currentTechArray[0] = String(id);
+        currentAssignees[0] = {id: id, name: state.techs.filter(tech=>tech.getUserId() === id)[0].getTechname()};
+      } else {
+        currentTechArray.push(String(id));
+        currentAssignees.push({id: id, name: state.techs.filter(tech=>tech.getUserId() === id)[0].getTechname()}); 
+      }
       currentInUse.push(id);
     }
     currentCall.setLogTechnicianAssigned(currentTechArray.toString());
+    firstCallDashboard({
+      type: 'setFirstCallInUse',
+      data: currentInUse
+    });
+    const availableTechs = state.techs.filter(tech => {
+      const notAvailable = [];
+      for (let i in state.firstCallManualOff) {
+        notAvailable.push(state.firstCallManualOff[i].id);
+      }
+      for (let j in currentInUse) {
+        notAvailable.push(currentInUse[j]);
+      }
+      for (let k in state.scheduledOff) {
+        notAvailable.push(state.scheduledOff[k].id);
+      }
+      return !notAvailable.includes(tech.getUserId());
+    });
+    handleFormDataUpdate({availableTechs : availableTechs});
     firstCallDashboard({
       type: 'setAssigneesAndCall',
       data: {
@@ -359,17 +391,27 @@ export const FirstCallDashboard: React.FC<Props> = function FirstCallDashboard({
         selectedCall: currentCall,
       }
     });
-    firstCallDashboard({
-      type: 'setFirstCallInUse',
-      data: currentInUse
-    });
   }
 
   const handleUnOffTech = async (tech : DispatchableTech) => {
     firstCallDashboard({ type: 'setProcessing', data: true});
     const offTechs = state.firstCallManualOff;
-    const index = offTechs.findIndex(id => id === tech.getUserId());
+    const index = offTechs.findIndex(offTech => offTech.id === tech.getUserId());
     offTechs.splice(index,1);
+    const availableTechs = state.techs.filter(tech => {
+      const notAvailable = [];
+      for (let i in offTechs) {
+        notAvailable.push(offTechs[i].id);
+      }
+      for (let j in state.firstCallInUse) {
+        notAvailable.push(state.firstCallInUse[j]);
+      }
+      for (let k in state.scheduledOff) {
+        notAvailable.push(state.scheduledOff[k].id);
+      }
+      return !notAvailable.includes(tech.getUserId());
+    });
+    handleFormDataUpdate({availableTechs: availableTechs});
     firstCallDashboard({ type: 'setFirstCallManualOff', data: offTechs});
   }
 
@@ -417,7 +459,6 @@ export const FirstCallDashboard: React.FC<Props> = function FirstCallDashboard({
   }
 
   const handleSave = useCallback(async () => {
-    console.log('saving');
     let allowSave = true;
     let id = 0;
     const saveTime = format(new Date(), 'yyyy-MM-dd HH:mm:ss')
@@ -426,6 +467,7 @@ export const FirstCallDashboard: React.FC<Props> = function FirstCallDashboard({
       meeting: state.firstCallMeeting,
       class: state.firstCallClass,
       manualOff: state.firstCallManualOff,
+      scheduledOff: state.scheduledOff,
       inUse: state.firstCallInUse,
       onCall: state.firstCallOnCall,
       message: state.firstCallMessage,
@@ -462,8 +504,26 @@ export const FirstCallDashboard: React.FC<Props> = function FirstCallDashboard({
     state.firstCallInUse, state.firstCallOnCall,
     state.firstCallMessage, state.firstCallExpires,
     state.firstCallId, state.formData.division,
-    state.newFirstCall, state.saveTime
-  ])
+    state.newFirstCall, state.saveTime,
+    state.scheduledOff
+  ]);
+
+  const handleFinalizeFirstCall = () => {
+    if (state.firstCallCalls.length) {
+      for (let call in state.firstCallCalls) {
+        for (let user in state.firstCallCalls[call].assigned) {
+          if (testUserId > 0) {
+            SlackClientService.Dispatch(state.firstCallCalls[call].id, testUserId, loggedUserId, true);
+          } else {
+            SlackClientService.Dispatch(state.firstCallCalls[call].id, state.firstCallCalls[call].assigned[user].userId, loggedUserId, true);
+          }
+        }
+      }
+    }
+    if (!disableSlack) {
+      SlackClientService.FirstCall(state.formData.division);
+    }
+  }
 
   const getTechs = useCallback (async () => {
     const techs = new DispatchableTech();
@@ -471,11 +531,19 @@ export const FirstCallDashboard: React.FC<Props> = function FirstCallDashboard({
     dr.setStart('2012-01-01');
     dr.setEnd(format(new Date(), 'yyyy-MM-dd'));
     techs.setDateRange(dr);
-    techs.setDepartmentList(state.formData.departmentIds.toString()); //Needs to be based on state.departmentList
+    techs.setDepartmentList(state.formData.departmentIds.toString());
     const users = new User();
     users.setIsActive(1);
     users.setIsHvacTech(1);
-    users.setDepartmentList(state.formData.departmentIds.toString()); //Needs to be based on state.departmentList
+    users.setDepartmentList(state.formData.departmentIds.toString());
+    const off = new TimeoffRequest();
+    const offRequestTimeStarted = format(addDays(setHours(setMinutes(setSeconds(new Date(), 0), 0), 7), 1), "yyyy-MM-dd HH::mm::ss");
+    const offRequestTimeFinished = format(addDays(setHours(setMinutes(setSeconds(new Date(), 0), 0), 12), 1), "yyyy-MM-dd HH::mm::ss");
+    off.setIsActive(1);
+    off.setRequestStatus(1);
+    off.setDateRangeList([">=", offRequestTimeStarted, "<=", offRequestTimeFinished]);
+    off.setDateTargetList(["time_finished", "time_started"]);
+    off.setDepartmentIdList(state.formData.departmentIds.toString());
     try {
       const userList = await UserClientService.BatchGet(users);
       const dispatchableTechs = await DispatchClientService.GetDispatchableTechnicians(techs);
@@ -491,10 +559,13 @@ export const FirstCallDashboard: React.FC<Props> = function FirstCallDashboard({
         newTech.setUserPhone(tech.getPhone());
         techList.push(newTech);
       });
-      return {techList: techList}
+      const timeoffList = await TimeoffRequestClientService.BatchGet(off);
+      const timeoffIds : {id: number, name: string}[] = [];
+      techList.filter(tech => timeoffList.getResultsList().map(req => req.getUserId()).includes(tech.getUserId())).forEach(tech => timeoffIds.push({id: tech.getUserId(), name: tech.getTechname()}));
+      return {techList: techList, scheduledOff: timeoffIds};
     } catch (err) {
       console.error(err)
-      return {techList: []}
+      return {techList: [], scheduledOff: []}
     }
   }, [state.formData.departmentIds])
 
@@ -579,11 +650,11 @@ export const FirstCallDashboard: React.FC<Props> = function FirstCallDashboard({
         message: parsedFirstCalls.message,
         expires: parsedFirstCalls.expires,
         manualOff: parsedFirstCalls.manualOff,
+        scheduledOff: parsedFirstCalls.scheduledOff,
         inUse: parsedFirstCalls.inUse,
       }
       return {firstCall: firstCallValues, newFirstCall: false, firstCallId: previousFirstCall.getId(), saveTime: previousFirstCall.getDateCreated()};
     } catch (err) {
-      console.error(err);
       return {firstCall: initialFirstCall, newFirstCall: true, firstCallId: 0, saveTime: ''};
     }
   }, [state.formData.division])
@@ -628,10 +699,23 @@ export const FirstCallDashboard: React.FC<Props> = function FirstCallDashboard({
       jobTypes: [],
       meetingTime: results[4].firstCall.meeting.start,
       classTime: results[4].firstCall.class.start,
-      availableTechs: results[0].techList.filter(tech => !results[4].firstCall.manualOff.includes(tech.getUserId()) && !results[4].firstCall.inUse.includes(tech.getUserId())),
+      availableTechs: results[0].techList.filter(tech => {
+        const notAvailable = [];
+        for (let i in results[4].firstCall.manualOff) {
+          notAvailable.push(results[4].firstCall.manualOff[i].id);
+        }
+        for (let j in results[4].firstCall.inUse) {
+          notAvailable.push(results[4].firstCall.inUse[j]);
+        }
+        for (let k in results[0].scheduledOff) {
+          notAvailable.push(results[0].scheduledOff[k].id);
+        }
+        return !notAvailable.includes(tech.getUserId());
+      }),
     }
     return {
       techs: results[0].techList,
+      scheduledOff: results[0].scheduledOff,
       calls: results[1].availableCalls,
       jobTypes: results[2].jobTypes,
       assigned: results[1].assignedCalls,
@@ -646,8 +730,20 @@ export const FirstCallDashboard: React.FC<Props> = function FirstCallDashboard({
 
   const load = useCallback(async() => {
     const initialData = await getInitialConstructor();
-    const meetingList = initialData.techs.filter(tech => initialData.firstCall.meeting.list.includes(tech.getUserId()));
-    const classList = initialData.techs.filter(tech => initialData.firstCall.class.list.includes(tech.getUserId()))
+    const meetingList = initialData.techs.filter(tech => {
+      const meetingTechIds = []
+      for (let i in initialData.firstCall.meeting.list) {
+        meetingTechIds.push(initialData.firstCall.meeting.list[i].id);
+      }
+      return meetingTechIds.includes(tech.getUserId())
+    });
+    const classList = initialData.techs.filter(tech => {
+      const classTechIds = []
+      for (let i in initialData.firstCall.class.list) {
+        classTechIds.push(initialData.firstCall.class.list[i].id);
+      }
+      return classTechIds.includes(tech.getUserId())
+    });
     firstCallDashboard({
       type: 'setInitialValues',
       data: {
@@ -663,6 +759,7 @@ export const FirstCallDashboard: React.FC<Props> = function FirstCallDashboard({
         meetingList: meetingList,
         classList: classList,
         offList: initialData.firstCall.manualOff,
+        scheduledOffList: initialData.scheduledOff,
         initialFormData: initialData.newFormData,
       }
     })
@@ -732,7 +829,6 @@ export const FirstCallDashboard: React.FC<Props> = function FirstCallDashboard({
   ];
 
   useEffect(() => {
-    console.log('loaded', state.loaded)
     if (state.formData.division === 0) {
       checkDivision();
     }
@@ -812,7 +908,22 @@ export const FirstCallDashboard: React.FC<Props> = function FirstCallDashboard({
                 case 'dismissTech': {
                   firstCallDashboard({ type: 'setProcessing', data: true });
                   const manualOffTechs = state.firstCallManualOff;
-                  manualOffTechs.push(Number(callback.draggableId));
+                  const selectedTech = state.techs.find(tech => tech.getUserId() === Number(callback.draggableId));
+                  manualOffTechs.push({id: selectedTech!.getUserId(), name: selectedTech!.getTechname()});
+                  const availableTechs = state.techs.filter(tech => {
+                    const notAvailable = [];
+                    for (let i in manualOffTechs) {
+                      notAvailable.push(manualOffTechs[i].id);
+                    }
+                    for (let j in state.firstCallInUse) {
+                      notAvailable.push(state.firstCallInUse[j]);
+                    }
+                    for (let k in state.scheduledOff) {
+                      notAvailable.push(state.scheduledOff[k].id);
+                    }
+                    return !notAvailable.includes(tech.getUserId());
+                  })
+                  handleFormDataUpdate({availableTechs: availableTechs});
                   firstCallDashboard({ type: 'setFirstCallManualOff', data: manualOffTechs });
                   break;
                 }
@@ -820,10 +931,24 @@ export const FirstCallDashboard: React.FC<Props> = function FirstCallDashboard({
                   firstCallDashboard({ type: 'setSaveCall', data: true });
                   const inUse = state.firstCallInUse;
                   inUse.push(Number(callback.draggableId));
+                  firstCallDashboard({ type: 'setFirstCallInUse', data: inUse });
+                  const availableTechs = state.techs.filter(tech => {
+                    const notAvailable = [];
+                    for (let i in state.firstCallManualOff) {
+                      notAvailable.push(state.firstCallManualOff[i].id);
+                    }
+                    for (let j in inUse) {
+                      notAvailable.push(inUse[j]);
+                    }
+                    for (let k in state.scheduledOff) {
+                      notAvailable.push(state.scheduledOff[k].id);
+                    }
+                    return !notAvailable.includes(tech.getUserId());
+                  });
+                  handleFormDataUpdate({availableTechs: availableTechs});
                   const selectedCall = state.calls.concat(state.assignedCalls).filter(call => call.getId() === Number(callback.destination?.droppableId))[0];
                   selectedCall.setLogTechnicianAssigned(selectedCall.getLogTechnicianAssigned().concat(selectedCall.getLogTechnicianAssigned().length > 0 ? `,${callback.draggableId}` : callback.draggableId));
                   handleCallDetails(selectedCall);
-                  firstCallDashboard({ type: 'setFirstCallInUse', data: inUse });
                   break;
                 }
               }
@@ -867,6 +992,7 @@ export const FirstCallDashboard: React.FC<Props> = function FirstCallDashboard({
                 key='finalize'
                 fullWidth
                 style={{fontSize:'18px', backgroundColor:'#711313', color:'white'}}
+                onClick={() => handleFinalizeFirstCall()}
               >
                 Finalize First Calls
               </Button>
@@ -913,9 +1039,11 @@ export const FirstCallDashboard: React.FC<Props> = function FirstCallDashboard({
                 </Typography>
                 <TextareaAutosize
                   minRows={5}
+                  maxRows={9}
                   style={{width:'99%', fontSize:'17px', fontStyle:'inherit'}}
                   placeholder="Please Enter Any First Call Notes Here."
-                  defaultValue={state.firstCallMessage.replace('     ', '\n')}
+                  // @ts-ignore
+                  defaultValue={state.firstCallMessage.replaceAll('     ', '\n')}
                   onBlur={(text)=>{
                     if (state.firstCallMessage !== text.target.value) {
                       firstCallDashboard({ type: 'setFirstCallMessage', data: text.target.value.replace(/\n/g,'     ') });
@@ -937,15 +1065,35 @@ export const FirstCallDashboard: React.FC<Props> = function FirstCallDashboard({
                 <DispatchTechs
                   userID={loggedUserId}
                   dismissedTechs={[]}
-                  techs={state.techs.filter(tech=>!state.firstCallManualOff.includes(tech.getUserId())&&!state.firstCallInUse.includes(tech.getUserId()))}
+                  techs={state.formData.availableTechs}
                   loading={false}
                   isFirstCall={true}
                 />
                 <DismissedTechs
                   userID={loggedUserId}
-                  dismissedTechs={state.techs.filter(tech => state.firstCallManualOff.includes(tech.getUserId()))}
+                  dismissedTechs={state.techs.filter(tech=>{
+                    const manualOff = []
+                    for (let i in state.firstCallManualOff) {
+                      manualOff.push(state.firstCallManualOff[i].id);
+                    }
+                    return manualOff.includes(tech.getUserId());
+                  })}
                   handleUndismissTech={handleUnOffTech}
                   isFirstCall={true}
+                  alternateTitle={"Manual Off Technicians"}
+                  processingDismissed={state.isProcessing}
+                />
+                <DismissedTechs
+                  userID={loggedUserId}
+                  dismissedTechs={state.techs.filter(tech=>{
+                    const scheduledOff = []
+                    for (let i in state.scheduledOff) {
+                      scheduledOff.push(state.scheduledOff[i].id);
+                    }
+                    return scheduledOff.includes(tech.getUserId());
+                  })}
+                  isFirstCall={true}
+                  alternateTitle={"Scheduled Off Technicians"}
                   processingDismissed={state.isProcessing}
                 />
               </div>
@@ -1024,7 +1172,13 @@ export const FirstCallDashboard: React.FC<Props> = function FirstCallDashboard({
         >
           <ClassMeeting 
             userID={loggedUserId}
-            techs={state.techs}
+            techs={state.techs.filter(tech => {
+              const schedoffList = [];
+              for (let i in state.scheduledOff) {
+                schedoffList.push(state.scheduledOff[i].id);
+              }
+              return !schedoffList.includes(tech.getUserId());
+            })}
             listTechs={state.modalKey === 'Meeting' ? state.meetingTechs : state.classTechs}
             schema={state.modalKey === 'Meeting' ? MEETING_TIME_SCHEMA : CLASS_TIME_SCHEMA}
             formData={state.formData}
@@ -1072,7 +1226,8 @@ export const FirstCallDashboard: React.FC<Props> = function FirstCallDashboard({
                             minRows={5}
                             style={{width:'99%', fontSize:'17px', fontStyle:'inherit'}}
                             placeholder="Please Enter Any First Call Notes Here."
-                            defaultValue={state.selectedCall.getNotes().replace('     ', '\n')}
+                            // @ts-ignore
+                            defaultValue={state.selectedCall.getNotes().replaceAll('     ', '\n')}
                             onBlur={(text) => {
                               if (text.target.value !== state.selectedCall.getNotes()) {
                                 const updatedSelectedCall = state.selectedCall;

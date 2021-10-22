@@ -37,7 +37,6 @@ export const DispatchTechs: FC<props> = props => {
   const [sortedTechnicians, setSortedTechnicians] = useState<DispatchableTech[]>([]);
 
   useEffect(() => {
-    console.log('dispatch techs use effect');
     sortTechs(techs);
   }, [props.dismissedTechs, techs]);
 
