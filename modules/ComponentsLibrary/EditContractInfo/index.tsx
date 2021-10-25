@@ -39,7 +39,10 @@ import { Request } from '../ServiceCall/components/Request';
 import { OPTION_BLANK } from '../../../constants';
 import {
   CANCEL_LABEL,
+  CONFIRM_SAVE_DIALOG,
+  CONFIRM_SAVE_LABEL,
   CONTRACT_SECTION_NAME,
+  ERROR_LABEL,
   INVOICE_SECTION_NAME,
   SAVE_LABEL,
   SERVICE_CALL_SECTION_NAME,
@@ -670,7 +673,7 @@ export const EditContractInfo: FC<props> = ({
       {state.isSaving || !state.isLoaded ? <Loader /> : undefined}
       {state.error && (
         <Alert
-          title="Error"
+          title={ERROR_LABEL}
           open={state.error !== undefined}
           onClose={() => {
             dispatch({ type: ACTIONS.SET_ERROR, data: undefined });
@@ -681,7 +684,7 @@ export const EditContractInfo: FC<props> = ({
       )}
       {state.isValidating && (
         <Confirm
-          title="Confirm Save"
+          title={CONFIRM_SAVE_LABEL}
           open={true}
           onClose={() =>
             dispatch({ type: ACTIONS.SET_VALIDATING, data: false })
@@ -691,9 +694,7 @@ export const EditContractInfo: FC<props> = ({
             dispatch({ type: ACTIONS.SET_VALIDATING, data: false });
           }}
         >
-          There are no properties selected in the properties dropdown. No
-          properties will be associated with the contract. Are you sure you wish
-          to continue?
+          {CONFIRM_SAVE_DIALOG}
         </Confirm>
       )}
       <SectionBar

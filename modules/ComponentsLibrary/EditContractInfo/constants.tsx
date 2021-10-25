@@ -7,3 +7,9 @@ export const INVOICE_SECTION_NAME = 'Invoice Data';
 export const SERVICE_CALL_SECTION_NAME = 'Service Call';
 export const CANCEL_LABEL = 'Cancel';
 export const SAVE_LABEL = 'Save';
+
+export const CONFIRM_SAVE_LABEL = 'Confirm Save';
+export const CONFIRM_SAVE_DIALOG =
+  'There are no properties selected in the properties dropdown. No properties will be associated with the contract. Are you sure you wish to continue?';
+
+export const ERROR_LABEL = 'Error';
