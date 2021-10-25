@@ -87,6 +87,7 @@ export const EditContractInfo: FC<props> = ({
     jobSubtypes: [],
     jobTypeSubtypes: [],
     eventPage: 0,
+    initiatedSchema: [],
   });
 
   const CONTRACT_SCHEMA: Schema<Contract> = [
@@ -596,12 +597,15 @@ export const EditContractInfo: FC<props> = ({
   );
 
   const saveEvents = useCallback(async () => {
-    console.log('would save events: ', state.contractEvents);
-    return;
     state.contractEvents.forEach(async event => {
       try {
         let req = event;
-        req.setFieldMaskList(['DepartmentId']);
+
+        req.setFieldMaskList(
+          state.initiatedSchema
+            .map(value => value.replace('get', ''))
+            .filter(value => value !== 'Id'),
+        );
 
         await EventClientService.Update(req);
       } catch (err) {
@@ -622,7 +626,7 @@ export const EditContractInfo: FC<props> = ({
         }
       }
     });
-  }, [state.contractEvents, userID]);
+  }, [state.contractEvents, state.initiatedSchema, userID]);
 
   const save = useCallback(async () => {
     dispatch({ type: ACTIONS.SET_SAVING, data: true });
@@ -877,7 +881,7 @@ export const EditContractInfo: FC<props> = ({
             }}
             onValid={valid => console.log('Valid: ', valid)}
             onInitSchema={initSchema =>
-              console.log('Init schema: ', initSchema)
+              dispatch({ type: ACTIONS.SET_INITIATED_SCHEMA, data: initSchema })
             }
           />
         )}
