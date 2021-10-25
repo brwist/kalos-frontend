@@ -30,6 +30,7 @@ import {
   makeSafeFormObject,
   TimesheetLineClientService,
   ActivityLogClientService,
+  TimesheetDepartmentClientService,
 } from '../../../helpers';
 import { OPTION_BLANK, ENDPOINT } from '../../../constants';
 import { EmailClient, EmailConfig } from '@kalos-core/kalos-rpc/Email';
@@ -38,6 +39,7 @@ import { PTO, TimeoffRequest } from '@kalos-core/kalos-rpc/TimeoffRequest';
 import { datePickerDefaultProps } from '@material-ui/pickers/constants/prop-types';
 import { ActivityLog } from '@kalos-core/kalos-rpc/ActivityLog';
 import { InfoTable } from '../InfoTable';
+import { TimesheetDepartment } from '@kalos-core/kalos-rpc/TimesheetDepartment';
 import { TimeoffRequestType } from '@kalos-core/kalos-rpc/compiled-protos/timeoff_request_pb';
 export interface Props {
   loggedUserId: number;
@@ -73,6 +75,7 @@ export const TimeOff: FC<Props> = ({
     alertDismissed: false,
     ptoHistory: [],
     loggedUser: undefined,
+    departments: [],
     logData: [],
     upcomingRequests: [],
     formKey: 0,
@@ -126,6 +129,16 @@ export const TimeOff: FC<Props> = ({
   const emailClient = useMemo(() => new EmailClient(ENDPOINT), []);
   const init = useCallback(async () => {
     console.log('called init');
+    const timesheetAdminReq = new TimesheetDepartment();
+    timesheetAdminReq.setIsActive(1);
+    const timesheetAdminResults = await TimesheetDepartmentClientService.BatchGet(
+      timesheetAdminReq,
+    );
+    dispatch({
+      type: ACTIONS.SET_DEPARTMENTS,
+      data: timesheetAdminResults.getResultsList(),
+    });
+
     const types = await TimeoffRequestClientService.getTimeoffRequestTypes();
     dispatch({ type: ACTIONS.SET_REQUEST_TYPES, data: types });
 
@@ -311,7 +324,11 @@ export const TimeOff: FC<Props> = ({
       temp.setUserApprovalDatetime(timestamp());
       let newData = new TimeoffRequest();
 
-      if (state.loggedUser!.getIsAdmin()) {
+      if (
+        state.departments.findIndex(
+          department => department.getManagerId() === loggedUserId,
+        ) != -1
+      ) {
         temp.setAdminApprovalUserId(loggedUserId);
         temp.setRequestStatus(1);
         temp.setAdminApprovalDatetime(timestamp(true));
