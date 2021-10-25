@@ -21,6 +21,7 @@ export type State = {
   jobSubtypes: JobSubtype[];
   jobTypeSubtypes: JobTypeSubtype[];
   eventPage: number; // Page for the current event to display
+  initiatedSchema: string[];
 };
 
 export enum ACTIONS {
@@ -38,6 +39,7 @@ export enum ACTIONS {
   SET_JOB_SUBTYPES = 'setJobSubtypes',
   SET_JOB_TYPE_SUBTYPES = 'setJobTypeSubtypes',
   SET_EVENT_PAGE = 'setEventPage',
+  SET_INITIATED_SCHEMA = 'setInitiatedSchema',
 }
 
 export enum FREQUENCIES {
@@ -106,6 +108,10 @@ export type Action =
   | {
       type: ACTIONS.SET_EVENT_PAGE;
       data: number;
+    }
+  | {
+      type: ACTIONS.SET_INITIATED_SCHEMA;
+      data: string[];
     };
 
 export const reducer = (state: State, action: Action) => {
@@ -192,6 +198,12 @@ export const reducer = (state: State, action: Action) => {
       return {
         ...state,
         eventPage: action.data,
+      };
+    }
+    case ACTIONS.SET_INITIATED_SCHEMA: {
+      return {
+        ...state,
+        initiatedSchema: action.data,
       };
     }
     default:
