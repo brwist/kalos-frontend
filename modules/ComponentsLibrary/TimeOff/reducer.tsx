@@ -4,6 +4,7 @@ import { User } from '@kalos-core/kalos-rpc/User';
 import { PTO, TimeoffRequest } from '@kalos-core/kalos-rpc/TimeoffRequest';
 import { ActivityLog } from '@kalos-core/kalos-rpc/ActivityLog';
 import { TimeoffRequestType } from '@kalos-core/kalos-rpc/compiled-protos/timeoff_request_pb';
+import { TimesheetDepartment } from '@kalos-core/kalos-rpc/TimesheetDepartment';
 
 export type State = {
   initiated: boolean;
@@ -23,6 +24,7 @@ export type State = {
   formKey: number;
   error: string;
   data: TimeoffRequest;
+  departments: TimesheetDepartment[];
 };
 
 export enum ACTIONS {
@@ -43,6 +45,7 @@ export enum ACTIONS {
   SET_FORM_KEY = 'setFormKey',
   SET_ERROR = 'setError',
   SET_DATA = 'setData',
+  SET_DEPARTMENTS = 'setDepartments',
 }
 
 export type Action =
@@ -55,6 +58,7 @@ export type Action =
   | { type: ACTIONS.SET_PTO; data: PTO }
   | { type: ACTIONS.SET_USER; data: User }
   | { type: ACTIONS.SET_OPEN_ALERT; data: boolean }
+  | { type: ACTIONS.SET_DEPARTMENTS; data: TimesheetDepartment[] }
   | { type: ACTIONS.SET_ALERT_DISMISSED; data: boolean }
   | { type: ACTIONS.SET_UPCOMING_REQUESTS; data: TimeoffRequest[] }
   | { type: ACTIONS.SET_PTO_HISTORY; data: TimeoffRequest[] }
@@ -183,6 +187,13 @@ export const reducer = (state: State, action: Action) => {
       return {
         ...state,
         data: action.data,
+      };
+    }
+    case ACTIONS.SET_DEPARTMENTS: {
+      console.log('setting departments');
+      return {
+        ...state,
+        departments: action.data,
       };
     }
     default:

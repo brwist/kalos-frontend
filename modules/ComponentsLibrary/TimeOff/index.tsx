@@ -410,6 +410,7 @@ export const TimeOff: FC<Props> = ({
       emailClient,
       state.typeOptions,
       state.user,
+      state.departments,
       state.alertDismissed,
       onSaveOrDelete,
       state.loggedUser,
