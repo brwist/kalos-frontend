@@ -526,6 +526,8 @@ export const FirstCallDashboard: React.FC<Props> = function FirstCallDashboard({
   }
 
   const getTechs = useCallback (async (refresh = false) => {
+    console.log(state.formData.departmentIds);
+    console.log(state.formData.departmentIds.toString());
     const techs = new DispatchableTech();
     const dr = new DateRange();
     dr.setStart('2012-01-01');
