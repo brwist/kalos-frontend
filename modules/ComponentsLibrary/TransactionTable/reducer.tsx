@@ -73,6 +73,8 @@ export type PopupType = {
 export enum ACTIONS {
   SET_TRANSACTION_FILTER = 'setTransactionFilter',
   SET_TRANSACTIONS = 'setTransactions',
+  SET_DELETE_FROM_LOCAL_LIST = 'setDeleteFromLocalList',
+  SET_UPDATE_FROM_LOCAL_LIST = 'setUpdateFromLocalList',
   SET_TOTAL_TRANSACTIONS = 'setTotalTransactions',
   SET_TRANSACTION_ACTIVITY_LOGS = 'setTransactionActivityLogs',
   SET_TRANSACTION_TO_EDIT = 'setTransactionToEdit',
@@ -124,6 +126,8 @@ export type Action =
       data: { orderBy: string; orderDir: OrderDir | undefined };
     }
   | { type: ACTIONS.SET_EMPLOYEES; data: User[] }
+  | { type: ACTIONS.SET_DELETE_FROM_LOCAL_LIST; data: Transaction }
+  | { type: ACTIONS.SET_UPDATE_FROM_LOCAL_LIST; data: Transaction }
   | { type: ACTIONS.SET_PENDING_UPLOAD_PHOTO; data: Transaction | undefined }
   | { type: ACTIONS.SET_PAGE; data: number }
   | { type: ACTIONS.SET_ERROR; data: string | undefined }
@@ -337,6 +341,39 @@ export const reducer = (state: State, action: Action) => {
         ...state,
         pendingUploadPhoto: action.data,
       };
+    case ACTIONS.SET_DELETE_FROM_LOCAL_LIST: {
+      console.log('delete from local list');
+      if (state.transactions) {
+        let temp = state.transactions!.filter(
+          transaction => transaction.txn.getId() != action.data.getId(),
+        );
+        console.log(temp);
+        return {
+          ...state,
+          transactions: temp,
+          totalTransactions: state.totalTransactions - 1,
+        };
+      } else {
+        return { ...state };
+      }
+    }
+    case ACTIONS.SET_UPDATE_FROM_LOCAL_LIST: {
+      console.log('update from local list');
+      if (state.transactions) {
+        let temp = state.transactions.findIndex(
+          transaction => transaction.txn.getId() === action.data.getId(),
+        );
+        let newTransactions = state.transactions;
+        newTransactions[temp].txn = action.data;
+        console.log(temp);
+        return {
+          ...state,
+          transactions: newTransactions,
+        };
+      } else {
+        return { ...state };
+      }
+    }
     case ACTIONS.SET_FILE_DATA:
       return { ...state, fileData: action.data };
     case ACTIONS.SET_IMAGE_WAIVER_TYPE_POPUP_OPEN:

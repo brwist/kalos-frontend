@@ -652,8 +652,20 @@ export const TransactionTable: FC<Props> = ({
       }
       try {
         await TransactionClientService.Update(transactionToSave);
+        const temp = transactionToSave;
+        transactionToSave.setCostCenterId(
+          parseInt(transactionToSave.getCostCenterId().toString()),
+        );
+        transactionToSave.setDepartmentId(
+          parseInt(transactionToSave.getDepartmentId().toString()),
+        );
+        console.log('transactionToSave', temp);
+        dispatch({
+          type: ACTIONS.SET_UPDATE_FROM_LOCAL_LIST,
+          data: transactionToSave,
+        });
+
         dispatch({ type: ACTIONS.SET_TRANSACTION_TO_EDIT, data: undefined });
-        refresh();
       } catch (err) {
         try {
           let errLog = new TransactionActivity();
@@ -673,7 +685,7 @@ export const TransactionTable: FC<Props> = ({
         dispatch({ type: ACTIONS.SET_TRANSACTION_TO_EDIT, data: undefined });
       }
     },
-    [refresh, loggedUserId, state.page],
+    [loggedUserId, state.page],
   );
   const getJobNumberInfo = async (number: number) => {
     let returnString = ['No Job Info Found'];
@@ -687,16 +699,16 @@ export const TransactionTable: FC<Props> = ({
           'Customer: ' +
           (res.getCustomer() === undefined
             ? 'No Customer '
-            : `${res.getCustomer()!.getFirstname()} ${res
+            : `${res
                 .getCustomer()!
-                .getLastname()}`);
+                .getFirstname()} ${res.getCustomer()!.getLastname()}`);
         const property =
           'Property: ' +
           (res.getProperty() === undefined
             ? 'No Property'
-            : `${res.getProperty()!.getAddress()} ${res
+            : `${res
                 .getProperty()!
-                .getCity()}`);
+                .getAddress()} ${res.getProperty()!.getCity()}`);
         returnString = [descritpion, customer, property];
       } catch (error) {
         console.log('Not a number');
@@ -1024,13 +1036,16 @@ export const TransactionTable: FC<Props> = ({
         );
       }
       await TransactionClientService.Delete(state.transactionToDelete);
+      dispatch({
+        type: ACTIONS.SET_DELETE_FROM_LOCAL_LIST,
+        data: state.transactionToDelete,
+      });
+
       dispatch({ type: ACTIONS.SET_TRANSACTION_TO_DELETE, data: undefined });
-      await resetTransactions();
-      await refresh();
     } catch (err) {
       console.error(`An error occurred while deleting a transaction: ${err}`);
     }
-  }, [state.transactionToDelete, refresh, resetTransactions]);
+  }, [state.transactionToDelete]);
 
   useEffect(() => {
     async function refreshEverything() {
@@ -1188,7 +1203,6 @@ export const TransactionTable: FC<Props> = ({
             onSave={saved => {
               saved.setId(state.transactionToEdit!.getId());
               updateTransaction(saved);
-              dispatch({ type: ACTIONS.SET_SEARCHING, data: true });
             }}
             onClose={() =>
               dispatch({
