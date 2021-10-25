@@ -1,7 +1,11 @@
 import { NULL_TIME } from '@kalos-core/kalos-rpc/constants';
 import { TimesheetLine } from '@kalos-core/kalos-rpc/TimesheetLine';
 import React, { FC, useCallback, useEffect, useState, useReducer } from 'react';
-import { IRS_SUGGESTED_MILE_FACTOR, MEALS_RATE } from '../../../constants';
+import {
+  IRS_SUGGESTED_MILE_FACTOR,
+  MEALS_RATE,
+  ENDPOINT,
+} from '../../../constants';
 import {
   formatDate,
   usd,
@@ -13,6 +17,7 @@ import {
   TaskClientService,
   TransactionAccountClientService,
 } from '../../../helpers';
+import { ClassCode, ClassCodeClient } from '@kalos-core/kalos-rpc/ClassCode';
 import { reducer, ACTIONS } from './reducer';
 import { PrintList } from '../PrintList';
 import { PrintPage, Status } from '../PrintPage';
@@ -75,11 +80,14 @@ export const CostReportCSV: FC<Props> = ({ serviceCallId, onClose }) => {
     loadingEvent: true,
     loadedInit: false,
     event: undefined,
+    laborTotals: {},
+    laborTotalsDropDownActive: false,
     transactionAccounts: [],
     trips: [],
     costCenterDropDownActive: false,
     tripsTotal: 0,
     tasks: [],
+    classCodes: [],
     dropDowns: [],
     totalHoursWorked: 0,
     activeTab: tabs[0],
@@ -100,6 +108,13 @@ export const CostReportCSV: FC<Props> = ({ serviceCallId, onClose }) => {
       active: 0,
     }));
     dispatch({ type: ACTIONS.SET_DROPDOWNS, data: mappedResults });
+    const cccs = new ClassCodeClient(ENDPOINT);
+    const classCodeReq = new ClassCode();
+    classCodeReq.setIsActive(true);
+    dispatch({
+      type: ACTIONS.SET_CLASS_CODES,
+      data: (await cccs.BatchGet(classCodeReq)).getResultsList(),
+    });
 
     let arr: PerDiem[] = [];
     resultsList.forEach(result => {
@@ -167,7 +182,7 @@ export const CostReportCSV: FC<Props> = ({ serviceCallId, onClose }) => {
     dispatch({ type: ACTIONS.SET_TRIPS_TOTAL, data: allTripsTotal });
 
     dispatch({ type: ACTIONS.SET_PER_DIEMS, data: arr });
-  }, [serviceCallId]);
+  }, [serviceCallId, state.costCenterTotals]);
 
   const totalMeals =
     state.perDiems.reduce((aggr, pd) => aggr + pd.getRowsList().length, 0) *
@@ -269,6 +284,17 @@ export const CostReportCSV: FC<Props> = ({ serviceCallId, onClose }) => {
         );
       }
       dispatch({ type: ACTIONS.SET_TIMESHEETS, data: timesheets });
+      let temp = state.laborTotals;
+      for (let i = 0; i < timesheets.length; i++) {
+        let keyValue = timesheets[i].getClassCodeId().toString();
+        if (temp[keyValue]) {
+          temp[keyValue] += timesheets[i].getHoursWorked();
+        } else {
+          //
+          temp[keyValue] = timesheets[i].getHoursWorked();
+        }
+      }
+      dispatch({ type: ACTIONS.SET_LABOR_TOTALS, data: temp });
 
       let total = 0;
       timesheets.forEach(
@@ -278,7 +304,7 @@ export const CostReportCSV: FC<Props> = ({ serviceCallId, onClose }) => {
       dispatch({ type: ACTIONS.SET_LOADING, data: false });
       dispatch({ type: ACTIONS.SET_LOADED, data: true });
     });
-  }, [loadResources, serviceCallId]);
+  }, [loadResources, state.laborTotals, serviceCallId]);
   const createReport = (section: string) => {
     let fullString = '';
     var find = ',';
@@ -489,10 +515,8 @@ export const CostReportCSV: FC<Props> = ({ serviceCallId, onClose }) => {
       load();
     }
   }, [state.loadedInit, loadInit, state.loaded, load]);
-  /*
-   */
   const costCenterArray = [['', '']];
-
+  const laborCostArray = [['', '']];
   state.transactionAccounts.map(account => {
     let findAccount = `${account.getId()}-${account.getDescription()}`;
     if (state.costCenterTotals[findAccount]) {
@@ -500,7 +524,17 @@ export const CostReportCSV: FC<Props> = ({ serviceCallId, onClose }) => {
       costCenterArray.push(value);
     }
   });
-  console.log(costCenterArray);
+  state.classCodes.map(code => {
+    let findAccount = code.getId();
+    if (state.laborTotals[findAccount]) {
+      let value = [
+        code.getDescription(),
+        `${state.laborTotals[findAccount]} hour(s)`,
+      ];
+      laborCostArray.push(value);
+    }
+  });
+
   return state.loaded ? (
     <SectionBar key="ReportPage" uncollapsable={true}>
       <style>{`
@@ -568,6 +602,18 @@ export const CostReportCSV: FC<Props> = ({ serviceCallId, onClose }) => {
                   : state.totalHoursWorked == 0
                   ? 'None'
                   : `${state.totalHoursWorked} hr`,
+              ],
+              [
+                <PrintTable
+                  key="TransactionBreakdownCategory"
+                  columns={[
+                    { title: '', align: 'left' },
+                    { title: '', align: 'left' },
+                  ]}
+                  data={laborCostArray.map(labor => {
+                    return labor;
+                  })}
+                ></PrintTable>,
               ],
             ]}
           />
@@ -1093,20 +1139,92 @@ export const CostReportCSV: FC<Props> = ({ serviceCallId, onClose }) => {
                 />
                 <div key="CostSummary">
                   <InfoTable
-                    columns={[{ name: 'Type' }, { name: 'Total' }]}
+                    columns={[
+                      { name: 'Type', align: 'left' },
+                      { name: 'Total', align: 'left' },
+                      { name: '', align: 'right' },
+                    ]}
                     data={[
                       [
                         {
-                          value: 'Total Hours Worked',
+                          value: (
+                            <div key="laborheader">
+                              Total Hours Worked
+                              <table key="LaborTypesContainer">
+                                <Collapse
+                                  key={'LaborCollapseTypes'}
+                                  in={state.laborTotalsDropDownActive === true}
+                                >
+                                  {state.classCodes.map(code => {
+                                    let findAccount = code.getId();
+                                    if (state.laborTotals[findAccount]) {
+                                      return (
+                                        <tr key={'laborValue' + findAccount}>
+                                          {code.getDescription()}
+                                        </tr>
+                                      );
+                                    }
+                                  })}
+                                </Collapse>
+                              </table>
+                            </div>
+                          ),
                         },
-
                         {
-                          value:
-                            state.totalHoursWorked > 1
-                              ? `${state.totalHoursWorked} hrs`
-                              : state.totalHoursWorked == 0
-                              ? 'None'
-                              : `${state.totalHoursWorked} hr`,
+                          value: (
+                            <div key="laborTotalHeader">
+                              {state.totalHoursWorked > 1
+                                ? `${state.totalHoursWorked} hrs`
+                                : state.totalHoursWorked == 0
+                                ? 'None'
+                                : `${state.totalHoursWorked} hr`}
+                              <table key="LaborCollapseValueHeader">
+                                <Collapse
+                                  key={'LaborCollapseValues'}
+                                  in={state.laborTotalsDropDownActive === true}
+                                >
+                                  {state.classCodes.map(code => {
+                                    let findAccount = code.getId();
+                                    if (state.laborTotals[findAccount]) {
+                                      return (
+                                        <tr
+                                          key={
+                                            'laborTotal' +
+                                            state.laborTotals[findAccount] +
+                                            code.getDescription()
+                                          }
+                                        >
+                                          {`${state.laborTotals[findAccount]} hour(s)`}
+                                        </tr>
+                                      );
+                                    }
+                                  })}
+                                </Collapse>
+                              </table>
+                            </div>
+                          ),
+                        },
+                        {
+                          value: (
+                            <div key="LaborTotalsButton">
+                              <Button
+                                key={'dropDownbuttonLabor'}
+                                onClick={() => {
+                                  dispatch({
+                                    type:
+                                      ACTIONS.SET_LABOR_TOTALS_DROPDOWN_ACTIVE,
+                                    data: !state.laborTotalsDropDownActive,
+                                  });
+                                }}
+                              >
+                                {state.laborTotalsDropDownActive == true ? (
+                                  <ExpandLess></ExpandLess>
+                                ) : (
+                                  <ExpandMore></ExpandMore>
+                                )}
+                              </Button>
+                            </div>
+                          ),
                         },
                       ],
                     ]}
@@ -1199,23 +1317,33 @@ export const CostReportCSV: FC<Props> = ({ serviceCallId, onClose }) => {
                           ),
                         },
                       ],
-                      [{ value: 'Meals' }, { value: usd(totalMeals) }],
-                      [{ value: 'Lodging' }, { value: usd(totalLodging) }],
+                      [
+                        { value: 'Meals' },
+                        { value: usd(totalMeals) },
+                        { value: '' },
+                      ],
+                      [
+                        { value: 'Lodging' },
+                        { value: usd(totalLodging) },
+                        { value: '' },
+                      ],
                       [
                         { value: 'Tasks Billable' },
                         { value: usd(totalTasksBillable) },
+                        { value: '' },
                       ],
                       [
                         { value: 'Trips Total' },
                         { value: usd(state.tripsTotal) },
+                        { value: '' },
                       ],
                       [
                         {
-                          value: <strong key="stronk">TOTAL:</strong>,
+                          value: <strong key="stronk1">TOTAL:</strong>,
                         },
                         {
                           value: (
-                            <strong key="stronk">
+                            <strong key="stronk2">
                               TOTAL:
                               {usd(
                                 totalMeals +
@@ -1226,6 +1354,7 @@ export const CostReportCSV: FC<Props> = ({ serviceCallId, onClose }) => {
                             </strong>
                           ),
                         },
+                        { value: '' },
                       ],
                     ]}
                   />
