@@ -64,14 +64,10 @@ describe('ComponentsLibrary', () => {
         closes = false;
       });
 
-      it('renders correctly', () => {
-        Chai.expect(wrapper.text().includes('New Contract')).to.equal(true);
-      });
-
-      describe('New Contract Section', () => {
+      describe('Edit Contract Section', () => {
         it('exists', () => {
           Chai.expect(
-            wrapper.find({ title: 'New Contract' }).length,
+            wrapper.find({ title: 'Edit Contract' }).length,
           ).to.be.greaterThanOrEqual(1);
         });
 
