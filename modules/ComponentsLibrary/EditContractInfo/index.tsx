@@ -46,6 +46,7 @@ import {
   INVOICE_SECTION_NAME,
   SAVE_LABEL,
   SERVICE_CALL_SECTION_NAME,
+  SERVICE_CALL_SUBTITLE,
 } from './constants';
 
 export interface Output {
@@ -823,6 +824,7 @@ export const EditContractInfo: FC<props> = ({
       </SectionBar>
       <SectionBar
         title={SERVICE_CALL_SECTION_NAME}
+        subtitle={SERVICE_CALL_SUBTITLE}
         actions={[{ label: CANCEL_LABEL, onClick: () => onClose() }]}
         pagination={{
           count: state.contractEvents.length,
@@ -832,13 +834,13 @@ export const EditContractInfo: FC<props> = ({
             dispatch({ type: ACTIONS.SET_EVENT_PAGE, data: page }),
         }}
       >
-        {/* ! Need to paginate events instead of just using first index */}
         {/* The property events are not going to be needed as it is not a callback */}
         {state.isLoaded && state.contractEvents.length > 0 && (
           <Request
+            key={state.eventPage.toString()}
             loading={!state.isLoaded}
             disabled={false}
-            serviceItem={state.contractEvents[0]}
+            serviceItem={state.contractEvents[state.eventPage]}
             propertyEvents={[]}
             jobTypeOptions={state.jobTypes.map(id => ({
               label: id.getName(),
@@ -850,7 +852,7 @@ export const EditContractInfo: FC<props> = ({
                 .filter(
                   jobTypeId =>
                     jobTypeId.getJobTypeId() ===
-                    state.contractEvents[0].getJobTypeId(),
+                    state.contractEvents[state.eventPage].getJobTypeId(),
                 )
                 .map(jobSubtypeId => ({
                   value: jobSubtypeId.getJobSubtypeId(),

@@ -5,6 +5,8 @@
 export const CONTRACT_SECTION_NAME = 'Edit Contract';
 export const INVOICE_SECTION_NAME = 'Invoice Data';
 export const SERVICE_CALL_SECTION_NAME = 'Service Call';
+export const SERVICE_CALL_SUBTITLE =
+  'Shows all service calls related to this contract';
 export const CANCEL_LABEL = 'Cancel';
 export const SAVE_LABEL = 'Save';
 
