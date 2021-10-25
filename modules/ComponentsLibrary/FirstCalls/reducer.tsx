@@ -117,7 +117,14 @@ export interface State {
 }
 
 export type Action = 
-  | { type: 'setTechs'; data: DispatchableTech[] }
+  | { type: 'setTechs'; data: {
+    techs: DispatchableTech[],
+  }}
+  | { type: 'setTechRefresh'; data: {
+    techs: DispatchableTech[],
+    formData: FormData,
+    scheduledOff: {id: number, name: string}[],
+  }}
   | { type: 'setModal'; data: {
     openModal: boolean,
     modalKey: string,
@@ -206,7 +213,14 @@ export const reducer = (state: State, action: Action) => {
     case 'setTechs':
       return {
         ...state,
-        techs: action.data,
+        techs: action.data.techs,
+      }
+    case 'setTechRefresh':
+      return {
+        ...state,
+        techs: action.data.techs,
+        formData: action.data.formData,
+        scheduledOff: action.data.scheduledOff,
       }
     case 'setModal':
       return {

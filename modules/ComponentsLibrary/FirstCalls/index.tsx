@@ -5,7 +5,6 @@ import { PageWrapper } from '../../PageWrapper/main';
 import { SectionBar } from '../SectionBar';
 import { Alert } from '../Alert';
 import { Modal } from '../Modal';
-import { Confirm } from '../Confirm';
 import { Schema, PlainForm } from '../PlainForm';
 import { DispatchTechs } from '../Dispatch/dispatchTechnicians';
 import { DismissedTechs } from '../Dispatch/dismissedTechnicians';
@@ -569,28 +568,39 @@ export const FirstCallDashboard: React.FC<Props> = function FirstCallDashboard({
     }
   }, [state.formData.departmentIds]);
 
-  // const setTechs = useCallback(async () => {
-  //   const newFormData : FormData = {
-  //     departmentIds: state.formData.departmentIds,
-  //     division: state.formData.division,
-  //     jobTypes: state.formData.jobTypes,
-  //     meetingTime: state.formData.meetingTime,
-  //     classTime: state.formData.classTime,
-  //     availableTechs: results[0].techList.filter(tech => {
-  //       const notAvailable = [];
-  //       for (let i in results[4].firstCall.manualOff) {
-  //         notAvailable.push(results[4].firstCall.manualOff[i].id);
-  //       }
-  //       for (let j in results[4].firstCall.inUse) {
-  //         notAvailable.push(results[4].firstCall.inUse[j]);
-  //       }
-  //       for (let k in results[0].scheduledOff) {
-  //         notAvailable.push(results[0].scheduledOff[k].id);
-  //       }
-  //       return !notAvailable.includes(tech.getUserId());
-  //     }),
-  //   }
-  // }, [getTechs]);
+  const setTechs = useCallback(async () => {
+    const techs = await getTechs();
+    const newFormData : FormData = {
+      departmentIds: state.formData.departmentIds,
+      division: state.formData.division,
+      jobTypes: state.formData.jobTypes,
+      meetingTime: state.formData.meetingTime,
+      classTime: state.formData.classTime,
+      availableTechs: techs.techList.filter(tech => {
+        const notAvailable = [];
+        for (let i in state.firstCallManualOff) {
+          notAvailable.push(state.firstCallManualOff[i].id);
+        }
+        for (let j in state.firstCallInUse) {
+          notAvailable.push(state.firstCallInUse[j]);
+        }
+        for (let k in techs.scheduledOff) {
+          notAvailable.push(techs.scheduledOff[k].id);
+        }
+        return !notAvailable.includes(tech.getUserId());
+      }),
+    }
+    updateFirstCallState({type: 'setTechRefresh', data: {
+      techs: techs.techList,
+      formData: newFormData,
+      scheduledOff: techs.scheduledOff,
+    }});
+  }, [
+    getTechs, state.firstCallInUse, 
+    state.firstCallManualOff, state.formData.classTime, 
+    state.formData.departmentIds, state.formData.division, 
+    state.formData.jobTypes, state.formData.meetingTime
+  ]);
 
   const getCalls =  useCallback(async () => {
     const newCall = new DispatchCall();
@@ -865,12 +875,10 @@ export const FirstCallDashboard: React.FC<Props> = function FirstCallDashboard({
       handleSave();
     }
     if (state.loaded) {
-      const intervalCalls = setInterval(() => setCalls(), 30000);
-      // const intervalTechs = setInterval(() => setTechs)
-      return () => clearInterval(intervalCalls);
-      
+      const interval = setInterval(() => {setCalls(true);setTechs()}, 30000);
+      return () => clearInterval(interval);
     }
-  }, [state.loaded, state.save, handleSave, state.refreshCalls, setCalls, load, checkDivision, state.formData.division, state.formData.departmentIds])
+  }, [state.loaded, state.save, handleSave, state.refreshCalls, setCalls, setTechs, load, checkDivision, state.formData.division, state.formData.departmentIds])
   
   return (
     <PageWrapper userID={loggedUserId}>
