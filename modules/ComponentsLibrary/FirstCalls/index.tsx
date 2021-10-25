@@ -154,10 +154,10 @@ export const FirstCallDashboard: React.FC<Props> = function FirstCallDashboard({
   testUserId=0,
   disableSlack=false,
 }) {
-  const [state, firstCallDashboard] = useReducer(reducer, initialState);
+  const [state, updateFirstCallState] = useReducer(reducer, initialState);
 
   const handleModalToggle = (modalKey : string) => {
-    firstCallDashboard({
+    updateFirstCallState({
       type: 'setModal',
       data: {
         openModal: !state.openModal,
@@ -166,7 +166,7 @@ export const FirstCallDashboard: React.FC<Props> = function FirstCallDashboard({
     });
   }
   const handleAddTechToggle = () => {
-    firstCallDashboard({ type: 'setShowAddTech', data: !state.showAddTech });
+    updateFirstCallState({ type: 'setShowAddTech', data: !state.showAddTech });
   }
   const equals = (a : any, b : any) =>
     a.length === b.length &&
@@ -183,7 +183,7 @@ export const FirstCallDashboard: React.FC<Props> = function FirstCallDashboard({
           list: techList,
         };
         if (data.start !== state.firstCallClass.start || !equals(data.list,state.firstCallClass.list)) {
-          firstCallDashboard({ type: 'setFirstCallClass', data: data});
+          updateFirstCallState({ type: 'setFirstCallClass', data: data});
         }
         break;
       }
@@ -196,7 +196,7 @@ export const FirstCallDashboard: React.FC<Props> = function FirstCallDashboard({
           list: techList,
         };
         if (data.start !== state.firstCallMeeting.start || !equals(data.list,state.firstCallMeeting.list)) {
-          firstCallDashboard({ type: 'setFirstCallMeeting', data: data});
+          updateFirstCallState({ type: 'setFirstCallMeeting', data: data});
         }
         break;
       }
@@ -239,7 +239,7 @@ export const FirstCallDashboard: React.FC<Props> = function FirstCallDashboard({
               userId: state.selectedCall.getUserId(),
               notes: state.selectedCall.getNotes(),
             }
-            firstCallDashboard({ type: 'setFirstCallCalls', data: state.firstCallCalls.concat(newCall) });
+            updateFirstCallState({ type: 'setFirstCallCalls', data: state.firstCallCalls.concat(newCall) });
           }
         } else if (firstCall[0].notes !== state.selectedCall.getNotes() || firstCall[0].assigned !== assignedTech) {
           if (assignedTech.length) {
@@ -262,17 +262,17 @@ export const FirstCallDashboard: React.FC<Props> = function FirstCallDashboard({
             }
             const fc = state.firstCallCalls;
             fc.splice(fc.findIndex(call => call.id === state.selectedCall.getId()),1);
-            firstCallDashboard({ type: 'setFirstCallCalls', data: fc.concat(updatedCall).sort((a,b) => (a.id > b.id) ? 1 : ((b.id > a.id) ? -1 : 0)) })
+            updateFirstCallState({ type: 'setFirstCallCalls', data: fc.concat(updatedCall).sort((a,b) => (a.id > b.id) ? 1 : ((b.id > a.id) ? -1 : 0)) })
           } else {
             const fc = state.firstCallCalls;
             fc.splice(fc.findIndex(call => call.id === state.selectedCall.getId()),1);
-            firstCallDashboard({ type: 'setFirstCallCalls', data: fc });
+            updateFirstCallState({ type: 'setFirstCallCalls', data: fc });
           }
         }
         break;
       }
     }
-    firstCallDashboard({
+    updateFirstCallState({
       type: 'setModal',
       data: {
         openModal: !state.openModal,
@@ -311,12 +311,12 @@ export const FirstCallDashboard: React.FC<Props> = function FirstCallDashboard({
     if (data.availableTechs) {
       updateFormData.availableTechs = data.availableTechs;
     }
-    firstCallDashboard({ type: 'setFormData', data: {formData: updateFormData} });
+    updateFirstCallState({ type: 'setFormData', data: {formData: updateFormData} });
     if (resetPage) {
-      firstCallDashboard({ type: 'setLoaded', data: false });
+      updateFirstCallState({ type: 'setLoaded', data: false });
     }
     if (refreshCalls) {
-      firstCallDashboard({ type: 'setRefreshCalls', data: true });
+      updateFirstCallState({ type: 'setRefreshCalls', data: true });
     }
   }, [state.formData, state.loaded])
 
@@ -331,7 +331,7 @@ export const FirstCallDashboard: React.FC<Props> = function FirstCallDashboard({
       for (const user of userData.getResultsList()) {
         assignees.push({id: user.getId(), name: `${user.getFirstname()} ${user.getLastname()}`})
       }
-      firstCallDashboard({
+      updateFirstCallState({
         type: 'setModal',
         data: {
           openModal: true,
@@ -346,7 +346,7 @@ export const FirstCallDashboard: React.FC<Props> = function FirstCallDashboard({
   }
 
   const handleUpdateAssignTech = async (id : number, updateType : string) => {
-    firstCallDashboard({ type: 'setProcessing', data: true });
+    updateFirstCallState({ type: 'setProcessing', data: true });
     const currentCall = state.selectedCall;
     const currentAssignees = state.assigneeList;
     const currentInUse = state.firstCallInUse;
@@ -366,7 +366,7 @@ export const FirstCallDashboard: React.FC<Props> = function FirstCallDashboard({
       currentInUse.push(id);
     }
     currentCall.setLogTechnicianAssigned(currentTechArray.toString());
-    firstCallDashboard({
+    updateFirstCallState({
       type: 'setFirstCallInUse',
       data: currentInUse
     });
@@ -384,7 +384,7 @@ export const FirstCallDashboard: React.FC<Props> = function FirstCallDashboard({
       return !notAvailable.includes(tech.getUserId());
     });
     handleFormDataUpdate({availableTechs : availableTechs});
-    firstCallDashboard({
+    updateFirstCallState({
       type: 'setAssigneesAndCall',
       data: {
         assigneeList: currentAssignees,
@@ -394,7 +394,7 @@ export const FirstCallDashboard: React.FC<Props> = function FirstCallDashboard({
   }
 
   const handleUnOffTech = async (tech : DispatchableTech) => {
-    firstCallDashboard({ type: 'setProcessing', data: true});
+    updateFirstCallState({ type: 'setProcessing', data: true});
     const offTechs = state.firstCallManualOff;
     const index = offTechs.findIndex(offTech => offTech.id === tech.getUserId());
     offTechs.splice(index,1);
@@ -412,7 +412,7 @@ export const FirstCallDashboard: React.FC<Props> = function FirstCallDashboard({
       return !notAvailable.includes(tech.getUserId());
     });
     handleFormDataUpdate({availableTechs: availableTechs});
-    firstCallDashboard({ type: 'setFirstCallManualOff', data: offTechs});
+    updateFirstCallState({ type: 'setFirstCallManualOff', data: offTechs});
   }
 
   const handleMapRecenter = async (center: {lat: number, lng: number}, zoom: number, address?: string) => {
@@ -434,7 +434,7 @@ export const FirstCallDashboard: React.FC<Props> = function FirstCallDashboard({
       }
     }
     if (newCenter.lat != 0 || newCenter.lng != 0) {
-      firstCallDashboard({
+      updateFirstCallState({
         type: 'setCenter',
         data: {
           center: newCenter,
@@ -452,7 +452,7 @@ export const FirstCallDashboard: React.FC<Props> = function FirstCallDashboard({
     try {
       await EventClientService.Update(updatedCall);
       const newCalls = await setCalls();
-      firstCallDashboard({ type: 'setCalls', data: {available: newCalls.availableCalls, assigned: newCalls.assignedCalls} });
+      updateFirstCallState({ type: 'setCalls', data: {available: newCalls.availableCalls, assigned: newCalls.assignedCalls} });
     } catch (err) {
       console.error(err);
     }
@@ -488,7 +488,7 @@ export const FirstCallDashboard: React.FC<Props> = function FirstCallDashboard({
     firstCall.setJson(firstCallJSON);
     if (!allowSave) {
       alert("Please Refresh Page");
-      firstCallDashboard({ type: 'setFailedSave', data: {save: false, error: 'DateMismatch'}});
+      updateFirstCallState({ type: 'setFailedSave', data: {save: false, error: 'DateMismatch'}});
     } else {
       if (state.newFirstCall) {
         const newCall = await FirstCallClientService.Create(firstCall);
@@ -496,7 +496,7 @@ export const FirstCallDashboard: React.FC<Props> = function FirstCallDashboard({
       } else if (allowSave) {
         await FirstCallClientService.Update(firstCall);
       } 
-      firstCallDashboard({ type: 'setSave', data: {save: false, saveTime: saveTime, firstCallId: id, isNew: false}});
+      updateFirstCallState({ type: 'setSave', data: {save: false, saveTime: saveTime, firstCallId: id, isNew: false}});
     }
   }, [
     state.firstCallCalls, state.firstCallMeeting,
@@ -525,7 +525,7 @@ export const FirstCallDashboard: React.FC<Props> = function FirstCallDashboard({
     }
   }
 
-  const getTechs = useCallback (async () => {
+  const getTechs = useCallback (async (refresh = false) => {
     const techs = new DispatchableTech();
     const dr = new DateRange();
     dr.setStart('2012-01-01');
@@ -567,7 +567,30 @@ export const FirstCallDashboard: React.FC<Props> = function FirstCallDashboard({
       console.error(err)
       return {techList: [], scheduledOff: []}
     }
-  }, [state.formData.departmentIds])
+  }, [state.formData.departmentIds]);
+
+  // const setTechs = useCallback(async () => {
+  //   const newFormData : FormData = {
+  //     departmentIds: state.formData.departmentIds,
+  //     division: state.formData.division,
+  //     jobTypes: state.formData.jobTypes,
+  //     meetingTime: state.formData.meetingTime,
+  //     classTime: state.formData.classTime,
+  //     availableTechs: results[0].techList.filter(tech => {
+  //       const notAvailable = [];
+  //       for (let i in results[4].firstCall.manualOff) {
+  //         notAvailable.push(results[4].firstCall.manualOff[i].id);
+  //       }
+  //       for (let j in results[4].firstCall.inUse) {
+  //         notAvailable.push(results[4].firstCall.inUse[j]);
+  //       }
+  //       for (let k in results[0].scheduledOff) {
+  //         notAvailable.push(results[0].scheduledOff[k].id);
+  //       }
+  //       return !notAvailable.includes(tech.getUserId());
+  //     }),
+  //   }
+  // }, [getTechs]);
 
   const getCalls =  useCallback(async () => {
     const newCall = new DispatchCall();
@@ -588,7 +611,7 @@ export const FirstCallDashboard: React.FC<Props> = function FirstCallDashboard({
     }
   }, [state.formData.jobTypes, state.formData.division])
 
-  const setCalls = useCallback(async () => {
+  const setCalls = useCallback(async (refresh = false) => {
     const availableCalls : DispatchCall[] = [];
     const assignedCalls : DispatchCall[] = [];
     const calls = await getCalls();
@@ -599,8 +622,8 @@ export const FirstCallDashboard: React.FC<Props> = function FirstCallDashboard({
         assignedCalls.push(call);
       }
     });
-    if (state.refreshCalls) {
-      firstCallDashboard({ type: 'setCalls', data: {
+    if (state.refreshCalls || refresh) {
+      updateFirstCallState({ type: 'setCalls', data: {
         available: availableCalls,
         assigned: assignedCalls
       }})
@@ -675,10 +698,11 @@ export const FirstCallDashboard: React.FC<Props> = function FirstCallDashboard({
       const sectorList = filteredDepartments.map(sector => sector.getSectorGroup())
       const filteredSectorList = sectorList.filter((c,index) => sectorList.indexOf(c) === index && c !== 0)
         .sort((a,b) => (a > b) ? 1 : ((b > a) ? -1 : 0));
+      console.log(filteredSectorList);
       if (filteredSectorList.length === 1) {
         handleFormDataUpdate({division: filteredSectorList[0]});
       }   
-      firstCallDashboard({
+      updateFirstCallState({
         type: 'setSectorList',
         data: sectorList});
     } catch(err) {
@@ -744,7 +768,7 @@ export const FirstCallDashboard: React.FC<Props> = function FirstCallDashboard({
       }
       return classTechIds.includes(tech.getUserId())
     });
-    firstCallDashboard({
+    updateFirstCallState({
       type: 'setInitialValues',
       data: {
         techs: initialData.techs,
@@ -841,6 +865,12 @@ export const FirstCallDashboard: React.FC<Props> = function FirstCallDashboard({
     if (state.save) {
       handleSave();
     }
+    if (state.loaded) {
+      const intervalCalls = setInterval(() => setCalls(), 30000);
+      // const intervalTechs = setInterval(() => setTechs)
+      return () => clearInterval(intervalCalls);
+      
+    }
   }, [state.loaded, state.save, handleSave, state.refreshCalls, setCalls, load, checkDivision, state.formData.division])
   
   return (
@@ -900,13 +930,13 @@ export const FirstCallDashboard: React.FC<Props> = function FirstCallDashboard({
                       }
                     }
                     if (newOnCall.tech.userId !== state.firstCallOnCall.tech.userId) {
-                      firstCallDashboard({ type: 'setFirstCallOnCall', data: newOnCall});
+                      updateFirstCallState({ type: 'setFirstCallOnCall', data: newOnCall});
                     }
                   }
                   break;
                 }
                 case 'dismissTech': {
-                  firstCallDashboard({ type: 'setProcessing', data: true });
+                  updateFirstCallState({ type: 'setProcessing', data: true });
                   const manualOffTechs = state.firstCallManualOff;
                   const selectedTech = state.techs.find(tech => tech.getUserId() === Number(callback.draggableId));
                   manualOffTechs.push({id: selectedTech!.getUserId(), name: selectedTech!.getTechname()});
@@ -924,14 +954,14 @@ export const FirstCallDashboard: React.FC<Props> = function FirstCallDashboard({
                     return !notAvailable.includes(tech.getUserId());
                   })
                   handleFormDataUpdate({availableTechs: availableTechs});
-                  firstCallDashboard({ type: 'setFirstCallManualOff', data: manualOffTechs });
+                  updateFirstCallState({ type: 'setFirstCallManualOff', data: manualOffTechs });
                   break;
                 }
                 default: {
-                  firstCallDashboard({ type: 'setSaveCall', data: true });
+                  updateFirstCallState({ type: 'setSaveCall', data: true });
                   const inUse = state.firstCallInUse;
                   inUse.push(Number(callback.draggableId));
-                  firstCallDashboard({ type: 'setFirstCallInUse', data: inUse });
+                  updateFirstCallState({ type: 'setFirstCallInUse', data: inUse });
                   const availableTechs = state.techs.filter(tech => {
                     const notAvailable = [];
                     for (let i in state.firstCallManualOff) {
@@ -1046,7 +1076,7 @@ export const FirstCallDashboard: React.FC<Props> = function FirstCallDashboard({
                   defaultValue={state.firstCallMessage.replaceAll('     ', '\n')}
                   onBlur={(text)=>{
                     if (state.firstCallMessage !== text.target.value) {
-                      firstCallDashboard({ type: 'setFirstCallMessage', data: text.target.value.replace(/\n/g,'     ') });
+                      updateFirstCallState({ type: 'setFirstCallMessage', data: text.target.value.replace(/\n/g,'     ') });
                     }
                   }}
                 />
@@ -1232,7 +1262,7 @@ export const FirstCallDashboard: React.FC<Props> = function FirstCallDashboard({
                               if (text.target.value !== state.selectedCall.getNotes()) {
                                 const updatedSelectedCall = state.selectedCall;
                                 updatedSelectedCall.setNotes(text.target.value.replace(/\n/g,'     '));
-                                firstCallDashboard({ type: 'setSelectedCall', data: updatedSelectedCall });
+                                updateFirstCallState({ type: 'setSelectedCall', data: updatedSelectedCall });
                               }
                             }}
                           />
