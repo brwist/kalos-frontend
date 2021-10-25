@@ -85,6 +85,7 @@ export const EditContractInfo: FC<props> = ({
     jobTypes: [],
     jobSubtypes: [],
     jobTypeSubtypes: [],
+    eventPage: 0,
   });
 
   const CONTRACT_SCHEMA: Schema<Contract> = [
@@ -230,7 +231,7 @@ export const EditContractInfo: FC<props> = ({
     return res;
   }, [contractID, userID]);
 
-  const getContractEvent = useCallback(async () => {
+  const getContractEvents = useCallback(async () => {
     try {
       let req = new Event();
       req.setContractId(contractID);
@@ -415,7 +416,7 @@ export const EditContractInfo: FC<props> = ({
       return;
     }
 
-    await getContractEvent();
+    await getContractEvents();
 
     await getProperties(res);
 
@@ -434,7 +435,7 @@ export const EditContractInfo: FC<props> = ({
   }, [
     doesInvoiceExistAlready,
     getContract,
-    getContractEvent,
+    getContractEvents,
     getJobSubtypes,
     getJobTypeSubtypes,
     getJobTypes,
@@ -823,6 +824,13 @@ export const EditContractInfo: FC<props> = ({
       <SectionBar
         title={SERVICE_CALL_SECTION_NAME}
         actions={[{ label: CANCEL_LABEL, onClick: () => onClose() }]}
+        pagination={{
+          count: state.contractEvents.length,
+          rowsPerPage: 1,
+          page: state.eventPage,
+          onPageChange: page =>
+            dispatch({ type: ACTIONS.SET_EVENT_PAGE, data: page }),
+        }}
       >
         {/* ! Need to paginate events instead of just using first index */}
         {/* The property events are not going to be needed as it is not a callback */}

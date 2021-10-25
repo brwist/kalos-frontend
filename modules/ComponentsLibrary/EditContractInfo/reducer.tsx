@@ -20,6 +20,7 @@ export type State = {
   jobTypes: JobType[];
   jobSubtypes: JobSubtype[];
   jobTypeSubtypes: JobTypeSubtype[];
+  eventPage: number; // Page for the current event to display
 };
 
 export enum ACTIONS {
@@ -36,6 +37,7 @@ export enum ACTIONS {
   SET_JOB_TYPES = 'setJobTypes',
   SET_JOB_SUBTYPES = 'setJobSubtypes',
   SET_JOB_TYPE_SUBTYPES = 'setJobTypeSubtypes',
+  SET_EVENT_PAGE = 'setEventPage',
 }
 
 export enum FREQUENCIES {
@@ -100,6 +102,10 @@ export type Action =
   | {
       type: ACTIONS.SET_JOB_SUBTYPES;
       data: JobSubtype[];
+    }
+  | {
+      type: ACTIONS.SET_EVENT_PAGE;
+      data: number;
     };
 
 export const reducer = (state: State, action: Action) => {
@@ -182,7 +188,17 @@ export const reducer = (state: State, action: Action) => {
         jobTypeSubtypes: action.data,
       };
     }
+    case ACTIONS.SET_EVENT_PAGE: {
+      return {
+        ...state,
+        eventPage: action.data,
+      };
+    }
     default:
+      console.error(
+        // @ts-expect-error
+        `The supplied action type does not match any actions in the reducer: ${action.type}`,
+      );
       return state;
   }
 };
