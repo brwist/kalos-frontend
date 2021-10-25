@@ -304,7 +304,7 @@ export const CostReportCSV: FC<Props> = ({ serviceCallId, onClose }) => {
       dispatch({ type: ACTIONS.SET_LOADING, data: false });
       dispatch({ type: ACTIONS.SET_LOADED, data: true });
     });
-  }, [loadResources, serviceCallId]);
+  }, [loadResources, state.laborTotals, serviceCallId]);
   const createReport = (section: string) => {
     let fullString = '';
     var find = ',';
@@ -515,7 +515,25 @@ export const CostReportCSV: FC<Props> = ({ serviceCallId, onClose }) => {
       load();
     }
   }, [state.loadedInit, loadInit, state.loaded, load]);
-  console.log(state.laborTotals);
+  const costCenterArray = [['', '']];
+  const laborCostArray = [['', '']];
+  state.transactionAccounts.map(account => {
+    let findAccount = `${account.getId()}-${account.getDescription()}`;
+    if (state.costCenterTotals[findAccount]) {
+      let value = [findAccount, usd(state.costCenterTotals[findAccount])];
+      costCenterArray.push(value);
+    }
+  });
+  state.classCodes.map(code => {
+    let findAccount = code.getId();
+    if (state.laborTotals[findAccount]) {
+      let value = [
+        code.getDescription(),
+        `${state.laborTotals[findAccount]} hour(s)`,
+      ];
+      laborCostArray.push(value);
+    }
+  });
 
   return state.loaded ? (
     <SectionBar key="ReportPage" uncollapsable={true}>
@@ -578,14 +596,24 @@ export const CostReportCSV: FC<Props> = ({ serviceCallId, onClose }) => {
             ]}
             data={[
               [
-                [
-                  'Total Hours Worked',
-                  state.totalHoursWorked > 1
-                    ? `${state.totalHoursWorked} hrs`
-                    : state.totalHoursWorked == 0
-                    ? 'None'
-                    : `${state.totalHoursWorked} hr`,
-                ],
+                'Total Hours Worked',
+                state.totalHoursWorked > 1
+                  ? `${state.totalHoursWorked} hrs`
+                  : state.totalHoursWorked == 0
+                  ? 'None'
+                  : `${state.totalHoursWorked} hr`,
+              ],
+              [
+                <PrintTable
+                  key="TransactionBreakdownCategory"
+                  columns={[
+                    { title: '', align: 'left' },
+                    { title: '', align: 'left' },
+                  ]}
+                  data={laborCostArray.map(labor => {
+                    return labor;
+                  })}
+                ></PrintTable>,
               ],
             ]}
           />
@@ -600,6 +628,18 @@ export const CostReportCSV: FC<Props> = ({ serviceCallId, onClose }) => {
             ]}
             data={[
               ['Transactions', usd(totalTransactions)],
+              [
+                <PrintTable
+                  key="TransactionBreakdownCategory"
+                  columns={[
+                    { title: 'Type', align: 'left' },
+                    { title: 'SubCost', align: 'right' },
+                  ]}
+                  data={costCenterArray.map(costCenter => {
+                    return costCenter;
+                  })}
+                ></PrintTable>,
+              ],
               ['Meals', usd(totalMeals)],
               ['Lodging', usd(totalLodging)],
               ['Tasks Billable', usd(totalTasksBillable)],
