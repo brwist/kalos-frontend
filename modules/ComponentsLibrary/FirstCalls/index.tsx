@@ -526,8 +526,6 @@ export const FirstCallDashboard: React.FC<Props> = function FirstCallDashboard({
   }
 
   const getTechs = useCallback (async (refresh = false) => {
-    console.log(state.formData.departmentIds);
-    console.log(state.formData.departmentIds.toString());
     const techs = new DispatchableTech();
     const dr = new DateRange();
     dr.setStart('2012-01-01');
@@ -700,7 +698,6 @@ export const FirstCallDashboard: React.FC<Props> = function FirstCallDashboard({
       const sectorList = filteredDepartments.map(sector => sector.getSectorGroup())
       const filteredSectorList = sectorList.filter((c,index) => sectorList.indexOf(c) === index && c !== 0)
         .sort((a,b) => (a > b) ? 1 : ((b > a) ? -1 : 0));
-      console.log(filteredSectorList);
       if (filteredSectorList.length === 1) {
         handleFormDataUpdate({division: filteredSectorList[0]});
       }   
@@ -858,7 +855,7 @@ export const FirstCallDashboard: React.FC<Props> = function FirstCallDashboard({
     if (state.formData.division === 0) {
       checkDivision();
     }
-    if (!state.loaded && state.formData.division !== 0) {
+    if (!state.loaded && state.formData.division !== 0 && state.formData.departmentIds.length !== 0) {
       load();
     }
     if (state.refreshCalls && state.loaded) {
@@ -873,7 +870,7 @@ export const FirstCallDashboard: React.FC<Props> = function FirstCallDashboard({
       return () => clearInterval(intervalCalls);
       
     }
-  }, [state.loaded, state.save, handleSave, state.refreshCalls, setCalls, load, checkDivision, state.formData.division])
+  }, [state.loaded, state.save, handleSave, state.refreshCalls, setCalls, load, checkDivision, state.formData.division, state.formData.departmentIds])
   
   return (
     <PageWrapper userID={loggedUserId}>
