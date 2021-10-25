@@ -596,6 +596,8 @@ export const EditContractInfo: FC<props> = ({
   );
 
   const saveEvents = useCallback(async () => {
+    console.log('would save events: ', state.contractEvents);
+    return;
     state.contractEvents.forEach(async event => {
       try {
         let req = event;
@@ -631,6 +633,8 @@ export const EditContractInfo: FC<props> = ({
 
     saveInvoice(contractResult);
 
+    saveEvents();
+
     dispatch({ type: ACTIONS.SET_SAVING, data: false });
     if (onSaveFinished)
       onSaveFinished({
@@ -643,6 +647,7 @@ export const EditContractInfo: FC<props> = ({
   }, [
     onSaveFinished,
     saveContract,
+    saveEvents,
     saveInvoice,
     state.contractData,
     state.invoiceData,
@@ -862,7 +867,14 @@ export const EditContractInfo: FC<props> = ({
                       ?.getName() || '',
                 })),
             ]}
-            onChange={changed => console.log('Changed: ', changed)}
+            onChange={changed => {
+              let contractEvents = state.contractEvents;
+              contractEvents[state.eventPage] = changed;
+              dispatch({
+                type: ACTIONS.SET_CONTRACT_EVENTS,
+                data: contractEvents,
+              });
+            }}
             onValid={valid => console.log('Valid: ', valid)}
             onInitSchema={initSchema =>
               console.log('Init schema: ', initSchema)
