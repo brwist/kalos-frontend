@@ -365,7 +365,7 @@ export const ServiceCall: FC<Props> = props => {
           newActivity.setActivityDate(
             format(new Date(), 'yyyy-MM-dd HH:mm:ss'),
           );
-          newActivity.setUserId(userID);
+          newActivity.setUserId(loggedUserId);
           newActivity.setActivityName(activityName);
           await ActivityLogClientService.Create(newActivity);
         }
@@ -391,7 +391,7 @@ export const ServiceCall: FC<Props> = props => {
         }
         newActivity.setPropertyId(propertyId);
         newActivity.setActivityDate(format(new Date(), 'yyyy-MM-dd HH:mm:ss'));
-        newActivity.setUserId(userID);
+        newActivity.setUserId(loggedUserId);
         newActivity.setActivityName(activityName);
         await ActivityLogClientService.Create(newActivity);
       }
@@ -422,7 +422,7 @@ export const ServiceCall: FC<Props> = props => {
     saveInvoice,
     property,
     propertyId,
-    userID,
+    loggedUserId,
     loadEntry,
     loadServicesRenderedData,
   ]);
