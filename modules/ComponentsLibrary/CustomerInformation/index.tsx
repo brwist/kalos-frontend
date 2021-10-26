@@ -195,7 +195,7 @@ export const CustomerInformation: FC<Props> = ({
         setNotificationEditing(false);
       }
     },
-    [setSaving, userID, setCustomer, setEditing, handleSetNotificationEditing],
+    [customer, userID],
   );
 
   const handleDelete = useCallback(async () => {
