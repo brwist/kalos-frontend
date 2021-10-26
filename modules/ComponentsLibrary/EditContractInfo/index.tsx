@@ -47,6 +47,8 @@ import {
   SAVE_LABEL,
   SERVICE_CALL_SECTION_NAME,
   SERVICE_CALL_SUBTITLE,
+  WARNING_LABEL,
+  CONFIRM_CLOSE_WITHOUT_SAVE_DIALOG,
 } from './constants';
 
 export interface Output {
@@ -88,6 +90,8 @@ export const EditContractInfo: FC<props> = ({
     jobTypeSubtypes: [],
     eventPage: 0,
     initiatedSchema: [],
+    hasBeenChanged: false,
+    isClosingWithoutSave: false,
   });
 
   const CONTRACT_SCHEMA: Schema<Contract> = [
@@ -671,6 +675,15 @@ export const EditContractInfo: FC<props> = ({
     save();
   };
 
+  const validateForClose = () => {
+    if (state.hasBeenChanged) {
+      dispatch({ type: ACTIONS.SET_CLOSING_WITHOUT_SAVE, data: true });
+      return;
+    }
+
+    onClose();
+  };
+
   useEffect(() => {
     if (!state.isLoaded) load();
 
@@ -693,6 +706,21 @@ export const EditContractInfo: FC<props> = ({
           {state.error}
         </Alert>
       )}
+      {state.isClosingWithoutSave && (
+        <Confirm
+          title={WARNING_LABEL}
+          open={state.isClosingWithoutSave}
+          onClose={() => {
+            dispatch({ type: ACTIONS.SET_CLOSING_WITHOUT_SAVE, data: false });
+          }}
+          onConfirm={() => {
+            dispatch({ type: ACTIONS.SET_CLOSING_WITHOUT_SAVE, data: false });
+            onClose();
+          }}
+        >
+          {CONFIRM_CLOSE_WITHOUT_SAVE_DIALOG}
+        </Confirm>
+      )}
       {state.isValidating && (
         <Confirm
           title={CONFIRM_SAVE_LABEL}
@@ -711,7 +739,7 @@ export const EditContractInfo: FC<props> = ({
       <SectionBar
         title={CONTRACT_SECTION_NAME}
         actions={[
-          { label: CANCEL_LABEL, onClick: () => onClose() },
+          { label: CANCEL_LABEL, onClick: () => validateForClose() },
           { label: SAVE_LABEL, onClick: () => validateForSave() },
         ]}
       >
@@ -724,6 +752,7 @@ export const EditContractInfo: FC<props> = ({
             onSave={() => validateForSave()}
             onClose={() => onClose()}
             onChange={contractData => {
+              dispatch({ type: ACTIONS.SET_HAS_BEEN_CHANGED, data: true });
               let req = makeSafeFormObject(contractData, new Contract());
               switch (req.getFrequency() as any) {
                 case FREQUENCIES.MONTHLY:
@@ -769,6 +798,7 @@ export const EditContractInfo: FC<props> = ({
               initialPropertiesSelected={state.propertiesSelected}
               userId={userID}
               onChange={propertyData => {
+                dispatch({ type: ACTIONS.SET_HAS_BEEN_CHANGED, data: true });
                 dispatch({
                   type: ACTIONS.SET_PROPERTIES_SELECTED,
                   data: propertyData,
@@ -786,7 +816,7 @@ export const EditContractInfo: FC<props> = ({
       </SectionBar>
       <SectionBar
         title={INVOICE_SECTION_NAME}
-        actions={[{ label: CANCEL_LABEL, onClick: () => onClose() }]}
+        actions={[{ label: CANCEL_LABEL, onClick: () => validateForClose() }]}
       >
         <EditInvoiceData
           userId={userID}
@@ -815,6 +845,7 @@ export const EditContractInfo: FC<props> = ({
               });
           }}
           onChange={currentData => {
+            dispatch({ type: ACTIONS.SET_HAS_BEEN_CHANGED, data: true });
             dispatch({
               type: ACTIONS.SET_INVOICE_DATA,
               data: currentData,
@@ -834,7 +865,7 @@ export const EditContractInfo: FC<props> = ({
       <SectionBar
         title={SERVICE_CALL_SECTION_NAME}
         subtitle={SERVICE_CALL_SUBTITLE}
-        actions={[{ label: CANCEL_LABEL, onClick: () => onClose() }]}
+        actions={[{ label: CANCEL_LABEL, onClick: () => validateForClose() }]}
         pagination={{
           count: state.contractEvents.length,
           rowsPerPage: 1,
@@ -872,6 +903,7 @@ export const EditContractInfo: FC<props> = ({
                 })),
             ]}
             onChange={changed => {
+              dispatch({ type: ACTIONS.SET_HAS_BEEN_CHANGED, data: true });
               let contractEvents = state.contractEvents;
               contractEvents[state.eventPage] = changed;
               dispatch({

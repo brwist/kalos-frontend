@@ -22,6 +22,8 @@ export type State = {
   jobTypeSubtypes: JobTypeSubtype[];
   eventPage: number; // Page for the current event to display
   initiatedSchema: string[];
+  hasBeenChanged: boolean;
+  isClosingWithoutSave: boolean; // warn the user that they haven't saved and data will be lost if they close
 };
 
 export enum ACTIONS {
@@ -40,6 +42,8 @@ export enum ACTIONS {
   SET_JOB_TYPE_SUBTYPES = 'setJobTypeSubtypes',
   SET_EVENT_PAGE = 'setEventPage',
   SET_INITIATED_SCHEMA = 'setInitiatedSchema',
+  SET_HAS_BEEN_CHANGED = 'setHasBeenChanged',
+  SET_CLOSING_WITHOUT_SAVE = 'setClosingWithoutSave',
 }
 
 export enum FREQUENCIES {
@@ -112,6 +116,14 @@ export type Action =
   | {
       type: ACTIONS.SET_INITIATED_SCHEMA;
       data: string[];
+    }
+  | {
+      type: ACTIONS.SET_HAS_BEEN_CHANGED;
+      data: true; // We don't wanna set it back to false
+    }
+  | {
+      type: ACTIONS.SET_CLOSING_WITHOUT_SAVE;
+      data: boolean;
     };
 
 export const reducer = (state: State, action: Action) => {
@@ -204,6 +216,19 @@ export const reducer = (state: State, action: Action) => {
       return {
         ...state,
         initiatedSchema: action.data,
+      };
+    }
+    case ACTIONS.SET_HAS_BEEN_CHANGED: {
+      return {
+        ...state,
+        hasBeenChanged: action.data,
+      };
+    }
+    case ACTIONS.SET_CLOSING_WITHOUT_SAVE: {
+      console.log('set closing without save');
+      return {
+        ...state,
+        isClosingWithoutSave: action.data,
       };
     }
     default:

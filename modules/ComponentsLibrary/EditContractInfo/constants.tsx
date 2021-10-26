@@ -15,3 +15,6 @@ export const CONFIRM_SAVE_DIALOG =
   'There are no properties selected in the properties dropdown. No properties will be associated with the contract. Are you sure you wish to continue?';
 
 export const ERROR_LABEL = 'Error';
+export const WARNING_LABEL = 'Warning';
+export const CONFIRM_CLOSE_WITHOUT_SAVE_DIALOG =
+  'Are you sure you want to close without saving? Changes will be lost.';
