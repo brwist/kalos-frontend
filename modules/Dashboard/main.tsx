@@ -605,6 +605,7 @@ export class Dashboard extends React.PureComponent<props, state> {
             <Spiffs
               spiffs={this.state.spiffs}
               isLoading={this.state.isLoading}
+              loggedUserId={this.props.userId}
             />
           )}
           {this.state.currentUser.getIsHvacTech() === 1 && (

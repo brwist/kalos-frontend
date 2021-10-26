@@ -103,7 +103,7 @@ export const DispatchDashboard: React.FC<Props> = function DispatchDashboard({
   testUserId,
   disableSlack,
 }) {
-  const [state, dispatchDashboard] = useReducer(reducer, initialState);
+  const [state, updateDispatchState] = useReducer(reducer, initialState);
 
   const getTechnicians = useCallback( async () => {
     const tech = new DispatchableTech();
@@ -227,7 +227,7 @@ export const DispatchDashboard: React.FC<Props> = function DispatchDashboard({
     if (techs.dismissed.length === 0) {
       resetModal();
     }
-    dispatchDashboard({
+    updateDispatchState({
       type: 'setTechs',
       data: {
         availableTechs: techs.available,
@@ -238,7 +238,7 @@ export const DispatchDashboard: React.FC<Props> = function DispatchDashboard({
 
   const setCalls = useCallback( async() => {
     const calls = await getCalls();
-    dispatchDashboard({
+    updateDispatchState({
       type: 'setCalls',
       data: {
         calls: calls.calls
@@ -247,22 +247,26 @@ export const DispatchDashboard: React.FC<Props> = function DispatchDashboard({
   }, [getCalls])
 
   useEffect(() => {
-    dispatchDashboard({
+    updateDispatchState({
       type: 'setLoadingTech',
       data: true
     })
     if (state.defaultDepartmentIds.length && !state.isLoadingFilters) {
       setTechnicians();
+      const interval = setInterval(() => setTechnicians(), 15000);
+      return () => clearInterval(interval);
     }
   }, [setTechnicians, state.defaultDepartmentIds, state.isLoadingFilters]);
 
   useEffect(() => {
-    dispatchDashboard({
+    updateDispatchState({
       type: 'setLoadingCall',
       data: true
     });
     if (state.defaultSectorIds.length && !state.isLoadingFilters) {
       setCalls();
+      const interval = setInterval(() => setCalls(), 30000);
+      return () => clearInterval(interval);
     }
   }, [setCalls, state.defaultSectorIds, state.isLoadingFilters])
 
@@ -291,14 +295,14 @@ export const DispatchDashboard: React.FC<Props> = function DispatchDashboard({
       jobTypes: formData.jobTypes,
       divisionMulti: formData.divisionMulti,
     };
-    dispatchDashboard({
+    updateDispatchState({
       type: 'setFormData',
       data: updatedForm,
     });
   }
 
   const handleUndismissButtonClick = () => {
-    dispatchDashboard({ 
+    updateDispatchState({ 
       type: 'setModal',
       data: {
         openModal: true,
@@ -422,7 +426,7 @@ export const DispatchDashboard: React.FC<Props> = function DispatchDashboard({
     } catch (err) {
       console.error('Error Updating Event', err);
     }
-    dispatchDashboard({
+    updateDispatchState({
       type: 'setAssigneeList',
       data: state.assigneeList.filter(assignee => assignee.id !== id)
     });
@@ -437,7 +441,7 @@ export const DispatchDashboard: React.FC<Props> = function DispatchDashboard({
       for (const user of userData.getResultsList()) {
         assignees.push({id: user.getId(), name: `${user.getFirstname()} ${user.getLastname()}`})
       }
-      dispatchDashboard({
+      updateDispatchState({
         type: 'setModal',
         data: {
           openModal: true,
@@ -473,7 +477,7 @@ export const DispatchDashboard: React.FC<Props> = function DispatchDashboard({
       }
     }
     if (newCenter.lat != 0 || newCenter.lng != 0) {
-      dispatchDashboard({type: 'setCenter', data: {
+      updateDispatchState({type: 'setCenter', data: {
         center: newCenter,
         zoom: zoom
       }});
@@ -481,7 +485,7 @@ export const DispatchDashboard: React.FC<Props> = function DispatchDashboard({
   }
 
   const handleMapClick = (call: DispatchCall, tech: DispatchableTech) => {
-    dispatchDashboard({ type: 'setModal', data: {
+    updateDispatchState({ type: 'setModal', data: {
       openModal: true,
       modalKey: 'mapInfo',
       selectedTech: tech,
@@ -496,7 +500,7 @@ export const DispatchDashboard: React.FC<Props> = function DispatchDashboard({
     const googleApiKey = getGoogleApiKey();
     const results = await Promise.all([departmentReq, jobTypeReq, googleApiKey]);
     const defaultSectors = getSectorGroups(results[0].departments.filter(dep => results[0].defaultValues.includes(dep.getId())));
-    dispatchDashboard({
+    updateDispatchState({
       type: 'setDropdownValuesAndApi',
       data: {
         departmentList: results[0].departments,
@@ -527,9 +531,9 @@ export const DispatchDashboard: React.FC<Props> = function DispatchDashboard({
   const handleFilterLoad = () => {
     // const cachedFilters = window.localStorage.getItem('DISPATCH_DASHBOARD_FILTER',);
     // if (cachedFilters) {
-    //   dispatchDashboard({type:'setFormData', data:JSON.parse(cachedFilters)});
+    //   updateDispatchState({type:'setFormData', data:JSON.parse(cachedFilters)});
     // } else {
-      dispatchDashboard({type:'setFormData', data:initialFormData});
+      updateDispatchState({type:'setFormData', data:initialFormData});
     // }
   }
 
@@ -597,7 +601,7 @@ export const DispatchDashboard: React.FC<Props> = function DispatchDashboard({
   ];
 
   const setProcessing = (loading : boolean, dismissProcessing = false) => {
-    dispatchDashboard({
+    updateDispatchState({
       type: 'setProcessing',
       data: {
         loading,
@@ -607,7 +611,7 @@ export const DispatchDashboard: React.FC<Props> = function DispatchDashboard({
   }
 
   const resetModal = () => {
-    dispatchDashboard({ 
+    updateDispatchState({ 
       type: 'setModal',
       data: {
         openModal: false,
@@ -656,7 +660,7 @@ export const DispatchDashboard: React.FC<Props> = function DispatchDashboard({
               </Button>
             </Grid>
             <Grid item xs={3}>
-              <Button size="small" variant="outlined" color="primary" style={{width:'80%'}} onClick={() => {dispatchDashboard({type:'setFormData', data:initialFormData})}}>
+              <Button size="small" variant="outlined" color="primary" style={{width:'80%'}} onClick={() => {updateDispatchState({type:'setFormData', data:initialFormData})}}>
                 Reset Filters
               </Button>
             </Grid>
@@ -678,7 +682,7 @@ export const DispatchDashboard: React.FC<Props> = function DispatchDashboard({
               modalKey = 'Assign';
             }
             if (callback.destination){
-              dispatchDashboard({ 
+              updateDispatchState({ 
                 type: 'setModal',
                 data: {
                   openModal: true,

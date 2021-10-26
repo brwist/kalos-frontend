@@ -205,6 +205,7 @@ export const SpiffTool: FC<Props> = ({
       }
 
       const { description, month, kind, technician } = searchForm;
+      console.log('data given to request', searchForm);
       const req = new Task();
       req.setPageNumber(page);
       req.setIsActive(true);
@@ -263,6 +264,7 @@ export const SpiffTool: FC<Props> = ({
         )}-${trailingZero(n.getDate())}`;
         req.setDateRangeList(['>=', month, '<', ltDate]);
       }
+      console.log(req);
       const res = await TaskClientService.BatchGet(req);
       const resultsList = res.getResultsList();
       const count = res.getTotalCount();
@@ -280,6 +282,7 @@ export const SpiffTool: FC<Props> = ({
     page,
     searchForm,
     type,
+
     setSpiffTypes,
     spiffTypes,
     needsManagerAction,
@@ -526,7 +529,11 @@ export const SpiffTool: FC<Props> = ({
   }, [extendedEditing, setExtendedEditing, setLoaded]);
   const handleSearchFormChange = useCallback(
     (form: SearchType) => {
+      console.log('formdata', form);
       const isPeriodsChange = searchForm.kind !== form.kind;
+      if (userRole != 'Manager') {
+        form.technician = loggedUserId;
+      }
       setSearchForm({
         ...form,
         ...(isPeriodsChange

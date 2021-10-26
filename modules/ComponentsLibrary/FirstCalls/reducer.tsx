@@ -13,17 +13,18 @@ export type FormData = {
 
 export type FirstCallType = {
   calls: CallObj[];
-  manualOff: number[];
+  manualOff: {id: number, name: string}[];
+  scheduledOff: {id: number, name: string}[];
   expires: string;
   meeting: {
     isTomorrow: boolean,
     start: string,
-    list: number[]
+    list: {id: number, name: string}[]
   };
   class: {
     isTomorrow: boolean,
     start: string,
-    list: number[]
+    list: {id: number, name: string}[]
   };
   inUse: number[];
   onCall: {
@@ -49,19 +50,21 @@ export type CallObj = {
   id: number;
   propertyAddress: string;
   propertyCity: string;
+  propertyState: string;
   propertyId: number;
   userId: number;
   description: string;
   custName: string;
   userBusinessName: string;
-  type: string;
+  jobType: string;
   subType: string;
   notes: string;
 };
 
 export interface State {
   techs: DispatchableTech[];
-  offTechs: number[];
+  offTechs: {id: number, name: string}[];
+  scheduledOff: {id: number, name: string}[];
   meetingTechs: DispatchableTech[];
   classTechs: DispatchableTech[];
   onCallTech: DispatchableTech;
@@ -82,7 +85,7 @@ export interface State {
   firstCallMeeting: {
     isTomorrow: boolean,
     start: string,
-    list: number[]
+    list: {id: number, name: string}[]
   };
   firstCallMessage: string;
   firstCallOnCall: {
@@ -94,10 +97,11 @@ export interface State {
   firstCallClass: {
     isTomorrow: boolean,
     start: string,
-    list: number[]
+    list: {id: number, name: string}[]
   };
   firstCallInUse: number[];
-  firstCallManualOff: number[];
+  firstCallManualOff: {id: number, name: string}[];
+  firstCallScheduledOff: {id: number, name: string}[];
   selectedCall: DispatchCall;
   isProcessing: boolean;
   assigneeList: {id: number, name: string}[];
@@ -113,7 +117,14 @@ export interface State {
 }
 
 export type Action = 
-  | { type: 'setTechs'; data: DispatchableTech[] }
+  | { type: 'setTechs'; data: {
+    techs: DispatchableTech[],
+  }}
+  | { type: 'setTechRefresh'; data: {
+    techs: DispatchableTech[],
+    formData: FormData,
+    scheduledOff: {id: number, name: string}[],
+  }}
   | { type: 'setModal'; data: {
     openModal: boolean,
     modalKey: string,
@@ -139,7 +150,8 @@ export type Action =
     firstCallId: number,
     meetingList: DispatchableTech[],
     classList: DispatchableTech[],
-    offList: number[],
+    offList: {id: number, name: string}[],
+    scheduledOffList: {id: number, name: string}[],
     initialFormData: FormData,
   }}
   | { type: 'setTimes'; data: {
@@ -152,7 +164,7 @@ export type Action =
   | { type: 'setFirstCallMeeting'; data: {
     isTomorrow: boolean,
     start: string,
-    list: number[]
+    list: {id: number, name: string}[]
   }}
   | { type: 'setFirstCallMessage'; data: string }
   | { type: 'setFirstCallOnCall'; data: {
@@ -164,10 +176,10 @@ export type Action =
   | { type: 'setFirstCallClass'; data: {
     isTomorrow: boolean,
     start: string,
-    list: number[]
+    list: {id: number, name: string}[]
   }}
   | { type: 'setFirstCallInUse'; data: number[] }
-  | { type: 'setFirstCallManualOff'; data: number[] }
+  | { type: 'setFirstCallManualOff'; data: {id: number, name: string}[] }
   | { type: 'setSave'; data: {
     save: boolean,
     saveTime: string,
@@ -181,7 +193,7 @@ export type Action =
     save: boolean,
     error: string,
   }}
-  | { type: 'setOffTechs'; data: number[] }
+  | { type: 'setOffTechs'; data: {id: number, name: string}[] }
   | { type: 'setCenter'; data: {
     center: {lat: number, lng: number},
     zoom: number,
@@ -201,7 +213,14 @@ export const reducer = (state: State, action: Action) => {
     case 'setTechs':
       return {
         ...state,
-        techs: action.data,
+        techs: action.data.techs,
+      }
+    case 'setTechRefresh':
+      return {
+        ...state,
+        techs: action.data.techs,
+        formData: action.data.formData,
+        scheduledOff: action.data.scheduledOff,
       }
     case 'setModal':
       return {
@@ -252,12 +271,14 @@ export const reducer = (state: State, action: Action) => {
         firstCallClass: action.data.firstCall.class,
         firstCallInUse: action.data.firstCall.inUse,
         firstCallManualOff: action.data.firstCall.manualOff,
+        firstCallScheduledOff: action.data.firstCall.scheduledOff,
         loaded: true,
         saveTime: action.data.saveTime,
         firstCallId: action.data.firstCallId,
         meetingTechs: action.data.meetingList,
         classTechs: action.data.classList,
         offTechs: action.data.offList,
+        scheduledOff: action.data.scheduledOffList,
         formData: action.data.initialFormData,
       }
     case 'setTimes':

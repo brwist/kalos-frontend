@@ -41,7 +41,6 @@ export const ClassMeeting: FC<props> = props => {
   useEffect(() => {
     setAvailableTechs(sorted(techs.filter(tech => !listTechs.includes(tech))));
     setAssignedTechs(sorted(listTechs));
-    console.log(props);
   }, []);
 
   return (

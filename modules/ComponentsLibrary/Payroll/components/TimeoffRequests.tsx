@@ -61,9 +61,11 @@ export const TimeoffRequests: FC<Props> = ({
   const [count, setCount] = useState<number>(0);
   const [pendingView, setPendingView] = useState<TimeoffRequest>();
   const [pendingPayroll, setPendingPayroll] = useState<TimeoffRequest>();
-  const [pendingPayrollReject, setPendingPayrollReject] =
-    useState<TimeoffRequest>();
-  const [toggleButton, setToggleButton] = useState<boolean>(true);
+  const [
+    pendingPayrollReject,
+    setPendingPayrollReject,
+  ] = useState<TimeoffRequest>();
+  const [toggleButton, setToggleButton] = useState<boolean>(false);
   const [pendingApproval, setPendingApproval] = useState<TimeoffRequest>();
   const load = useCallback(async () => {
     setLoading(true);
@@ -73,7 +75,12 @@ export const TimeoffRequests: FC<Props> = ({
     const filter: GetTimesheetConfig = {
       page,
       departmentID: departmentId,
-      approved: role != 'Manager' ? true : false,
+      approved:
+        role != 'Manager'
+          ? true
+          : role === 'Manager'
+          ? toggleButton
+          : undefined,
       payrollProcessed: role === 'Payroll' ? toggleButton : undefined,
       technicianUserID: employeeId,
       requestType: role === 'Payroll' ? 9 : 0,
@@ -176,12 +183,14 @@ export const TimeoffRequests: FC<Props> = ({
           onPageChange: setPage,
         }}
       />
-      {role === 'Payroll' && (
+      {(role === 'Payroll' || role == 'Manager') && (
         <Button
           label={
             toggleButton === true
-              ? 'Show Unprocesssed Timeoff'
-              : 'Show Processed Timeoff'
+              ? `Show ${
+                  role === 'Payroll' ? 'Unprocessed' : 'Unapproved'
+                } Timeoff`
+              : `Show ${role === 'Payroll' ? 'Processed' : 'Approved'} Timeoff`
           }
           onClick={() => setToggleButton(!toggleButton)}
         ></Button>
