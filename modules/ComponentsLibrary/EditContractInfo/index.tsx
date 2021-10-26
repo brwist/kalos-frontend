@@ -883,6 +883,7 @@ export const EditContractInfo: FC<props> = ({
             onInitSchema={initSchema =>
               dispatch({ type: ACTIONS.SET_INITIATED_SCHEMA, data: initSchema })
             }
+            canBeCallback={false}
           />
         )}
       </SectionBar>

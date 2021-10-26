@@ -36,6 +36,7 @@ interface Props {
   onChange: (serviceItem: Event) => void;
   onValid: (valid: boolean) => void;
   onInitSchema: (fields: string[]) => void;
+  canBeCallback?: boolean; // if false, doesn't display 'Is Callback?' checkbox
 }
 
 export const Request: FC<Props> = forwardRef(
@@ -50,6 +51,7 @@ export const Request: FC<Props> = forwardRef(
       onChange,
       onValid,
       onInitSchema,
+      canBeCallback,
     },
     ref,
   ) => {
@@ -120,7 +122,7 @@ export const Request: FC<Props> = forwardRef(
         })),
       ],
       [propertyEvents],
-    ); 
+    );
     const isCallback = serviceItem.getIsCallback();
     const SCHEMA: Schema<Event> = useMemo(
       () => [
@@ -220,12 +222,14 @@ export const Request: FC<Props> = forwardRef(
             label: 'Is Callback?',
             name: 'getIsCallback',
             type: 'checkbox',
+            invisible: canBeCallback === false,
           },
           {
             label: 'Callback Regarding Service Call',
             name: 'getCallbackOriginalId',
             options: callbackOriginalOptions,
             disabled: !isCallback,
+            invisible: canBeCallback === false,
           },
         ],
         [
@@ -290,7 +294,13 @@ export const Request: FC<Props> = forwardRef(
           },
         ],
       ],
-      [callbackOriginalOptions, isCallback, jobSubtypeOptions, jobTypeOptions],
+      [
+        callbackOriginalOptions,
+        canBeCallback,
+        isCallback,
+        jobSubtypeOptions,
+        jobTypeOptions,
+      ],
     );
     useEffect(() => {
       if (!initSchemaCalled) {
