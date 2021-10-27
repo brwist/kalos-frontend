@@ -50,6 +50,7 @@ import {
   WARNING_LABEL,
   CONFIRM_CLOSE_WITHOUT_SAVE_DIALOG,
 } from './constants';
+import { Document } from '@kalos-core/kalos-rpc/Document';
 
 export interface Output {
   contractData: Contract;
@@ -60,6 +61,7 @@ export interface Output {
 interface props {
   userID: number;
   contractID: number;
+  invoiceDocuments: Document[]; // Passed in to ensure that the invoices can regenerate their respective documents when they're edited
   onSaveStarted?: (savedContract: Output) => any;
   onSaveFinished?: (savedContract: Output) => any;
   onClose: () => any;
@@ -69,6 +71,7 @@ interface props {
 export const EditContractInfo: FC<props> = ({
   userID,
   contractID,
+  invoiceDocuments,
   onSaveStarted,
   onSaveFinished,
   onClose,
@@ -822,6 +825,7 @@ export const EditContractInfo: FC<props> = ({
         actions={[{ label: CANCEL_LABEL, onClick: () => validateForClose() }]}
       >
         <EditInvoiceData
+          invoiceDocuments={invoiceDocuments}
           userId={userID}
           contractId={contractID}
           onClose={() => onClose()}

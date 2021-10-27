@@ -223,6 +223,7 @@ export const ContractInfo: FC<Props> = props => {
               handleToggleEditing();
               load();
             }}
+            invoiceDocuments={loadedDocs}
           />
         </Modal>
       )}

@@ -10,12 +10,13 @@ import React, { useReducer, useEffect, useCallback, FC } from 'react';
 import { InvoiceClientService, makeSafeFormObject } from '../../../helpers';
 import { Form, Schema } from '../Form';
 import { reducer, ACTIONS } from './reducer';
-
+import { Document } from '@kalos-core/kalos-rpc/Document';
 interface props {
   contractId: number;
   userId: number;
   onClose: () => any;
   onSave: (savedInvoice: Invoice) => any;
+  invoiceDocuments: Document[];
   onLoad?: (loadedInvoice: Invoice) => any;
   onChange?: (currentData: Invoice) => any;
 }
@@ -27,6 +28,7 @@ export const EditInvoiceData: FC<props> = ({
   onChange,
   contractId,
   userId,
+  invoiceDocuments,
 }) => {
   const INVOICE_SCHEMA: Schema<Invoice> = [
     [
@@ -119,6 +121,11 @@ export const EditInvoiceData: FC<props> = ({
       cleanup();
     };
   }, [load, cleanup, state.isLoaded]);
+
+  console.log(
+    'invoice documents passed to editInvoiceData: ',
+    invoiceDocuments,
+  );
 
   return (
     <>
