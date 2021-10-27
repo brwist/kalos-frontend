@@ -124,6 +124,7 @@ export const UploadPhotoTransaction: FC<Props> = ({
       newTransaction.setStatusId(2);
       newTransaction.setIsActive(1);
       newTransaction.setOwnerId(data.ownerId);
+      newTransaction.setAssignedEmployeeId(loggedUserId);
       newTransaction.setAmount(data.cost);
       newTransaction.setDescription(data.description);
       newTransaction.setVendor(data.vendor);
