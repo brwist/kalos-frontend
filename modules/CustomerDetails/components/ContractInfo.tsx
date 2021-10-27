@@ -403,8 +403,14 @@ export const ContractInfo: FC<Props> = props => {
           <EditContractInfo
             userID={userID}
             contractID={entry.getId()}
-            onSaveFinished={() => handleToggleEditing()}
-            onClose={() => handleToggleEditing()}
+            onSaveFinished={() => {
+              handleToggleEditing();
+              load();
+            }}
+            onClose={() => {
+              handleToggleEditing();
+              load();
+            }}
           />
         </Modal>
       )}
