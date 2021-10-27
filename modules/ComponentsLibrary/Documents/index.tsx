@@ -65,6 +65,7 @@ interface Props {
   orderBy?: OrderByDirective;
   ignoreUserId?: boolean;
   onDownload?: (file: Uint8Array) => void;
+  onDocumentsLoaded?: (documents: Document[]) => any;
 }
 
 export const Documents: FC<Props> = ({
@@ -87,6 +88,7 @@ export const Documents: FC<Props> = ({
   orderBy = 'document_date_created',
   ignoreUserId,
   onDownload,
+  onDocumentsLoaded,
 }) => {
   const [entries, setEntries] = useState<DocumentType[]>([]);
   const [loaded, setLoaded] = useState<boolean>(false);
@@ -118,6 +120,7 @@ export const Documents: FC<Props> = ({
         entry.setOrderDir(displayInAscendingOrder ? 'asc' : 'desc');
         entry.setOrderBy(cleanOrderByField(orderBy));
         const response = await DocumentClientService.BatchGet(entry);
+        if (onDocumentsLoaded) onDocumentsLoaded(response.getResultsList());
         setEntries(response.getResultsList());
         setCount(response.getTotalCount());
       } catch (e) {
@@ -129,13 +132,14 @@ export const Documents: FC<Props> = ({
       setLoading(false);
     },
     [
-      displayInAscendingOrder,
       fieldMask,
-      orderBy,
-      propertyId,
-      taskId,
       userId,
       ignoreUserId,
+      propertyId,
+      taskId,
+      displayInAscendingOrder,
+      orderBy,
+      onDocumentsLoaded,
     ],
   );
 
