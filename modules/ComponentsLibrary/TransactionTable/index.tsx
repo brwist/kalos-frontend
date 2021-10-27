@@ -74,6 +74,7 @@ import { UploadPhotoToExistingTransaction } from '../UploadPhotoToExistingTransa
 import { Form } from '../Form';
 import { ACTIONS } from './reducer';
 import { Devlog } from '@kalos-core/kalos-rpc/Devlog';
+import { TxnDepartment } from '@kalos-core/kalos-rpc/compiled-protos/transaction_pb';
 
 export interface Props {
   loggedUserId: number;
@@ -287,7 +288,6 @@ export const TransactionTable: FC<Props> = ({
     }
 
     await makeUpdateStatus(txn.getId(), 4, 'rejected', reason);
-    refresh();
   };
   const resetTransactions = useCallback(async () => {
     let req = new Transaction();
@@ -535,6 +535,11 @@ export const TransactionTable: FC<Props> = ({
     txn.setStatusId(statusID);
     txn.setFieldMaskList(['StatusId']);
     txn.setIsBillingRecorded(true);
+    dispatch({
+      type: ACTIONS.UPDATE_LOCAL_STATUS,
+      data: { transactionId: id, statusId: statusID },
+    });
+
     try {
       await TransactionClientService.Update(txn);
     } catch (err) {
@@ -553,8 +558,6 @@ export const TransactionTable: FC<Props> = ({
     );
     if (ok) {
       await makeUpdateStatus(txn.getId(), 3, 'accepted');
-      await resetTransactions();
-      await refresh();
     }
   };
   const updateStatusProcessed = async (txn: Transaction) => {
@@ -563,8 +566,6 @@ export const TransactionTable: FC<Props> = ({
     );
     if (ok) {
       await makeUpdateStatus(txn.getId(), 5, 'Recorded and Processed');
-      await resetTransactions();
-      await refresh();
     }
   };
   const forceAccept = async (txn: Transaction) => {
@@ -573,7 +574,6 @@ export const TransactionTable: FC<Props> = ({
     );
     if (ok) {
       await makeUpdateStatus(txn.getId(), 3, 'accepted');
-      await refresh();
     }
   };
 
@@ -659,7 +659,20 @@ export const TransactionTable: FC<Props> = ({
         transactionToSave.setDepartmentId(
           parseInt(transactionToSave.getDepartmentId().toString()),
         );
-        console.log('transactionToSave', temp);
+        const costCenterReq = new TransactionAccount();
+        costCenterReq.setId(transactionToSave.getCostCenterId());
+        const costCenterResult = await TransactionAccountClientService.Get(
+          costCenterReq,
+        );
+        transactionToSave.setCostCenter(costCenterResult);
+        const departmentReq = new TimesheetDepartment();
+        departmentReq.setId(transactionToSave.getDepartmentId());
+        const departmentResult = await TimesheetDepartmentClientService.Get(
+          departmentReq,
+        );
+        const txnDepartment = new TxnDepartment();
+        txnDepartment.setDescription(departmentResult.getDescription());
+        transactionToSave.setDepartment(txnDepartment);
         dispatch({
           type: ACTIONS.SET_UPDATE_FROM_LOCAL_LIST,
           data: transactionToSave,
@@ -984,7 +997,9 @@ export const TransactionTable: FC<Props> = ({
       newTxn.setVendor(saved['Vendor']);
       newTxn.setStatusId(2);
       newTxn.setVendorCategory('Receipt');
-
+      newTxn.setNotes(
+        `Order Number-${newTxn.getOrderNumber()},Job Number-${newTxn.getJobId()}`,
+      );
       let res: Transaction | undefined;
       try {
         res = await TransactionClientService.Create(newTxn);

@@ -89,6 +89,8 @@ export const CostReportCSV: FC<Props> = ({ serviceCallId, onClose }) => {
     tasks: [],
     classCodes: [],
     dropDowns: [],
+    transactionDropDowns: [],
+    timesheetDropDowns: [],
     totalHoursWorked: 0,
     activeTab: tabs[0],
     printStatus: 'idle',
@@ -111,11 +113,19 @@ export const CostReportCSV: FC<Props> = ({ serviceCallId, onClose }) => {
     const cccs = new ClassCodeClient(ENDPOINT);
     const classCodeReq = new ClassCode();
     classCodeReq.setIsActive(true);
+    const cccsResults = (await cccs.BatchGet(classCodeReq)).getResultsList();
     dispatch({
       type: ACTIONS.SET_CLASS_CODES,
-      data: (await cccs.BatchGet(classCodeReq)).getResultsList(),
+      data: cccsResults,
     });
-
+    const classCodeMap = cccsResults.map(classCode => ({
+      classCodeId: classCode.getId(),
+      active: 0,
+    }));
+    dispatch({
+      type: ACTIONS.SET_TIMESHEET_DROPDOWNS,
+      data: classCodeMap,
+    });
     let arr: PerDiem[] = [];
     resultsList.forEach(result => {
       let isIncluded = false;
@@ -147,7 +157,14 @@ export const CostReportCSV: FC<Props> = ({ serviceCallId, onClose }) => {
       await TransactionAccountClientService.BatchGet(accountReq)
     ).getResultsList();
     dispatch({ type: ACTIONS.SET_TRANSACTION_ACCOUNTS, data: accountRes });
-
+    const costCenterMap = accountRes.map(account => ({
+      costCenterId: account.getId(),
+      active: 0,
+    }));
+    dispatch({
+      type: ACTIONS.SET_TRANSACTION_DROPDOWNS,
+      data: costCenterMap,
+    });
     const lodgings = await PerDiemClientService.loadPerDiemsLodging(arr); // first # is per diem id
     dispatch({ type: ACTIONS.SET_LODGINGS, data: lodgings });
 
