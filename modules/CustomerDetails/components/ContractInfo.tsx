@@ -478,7 +478,13 @@ export const ContractInfo: FC<Props> = props => {
           {children}
         </div>
         <div className="ContractInfoAsidePanel">
-          <ContractDocuments contractID={entry.getId()} {...props} />
+          <ContractDocuments
+            onDocumentsLoaded={documents =>
+              console.log('Loaded documents: ', documents)
+            }
+            contractID={entry.getId()}
+            {...props}
+          />
         </div>
       </div>
       <ConfirmDelete

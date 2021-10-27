@@ -12,6 +12,7 @@ interface Props {
   className?: string;
   userID: number;
   contractID?: number;
+  onDocumentsLoaded?: (documents: Document[]) => any;
 }
 
 type DocumentUpload = {
@@ -60,6 +61,7 @@ export class ContractDocuments extends PureComponent<Props, State> {
             ...(contractID ? [`contract_id=${contractID}`] : []),
             'p=1',
           ].join('&')}
+          onDocumentsLoaded={this.props.onDocumentsLoaded}
         />
       </div>
     );
