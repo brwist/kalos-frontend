@@ -984,12 +984,8 @@ export const TransactionTable: FC<Props> = ({
         newTxn.setTimestamp(newTimestamp);
       }
       newTxn.setOrderNumber(saved['Order #']);
-      newTxn.setAssignedEmployeeId(saved['Purchaser']);
-      if (saved['Purchaser'] != 0 && saved['Purchaser'] != undefined) {
-        newTxn.setOwnerId(newTxn.getAssignedEmployeeId());
-      } else {
-        newTxn.setOwnerId(loggedUserId);
-      }
+      newTxn.setAssignedEmployeeId(loggedUserId);
+      newTxn.setOwnerId(saved['Purchaser']);
       newTxn.setDepartmentId(saved['Department']);
       newTxn.setJobId(saved['Job #']);
       newTxn.setCostCenterId(saved['Cost Center ID']);
@@ -1402,7 +1398,7 @@ export const TransactionTable: FC<Props> = ({
           externalButton: true,
           type: new Transaction(),
           columnDefinition: {
-            columnsToIgnore: ['Actions', 'Accepted / Rejected'],
+            columnsToIgnore: ['Actions', 'Accepted / Rejected', 'Creator'],
             columnTypeOverrides: [
               { columnName: 'Type', columnType: 'text' },
               {
@@ -1430,6 +1426,10 @@ export const TransactionTable: FC<Props> = ({
                 columnName: 'Purchaser',
                 columnType: 'technician',
               },
+              {
+                columnName: 'Creator',
+                columnType: 'technician',
+              },
             ],
           },
         }}
@@ -1452,6 +1452,14 @@ export const TransactionTable: FC<Props> = ({
             name: 'Purchaser',
             dir: state.orderBy == 'owner_id' ? state.orderDir : undefined,
             onClick: () => changeSort('owner_id'),
+          },
+          {
+            name: 'Creator',
+            dir:
+              state.orderBy == 'assigned_employee_id'
+                ? state.orderDir
+                : undefined,
+            onClick: () => changeSort('assigned_employee_id'),
           },
           {
             name: 'Department',
@@ -1486,7 +1494,7 @@ export const TransactionTable: FC<Props> = ({
         ]}
         data={
           state.loading
-            ? makeFakeRows(10, 15)
+            ? makeFakeRows(11, 15)
             : (state.transactions?.map((selectorParam, idx) => {
                 let txnWithId = state.selectedTransactions.filter(
                   txn => txn.getId() === selectorParam.txn.getId(),
@@ -1531,7 +1539,19 @@ export const TransactionTable: FC<Props> = ({
                     },
                     {
                       value: (
-                        <div key="OwnernameValue">{`${selectorParam.txn.getOwnerName()} (${selectorParam.txn.getOwnerId()})`}</div>
+                        <div key="OwnernameValue">
+                          {selectorParam.txn.getOwnerId() != 0
+                            ? `${selectorParam.txn.getOwnerName()} (${selectorParam.txn.getOwnerId()})`
+                            : 'No Purchaser'}
+                        </div>
+                      ),
+                      onClick: isSelector
+                        ? () => setTransactionChecked(idx)
+                        : undefined,
+                    },
+                    {
+                      value: (
+                        <div key="CreatornameValue">{`${selectorParam.txn.getAssignedEmployeeName()} (${selectorParam.txn.getAssignedEmployeeId()})`}</div>
                       ),
                       onClick: isSelector
                         ? () => setTransactionChecked(idx)
