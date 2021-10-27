@@ -203,6 +203,13 @@ async function create() {
   }
 
   // Get the text from the template files
+
+  const constantsJS = replaceKeywords(
+    sh.cat(['constants.txt']),
+    userSpecs,
+    name,
+  );
+
   const indexJS = replaceKeywords(sh.cat(['index.txt']), userSpecs, name);
   let mainJS;
   if (moduleType === ModuleTypes['Module']) {
@@ -265,6 +272,7 @@ async function create() {
   sh.touch('index.tsx');
   sh.touch('reducer.tsx');
   indexJS.to('index.tsx');
+  constantsJS.to('constants.tsx');
   reducerJS.to('reducer.tsx');
 
   info(`Module files created in: ${sh.pwd()}`);

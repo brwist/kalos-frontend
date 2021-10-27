@@ -1,0 +1,18 @@
+/* 
+
+  Description: DESCRIPTION
+
+  Design Specification / Document: DOCUMENT
+  
+*/
+
+/*
+    This file is meant as a way to include headings, text and other reusable names across the module. 
+    For example, the text for a close button - "Close" - can be put into a const here to be reused across
+    the whole module for testing and modularity purposes. 
+
+    You can also put helper functions here to keep things clean in index.tsx and allow for those to be 
+    individually tested as well.
+*/
+
+export const MODULE_TITLE = "TITLE_HERE works!";

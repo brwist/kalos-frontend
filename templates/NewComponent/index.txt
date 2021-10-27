@@ -13,6 +13,7 @@ import {
   DevlogClientService,
 } from '../../../helpers';
 import { format } from 'date-fns';
+import { COMPONENT_TITLE } from './constants';
 
 // add any prop types here
 interface props { 
@@ -67,7 +68,7 @@ export const TITLE_HERE: FC<props> = ({ loggedUserId }) => {
 
   return ( 
     <> 
-      <h1>TITLE_HERE works!</h1>
+      <h1>{COMPONENT_TITLE}</h1>
       <h2>Ideas for What To Do</h2>
       <ul>
         <li>You can add more tests for your component as you write your functionality (preferably to a spec or design document of some kind)</li>

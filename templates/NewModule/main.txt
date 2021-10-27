@@ -14,7 +14,7 @@ import {
   DevlogClientService,
 } from '../../helpers';
 import { format } from 'date-fns';
-
+import { MODULE_TITLE } from './constants';
 
 // add any prop types here
 interface props {
@@ -69,7 +69,7 @@ export const TITLE_HERE: FC<props> = ({ loggedUserId }) => {
 
   return (
     <PageWrapper userID={loggedUserId} withHeader>
-      <h1>TITLE_HERE works!</h1>
+      <h1>{MODULE_TITLE}</h1>
       <h2>About this boilerplate</h2>
       <ul>
         <li>Frontend unit tests were created for this module automatically in <code>/test/modules/TITLE_HERE</code></li>
