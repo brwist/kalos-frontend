@@ -25,6 +25,8 @@ export type State = {
   tripsTotal: number;
   tasks: Task[];
   classCodes: ClassCode[];
+  transactionDropDowns: { costCenterId: number; active: number }[];
+  timesheetDropDowns: { classCodeId: number; active: number }[];
   dropDowns: { perDiemId: number; active: number }[];
   activeTab: string;
   costCenterDropDownActive: boolean;
@@ -49,6 +51,8 @@ export enum ACTIONS {
   SET_TRIPS_TOTAL = 'setTripsTotal',
   SET_TASKS = 'setTasks',
   SET_DROPDOWNS = 'setDropDowns',
+  SET_TRANSACTION_DROPDOWNS = 'setTransactionDropDowns',
+  SET_TIMESHEET_DROPDOWNS = 'setTimesheetDropDowns',
   SET_COST_CENTER_DROPDOWN_ACTIVE = 'setCostCenterDropdownActive',
   SET_LABOR_TOTALS_DROPDOWN_ACTIVE = 'setLaborTotalsDropdownActive',
   SET_LABOR_TOTALS = 'setLaborTotals',
@@ -85,6 +89,14 @@ export type Action =
   | {
       type: ACTIONS.SET_DROPDOWNS;
       data: { perDiemId: number; active: number }[];
+    }
+  | {
+      type: ACTIONS.SET_TIMESHEET_DROPDOWNS;
+      data: { classCodeId: number; active: number }[];
+    }
+  | {
+      type: ACTIONS.SET_TRANSACTION_DROPDOWNS;
+      data: { costCenterId: number; active: number }[];
     };
 
 export const reducer = (state: State, action: Action) => {

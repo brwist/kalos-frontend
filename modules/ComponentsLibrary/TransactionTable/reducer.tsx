@@ -82,6 +82,7 @@ export enum ACTIONS {
   SET_LOADING = 'setLoading',
   SET_LOADED = 'setLoaded',
   SET_ORDER = 'setOrder',
+  UPDATE_LOCAL_STATUS = 'updateLocalStatus',
   SET_CHANGING_PAGE = 'setChangingPage',
   SET_MERGING_TRANSACTION = 'setMergingTransaction',
   SET_SEARCHING = 'setSearching',
@@ -116,6 +117,10 @@ export type Action =
   | { type: ACTIONS.SET_TRANSACTION_TO_EDIT; data: Transaction | undefined }
   | { type: ACTIONS.SET_LOADING; data: boolean }
   | { type: ACTIONS.SET_LOADED; data: boolean }
+  | {
+      type: ACTIONS.UPDATE_LOCAL_STATUS;
+      data: { transactionId: number; statusId: number };
+    }
   | { type: ACTIONS.SET_CHANGING_PAGE; data: boolean }
   | { type: ACTIONS.SET_MERGING_TRANSACTION; data: boolean }
   | { type: ACTIONS.SET_SEARCHING; data: boolean }
@@ -365,7 +370,22 @@ export const reducer = (state: State, action: Action) => {
         );
         let newTransactions = state.transactions;
         newTransactions[temp].txn = action.data;
-        console.log(temp);
+        return {
+          ...state,
+          transactions: newTransactions,
+        };
+      } else {
+        return { ...state };
+      }
+    }
+    case ACTIONS.UPDATE_LOCAL_STATUS: {
+      console.log('update from local list');
+      if (state.transactions) {
+        let temp = state.transactions.findIndex(
+          transaction => transaction.txn.getId() === action.data.transactionId,
+        );
+        let newTransactions = state.transactions;
+        newTransactions[temp].txn.setStatusId(action.data.statusId);
         return {
           ...state,
           transactions: newTransactions,
