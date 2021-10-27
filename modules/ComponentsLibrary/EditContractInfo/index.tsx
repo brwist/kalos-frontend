@@ -148,13 +148,16 @@ export const EditContractInfo: FC<props> = ({
         required: true,
       },
     ],
-    [
-      {
-        label: 'Payment Terms',
-        type: 'text',
-        name: 'getPaymentTerms',
-      },
-    ],
+    // TODO once the payment terms are able to be set to blank (New Contract page is actually remade in react)
+    // TODO this should be un-commented
+    // See the payment terms issue in this Loom: https://www.loom.com/share/2a1053a0c1844a4aae0da0cb70488699
+    // [
+    //   {
+    //     label: 'Payment Terms',
+    //     type: 'text',
+    //     name: 'getPaymentTerms',
+    //   },
+    // ],
     [
       {
         label: 'Notes',
