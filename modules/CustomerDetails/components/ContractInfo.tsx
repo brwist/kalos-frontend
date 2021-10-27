@@ -1,5 +1,4 @@
 import React, { FC, useState, useEffect, useCallback, useMemo } from 'react';
-import AddCircleIcon from '@material-ui/icons/AddCircle';
 import { ContractClient, Contract } from '@kalos-core/kalos-rpc/Contract';
 import {
   ContractFrequencyClient,
@@ -10,27 +9,21 @@ import { PropertyClient, Property } from '@kalos-core/kalos-rpc/Property';
 import { ENDPOINT } from '../../../constants';
 import { InfoTable, Data } from '../../ComponentsLibrary/InfoTable';
 import { Modal } from '../../ComponentsLibrary/Modal';
-import { Form, Schema, Options } from '../../ComponentsLibrary/Form';
+import { Options } from '../../ComponentsLibrary/Form';
 import { SectionBar } from '../../ComponentsLibrary/SectionBar';
 import { ConfirmDelete } from '../../ComponentsLibrary/ConfirmDelete';
 import { Confirm } from '../../ComponentsLibrary/Confirm';
-import { PlainForm } from '../../ComponentsLibrary/PlainForm';
-import { Field, Value } from '../../ComponentsLibrary/Field';
-import { getRPCFields, formatDate, getCFAppUrl } from '../../../helpers';
+import { formatDate, getCFAppUrl } from '../../../helpers';
 import { ContractDocuments } from './ContractDocuments';
 import './contractInfo.less';
 import { User } from '@kalos-core/kalos-rpc/User';
 import { EditContractInfo } from '../../ComponentsLibrary/EditContractInfo';
+import { Document } from '@kalos-core/kalos-rpc/Document';
 
 const ContractClientService = new ContractClient(ENDPOINT);
 const ContractFrequencyClientService = new ContractFrequencyClient(ENDPOINT);
 const InvoiceClientService = new InvoiceClient(ENDPOINT);
 const PropertyClientService = new PropertyClient(ENDPOINT);
-
-const BILLING_OPTIONS: Options = [
-  { label: 'Site', value: 0 },
-  { label: 'Group', value: 1 },
-];
 
 export const PAYMENT_TYPE_OPTIONS: Options = [
   'Cash',
@@ -55,42 +48,13 @@ export const PAYMENT_STATUS_OPTIONS: Options = [
   'Paid',
 ];
 
-const INVOICE_SCHEMA: Schema<Invoice> = [
-  [{ name: 'getId', type: 'hidden' }],
-  [{ label: 'Invoice Data', headline: true }],
-  [{ label: 'Terms', name: 'getTerms', multiline: true }],
-  [
-    { label: 'Services Performed (1)', name: 'getServicesperformedrow1' },
-    { label: 'Total Amount (1)', name: 'getTotalamountrow1' },
-  ],
-  [
-    { label: 'Services Performed (2)', name: 'getServicesperformedrow2' },
-    { label: 'Total Amount (2)', name: 'getTotalamountrow2' },
-  ],
-  [
-    { label: 'Services Performed (3)', name: 'getServicesperformedrow3' },
-    { label: 'Total Amount (3)', name: 'getTotalamountrow3' },
-  ],
-  [
-    { label: 'Services Performed (4)', name: 'getServicesperformedrow4' },
-    { label: 'Total Amount (4)', name: 'getTotalamountrow4' },
-  ],
-  [{ label: 'Grand Total', name: 'getTotalamounttotal' }],
-];
-
-const makeContractNumber = (id: number) =>
-  'C' +
-  new Date().getFullYear().toString().substr(2, 2) +
-  '-' +
-  id.toString().padStart(5, '0');
-
 interface Props {
   userID: number;
   customer: User;
 }
 
 export const ContractInfo: FC<Props> = props => {
-  const { userID, children, customer } = props;
+  const { userID, children } = props;
   const [entry, setEntry] = useState<Contract>(new Contract());
   const [frequencies, setFrequencies] = useState<ContractFrequency[]>([]);
   const [invoice, setInvoice] = useState<Invoice>(new Invoice());
@@ -104,15 +68,7 @@ export const ContractInfo: FC<Props> = props => {
   const [error, setError] = useState<boolean>(false);
   const [deleting, setDeleting] = useState<boolean>(false);
   const [confirmNew, setConfirmNew] = useState<boolean>(false);
-
-  const frequencyOptions: Options = useMemo(
-    () =>
-      frequencies.map(frequency => ({
-        label: frequency.getName(),
-        value: frequency.getId(),
-      })),
-    [frequencies],
-  );
+  const [loadedDocs, setLoadedDocs] = useState<Document[]>([]);
 
   const loadFrequencies = useCallback(async () => {
     const entry = new ContractFrequency();
@@ -184,80 +140,6 @@ export const ContractInfo: FC<Props> = props => {
     [setDeleting],
   );
 
-  const handleChangePropertiesIds = useCallback(
-    (id: number) => (value: Value) => {
-      if (value === 1) {
-        setPropertiesIds([...propertiesIds, id]);
-      } else {
-        setPropertiesIds(propertiesIds.filter(_id => _id !== id));
-      }
-    },
-    [propertiesIds, setPropertiesIds],
-  );
-
-  const saveInvoice = useCallback(
-    async (invoice: Invoice, entry: Contract) => {
-      const req = new Invoice();
-      req.setContractId(entry.getId());
-      req.setUserId(userID);
-      const fieldMaskList = ['UserId', 'ContractId'];
-      if (invoice.getId() !== 0) {
-        req.setId(invoice.getId());
-      }
-      for (const fieldName in invoice) {
-        if (fieldName === 'id') continue;
-        const { upperCaseProp, methodName } = getRPCFields(fieldName);
-        // @ts-ignore
-        req[methodName](invoice[fieldName]);
-        fieldMaskList.push(upperCaseProp);
-      }
-      req.setFieldMaskList(fieldMaskList);
-      // FIXME: Create sql fails
-      const res = await InvoiceClientService[
-        invoice.getId() === 0 ? 'Create' : 'Update'
-      ](req);
-      setInvoice(res);
-      setInvoiceInitial(res);
-    },
-    [userID, setInvoice, setInvoiceInitial],
-  );
-
-  const handleSave = useCallback(
-    async (data: Contract) => {
-      setSaving(true);
-      const fieldMaskList = ['UserId', 'Properties'];
-      const req = new Contract();
-      req.setUserId(userID);
-      req.setProperties(propertiesIds.join(','));
-      if (entry.getId() !== 0) {
-        req.setId(entry.getId());
-        fieldMaskList.push('Id');
-      }
-      for (const fieldName in data) {
-        const { upperCaseProp, methodName } = getRPCFields(fieldName);
-        // @ts-ignore
-        req[methodName](data[fieldName]);
-        fieldMaskList.push(upperCaseProp);
-      }
-      req.setFieldMaskList(fieldMaskList);
-      let res = await ContractClientService[
-        entry.getId() === 0 ? 'Create' : 'Update'
-      ](req);
-      if (entry.getId() === 0) {
-        const req2 = new Contract();
-        req2.setId(res.getId());
-        req2.setNumber(makeContractNumber(res.getId()));
-        req2.setFieldMaskList(['Number']);
-        res = await ContractClientService.Update(req2);
-      }
-      await saveInvoice(invoice, res);
-      setEntry(res);
-      setSaving(false);
-      setEditing(false);
-    },
-    [userID, propertiesIds, entry, saveInvoice, invoice],
-  );
-
   const handleDelete = useCallback(async () => {
     const req = new Contract();
     req.setId(entry.getId());
@@ -298,59 +180,11 @@ export const ContractInfo: FC<Props> = props => {
     [entry],
   );
 
-  const SCHEMA: Schema<Contract> = [
-    [{ label: 'Contract Details', headline: true }],
-    [
-      {
-        label: 'Start Date',
-        name: 'getDateStarted',
-        required: true,
-        type: 'date',
-      },
-      { label: 'End Date', name: 'getDateEnded', required: true, type: 'date' },
-    ],
-    [
-      {
-        label: 'Frequency',
-        name: 'getFrequency',
-        required: true,
-        options: frequencyOptions,
-      },
-      {
-        label: 'Billing',
-        name: 'getGroupBilling',
-        required: true,
-        options: BILLING_OPTIONS,
-      },
-    ],
-    [
-      {
-        label: 'Payment Type',
-        name: 'getPaymentType',
-        required: true,
-        options: PAYMENT_TYPE_OPTIONS,
-      },
-      {
-        label: 'Payment Status',
-        name: 'getPaymentStatus',
-        required: true,
-        options: PAYMENT_STATUS_OPTIONS,
-      },
-    ],
-    [{ label: 'Notes', name: 'getNotes', multiline: true }],
-    [
-      {
-        content: (
-          <PlainForm<Invoice>
-            schema={INVOICE_SCHEMA}
-            data={invoice}
-            onChange={setInvoice}
-            disabled={saving}
-          />
-        ),
-      },
-    ],
-  ];
+  const handleSetLoadedDocs = useCallback(
+    (documents: Document[]) => setLoadedDocs(documents),
+    [setLoadedDocs],
+  );
+
   const data: Data = [
     [
       { label: 'Contract Number', value: entry.getNumber() },
@@ -373,29 +207,7 @@ export const ContractInfo: FC<Props> = props => {
     ],
     [{ label: 'Notes', value: entry.getNotes() }],
   ];
-  const propertiesData: Data = properties.map(property => [
-    {
-      value: (
-        <Field
-          name={`property-${property.getId()}`}
-          label={`${property.getAddress()}, ${property.getCity()}, ${property.getState()} ${property.getZip()}`}
-          type="checkbox"
-          value={propertiesIds.includes(property.getId())}
-          onChange={handleChangePropertiesIds(property.getId())}
-          className="ContractInfoProperty"
-          disabled={saving}
-        />
-      ),
-      actions: propertiesIds.includes(property.getId())
-        ? [
-            // TODO: PM's count
-            <span key={0} className="ContractInfoPropertyPM">
-              PMs: 1 <AddCircleIcon className="ContractInfoPropertyAdd" />
-            </span>,
-          ]
-        : [],
-    },
-  ]);
+
   return (
     <>
       {editing && (
@@ -479,9 +291,7 @@ export const ContractInfo: FC<Props> = props => {
         </div>
         <div className="ContractInfoAsidePanel">
           <ContractDocuments
-            onDocumentsLoaded={documents =>
-              console.log('Loaded documents: ', documents)
-            }
+            onDocumentsLoaded={documents => handleSetLoadedDocs(documents)}
             contractID={entry.getId()}
             {...props}
           />
