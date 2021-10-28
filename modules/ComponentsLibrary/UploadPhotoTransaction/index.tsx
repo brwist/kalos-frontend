@@ -262,7 +262,6 @@ export const UploadPhotoTransaction: FC<Props> = ({
         name: 'ownerId',
         label: 'Purchaser ',
         type: 'technician',
-        required: true,
       },
     ],
     [
