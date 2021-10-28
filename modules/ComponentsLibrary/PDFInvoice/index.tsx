@@ -79,7 +79,7 @@ export const PDFInvoice: FC<Props> = ({ serviceCallId }) => {
                 <td>
                   <strong>Notes:</strong>
                   <br />
-                  {event.notes}
+                  {event.getNotes()}
                 </td>
               </tr>
             </tbody>
@@ -112,31 +112,14 @@ export const PDFInvoice: FC<Props> = ({ serviceCallId }) => {
                     borderRight: border,
                   }}
                 >
-                  {event.servicesperformedrow1}
+                  {event.getServicesperformedrow1()}
                 </td>
                 <td
                   style={{
                     borderTop: border,
                   }}
                 >
-                  {event.totalamountrow1}&nbsp;
-                </td>
-              </tr>
-              <tr>
-                <td
-                  style={{
-                    borderTop: border,
-                    borderRight: border,
-                  }}
-                >
-                  {event.servicesperformedrow2}
-                </td>
-                <td
-                  style={{
-                    borderTop: border,
-                  }}
-                >
-                  {event.totalamountrow2}&nbsp;
+                  {event.getTotalamountrow1()}&nbsp;
                 </td>
               </tr>
               <tr>
@@ -146,14 +129,14 @@ export const PDFInvoice: FC<Props> = ({ serviceCallId }) => {
                     borderRight: border,
                   }}
                 >
-                  {event.servicesperformedrow3}
+                  {event.getServicesperformedrow2()}
                 </td>
                 <td
                   style={{
                     borderTop: border,
                   }}
                 >
-                  {event.totalamountrow3}&nbsp;
+                  {event.getTotalamountrow2()}&nbsp;
                 </td>
               </tr>
               <tr>
@@ -163,14 +146,31 @@ export const PDFInvoice: FC<Props> = ({ serviceCallId }) => {
                     borderRight: border,
                   }}
                 >
-                  {event.servicesperformedrow4}
+                  {event.getServicesperformedrow3()}
                 </td>
                 <td
                   style={{
                     borderTop: border,
                   }}
                 >
-                  {event.totalamountrow4}&nbsp;
+                  {event.getTotalamountrow3()}&nbsp;
+                </td>
+              </tr>
+              <tr>
+                <td
+                  style={{
+                    borderTop: border,
+                    borderRight: border,
+                  }}
+                >
+                  {event.getServicesperformedrow4()}
+                </td>
+                <td
+                  style={{
+                    borderTop: border,
+                  }}
+                >
+                  {event.getTotalamountrow4()}&nbsp;
                 </td>
               </tr>
             </tbody>
@@ -187,7 +187,7 @@ export const PDFInvoice: FC<Props> = ({ serviceCallId }) => {
                           <strong>Payment Type:</strong>
                         </td>
                         <td style={{ width: 250, borderBottom: border }}>
-                          {event.logPaymentType}&nbsp;
+                          {event.getLogPaymentType()}&nbsp;
                         </td>
                       </tr>
                       <tr>
@@ -195,7 +195,7 @@ export const PDFInvoice: FC<Props> = ({ serviceCallId }) => {
                           <strong>Payment Status:</strong>
                         </td>
                         <td style={{ borderBottom: border }}>
-                          {event.logPaymentStatus}&nbsp;
+                          {event.getLogPaymentStatus()}&nbsp;
                         </td>
                       </tr>
                     </tbody>
@@ -219,7 +219,7 @@ export const PDFInvoice: FC<Props> = ({ serviceCallId }) => {
                             width: 120,
                           }}
                         >
-                          {event.materialTotal}&nbsp;
+                          {event.getMaterialTotal()}&nbsp;
                         </td>
                       </tr>
                     </tbody>
@@ -245,46 +245,47 @@ export const PDFInvoice: FC<Props> = ({ serviceCallId }) => {
                       <tr>
                         <td style={{ borderBottom: border }}>
                           <strong>Compressor Amps:</strong>{' '}
-                          {event.compressorAmps}
+                          {event.getCompressorAmps()}
                         </td>
                       </tr>
                       <tr>
                         <td style={{ borderBottom: border }}>
                           <strong>Condensing Fan Amps:</strong>{' '}
-                          {event.condensingFanAmps}
+                          {event.getCondensingFanAmps()}
                         </td>
                       </tr>
                       <tr>
                         <td style={{ borderBottom: border }}>
                           <strong>Suction Pressure:</strong>{' '}
-                          {event.suctionPressure}
+                          {event.getSuctionPressure()}
                         </td>
                       </tr>
                       <tr>
                         <td style={{ borderBottom: border }}>
-                          <strong>Head Pressure:</strong> {event.headPressure}
+                          <strong>Head Pressure:</strong>{' '}
+                          {event.getHeadPressure()}
                         </td>
                       </tr>
                       <tr>
                         <td style={{ borderBottom: border }}>
                           <strong>Return Temperature:</strong>{' '}
-                          {event.returnTemperature}
+                          {event.getReturnTemperature()}
                         </td>
                       </tr>
                       <tr>
                         <td style={{ borderBottom: border }}>
                           <strong>Supply Temperature:</strong>{' '}
-                          {event.supplyTemperature}
+                          {event.getSupplyTemperature()}
                         </td>
                       </tr>
                       <tr>
                         <td style={{ borderBottom: border }}>
-                          <strong>Subcool:</strong> {event.subcool}
+                          <strong>Subcool:</strong> {event.getSubcool()}
                         </td>
                       </tr>
                       <tr>
                         <td>
-                          <strong>Superheat:</strong> {event.superheat}
+                          <strong>Superheat:</strong> {event.getSuperheat()}
                         </td>
                       </tr>
                     </tbody>
@@ -301,7 +302,7 @@ export const PDFInvoice: FC<Props> = ({ serviceCallId }) => {
             <tbody>
               <tr>
                 <td>
-                  The undersigned has authority to order the above labor and
+                  {`The undersigned has authority to order the above labor and
                   materials on behalf of the above named purchaser. The labor
                   and materials described above have been completely and
                   satisfactorily performed and furnished. Kalos Services is not
@@ -324,7 +325,7 @@ export const PDFInvoice: FC<Props> = ({ serviceCallId }) => {
                   previously serviced. If my payment is by check and my check is
                   returned for any reason, I authorize the merchant to
                   electronically debit my account for the amount of this item
-                  plus any fees allowed by law.
+                  plus any fees allowed by law.`}
                 </td>
               </tr>
             </tbody>
