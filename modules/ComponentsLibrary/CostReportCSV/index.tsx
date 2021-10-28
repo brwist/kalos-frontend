@@ -678,60 +678,78 @@ export const CostReportCSV: FC<Props> = ({ serviceCallId, onClose }) => {
           <PrintParagraph tag="h2" key="transactionColumns">
             Transactions
           </PrintParagraph>
-          <PrintTable
-            columns={[
-              {
-                title: 'Department',
-                align: 'left',
-              },
-              {
-                title: 'Owner',
-                align: 'left',
-                widthPercentage: 10,
-              },
-              {
-                title: 'Cost Center / Vendor',
-                align: 'left',
-                widthPercentage: 10,
-              },
-              {
-                title: 'Date',
-                align: 'left',
-                widthPercentage: 10,
-              },
-              {
-                title: 'Amount',
-                align: 'left',
-                widthPercentage: 10,
-              },
-              {
-                title: 'Notes',
-                align: 'right',
-                widthPercentage: 20,
-              },
-            ]}
-            data={state.transactions.map(txn => {
-              return [
-                txn.getDepartment() ? (
-                  <>
-                    {txn.getDepartment()?.getClassification()} -{' '}
-                    {txn.getDepartment()?.getDescription()}
-                  </>
-                ) : (
-                  '-'
-                ),
-                txn.getOwnerName(),
-                <>
-                  {`${txn.getCostCenter()?.getDescription()}` + ' - '}
-                  <br />
-                  {txn.getVendor()}
-                </>,
-                formatDate(txn.getTimestamp()),
-                usd(txn.getAmount()),
-                txn.getNotes(),
-              ];
-            })}
-          />
+          {state.transactionAccounts
+            .filter(
+              account =>
+                state.costCenterTotals[
+                  `${account.getId()}-${account.getDescription()}`
+                ] != undefined,
+            )
+            .map(account => (
+              <>
+                <PrintParagraph tag="h3">{`${account.getId()}-${account.getDescription()}`}</PrintParagraph>
+                <PrintTable
+                  key={account.getId()}
+                  columns={[
+                    {
+                      title: 'Department',
+                      align: 'left',
+                    },
+                    {
+                      title: 'Owner',
+                      align: 'left',
+                      widthPercentage: 10,
+                    },
+                    {
+                      title: 'Cost Center / Vendor',
+                      align: 'left',
+                      widthPercentage: 10,
+                    },
+                    {
+                      title: 'Date',
+                      align: 'left',
+                      widthPercentage: 10,
+                    },
+                    {
+                      title: 'Amount',
+                      align: 'left',
+                      widthPercentage: 10,
+                    },
+                    {
+                      title: 'Notes',
+                      align: 'right',
+                      widthPercentage: 20,
+                    },
+                  ]}
+                  data={state.transactions
+                    .filter(
+                      transaction =>
+                        transaction.getCostCenterId() === account.getId(),
+                    )
+                    .map(txn => {
+                      return [
+                        txn.getDepartment() ? (
+                          <>
+                            {txn.getDepartment()?.getClassification()} -{' '}
+                            {txn.getDepartment()?.getDescription()}
+                          </>
+                        ) : (
+                          '-'
+                        ),
+                        txn.getOwnerName(),
+                        <>
+                          {`${txn.getCostCenter()?.getDescription()}` + ' - '}
+                          <br />
+                          {txn.getVendor()}
+                        </>,
+                        formatDate(txn.getTimestamp()),
+                        usd(txn.getAmount()),
+                        txn.getNotes(),
+                      ];
+                    })}
+                />
+              </>
+            ))}
           <PrintParagraph tag="h2" key="perDiemColumns">
             Per Diem
           </PrintParagraph>
@@ -893,11 +911,17 @@ export const CostReportCSV: FC<Props> = ({ serviceCallId, onClose }) => {
               );
             })}
           <PrintParagraph tag="h2" key="timesheetsHeader">
-            Timesheet Lines
+            Labor Summary
           </PrintParagraph>
-          {state.timesheets.map(tsl => {
-            return (
-              <div key={tsl.getId() + 'pdf'}>
+          {state.classCodes
+            .filter(code => state.laborTotals[code.getId()] != undefined)
+            .map(code => (
+              <>
+                <PrintParagraph
+                  key={`${code.getId()}-${code.getDescription()}`}
+                  tag="h3"
+                >{`${code.getId()}-${code.getDescription()}`}</PrintParagraph>
+
                 <PrintTable
                   columns={[
                     {
@@ -940,27 +964,23 @@ export const CostReportCSV: FC<Props> = ({ serviceCallId, onClose }) => {
                       widthPercentage: 20,
                     },
                   ]}
-                  data={[
-                    [
-                      tsl.getTechnicianUserName() +
-                        ` (${tsl.getTechnicianUserId()})`,
-                      tsl.getDepartmentName(),
-                      tsl.getAdminApprovalUserName(),
-                      formatDate(tsl.getTimeStarted()) || '-',
-                      formatDate(tsl.getTimeFinished()) || '-',
-                      tsl.getBriefDescription(),
-                      tsl.getHoursWorked() != 0
-                        ? tsl.getHoursWorked() > 1
-                          ? `${tsl.getHoursWorked()} hrs`
-                          : `${tsl.getHoursWorked()} hr`
-                        : '-',
-                      tsl.getNotes(),
-                    ],
-                  ]}
+                  data={state.timesheets
+                    .filter(tsl => tsl.getClassCodeId() === code.getId())
+                    .map(tsl => {
+                      return [
+                        tsl.getTechnicianUserName(),
+                        tsl.getDepartmentName(),
+                        tsl.getAdminApprovalUserName(),
+                        formatDate(tsl.getTimeStarted()),
+                        formatDate(tsl.getTimeFinished()),
+                        tsl.getBriefDescription(),
+                        `${tsl.getHoursWorked()} hour(s)`,
+                        tsl.getNotes(),
+                      ];
+                    })}
                 />
-              </div>
-            );
-          })}
+              </>
+            ))}
           <PrintParagraph tag="h2" key="tripsHeader">
             Related Trips
           </PrintParagraph>
@@ -1167,7 +1187,7 @@ export const CostReportCSV: FC<Props> = ({ serviceCallId, onClose }) => {
                           value: (
                             <div key="laborheader">
                               Total Hours Worked
-                              <table key="LaborTypesContainer">
+                              <div key="LaborTypesContainer">
                                 <Collapse
                                   key={'LaborCollapseTypes'}
                                   in={state.laborTotalsDropDownActive === true}
@@ -1176,14 +1196,14 @@ export const CostReportCSV: FC<Props> = ({ serviceCallId, onClose }) => {
                                     let findAccount = code.getId();
                                     if (state.laborTotals[findAccount]) {
                                       return (
-                                        <tr key={'laborValue' + findAccount}>
+                                        <div key={'laborValue' + findAccount}>
                                           {code.getDescription()}
-                                        </tr>
+                                        </div>
                                       );
                                     }
                                   })}
                                 </Collapse>
-                              </table>
+                              </div>
                             </div>
                           ),
                         },
@@ -1195,7 +1215,7 @@ export const CostReportCSV: FC<Props> = ({ serviceCallId, onClose }) => {
                                 : state.totalHoursWorked == 0
                                 ? 'None'
                                 : `${state.totalHoursWorked} hr`}
-                              <table key="LaborCollapseValueHeader">
+                              <div key="LaborCollapseValueHeader">
                                 <Collapse
                                   key={'LaborCollapseValues'}
                                   in={state.laborTotalsDropDownActive === true}
@@ -1204,7 +1224,7 @@ export const CostReportCSV: FC<Props> = ({ serviceCallId, onClose }) => {
                                     let findAccount = code.getId();
                                     if (state.laborTotals[findAccount]) {
                                       return (
-                                        <tr
+                                        <div
                                           key={
                                             'laborTotal' +
                                             state.laborTotals[findAccount] +
@@ -1212,12 +1232,12 @@ export const CostReportCSV: FC<Props> = ({ serviceCallId, onClose }) => {
                                           }
                                         >
                                           {`${state.laborTotals[findAccount]} hour(s)`}
-                                        </tr>
+                                        </div>
                                       );
                                     }
                                   })}
                                 </Collapse>
-                              </table>
+                              </div>
                             </div>
                           ),
                         },
@@ -1257,7 +1277,7 @@ export const CostReportCSV: FC<Props> = ({ serviceCallId, onClose }) => {
                       [
                         {
                           value: (
-                            <table key="CostCenterCollapseTypesContainer">
+                            <div key="CostCenterCollapseTypesContainer">
                               Transactions
                               <Collapse
                                 key={'CostCenterCollapseTypes'}
@@ -1267,24 +1287,25 @@ export const CostReportCSV: FC<Props> = ({ serviceCallId, onClose }) => {
                                   let findAccount = `${account.getId()}-${account.getDescription()}`;
                                   if (state.costCenterTotals[findAccount]) {
                                     return (
-                                      <tr
+                                      <div
                                         key={
                                           'transactionAccountValue' +
-                                          findAccount
+                                          findAccount +
+                                          account.getId()
                                         }
                                       >
                                         {findAccount}
-                                      </tr>
+                                      </div>
                                     );
                                   }
                                 })}
                               </Collapse>
-                            </table>
+                            </div>
                           ),
                         },
                         {
                           value: (
-                            <table key="CostCenterCollapseValueHeader">
+                            <div key="CostCenterCollapseValueHeader">
                               {usd(totalTransactions)}
                               <Collapse
                                 key={'CostCenterCollapseValues'}
@@ -1294,21 +1315,22 @@ export const CostReportCSV: FC<Props> = ({ serviceCallId, onClose }) => {
                                   let findAccount = `${account.getId()}-${account.getDescription()}`;
                                   if (state.costCenterTotals[findAccount]) {
                                     return (
-                                      <tr
+                                      <div
                                         key={
                                           'transactionAccountValue' +
-                                          state.costCenterTotals[findAccount]
+                                          state.costCenterTotals[findAccount] +
+                                          findAccount
                                         }
                                       >
                                         {usd(
                                           state.costCenterTotals[findAccount],
                                         )}
-                                      </tr>
+                                      </div>
                                     );
                                   }
                                 })}
                               </Collapse>
-                            </table>
+                            </div>
                           ),
                         },
                         {
@@ -1668,69 +1690,80 @@ export const CostReportCSV: FC<Props> = ({ serviceCallId, onClose }) => {
 
           {
             label: 'Timesheets',
-            content: (
-              <div key={'TimesheetData'}>
-                <InfoTable
-                  columns={[
-                    {
-                      name: 'Technician',
-                      align: 'left',
-                    },
-                    {
-                      name: 'Department',
-                      align: 'left',
-                    },
-                    {
-                      name: 'Approved By',
-                      align: 'left',
-                    },
-                    {
-                      name: 'Time Started',
-                      align: 'left',
-                    },
-                    {
-                      name: 'Time Finished',
-                      align: 'left',
-                    },
-                    {
-                      name: 'Brief Description',
-                      align: 'left',
-                    },
-                    {
-                      name: 'Hours Worked',
-                      align: 'left',
-                    },
-                    {
-                      name: 'Notes',
-                      align: 'right',
-                    },
-                  ]}
-                  data={state.timesheets.map(tsl => {
-                    return [
+            content: state.classCodes
+              .filter(code => state.laborTotals[code.getId()] != undefined)
+              .map(code => (
+                <SectionBar
+                  title={`${code.getId()}-${code.getDescription()}`}
+                  subtitle={`${state.laborTotals[code.getId()]} hour(s)`}
+                  key={'header' + code.getId()}
+                >
+                  <InfoTable
+                    columns={[
                       {
-                        value:
-                          tsl.getTechnicianUserName() +
-                          ` (${tsl.getTechnicianUserId()})`,
+                        name: 'Technician',
+                        align: 'left',
                       },
-                      { value: tsl.getDepartmentName() },
-                      { value: tsl.getAdminApprovalUserName() },
-                      { value: formatDate(tsl.getTimeStarted()) || '-' },
-                      { value: formatDate(tsl.getTimeFinished()) || '-' },
-                      { value: tsl.getBriefDescription() },
                       {
-                        value:
-                          tsl.getHoursWorked() != 0
-                            ? tsl.getHoursWorked() > 1
-                              ? `${tsl.getHoursWorked()} hrs`
-                              : `${tsl.getHoursWorked()} hr`
-                            : '-',
+                        name: 'Department',
+                        align: 'left',
                       },
-                      { value: tsl.getNotes() },
-                    ];
-                  })}
-                />
-              </div>
-            ),
+                      {
+                        name: 'Approved By',
+                        align: 'left',
+                      },
+                      {
+                        name: 'Time Started',
+                        align: 'left',
+                      },
+                      {
+                        name: 'Time Finished',
+                        align: 'left',
+                      },
+                      {
+                        name: 'Brief Description',
+                        align: 'left',
+                      },
+                      {
+                        name: 'Hours Worked',
+                        align: 'left',
+                      },
+                      {
+                        name: 'Notes',
+                        align: 'right',
+                      },
+                    ]}
+                    data={state.timesheets
+                      .filter(
+                        timesheet =>
+                          timesheet.getClassCodeId() === code.getId(),
+                      )
+                      .map(tsl => {
+                        return [
+                          {
+                            value:
+                              tsl.getTechnicianUserName() +
+                              ` (${tsl.getTechnicianUserId()})`,
+                          },
+                          { value: tsl.getDepartmentName() },
+                          { value: tsl.getAdminApprovalUserName() },
+                          { value: formatDate(tsl.getTimeStarted()) || '-' },
+                          { value: formatDate(tsl.getTimeFinished()) || '-' },
+                          { value: tsl.getBriefDescription() },
+                          {
+                            value:
+                              tsl.getHoursWorked() != 0
+                                ? tsl.getHoursWorked() > 1
+                                  ? `${tsl.getHoursWorked()} hrs`
+                                  : `${tsl.getHoursWorked()} hr`
+                                : '-',
+                          },
+                          { value: tsl.getNotes() },
+                        ];
+                      })}
+                  />
+                </SectionBar>
+              )),
           },
 
           {
