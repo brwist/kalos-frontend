@@ -1,10 +1,11 @@
 import React, { FC, useEffect, useState, useCallback } from 'react';
 import { PrintPage } from '../PrintPage';
-import { loadEventById, EventType } from '../../../helpers';
+import { loadEventById } from '../../../helpers';
 import { PrefabKalosInfo } from './PrefabKalosInfo';
 import { PrefabPropertyInfo } from './PrefabPropertyInfo';
 import { PrefabPayables } from './PrefabPayables';
 import './styles.scss';
+import { Event } from '@kalos-core/kalos-rpc/Event';
 
 interface Props {
   serviceCallId: number;
@@ -13,7 +14,7 @@ interface Props {
 const border = '1px solid #000';
 
 export const PDFInvoice: FC<Props> = ({ serviceCallId }) => {
-  const [event, setEvent] = useState<EventType>();
+  const [event, setEvent] = useState<Event>();
   const [loaded, setLoaded] = useState<boolean>(false);
   const load = useCallback(async () => {
     const event = await loadEventById(serviceCallId);
@@ -24,7 +25,7 @@ export const PDFInvoice: FC<Props> = ({ serviceCallId }) => {
       setLoaded(true);
       load();
     }
-  }, [loaded]);
+  }, [load, loaded]);
   console.log({ event });
   return (
     <PrintPage downloadPdfFilename="lorem_ipsum_1">
@@ -43,11 +44,11 @@ export const PDFInvoice: FC<Props> = ({ serviceCallId }) => {
                 width: '100%',
               }}
             >
-              The undersigned has authority to order the above labor and
+              {`The undersigned has authority to order the above labor and
               materials on behalf of the above named purchaser. The labor and
               materials described above have been completely and satisfactorily
               performed and furnished. Kalos Services is not liable for any
-              defects in labor or material unless the purchaser gives written
+              defects in labor or material unless the purchaser gives written 
               notice of such defects within 30 days from the date of this
               contract. Payment in full is due upon receipt of this invoice and
               payable upon completion of work. The purchaser should be aware
@@ -65,7 +66,7 @@ export const PDFInvoice: FC<Props> = ({ serviceCallId }) => {
               previously serviced. If my payment is by check and my check is
               returned for any reason, I authorize the merchant to
               electronically debit my account for the amount of this item plus
-              any fees allowed by law.
+              any fees allowed by law.`}
             </div>
           </div>
         </div>
