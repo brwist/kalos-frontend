@@ -999,6 +999,14 @@ export const TransactionTable: FC<Props> = ({
       let res: Transaction | undefined;
       try {
         res = await TransactionClientService.Create(newTxn);
+        let newTransactionReq = new Transaction();
+        newTransactionReq.setId(res.getId());
+        let result = await TransactionClientService.Get(newTransactionReq);
+        let param = { txn: result, totalCount: 1 };
+        dispatch({
+          type: ACTIONS.ADD_LOCAL_TRANSACTION_TO_LIST,
+          data: param,
+        });
       } catch (err) {
         console.error(`An error occurred while creating a transaction: ${err}`);
         try {
@@ -1032,11 +1040,9 @@ export const TransactionTable: FC<Props> = ({
         );
       }
 
-      await resetTransactions();
-      refresh();
       return res;
     },
-    [loggedUserId, resetTransactions, refresh],
+    [loggedUserId],
   );
 
   const deleteTransaction = useCallback(async () => {

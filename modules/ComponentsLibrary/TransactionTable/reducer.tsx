@@ -87,6 +87,7 @@ export enum ACTIONS {
   SET_MERGING_TRANSACTION = 'setMergingTransaction',
   SET_SEARCHING = 'setSearching',
   SET_ROLE = 'setRole',
+  ADD_LOCAL_TRANSACTION_TO_LIST = 'addLocalTransactionToList',
   SET_COST_CENTERS = 'setCostCenters',
   SET_CREATING_TRANSACTION = 'setCreatingTransaction',
   SET_EMPLOYEES = 'setEmployees',
@@ -122,6 +123,7 @@ export type Action =
       data: { transactionId: number; statusId: number };
     }
   | { type: ACTIONS.SET_CHANGING_PAGE; data: boolean }
+  | { type: ACTIONS.ADD_LOCAL_TRANSACTION_TO_LIST; data: SelectorParams }
   | { type: ACTIONS.SET_MERGING_TRANSACTION; data: boolean }
   | { type: ACTIONS.SET_SEARCHING; data: boolean }
   | { type: ACTIONS.SET_ROLE; data: RoleType }
@@ -393,6 +395,16 @@ export const reducer = (state: State, action: Action) => {
       } else {
         return { ...state };
       }
+    }
+    case ACTIONS.ADD_LOCAL_TRANSACTION_TO_LIST: {
+      console.log('add transaction to local list');
+      let temp = state.transactions;
+      temp![temp!.length - 1] = action.data;
+      return {
+        ...state,
+        transactions: temp,
+        totalTransactions: (state.totalTransactions += 1),
+      };
     }
     case ACTIONS.SET_FILE_DATA:
       return { ...state, fileData: action.data };
