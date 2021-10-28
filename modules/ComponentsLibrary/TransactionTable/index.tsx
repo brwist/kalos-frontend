@@ -1072,7 +1072,9 @@ export const TransactionTable: FC<Props> = ({
       resetTransactions();
     }
     if (state.searching) {
-      refreshEverything();
+      dispatch({ type: ACTIONS.SET_PAGE, data: 0 });
+      dispatch({ type: ACTIONS.SET_CHANGING_PAGE, data: true });
+
       dispatch({ type: ACTIONS.SET_SEARCHING, data: false });
     }
   }, [

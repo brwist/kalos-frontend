@@ -1382,69 +1382,92 @@ export const CostReportCSV: FC<Props> = ({ serviceCallId, onClose }) => {
 
           {
             label: 'Transactions',
-            content: (
-              <InfoTable
-                styles={{ width: '100%', padding: 10 }}
-                columns={[
-                  {
-                    name: 'Department',
-                    align: 'left',
-                  },
-                  {
-                    name: 'Owner',
-                    align: 'left',
-                  },
-                  {
-                    name: 'Cost Center / Vendor',
-                    align: 'left',
-                  },
-                  {
-                    name: 'Date',
-                    align: 'left',
-                  },
-                  {
-                    name: 'Amount',
-                    align: 'left',
-                  },
-                  {
-                    name: 'Notes',
-                    align: 'left',
-                  },
-                ]}
-                data={state.transactions.map(txn => {
-                  return [
-                    {
-                      value: txn.getDepartment() ? (
-                        <div>
-                          {txn.getDepartment()?.getClassification()} -{' '}
-                          {txn.getDepartment()?.getDescription()}
-                        </div>
-                      ) : (
-                        '-'
-                      ),
-                    },
+            content: state.transactionAccounts
+              .filter(
+                account =>
+                  state.costCenterTotals[
+                    `${account.getId()}-${account.getDescription()}`
+                  ] != undefined,
+              )
+              .map(account => (
+                <SectionBar
+                  title={`${account.getId()}-${account.getDescription()}`}
+                  subtitle={usd(
+                    state.costCenterTotals[
+                      `${account.getId()}-${account.getDescription()}`
+                    ],
+                  )}
+                  key={'header' + account.getId()}
+                >
+                  <InfoTable
+                    key={account.getId()}
+                    styles={{ width: '100%', padding: 10 }}
+                    columns={[
+                      {
+                        name: 'Department',
+                        align: 'left',
+                      },
+                      {
+                        name: 'Owner',
+                        align: 'left',
+                      },
+                      {
+                        name: 'Cost Center / Vendor',
+                        align: 'left',
+                      },
+                      {
+                        name: 'Date',
+                        align: 'left',
+                      },
+                      {
+                        name: 'Amount',
+                        align: 'left',
+                      },
+                      {
+                        name: 'Notes',
+                        align: 'left',
+                      },
+                    ]}
+                    data={state.transactions
+                      .filter(
+                        transaction =>
+                          transaction.getCostCenterId() === account.getId(),
+                      )
+                      .map(txn => {
+                        return [
+                          {
+                            value: txn.getDepartment() ? (
+                              <div>
+                                {txn.getDepartment()?.getClassification()} -{' '}
+                                {txn.getDepartment()?.getDescription()}
+                              </div>
+                            ) : (
+                              '-'
+                            ),
+                          },
 
-                    { value: txn.getOwnerName() },
+                          { value: txn.getOwnerName() },
 
-                    {
-                      value: `${txn
-                        .getCostCenter()
-                        ?.getDescription()} - ${txn.getVendor()}`,
-                    },
-                    { value: formatDate(txn.getTimestamp()) },
-                    { value: usd(txn.getAmount()) },
+                          {
+                            value: `${txn
+                              .getCostCenter()
+                              ?.getDescription()} - ${txn.getVendor()}`,
+                          },
+                          { value: formatDate(txn.getTimestamp()) },
+                          { value: usd(txn.getAmount()) },
 
-                    {
-                      value: (
-                        <div style={{ fontSizeAdjust: '0.5' }}>
-                          {txn.getNotes()}
-                        </div>
-                      ),
-                    },
-                  ];
-                })}
-              />
-            ),
+                          {
+                            value: (
+                              <div style={{ fontSizeAdjust: '0.5' }}>
+                                {txn.getNotes()}
+                              </div>
+                            ),
+                          },
+                        ];
+                      })}
+                  />
+                </SectionBar>
+              )),
           },
 
           {
