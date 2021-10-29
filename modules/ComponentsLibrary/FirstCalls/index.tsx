@@ -57,6 +57,9 @@ import nextSunday from 'date-fns/esm/nextSunday';
 import AddCircleOutlineTwoTone from '@material-ui/icons/AddCircleOutlineTwoTone';
 import { TimesheetDepartment } from '@kalos-core/kalos-rpc/TimesheetDepartment';
 import { Loader } from '../../Loader/main';
+import { ServiceRequest } from '../ServiceCall/requestIndex';
+import Checkbox from '@material-ui/core/Checkbox';
+import { Confirm } from '../Confirm';
 
 
 
@@ -146,6 +149,7 @@ const initialState : State = {
   showAddTech: false,
   tempAssigneeList: '',
   refreshCalls: false,
+  isApproved: false,
 };
 
 export const FirstCallDashboard: React.FC<Props> = function FirstCallDashboard({
@@ -161,6 +165,7 @@ export const FirstCallDashboard: React.FC<Props> = function FirstCallDashboard({
       data: {
         openModal: !state.openModal,
         modalKey: modalKey,
+        currentFC: state.savedFirstCall,
       }
     });
   }
@@ -171,7 +176,7 @@ export const FirstCallDashboard: React.FC<Props> = function FirstCallDashboard({
     a.length === b.length &&
     a.every((v : any, i : number) => v === b[i]);
 
-  const resetModal = () => {
+  const resetModal = (refreshCalls = false) => {
     switch (state.modalKey) {
       case 'Class': {
         const techList : {id: number, name: string}[] = [];
@@ -271,11 +276,15 @@ export const FirstCallDashboard: React.FC<Props> = function FirstCallDashboard({
         break;
       }
     }
+    if (refreshCalls) {
+      setCalls(refreshCalls);
+    }
     updateFirstCallState({
       type: 'setModal',
       data: {
         openModal: !state.openModal,
         modalKey: '',
+        currentFC: state.savedFirstCall,
       }
     });
   }
@@ -319,28 +328,43 @@ export const FirstCallDashboard: React.FC<Props> = function FirstCallDashboard({
     }
   }, [state.formData, state.loaded])
 
-  const handleCallDetails = async (call : DispatchCall, techId? : string | DispatchableTech) => {
-    let assignees : {id: number, name: string}[] = [];
-    let ids = call.getLogTechnicianAssigned().split(',').map(Number);
-    if (techId) {
-      ids = call.getLogTechnicianAssigned().concat(`,${techId}`).split(',').map(Number);
-    }
-    try {
-      const userData = await UserClientService.BatchGetUsersByIds(ids);
-      for (const user of userData.getResultsList()) {
-        assignees.push({id: user.getId(), name: `${user.getFirstname()} ${user.getLastname()}`})
-      }
+  const handleCallDetails = async (call : DispatchCall, techId? : string | DispatchableTech | boolean) => {
+    if (typeof techId === 'boolean') {
       updateFirstCallState({
         type: 'setModal',
         data: {
           openModal: true,
-          modalKey: 'callInfo',
+          modalKey: 'editRequest',
           selectedCall: call,
-          assigneeList: assignees,
+          assigneeList: [],
+          currentFC: state.savedFirstCall,
         }
       });
-    } catch (err) {
-      console.error('Error Occurred when Getting Assigned Users', err);
+      console.log("this is accurate");
+    } else {
+      let assignees : {id: number, name: string}[] = [];
+      let ids = call.getLogTechnicianAssigned().split(',').map(Number);
+      if (techId) {
+        ids = call.getLogTechnicianAssigned().concat(`,${techId}`).split(',').map(Number);
+      }
+      try {
+        const userData = await UserClientService.BatchGetUsersByIds(ids);
+        for (const user of userData.getResultsList()) {
+          assignees.push({id: user.getId(), name: `${user.getFirstname()} ${user.getLastname()}`})
+        }
+        updateFirstCallState({
+          type: 'setModal',
+          data: {
+            openModal: true,
+            modalKey: 'callInfo',
+            selectedCall: call,
+            assigneeList: assignees,
+            currentFC: state.savedFirstCall,
+          }
+        });
+      } catch (err) {
+        console.error('Error Occurred when Getting Assigned Users', err);
+      }
     }
   }
 
@@ -457,6 +481,18 @@ export const FirstCallDashboard: React.FC<Props> = function FirstCallDashboard({
     }
   }
 
+  const handleFirstCallPreview = async () => {
+    const currentFC = await getPreviousFirstCall();
+    updateFirstCallState({
+      type: 'setModal', 
+      data: {
+        openModal: true,
+        modalKey: 'fcPreview',
+        currentFC: currentFC.firstCall,
+      }
+    })
+  }
+
   const handleSave = useCallback(async () => {
     let allowSave = true;
     let id = 0;
@@ -509,6 +545,7 @@ export const FirstCallDashboard: React.FC<Props> = function FirstCallDashboard({
 
   const handleFinalizeFirstCall = () => {
     if (state.firstCallCalls.length) {
+      updateFirstCallState({type:'setProcessing', data:true});
       for (let call in state.firstCallCalls) {
         for (let user in state.firstCallCalls[call].assigned) {
           if (testUserId > 0) {
@@ -522,6 +559,8 @@ export const FirstCallDashboard: React.FC<Props> = function FirstCallDashboard({
     if (!disableSlack) {
       SlackClientService.FirstCall(state.formData.division);
     }
+    updateFirstCallState({type:'setProcessing', data:false});
+    resetModal();
   }
 
   const getTechs = useCallback (async (refresh = false) => {
@@ -1028,8 +1067,9 @@ export const FirstCallDashboard: React.FC<Props> = function FirstCallDashboard({
               <Button
                 key='finalize'
                 fullWidth
-                style={{fontSize:'18px', backgroundColor:'#711313', color:'white'}}
-                onClick={() => handleFinalizeFirstCall()}
+                style={{fontSize:'18px', backgroundColor:state.save?'grey':'#711313', color:'white'}}
+                onClick={() => handleFirstCallPreview()}
+                disabled={state.save}
               >
                 Finalize First Calls
               </Button>
@@ -1094,7 +1134,7 @@ export const FirstCallDashboard: React.FC<Props> = function FirstCallDashboard({
             <div style={{borderStyle:'solid', borderBottom:'1px', width:'98%', margin:'auto'}}></div>
           </Grid>
           <Grid container style={{paddingTop:'30px', paddingBottom:'20px'}}>
-            <Grid item xs={5}>       
+            <Grid item xs={4}>       
               <div style={{margin:'auto', width:'92%', opacity:state.isProcessing? 0.2 : 1}}>
                 <Typography style={{textAlign:'center', fontWeight:'bold', fontSize:'32px'}}>
                   Available Technicians
@@ -1135,7 +1175,7 @@ export const FirstCallDashboard: React.FC<Props> = function FirstCallDashboard({
                 />
               </div>
             </Grid>
-            <Grid item xs={7}>
+            <Grid item xs={8}>
               <div style={{margin:'auto', width:'92%'}}>
                 <Typography style={{textAlign:'center', fontWeight:'bold', fontSize:'32px'}}>
                   Available Calls
@@ -1158,7 +1198,7 @@ export const FirstCallDashboard: React.FC<Props> = function FirstCallDashboard({
             <div style={{borderStyle:'solid', borderBottom:'1px', width:'98%', margin:'auto'}}></div>
           </Grid>
           <Grid container style={{paddingTop:'20px', paddingBottom:'20px'}}>
-            <Grid item xs={5}>
+            <Grid item xs={4}>
               <div style={{margin:'auto', width:'92%'}}>
                 {state.googleApiKey != '' && (
                   <DispatchMap 
@@ -1174,7 +1214,7 @@ export const FirstCallDashboard: React.FC<Props> = function FirstCallDashboard({
                 )}
               </div>
             </Grid>
-            <Grid item xs={7}>
+            <Grid item xs={8}>
               <div style={{margin:'auto', width:'92%'}}>
                 <Typography style={{fontWeight:'bold', fontSize:'32px', textAlign:'center'}}>
                   First Call Queue                    
@@ -1228,59 +1268,97 @@ export const FirstCallDashboard: React.FC<Props> = function FirstCallDashboard({
             onClose={resetModal}
             title="Call Info"
             label="Close"
-            maxWidth={(window.innerWidth * .80)}
+            maxWidth={(window.innerWidth * .90)}
           >
             <div style={{textAlign: "center"}}>
               <h2>Selected Call</h2>
             </div>
 
-            <Grid container spacing={3} style={{width:(window.innerWidth * .65)}}>
-              <Grid item xs={6}>
-                <TableContainer style={{width:'100%'}}>
-                  <Table>
-                    <TableHead></TableHead>
-                    <TableBody>
-                      <TableRow>
-                        <TableCell style={{width:"35%", fontWeight:"bold", fontSize:"15px"}}>Location:</TableCell>
-                        <TableCell style={{width:"65%", textAlign:"center"}}>{state.selectedCall.getPropertyCity()}</TableCell>
-                      </TableRow>
-                      <TableRow>
-                        <TableCell style={{width:"35%", fontWeight:"bold", fontSize:"15px"}}>Customer:</TableCell>
-                        <TableCell style={{width:"65%", textAlign:"center"}}>{state.selectedCall.getCustName()}</TableCell>
-                      </TableRow>
-                      <TableRow>
-                        <TableCell style={{fontWeight:"bold", fontSize:"15px"}}>Type:</TableCell>
-                        <TableCell style={{textAlign:"center"}}>{`${state.selectedCall.getJobType()}/${state.selectedCall.getJobSubtype()}`}</TableCell>
-                      </TableRow>
-                      <TableRow>
-                        <TableCell style={{fontWeight:"bold", fontSize:"15px"}}>Description:</TableCell>
-                        <TableCell style={{textAlign:"center"}}>{state.selectedCall.getDescription().length >= 200 ? state.selectedCall.getDescription().slice(0,150).concat(" ...") : state.selectedCall.getDescription()}</TableCell>
-                      </TableRow>
-                      <TableRow>
-                        <TableCell style={{fontWeight:"bold", fontSize:"15px"}}>Notes:</TableCell>
-                        <TableCell>
-                          <TextareaAutosize
-                            minRows={5}
-                            style={{width:'99%', fontSize:'17px', fontStyle:'inherit'}}
-                            placeholder="Please Enter Any First Call Notes Here."
-                            // @ts-ignore
-                            defaultValue={state.selectedCall.getNotes().replaceAll('     ', '\n')}
-                            onBlur={(text) => {
-                              if (text.target.value !== state.selectedCall.getNotes()) {
-                                const updatedSelectedCall = state.selectedCall;
-                                updatedSelectedCall.setNotes(text.target.value.replace(/\n/g,'     '));
-                                updateFirstCallState({ type: 'setSelectedCall', data: updatedSelectedCall });
-                              }
-                            }}
-                          />
-                        </TableCell>
-
-                      </TableRow>
-                    </TableBody>
-                  </Table>
-                </TableContainer>
+            <Grid container spacing={3} style={{width:(window.innerWidth * .95)}}>
+              <Grid item xs={8}>
+                <Grid container>
+                  <Grid item xs={6}>
+                    <TableContainer style={{width:'100%'}}>
+                      <Table>
+                        <TableHead></TableHead>
+                        <TableBody>
+                          <TableRow>
+                            <TableCell style={{width:"35%", fontWeight:"bold", fontSize:"15px"}}>Call ID:</TableCell>
+                            <TableCell style={{width:"65%", textAlign:"center"}}>{state.selectedCall.getId()}</TableCell>
+                          </TableRow>
+                          <TableRow>
+                            <TableCell style={{width:"35%", fontWeight:"bold", fontSize:"15px"}}>Location:</TableCell>
+                            <TableCell style={{width:"65%", textAlign:"center"}}>{state.selectedCall.getPropertyCity()}</TableCell>
+                          </TableRow>
+                          <TableRow>
+                            <TableCell style={{fontWeight:"bold", fontSize:"15px"}}>Type:</TableCell>
+                            <TableCell style={{textAlign:"center"}}>{`${state.selectedCall.getJobType()}/${state.selectedCall.getJobSubtype()}`}</TableCell>
+                          </TableRow>
+                          <TableRow>
+                            <TableCell style={{fontWeight:"bold", fontSize:"15px"}}>Description:</TableCell>
+                            <TableCell style={{textAlign:"center"}}>{state.selectedCall.getDescription().length >= 200 ? state.selectedCall.getDescription().slice(0,150).concat(" ...") : state.selectedCall.getDescription()}</TableCell>
+                          </TableRow>
+                        </TableBody>
+                      </Table>
+                    </TableContainer>
+                  </Grid>
+                  <Grid item xs={6}>
+                    <TableContainer style={{width:'100%'}}>
+                      <Table>
+                        <TableHead></TableHead>
+                        <TableBody>
+                          <TableRow>
+                            <TableCell style={{width:"35%", fontWeight:"bold", fontSize:"15px"}}>Customer:</TableCell>
+                            <TableCell style={{width:"65%", textAlign:"center"}}>{state.selectedCall.getCustName()}</TableCell>
+                          </TableRow>
+                          <TableRow>
+                            <TableCell style={{width:"35%", fontWeight:"bold", fontSize:"15px"}}>Address:</TableCell>
+                            <TableCell style={{width:"65%", textAlign:"center"}}>{state.selectedCall.getPropertyAddress()}</TableCell>
+                          </TableRow>
+                          <TableRow>
+                            <TableCell style={{width:"35%", fontWeight:"bold", fontSize:"15px"}}>Email:</TableCell>
+                            <TableCell style={{width:"65%", textAlign:"center"}}>{state.selectedCall.getUserEmail()}</TableCell>
+                          </TableRow>
+                          <TableRow>
+                            <TableCell style={{width:"35%", fontWeight:"bold", fontSize:"15px"}}>Phone:</TableCell>
+                            <TableCell style={{width:"65%", textAlign:"center"}}>{state.selectedCall.getUserPhone()}</TableCell>
+                          </TableRow>
+                        </TableBody>
+                      </Table>
+                    </TableContainer>
+                  </Grid>
+                </Grid>
+                <Grid item xs={12}>
+                  <TableContainer>
+                    <Table>
+                      <TableHead/>
+                      <TableBody>
+                        <TableRow>
+                          <TableCell style={{fontWeight:"bold", fontSize:"15px", width:"15%"}}>Notes:</TableCell>
+                          <TableCell>
+                            <TextareaAutosize
+                              minRows={5}
+                              maxRows={5}
+                              style={{width:'99%', fontSize:'17px', fontStyle:'inherit'}}
+                              placeholder="Please Enter Any First Call Notes Here."
+                              // @ts-ignore
+                              defaultValue={state.selectedCall.getNotes().replaceAll('     ', '\n')}
+                              onBlur={(text) => {
+                                if (text.target.value !== state.selectedCall.getNotes()) {
+                                  const updatedSelectedCall = state.selectedCall;
+                                  updatedSelectedCall.setNotes(text.target.value.replace(/\n/g,'     '));
+                                  updateFirstCallState({ type: 'setSelectedCall', data: updatedSelectedCall });
+                                }
+                              }}
+                            />
+                          </TableCell>
+                        </TableRow>
+                      </TableBody>
+                    </Table>
+                  </TableContainer>
+                </Grid>
               </Grid>
-              <Grid item xs={6} style={{margin:'auto', position:'relative'}}>
+              <Grid item xs={4} style={{margin:'auto', position:'relative'}}>
                 {state.isProcessing && (
                   <CircleProgress
                     style={{
@@ -1301,7 +1379,7 @@ export const FirstCallDashboard: React.FC<Props> = function FirstCallDashboard({
                       Assigned Technicians
                     </ListSubheader>
                   }
-                  style={{display:'table',margin:'auto',alignItems:'center', opacity:state.isProcessing?0.2:1}}
+                  style={{display:'table', marginLeft:'15%', alignItems:'center', opacity:state.isProcessing?0.2:1}}
                 >
                   {!state.assigneeList.length && (
                     <ListItemText style={{textAlign:'center'}}>
@@ -1364,6 +1442,193 @@ export const FirstCallDashboard: React.FC<Props> = function FirstCallDashboard({
               </Grid>
             </Grid>
           </Alert>
+        )}
+        {state.modalKey === 'editRequest' && (
+          <ServiceRequest
+            loggedUserId={loggedUserId}
+            propertyId={state.selectedCall.getPropertyId()}
+            userID={loggedUserId}
+            serviceCallId={state.selectedCall.getId()}
+            onClose={() => resetModal(true)}
+          />
+        )}
+        {state.modalKey === 'fcPreview' && (
+          <Confirm
+            open
+            onClose={resetModal}
+            onConfirm={handleFinalizeFirstCall}
+            title="Finalize First Call"
+            submitLabel={state.isProcessing ? "Saving" : "Send First Calls"}
+            cancelLabel="Close"
+            disabled={!state.isApproved || state.isProcessing}
+            maxWidth={(window.innerWidth * .50)}
+          >
+            <div>
+              <Grid container style={{verticalAlign:'middle'}}>
+              <Grid item xs={9}>
+                  <Typography style={{fontWeight:'bolder', fontSize:'22px', textAlign:'center'}}>
+                    Please Review the First Call and Approve.
+                  </Typography>
+                </Grid>
+                <Grid item xs={3}>
+                  <Checkbox
+                    defaultChecked = {false}
+                    size = 'medium'
+                    color = "default"
+                    onChange = {() => updateFirstCallState({type:'setFinalApproval', data:!state.isApproved})}
+                    inputProps = {{"aria-label": 'Approve'}}
+                    style={{marginBottom:'10px'}}
+                  />
+                </Grid>
+                
+              </Grid>
+              <div style={{border:1, borderWidth:'1px', borderStyle:'solid'}}>
+                <Grid container justifyContent="center" style={{textAlign:'center', maxHeight:(window.innerHeight*0.75), overflow:'auto'}}>
+                  <Grid item xs={12}>
+                    <Typography style={{fontWeight:'bolder', fontSize:'20px', paddingTop:'10px'}}>
+                      Details
+                    </Typography>
+                  </Grid>
+                  <Grid item xs={12} style={{paddingTop:'10px', paddingBottom:'10px'}}>
+                    <div style={{borderStyle:'solid', borderBottom:'1px', width:'98%', margin:'auto', color:'grey'}}></div>
+                  </Grid>
+                  <Grid item xs={6} style={{paddingTop:'15px'}}>
+                    <Grid container>
+                      <Grid item xs={12} style={{fontWeight:'bolder', fontSize:'16px'}}>
+                        On Call Coordinator
+                      </Grid>
+                      <Grid item xs={12}>
+                        {state.savedFirstCall.onCall.coordinator}
+                      </Grid>
+                    </Grid>
+                  </Grid>
+                  <Grid item xs={6} style={{paddingTop:'15px'}}>
+                    <Grid container>
+                      <Grid item xs={12} style={{fontWeight:'bolder', fontSize:'16px'}}>
+                        First Call Notes
+                      </Grid>
+                      <Grid item xs={12}>
+                        {state.savedFirstCall.message.split('     ').map((message, index) => (
+                          <Typography key={`${index}_message`}>
+                            {message}
+                          </Typography>
+                        ))}
+                      </Grid>
+                    </Grid>
+                  </Grid>
+                  <Grid item xs={12} style={{paddingTop:'10px', paddingBottom:'10px'}}>
+                    <div style={{borderStyle:'solid', borderBottom:'1px', width:'90%', margin:'auto', color:'grey'}}></div>
+                  </Grid>
+                  <Grid item xs={6} style={{paddingTop:'15px'}}>
+                    <Grid container>
+                      <Grid item xs={12} style={{fontWeight:'bolder', fontSize:'16px'}}>
+                        {!state.savedFirstCall.class.isTomorrow ? `No Class Tomorrow` : `Class Tomorrow @ ${state.savedFirstCall.class.start}`}
+                      </Grid>
+                      {state.savedFirstCall.class.list.length > 0 && state.savedFirstCall.class.list.map(tech => (
+                        <Grid item xs={12} key={`${tech.id}_class`}>
+                          {tech.name}
+                        </Grid>
+                      ))}
+                    </Grid>
+                  </Grid>
+                  <Grid item xs={6} style={{paddingTop:'15px'}}>
+                    <Grid container>
+                      <Grid item xs={12} style={{fontWeight:'bolder', fontSize:'16px'}}>
+                        {!state.savedFirstCall.meeting.isTomorrow ? `No Meeting Tomorrow` : `Meeting Tomorrow @ ${state.savedFirstCall.meeting.start}`}
+                      </Grid>
+                      {state.savedFirstCall.meeting.list.length > 0 && state.savedFirstCall.meeting.list.map(tech => (
+                        <Grid item xs={12} key={`${tech.id}_meeting`}>
+                          {tech.name}
+                        </Grid>
+                      ))}
+                    </Grid>
+                  </Grid>
+                  <Grid item xs={12} style={{paddingTop:'10px', paddingBottom:'10px'}}>
+                    <div style={{borderStyle:'solid', borderBottom:'1px', width:'90%', margin:'auto', color:'grey'}}></div>
+                  </Grid>
+                  <Grid item xs={6} style={{paddingTop:'15px'}}>
+                    <Grid container>
+                      <Grid item xs={12} style={{fontWeight:'bolder', fontSize:'16px'}}>
+                        Manual Off Technicians  
+                      </Grid>
+                      {state.savedFirstCall.manualOff.length > 0 && state.savedFirstCall.manualOff.map(tech => (
+                        <Grid item xs={12} key={`${tech.id}_manual_off`}>
+                          {tech.name}                   
+                        </Grid>
+                      ))}
+                    </Grid>
+                  </Grid>
+                  <Grid item xs={6} style={{paddingTop:'15px'}}>
+                    <Grid container>
+                      <Grid item xs={12} style={{fontWeight:'bolder', fontSize:'16px'}}>
+                        Scheduled Off Technicians
+                      </Grid>
+                      {state.savedFirstCall.scheduledOff.length > 0 && state.savedFirstCall.scheduledOff.map(tech => (
+                        <Grid item xs={12} key={`${tech.id}_scheduled_off`}>
+                          {tech.name}
+                        </Grid>
+                      ))}
+                    </Grid>
+                  </Grid>
+                  <Grid item xs={12} style={{paddingTop:'15px'}}>
+                    <div style={{borderStyle:'solid', borderBottom:'1px', width:'98%', margin:'auto'}}></div>
+                  </Grid>
+                  <Grid item xs={12} style={{paddingTop:'15px'}}>
+                    <Typography style={{fontWeight:'bolder', fontSize:'20px'}}>
+                      Calls
+                    </Typography>
+                  </Grid>
+                  {state.savedFirstCall.calls.length > 0 && state.savedFirstCall.calls.map(call => (
+                    <Grid item xs={12} key={`${call.id}_calls`}>
+                      <Grid container>
+                        <Grid item xs={12} style={{paddingTop:'10px', paddingBottom:'10px'}}>
+                          <div style={{borderStyle:'solid', borderBottom:'1px', width:'90%', margin:'auto', color:'grey'}}></div>
+                        </Grid>
+                        <Grid item xs={12} style={{fontWeight:'bolder', fontSize:'16px'}}>
+                          {`Call Info : ${call.id} - ${call.custName}`}
+                        </Grid>
+                        <Grid item xs={12} style={{fontWeight:'bolder', fontSize:'16px', paddingTop:'10px'}}>
+                          {`Assignee(s)`}
+                        </Grid>
+                        <Grid item xs={12}>
+                          {/* @ts-ignore */}
+                          {`${call.assigned.map(tech => tech.name).toString().replaceAll(',', ', ')}`}
+                        </Grid>
+                        <Grid item xs={6} style={{fontWeight:'bolder', fontSize:'16px', paddingTop:'10px'}}>
+                          {`Window`}
+                        </Grid>
+                        <Grid item xs={6} style={{fontWeight:'bolder', fontSize:'16px', paddingTop:'10px'}}>
+                          {`Location`}
+                        </Grid>
+                        <Grid item xs={6}>
+                          {`${call.start} - ${call.end}`}
+                        </Grid>
+                        <Grid item xs={6}>
+                          {`${call.propertyAddress}`}
+                        </Grid>
+                        <Grid item xs={12} style={{fontWeight:'bolder', fontSize:'16px', paddingTop:'10px'}}>
+                          {`Description`}
+                        </Grid>
+                        <Grid item xs={12}>
+                          {`${call.description}`}
+                        </Grid>
+                        <Grid item xs={12} style={{fontWeight:'bolder', fontSize:'16px', paddingTop:'10px'}}>
+                          {`Additional Notes`}
+                        </Grid>
+                        <Grid item xs={12}>
+                          {call.notes.split('     ').map((message, index) => (
+                            <Typography key={`${index}_notes`}>
+                              {message}
+                            </Typography>
+                          ))}
+                        </Grid>
+                      </Grid>
+                    </Grid>
+                  ))}
+                </Grid>
+              </div>
+            </div>
+          </Confirm>
         )}
       </Modal>
     </PageWrapper>
