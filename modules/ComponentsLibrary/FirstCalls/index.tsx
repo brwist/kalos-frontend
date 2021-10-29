@@ -5,7 +5,6 @@ import { PageWrapper } from '../../PageWrapper/main';
 import { SectionBar } from '../SectionBar';
 import { Alert } from '../Alert';
 import { Modal } from '../Modal';
-import { Confirm } from '../Confirm';
 import { Schema, PlainForm } from '../PlainForm';
 import { DispatchTechs } from '../Dispatch/dispatchTechnicians';
 import { DismissedTechs } from '../Dispatch/dismissedTechnicians';
@@ -58,6 +57,9 @@ import nextSunday from 'date-fns/esm/nextSunday';
 import AddCircleOutlineTwoTone from '@material-ui/icons/AddCircleOutlineTwoTone';
 import { TimesheetDepartment } from '@kalos-core/kalos-rpc/TimesheetDepartment';
 import { Loader } from '../../Loader/main';
+import { ServiceRequest } from '../ServiceCall/requestIndex';
+import Checkbox from '@material-ui/core/Checkbox';
+import { Confirm } from '../Confirm';
 
 
 
@@ -147,6 +149,7 @@ const initialState : State = {
   showAddTech: false,
   tempAssigneeList: '',
   refreshCalls: false,
+  isApproved: false,
 };
 
 export const FirstCallDashboard: React.FC<Props> = function FirstCallDashboard({
@@ -154,36 +157,37 @@ export const FirstCallDashboard: React.FC<Props> = function FirstCallDashboard({
   testUserId=0,
   disableSlack=false,
 }) {
-  const [state, firstCallDashboard] = useReducer(reducer, initialState);
+  const [state, updateFirstCallState] = useReducer(reducer, initialState);
 
   const handleModalToggle = (modalKey : string) => {
-    firstCallDashboard({
+    updateFirstCallState({
       type: 'setModal',
       data: {
         openModal: !state.openModal,
         modalKey: modalKey,
+        currentFC: state.savedFirstCall,
       }
     });
   }
   const handleAddTechToggle = () => {
-    firstCallDashboard({ type: 'setShowAddTech', data: !state.showAddTech });
+    updateFirstCallState({ type: 'setShowAddTech', data: !state.showAddTech });
   }
   const equals = (a : any, b : any) =>
     a.length === b.length &&
     a.every((v : any, i : number) => v === b[i]);
 
-  const resetModal = () => {
+  const resetModal = (refreshCalls = false) => {
     switch (state.modalKey) {
       case 'Class': {
         const techList : {id: number, name: string}[] = [];
         state.classTechs.map(tech => techList.push({id: tech.getUserId(), name: tech.getTechname()}));
         const data = {
-          isTomorrow: state.classTechs ? true : false,
+          isTomorrow: state.classTechs.length ? true : false,
           start: state.formData.classTime,
           list: techList,
         };
         if (data.start !== state.firstCallClass.start || !equals(data.list,state.firstCallClass.list)) {
-          firstCallDashboard({ type: 'setFirstCallClass', data: data});
+          updateFirstCallState({ type: 'setFirstCallClass', data: data});
         }
         break;
       }
@@ -191,12 +195,12 @@ export const FirstCallDashboard: React.FC<Props> = function FirstCallDashboard({
         const techList : {id: number, name: string}[] = [];
         state.meetingTechs.map(tech => techList.push({id: tech.getUserId(), name: tech.getTechname()}));
         const data = {
-          isTomorrow: state.meetingTechs ? true : false,
+          isTomorrow: state.meetingTechs.length ? true : false,
           start: state.formData.meetingTime,
           list: techList,
         };
         if (data.start !== state.firstCallMeeting.start || !equals(data.list,state.firstCallMeeting.list)) {
-          firstCallDashboard({ type: 'setFirstCallMeeting', data: data});
+          updateFirstCallState({ type: 'setFirstCallMeeting', data: data});
         }
         break;
       }
@@ -239,7 +243,7 @@ export const FirstCallDashboard: React.FC<Props> = function FirstCallDashboard({
               userId: state.selectedCall.getUserId(),
               notes: state.selectedCall.getNotes(),
             }
-            firstCallDashboard({ type: 'setFirstCallCalls', data: state.firstCallCalls.concat(newCall) });
+            updateFirstCallState({ type: 'setFirstCallCalls', data: state.firstCallCalls.concat(newCall) });
           }
         } else if (firstCall[0].notes !== state.selectedCall.getNotes() || firstCall[0].assigned !== assignedTech) {
           if (assignedTech.length) {
@@ -262,21 +266,25 @@ export const FirstCallDashboard: React.FC<Props> = function FirstCallDashboard({
             }
             const fc = state.firstCallCalls;
             fc.splice(fc.findIndex(call => call.id === state.selectedCall.getId()),1);
-            firstCallDashboard({ type: 'setFirstCallCalls', data: fc.concat(updatedCall).sort((a,b) => (a.id > b.id) ? 1 : ((b.id > a.id) ? -1 : 0)) })
+            updateFirstCallState({ type: 'setFirstCallCalls', data: fc.concat(updatedCall).sort((a,b) => (a.id > b.id) ? 1 : ((b.id > a.id) ? -1 : 0)) })
           } else {
             const fc = state.firstCallCalls;
             fc.splice(fc.findIndex(call => call.id === state.selectedCall.getId()),1);
-            firstCallDashboard({ type: 'setFirstCallCalls', data: fc });
+            updateFirstCallState({ type: 'setFirstCallCalls', data: fc });
           }
         }
         break;
       }
     }
-    firstCallDashboard({
+    if (refreshCalls) {
+      setCalls(refreshCalls);
+    }
+    updateFirstCallState({
       type: 'setModal',
       data: {
         openModal: !state.openModal,
         modalKey: '',
+        currentFC: state.savedFirstCall,
       }
     });
   }
@@ -311,42 +319,57 @@ export const FirstCallDashboard: React.FC<Props> = function FirstCallDashboard({
     if (data.availableTechs) {
       updateFormData.availableTechs = data.availableTechs;
     }
-    firstCallDashboard({ type: 'setFormData', data: {formData: updateFormData} });
+    updateFirstCallState({ type: 'setFormData', data: {formData: updateFormData} });
     if (resetPage) {
-      firstCallDashboard({ type: 'setLoaded', data: false });
+      updateFirstCallState({ type: 'setLoaded', data: false });
     }
     if (refreshCalls) {
-      firstCallDashboard({ type: 'setRefreshCalls', data: true });
+      updateFirstCallState({ type: 'setRefreshCalls', data: true });
     }
   }, [state.formData, state.loaded])
 
-  const handleCallDetails = async (call : DispatchCall, techId? : string | DispatchableTech) => {
-    let assignees : {id: number, name: string}[] = [];
-    let ids = call.getLogTechnicianAssigned().split(',').map(Number);
-    if (techId) {
-      ids = call.getLogTechnicianAssigned().concat(`,${techId}`).split(',').map(Number);
-    }
-    try {
-      const userData = await UserClientService.BatchGetUsersByIds(ids);
-      for (const user of userData.getResultsList()) {
-        assignees.push({id: user.getId(), name: `${user.getFirstname()} ${user.getLastname()}`})
-      }
-      firstCallDashboard({
+  const handleCallDetails = async (call : DispatchCall, techId? : string | DispatchableTech | boolean) => {
+    if (typeof techId === 'boolean') {
+      updateFirstCallState({
         type: 'setModal',
         data: {
           openModal: true,
-          modalKey: 'callInfo',
+          modalKey: 'editRequest',
           selectedCall: call,
-          assigneeList: assignees,
+          assigneeList: [],
+          currentFC: state.savedFirstCall,
         }
       });
-    } catch (err) {
-      console.error('Error Occurred when Getting Assigned Users', err);
+      console.log("this is accurate");
+    } else {
+      let assignees : {id: number, name: string}[] = [];
+      let ids = call.getLogTechnicianAssigned().split(',').map(Number);
+      if (techId) {
+        ids = call.getLogTechnicianAssigned().concat(`,${techId}`).split(',').map(Number);
+      }
+      try {
+        const userData = await UserClientService.BatchGetUsersByIds(ids);
+        for (const user of userData.getResultsList()) {
+          assignees.push({id: user.getId(), name: `${user.getFirstname()} ${user.getLastname()}`})
+        }
+        updateFirstCallState({
+          type: 'setModal',
+          data: {
+            openModal: true,
+            modalKey: 'callInfo',
+            selectedCall: call,
+            assigneeList: assignees,
+            currentFC: state.savedFirstCall,
+          }
+        });
+      } catch (err) {
+        console.error('Error Occurred when Getting Assigned Users', err);
+      }
     }
   }
 
   const handleUpdateAssignTech = async (id : number, updateType : string) => {
-    firstCallDashboard({ type: 'setProcessing', data: true });
+    updateFirstCallState({ type: 'setProcessing', data: true });
     const currentCall = state.selectedCall;
     const currentAssignees = state.assigneeList;
     const currentInUse = state.firstCallInUse;
@@ -366,7 +389,7 @@ export const FirstCallDashboard: React.FC<Props> = function FirstCallDashboard({
       currentInUse.push(id);
     }
     currentCall.setLogTechnicianAssigned(currentTechArray.toString());
-    firstCallDashboard({
+    updateFirstCallState({
       type: 'setFirstCallInUse',
       data: currentInUse
     });
@@ -384,7 +407,7 @@ export const FirstCallDashboard: React.FC<Props> = function FirstCallDashboard({
       return !notAvailable.includes(tech.getUserId());
     });
     handleFormDataUpdate({availableTechs : availableTechs});
-    firstCallDashboard({
+    updateFirstCallState({
       type: 'setAssigneesAndCall',
       data: {
         assigneeList: currentAssignees,
@@ -394,7 +417,7 @@ export const FirstCallDashboard: React.FC<Props> = function FirstCallDashboard({
   }
 
   const handleUnOffTech = async (tech : DispatchableTech) => {
-    firstCallDashboard({ type: 'setProcessing', data: true});
+    updateFirstCallState({ type: 'setProcessing', data: true});
     const offTechs = state.firstCallManualOff;
     const index = offTechs.findIndex(offTech => offTech.id === tech.getUserId());
     offTechs.splice(index,1);
@@ -412,7 +435,7 @@ export const FirstCallDashboard: React.FC<Props> = function FirstCallDashboard({
       return !notAvailable.includes(tech.getUserId());
     });
     handleFormDataUpdate({availableTechs: availableTechs});
-    firstCallDashboard({ type: 'setFirstCallManualOff', data: offTechs});
+    updateFirstCallState({ type: 'setFirstCallManualOff', data: offTechs});
   }
 
   const handleMapRecenter = async (center: {lat: number, lng: number}, zoom: number, address?: string) => {
@@ -434,7 +457,7 @@ export const FirstCallDashboard: React.FC<Props> = function FirstCallDashboard({
       }
     }
     if (newCenter.lat != 0 || newCenter.lng != 0) {
-      firstCallDashboard({
+      updateFirstCallState({
         type: 'setCenter',
         data: {
           center: newCenter,
@@ -452,10 +475,22 @@ export const FirstCallDashboard: React.FC<Props> = function FirstCallDashboard({
     try {
       await EventClientService.Update(updatedCall);
       const newCalls = await setCalls();
-      firstCallDashboard({ type: 'setCalls', data: {available: newCalls.availableCalls, assigned: newCalls.assignedCalls} });
+      updateFirstCallState({ type: 'setCalls', data: {available: newCalls.availableCalls, assigned: newCalls.assignedCalls} });
     } catch (err) {
       console.error(err);
     }
+  }
+
+  const handleFirstCallPreview = async () => {
+    const currentFC = await getPreviousFirstCall();
+    updateFirstCallState({
+      type: 'setModal', 
+      data: {
+        openModal: true,
+        modalKey: 'fcPreview',
+        currentFC: currentFC.firstCall,
+      }
+    })
   }
 
   const handleSave = useCallback(async () => {
@@ -488,7 +523,7 @@ export const FirstCallDashboard: React.FC<Props> = function FirstCallDashboard({
     firstCall.setJson(firstCallJSON);
     if (!allowSave) {
       alert("Please Refresh Page");
-      firstCallDashboard({ type: 'setFailedSave', data: {save: false, error: 'DateMismatch'}});
+      updateFirstCallState({ type: 'setFailedSave', data: {save: false, error: 'DateMismatch'}});
     } else {
       if (state.newFirstCall) {
         const newCall = await FirstCallClientService.Create(firstCall);
@@ -496,7 +531,7 @@ export const FirstCallDashboard: React.FC<Props> = function FirstCallDashboard({
       } else if (allowSave) {
         await FirstCallClientService.Update(firstCall);
       } 
-      firstCallDashboard({ type: 'setSave', data: {save: false, saveTime: saveTime, firstCallId: id, isNew: false}});
+      updateFirstCallState({ type: 'setSave', data: {save: false, saveTime: saveTime, firstCallId: id, isNew: false}});
     }
   }, [
     state.firstCallCalls, state.firstCallMeeting,
@@ -510,6 +545,7 @@ export const FirstCallDashboard: React.FC<Props> = function FirstCallDashboard({
 
   const handleFinalizeFirstCall = () => {
     if (state.firstCallCalls.length) {
+      updateFirstCallState({type:'setProcessing', data:true});
       for (let call in state.firstCallCalls) {
         for (let user in state.firstCallCalls[call].assigned) {
           if (testUserId > 0) {
@@ -523,9 +559,11 @@ export const FirstCallDashboard: React.FC<Props> = function FirstCallDashboard({
     if (!disableSlack) {
       SlackClientService.FirstCall(state.formData.division);
     }
+    updateFirstCallState({type:'setProcessing', data:false});
+    resetModal();
   }
 
-  const getTechs = useCallback (async () => {
+  const getTechs = useCallback (async (refresh = false) => {
     const techs = new DispatchableTech();
     const dr = new DateRange();
     dr.setStart('2012-01-01');
@@ -567,7 +605,41 @@ export const FirstCallDashboard: React.FC<Props> = function FirstCallDashboard({
       console.error(err)
       return {techList: [], scheduledOff: []}
     }
-  }, [state.formData.departmentIds])
+  }, [state.formData.departmentIds]);
+
+  const setTechs = useCallback(async () => {
+    const techs = await getTechs();
+    const newFormData : FormData = {
+      departmentIds: state.formData.departmentIds,
+      division: state.formData.division,
+      jobTypes: state.formData.jobTypes,
+      meetingTime: state.formData.meetingTime,
+      classTime: state.formData.classTime,
+      availableTechs: techs.techList.filter(tech => {
+        const notAvailable = [];
+        for (let i in state.firstCallManualOff) {
+          notAvailable.push(state.firstCallManualOff[i].id);
+        }
+        for (let j in state.firstCallInUse) {
+          notAvailable.push(state.firstCallInUse[j]);
+        }
+        for (let k in techs.scheduledOff) {
+          notAvailable.push(techs.scheduledOff[k].id);
+        }
+        return !notAvailable.includes(tech.getUserId());
+      }),
+    }
+    updateFirstCallState({type: 'setTechRefresh', data: {
+      techs: techs.techList,
+      formData: newFormData,
+      scheduledOff: techs.scheduledOff,
+    }});
+  }, [
+    getTechs, state.firstCallInUse, 
+    state.firstCallManualOff, state.formData.classTime, 
+    state.formData.departmentIds, state.formData.division, 
+    state.formData.jobTypes, state.formData.meetingTime
+  ]);
 
   const getCalls =  useCallback(async () => {
     const newCall = new DispatchCall();
@@ -588,7 +660,7 @@ export const FirstCallDashboard: React.FC<Props> = function FirstCallDashboard({
     }
   }, [state.formData.jobTypes, state.formData.division])
 
-  const setCalls = useCallback(async () => {
+  const setCalls = useCallback(async (refresh = false) => {
     const availableCalls : DispatchCall[] = [];
     const assignedCalls : DispatchCall[] = [];
     const calls = await getCalls();
@@ -599,8 +671,8 @@ export const FirstCallDashboard: React.FC<Props> = function FirstCallDashboard({
         assignedCalls.push(call);
       }
     });
-    if (state.refreshCalls) {
-      firstCallDashboard({ type: 'setCalls', data: {
+    if (state.refreshCalls || refresh) {
+      updateFirstCallState({ type: 'setCalls', data: {
         available: availableCalls,
         assigned: assignedCalls
       }})
@@ -678,7 +750,7 @@ export const FirstCallDashboard: React.FC<Props> = function FirstCallDashboard({
       if (filteredSectorList.length === 1) {
         handleFormDataUpdate({division: filteredSectorList[0]});
       }   
-      firstCallDashboard({
+      updateFirstCallState({
         type: 'setSectorList',
         data: sectorList});
     } catch(err) {
@@ -744,7 +816,7 @@ export const FirstCallDashboard: React.FC<Props> = function FirstCallDashboard({
       }
       return classTechIds.includes(tech.getUserId())
     });
-    firstCallDashboard({
+    updateFirstCallState({
       type: 'setInitialValues',
       data: {
         techs: initialData.techs,
@@ -832,7 +904,7 @@ export const FirstCallDashboard: React.FC<Props> = function FirstCallDashboard({
     if (state.formData.division === 0) {
       checkDivision();
     }
-    if (!state.loaded && state.formData.division !== 0) {
+    if (!state.loaded && state.formData.division !== 0 && state.formData.departmentIds.length !== 0) {
       load();
     }
     if (state.refreshCalls && state.loaded) {
@@ -841,7 +913,11 @@ export const FirstCallDashboard: React.FC<Props> = function FirstCallDashboard({
     if (state.save) {
       handleSave();
     }
-  }, [state.loaded, state.save, handleSave, state.refreshCalls, setCalls, load, checkDivision, state.formData.division])
+    if (state.loaded) {
+      const interval = setInterval(() => {setCalls(true);setTechs()}, 30000);
+      return () => clearInterval(interval);
+    }
+  }, [state.loaded, state.save, handleSave, state.refreshCalls, setCalls, setTechs, load, checkDivision, state.formData.division, state.formData.departmentIds])
   
   return (
     <PageWrapper userID={loggedUserId}>
@@ -900,13 +976,13 @@ export const FirstCallDashboard: React.FC<Props> = function FirstCallDashboard({
                       }
                     }
                     if (newOnCall.tech.userId !== state.firstCallOnCall.tech.userId) {
-                      firstCallDashboard({ type: 'setFirstCallOnCall', data: newOnCall});
+                      updateFirstCallState({ type: 'setFirstCallOnCall', data: newOnCall});
                     }
                   }
                   break;
                 }
                 case 'dismissTech': {
-                  firstCallDashboard({ type: 'setProcessing', data: true });
+                  updateFirstCallState({ type: 'setProcessing', data: true });
                   const manualOffTechs = state.firstCallManualOff;
                   const selectedTech = state.techs.find(tech => tech.getUserId() === Number(callback.draggableId));
                   manualOffTechs.push({id: selectedTech!.getUserId(), name: selectedTech!.getTechname()});
@@ -924,14 +1000,14 @@ export const FirstCallDashboard: React.FC<Props> = function FirstCallDashboard({
                     return !notAvailable.includes(tech.getUserId());
                   })
                   handleFormDataUpdate({availableTechs: availableTechs});
-                  firstCallDashboard({ type: 'setFirstCallManualOff', data: manualOffTechs });
+                  updateFirstCallState({ type: 'setFirstCallManualOff', data: manualOffTechs });
                   break;
                 }
                 default: {
-                  firstCallDashboard({ type: 'setSaveCall', data: true });
+                  updateFirstCallState({ type: 'setSaveCall', data: true });
                   const inUse = state.firstCallInUse;
                   inUse.push(Number(callback.draggableId));
-                  firstCallDashboard({ type: 'setFirstCallInUse', data: inUse });
+                  updateFirstCallState({ type: 'setFirstCallInUse', data: inUse });
                   const availableTechs = state.techs.filter(tech => {
                     const notAvailable = [];
                     for (let i in state.firstCallManualOff) {
@@ -991,8 +1067,9 @@ export const FirstCallDashboard: React.FC<Props> = function FirstCallDashboard({
               <Button
                 key='finalize'
                 fullWidth
-                style={{fontSize:'18px', backgroundColor:'#711313', color:'white'}}
-                onClick={() => handleFinalizeFirstCall()}
+                style={{fontSize:'18px', backgroundColor:state.save?'grey':'#711313', color:'white'}}
+                onClick={() => handleFirstCallPreview()}
+                disabled={state.save}
               >
                 Finalize First Calls
               </Button>
@@ -1046,7 +1123,7 @@ export const FirstCallDashboard: React.FC<Props> = function FirstCallDashboard({
                   defaultValue={state.firstCallMessage.replaceAll('     ', '\n')}
                   onBlur={(text)=>{
                     if (state.firstCallMessage !== text.target.value) {
-                      firstCallDashboard({ type: 'setFirstCallMessage', data: text.target.value.replace(/\n/g,'     ') });
+                      updateFirstCallState({ type: 'setFirstCallMessage', data: text.target.value.replace(/\n/g,'     ') });
                     }
                   }}
                 />
@@ -1057,7 +1134,7 @@ export const FirstCallDashboard: React.FC<Props> = function FirstCallDashboard({
             <div style={{borderStyle:'solid', borderBottom:'1px', width:'98%', margin:'auto'}}></div>
           </Grid>
           <Grid container style={{paddingTop:'30px', paddingBottom:'20px'}}>
-            <Grid item xs={5}>       
+            <Grid item xs={4}>       
               <div style={{margin:'auto', width:'92%', opacity:state.isProcessing? 0.2 : 1}}>
                 <Typography style={{textAlign:'center', fontWeight:'bold', fontSize:'32px'}}>
                   Available Technicians
@@ -1098,7 +1175,7 @@ export const FirstCallDashboard: React.FC<Props> = function FirstCallDashboard({
                 />
               </div>
             </Grid>
-            <Grid item xs={7}>
+            <Grid item xs={8}>
               <div style={{margin:'auto', width:'92%'}}>
                 <Typography style={{textAlign:'center', fontWeight:'bold', fontSize:'32px'}}>
                   Available Calls
@@ -1121,7 +1198,7 @@ export const FirstCallDashboard: React.FC<Props> = function FirstCallDashboard({
             <div style={{borderStyle:'solid', borderBottom:'1px', width:'98%', margin:'auto'}}></div>
           </Grid>
           <Grid container style={{paddingTop:'20px', paddingBottom:'20px'}}>
-            <Grid item xs={5}>
+            <Grid item xs={4}>
               <div style={{margin:'auto', width:'92%'}}>
                 {state.googleApiKey != '' && (
                   <DispatchMap 
@@ -1137,7 +1214,7 @@ export const FirstCallDashboard: React.FC<Props> = function FirstCallDashboard({
                 )}
               </div>
             </Grid>
-            <Grid item xs={7}>
+            <Grid item xs={8}>
               <div style={{margin:'auto', width:'92%'}}>
                 <Typography style={{fontWeight:'bold', fontSize:'32px', textAlign:'center'}}>
                   First Call Queue                    
@@ -1191,59 +1268,97 @@ export const FirstCallDashboard: React.FC<Props> = function FirstCallDashboard({
             onClose={resetModal}
             title="Call Info"
             label="Close"
-            maxWidth={(window.innerWidth * .80)}
+            maxWidth={(window.innerWidth * .90)}
           >
             <div style={{textAlign: "center"}}>
               <h2>Selected Call</h2>
             </div>
 
-            <Grid container spacing={3} style={{width:(window.innerWidth * .65)}}>
-              <Grid item xs={6}>
-                <TableContainer style={{width:'100%'}}>
-                  <Table>
-                    <TableHead></TableHead>
-                    <TableBody>
-                      <TableRow>
-                        <TableCell style={{width:"35%", fontWeight:"bold", fontSize:"15px"}}>Location:</TableCell>
-                        <TableCell style={{width:"65%", textAlign:"center"}}>{state.selectedCall.getPropertyCity()}</TableCell>
-                      </TableRow>
-                      <TableRow>
-                        <TableCell style={{width:"35%", fontWeight:"bold", fontSize:"15px"}}>Customer:</TableCell>
-                        <TableCell style={{width:"65%", textAlign:"center"}}>{state.selectedCall.getCustName()}</TableCell>
-                      </TableRow>
-                      <TableRow>
-                        <TableCell style={{fontWeight:"bold", fontSize:"15px"}}>Type:</TableCell>
-                        <TableCell style={{textAlign:"center"}}>{`${state.selectedCall.getJobType()}/${state.selectedCall.getJobSubtype()}`}</TableCell>
-                      </TableRow>
-                      <TableRow>
-                        <TableCell style={{fontWeight:"bold", fontSize:"15px"}}>Description:</TableCell>
-                        <TableCell style={{textAlign:"center"}}>{state.selectedCall.getDescription().length >= 200 ? state.selectedCall.getDescription().slice(0,150).concat(" ...") : state.selectedCall.getDescription()}</TableCell>
-                      </TableRow>
-                      <TableRow>
-                        <TableCell style={{fontWeight:"bold", fontSize:"15px"}}>Notes:</TableCell>
-                        <TableCell>
-                          <TextareaAutosize
-                            minRows={5}
-                            style={{width:'99%', fontSize:'17px', fontStyle:'inherit'}}
-                            placeholder="Please Enter Any First Call Notes Here."
-                            // @ts-ignore
-                            defaultValue={state.selectedCall.getNotes().replaceAll('     ', '\n')}
-                            onBlur={(text) => {
-                              if (text.target.value !== state.selectedCall.getNotes()) {
-                                const updatedSelectedCall = state.selectedCall;
-                                updatedSelectedCall.setNotes(text.target.value.replace(/\n/g,'     '));
-                                firstCallDashboard({ type: 'setSelectedCall', data: updatedSelectedCall });
-                              }
-                            }}
-                          />
-                        </TableCell>
-
-                      </TableRow>
-                    </TableBody>
-                  </Table>
-                </TableContainer>
+            <Grid container spacing={3} style={{width:(window.innerWidth * .95)}}>
+              <Grid item xs={8}>
+                <Grid container>
+                  <Grid item xs={6}>
+                    <TableContainer style={{width:'100%'}}>
+                      <Table>
+                        <TableHead></TableHead>
+                        <TableBody>
+                          <TableRow>
+                            <TableCell style={{width:"35%", fontWeight:"bold", fontSize:"15px"}}>Call ID:</TableCell>
+                            <TableCell style={{width:"65%", textAlign:"center"}}>{state.selectedCall.getId()}</TableCell>
+                          </TableRow>
+                          <TableRow>
+                            <TableCell style={{width:"35%", fontWeight:"bold", fontSize:"15px"}}>Location:</TableCell>
+                            <TableCell style={{width:"65%", textAlign:"center"}}>{state.selectedCall.getPropertyCity()}</TableCell>
+                          </TableRow>
+                          <TableRow>
+                            <TableCell style={{fontWeight:"bold", fontSize:"15px"}}>Type:</TableCell>
+                            <TableCell style={{textAlign:"center"}}>{`${state.selectedCall.getJobType()}/${state.selectedCall.getJobSubtype()}`}</TableCell>
+                          </TableRow>
+                          <TableRow>
+                            <TableCell style={{fontWeight:"bold", fontSize:"15px"}}>Description:</TableCell>
+                            <TableCell style={{textAlign:"center"}}>{state.selectedCall.getDescription().length >= 200 ? state.selectedCall.getDescription().slice(0,150).concat(" ...") : state.selectedCall.getDescription()}</TableCell>
+                          </TableRow>
+                        </TableBody>
+                      </Table>
+                    </TableContainer>
+                  </Grid>
+                  <Grid item xs={6}>
+                    <TableContainer style={{width:'100%'}}>
+                      <Table>
+                        <TableHead></TableHead>
+                        <TableBody>
+                          <TableRow>
+                            <TableCell style={{width:"35%", fontWeight:"bold", fontSize:"15px"}}>Customer:</TableCell>
+                            <TableCell style={{width:"65%", textAlign:"center"}}>{state.selectedCall.getCustName()}</TableCell>
+                          </TableRow>
+                          <TableRow>
+                            <TableCell style={{width:"35%", fontWeight:"bold", fontSize:"15px"}}>Address:</TableCell>
+                            <TableCell style={{width:"65%", textAlign:"center"}}>{state.selectedCall.getPropertyAddress()}</TableCell>
+                          </TableRow>
+                          <TableRow>
+                            <TableCell style={{width:"35%", fontWeight:"bold", fontSize:"15px"}}>Email:</TableCell>
+                            <TableCell style={{width:"65%", textAlign:"center"}}>{state.selectedCall.getUserEmail()}</TableCell>
+                          </TableRow>
+                          <TableRow>
+                            <TableCell style={{width:"35%", fontWeight:"bold", fontSize:"15px"}}>Phone:</TableCell>
+                            <TableCell style={{width:"65%", textAlign:"center"}}>{state.selectedCall.getUserPhone()}</TableCell>
+                          </TableRow>
+                        </TableBody>
+                      </Table>
+                    </TableContainer>
+                  </Grid>
+                </Grid>
+                <Grid item xs={12}>
+                  <TableContainer>
+                    <Table>
+                      <TableHead/>
+                      <TableBody>
+                        <TableRow>
+                          <TableCell style={{fontWeight:"bold", fontSize:"15px", width:"15%"}}>Notes:</TableCell>
+                          <TableCell>
+                            <TextareaAutosize
+                              minRows={5}
+                              maxRows={5}
+                              style={{width:'99%', fontSize:'17px', fontStyle:'inherit'}}
+                              placeholder="Please Enter Any First Call Notes Here."
+                              // @ts-ignore
+                              defaultValue={state.selectedCall.getNotes().replaceAll('     ', '\n')}
+                              onBlur={(text) => {
+                                if (text.target.value !== state.selectedCall.getNotes()) {
+                                  const updatedSelectedCall = state.selectedCall;
+                                  updatedSelectedCall.setNotes(text.target.value.replace(/\n/g,'     '));
+                                  updateFirstCallState({ type: 'setSelectedCall', data: updatedSelectedCall });
+                                }
+                              }}
+                            />
+                          </TableCell>
+                        </TableRow>
+                      </TableBody>
+                    </Table>
+                  </TableContainer>
+                </Grid>
               </Grid>
-              <Grid item xs={6} style={{margin:'auto', position:'relative'}}>
+              <Grid item xs={4} style={{margin:'auto', position:'relative'}}>
                 {state.isProcessing && (
                   <CircleProgress
                     style={{
@@ -1264,7 +1379,7 @@ export const FirstCallDashboard: React.FC<Props> = function FirstCallDashboard({
                       Assigned Technicians
                     </ListSubheader>
                   }
-                  style={{display:'table',margin:'auto',alignItems:'center', opacity:state.isProcessing?0.2:1}}
+                  style={{display:'table', marginLeft:'15%', alignItems:'center', opacity:state.isProcessing?0.2:1}}
                 >
                   {!state.assigneeList.length && (
                     <ListItemText style={{textAlign:'center'}}>
@@ -1327,6 +1442,193 @@ export const FirstCallDashboard: React.FC<Props> = function FirstCallDashboard({
               </Grid>
             </Grid>
           </Alert>
+        )}
+        {state.modalKey === 'editRequest' && (
+          <ServiceRequest
+            loggedUserId={loggedUserId}
+            propertyId={state.selectedCall.getPropertyId()}
+            userID={loggedUserId}
+            serviceCallId={state.selectedCall.getId()}
+            onClose={() => resetModal(true)}
+          />
+        )}
+        {state.modalKey === 'fcPreview' && (
+          <Confirm
+            open
+            onClose={resetModal}
+            onConfirm={handleFinalizeFirstCall}
+            title="Finalize First Call"
+            submitLabel={state.isProcessing ? "Saving" : "Send First Calls"}
+            cancelLabel="Close"
+            disabled={!state.isApproved || state.isProcessing}
+            maxWidth={(window.innerWidth * .50)}
+          >
+            <div>
+              <Grid container style={{verticalAlign:'middle'}}>
+              <Grid item xs={9}>
+                  <Typography style={{fontWeight:'bolder', fontSize:'22px', textAlign:'center'}}>
+                    Please Review the First Call and Approve.
+                  </Typography>
+                </Grid>
+                <Grid item xs={3}>
+                  <Checkbox
+                    defaultChecked = {false}
+                    size = 'medium'
+                    color = "default"
+                    onChange = {() => updateFirstCallState({type:'setFinalApproval', data:!state.isApproved})}
+                    inputProps = {{"aria-label": 'Approve'}}
+                    style={{marginBottom:'10px'}}
+                  />
+                </Grid>
+                
+              </Grid>
+              <div style={{border:1, borderWidth:'1px', borderStyle:'solid'}}>
+                <Grid container justifyContent="center" style={{textAlign:'center', maxHeight:(window.innerHeight*0.75), overflow:'auto'}}>
+                  <Grid item xs={12}>
+                    <Typography style={{fontWeight:'bolder', fontSize:'20px', paddingTop:'10px'}}>
+                      Details
+                    </Typography>
+                  </Grid>
+                  <Grid item xs={12} style={{paddingTop:'10px', paddingBottom:'10px'}}>
+                    <div style={{borderStyle:'solid', borderBottom:'1px', width:'98%', margin:'auto', color:'grey'}}></div>
+                  </Grid>
+                  <Grid item xs={6} style={{paddingTop:'15px'}}>
+                    <Grid container>
+                      <Grid item xs={12} style={{fontWeight:'bolder', fontSize:'16px'}}>
+                        On Call Coordinator
+                      </Grid>
+                      <Grid item xs={12}>
+                        {state.savedFirstCall.onCall.coordinator}
+                      </Grid>
+                    </Grid>
+                  </Grid>
+                  <Grid item xs={6} style={{paddingTop:'15px'}}>
+                    <Grid container>
+                      <Grid item xs={12} style={{fontWeight:'bolder', fontSize:'16px'}}>
+                        First Call Notes
+                      </Grid>
+                      <Grid item xs={12}>
+                        {state.savedFirstCall.message.split('     ').map((message, index) => (
+                          <Typography key={`${index}_message`}>
+                            {message}
+                          </Typography>
+                        ))}
+                      </Grid>
+                    </Grid>
+                  </Grid>
+                  <Grid item xs={12} style={{paddingTop:'10px', paddingBottom:'10px'}}>
+                    <div style={{borderStyle:'solid', borderBottom:'1px', width:'90%', margin:'auto', color:'grey'}}></div>
+                  </Grid>
+                  <Grid item xs={6} style={{paddingTop:'15px'}}>
+                    <Grid container>
+                      <Grid item xs={12} style={{fontWeight:'bolder', fontSize:'16px'}}>
+                        {!state.savedFirstCall.class.isTomorrow ? `No Class Tomorrow` : `Class Tomorrow @ ${state.savedFirstCall.class.start}`}
+                      </Grid>
+                      {state.savedFirstCall.class.list.length > 0 && state.savedFirstCall.class.list.map(tech => (
+                        <Grid item xs={12} key={`${tech.id}_class`}>
+                          {tech.name}
+                        </Grid>
+                      ))}
+                    </Grid>
+                  </Grid>
+                  <Grid item xs={6} style={{paddingTop:'15px'}}>
+                    <Grid container>
+                      <Grid item xs={12} style={{fontWeight:'bolder', fontSize:'16px'}}>
+                        {!state.savedFirstCall.meeting.isTomorrow ? `No Meeting Tomorrow` : `Meeting Tomorrow @ ${state.savedFirstCall.meeting.start}`}
+                      </Grid>
+                      {state.savedFirstCall.meeting.list.length > 0 && state.savedFirstCall.meeting.list.map(tech => (
+                        <Grid item xs={12} key={`${tech.id}_meeting`}>
+                          {tech.name}
+                        </Grid>
+                      ))}
+                    </Grid>
+                  </Grid>
+                  <Grid item xs={12} style={{paddingTop:'10px', paddingBottom:'10px'}}>
+                    <div style={{borderStyle:'solid', borderBottom:'1px', width:'90%', margin:'auto', color:'grey'}}></div>
+                  </Grid>
+                  <Grid item xs={6} style={{paddingTop:'15px'}}>
+                    <Grid container>
+                      <Grid item xs={12} style={{fontWeight:'bolder', fontSize:'16px'}}>
+                        Manual Off Technicians  
+                      </Grid>
+                      {state.savedFirstCall.manualOff.length > 0 && state.savedFirstCall.manualOff.map(tech => (
+                        <Grid item xs={12} key={`${tech.id}_manual_off`}>
+                          {tech.name}                   
+                        </Grid>
+                      ))}
+                    </Grid>
+                  </Grid>
+                  <Grid item xs={6} style={{paddingTop:'15px'}}>
+                    <Grid container>
+                      <Grid item xs={12} style={{fontWeight:'bolder', fontSize:'16px'}}>
+                        Scheduled Off Technicians
+                      </Grid>
+                      {state.savedFirstCall.scheduledOff.length > 0 && state.savedFirstCall.scheduledOff.map(tech => (
+                        <Grid item xs={12} key={`${tech.id}_scheduled_off`}>
+                          {tech.name}
+                        </Grid>
+                      ))}
+                    </Grid>
+                  </Grid>
+                  <Grid item xs={12} style={{paddingTop:'15px'}}>
+                    <div style={{borderStyle:'solid', borderBottom:'1px', width:'98%', margin:'auto'}}></div>
+                  </Grid>
+                  <Grid item xs={12} style={{paddingTop:'15px'}}>
+                    <Typography style={{fontWeight:'bolder', fontSize:'20px'}}>
+                      Calls
+                    </Typography>
+                  </Grid>
+                  {state.savedFirstCall.calls.length > 0 && state.savedFirstCall.calls.map(call => (
+                    <Grid item xs={12} key={`${call.id}_calls`}>
+                      <Grid container>
+                        <Grid item xs={12} style={{paddingTop:'10px', paddingBottom:'10px'}}>
+                          <div style={{borderStyle:'solid', borderBottom:'1px', width:'90%', margin:'auto', color:'grey'}}></div>
+                        </Grid>
+                        <Grid item xs={12} style={{fontWeight:'bolder', fontSize:'16px'}}>
+                          {`Call Info : ${call.id} - ${call.custName}`}
+                        </Grid>
+                        <Grid item xs={12} style={{fontWeight:'bolder', fontSize:'16px', paddingTop:'10px'}}>
+                          {`Assignee(s)`}
+                        </Grid>
+                        <Grid item xs={12}>
+                          {/* @ts-ignore */}
+                          {`${call.assigned.map(tech => tech.name).toString().replaceAll(',', ', ')}`}
+                        </Grid>
+                        <Grid item xs={6} style={{fontWeight:'bolder', fontSize:'16px', paddingTop:'10px'}}>
+                          {`Window`}
+                        </Grid>
+                        <Grid item xs={6} style={{fontWeight:'bolder', fontSize:'16px', paddingTop:'10px'}}>
+                          {`Location`}
+                        </Grid>
+                        <Grid item xs={6}>
+                          {`${call.start} - ${call.end}`}
+                        </Grid>
+                        <Grid item xs={6}>
+                          {`${call.propertyAddress}`}
+                        </Grid>
+                        <Grid item xs={12} style={{fontWeight:'bolder', fontSize:'16px', paddingTop:'10px'}}>
+                          {`Description`}
+                        </Grid>
+                        <Grid item xs={12}>
+                          {`${call.description}`}
+                        </Grid>
+                        <Grid item xs={12} style={{fontWeight:'bolder', fontSize:'16px', paddingTop:'10px'}}>
+                          {`Additional Notes`}
+                        </Grid>
+                        <Grid item xs={12}>
+                          {call.notes.split('     ').map((message, index) => (
+                            <Typography key={`${index}_notes`}>
+                              {message}
+                            </Typography>
+                          ))}
+                        </Grid>
+                      </Grid>
+                    </Grid>
+                  ))}
+                </Grid>
+              </div>
+            </div>
+          </Confirm>
         )}
       </Modal>
     </PageWrapper>
