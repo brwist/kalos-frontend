@@ -105,12 +105,10 @@ export const ServiceCall: FC<Props> = props => {
     [],
   );
   const [loggedUser, setLoggedUser] = useState<User>();
-  const [notificationEditing, setNotificationEditing] = useState<boolean>(
-    false,
-  );
-  const [notificationViewing, setNotificationViewing] = useState<boolean>(
-    false,
-  );
+  const [notificationEditing, setNotificationEditing] =
+    useState<boolean>(false);
+  const [notificationViewing, setNotificationViewing] =
+    useState<boolean>(false);
   const [projects, setProjects] = useState<Event[]>([]);
   const [parentId, setParentId] = useState<number | null>(null);
   const [confirmedParentId, setConfirmedParentId] = useState<number | null>(
@@ -170,9 +168,10 @@ export const ServiceCall: FC<Props> = props => {
     [setServicesRendered, serviceCallId],
   );
 
-  const handleSetError = useCallback((error: boolean) => setError(error), [
-    setError,
-  ]);
+  const handleSetError = useCallback(
+    (value: boolean) => setError(value),
+    [setError],
+  );
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -202,9 +201,8 @@ export const ServiceCall: FC<Props> = props => {
 
       promises.push(
         new Promise<void>(async resolve => {
-          const propertyEvents = await EventClientService.loadEventsByPropertyId(
-            propertyId,
-          );
+          const propertyEvents =
+            await EventClientService.loadEventsByPropertyId(propertyId);
           setPropertyEvents(propertyEvents);
           resolve();
         }),
@@ -228,7 +226,8 @@ export const ServiceCall: FC<Props> = props => {
 
       promises.push(
         new Promise<void>(async resolve => {
-          const jobTypeSubtypes = await JobTypeSubtypeClientService.loadJobTypeSubtypes();
+          const jobTypeSubtypes =
+            await JobTypeSubtypeClientService.loadJobTypeSubtypes();
           setJobTypeSubtypes(jobTypeSubtypes);
           resolve();
         }),
@@ -299,7 +298,7 @@ export const ServiceCall: FC<Props> = props => {
         setLoading(false);
       });
     } catch (e) {
-      handleSetError(e);
+      handleSetError(true);
       setLoaded(true);
       setLoading(false);
     }
@@ -418,12 +417,12 @@ export const ServiceCall: FC<Props> = props => {
   }, [
     entry,
     serviceCallId,
-    propertyId,
-    saveInvoice,
-    setSaving,
-    setLoading,
     onSave,
     onClose,
+    saveInvoice,
+    property,
+    propertyId,
+    loggedUserId,
     loadEntry,
     loadServicesRenderedData,
   ]);
@@ -858,7 +857,6 @@ export const ServiceCall: FC<Props> = props => {
                     loading={loading}
                     jobTypeOptions={jobTypeOptions}
                     jobSubtypeOptions={jobSubtypeOptions}
-                    jobTypeSubtypes={jobTypeSubtypes}
                     onChange={handleChangeEntry}
                     disabled={saving}
                     onValid={setRequestValid}

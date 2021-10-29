@@ -65,10 +65,8 @@ export const CustomerInformation: FC<Props> = ({
   viewedAsCustomer = false,
 }) => {
   const [customer, setCustomer] = useState<User>(new User());
-  const [
-    pendingBillingRecordCount,
-    setPendingBillingRecordCount,
-  ] = useState<number>(0);
+  const [pendingBillingRecordCount, setPendingBillingRecordCount] =
+    useState<number>(0);
   const [isPendingBilling, setPendingBilling] = useState<boolean>(false);
   const [groups, setGroups] = useState<Group[]>([]);
   const [groupLinks, setGroupLinks] = useState<UserGroupLink[]>([]);
@@ -80,12 +78,10 @@ export const CustomerInformation: FC<Props> = ({
   const [error, setError] = useState<boolean>(false);
   const [deleting, setDeleting] = useState<boolean>(false);
   const [documentsOpened, setDocumentsOpened] = useState<boolean>(false);
-  const [notificationEditing, setNotificationEditing] = useState<boolean>(
-    false,
-  );
-  const [notificationViewing, setNotificationViewing] = useState<boolean>(
-    false,
-  );
+  const [notificationEditing, setNotificationEditing] =
+    useState<boolean>(false);
+  const [notificationViewing, setNotificationViewing] =
+    useState<boolean>(false);
   const [pendingBillingsLoaded, setPendingBillingsLoaded] = useState<boolean>();
 
   const groupLinksInitialIds = groupLinksInitial.map(g => g.getGroupId());
@@ -124,9 +120,8 @@ export const CustomerInformation: FC<Props> = ({
     }
     const groups = await GroupClientService.loadGroups();
     setGroups(groups);
-    const groupLinks = await UserGroupLinkClientService.loadUserGroupLinksByUserId(
-      userID,
-    );
+    const groupLinks =
+      await UserGroupLinkClientService.loadUserGroupLinksByUserId(userID);
     setGroupLinks(groupLinks);
     setGroupLinksInitial(groupLinks);
     const entry = new User();
@@ -165,9 +160,8 @@ export const CustomerInformation: FC<Props> = ({
     [setNotificationEditing],
   );
   const handleResetGroups = useCallback(async () => {
-    const groupLinks = await UserGroupLinkClientService.loadUserGroupLinksByUserId(
-      userID,
-    );
+    const groupLinks =
+      await UserGroupLinkClientService.loadUserGroupLinksByUserId(userID);
     setGroupLinks(groupLinks);
     setGroupLinksInitial(groupLinks);
   }, [userID]);
@@ -201,7 +195,7 @@ export const CustomerInformation: FC<Props> = ({
         setNotificationEditing(false);
       }
     },
-    [setSaving, userID, setCustomer, setEditing, handleSetNotificationEditing],
+    [customer, userID],
   );
 
   const handleDelete = useCallback(async () => {

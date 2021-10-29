@@ -331,8 +331,8 @@ export const TransactionTable: FC<Props> = ({
           errLog.setDescription(
             `An error occurred while using universal search: ${err}`,
           );
-          errLog.setErrorSeverity(1);
-          const result = await DevlogClientService.Create(errLog);
+          errLog.setErrorSeverity(0);
+          await DevlogClientService.Create(errLog);
         } catch (errActivity) {
           console.error(`An error occurred while uploading a dev log: ${err} `);
         }
@@ -354,13 +354,14 @@ export const TransactionTable: FC<Props> = ({
         }
       } catch (err) {
         try {
-          let errLog = new TransactionActivity();
+          let errLog = new Devlog();
           errLog.setTimestamp(format(new Date(), 'yyyy-MM-dd hh:mm:ss'));
           errLog.setUserId(loggedUserId);
           errLog.setDescription(
-            `ERROR : An error occurred while batch-getting transactions in TransactionTable: ${err}`,
+            `An error occurred while batch-getting transactions in TransactionTable: ${err}`,
           );
-          await TransactionActivityClientService.Create(errLog);
+          errLog.setErrorSeverity(0);
+          await DevlogClientService.Create(errLog);
         } catch (errActivity) {
           console.error(
             `An error occurred while batch-getting transactions in TransactionTable: ${err} `,
@@ -398,14 +399,15 @@ export const TransactionTable: FC<Props> = ({
         }
       } catch (err) {
         try {
-          let errLog = new TransactionActivity();
+          let errLog = new Devlog();
           errLog.setTimestamp(format(new Date(), 'yyyy-MM-dd hh:mm:ss'));
           errLog.setTransactionId(transaction.getId());
           errLog.setUserId(loggedUserId);
           errLog.setDescription(
-            `ERROR : An error occurred while getting a transaction activity log: ${err}`,
+            `An error occurred while getting a transaction activity log: ${err}`,
           );
-          await TransactionActivityClientService.Create(errLog);
+          errLog.setErrorSeverity(0);
+          await DevlogClientService.Create(errLog);
         } catch (errActivity) {
           console.error(
             `An error occurred while getting a transaction activity log: ${err} `,
