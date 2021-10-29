@@ -1,6 +1,5 @@
 import { DispatchableTech, DispatchCall } from '@kalos-core/kalos-rpc/Dispatch';
 import { JobType } from '@kalos-core/kalos-rpc/JobType';
-import { TimesheetDepartment } from '@kalos-core/kalos-rpc/TimesheetDepartment';
 
 export type FormData = {
   departmentIds: number[];
@@ -114,6 +113,7 @@ export interface State {
   showAddTech: boolean;
   tempAssigneeList: string;
   refreshCalls: boolean;
+  isApproved: boolean;
 }
 
 export type Action = 
@@ -128,6 +128,7 @@ export type Action =
   | { type: 'setModal'; data: {
     openModal: boolean,
     modalKey: string,
+    currentFC: FirstCallType,
     selectedCall?: DispatchCall,
     assigneeList?: {id: number, name: string}[],
   }}
@@ -206,6 +207,7 @@ export type Action =
   | { type: 'setShowAddTech'; data: boolean }
   | { type: 'setRefreshCalls'; data: boolean }
   | { type: 'setSectorList'; data: number[] }
+  | { type: 'setFinalApproval'; data: boolean }
 ;
 
 export const reducer = (state: State, action: Action) => {
@@ -229,6 +231,7 @@ export const reducer = (state: State, action: Action) => {
         modalKey: action.data.modalKey,
         selectedCall: action.data.selectedCall ? action.data.selectedCall : new DispatchCall(),
         assigneeList: action.data.assigneeList ? action.data.assigneeList : [],
+        savedFirstCall: action.data.currentFC,
       }
     case 'setCalls':
       return {
@@ -403,6 +406,11 @@ export const reducer = (state: State, action: Action) => {
       return {
         ...state,
         sectorList: action.data,
+      }
+    case 'setFinalApproval':
+      return {
+        ...state,
+        isApproved: action.data,
       }
     default:
       return {

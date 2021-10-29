@@ -55,6 +55,7 @@ import ListItemText from '@material-ui/core/ListItemText';
 import RemoveCircleOutlineTwoTone from '@material-ui/icons/RemoveCircleOutlineTwoTone';
 import ListItem from '@material-ui/core/ListItem';
 import CircleProgress from '@material-ui/core/CircularProgress';
+import { ServiceRequest } from '../ServiceCall/requestIndex';
 export interface Props {
   loggedUserId: number;
   testUserId?: number;
@@ -104,6 +105,25 @@ export const DispatchDashboard: React.FC<Props> = function DispatchDashboard({
   disableSlack,
 }) {
   const [state, updateDispatchState] = useReducer(reducer, initialState);
+
+  const resetModal = (refreshTechs: boolean, refreshCalls: boolean) => {
+    updateDispatchState({ 
+      type: 'setModal',
+      data: {
+        openModal: false,
+        modalKey: '',
+        selectedTech: new DispatchableTech(),
+        selectedCall: new DispatchCall(),
+        isProcessing: false
+      }
+    });
+    if (refreshTechs) {
+      setTechnicians();
+    }
+    if (refreshCalls) {
+      setCalls();
+    }
+  }
 
   const getTechnicians = useCallback( async () => {
     const tech = new DispatchableTech();
@@ -224,8 +244,8 @@ export const DispatchDashboard: React.FC<Props> = function DispatchDashboard({
 
   const setTechnicians = useCallback( async() => {
     const techs = await getTechnicians();
-    if (techs.dismissed.length === 0) {
-      resetModal();
+    if (techs.dismissed.length === 0 && state.dismissedTechs.length > 0) {
+      resetModal(false, false);
     }
     updateDispatchState({
       type: 'setTechs',
@@ -337,8 +357,7 @@ export const DispatchDashboard: React.FC<Props> = function DispatchDashboard({
         `An error occurred while creating the Activity Log and Service Rendered for the dismissal: ${err}`
       );
     }
-    resetModal();
-    setTechnicians();
+    resetModal(true, false);
   };
 
   const handleUndismissTech = async (tech : DispatchableTech) => {
@@ -401,8 +420,7 @@ export const DispatchDashboard: React.FC<Props> = function DispatchDashboard({
         `An error occurred while updating the Event Assignment and Event: ${err}`
       );
     }
-    resetModal();
-    setCalls();
+    resetModal(false, true);
   }
 
   const handleUnassignTech = async (id: number) => {
@@ -433,29 +451,42 @@ export const DispatchDashboard: React.FC<Props> = function DispatchDashboard({
     setCalls();
   }
 
-  const handleCallDetails = async (call : DispatchCall) => {
-    let assignees : {id: number, name: string}[] = [];
-    const ids = call.getLogTechnicianAssigned().split(',').map(Number);
-    try {
-      const userData = await UserClientService.BatchGetUsersByIds(ids);
-      for (const user of userData.getResultsList()) {
-        assignees.push({id: user.getId(), name: `${user.getFirstname()} ${user.getLastname()}`})
-      }
+  const handleCallDetails = async (call : DispatchCall, edit = false) => {
+    if (edit) {
       updateDispatchState({
         type: 'setModal',
         data: {
           openModal: true,
-          modalKey: 'callInfo',
+          modalKey: 'editRequest',
           selectedTech: new DispatchableTech(),
           selectedCall: call,
           isProcessing: false,
-          assigneeList: assignees,
+          assigneeList: [],
         }
       });
-    } catch (err) {
-      console.error('Error Occurred when Getting Assigned Users', err);
+    } else {
+      let assignees : {id: number, name: string}[] = [];
+      const ids = call.getLogTechnicianAssigned().split(',').map(Number);
+      try {
+        const userData = await UserClientService.BatchGetUsersByIds(ids);
+        for (const user of userData.getResultsList()) {
+          assignees.push({id: user.getId(), name: `${user.getFirstname()} ${user.getLastname()}`})
+        }
+        updateDispatchState({
+          type: 'setModal',
+          data: {
+            openModal: true,
+            modalKey: 'callInfo',
+            selectedTech: new DispatchableTech(),
+            selectedCall: call,
+            isProcessing: false,
+            assigneeList: assignees,
+          }
+        });
+      } catch (err) {
+        console.error('Error Occurred when Getting Assigned Users', err);
+      }
     }
-    
   }
 
   const handleMapRecenter = async (center: {lat: number, lng: number}, zoom: number, address?: string) => {
@@ -610,19 +641,6 @@ export const DispatchDashboard: React.FC<Props> = function DispatchDashboard({
     });
   }
 
-  const resetModal = () => {
-    updateDispatchState({ 
-      type: 'setModal',
-      data: {
-        openModal: false,
-        modalKey: '',
-        selectedTech: new DispatchableTech(),
-        selectedCall: new DispatchCall(),
-        isProcessing: false
-      }
-    });
-  }
-
   useEffect(() => {
     if (state.isInitialLoad) {
       setInitialValues();
@@ -745,12 +763,12 @@ export const DispatchDashboard: React.FC<Props> = function DispatchDashboard({
 
       <Modal
         open={state.openModal}
-        onClose={resetModal}
+        onClose={() => resetModal(false, false)}
       >
         {state.modalKey === 'Undismiss' && (
             <Alert
               open={true}
-              onClose={resetModal}
+              onClose={() => resetModal(false, false)}
               title="Undismiss Tech"
               label={state.isProcessing ? "Saving..." : "Cancel"}
               disabled={state.isProcessing}
@@ -770,7 +788,7 @@ export const DispatchDashboard: React.FC<Props> = function DispatchDashboard({
               key="ConfirmDismiss"
               title="Dismiss Tech"
               open={true}
-              onClose={resetModal}
+              onClose={() => resetModal(false, false)}
               onConfirm={handleDismissTech}
               maxWidth={(window.innerWidth * .40)}
               submitLabel={state.isProcessing ? "Saving..." : "Dismiss"}
@@ -786,7 +804,7 @@ export const DispatchDashboard: React.FC<Props> = function DispatchDashboard({
               key="ConfirmAssign"
               title="Assign Tech"
               open={true}
-              onClose={resetModal}
+              onClose={() => resetModal(false, false)}
               onConfirm={handleAssignTech}
               maxWidth={(window.innerWidth * .60)}
               submitLabel={state.isProcessing ? "Saving..." : "Assign Tech to Call"}
@@ -860,7 +878,7 @@ export const DispatchDashboard: React.FC<Props> = function DispatchDashboard({
         {state.modalKey === 'mapInfo' && state.selectedCall.getId() > 0 && (
           <Alert
           open
-          onClose={resetModal}
+          onClose={() => resetModal(false, false)}
           title="Dispatch Call Info"
           label="Close"
           maxWidth={(window.innerWidth * .50)}
@@ -901,7 +919,7 @@ export const DispatchDashboard: React.FC<Props> = function DispatchDashboard({
         {state.modalKey === 'callInfo' && (
           <Alert
             open
-            onClose={resetModal}
+            onClose={() => resetModal(false, false)}
             title="Call Info"
             label="Close"
             maxWidth={(window.innerWidth * .80)}
@@ -910,33 +928,62 @@ export const DispatchDashboard: React.FC<Props> = function DispatchDashboard({
               <h2>Selected Call</h2>
             </div>
 
-            <Grid container spacing={3} style={{width:(window.innerWidth * .65)}}>
-              <Grid item xs={6}>
-                <TableContainer style={{width:'100%'}}>
-                  <Table>
-                    <TableHead></TableHead>
-                    <TableBody>
-                      <TableRow>
-                        <TableCell style={{width:"35%", fontWeight:"bold", fontSize:"15px"}}>Location:</TableCell>
-                        <TableCell style={{width:"65%", textAlign:"center"}}>{state.selectedCall.getPropertyCity()}</TableCell>
-                      </TableRow>
-                      <TableRow>
-                        <TableCell style={{width:"35%", fontWeight:"bold", fontSize:"15px"}}>Customer:</TableCell>
-                        <TableCell style={{width:"65%", textAlign:"center"}}>{state.selectedCall.getCustName()}</TableCell>
-                      </TableRow>
-                      <TableRow>
-                        <TableCell style={{fontWeight:"bold", fontSize:"15px"}}>Type:</TableCell>
-                        <TableCell style={{textAlign:"center"}}>{`${state.selectedCall.getJobType()}/${state.selectedCall.getJobSubtype()}`}</TableCell>
-                      </TableRow>
-                      <TableRow>
-                        <TableCell style={{fontWeight:"bold", fontSize:"15px"}}>Description:</TableCell>
-                        <TableCell style={{textAlign:"center"}}>{state.selectedCall.getDescription().length >= 200 ? state.selectedCall.getDescription().slice(0,150).concat(" ...") : state.selectedCall.getDescription()}</TableCell>
-                      </TableRow>
-                    </TableBody>
-                  </Table>
-                </TableContainer>
+            <Grid container spacing={1} style={{width:(window.innerWidth * .85)}}>
+              <Grid item xs={7}>
+                <Grid container spacing={2}>
+                <Grid item xs={6}>
+                    <TableContainer style={{width:'100%'}}>
+                      <Table>
+                        <TableHead></TableHead>
+                        <TableBody>
+                        <TableRow>
+                            <TableCell style={{width:"35%", fontWeight:"bold", fontSize:"15px"}}>Call ID:</TableCell>
+                            <TableCell style={{width:"65%", textAlign:"center"}}>{state.selectedCall.getId()}</TableCell>
+                          </TableRow>
+                          <TableRow>
+                            <TableCell style={{width:"35%", fontWeight:"bold", fontSize:"15px"}}>Location:</TableCell>
+                            <TableCell style={{width:"65%", textAlign:"center"}}>{state.selectedCall.getPropertyCity()}</TableCell>
+                          </TableRow>
+                          <TableRow>
+                            <TableCell style={{fontWeight:"bold", fontSize:"15px"}}>Type:</TableCell>
+                            <TableCell style={{textAlign:"center"}}>{`${state.selectedCall.getJobType()}/${state.selectedCall.getJobSubtype()}`}</TableCell>
+                          </TableRow>
+                          <TableRow>
+                            <TableCell style={{fontWeight:"bold", fontSize:"15px"}}>Description:</TableCell>
+                            <TableCell style={{textAlign:"center"}}>{state.selectedCall.getDescription().length >= 200 ? state.selectedCall.getDescription().slice(0,150).concat(" ...") : state.selectedCall.getDescription()}</TableCell>
+                          </TableRow>
+                        </TableBody>
+                      </Table>
+                    </TableContainer>
+                  </Grid>
+                  <Grid item xs={6}>
+                    <TableContainer style={{width:'100%'}}>
+                      <Table>
+                        <TableHead></TableHead>
+                        <TableBody>
+                          <TableRow>
+                            <TableCell style={{width:"35%", fontWeight:"bold", fontSize:"15px"}}>Customer:</TableCell>
+                            <TableCell style={{width:"65%", textAlign:"center"}}>{state.selectedCall.getCustName()}</TableCell>
+                          </TableRow>
+                          <TableRow>
+                            <TableCell style={{width:"35%", fontWeight:"bold", fontSize:"15px"}}>Address:</TableCell>
+                            <TableCell style={{width:"65%", textAlign:"center"}}>{state.selectedCall.getPropertyAddress()}</TableCell>
+                          </TableRow>
+                          <TableRow>
+                            <TableCell style={{width:"35%", fontWeight:"bold", fontSize:"15px"}}>Email:</TableCell>
+                            <TableCell style={{width:"65%", textAlign:"center"}}>{state.selectedCall.getUserEmail()}</TableCell>
+                          </TableRow>
+                          <TableRow>
+                            <TableCell style={{width:"35%", fontWeight:"bold", fontSize:"15px"}}>Phone:</TableCell>
+                            <TableCell style={{width:"65%", textAlign:"center"}}>{state.selectedCall.getUserPhone()}</TableCell>
+                          </TableRow>
+                        </TableBody>
+                      </Table>
+                    </TableContainer>
+                  </Grid>
+                </Grid>
               </Grid>
-              <Grid item xs={6} style={{margin:'auto', position:'relative'}}>
+              <Grid item xs={5} style={{margin:'auto', position:'relative'}}>
                 {state.isProcessing && (
                   <CircleProgress
                     style={{
@@ -957,7 +1004,7 @@ export const DispatchDashboard: React.FC<Props> = function DispatchDashboard({
                       Assigned Technicians
                     </ListSubheader>
                   }
-                  style={{display:'table',margin:'auto',alignItems:'center', opacity:state.isProcessing?0.2:1}}
+                  style={{display:'table', marginLeft:'15%', alignItems:'center', opacity:state.isProcessing?0.2:1}}
                 >
                   {!state.assigneeList.length && (
                     <ListItemText style={{textAlign:'center'}}>
@@ -984,6 +1031,15 @@ export const DispatchDashboard: React.FC<Props> = function DispatchDashboard({
               </Grid>
             </Grid>
           </Alert>
+        )}
+        {state.modalKey === 'editRequest' && (
+          <ServiceRequest
+            loggedUserId={loggedUserId}
+            propertyId={state.selectedCall.getPropertyId()}
+            userID={loggedUserId}
+            serviceCallId={state.selectedCall.getId()}
+            onClose={() => resetModal(false, true)}
+          />
         )}
       </Modal>
       </div>

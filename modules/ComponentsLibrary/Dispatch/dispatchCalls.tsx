@@ -1,5 +1,5 @@
 import { DispatchCall } from '@kalos-core/kalos-rpc/Dispatch';
-import React, { Dispatch, FC, useEffect } from 'react';
+import React, { FC, useEffect } from 'react';
 import Table from '@material-ui/core/Table';
 import TableRow from '@material-ui/core/TableRow';
 import TableHead from '@material-ui/core/TableHead';
@@ -11,9 +11,10 @@ import setMinutes from 'date-fns/esm/setMinutes';
 import setHours from 'date-fns/esm/setHours';
 import parseISO from 'date-fns/esm/parseISO';
 import { Droppable } from 'react-beautiful-dnd';
-import CircularProgress from '@material-ui/core/CircularProgress';
 import { InfoTable } from '../InfoTable';
 import { makeFakeRows } from '../../../helpers'
+import RateReviewOutlined from '@material-ui/icons/RateReviewOutlined';
+import IconButton from '@material-ui/core/IconButton';
 
 interface props {
   userID: number;
@@ -23,7 +24,7 @@ interface props {
     zoom: number,
     address?: string,
   ) => void;
-  handleDblClick: (call : DispatchCall) => void;
+  handleDblClick: (call : DispatchCall, edit? : boolean) => void;
   loading: boolean;
   showAssigned?: boolean;
   isFirstCall?: boolean;
@@ -122,6 +123,12 @@ export const DispatchCalls: FC<props> = props => {
                 Assigned
               </TableCell>
             )}
+            <TableCell
+              align="center"
+              style={{ fontWeight:'bolder', fontSize: '16px', width: '5%'}}
+            >
+              Actions
+            </TableCell>
           </TableRow>
         </TableHead>
         {calls.length === 0 && (
@@ -189,15 +196,9 @@ export const DispatchCalls: FC<props> = props => {
                     </TableCell>
                     <TableCell align="center">{call.getUserBusinessname().length ? call.getUserBusinessname() : call.getCustName()}</TableCell>
                     <TableCell align="center">
-                    <a 
-                    target="_blank" 
-                    rel="noreferrer"
-                    href={`/index.cfm?action=admin:service.editServiceCall&id=${call.getId()}&property_id=${call.getPropertyId()}&user_id=${call.getUserId()}`}
-                    >
                       {call.getDescription().length >= 200
                         ? call.getDescription().slice(0, 150).concat(' ...')
                         : call.getDescription()}
-                    </a>
                     </TableCell>
                     <TableCell align="center">{`${call.getJobType()}/${call.getJobSubtype()}`}</TableCell>
                     {showAssigned && (
@@ -207,6 +208,15 @@ export const DispatchCalls: FC<props> = props => {
                           : 'Unassigned'}
                       </TableCell>
                     )}
+                    <TableCell align="center">
+                      <IconButton
+                        key='newEdit'
+                        size="small"
+                        onClick={() => props.handleDblClick(call, true)}
+                      >
+                        <RateReviewOutlined />
+                      </IconButton>
+                    </TableCell>
                   </TableRow>
                   {provided.placeholder && false}
                   {/* Come back and Fix Later */}
