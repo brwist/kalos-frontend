@@ -1,13 +1,14 @@
 import { Event } from '@kalos-core/kalos-rpc/Event';
+import { Invoice } from '@kalos-core/kalos-rpc/Invoice';
 import React, { FC } from 'react';
 import { usd } from '../../../helpers';
 import './styles.scss';
 
 interface Props {
-  event: Event;
+  invoice: Invoice;
 }
 
-export const PrefabPayables: FC<Props> = ({ event }) => {
+export const PrefabPayables: FC<Props> = ({ invoice }) => {
   return (
     <table className="invoiceSection border">
       <tbody>
@@ -16,46 +17,46 @@ export const PrefabPayables: FC<Props> = ({ event }) => {
             <div className="align-center strong padding-top">
               Services Rendered
             </div>
-            <div className="serviceTerms">{event.getNotes()}</div>
+            <div className="serviceTerms">{invoice.getNotes()}</div>
           </td>
         </tr>
         <tr>
           <td colSpan={2} className="servicePerformed">
-            {event.getServicesperformedrow1()}
+            {invoice.getServicesperformedrow1()}
           </td>
           <td className="totalAmount">
-            {+event.getTotalamountrow1()
-              ? usd(+event.getTotalamountrow1())
+            {+invoice.getTotalamountrow1()
+              ? usd(+invoice.getTotalamountrow1())
               : ''}
           </td>
         </tr>
         <tr>
           <td colSpan={2} className="servicePerformed">
-            {event.getServicesperformedrow2()}
+            {invoice.getServicesperformedrow2()}
           </td>
           <td className="totalAmount">
-            {+event.getTotalamountrow2()
-              ? usd(+event.getTotalamountrow2())
+            {+invoice.getTotalamountrow2()
+              ? usd(+invoice.getTotalamountrow2())
               : ''}
           </td>
         </tr>
         <tr>
           <td colSpan={2} className="servicePerformed">
-            {event.getServicesperformedrow3()}
+            {invoice.getServicesperformedrow3()}
           </td>
           <td className="totalAmount">
-            {+event.getTotalamountrow3()
-              ? usd(+event.getTotalamountrow3())
+            {+invoice.getTotalamountrow3()
+              ? usd(+invoice.getTotalamountrow3())
               : ''}
           </td>
         </tr>
         <tr>
           <td colSpan={2} className="servicePerformed">
-            {event.getServicesperformedrow4()}
+            {invoice.getServicesperformedrow4()}
           </td>
           <td className="totalAmount">
-            {+event.getTotalamountrow4()
-              ? usd(+event.getTotalamountrow4())
+            {+invoice.getTotalamountrow4()
+              ? usd(+invoice.getTotalamountrow4())
               : ''}
           </td>
         </tr>

@@ -1,25 +1,56 @@
 import React, { FC, useEffect, useState, useCallback } from 'react';
 import { PrintPage } from '../PrintPage';
-import { loadEventById } from '../../../helpers';
+import { InvoiceClientService, loadEventById } from '../../../helpers';
 import { PrefabKalosInfo } from './PrefabKalosInfo';
 import { PrefabPropertyInfo } from './PrefabPropertyInfo';
 import { PrefabPayables } from './PrefabPayables';
 import './styles.scss';
 import { Event } from '@kalos-core/kalos-rpc/Event';
+import { Invoice } from '@kalos-core/kalos-rpc/Invoice';
+import { Alert } from '../Alert';
 
 interface Props {
   serviceCallId: number;
+  contractId: number;
+  userId: number;
 }
 
 const border = '1px solid #000';
 
-export const PDFInvoice: FC<Props> = ({ serviceCallId }) => {
+export const PDFInvoice: FC<Props> = ({
+  serviceCallId,
+  contractId,
+  userId,
+}) => {
   const [event, setEvent] = useState<Event>();
+  const [invoice, setInvoice] = useState<Invoice>();
+  const [error, setError] = useState<string>();
   const [loaded, setLoaded] = useState<boolean>(false);
+
+  const getInvoice = useCallback(async () => {
+    try {
+      let req = new Invoice();
+      req.setContractId(contractId);
+      req.setUserId(userId);
+      let res = await InvoiceClientService.Get(req);
+      console.log('Result invoice: ', res);
+      setInvoice(res);
+      if (!res) {
+        console.error('No invoice to get services performed from. ');
+        setError(
+          `An error occurred: no invoice found for the contract with id: ${contractId} and user with id: ${userId}`,
+        );
+      }
+      return res;
+    } catch (err) {
+      console.error(`An error occurred while getting an invoice: ${err}`);
+    }
+  }, [contractId, userId]);
   const load = useCallback(async () => {
     const event = await loadEventById(serviceCallId);
+    await getInvoice();
     setEvent(event);
-  }, [serviceCallId]);
+  }, [getInvoice, serviceCallId]);
   useEffect(() => {
     if (!loaded) {
       setLoaded(true);
@@ -27,24 +58,35 @@ export const PDFInvoice: FC<Props> = ({ serviceCallId }) => {
     }
   }, [load, loaded]);
   console.log({ event });
+  console.log('Error is: ', error);
   return (
-    <PrintPage downloadPdfFilename="lorem_ipsum_1">
-      {event && (
-        <div className="wrapper" style={{ height: 1100 }}>
-          <PrefabKalosInfo />
-          <PrefabPropertyInfo event={event} />
-          <PrefabPayables event={event} />
-          <div className="footer">
-            <div
-              className="signature"
-              style={{
-                marginLeft: 'auto',
-                marginRight: 'auto',
-                textAlign: 'justify',
-                width: '100%',
-              }}
-            >
-              {`The undersigned has authority to order the above labor and
+    <>
+      {error && (
+        <Alert
+          title="Error"
+          open={error !== undefined}
+          onClose={() => setError(undefined)}
+        >
+          {error}
+        </Alert>
+      )}
+      <PrintPage downloadPdfFilename="lorem_ipsum_1">
+        {event && invoice && (
+          <div className="wrapper" style={{ height: 1100 }}>
+            <PrefabKalosInfo />
+            <PrefabPropertyInfo event={event} />
+            <PrefabPayables invoice={invoice} />
+            <div className="footer">
+              <div
+                className="signature"
+                style={{
+                  marginLeft: 'auto',
+                  marginRight: 'auto',
+                  textAlign: 'justify',
+                  width: '100%',
+                }}
+              >
+                {`The undersigned has authority to order the above labor and
               materials on behalf of the above named purchaser. The labor and
               materials described above have been completely and satisfactorily
               performed and furnished. Kalos Services is not liable for any
@@ -67,11 +109,11 @@ export const PDFInvoice: FC<Props> = ({ serviceCallId }) => {
               returned for any reason, I authorize the merchant to
               electronically debit my account for the amount of this item plus
               any fees allowed by law.`}
+              </div>
             </div>
           </div>
-        </div>
-      )}
-      {/* {event && (
+        )}
+        {/* {event && (
         <div className="PDFInvoice">
           <table width="100%" style={{ borderTop: border }}>
             <tbody>
@@ -356,6 +398,7 @@ export const PDFInvoice: FC<Props> = ({ serviceCallId }) => {
           </table>
         </div>
       )} */}
-    </PrintPage>
+      </PrintPage>
+    </>
   );
 };
