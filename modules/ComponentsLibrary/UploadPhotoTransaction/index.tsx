@@ -38,6 +38,7 @@ type Entry = {
   tag: string;
   vendor: string;
   cost: number;
+  ownerId: number;
   costCenter: number;
   department: number;
   orderNumber: string;
@@ -85,6 +86,7 @@ export const UploadPhotoTransaction: FC<Props> = ({
         value: 0,
       }
     ).value,
+    ownerId: loggedUserId,
     vendor: '',
     cost: 0,
     tag: (
@@ -121,7 +123,8 @@ export const UploadPhotoTransaction: FC<Props> = ({
       newTransaction.setVendorCategory(type);
       newTransaction.setStatusId(2);
       newTransaction.setIsActive(1);
-      newTransaction.setOwnerId(loggedUserId);
+      newTransaction.setOwnerId(data.ownerId);
+      newTransaction.setAssignedEmployeeId(loggedUserId);
       newTransaction.setAmount(data.cost);
       newTransaction.setDescription(data.description);
       newTransaction.setVendor(data.vendor);
@@ -252,6 +255,13 @@ export const UploadPhotoTransaction: FC<Props> = ({
       {
         name: 'invoiceNumber',
         label: 'Invoice #',
+      },
+    ],
+    [
+      {
+        name: 'ownerId',
+        label: 'Purchaser ',
+        type: 'technician',
       },
     ],
     [

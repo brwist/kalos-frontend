@@ -74,6 +74,7 @@ import { UploadPhotoToExistingTransaction } from '../UploadPhotoToExistingTransa
 import { Form } from '../Form';
 import { ACTIONS } from './reducer';
 import { Devlog } from '@kalos-core/kalos-rpc/Devlog';
+import { TxnDepartment } from '@kalos-core/kalos-rpc/compiled-protos/transaction_pb';
 
 export interface Props {
   loggedUserId: number;
@@ -287,7 +288,6 @@ export const TransactionTable: FC<Props> = ({
     }
 
     await makeUpdateStatus(txn.getId(), 4, 'rejected', reason);
-    refresh();
   };
   const resetTransactions = useCallback(async () => {
     let req = new Transaction();
@@ -313,7 +313,7 @@ export const TransactionTable: FC<Props> = ({
     if (state.transactionFilter.departmentId != 0)
       req.setDepartmentId(state.transactionFilter.departmentId);
     if (state.transactionFilter.employeeId != 0)
-      req.setAssignedEmployeeId(state.transactionFilter.employeeId);
+      req.setOwnerId(state.transactionFilter.employeeId);
     if (state.transactionFilter.amount)
       req.setAmount(state.transactionFilter.amount);
     req.setIsBillingRecorded(state.transactionFilter.billingRecorded);
@@ -537,6 +537,11 @@ export const TransactionTable: FC<Props> = ({
     txn.setStatusId(statusID);
     txn.setFieldMaskList(['StatusId']);
     txn.setIsBillingRecorded(true);
+    dispatch({
+      type: ACTIONS.UPDATE_LOCAL_STATUS,
+      data: { transactionId: id, statusId: statusID },
+    });
+
     try {
       await TransactionClientService.Update(txn);
     } catch (err) {
@@ -555,8 +560,6 @@ export const TransactionTable: FC<Props> = ({
     );
     if (ok) {
       await makeUpdateStatus(txn.getId(), 3, 'accepted');
-      await resetTransactions();
-      await refresh();
     }
   };
   const updateStatusProcessed = async (txn: Transaction) => {
@@ -565,8 +568,6 @@ export const TransactionTable: FC<Props> = ({
     );
     if (ok) {
       await makeUpdateStatus(txn.getId(), 5, 'Recorded and Processed');
-      await resetTransactions();
-      await refresh();
     }
   };
   const forceAccept = async (txn: Transaction) => {
@@ -575,7 +576,6 @@ export const TransactionTable: FC<Props> = ({
     );
     if (ok) {
       await makeUpdateStatus(txn.getId(), 3, 'accepted');
-      await refresh();
     }
   };
 
@@ -654,8 +654,33 @@ export const TransactionTable: FC<Props> = ({
       }
       try {
         await TransactionClientService.Update(transactionToSave);
+        const temp = transactionToSave;
+        transactionToSave.setCostCenterId(
+          parseInt(transactionToSave.getCostCenterId().toString()),
+        );
+        transactionToSave.setDepartmentId(
+          parseInt(transactionToSave.getDepartmentId().toString()),
+        );
+        const costCenterReq = new TransactionAccount();
+        costCenterReq.setId(transactionToSave.getCostCenterId());
+        const costCenterResult = await TransactionAccountClientService.Get(
+          costCenterReq,
+        );
+        transactionToSave.setCostCenter(costCenterResult);
+        const departmentReq = new TimesheetDepartment();
+        departmentReq.setId(transactionToSave.getDepartmentId());
+        const departmentResult = await TimesheetDepartmentClientService.Get(
+          departmentReq,
+        );
+        const txnDepartment = new TxnDepartment();
+        txnDepartment.setDescription(departmentResult.getDescription());
+        transactionToSave.setDepartment(txnDepartment);
+        dispatch({
+          type: ACTIONS.SET_UPDATE_FROM_LOCAL_LIST,
+          data: transactionToSave,
+        });
+
         dispatch({ type: ACTIONS.SET_TRANSACTION_TO_EDIT, data: undefined });
-        refresh();
       } catch (err) {
         try {
           let errLog = new TransactionActivity();
@@ -675,7 +700,7 @@ export const TransactionTable: FC<Props> = ({
         dispatch({ type: ACTIONS.SET_TRANSACTION_TO_EDIT, data: undefined });
       }
     },
-    [refresh, loggedUserId, state.page],
+    [loggedUserId, state.page],
   );
   const getJobNumberInfo = async (number: number) => {
     let returnString = ['No Job Info Found'];
@@ -689,16 +714,16 @@ export const TransactionTable: FC<Props> = ({
           'Customer: ' +
           (res.getCustomer() === undefined
             ? 'No Customer '
-            : `${res.getCustomer()!.getFirstname()} ${res
+            : `${res
                 .getCustomer()!
-                .getLastname()}`);
+                .getFirstname()} ${res.getCustomer()!.getLastname()}`);
         const property =
           'Property: ' +
           (res.getProperty() === undefined
             ? 'No Property'
-            : `${res.getProperty()!.getAddress()} ${res
+            : `${res
                 .getProperty()!
-                .getCity()}`);
+                .getAddress()} ${res.getProperty()!.getCity()}`);
         returnString = [descritpion, customer, property];
       } catch (error) {
         console.log('Not a number');
@@ -961,12 +986,8 @@ export const TransactionTable: FC<Props> = ({
         newTxn.setTimestamp(newTimestamp);
       }
       newTxn.setOrderNumber(saved['Order #']);
-      newTxn.setAssignedEmployeeId(saved['Purchaser']);
-      if (saved['Purchaser'] != 0 && saved['Purchaser'] != undefined) {
-        newTxn.setOwnerId(newTxn.getAssignedEmployeeId());
-      } else {
-        newTxn.setOwnerId(loggedUserId);
-      }
+      newTxn.setAssignedEmployeeId(loggedUserId);
+      newTxn.setOwnerId(saved['Purchaser']);
       newTxn.setDepartmentId(saved['Department']);
       newTxn.setJobId(saved['Job #']);
       newTxn.setCostCenterId(saved['Cost Center ID']);
@@ -974,7 +995,9 @@ export const TransactionTable: FC<Props> = ({
       newTxn.setVendor(saved['Vendor']);
       newTxn.setStatusId(2);
       newTxn.setVendorCategory('Receipt');
-
+      newTxn.setNotes(
+        `Order Number-${newTxn.getOrderNumber()},Job Number-${newTxn.getJobId()}`,
+      );
       let res: Transaction | undefined;
       try {
         res = await TransactionClientService.Create(newTxn);
@@ -1026,13 +1049,16 @@ export const TransactionTable: FC<Props> = ({
         );
       }
       await TransactionClientService.Delete(state.transactionToDelete);
+      dispatch({
+        type: ACTIONS.SET_DELETE_FROM_LOCAL_LIST,
+        data: state.transactionToDelete,
+      });
+
       dispatch({ type: ACTIONS.SET_TRANSACTION_TO_DELETE, data: undefined });
-      await resetTransactions();
-      await refresh();
     } catch (err) {
       console.error(`An error occurred while deleting a transaction: ${err}`);
     }
-  }, [state.transactionToDelete, refresh, resetTransactions]);
+  }, [state.transactionToDelete]);
 
   useEffect(() => {
     async function refreshEverything() {
@@ -1048,7 +1074,9 @@ export const TransactionTable: FC<Props> = ({
       resetTransactions();
     }
     if (state.searching) {
-      refreshEverything();
+      dispatch({ type: ACTIONS.SET_PAGE, data: 0 });
+      dispatch({ type: ACTIONS.SET_CHANGING_PAGE, data: true });
+
       dispatch({ type: ACTIONS.SET_SEARCHING, data: false });
     }
   }, [
@@ -1190,7 +1218,6 @@ export const TransactionTable: FC<Props> = ({
             onSave={saved => {
               saved.setId(state.transactionToEdit!.getId());
               updateTransaction(saved);
-              dispatch({ type: ACTIONS.SET_SEARCHING, data: true });
             }}
             onClose={() =>
               dispatch({
@@ -1375,7 +1402,7 @@ export const TransactionTable: FC<Props> = ({
           externalButton: true,
           type: new Transaction(),
           columnDefinition: {
-            columnsToIgnore: ['Actions', 'Accepted / Rejected'],
+            columnsToIgnore: ['Actions', 'Accepted / Rejected', 'Creator'],
             columnTypeOverrides: [
               { columnName: 'Type', columnType: 'text' },
               {
@@ -1403,6 +1430,10 @@ export const TransactionTable: FC<Props> = ({
                 columnName: 'Purchaser',
                 columnType: 'technician',
               },
+              {
+                columnName: 'Creator',
+                columnType: 'technician',
+              },
             ],
           },
         }}
@@ -1425,6 +1456,14 @@ export const TransactionTable: FC<Props> = ({
             name: 'Purchaser',
             dir: state.orderBy == 'owner_id' ? state.orderDir : undefined,
             onClick: () => changeSort('owner_id'),
+          },
+          {
+            name: 'Creator',
+            dir:
+              state.orderBy == 'assigned_employee_id'
+                ? state.orderDir
+                : undefined,
+            onClick: () => changeSort('assigned_employee_id'),
           },
           {
             name: 'Department',
@@ -1459,7 +1498,7 @@ export const TransactionTable: FC<Props> = ({
         ]}
         data={
           state.loading
-            ? makeFakeRows(10, 15)
+            ? makeFakeRows(11, 15)
             : (state.transactions?.map((selectorParam, idx) => {
                 let txnWithId = state.selectedTransactions.filter(
                   txn => txn.getId() === selectorParam.txn.getId(),
@@ -1504,7 +1543,19 @@ export const TransactionTable: FC<Props> = ({
                     },
                     {
                       value: (
-                        <div key="OwnernameValue">{`${selectorParam.txn.getOwnerName()} (${selectorParam.txn.getOwnerId()})`}</div>
+                        <div key="OwnernameValue">
+                          {selectorParam.txn.getOwnerId() != 0
+                            ? `${selectorParam.txn.getOwnerName()} (${selectorParam.txn.getOwnerId()})`
+                            : 'No Purchaser'}
+                        </div>
+                      ),
+                      onClick: isSelector
+                        ? () => setTransactionChecked(idx)
+                        : undefined,
+                    },
+                    {
+                      value: (
+                        <div key="CreatornameValue">{`${selectorParam.txn.getAssignedEmployeeName()} (${selectorParam.txn.getAssignedEmployeeId()})`}</div>
                       ),
                       onClick: isSelector
                         ? () => setTransactionChecked(idx)
