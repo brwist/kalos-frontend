@@ -76,7 +76,10 @@ import {
 } from './modules/ComponentsLibrary/helpers';
 import { Contract, ContractClient } from '@kalos-core/kalos-rpc/Contract';
 import { NULL_TIME } from '@kalos-core/kalos-rpc/constants';
-import { TransactionActivityClient } from '@kalos-core/kalos-rpc/TransactionActivity';
+import {
+  TransactionActivity,
+  TransactionActivityClient,
+} from '@kalos-core/kalos-rpc/TransactionActivity';
 import { EmailClient } from '@kalos-core/kalos-rpc/Email';
 import { PropLinkClient } from '@kalos-core/kalos-rpc/PropLink';
 import { TransactionAccountClient } from '@kalos-core/kalos-rpc/TransactionAccount';
@@ -441,17 +444,15 @@ function formatDate(date: string) {
  * @returns format Day (ie. Tue)
  */
 function formatDay(datetime: string) {
-  return (
-    {
-      0: 'Sun',
-      1: 'Mon',
-      2: 'Tue',
-      3: 'Wed',
-      4: 'Thu',
-      5: 'Fri',
-      6: 'Sat',
-    } as { [key: number]: string }
-  )[new Date(datetime.substr(0, 10)).getDay()];
+  return ({
+    0: 'Sun',
+    1: 'Mon',
+    2: 'Tue',
+    3: 'Wed',
+    4: 'Thu',
+    5: 'Fri',
+    6: 'Sat',
+  } as { [key: number]: string })[new Date(datetime.substr(0, 10)).getDay()];
 }
 
 /**
@@ -1969,6 +1970,18 @@ export const uploadPhotoToExistingTransaction = async (
     let uploadFile;
     try {
       uploadFile = await FileClientService.Create(fReq);
+      try {
+        let log = new TransactionActivity();
+        log.setTimestamp(format(new Date(), 'yyyy-MM-dd hh:mm:ss'));
+        log.setUserId(loggedUserId);
+        log.setTransactionId(existingTransaction.getId());
+        log.setDescription(`New File ${name}`);
+        await TransactionActivityClientService.Create(log);
+      } catch (err) {
+        console.error(
+          `An error occurred while uploading an activity log for an error in an S3 bucket: ${err}`,
+        );
+      }
     } catch (err) {
       console.error(`An error occurred while creating a file: ${err}`);
       try {
