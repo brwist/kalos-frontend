@@ -1,9 +1,10 @@
+import { Event } from '@kalos-core/kalos-rpc/Event';
 import React, { FC } from 'react';
-import { EventType, usd } from '../../../helpers';
+import { usd } from '../../../helpers';
 import './styles.scss';
 
 interface Props {
-  event: EventType;
+  event: Event;
 }
 
 export const PrefabPayables: FC<Props> = ({ event }) => {
@@ -15,39 +16,47 @@ export const PrefabPayables: FC<Props> = ({ event }) => {
             <div className="align-center strong padding-top">
               Services Rendered
             </div>
-            <div className="serviceTerms">{event.notes}</div>
+            <div className="serviceTerms">{event.getNotes()}</div>
           </td>
         </tr>
         <tr>
           <td colSpan={2} className="servicePerformed">
-            {event.servicesperformedrow1}
+            {event.getServicesperformedrow1()}
           </td>
           <td className="totalAmount">
-            {+event.totalamountrow1 ? usd(+event.totalamountrow1) : ''}
+            {+event.getTotalamountrow1()
+              ? usd(+event.getTotalamountrow1())
+              : ''}
           </td>
         </tr>
         <tr>
           <td colSpan={2} className="servicePerformed">
-            {event.servicesperformedrow2}
+            {event.getServicesperformedrow2()}
           </td>
           <td className="totalAmount">
-            {+event.totalamountrow2 ? usd(+event.totalamountrow2) : ''}
+            {+event.getTotalamountrow2()
+              ? usd(+event.getTotalamountrow2())
+              : ''}
           </td>
         </tr>
         <tr>
           <td colSpan={2} className="servicePerformed">
-            {event.servicesperformedrow3}
+            {event.getServicesperformedrow3()}
           </td>
           <td className="totalAmount">
-            {+event.totalamountrow3 ? usd(+event.totalamountrow3) : ''}
+            {+event.getTotalamountrow3()
+              ? usd(+event.getTotalamountrow3())
+              : ''}
           </td>
         </tr>
         <tr>
           <td colSpan={2} className="servicePerformed">
-            {event.servicesperformedrow4}
+            {event.getServicesperformedrow4()}
           </td>
           <td className="totalAmount">
-            {+event.totalamountrow4 ? usd(+event.totalamountrow4) : ''}
+            {+event.getTotalamountrow4()
+              ? usd(+event.getTotalamountrow4())
+              : ''}
           </td>
         </tr>
         {/* .has(prefabQuoteUsed(arguments.invoiceData.callId,'list'));
