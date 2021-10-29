@@ -13,5 +13,13 @@ export default () => (
       userId={8428}
       onFileCreated={created => console.log('file made: ', created)}
     />
+    <ExampleTitle>OnFileCreated provided in props and invisible</ExampleTitle>
+    <PDFInvoice
+      serviceCallId={1051}
+      contractId={1051}
+      userId={8428}
+      onFileCreated={created => console.log('file made: ', created)}
+      invisible
+    />
   </>
 );

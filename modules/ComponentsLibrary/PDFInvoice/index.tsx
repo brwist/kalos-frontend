@@ -14,6 +14,7 @@ interface Props {
   contractId: number;
   userId: number;
   onFileCreated?: (file: Uint8Array) => any;
+  invisible?: boolean;
 }
 
 // For the commented code:
@@ -24,6 +25,7 @@ export const PDFInvoice: FC<Props> = ({
   contractId,
   userId,
   onFileCreated,
+  invisible,
 }) => {
   const [event, setEvent] = useState<Event>();
   const [invoice, setInvoice] = useState<Invoice>();
@@ -73,6 +75,7 @@ export const PDFInvoice: FC<Props> = ({
       <PrintPage
         downloadPdfFilename="lorem_ipsum_1"
         onFileCreated={onFileCreated}
+        invisible={invisible}
       >
         {event && invoice && (
           <div className="wrapper" style={{ height: 1100 }}>

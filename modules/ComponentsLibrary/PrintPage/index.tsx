@@ -25,6 +25,7 @@ interface Props {
   downloadLabel?: string;
   icons?: boolean;
   onFileCreated?: (file: Uint8Array) => void;
+  invisible?: boolean;
 }
 
 export const PrintPage: FC<Props> = ({
@@ -40,6 +41,7 @@ export const PrintPage: FC<Props> = ({
   downloadLabel = 'Download',
   icons = false,
   onFileCreated,
+  invisible,
 }) => {
   const printRef = useRef(null);
   const [fileReturned, setFileReturned] = useState<boolean>(false);
@@ -144,69 +146,71 @@ export const PrintPage: FC<Props> = ({
           The file is not ready to view yet.{' '}
         </Alert>
       )}
-      <span className={className}>
-        {downloadPdfFilename &&
-          (icons ? (
+      {!invisible && (
+        <span className={className}>
+          {downloadPdfFilename &&
+            (icons ? (
+              <IconButton
+                onClick={handleDownload(true)}
+                size="small"
+                disabled={
+                  status === 'loading' || downloading || buttonProps.disabled
+                }
+              >
+                {(status === 'loading' || downloading) && (
+                  <CircularProgress
+                    style={{ position: 'absolute', color: '#FFF' }}
+                    size={12}
+                  />
+                )}
+                <DownloadIcon />
+              </IconButton>
+            ) : (
+              <Button
+                onClick={handleDownload(true)}
+                {...buttonProps}
+                disabled={
+                  status === 'loading' || downloading || buttonProps.disabled
+                }
+                label={downloadLabel}
+              >
+                {(status === 'loading' || downloading) && (
+                  <CircularProgress
+                    style={{ color: '#FFF', marginRight: 8 }}
+                    size={16}
+                  />
+                )}
+              </Button>
+            ))}
+          {onFileCreated ? null : icons ? (
             <IconButton
-              onClick={handleDownload(true)}
-              size="small"
-              disabled={
-                status === 'loading' || downloading || buttonProps.disabled
+              onClick={
+                buttonProps.loading
+                  ? () => handleSetAlertOpen(true)
+                  : onPrint || handlePrint!
               }
+              size="small"
+              disabled={status === 'loading' || buttonProps.disabled}
             >
-              {(status === 'loading' || downloading) && (
-                <CircularProgress
-                  style={{ position: 'absolute', color: '#FFF' }}
-                  size={12}
-                />
-              )}
-              <DownloadIcon />
+              <PrintIcon />
             </IconButton>
           ) : (
             <Button
-              onClick={handleDownload(true)}
+              label="Print"
+              onClick={onPrint || handlePrint!}
               {...buttonProps}
-              disabled={
-                status === 'loading' || downloading || buttonProps.disabled
-              }
-              label={downloadLabel}
+              disabled={status === 'loading' || buttonProps.disabled}
             >
-              {(status === 'loading' || downloading) && (
+              {status === 'loading' && (
                 <CircularProgress
                   style={{ color: '#FFF', marginRight: 8 }}
                   size={16}
                 />
               )}
             </Button>
-          ))}
-        {onFileCreated ? null : icons ? (
-          <IconButton
-            onClick={
-              buttonProps.loading
-                ? () => handleSetAlertOpen(true)
-                : onPrint || handlePrint!
-            }
-            size="small"
-            disabled={status === 'loading' || buttonProps.disabled}
-          >
-            <PrintIcon />
-          </IconButton>
-        ) : (
-          <Button
-            label="Print"
-            onClick={onPrint || handlePrint!}
-            {...buttonProps}
-            disabled={status === 'loading' || buttonProps.disabled}
-          >
-            {status === 'loading' && (
-              <CircularProgress
-                style={{ color: '#FFF', marginRight: 8 }}
-                size={16}
-              />
-            )}
-          </Button>
-        )}
-      </span>
+          )}
+        </span>
+      )}
       <div className="PrintPage">
         <div ref={printRef}>
           {headerProps && <PrintHeader {...headerProps} />}
