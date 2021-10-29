@@ -8,7 +8,7 @@ export default () => (
     <EditContractInfo
       userID={8428}
       contractID={1051}
-      onSave={contractData => console.log('Saved: ', contractData)}
+      onSaveStarted={contractData => console.log('Saved: ', contractData)}
       onClose={() => alert('Would close')}
       onChange={changed => console.log('OnChange output: ', changed)}
     />

@@ -14,6 +14,17 @@ Kalos Frontend is split into quite a few folders:
 - templates is for the `yarn make` command. NewComponent are the files included when a new component is created, and NewModule is the same but for new modules instead
 - test is where our frontend unit tests live
 
+## The Components Library
+
+Our modules are made up of multiple components. You can mostly think of modules as individual pages and components as pieces of each module (you are probably already familiar with this concept).
+
+Components are entirely encapsulated within the components library. This is located in `/modules/ComponentsLibrary`. Inside of this:
+
+- The `index.tsx`, `index.html` and other files inside of the main `ComponentsLibrary` folder are for running the components as a module (`yarn start --ComponentsLibrary`)
+- Each folder is a component
+- Each component folder has an `examples.tsx` file which contains examples to be shown when the ComponentsLibrary is run as a module
+  - You should add these examples manually via importing them in `index.tsx` (in alphabetical order please)
+
 ## About our frontend unit testing setup
 
 Inside the test folder, we have a mockup of the repository's file structure with tests inside of them based upon the thing being tested.
