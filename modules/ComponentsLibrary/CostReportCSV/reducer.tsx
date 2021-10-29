@@ -6,6 +6,7 @@ import { Trip } from '@kalos-core/kalos-rpc/compiled-protos/perdiem_pb';
 import { Task } from '@kalos-core/kalos-rpc/Task';
 import { TransactionAccount } from '@kalos-core/kalos-rpc/TransactionAccount';
 import { ClassCode, ClassCodeClient } from '@kalos-core/kalos-rpc/ClassCode';
+import { User } from '@kalos-core/kalos-rpc/User';
 
 export type State = {
   loading: boolean;
@@ -24,6 +25,7 @@ export type State = {
   trips: Trip[];
   tripsTotal: number;
   tasks: Task[];
+  users: User[];
   classCodes: ClassCode[];
   transactionDropDowns: { costCenterId: number; active: number }[];
   timesheetDropDowns: { classCodeId: number; active: number }[];
@@ -41,6 +43,7 @@ export enum ACTIONS {
   SET_TIMESHEETS = 'setTimesheets',
   SET_TRANSACTIONS = 'setTransactions',
   SET_LODGINGS = 'setLodgings',
+  SET_USERS = 'setUsers',
   SET_TOTAL_HOURS_WORKED = 'setTotalHoursWorked',
   SET_LOADED_INIT = 'setLoadedInit',
   SET_EVENT = 'setEvent',
@@ -77,6 +80,7 @@ export type Action =
   | { type: ACTIONS.SET_COST_CENTER_DROPDOWN_ACTIVE; data: boolean }
   | { type: ACTIONS.SET_LABOR_TOTALS_DROPDOWN_ACTIVE; data: boolean }
   | { type: ACTIONS.SET_EVENT; data: Event }
+  | { type: ACTIONS.SET_USERS; data: User[] }
   | { type: ACTIONS.SET_TRIPS; data: Trip[] }
   | { type: ACTIONS.SET_TRANSACTION_ACCOUNTS; data: TransactionAccount[] }
   | { type: ACTIONS.SET_TRIPS_TOTAL; data: number }
@@ -129,6 +133,12 @@ export const reducer = (state: State, action: Action) => {
       return {
         ...state,
         transactions: action.data,
+      };
+    }
+    case ACTIONS.SET_USERS: {
+      return {
+        ...state,
+        users: action.data,
       };
     }
     case ACTIONS.SET_LODGINGS: {
