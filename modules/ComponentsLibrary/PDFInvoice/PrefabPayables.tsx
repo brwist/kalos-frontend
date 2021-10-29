@@ -73,11 +73,20 @@ export const PrefabPayables: FC<Props> = ({ invoice }) => {
           </td>
           <td className="totalAmount padding-top">{usd(0)}</td>
         </tr>
-        {/* .tr()
-            .td(colspan=2,class="servicePerformed padding-top").has("Payment by ").b(invoiceData.paymentType).has(" is ").b(invoiceData.paymentStatus).has(" for the total of ").end()
-            .td(class="totalAmount padding-top").b(invoiceData.totalAmountTotal).end()
-        .end()
-        .tr().td().has(prefabPayments(arguments.invoiceData.callId)).end().end() */}
+        <tr>
+          <td colSpan={7} className="servicePerformed padding-top">
+            <td>Payment by </td>
+            <td className="strong">{invoice.getLogPaymentType()}</td>
+            <td>is </td>
+            <td className="strong">{invoice.getLogPaymentStatus()}</td>
+            <td>for the total of</td>
+          </td>
+          <td className="totalAmount">
+            {+invoice.getTotalamounttotal()
+              ? usd(+invoice.getTotalamounttotal())
+              : ''}
+          </td>
+        </tr>
       </tbody>
     </table>
   );
