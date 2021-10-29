@@ -13,14 +13,17 @@ interface Props {
   serviceCallId: number;
   contractId: number;
   userId: number;
+  onFileCreated?: (file: Uint8Array) => any;
 }
 
-const border = '1px solid #000';
+// For the commented code:
+// const border = '1px solid #000';
 
 export const PDFInvoice: FC<Props> = ({
   serviceCallId,
   contractId,
   userId,
+  onFileCreated,
 }) => {
   const [event, setEvent] = useState<Event>();
   const [invoice, setInvoice] = useState<Invoice>();
@@ -33,7 +36,6 @@ export const PDFInvoice: FC<Props> = ({
       req.setContractId(contractId);
       req.setUserId(userId);
       let res = await InvoiceClientService.Get(req);
-      console.log('Result invoice: ', res);
       setInvoice(res);
       if (!res) {
         console.error('No invoice to get services performed from. ');
@@ -57,8 +59,6 @@ export const PDFInvoice: FC<Props> = ({
       load();
     }
   }, [load, loaded]);
-  console.log({ event });
-  console.log('Error is: ', error);
   return (
     <>
       {error && (
@@ -70,7 +70,10 @@ export const PDFInvoice: FC<Props> = ({
           {error}
         </Alert>
       )}
-      <PrintPage downloadPdfFilename="lorem_ipsum_1">
+      <PrintPage
+        downloadPdfFilename="lorem_ipsum_1"
+        onFileCreated={onFileCreated}
+      >
         {event && invoice && (
           <div className="wrapper" style={{ height: 1100 }}>
             <PrefabKalosInfo />
