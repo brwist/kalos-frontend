@@ -1970,18 +1970,6 @@ export const uploadPhotoToExistingTransaction = async (
     let uploadFile;
     try {
       uploadFile = await FileClientService.Create(fReq);
-      try {
-        let log = new TransactionActivity();
-        log.setTimestamp(format(new Date(), 'yyyy-MM-dd hh:mm:ss'));
-        log.setUserId(loggedUserId);
-        log.setTransactionId(existingTransaction.getId());
-        log.setDescription(`New File ${name}`);
-        await TransactionActivityClientService.Create(log);
-      } catch (err) {
-        console.error(
-          `An error occurred while uploading an activity log for an error in an S3 bucket: ${err}`,
-        );
-      }
     } catch (err) {
       console.error(`An error occurred while creating a file: ${err}`);
       try {
@@ -2013,6 +2001,7 @@ export const uploadPhotoToExistingTransaction = async (
     if (existingTransaction) tDoc.setTransactionId(existingTransaction.getId());
     tDoc.setReference(nameWithoutId);
     tDoc.setFileId(uploadFile.getId());
+    tDoc.setUploaderId(loggedUserId);
     try {
       await TransactionDocumentClientService.Create(tDoc);
     } catch (err) {
