@@ -6,7 +6,7 @@
 
 export {};
 
-import PropertyTable = require('../../../../modules/ComponentsLibrary/PropertyDropdown/index');
+import PropertyDropdown = require('../../../../modules/ComponentsLibrary/PropertyDropdown/index');
 import PropertyProto = require('@kalos-core/kalos-rpc/Property');
 import React = require('react');
 import Enzyme = require('enzyme');
@@ -16,12 +16,12 @@ import Chai = require('chai');
 import ResponseData = require('../../../test-constants/test-response-data');
 import Constants = require('../../../test-constants/constants');
 describe('ComponentsLibrary', () => {
-  describe('PropertyTable', () => {
-    describe('<PropertyTable />', () => {
+  describe('PropertyDropdown', () => {
+    describe('<PropertyDropdown />', () => {
       let wrapper: Enzyme.ReactWrapper;
       before(() => {
         wrapper = Enzyme.mount(
-          <PropertyTable.PropertyDropdown
+          <PropertyDropdown.PropertyDropdown
             userId={69}
             onSave={() => {}}
             onClose={() => {}}

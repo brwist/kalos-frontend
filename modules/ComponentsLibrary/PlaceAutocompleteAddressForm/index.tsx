@@ -1,5 +1,5 @@
 // This is the google autocomplete form for address queries
-import React, { createRef } from 'react';
+import React from 'react';
 import { ApiKeyClientService, PerDiemClientService } from '../../../helpers';
 import { Modal } from '../Modal';
 import { Form, Schema } from '../Form';
@@ -8,13 +8,7 @@ import { Alert } from '../Alert';
 import Typography from '@material-ui/core/Typography';
 import './styles.less';
 import { Loader } from '../../Loader/main';
-import FormControl from '@material-ui/core/FormControl';
-import FormHelperText from '@material-ui/core/FormHelperText';
-import InputLabel from '@material-ui/core/InputLabel';
-import MenuItem from '@material-ui/core/MenuItem';
-import Select from '@material-ui/core/Select';
 import { PerDiem } from '@kalos-core/kalos-rpc/compiled-protos/perdiem_pb';
-import { SectionBar } from '../SectionBar';
 interface Props {
   onClose: () => void;
   onSave: (addressPair: AddressPair.AddressPair) => void;
@@ -334,8 +328,6 @@ export class PlaceAutocompleteAddressForm extends React.PureComponent<
       });
     }
   }
-
-  componentDidUpdate() {}
 
   componentDidMount() {
     this.geolocate();

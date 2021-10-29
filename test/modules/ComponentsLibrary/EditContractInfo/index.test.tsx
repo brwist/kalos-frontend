@@ -40,8 +40,9 @@ describe('ComponentsLibrary', () => {
       before(() => {
         wrapper = Enzyme.mount(
           <EditContractInfo.EditContractInfo
+            contractID={1051}
             userID={8418}
-            onSave={() => {
+            onSaveStarted={() => {
               saves = true;
             }}
             onClose={() => {
@@ -63,14 +64,10 @@ describe('ComponentsLibrary', () => {
         closes = false;
       });
 
-      it('renders correctly', () => {
-        Chai.expect(wrapper.text().includes('New Contract')).to.equal(true);
-      });
-
-      describe('New Contract Section', () => {
+      describe('Edit Contract Section', () => {
         it('exists', () => {
           Chai.expect(
-            wrapper.find({ title: 'New Contract' }).length,
+            wrapper.find({ title: 'Edit Contract' }).length,
           ).to.be.greaterThanOrEqual(1);
         });
 
@@ -343,6 +340,7 @@ describe('ComponentsLibrary', () => {
         it('contains an Edit Invoice Data component', () => {
           Chai.expect(
             wrapper.containsMatchingElement(
+              // @ts-expect-error
               <EditInvoiceDataModule.EditInvoiceData />,
             ),
           ).to.be.equal(true);

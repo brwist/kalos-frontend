@@ -33,10 +33,10 @@ interface Props {
   propertyEvents: Event[];
   jobTypeOptions: Option[];
   jobSubtypeOptions: Option[];
-  jobTypeSubtypes: JobTypeSubtype[];
   onChange: (serviceItem: Event) => void;
   onValid: (valid: boolean) => void;
   onInitSchema: (fields: string[]) => void;
+  canBeCallback?: boolean; // if false, doesn't display 'Is Callback?' checkbox
 }
 
 export const Request: FC<Props> = forwardRef(
@@ -48,10 +48,10 @@ export const Request: FC<Props> = forwardRef(
       disabled,
       jobTypeOptions,
       jobSubtypeOptions,
-      jobTypeSubtypes,
       onChange,
       onValid,
       onInitSchema,
+      canBeCallback,
     },
     ref,
   ) => {
@@ -111,9 +111,8 @@ export const Request: FC<Props> = forwardRef(
       ],
     );
     const handleSetValid = useCallback(() => {
-      onValid(true)}
-      ,[onValid]
-    );
+      onValid(true);
+    }, [onValid]);
     const callbackOriginalOptions: Option[] = useMemo(
       () => [
         { label: OPTION_BLANK, value: 0 },
@@ -223,12 +222,14 @@ export const Request: FC<Props> = forwardRef(
             label: 'Is Callback?',
             name: 'getIsCallback',
             type: 'checkbox',
+            invisible: canBeCallback === false,
           },
           {
             label: 'Callback Regarding Service Call',
             name: 'getCallbackOriginalId',
             options: callbackOriginalOptions,
             disabled: !isCallback,
+            invisible: canBeCallback === false,
           },
         ],
         [
@@ -293,7 +294,13 @@ export const Request: FC<Props> = forwardRef(
           },
         ],
       ],
-      [callbackOriginalOptions, isCallback, jobSubtypeOptions, jobTypeOptions],
+      [
+        callbackOriginalOptions,
+        canBeCallback,
+        isCallback,
+        jobSubtypeOptions,
+        jobTypeOptions,
+      ],
     );
     useEffect(() => {
       if (!initSchemaCalled) {

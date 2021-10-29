@@ -170,7 +170,7 @@ export const ServiceCall: FC<Props> = props => {
     [setServicesRendered, serviceCallId],
   );
 
-  const handleSetError = useCallback((error: boolean) => setError(error), [
+  const handleSetError = useCallback((value: boolean) => setError(value), [
     setError,
   ]);
 
@@ -300,7 +300,7 @@ export const ServiceCall: FC<Props> = props => {
         setLoading(false);
       });
     } catch (e) {
-      handleSetError(e);
+      handleSetError(true);
       setLoaded(true);
       setLoading(false);
     }
@@ -419,14 +419,12 @@ export const ServiceCall: FC<Props> = props => {
   }, [
     entry,
     serviceCallId,
-    propertyId,
-    saveInvoice,
-    loggedUserId,
-    property,
-    setSaving,
-    setLoading,
     onSave,
     onClose,
+    saveInvoice,
+    property,
+    propertyId,
+    loggedUserId,
     loadEntry,
     loadServicesRenderedData,
   ]);
@@ -861,7 +859,6 @@ export const ServiceCall: FC<Props> = props => {
                     loading={loading}
                     jobTypeOptions={jobTypeOptions}
                     jobSubtypeOptions={jobSubtypeOptions}
-                    jobTypeSubtypes={jobTypeSubtypes}
                     onChange={handleChangeEntry}
                     disabled={saving}
                     onValid={setRequestValid}

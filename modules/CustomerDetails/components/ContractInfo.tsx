@@ -20,6 +20,7 @@ import { getRPCFields, formatDate, getCFAppUrl } from '../../../helpers';
 import { ContractDocuments } from './ContractDocuments';
 import './contractInfo.less';
 import { User } from '@kalos-core/kalos-rpc/User';
+import { EditContractInfo } from '../../ComponentsLibrary/EditContractInfo';
 
 const ContractClientService = new ContractClient(ENDPOINT);
 const ContractFrequencyClientService = new ContractFrequencyClient(ENDPOINT);
@@ -397,6 +398,16 @@ export const ContractInfo: FC<Props> = props => {
   ]);
   return (
     <>
+      {editing && (
+        <Modal open={true} onClose={() => handleToggleEditing()} fullScreen>
+          <EditContractInfo
+            userID={userID}
+            contractID={entry.getId()}
+            onSaveFinished={() => handleToggleEditing()}
+            onClose={() => handleToggleEditing()}
+          />
+        </Modal>
+      )}
       <div className="ContractInfo">
         <div className="ContractInfoPanel">
           {entry.getId() === 0 ? (
@@ -424,12 +435,7 @@ export const ContractInfo: FC<Props> = props => {
               actions={[
                 {
                   label: 'Edit',
-                  // onClick: handleToggleEditing, // TODO: finish edit form
-                  url: [
-                    getCFAppUrl('admin:contracts.edit'),
-                    `contract_id=${entry.getId()}`,
-                    'p=1',
-                  ].join('&'),
+                  onClick: handleToggleEditing,
                 },
                 {
                   label: 'Materials',
@@ -469,27 +475,6 @@ export const ContractInfo: FC<Props> = props => {
           <ContractDocuments contractID={entry.getId()} {...props} />
         </div>
       </div>
-      <Modal open={editing} onClose={handleToggleEditing}>
-        <div className="ContractInfoForm">
-          <Form<Contract>
-            title={`Customer: ${customer.getFirstname()} ${customer.getLastname()}`}
-            subtitle={
-              entry.getId() === 0
-                ? 'New contract'
-                : `Edit contract: ${entry.getNumber()}`
-            }
-            schema={SCHEMA}
-            data={entry}
-            onSave={handleSave}
-            onClose={handleToggleEditing}
-            disabled={saving}
-          />
-          <div className="ContractInfoProperties">
-            <SectionBar title="Properties" />
-            <InfoTable data={propertiesData} />
-          </div>
-        </div>
-      </Modal>
       <ConfirmDelete
         open={deleting}
         onClose={handleSetDeleting(false)}
