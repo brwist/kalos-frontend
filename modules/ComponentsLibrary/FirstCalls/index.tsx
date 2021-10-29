@@ -182,7 +182,7 @@ export const FirstCallDashboard: React.FC<Props> = function FirstCallDashboard({
         const techList : {id: number, name: string}[] = [];
         state.classTechs.map(tech => techList.push({id: tech.getUserId(), name: tech.getTechname()}));
         const data = {
-          isTomorrow: state.classTechs ? true : false,
+          isTomorrow: state.classTechs.length ? true : false,
           start: state.formData.classTime,
           list: techList,
         };
@@ -195,7 +195,7 @@ export const FirstCallDashboard: React.FC<Props> = function FirstCallDashboard({
         const techList : {id: number, name: string}[] = [];
         state.meetingTechs.map(tech => techList.push({id: tech.getUserId(), name: tech.getTechname()}));
         const data = {
-          isTomorrow: state.meetingTechs ? true : false,
+          isTomorrow: state.meetingTechs.length ? true : false,
           start: state.formData.meetingTime,
           list: techList,
         };
