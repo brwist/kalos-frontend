@@ -316,6 +316,7 @@ export class TxnCard extends React.PureComponent<props, state> {
     txnDocReq.setReference(file.getName());
     txnDocReq.setFileId(file.getId());
     txnDocReq.setTypeId(1);
+    txnDocReq.setUploaderId(this.props.loggedUserId);
     await TransactionDocumentClientService.upsertTransactionDocument(txnDocReq);
     alert('Upload complete');
   };
@@ -349,6 +350,7 @@ export class TxnCard extends React.PureComponent<props, state> {
     txnDocReq.setReference(file.getName());
     txnDocReq.setFileId(file.getId());
     txnDocReq.setTypeId(1);
+    txnDocReq.setUploaderId(this.props.loggedUserId);
     await TransactionDocumentClientService.upsertTransactionDocument(txnDocReq);
     alert('Upload complete');
   };
@@ -395,6 +397,7 @@ export class TxnCard extends React.PureComponent<props, state> {
     await this.props.toggleLoading();
     await TransactionDocumentClientService.upload(
       this.state.txn.getId(),
+      this.props.loggedUserId,
       `${timestamp()}-generated.pdf`,
       fileData,
     );
@@ -414,6 +417,7 @@ export class TxnCard extends React.PureComponent<props, state> {
     try {
       await TransactionDocumentClientService.upload(
         this.state.txn.getId(),
+        this.props.loggedUserId,
         this.FileInput.current!.files![0].name,
         this.LastSingleFileUpload?.filedata,
       );
