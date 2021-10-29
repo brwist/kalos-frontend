@@ -1089,6 +1089,7 @@ const NAMED_EXPORTS = {
     ['TimesheetDepartment', 'TimesheetDepartmentList'],
   'node_modules/@kalos-core/kalos-rpc/compiled-protos/transaction_pb.js': [
     'Transaction',
+    'TxnDepartment',
     'TransactionList',
     'RecordPageReq',
   ],
