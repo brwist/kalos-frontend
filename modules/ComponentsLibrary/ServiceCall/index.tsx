@@ -284,16 +284,15 @@ export const ServiceCall: FC<Props> = props => {
           resolve();
         }),
       );
-      /*
-      promises.push(
-        new Promise<void>(async resolve => {
-          const projects = await loadProjects();
-          setProjects(projects);
-          resolve();
-        }),
-        
-      );
-*/
+
+      // promises.push(
+      //   new Promise<void>(async resolve => {
+      //     const projects = await loadProjects();
+      //     setProjects(projects);
+      //     resolve();
+      //   }),
+      // );
+
       Promise.all(promises).then(() => {
         console.log('all processes complete');
         setLoaded(true);
