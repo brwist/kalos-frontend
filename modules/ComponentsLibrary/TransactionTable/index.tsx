@@ -977,7 +977,11 @@ export const TransactionTable: FC<Props> = ({
     async (saved: any) => {
       let newTxn = new Transaction();
       let timestamp = saved['Date'];
-      if (timestamp != '') {
+      if (
+        timestamp != '' &&
+        timestamp != '0000-00-00 00:00:00' &&
+        timestamp != null
+      ) {
         newTxn.setTimestamp(saved['Date']);
       } else {
         console.log('not valid date');
