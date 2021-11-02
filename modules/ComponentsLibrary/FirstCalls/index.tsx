@@ -535,6 +535,7 @@ export const FirstCallDashboard: React.FC<Props> = function FirstCallDashboard({
       if (!state.newFirstCall) {
         firstCall.setId(state.firstCallId);
         const currentCall = await FirstCallClientService.Get(firstCall);
+        console.log(currentCall);
         id = currentCall.getId();
         if (state.saveTime !== currentCall.getDateCreated()) {
           allowSave = false;
@@ -558,6 +559,7 @@ export const FirstCallDashboard: React.FC<Props> = function FirstCallDashboard({
       }
     } catch (err) {
       console.error(err);
+      console.log("The error is in this area");
       updateFirstCallState({ type: 'setNotification', data: {hasNotification: true, notificationType: "error", notificationMessage: "Failed to Save First Call Information"}});
     }
   }, [
