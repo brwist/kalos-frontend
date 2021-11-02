@@ -926,7 +926,7 @@ export const DispatchDashboard: React.FC<Props> = function DispatchDashboard({
             </div>
 
             <Grid container spacing={1} style={{width:(window.innerWidth * .85)}}>
-              <Grid item md={7} xs={12}>
+              <Grid item md={7} xs={10}>
                 <Grid container spacing={2}>
                 <Grid item md={6} xs={12}>
                     <TableContainer style={{width:'100%'}}>
