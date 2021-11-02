@@ -1134,7 +1134,7 @@ export const FirstCallDashboard: React.FC<Props> = function FirstCallDashboard({
             <div style={{borderStyle:'solid', borderBottom:'1px', width:'98%', margin:'auto'}}></div>
           </Grid>
           <Grid container style={{paddingTop:'30px', paddingBottom:'20px'}}>
-            <Grid item xs={4}>       
+            <Grid item xs={12} md={4}>       
               <div style={{margin:'auto', width:'92%', opacity:state.isProcessing? 0.2 : 1}}>
                 <Typography style={{textAlign:'center', fontWeight:'bold', fontSize:'32px'}}>
                   Available Technicians
@@ -1175,7 +1175,7 @@ export const FirstCallDashboard: React.FC<Props> = function FirstCallDashboard({
                 />
               </div>
             </Grid>
-            <Grid item xs={8}>
+            <Grid item xs={12} md={8}>
               <div style={{margin:'auto', width:'92%'}}>
                 <Typography style={{textAlign:'center', fontWeight:'bold', fontSize:'32px'}}>
                   Available Calls
@@ -1198,7 +1198,7 @@ export const FirstCallDashboard: React.FC<Props> = function FirstCallDashboard({
             <div style={{borderStyle:'solid', borderBottom:'1px', width:'98%', margin:'auto'}}></div>
           </Grid>
           <Grid container style={{paddingTop:'20px', paddingBottom:'20px'}}>
-            <Grid item xs={4}>
+            <Grid item md={4} xs={12}>
               <div style={{margin:'auto', width:'92%'}}>
                 {state.googleApiKey != '' && (
                   <DispatchMap 
@@ -1214,7 +1214,7 @@ export const FirstCallDashboard: React.FC<Props> = function FirstCallDashboard({
                 )}
               </div>
             </Grid>
-            <Grid item xs={8}>
+            <Grid item md={8} xs={12}>
               <div style={{margin:'auto', width:'92%'}}>
                 <Typography style={{fontWeight:'bold', fontSize:'32px', textAlign:'center'}}>
                   First Call Queue                    
@@ -1275,9 +1275,9 @@ export const FirstCallDashboard: React.FC<Props> = function FirstCallDashboard({
             </div>
 
             <Grid container spacing={3} style={{width:(window.innerWidth * .95)}}>
-              <Grid item xs={8}>
+              <Grid item md={8} xs={12}>
                 <Grid container>
-                  <Grid item xs={6}>
+                  <Grid item md={6} xs={12}>
                     <TableContainer style={{width:'100%'}}>
                       <Table>
                         <TableHead></TableHead>
@@ -1302,7 +1302,7 @@ export const FirstCallDashboard: React.FC<Props> = function FirstCallDashboard({
                       </Table>
                     </TableContainer>
                   </Grid>
-                  <Grid item xs={6}>
+                  <Grid item md={6} xs={12}>
                     <TableContainer style={{width:'100%'}}>
                       <Table>
                         <TableHead></TableHead>
@@ -1358,7 +1358,7 @@ export const FirstCallDashboard: React.FC<Props> = function FirstCallDashboard({
                   </TableContainer>
                 </Grid>
               </Grid>
-              <Grid item xs={4} style={{margin:'auto', position:'relative'}}>
+              <Grid item md={4} xs={12} style={{margin:'auto', position:'relative'}}>
                 {state.isProcessing && (
                   <CircleProgress
                     style={{
