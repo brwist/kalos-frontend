@@ -1033,7 +1033,7 @@ export const DispatchDashboard: React.FC<Props> = function DispatchDashboard({
           <ServiceRequest
             loggedUserId={loggedUserId}
             propertyId={state.selectedCall.getPropertyId()}
-            userID={loggedUserId}
+            userID={state.selectedCall.getUserId()}
             serviceCallId={state.selectedCall.getId()}
             onClose={() => resetModal(false, true)}
           />
