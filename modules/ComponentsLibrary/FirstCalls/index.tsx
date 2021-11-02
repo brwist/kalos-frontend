@@ -1275,7 +1275,7 @@ export const FirstCallDashboard: React.FC<Props> = function FirstCallDashboard({
             </div>
 
             <Grid container spacing={3} style={{width:(window.innerWidth * .95)}}>
-              <Grid item md={8} xs={12}>
+              <Grid item md={8} xs={10}>
                 <Grid container>
                   <Grid item md={6} xs={12}>
                     <TableContainer style={{width:'100%'}}>
