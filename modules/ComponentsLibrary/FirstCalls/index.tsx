@@ -3,7 +3,7 @@ import { FormData, FirstCallType, TechObj, CallObj, State, reducer } from './red
 import { ClassMeeting } from './classMeeting';
 import { PageWrapper } from '../../PageWrapper/main';
 import { SectionBar } from '../SectionBar';
-import { Alert } from '../Alert';
+import { Alert as ModalAlert } from '../Alert';
 import { Modal } from '../Modal';
 import { Schema, PlainForm } from '../PlainForm';
 import { DispatchTechs } from '../Dispatch/dispatchTechnicians';
@@ -60,8 +60,12 @@ import { Loader } from '../../Loader/main';
 import { ServiceRequest } from '../ServiceCall/requestIndex';
 import Checkbox from '@material-ui/core/Checkbox';
 import { Confirm } from '../Confirm';
-
-
+import Alert from '@material-ui/lab/Alert';
+import AlertTitle from '@material-ui/lab/AlertTitle';
+import Collapse from '@material-ui/core/Collapse';
+import Box from '@material-ui/core/Box';
+import IconButton from '@material-ui/core/IconButton';
+import CloseIcon from '@material-ui/icons/Close';
 
 export interface Props {
   loggedUserId: number;
@@ -150,6 +154,9 @@ const initialState : State = {
   tempAssigneeList: '',
   refreshCalls: false,
   isApproved: false,
+  hasNotification: false,
+  notificationType: '',
+  notificationMessage: '',
 };
 
 export const FirstCallDashboard: React.FC<Props> = function FirstCallDashboard({
@@ -310,8 +317,20 @@ export const FirstCallDashboard: React.FC<Props> = function FirstCallDashboard({
       updateFormData.division = data.division;
       const departmentReq = new TimesheetDepartment();
       departmentReq.setSectorGroup(data.division);
-      const departments = await TimesheetDepartmentClientService.BatchGet(departmentReq);
-      updateFormData.departmentIds = departments.getResultsList().map(dep => dep.getId());
+      try {
+        const departments = await TimesheetDepartmentClientService.BatchGet(departmentReq);
+        updateFormData.departmentIds = departments.getResultsList().map(dep => dep.getId());
+      } catch (err) {
+        console.error(err);
+        updateFirstCallState({
+          type: 'setNotification',
+          data: {
+            hasNotification: true,
+            notificationType: 'error',
+            notificationMessage: 'Failed To Retrieve Departments'
+          }
+        })
+      }
       if (state.loaded) {
         resetPage = true;
       }
@@ -340,7 +359,6 @@ export const FirstCallDashboard: React.FC<Props> = function FirstCallDashboard({
           currentFC: state.savedFirstCall,
         }
       });
-      console.log("this is accurate");
     } else {
       let assignees : {id: number, name: string}[] = [];
       let ids = call.getLogTechnicianAssigned().split(',').map(Number);
@@ -364,6 +382,7 @@ export const FirstCallDashboard: React.FC<Props> = function FirstCallDashboard({
         });
       } catch (err) {
         console.error('Error Occurred when Getting Assigned Users', err);
+        updateFirstCallState({ type: 'setNotification', data: {hasNotification: true, notificationType: 'error', notificationMessage: 'Failed to Retrieve Assigned Technicians for Call'}})
       }
     }
   }
@@ -450,10 +469,11 @@ export const FirstCallDashboard: React.FC<Props> = function FirstCallDashboard({
           console.error(
             `An error occurred while geocoding: ${err}`
           );
+          updateFirstCallState({type: 'setNotification', data: {hasNotification: true, notificationType: "error", notificationMessage: "Failed to Retrieve Latitude and Longitude"}});
           newCenter = {lat: 0, lng: 0};
         }
       } else {
-        alert("No Valid Latitude, Longitude, or Address found");
+        updateFirstCallState({type: 'setNotification', data: {hasNotification: true, notificationType: "warning", notificationMessage: "No Valid Latitude, Longitude, or Address found"}});
       }
     }
     if (newCenter.lat != 0 || newCenter.lng != 0) {
@@ -478,6 +498,7 @@ export const FirstCallDashboard: React.FC<Props> = function FirstCallDashboard({
       updateFirstCallState({ type: 'setCalls', data: {available: newCalls.availableCalls, assigned: newCalls.assignedCalls} });
     } catch (err) {
       console.error(err);
+      updateFirstCallState({ type: 'setNotification', data: {hasNotification: true, notificationType: "error", notificationMessage: `Failed to Update Call ${state.selectedCall.getId()}`}});
     }
   }
 
@@ -510,28 +531,34 @@ export const FirstCallDashboard: React.FC<Props> = function FirstCallDashboard({
     };
     const firstCallJSON = JSON.stringify(updatedFirstCall);
     const firstCall = new FirstCall();
-    if (!state.newFirstCall) {
-      firstCall.setId(state.firstCallId);
-      const currentCall = await FirstCallClientService.Get(firstCall);
-      id = currentCall.getId();
-      if (state.saveTime !== currentCall.getDateCreated()) {
-        allowSave = false;
+    try {
+      if (!state.newFirstCall) {
+        firstCall.setId(state.firstCallId);
+        const currentCall = await FirstCallClientService.Get(firstCall);
+        id = currentCall.getId();
+        if (state.saveTime !== currentCall.getDateCreated()) {
+          allowSave = false;
+        }
       }
-    }
-    firstCall.setDateCreated(saveTime);
-    firstCall.setSector(state.formData.division);
-    firstCall.setJson(firstCallJSON);
-    if (!allowSave) {
-      alert("Please Refresh Page");
-      updateFirstCallState({ type: 'setFailedSave', data: {save: false, error: 'DateMismatch'}});
-    } else {
-      if (state.newFirstCall) {
-        const newCall = await FirstCallClientService.Create(firstCall);
-        id = newCall.getId();
-      } else if (allowSave) {
-        await FirstCallClientService.Update(firstCall);
-      } 
-      updateFirstCallState({ type: 'setSave', data: {save: false, saveTime: saveTime, firstCallId: id, isNew: false}});
+      firstCall.setDateCreated(saveTime);
+      firstCall.setSector(state.formData.division);
+      firstCall.setJson(firstCallJSON);
+      if (!allowSave) {
+        updateFirstCallState({ type: 'setFailedSave', data: {save: false, error: 'DateMismatch'}});
+        updateFirstCallState({ type: 'setNotification', data: {hasNotification: true, notificationType: "warning", notificationMessage: "A Newer Version Exists.  Please Refresh the Page."}});
+      } else {
+        if (state.newFirstCall) {
+          const newCall = await FirstCallClientService.Create(firstCall);
+          id = newCall.getId();
+        } else if (allowSave) {
+          await FirstCallClientService.Update(firstCall);
+        } 
+        updateFirstCallState({ type: 'setSave', data: {save: false, saveTime: saveTime, firstCallId: id, isNew: false}});  
+        updateFirstCallState({ type: 'setNotification', data: {hasNotification: true, notificationType: "success", notificationMessage: "Save Successful!"}});
+      }
+    } catch (err) {
+      console.error(err);
+      updateFirstCallState({ type: 'setNotification', data: {hasNotification: true, notificationType: "error", notificationMessage: "Failed to Save First Call Information"}});
     }
   }, [
     state.firstCallCalls, state.firstCallMeeting,
@@ -603,6 +630,7 @@ export const FirstCallDashboard: React.FC<Props> = function FirstCallDashboard({
       return {techList: techList, scheduledOff: timeoffIds};
     } catch (err) {
       console.error(err)
+      updateFirstCallState({ type: 'setNotification', data: {hasNotification: true, notificationType: "error", notificationMessage: "Failed to Retrieve Technician List"}});
       return {techList: [], scheduledOff: []}
     }
   }, [state.formData.departmentIds]);
@@ -656,6 +684,7 @@ export const FirstCallDashboard: React.FC<Props> = function FirstCallDashboard({
         return filteredCallList;
     } catch (err) {
       console.error(err);
+      updateFirstCallState({ type: 'setNotification', data: {hasNotification: true, notificationType: "error", notificationMessage: "Failed to Retrieve Service Calls"}});
       return [];
     }
   }, [state.formData.jobTypes, state.formData.division])
@@ -686,9 +715,8 @@ export const FirstCallDashboard: React.FC<Props> = function FirstCallDashboard({
       const jobTypes = await JobTypeClientService.BatchGet(jobTypeReq);
       return {jobTypes: jobTypes.getResultsList()};
     } catch (err) {
-      console.error(
-        `An error occurred while getting Job Types: ${err}`
-        );
+      console.error(`An error occurred while getting Job Types: ${err}`);
+      updateFirstCallState({ type: 'setNotification', data: {hasNotification: true, notificationType: "error", notificationMessage: "Failed to Retrieve Job Types"}});
       return {jobTypes: []};
     }
   }
@@ -703,6 +731,7 @@ export const FirstCallDashboard: React.FC<Props> = function FirstCallDashboard({
       console.error(
         `An error occurred while getting Google API Key: ${err}`
         );
+      updateFirstCallState({ type: 'setNotification', data: {hasNotification: true, notificationType: "error", notificationMessage: "Failed to Load Google Maps"}});
       return {googleKey: ''};
     }
   };
@@ -755,6 +784,7 @@ export const FirstCallDashboard: React.FC<Props> = function FirstCallDashboard({
         data: sectorList});
     } catch(err) {
       console.error(err);
+      updateFirstCallState({ type: 'setNotification', data: {hasNotification: true, notificationType:"error", notificationMessage: "Failed to User Department Information"}});
     }
   }, [handleFormDataUpdate, loggedUserId])
 
@@ -913,11 +943,14 @@ export const FirstCallDashboard: React.FC<Props> = function FirstCallDashboard({
     if (state.save) {
       handleSave();
     }
+    if (state.hasNotification && state.notificationType === "success") {
+      setTimeout(() => {updateFirstCallState({type: 'setNotification', data: {hasNotification: false, notificationType: "", notificationMessage: ""}})}, 5000);
+    }
     if (state.loaded) {
       const interval = setInterval(() => {setCalls(true);setTechs()}, 30000);
       return () => clearInterval(interval);
     }
-  }, [state.loaded, state.save, handleSave, state.refreshCalls, setCalls, setTechs, load, checkDivision, state.formData.division, state.formData.departmentIds])
+  }, [state.loaded, state.save, handleSave, state.refreshCalls, setCalls, setTechs, load, checkDivision, state.formData.division, state.formData.departmentIds, state.hasNotification, state.notificationType])
   
   return (
     <PageWrapper userID={loggedUserId}>
@@ -925,6 +958,28 @@ export const FirstCallDashboard: React.FC<Props> = function FirstCallDashboard({
         title="First Calls" 
         styles={{backgroundColor: "#711313", color: "white", zIndex:3}} 
       />
+      <Box sx={{width:'100%', position: 'absolute', zIndex:3}}>
+        <Collapse in={state.hasNotification}>
+          <Alert
+            action={
+              <IconButton
+                aria-label="close"
+                color="inherit"
+                size="small"
+                onClick={() => {updateFirstCallState({type: 'setNotification', data: {hasNotification: false, notificationType: '', notificationMessage: ''}})}}
+              >
+                <CloseIcon fontSize="inherit" />
+              </IconButton>
+            }
+            severity={state.notificationType === 'error' ? "error" : state.notificationType === 'success' ? "success" : state.notificationType === "warning" ? "warning" : undefined}
+          >
+            <AlertTitle>
+              {state.notificationType === 'error' ? "ERROR!" : state.notificationType === 'success' ? "SUCCESS!" : state.notificationType === "warning" ? "WARNING!" : ""}
+            </AlertTitle>
+            {state.notificationMessage} {state.notificationType === 'error' ? `- If This Error Continues, Please Contact Webtech.` : ``}
+          </Alert>
+        </Collapse>
+      </Box>
       {!state.loaded && (
         <Grid container spacing={1} style={{paddingTop:'20px'}}>
         <Grid item xs={12}>
@@ -1240,7 +1295,7 @@ export const FirstCallDashboard: React.FC<Props> = function FirstCallDashboard({
         open={state.openModal}
         onClose={resetModal}
       >
-        <Alert
+        <ModalAlert
           open={state.modalKey === 'Class' || state.modalKey === 'Meeting'}
           onClose={resetModal}
           title={`${state.modalKey} Tomorrow`}
@@ -1261,9 +1316,9 @@ export const FirstCallDashboard: React.FC<Props> = function FirstCallDashboard({
             formData={state.formData}
             handleFormDataUpdate={handleFormDataUpdate}
           />
-        </Alert>
+        </ModalAlert>
         {state.modalKey === 'callInfo' && (
-          <Alert
+          <ModalAlert
             open
             onClose={resetModal}
             title="Call Info"
@@ -1441,7 +1496,7 @@ export const FirstCallDashboard: React.FC<Props> = function FirstCallDashboard({
                 </List>
               </Grid>
             </Grid>
-          </Alert>
+          </ModalAlert>
         )}
         {state.modalKey === 'editRequest' && (
           <ServiceRequest
