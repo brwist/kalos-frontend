@@ -16,7 +16,7 @@ import CloseIcon from '@material-ui/icons/Close';
 import UploadIcon from '@material-ui/icons/CloudUploadSharp';
 import DoneIcon from '@material-ui/icons/Done';
 import Save from '@material-ui/icons/Save';
-import { PDFDocument, PDFImage, PDFPage } from 'pdf-lib';
+import { PDFDocument, PDFImage, PDFPage, PageSizes } from 'pdf-lib';
 import CopyIcon from '@material-ui/icons/FileCopySharp';
 import RejectIcon from '@material-ui/icons/ThumbDownSharp';
 import SubmitIcon from '@material-ui/icons/ThumbUpSharp';
@@ -1156,8 +1156,6 @@ export const TransactionTable: FC<Props> = ({
     height: 297,
   };
 
-  const PDFLib = require('pdf-lib'),
-    fs = require('fs');
   const imageDimensionToFit = (
     image: PDFImage,
     container: { width: number; height: number },
@@ -1184,14 +1182,14 @@ export const TransactionTable: FC<Props> = ({
   const toPdfPromise = async (file: UploadData) => {
     const pdf = await PDFDocument.create();
 
-    const page = pdf.addPage(PDFLib.PageSizes.A4);
+    const page = pdf.addPage(PageSizes.A4);
     const imageUInt8Array = file.fileData;
 
     try {
       console.log('embed jpeg');
       const tempImage = await pdf.embedJpg(imageUInt8Array);
       try {
-        const [a4_width, a4_height] = PDFLib.PageSizes.A4;
+        const [a4_width, a4_height] = PageSizes.A4;
         const dimensions = imageDimensionToFit(tempImage, {
           width: a4_width,
           height: a4_height,
@@ -1210,7 +1208,7 @@ export const TransactionTable: FC<Props> = ({
       try {
         const tempImage = await pdf.embedPng(imageUInt8Array);
         try {
-          const [a4_width, a4_height] = PDFLib.PageSizes.A4;
+          const [a4_width, a4_height] = PageSizes.A4;
           const dimensions = imageDimensionToFit(tempImage, {
             width: a4_width,
             height: a4_height,
