@@ -16,6 +16,7 @@ import CloseIcon from '@material-ui/icons/Close';
 import UploadIcon from '@material-ui/icons/CloudUploadSharp';
 import DoneIcon from '@material-ui/icons/Done';
 import Save from '@material-ui/icons/Save';
+import { PDFDocument } from 'pdf-lib';
 import CopyIcon from '@material-ui/icons/FileCopySharp';
 import RejectIcon from '@material-ui/icons/ThumbDownSharp';
 import SubmitIcon from '@material-ui/icons/ThumbUpSharp';
@@ -33,7 +34,13 @@ import {
   OPTION_ALL,
   WaiverTypes,
 } from '../../../constants';
-import { FilterType, PopupType, reducer } from './reducer';
+import {
+  FilterType,
+  PopupType,
+  reducer,
+  MergeDocuments,
+  UploadData,
+} from './reducer';
 import {
   makeFakeRows,
   OrderDir,
@@ -48,6 +55,7 @@ import {
   DevlogClientService,
   TransactionAccountClientService,
 } from '../../../helpers';
+import { jsPDF } from 'jspdf';
 import { AltGallery } from '../../AltGallery/main';
 import { Tooltip } from '../../ComponentsLibrary/Tooltip';
 import { Loader } from '../../Loader/main';
@@ -75,6 +83,9 @@ import { Form } from '../Form';
 import { ACTIONS } from './reducer';
 import { Devlog } from '@kalos-core/kalos-rpc/Devlog';
 import { TxnDepartment } from '@kalos-core/kalos-rpc/compiled-protos/transaction_pb';
+import { stringify } from 'querystring';
+import { truncateSync } from 'fs';
+import { getMimeType } from '@kalos-core/kalos-rpc/Common';
 
 export interface Props {
   loggedUserId: number;
@@ -130,6 +141,9 @@ export const TransactionTable: FC<Props> = ({
     transactionFilter: filter,
     transactions: undefined,
     totalTransactions: 0,
+    openMerge: false,
+    document1: { fileData: '', width: 0, height: 0 },
+    document2: { fileData: '', width: 0, height: 0 },
     costCenterData: new TransactionAccountList(),
     transactionActivityLogs: [],
     costCenters: [{ label: 'temp', value: 0 }],
@@ -879,6 +893,52 @@ export const TransactionTable: FC<Props> = ({
       },
     ],
   ];
+  const handleFileLoad = useCallback((stateFile: string, file) => {
+    let width = 0;
+    let height = 0;
+    const img = new Image();
+    try {
+      //TO-DO Still have to get image height/width for formatting
+      width = img.width;
+      height = img.height;
+    } catch (e) {
+      console.log('not an image', e);
+    }
+    if (stateFile == 'document1') {
+      dispatch({
+        type: ACTIONS.SET_MERGE_DOCUMENT1,
+        data: { fileData: file, width: width, height: height },
+      });
+    }
+    if (stateFile == 'document2') {
+      console.log(width);
+      console.log(height);
+      dispatch({
+        type: ACTIONS.SET_MERGE_DOCUMENT2,
+        data: { fileData: file, width: width, height: height },
+      });
+    }
+  }, []);
+  const SCHEMA_MERGE_DOCUMENTS: Schema<MergeDocuments> = [
+    [
+      {
+        name: 'document1',
+        label: 'File',
+        type: 'file',
+        required: true,
+        onFileLoad: e => handleFileLoad('document1', e),
+      },
+    ],
+    [
+      {
+        name: 'document2',
+        label: 'File2',
+        type: 'file',
+        required: true,
+        onFileLoad: e => handleFileLoad('document2', e),
+      },
+    ],
+  ];
 
   const SCHEMA: Schema<FilterData> = [
     [
@@ -1091,7 +1151,89 @@ export const TransactionTable: FC<Props> = ({
     state.loaded,
     state.searching,
   ]);
+  const A4_PAPER_DIMENSIONS = {
+    width: 210,
+    height: 297,
+  };
 
+  const A4_PAPER_RATIO = A4_PAPER_DIMENSIONS.width / A4_PAPER_DIMENSIONS.height;
+
+  const generatePdfFromImages = (image: UploadData) => {
+    // Default export is A4 paper, portrait, using millimeters for units.
+    const doc = new jsPDF();
+
+    // We let the images add all pages,
+    // therefore the first default page can be removed.
+    doc.deletePage(1);
+
+    doc.addPage();
+    doc.addImage(
+      image.fileData,
+      'image/png',
+      A4_PAPER_DIMENSIONS.width / 2,
+      A4_PAPER_DIMENSIONS.height / 2,
+      image.width,
+      image.height,
+      'NONE',
+      'NONE',
+      0,
+    );
+
+    // Creates a PDF and opens it in a new browser tab.
+    const pdfURL = doc.output('arraybuffer');
+    console.log('pdfURL', pdfURL);
+    return pdfURL;
+  };
+  const mergePdf = async () => {
+    const mergedPdf = await PDFDocument.create();
+    console.log('creating document');
+    let pdfA = await PDFDocument.create();
+    let pdfB = await PDFDocument.create();
+    try {
+      pdfA = await PDFDocument.load(state.document1.fileData);
+    } catch (e) {
+      try {
+        pdfA = await PDFDocument.load(generatePdfFromImages(state.document1));
+        console.log('first document not a pdf');
+      } catch (e) {
+        console.log('failed to load document a as pdf or image ', e);
+      }
+    }
+    try {
+      pdfB = await PDFDocument.load(state.document2.fileData);
+    } catch (e) {
+      try {
+        pdfB = await PDFDocument.load(generatePdfFromImages(state.document2));
+      } catch (e) {
+        console.log('failed to load document b as a pdf and image ', e);
+      }
+
+      console.log('second document not a pdf ', e);
+    }
+    console.log('loading documents');
+
+    const copiedPagesA = await mergedPdf.copyPages(pdfA, pdfA.getPageIndices());
+    console.log('copying from a');
+
+    copiedPagesA.forEach(page => mergedPdf.addPage(page));
+
+    const copiedPagesB = await mergedPdf.copyPages(pdfB, pdfB.getPageIndices());
+    console.log('copying from b');
+
+    copiedPagesB.forEach(page => mergedPdf.addPage(page));
+
+    const mergedPdfFile = await mergedPdf.save();
+    console.log('copying saving');
+
+    var link = document.createElement('a');
+    var blob = new Blob([mergedPdfFile], { type: 'application/pdf' });
+    link.href = window.URL.createObjectURL(blob);
+    console.log('creating url');
+
+    var fileName = 'MergedDocument';
+    link.download = fileName;
+    link.click();
+  };
   return (
     <ErrorBoundary key="ErrorBoundary">
       {state.imageWaiverTypePopupOpen && (
@@ -1180,6 +1322,26 @@ export const TransactionTable: FC<Props> = ({
             submitLabel="Upload"
             data={state.imageWaiverTypeFormData}
           />
+        </Modal>
+      )}
+      {state.openMerge && (
+        <Modal
+          open={state.openMerge}
+          onClose={() =>
+            dispatch({ type: ACTIONS.SET_OPEN_MERGE, data: false })
+          }
+        >
+          <Form<MergeDocuments>
+            key="mergeDocuments"
+            title="Merge PDFs"
+            schema={SCHEMA_MERGE_DOCUMENTS}
+            data={{ document1: state.document1, document2: state.document2 }}
+            onSave={mergePdf}
+            submitLabel="Save"
+            onClose={() =>
+              dispatch({ type: ACTIONS.SET_OPEN_MERGE, data: false })
+            }
+          ></Form>
         </Modal>
       )}
       {state.loading ? <Loader /> : <> </>}
@@ -1312,6 +1474,15 @@ export const TransactionTable: FC<Props> = ({
           hasActions &&
           (state.role == 'AccountsPayable' || state.role == 'Manager')
             ? [
+                {
+                  label: 'Merge 2 Documents',
+                  onClick: () => {
+                    dispatch({
+                      type: ACTIONS.SET_OPEN_MERGE,
+                      data: true,
+                    });
+                  },
+                },
                 {
                   label: 'New Transaction',
                   onClick: () => {
