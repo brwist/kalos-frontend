@@ -562,6 +562,7 @@ export const FirstCallDashboard: React.FC<Props> = function FirstCallDashboard({
       }
     } catch (err) {
       console.error(err);
+      updateFirstCallState({ type: 'setFailedSave', data: {save: false, error: 'Error'}});
       updateFirstCallState({ type: 'setNotification', data: {hasNotification: true, notificationType: "error", notificationMessage: "Failed to Save First Call Information"}});
     }
   }, [

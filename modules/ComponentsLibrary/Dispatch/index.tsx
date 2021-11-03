@@ -351,7 +351,7 @@ export const DispatchDashboard: React.FC<Props> = function DispatchDashboard({
     try{
       await ActivityLogClientService.Create(actLog);
       await ServicesRenderedClientService.Create(service);
-      if (!disableSlack) SlackClientService.DirectMessageUser(testUserId ? 103939 : state.selectedTech.getUserId(), `Go Home, ${state.selectedTech.getTechname()}`);
+      if (!disableSlack) SlackClientService.DirectMessageUser(testUserId ? 103939 : state.selectedTech.getUserId(), `Go Home, ${state.selectedTech.getTechname()}`, loggedUserId);
     } catch (err) {
       console.error(
         `An error occurred while creating the Activity Log and Service Rendered for the dismissal: ${err}`
@@ -377,7 +377,7 @@ export const DispatchDashboard: React.FC<Props> = function DispatchDashboard({
     try{
       await ActivityLogClientService.Create(actLog);
       await ServicesRenderedClientService.Create(service);
-      if (!disableSlack) SlackClientService.DirectMessageUser(testUserId ? 103939 : tech.getUserId(), `False Alarm, ${tech.getTechname()}!  I need you back on the schedule!`);
+      if (!disableSlack) SlackClientService.DirectMessageUser(testUserId ? 103939 : tech.getUserId(), `False Alarm, ${tech.getTechname()}!  I need you back on the schedule!`, loggedUserId);
     } catch (err) {
       console.error(
         `An error occured while create the Activity Log and Service Rendered for the Un-Dismissal: ${err}`
