@@ -23,7 +23,15 @@ type SelectorParams = {
   txn: Transaction;
   totalCount: number;
 };
-
+export type UploadData = {
+  fileData: string;
+  width: number;
+  height: number;
+};
+export type MergeDocuments = {
+  document1: UploadData;
+  document2: UploadData;
+};
 export type State = {
   transactionFilter: FilterType;
   transactions: SelectorParams[] | undefined;
@@ -34,6 +42,9 @@ export type State = {
   costCenterData: TransactionAccountList;
   loading: boolean;
   orderBy: string;
+  openMerge: boolean;
+  document1: UploadData;
+  document2: UploadData;
   orderDir: OrderDir | undefined;
   costCenters: { label: string; value: number }[];
   changingPage: boolean;
@@ -82,6 +93,9 @@ export enum ACTIONS {
   SET_LOADING = 'setLoading',
   SET_LOADED = 'setLoaded',
   SET_ORDER = 'setOrder',
+  SET_MERGE_DOCUMENT1 = 'setMergeDocument1',
+  SET_MERGE_DOCUMENT2 = 'setMergeDocument2',
+  SET_OPEN_MERGE = 'setOpenMerge',
   UPDATE_LOCAL_STATUS = 'updateLocalStatus',
   SET_CHANGING_PAGE = 'setChangingPage',
   SET_MERGING_TRANSACTION = 'setMergingTransaction',
@@ -161,6 +175,18 @@ export type Action =
   | {
       type: ACTIONS.SET_COST_CENTERS;
       data: { label: string; value: number }[];
+    }
+  | {
+      type: ACTIONS.SET_OPEN_MERGE;
+      data: boolean;
+    }
+  | {
+      type: ACTIONS.SET_MERGE_DOCUMENT1;
+      data: UploadData;
+    }
+  | {
+      type: ACTIONS.SET_MERGE_DOCUMENT2;
+      data: UploadData;
     }
   | {
       type: ACTIONS.SET_COST_CENTER_DATA;
@@ -259,6 +285,12 @@ export const reducer = (state: State, action: Action) => {
         employees: action.data,
       };
     }
+    case ACTIONS.SET_OPEN_MERGE: {
+      return {
+        ...state,
+        openMerge: action.data,
+      };
+    }
     case ACTIONS.SET_DEPARTMENTS: {
       return {
         ...state,
@@ -280,6 +312,19 @@ export const reducer = (state: State, action: Action) => {
       return {
         ...state,
         page: action.data,
+      };
+    }
+    case ACTIONS.SET_MERGE_DOCUMENT1: {
+      return {
+        ...state,
+        document1: action.data,
+      };
+    }
+    case ACTIONS.SET_MERGE_DOCUMENT2: {
+      console.log(action.data);
+      return {
+        ...state,
+        document2: action.data,
       };
     }
     case ACTIONS.SET_ASSIGNED_EMPLOYEE: {
