@@ -535,9 +535,6 @@ export const FirstCallDashboard: React.FC<Props> = function FirstCallDashboard({
       if (!state.newFirstCall) {
         firstCall.setId(state.firstCallId);
         const currentCall = await FirstCallClientService.Get(firstCall);
-        console.log(currentCall);
-        console.log(currentCall.getDateCreated());
-        console.log(state.saveTime);
         id = currentCall.getId();
         if (state.saveTime !== currentCall.getDateCreated()) {
           allowSave = false;
@@ -546,7 +543,6 @@ export const FirstCallDashboard: React.FC<Props> = function FirstCallDashboard({
       firstCall.setDateCreated(saveTime);
       firstCall.setSector(state.formData.division);
       firstCall.setJson(firstCallJSON);
-      console.log(firstCallJSON);
       if (!allowSave) {
         updateFirstCallState({ type: 'setFailedSave', data: {save: false, error: 'DateMismatch'}});
         updateFirstCallState({ type: 'setNotification', data: {hasNotification: true, notificationType: "warning", notificationMessage: "A Newer Version Exists.  Please Refresh the Page."}});

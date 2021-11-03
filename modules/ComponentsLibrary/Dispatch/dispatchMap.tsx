@@ -46,17 +46,23 @@ export const DispatchMap: FC<props> = props => {
           />
         )
       } else if (tech.getPropertyCity()) {
+        console.log("Tech Geocode Running");
         const geocode = new google.maps.Geocoder();
-        const results = await geocode.geocode({address: tech.getPropertyCity()});
+        try {
+          const results = await geocode.geocode({address: tech.getPropertyCity()});
 
-        return ( <Marker
-            position={{lat: results.results[0].geometry.location.lat(), lng: results.results[0].geometry.location.lng()}}
-            icon={icon}
-            label={{text: tech.getTechname(), fontWeight:'bold', fontSize:'15px'}}
-            // onClick={() => props.handleMapClick(tech, new DispatchCall())}
-            key={`marker_${tech.getUserId()}`}
-          />
-        )
+          return ( <Marker
+              position={{lat: results.results[0].geometry.location.lat(), lng: results.results[0].geometry.location.lng()}}
+              icon={icon}
+              label={{text: tech.getTechname(), fontWeight:'bold', fontSize:'15px'}}
+              // onClick={() => props.handleMapClick(tech, new DispatchCall())}
+              key={`marker_${tech.getUserId()}`}
+            />
+          )
+        } catch (err) {
+          console.error(err);
+          return ( <Marker position={{lat: 0, lng: 0}} key={`marker_${tech.getUserId()}`}/>)  
+        }
       } else {
         return ( <Marker position={{lat: 0, lng: 0}} key={`marker_${tech.getUserId()}`}/>)
       }
@@ -84,10 +90,11 @@ export const DispatchMap: FC<props> = props => {
         />
         )
       } else if (call.getPropertyAddress()) {
+        console.log("Call Geocode Running");
         const geocode = new google.maps.Geocoder();
-        const results = await geocode.geocode({address: call.getPropertyAddress()});
-        
-        return ( <Marker
+        try {
+          const results = await geocode.geocode({address: call.getPropertyAddress()});
+          return ( <Marker
             position={{lat: results.results[0].geometry.location.lat(), lng: results.results[0].geometry.location.lng()}}
             icon={icon}
             label={{text: `${index + 1}`, fontWeight:'bold', fontSize:'15px'}}
@@ -95,6 +102,10 @@ export const DispatchMap: FC<props> = props => {
             key={`marker_${call.getId()}`}
           />
         )
+        } catch (err) {
+          console.error(err);
+          return ( <Marker position={{lat: 0, lng: 0}} key={`marker_${call.getId()}`}/>)
+        }
       } else {
         return ( <Marker position={{lat: 0, lng: 0}} key={`marker_${call.getId()}`}/>)
       }
