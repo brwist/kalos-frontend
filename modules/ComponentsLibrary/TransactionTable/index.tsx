@@ -1037,14 +1037,16 @@ export const TransactionTable: FC<Props> = ({
       newTxn.setOwnerId(saved['Purchaser']);
       newTxn.setDepartmentId(saved['Department']);
       newTxn.setJobId(saved['Job #']);
+      newTxn.setNotes(saved['Notes']);
       newTxn.setCostCenterId(saved['Cost Center ID']);
       newTxn.setAmount(saved['Amount']);
       newTxn.setVendor(saved['Vendor']);
       newTxn.setStatusId(2);
       newTxn.setVendorCategory('Receipt');
-      newTxn.setNotes(
-        `Order Number-${newTxn.getOrderNumber()},Job Number-${newTxn.getJobId()}`,
-      );
+      if (saved['Notes'] === '')
+        newTxn.setNotes(
+          `Order Number-${newTxn.getOrderNumber()},Job Number-${newTxn.getJobId()}`,
+        );
       let res: Transaction | undefined;
       try {
         res = await TransactionClientService.Create(newTxn);
@@ -1671,6 +1673,10 @@ export const TransactionTable: FC<Props> = ({
                 columnType: 'technician',
               },
               {
+                columnName: 'Notes',
+                columnType: 'text',
+              },
+              {
                 columnName: 'Creator',
                 columnType: 'technician',
               },
@@ -1730,6 +1736,11 @@ export const TransactionTable: FC<Props> = ({
             name: 'Vendor',
             dir: state.orderBy == 'vendor' ? state.orderDir : undefined,
             onClick: () => changeSort('vendor'),
+          },
+          {
+            name: 'Notes',
+            dir: state.orderBy == 'notes' ? state.orderDir : undefined,
+            onClick: () => changeSort('notes'),
           },
           { name: 'Actions' },
           {
@@ -1858,6 +1869,16 @@ export const TransactionTable: FC<Props> = ({
                       value: (
                         <div key="VendorValue">
                           {selectorParam.txn.getVendor()}
+                        </div>
+                      ),
+                      onClick: isSelector
+                        ? () => setTransactionChecked(idx)
+                        : undefined,
+                    },
+                    {
+                      value: (
+                        <div key="NotesValue">
+                          {selectorParam.txn.getNotes()}
                         </div>
                       ),
                       onClick: isSelector
