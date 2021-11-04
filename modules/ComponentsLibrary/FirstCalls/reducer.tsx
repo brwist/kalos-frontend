@@ -114,6 +114,9 @@ export interface State {
   tempAssigneeList: string;
   refreshCalls: boolean;
   isApproved: boolean;
+  hasNotification: boolean;
+  notificationType: string;
+  notificationMessage: string;
 }
 
 export type Action = 
@@ -208,6 +211,11 @@ export type Action =
   | { type: 'setRefreshCalls'; data: boolean }
   | { type: 'setSectorList'; data: number[] }
   | { type: 'setFinalApproval'; data: boolean }
+  | { type: 'setNotification'; data: {
+    hasNotification: boolean,
+    notificationType: string,
+    notificationMessage: string,
+  }}
 ;
 
 export const reducer = (state: State, action: Action) => {
@@ -411,6 +419,13 @@ export const reducer = (state: State, action: Action) => {
       return {
         ...state,
         isApproved: action.data,
+      }
+    case 'setNotification':
+      return {
+        ...state,
+        hasNotification: action.data.hasNotification,
+        notificationType: action.data.notificationType,
+        notificationMessage: action.data.notificationMessage,
       }
     default:
       return {

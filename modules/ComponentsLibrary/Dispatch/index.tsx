@@ -351,7 +351,7 @@ export const DispatchDashboard: React.FC<Props> = function DispatchDashboard({
     try{
       await ActivityLogClientService.Create(actLog);
       await ServicesRenderedClientService.Create(service);
-      if (!disableSlack) SlackClientService.DirectMessageUser(testUserId ? 103939 : state.selectedTech.getUserId(), `Go Home, ${state.selectedTech.getTechname()}`);
+      if (!disableSlack) SlackClientService.DirectMessageUser(testUserId ? 103939 : state.selectedTech.getUserId(), `Go Home, ${state.selectedTech.getTechname()}`, loggedUserId);
     } catch (err) {
       console.error(
         `An error occurred while creating the Activity Log and Service Rendered for the dismissal: ${err}`
@@ -377,7 +377,7 @@ export const DispatchDashboard: React.FC<Props> = function DispatchDashboard({
     try{
       await ActivityLogClientService.Create(actLog);
       await ServicesRenderedClientService.Create(service);
-      if (!disableSlack) SlackClientService.DirectMessageUser(testUserId ? 103939 : tech.getUserId(), `False Alarm, ${tech.getTechname()}!  I need you back on the schedule!`);
+      if (!disableSlack) SlackClientService.DirectMessageUser(testUserId ? 103939 : tech.getUserId(), `False Alarm, ${tech.getTechname()}!  I need you back on the schedule!`, loggedUserId);
     } catch (err) {
       console.error(
         `An error occured while create the Activity Log and Service Rendered for the Un-Dismissal: ${err}`
@@ -713,7 +713,7 @@ export const DispatchDashboard: React.FC<Props> = function DispatchDashboard({
             }
           }}>
             <Grid container spacing={3}>
-              <Grid item xs={6}>
+              <Grid item md={6} xs={12}>
                 <div style={{alignItems:'center', margin:'auto', textAlign:'center', display:state.dismissedTechs.length ? '' : 'none'}}>
                   <Button style={{backgroundColor:'green', color:'white', width:'60%', padding:'10px', textAlign:'center'}} onClick={handleUndismissButtonClick}>
                     <UndoRounded></UndoRounded>
@@ -728,7 +728,7 @@ export const DispatchDashboard: React.FC<Props> = function DispatchDashboard({
                   loading={state.isLoadingTech}
                 />
               </Grid>
-              <Grid item xs={6}>
+              <Grid item md={6} xs={12}>
                 {state.googleApiKey != '' && (
                   <DispatchMap
                     userID={loggedUserId}
@@ -812,66 +812,63 @@ export const DispatchDashboard: React.FC<Props> = function DispatchDashboard({
               disabled={state.isProcessing}
             >
               <div style={{display: 'flex', width: "98%"}}>
+                <Grid container>
+                  <Grid item md={6} xs={12}>
+                    <div style={{textAlign: "center"}}>
+                      <h2>Selected Technician</h2>
+                    </div>
+                      
+                    <TableContainer>
+                      <Table>
+                        <TableHead></TableHead>
+                        <TableBody>
+                          <TableRow>
+                            <TableCell style={{width:"45%", textAlign:"left", fontWeight:"bold", fontSize:"15px"}}>Name:</TableCell>
+                            <TableCell style={{width:"55%", textAlign:"center"}}>{state.selectedTech.getTechname()}</TableCell>
+                          </TableRow>
+                          <TableRow>
+                            <TableCell style={{fontWeight:"bold", fontSize:"15px"}}>Current Location:</TableCell>
+                            <TableCell style={{textAlign:"center"}}>{state.selectedTech.getPropertyCity()}</TableCell>
+                          </TableRow>
+                        </TableBody>
+                      </Table>
+                    </TableContainer>
+                  </Grid>
+                  <Grid item md={6} xs={12}>
+                    <div style={{textAlign: "center"}}>
+                      <h2>Selected Call</h2>
+                    </div>
 
-                <div style={{width:"50%", paddingRight:"10px"}}>
-                  
-                  <div style={{textAlign: "center"}}>
-                    <h2>Selected Technician</h2>
-                  </div>
-                    
-                  <TableContainer>
-                    <Table>
-                      <TableHead></TableHead>
-                      <TableBody>
-                        <TableRow>
-                          <TableCell style={{width:"45%", textAlign:"left", fontWeight:"bold", fontSize:"15px"}}>Name:</TableCell>
-                          <TableCell style={{width:"55%", textAlign:"center"}}>{state.selectedTech.getTechname()}</TableCell>
-                        </TableRow>
-                        <TableRow>
-                          <TableCell style={{fontWeight:"bold", fontSize:"15px"}}>Current Location:</TableCell>
-                          <TableCell style={{textAlign:"center"}}>{state.selectedTech.getPropertyCity()}</TableCell>
-                        </TableRow>
-                      </TableBody>
-                    </Table>
-                  </TableContainer>
-                </div>
-
-                <div style={{width:"50%", paddingLeft:"10px"}}>
-
-                  <div style={{textAlign: "center"}}>
-                    <h2>Selected Call</h2>
-                  </div>
-
-                  <TableContainer>
-                    <Table>
-                      <TableHead></TableHead>
-                      <TableBody>
-                        <TableRow>
-                          <TableCell style={{width:"35%", fontWeight:"bold", fontSize:"15px"}}>Location:</TableCell>
-                          <TableCell style={{width:"65%", textAlign:"center"}}>{state.selectedCall.getPropertyCity()}</TableCell>
-                        </TableRow>
-                        <TableRow>
-                          <TableCell style={{width:"35%", fontWeight:"bold", fontSize:"15px"}}>Customer:</TableCell>
-                          <TableCell style={{width:"65%", textAlign:"center"}}>{state.selectedCall.getCustName()}</TableCell>
-                        </TableRow>
-                        <TableRow>
-                          <TableCell style={{fontWeight:"bold", fontSize:"15px"}}>Type:</TableCell>
-                          <TableCell style={{textAlign:"center"}}>{`${state.selectedCall.getJobType()}/${state.selectedCall.getJobSubtype()}`}</TableCell>
-                        </TableRow>
-                        <TableRow>
-                          <TableCell style={{fontWeight:"bold", fontSize:"15px"}}>Description:</TableCell>
-                          <TableCell>{state.selectedCall.getDescription().length >= 200 ? state.selectedCall.getDescription().slice(0,150).concat(" ...") : state.selectedCall.getDescription()}</TableCell>
-                        </TableRow>
-                        <TableRow>
-                          <TableCell style={{fontWeight:"bold", fontSize:"15px"}}>Assigned:</TableCell>
-                          <TableCell style={{textAlign:"center"}}>{state.selectedCall.getAssigned() != '0' ? state.selectedCall.getAssigned() : 'Unassigned'}</TableCell>
-                        </TableRow>
-                      </TableBody>
-                    </Table>
-                  </TableContainer>
-                </div>
+                    <TableContainer>
+                      <Table>
+                        <TableHead></TableHead>
+                        <TableBody>
+                          <TableRow>
+                            <TableCell style={{width:"35%", fontWeight:"bold", fontSize:"15px"}}>Location:</TableCell>
+                            <TableCell style={{width:"65%", textAlign:"center"}}>{state.selectedCall.getPropertyCity()}</TableCell>
+                          </TableRow>
+                          <TableRow>
+                            <TableCell style={{width:"35%", fontWeight:"bold", fontSize:"15px"}}>Customer:</TableCell>
+                            <TableCell style={{width:"65%", textAlign:"center"}}>{state.selectedCall.getCustName()}</TableCell>
+                          </TableRow>
+                          <TableRow>
+                            <TableCell style={{fontWeight:"bold", fontSize:"15px"}}>Type:</TableCell>
+                            <TableCell style={{textAlign:"center"}}>{`${state.selectedCall.getJobType()}/${state.selectedCall.getJobSubtype()}`}</TableCell>
+                          </TableRow>
+                          <TableRow>
+                            <TableCell style={{fontWeight:"bold", fontSize:"15px"}}>Description:</TableCell>
+                            <TableCell>{state.selectedCall.getDescription().length >= 200 ? state.selectedCall.getDescription().slice(0,150).concat(" ...") : state.selectedCall.getDescription()}</TableCell>
+                          </TableRow>
+                          <TableRow>
+                            <TableCell style={{fontWeight:"bold", fontSize:"15px"}}>Assigned:</TableCell>
+                            <TableCell style={{textAlign:"center"}}>{state.selectedCall.getAssigned() != '0' ? state.selectedCall.getAssigned() : 'Unassigned'}</TableCell>
+                          </TableRow>
+                        </TableBody>
+                      </Table>
+                    </TableContainer>
+                  </Grid>
+                </Grid>
               </div>
-
             </Confirm>
           )
         }
@@ -929,9 +926,9 @@ export const DispatchDashboard: React.FC<Props> = function DispatchDashboard({
             </div>
 
             <Grid container spacing={1} style={{width:(window.innerWidth * .85)}}>
-              <Grid item xs={7}>
+              <Grid item md={7} xs={10}>
                 <Grid container spacing={2}>
-                <Grid item xs={6}>
+                <Grid item md={6} xs={12}>
                     <TableContainer style={{width:'100%'}}>
                       <Table>
                         <TableHead></TableHead>
@@ -956,7 +953,7 @@ export const DispatchDashboard: React.FC<Props> = function DispatchDashboard({
                       </Table>
                     </TableContainer>
                   </Grid>
-                  <Grid item xs={6}>
+                  <Grid item md={6} xs={12}>
                     <TableContainer style={{width:'100%'}}>
                       <Table>
                         <TableHead></TableHead>
@@ -983,7 +980,7 @@ export const DispatchDashboard: React.FC<Props> = function DispatchDashboard({
                   </Grid>
                 </Grid>
               </Grid>
-              <Grid item xs={5} style={{margin:'auto', position:'relative'}}>
+              <Grid item md={5} xs={12} style={{margin:'auto', position:'relative'}}>
                 {state.isProcessing && (
                   <CircleProgress
                     style={{
@@ -1036,7 +1033,7 @@ export const DispatchDashboard: React.FC<Props> = function DispatchDashboard({
           <ServiceRequest
             loggedUserId={loggedUserId}
             propertyId={state.selectedCall.getPropertyId()}
-            userID={loggedUserId}
+            userID={state.selectedCall.getUserId()}
             serviceCallId={state.selectedCall.getId()}
             onClose={() => resetModal(false, true)}
           />
