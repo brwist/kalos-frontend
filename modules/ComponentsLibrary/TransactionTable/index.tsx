@@ -1019,14 +1019,13 @@ export const TransactionTable: FC<Props> = ({
   const saveFromRowButton = useCallback(
     async (saved: any) => {
       let newTxn = new Transaction();
-      let timestamp = saved['Date'];
+
+      let newtimestamp = newTxn.getTimestamp();
       if (
-        timestamp != '' &&
-        timestamp != '0000-00-00 00:00:00' &&
-        timestamp != null
+        newtimestamp.includes('0000') ||
+        newtimestamp == '' ||
+        newtimestamp == undefined
       ) {
-        newTxn.setTimestamp(saved['Date']);
-      } else {
         console.log('not valid date');
         const newTimestamp = format(new Date(), 'yyyy-MM-dd hh:mm:ss');
         console.log('new date', newTimestamp);
