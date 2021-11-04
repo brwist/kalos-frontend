@@ -131,9 +131,8 @@ export const TimeOff: FC<Props> = ({
     console.log('called init');
     const timesheetAdminReq = new TimesheetDepartment();
     timesheetAdminReq.setIsActive(1);
-    const timesheetAdminResults = await TimesheetDepartmentClientService.BatchGet(
-      timesheetAdminReq,
-    );
+    const timesheetAdminResults =
+      await TimesheetDepartmentClientService.BatchGet(timesheetAdminReq);
     dispatch({
       type: ACTIONS.SET_DEPARTMENTS,
       data: timesheetAdminResults.getResultsList(),
@@ -645,7 +644,9 @@ export const TimeOff: FC<Props> = ({
             <span>
               PTO Remaining:{' '}
               <span style={css}>{state.pto.getHoursAvailable()}</span> of{' '}
-              <span style={css}>{state.user.getAnnualHoursPto()}</span>
+              <span style={css}>
+                {state.user.getAnnualHoursPto() + state.user.getBonusHoursPto()}
+              </span>
             </span>
           ) : null
         }
