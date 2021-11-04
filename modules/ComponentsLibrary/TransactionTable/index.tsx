@@ -34,13 +34,7 @@ import {
   OPTION_ALL,
   WaiverTypes,
 } from '../../../constants';
-import {
-  FilterType,
-  PopupType,
-  reducer,
-  MergeDocuments,
-  UploadData,
-} from './reducer';
+import { FilterType, PopupType, reducer, MergeDocuments } from './reducer';
 import {
   makeFakeRows,
   OrderDir,
@@ -142,8 +136,9 @@ export const TransactionTable: FC<Props> = ({
     transactions: undefined,
     totalTransactions: 0,
     openMerge: false,
-    document1: { fileData: '', width: 0, height: 0 },
-    document2: { fileData: '', width: 0, height: 0 },
+    document1: '',
+    document2: '',
+    mergeDocumentAlert: '',
     costCenterData: new TransactionAccountList(),
     transactionActivityLogs: [],
     costCenters: [{ label: 'temp', value: 0 }],
@@ -894,28 +889,16 @@ export const TransactionTable: FC<Props> = ({
     ],
   ];
   const handleFileLoad = useCallback((stateFile: string, file) => {
-    let width = 0;
-    let height = 0;
-    const img = new Image();
-    try {
-      //TO-DO Still have to get image height/width for formatting
-      width = img.width;
-      height = img.height;
-    } catch (e) {
-      console.log('not an image', e);
-    }
     if (stateFile == 'document1') {
       dispatch({
         type: ACTIONS.SET_MERGE_DOCUMENT1,
-        data: { fileData: file, width: width, height: height },
+        data: file,
       });
     }
     if (stateFile == 'document2') {
-      console.log(width);
-      console.log(height);
       dispatch({
         type: ACTIONS.SET_MERGE_DOCUMENT2,
-        data: { fileData: file, width: width, height: height },
+        data: file,
       });
     }
   }, []);
@@ -1151,10 +1134,6 @@ export const TransactionTable: FC<Props> = ({
     state.loaded,
     state.searching,
   ]);
-  const A4_PAPER_DIMENSIONS = {
-    width: 210,
-    height: 297,
-  };
 
   const imageDimensionToFit = (
     image: PDFImage,
@@ -1179,16 +1158,31 @@ export const TransactionTable: FC<Props> = ({
       };
     }
   };
-  const toPdfPromise = async (file: UploadData) => {
+  const toPdfPromise = async (file: string) => {
     const pdf = await PDFDocument.create();
 
     const page = pdf.addPage(PageSizes.A4);
-    const imageUInt8Array = file.fileData;
+    const imageUInt8Array = file;
 
     try {
       console.log('embed jpeg');
       const tempImage = await pdf.embedJpg(imageUInt8Array);
+      const [a4_width, a4_height] = PageSizes.A4;
+      const dimensions = imageDimensionToFit(tempImage, {
+        width: a4_width,
+        height: a4_height,
+      });
+      page.drawImage(tempImage, {
+        x: (a4_width - dimensions.width) / 2,
+        y: (a4_height - dimensions.height) / 2,
+        width: dimensions.width,
+        height: dimensions.height,
+      });
+      return { pdf: pdf.save(), error: '' };
+    } catch (e) {
+      console.log('failed to embed jpeg, trying png');
       try {
+        const tempImage = await pdf.embedPng(imageUInt8Array);
         const [a4_width, a4_height] = PageSizes.A4;
         const dimensions = imageDimensionToFit(tempImage, {
           width: a4_width,
@@ -1200,86 +1194,95 @@ export const TransactionTable: FC<Props> = ({
           width: dimensions.width,
           height: dimensions.height,
         });
+        return { pdf: pdf.save(), error: '' };
       } catch (e) {
         console.log('something went wrong with drawing the image', e);
-      }
-    } catch (e) {
-      console.log('failed to embed jpeg, trying png');
-      try {
-        const tempImage = await pdf.embedPng(imageUInt8Array);
-        try {
-          const [a4_width, a4_height] = PageSizes.A4;
-          const dimensions = imageDimensionToFit(tempImage, {
-            width: a4_width,
-            height: a4_height,
-          });
-          page.drawImage(tempImage, {
-            x: (a4_width - dimensions.width) / 2,
-            y: (a4_height - dimensions.height) / 2,
-            width: dimensions.width,
-            height: dimensions.height,
-          });
-        } catch (e) {
-          console.log('something went wrong with drawing the image', e);
-        }
-        console.log('embed png');
-      } catch (e) {
-        console.log('failed to embed both', e, file.fileData);
+        return { pdf: pdf.save(), error: 'Could not Draw Image on PDF' };
       }
     }
-
-    return pdf.save();
   };
 
   const mergePdf = async () => {
     const mergedPdf = await PDFDocument.create();
-    console.log('creating document');
     let pdfA = await PDFDocument.create();
     let pdfB = await PDFDocument.create();
+    let error = '';
     try {
-      pdfA = await PDFDocument.load(state.document1.fileData);
+      pdfA = await PDFDocument.load(state.document1);
     } catch (e) {
       try {
-        pdfA = await PDFDocument.load(await toPdfPromise(state.document1));
+        let resultA = await toPdfPromise(state.document1);
+        pdfA = await PDFDocument.load(await resultA.pdf);
+        if (resultA.error != '') {
+          error = resultA.error;
+        }
         console.log('first document not a pdf');
       } catch (e) {
         console.log('failed to load document a as pdf or image ', e);
+        dispatch({
+          type: ACTIONS.SET_MERGE_DOCUMENT_ALERT,
+          data: 'Could not generate PDF',
+        });
       }
     }
     try {
-      pdfB = await PDFDocument.load(state.document2.fileData);
+      pdfB = await PDFDocument.load(state.document2);
     } catch (e) {
       try {
-        pdfB = await PDFDocument.load(await toPdfPromise(state.document2));
+        let resultB = await toPdfPromise(state.document2);
+        pdfB = await PDFDocument.load(await resultB.pdf);
+        if (resultB.error != '') {
+          error = resultB.error;
+        }
       } catch (e) {
         console.log('failed to load document b as a pdf and image ', e);
+        dispatch({
+          type: ACTIONS.SET_MERGE_DOCUMENT_ALERT,
+          data: 'Could not generate PDF',
+        });
       }
 
       console.log('second document not a pdf ', e);
     }
     console.log('loading documents');
+    if (error != '') {
+      dispatch({
+        type: ACTIONS.SET_MERGE_DOCUMENT_ALERT,
+        data: 'Could not generate PDF',
+      });
+    } else {
+      const copiedPagesA = await mergedPdf.copyPages(
+        pdfA,
+        pdfA.getPageIndices(),
+      );
+      console.log('copying from a');
 
-    const copiedPagesA = await mergedPdf.copyPages(pdfA, pdfA.getPageIndices());
-    console.log('copying from a');
+      copiedPagesA.forEach(page => mergedPdf.addPage(page));
 
-    copiedPagesA.forEach(page => mergedPdf.addPage(page));
+      const copiedPagesB = await mergedPdf.copyPages(
+        pdfB,
+        pdfB.getPageIndices(),
+      );
+      console.log('copying from b');
 
-    const copiedPagesB = await mergedPdf.copyPages(pdfB, pdfB.getPageIndices());
-    console.log('copying from b');
+      copiedPagesB.forEach(page => mergedPdf.addPage(page));
 
-    copiedPagesB.forEach(page => mergedPdf.addPage(page));
+      const mergedPdfFile = await mergedPdf.save();
+      console.log('copying saving');
 
-    const mergedPdfFile = await mergedPdf.save();
-    console.log('copying saving');
+      var link = document.createElement('a');
+      var blob = new Blob([mergedPdfFile], { type: 'application/pdf' });
+      link.href = window.URL.createObjectURL(blob);
+      console.log('creating url');
 
-    var link = document.createElement('a');
-    var blob = new Blob([mergedPdfFile], { type: 'application/pdf' });
-    link.href = window.URL.createObjectURL(blob);
-    console.log('creating url');
-
-    var fileName = 'MergedDocument';
-    link.download = fileName;
-    link.click();
+      var fileName = 'MergedDocument';
+      link.download = fileName;
+      link.click();
+      dispatch({
+        type: ACTIONS.SET_OPEN_MERGE,
+        data: false,
+      });
+    }
   };
   return (
     <ErrorBoundary key="ErrorBoundary">
@@ -1374,10 +1377,23 @@ export const TransactionTable: FC<Props> = ({
       {state.openMerge && (
         <Modal
           open={state.openMerge}
-          onClose={() =>
-            dispatch({ type: ACTIONS.SET_OPEN_MERGE, data: false })
-          }
+          onClose={() => {
+            dispatch({ type: ACTIONS.SET_MERGE_DOCUMENT1, data: '' });
+            dispatch({ type: ACTIONS.SET_MERGE_DOCUMENT2, data: '' });
+            dispatch({ type: ACTIONS.SET_OPEN_MERGE, data: false });
+          }}
         >
+          <Alert
+            open={state.mergeDocumentAlert != ''}
+            onClose={() =>
+              dispatch({ type: ACTIONS.SET_MERGE_DOCUMENT_ALERT, data: '' })
+            }
+            label="Okay"
+          >
+            There was an Error generating your PDF. There may be something wrong
+            with the file. If you continue to notice this error, please contact
+            webtech
+          </Alert>
           <Form<MergeDocuments>
             key="mergeDocuments"
             title="Merge PDFs"
@@ -1385,9 +1401,11 @@ export const TransactionTable: FC<Props> = ({
             data={{ document1: state.document1, document2: state.document2 }}
             onSave={mergePdf}
             submitLabel="Save"
-            onClose={() =>
-              dispatch({ type: ACTIONS.SET_OPEN_MERGE, data: false })
-            }
+            onClose={() => {
+              dispatch({ type: ACTIONS.SET_MERGE_DOCUMENT1, data: '' });
+              dispatch({ type: ACTIONS.SET_MERGE_DOCUMENT2, data: '' });
+              dispatch({ type: ACTIONS.SET_OPEN_MERGE, data: false });
+            }}
           ></Form>
         </Modal>
       )}
