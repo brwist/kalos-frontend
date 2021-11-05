@@ -19,7 +19,12 @@ import {
   UserClientService,
 } from '../../../helpers';
 import { ClassCode, ClassCodeClient } from '@kalos-core/kalos-rpc/ClassCode';
-import { reducer, ACTIONS } from './reducer';
+import {
+  reducer,
+  ACTIONS,
+  EmployeeSubotal,
+  WeekClassCodeBreakdownSubtotal,
+} from './reducer';
 import { PrintList } from '../PrintList';
 import { PrintPage, Status } from '../PrintPage';
 import { PrintParagraph } from '../PrintParagraph';
@@ -35,16 +40,20 @@ import Button from '@material-ui/core/Button';
 import { Button as KalosButton } from '../Button';
 import { Trip } from '@kalos-core/kalos-rpc/compiled-protos/perdiem_pb';
 import { Task } from '@kalos-core/kalos-rpc/Task';
-import { differenceInMinutes, parseISO } from 'date-fns';
+import {
+  differenceInMinutes,
+  parseISO,
+  startOfWeek,
+  format,
+  addDays,
+  differenceInCalendarWeeks,
+} from 'date-fns';
 import { roundNumber, downloadCSV } from '../../../helpers';
 import { Tabs } from '../Tabs';
 import ExpandLess from '@material-ui/icons/ExpandLess';
 import ExpandMore from '@material-ui/icons/ExpandMore';
 import Collapse from '@material-ui/core/Collapse/Collapse';
-import { PrintHeader } from '../PrintHeader';
-import { PinDrop } from '@material-ui/icons';
 import { TransactionAccount } from '@kalos-core/kalos-rpc/TransactionAccount';
-import { User } from '@kalos-core/kalos-rpc/User';
 export interface Props {
   serviceCallId: number;
   loggedUserId: number;
@@ -113,27 +122,13 @@ export const CostReportCSV: FC<Props> = ({ serviceCallId, onClose }) => {
       active: 0,
     }));
     dispatch({ type: ACTIONS.SET_DROPDOWNS, data: mappedResults });
-    const cccs = new ClassCodeClient(ENDPOINT);
-    const classCodeReq = new ClassCode();
-    classCodeReq.setIsActive(true);
-    const cccsResults = (await cccs.BatchGet(classCodeReq)).getResultsList();
-    dispatch({
-      type: ACTIONS.SET_CLASS_CODES,
-      data: cccsResults,
-    });
+
     const users = await UserClientService.loadTechnicians();
     dispatch({
       type: ACTIONS.SET_USERS,
       data: users,
     });
-    const classCodeMap = cccsResults.map(classCode => ({
-      classCodeId: classCode.getId(),
-      active: 0,
-    }));
-    dispatch({
-      type: ACTIONS.SET_TIMESHEET_DROPDOWNS,
-      data: classCodeMap,
-    });
+
     let arr: PerDiem[] = [];
     resultsList.forEach(result => {
       let isIncluded = false;
@@ -176,10 +171,11 @@ export const CostReportCSV: FC<Props> = ({ serviceCallId, onClose }) => {
     const lodgings = await PerDiemClientService.loadPerDiemsLodging(arr); // first # is per diem id
     dispatch({ type: ACTIONS.SET_LODGINGS, data: lodgings });
 
-    const transactions = await TransactionClientService.loadTransactionsByEventId(
-      serviceCallId,
-      true,
-    );
+    const transactions =
+      await TransactionClientService.loadTransactionsByEventId(
+        serviceCallId,
+        true,
+      );
     let temp = state.costCenterTotals;
     dispatch({ type: ACTIONS.SET_TRANSACTIONS, data: transactions });
     for (let i = 0; i < transactions.length; i++) {
@@ -193,7 +189,6 @@ export const CostReportCSV: FC<Props> = ({ serviceCallId, onClose }) => {
         temp[keyValue] = transactions[i].getAmount();
       }
     }
-    console.log(temp);
     let allTripsTotal = 0;
     allTrips.forEach(trip => {
       // Subtracting 30 miles flat from trip distance in accordance
@@ -247,6 +242,7 @@ export const CostReportCSV: FC<Props> = ({ serviceCallId, onClose }) => {
   const load = useCallback(async () => {
     let promises = [];
     let timesheets: TimesheetLine[] = [];
+    let classCodes: ClassCode[] = [];
 
     dispatch({ type: ACTIONS.SET_LOADING, data: true });
 
@@ -256,17 +252,30 @@ export const CostReportCSV: FC<Props> = ({ serviceCallId, onClose }) => {
         resolve();
       }),
     );
+    promises.push(
+      new Promise<void>(async resolve => {
+        const cccs = new ClassCodeClient(ENDPOINT);
+        const classCodeReq = new ClassCode();
+        classCodeReq.setIsActive(true);
 
+        classCodes = (await cccs.BatchGet(classCodeReq)).getResultsList();
+        dispatch({
+          type: ACTIONS.SET_CLASS_CODES,
+          data: classCodes,
+        });
+        resolve();
+      }),
+    );
     promises.push(
       new Promise<void>(async resolve => {
         try {
           let req = new TimesheetLine();
           req.setReferenceNumber(serviceCallId.toString());
-
+          req.setOrderBy('time_started');
+          req.setOrderDir('ASC');
           timesheets = (
             await TimesheetLineClientService.BatchGet(req)
           ).getResultsList();
-          console.log('timesheets', timesheets);
           resolve();
         } catch (err) {
           console.error(
@@ -309,13 +318,77 @@ export const CostReportCSV: FC<Props> = ({ serviceCallId, onClose }) => {
         );
       }
       dispatch({ type: ACTIONS.SET_TIMESHEETS, data: timesheets });
+
+      if (timesheets.length > 0) {
+        let earliestTimesheet = timesheets[0];
+        let latestTimesheet = timesheets[timesheets.length - 1];
+        let startWeek = new Date(parseISO(earliestTimesheet.getTimeStarted()));
+        startWeek = startOfWeek(startWeek, { weekStartsOn: 6 });
+        let endWeek = new Date(parseISO(latestTimesheet.getTimeStarted()));
+        endWeek = startOfWeek(endWeek, { weekStartsOn: 6 });
+
+        let weeks = differenceInCalendarWeeks(endWeek, startWeek);
+        let weekList = [];
+        console.log('classCodes');
+        for (let i = 1; i < weeks + 1; i++) {
+          for (let j = 0; j < classCodes.length; j++) {
+            const newWeekStart = format(
+              addDays(new Date(startWeek), 7 * (i - 1)),
+              'yyyy-MM-dd',
+            );
+            const newWeekEnd = format(
+              addDays(new Date(startWeek), 7 * i),
+              'yyyy-MM-dd',
+            );
+            const result: EmployeeSubotal[] = [];
+
+            const weekStruct = {
+              weekStart: newWeekStart,
+              weekEnd: newWeekEnd,
+              employeeSubtotals: result,
+              classCodeId: classCodes[j].getId(),
+            };
+            weekList.push(weekStruct);
+          }
+        }
+        console.log('weekList before time', weekList);
+        if (weekList.length > 0) {
+          for (let i = 0; i < weekList.length; i++) {
+            for (let j = 0; j < timesheets.length; j++) {
+              let timesheetStart = format(
+                new Date(parseISO(timesheets[j].getTimeStarted())),
+                'yyyy-MM-dd',
+              );
+              if (
+                timesheetStart < weekList[i].weekEnd &&
+                timesheetStart > weekList[i].weekStart &&
+                weekList[i].classCodeId == timesheets[j].getClassCodeId()
+              ) {
+                let newStruct = {
+                  employeeId: timesheets[j].getTechnicianUserId(),
+                  hours: timesheets[j].getHoursWorked(),
+                };
+                weekList[i].employeeSubtotals.push(newStruct);
+              }
+            }
+          }
+        }
+        const weekListFinal = weekList.filter(
+          week => week.employeeSubtotals.length != 0,
+        );
+        dispatch({
+          type: ACTIONS.SET_TIMESHEET_DROPDOWNS,
+          data: weekListFinal,
+        });
+        console.log('weekList', weekListFinal);
+      }
+
       let temp = state.laborTotals;
       for (let i = 0; i < timesheets.length; i++) {
         let keyValue = timesheets[i].getClassCodeId().toString();
         if (temp[keyValue]) {
           temp[keyValue] += timesheets[i].getHoursWorked();
         } else {
-          //
           temp[keyValue] = timesheets[i].getHoursWorked();
         }
       }
@@ -460,7 +533,6 @@ export const CostReportCSV: FC<Props> = ({ serviceCallId, onClose }) => {
           ',' +
           t.getNotes() +
           `\r\n`;
-        console.log(tempString);
         fullString = fullString + tempString;
       }
     }
@@ -531,12 +603,9 @@ export const CostReportCSV: FC<Props> = ({ serviceCallId, onClose }) => {
   };
   useEffect(() => {
     if (!state.loadedInit) {
-      console.log('loading init');
       loadInit();
     }
     if (state.loadedInit == true && state.loaded === false) {
-      console.log('loading');
-
       load();
     }
   }, [state.loadedInit, loadInit, state.loaded, load]);
@@ -1259,8 +1328,7 @@ export const CostReportCSV: FC<Props> = ({ serviceCallId, onClose }) => {
                                 key={'dropDownbuttonLabor'}
                                 onClick={() => {
                                   dispatch({
-                                    type:
-                                      ACTIONS.SET_LABOR_TOTALS_DROPDOWN_ACTIVE,
+                                    type: ACTIONS.SET_LABOR_TOTALS_DROPDOWN_ACTIVE,
                                     data: !state.laborTotalsDropDownActive,
                                   });
                                 }}
@@ -1351,8 +1419,7 @@ export const CostReportCSV: FC<Props> = ({ serviceCallId, onClose }) => {
                                 key={'dropDownbuttonTransactions'}
                                 onClick={() => {
                                   dispatch({
-                                    type:
-                                      ACTIONS.SET_COST_CENTER_DROPDOWN_ACTIVE,
+                                    type: ACTIONS.SET_COST_CENTER_DROPDOWN_ACTIVE,
                                     data: !state.costCenterDropDownActive,
                                   });
                                 }}
@@ -1582,9 +1649,10 @@ export const CostReportCSV: FC<Props> = ({ serviceCallId, onClose }) => {
                                   data={[
                                     [
                                       {
-                                        value: TimesheetDepartmentClientService.getDepartmentName(
-                                          pd.getDepartment()!,
-                                        ),
+                                        value:
+                                          TimesheetDepartmentClientService.getDepartmentName(
+                                            pd.getDepartment()!,
+                                          ),
                                       },
                                       { value: pd.getOwnerName() },
                                       {
@@ -1624,7 +1692,6 @@ export const CostReportCSV: FC<Props> = ({ serviceCallId, onClose }) => {
                                         tempDropDowns[dropdown].active = 1;
                                       else tempDropDowns[dropdown].active = 0;
                                     }
-                                    console.log(tempDropDowns);
                                     dispatch({
                                       type: ACTIONS.SET_DROPDOWNS,
                                       data: tempDropDowns,

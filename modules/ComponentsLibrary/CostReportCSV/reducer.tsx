@@ -8,6 +8,16 @@ import { TransactionAccount } from '@kalos-core/kalos-rpc/TransactionAccount';
 import { ClassCode, ClassCodeClient } from '@kalos-core/kalos-rpc/ClassCode';
 import { User } from '@kalos-core/kalos-rpc/User';
 
+export interface EmployeeSubotal {
+  employeeId: number;
+  hours: number;
+}
+export interface WeekClassCodeBreakdownSubtotal {
+  weekStart: string;
+  weekEnd: string;
+  classCodeId: number;
+  employeeSubtotals: EmployeeSubotal[];
+}
 export type State = {
   loading: boolean;
   loadingEvent: boolean;
@@ -28,7 +38,7 @@ export type State = {
   users: User[];
   classCodes: ClassCode[];
   transactionDropDowns: { costCenterId: number; active: number }[];
-  timesheetDropDowns: { classCodeId: number; active: number }[];
+  timesheetDropDowns: WeekClassCodeBreakdownSubtotal[];
   dropDowns: { perDiemId: number; active: number }[];
   activeTab: string;
   costCenterDropDownActive: boolean;
@@ -96,7 +106,7 @@ export type Action =
     }
   | {
       type: ACTIONS.SET_TIMESHEET_DROPDOWNS;
-      data: { classCodeId: number; active: number }[];
+      data: WeekClassCodeBreakdownSubtotal[];
     }
   | {
       type: ACTIONS.SET_TRANSACTION_DROPDOWNS;
