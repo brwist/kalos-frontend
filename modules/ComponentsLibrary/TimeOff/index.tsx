@@ -611,7 +611,8 @@ export const TimeOff: FC<Props> = ({
   ];
   const css: CSSProperties =
     state.pto && state.user
-      ? state.pto.getHoursAvailable() > state.user.getAnnualHoursPto()
+      ? state.pto.getHoursAvailable() >
+        state.user.getAnnualHoursPto() + state.user.getBonusHoursPto()
         ? { color: '#d22' }
         : {}
       : {};
