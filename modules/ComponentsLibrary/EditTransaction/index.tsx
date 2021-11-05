@@ -113,7 +113,7 @@ export const EditTransaction: FC<Props> = ({
         label: 'Creator',
         name: 'getAssignedEmployeeId',
         type: 'technician',
-        disabled: true,
+        disabled: transactionInput.getAssignedEmployeeId() === 0 ? false : true,
       },
       {
         label: 'Status ID',

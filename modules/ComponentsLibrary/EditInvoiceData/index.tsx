@@ -7,18 +7,27 @@
 
 import { Invoice } from '@kalos-core/kalos-rpc/Invoice';
 import React, { useReducer, useEffect, useCallback, FC } from 'react';
-import { makeSafeFormObject } from '../../../helpers';
+import { InvoiceClientService, makeSafeFormObject } from '../../../helpers';
 import { Form, Schema } from '../Form';
 import { reducer, ACTIONS } from './reducer';
 
 interface props {
+  contractId: number;
   userId: number;
   onClose: () => any;
   onSave: (savedInvoice: Invoice) => any;
+  onLoad?: (loadedInvoice: Invoice) => any;
   onChange?: (currentData: Invoice) => any;
 }
 
-export const EditInvoiceData: FC<props> = ({ onClose, onSave, onChange }) => {
+export const EditInvoiceData: FC<props> = ({
+  onClose,
+  onSave,
+  onLoad,
+  onChange,
+  contractId,
+  userId,
+}) => {
   const INVOICE_SCHEMA: Schema<Invoice> = [
     [
       {
@@ -78,9 +87,24 @@ export const EditInvoiceData: FC<props> = ({ onClose, onSave, onChange }) => {
     invoiceData: new Invoice(),
   });
 
-  const load = useCallback(() => {
+  const getInvoice = useCallback(async () => {
+    try {
+      let req = new Invoice();
+      req.setContractId(contractId);
+      req.setUserId(userId);
+      let res = await InvoiceClientService.Get(req);
+      dispatch({ type: ACTIONS.SET_INVOICE_DATA, data: res });
+      return res;
+    } catch (err) {
+      console.error(`An error occurred while getting an invoice: ${err}`);
+    }
+  }, [contractId, userId]);
+
+  const load = useCallback(async () => {
+    const invoice = await getInvoice();
+    if (invoice && onLoad) onLoad(invoice);
     dispatch({ type: ACTIONS.SET_LOADED, data: true });
-  }, []);
+  }, [getInvoice, onLoad]);
 
   const cleanup = useCallback(() => {}, []);
 
@@ -89,16 +113,17 @@ export const EditInvoiceData: FC<props> = ({ onClose, onSave, onChange }) => {
   }, []);
 
   useEffect(() => {
-    load();
+    if (!state.isLoaded) load();
 
     return () => {
       cleanup();
     };
-  }, [load, cleanup]);
+  }, [load, cleanup, state.isLoaded]);
 
   return (
     <>
       <Form<Invoice>
+        key={state.isLoaded.toString()}
         data={state.invoiceData}
         schema={INVOICE_SCHEMA}
         onClose={() => onClose()}

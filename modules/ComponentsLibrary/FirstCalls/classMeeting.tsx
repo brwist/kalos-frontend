@@ -41,7 +41,6 @@ export const ClassMeeting: FC<props> = props => {
   useEffect(() => {
     setAvailableTechs(sorted(techs.filter(tech => !listTechs.includes(tech))));
     setAssignedTechs(sorted(listTechs));
-    console.log(props);
   }, []);
 
   return (
@@ -74,7 +73,7 @@ export const ClassMeeting: FC<props> = props => {
           setLoading(false);
         }
       }}>
-        <Grid container spacing={4} style={{width:window.innerWidth * .5}}>
+        <Grid container spacing={4} style={{minWidth:window.innerWidth * .5, maxWidth:window.innerWidth * .8}}>
           <Grid item xs={6}>
             <Table>
               <TableHead>

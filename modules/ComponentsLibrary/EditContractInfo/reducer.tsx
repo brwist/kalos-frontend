@@ -1,5 +1,9 @@
 import { Contract } from '@kalos-core/kalos-rpc/Contract';
+import { Event } from '@kalos-core/kalos-rpc/Event';
 import { Invoice } from '@kalos-core/kalos-rpc/Invoice';
+import { JobSubtype } from '@kalos-core/kalos-rpc/JobSubtype';
+import { JobType } from '@kalos-core/kalos-rpc/JobType';
+import { JobTypeSubtype } from '@kalos-core/kalos-rpc/JobTypeSubtype';
 import { Property } from '@kalos-core/kalos-rpc/Property';
 
 export type State = {
@@ -11,6 +15,15 @@ export type State = {
   isSaving: boolean;
   error: string | undefined;
   fatalError: boolean; // Contract does not exist, etc.
+  invoiceId: number;
+  contractEvents: Event[]; // Corresponding event for the contract that must be kept in sync with updates
+  jobTypes: JobType[];
+  jobSubtypes: JobSubtype[];
+  jobTypeSubtypes: JobTypeSubtype[];
+  eventPage: number; // Page for the current event to display
+  initiatedSchema: string[];
+  hasBeenChanged: boolean;
+  isClosingWithoutSave: boolean; // warn the user that they haven't saved and data will be lost if they close
 };
 
 export enum ACTIONS {
@@ -22,6 +35,15 @@ export enum ACTIONS {
   SET_SAVING = 'setSaving',
   SET_ERROR = 'setError',
   SET_FATAL_ERROR = 'setUnrecoverableError',
+  SET_INVOICE_ID = 'setInvoiceId',
+  SET_CONTRACT_EVENTS = 'setContractEvents',
+  SET_JOB_TYPES = 'setJobTypes',
+  SET_JOB_SUBTYPES = 'setJobSubtypes',
+  SET_JOB_TYPE_SUBTYPES = 'setJobTypeSubtypes',
+  SET_EVENT_PAGE = 'setEventPage',
+  SET_INITIATED_SCHEMA = 'setInitiatedSchema',
+  SET_HAS_BEEN_CHANGED = 'setHasBeenChanged',
+  SET_CLOSING_WITHOUT_SAVE = 'setClosingWithoutSave',
 }
 
 export enum FREQUENCIES {
@@ -66,6 +88,42 @@ export type Action =
   | {
       type: ACTIONS.SET_FATAL_ERROR;
       data: true; // Should only be set to true, not set to false. Wouldn't be very "fatal" otherwise
+    }
+  | {
+      type: ACTIONS.SET_INVOICE_ID;
+      data: number;
+    }
+  | {
+      type: ACTIONS.SET_CONTRACT_EVENTS;
+      data: Event[];
+    }
+  | {
+      type: ACTIONS.SET_JOB_TYPES;
+      data: JobType[];
+    }
+  | {
+      type: ACTIONS.SET_JOB_TYPE_SUBTYPES;
+      data: JobTypeSubtype[];
+    }
+  | {
+      type: ACTIONS.SET_JOB_SUBTYPES;
+      data: JobSubtype[];
+    }
+  | {
+      type: ACTIONS.SET_EVENT_PAGE;
+      data: number;
+    }
+  | {
+      type: ACTIONS.SET_INITIATED_SCHEMA;
+      data: string[];
+    }
+  | {
+      type: ACTIONS.SET_HAS_BEEN_CHANGED;
+      data: true; // We don't wanna set it back to false
+    }
+  | {
+      type: ACTIONS.SET_CLOSING_WITHOUT_SAVE;
+      data: boolean;
     };
 
 export const reducer = (state: State, action: Action) => {
@@ -118,7 +176,66 @@ export const reducer = (state: State, action: Action) => {
         fatalError: action.data,
       };
     }
+    case ACTIONS.SET_INVOICE_ID: {
+      return {
+        ...state,
+        invoiceId: action.data,
+      };
+    }
+    case ACTIONS.SET_CONTRACT_EVENTS: {
+      return {
+        ...state,
+        contractEvents: action.data,
+      };
+    }
+    case ACTIONS.SET_JOB_TYPES: {
+      return {
+        ...state,
+        jobTypes: action.data,
+      };
+    }
+    case ACTIONS.SET_JOB_SUBTYPES: {
+      return {
+        ...state,
+        jobSubtypes: action.data,
+      };
+    }
+    case ACTIONS.SET_JOB_TYPE_SUBTYPES: {
+      return {
+        ...state,
+        jobTypeSubtypes: action.data,
+      };
+    }
+    case ACTIONS.SET_EVENT_PAGE: {
+      return {
+        ...state,
+        eventPage: action.data,
+      };
+    }
+    case ACTIONS.SET_INITIATED_SCHEMA: {
+      return {
+        ...state,
+        initiatedSchema: action.data,
+      };
+    }
+    case ACTIONS.SET_HAS_BEEN_CHANGED: {
+      return {
+        ...state,
+        hasBeenChanged: action.data,
+      };
+    }
+    case ACTIONS.SET_CLOSING_WITHOUT_SAVE: {
+      console.log('set closing without save');
+      return {
+        ...state,
+        isClosingWithoutSave: action.data,
+      };
+    }
     default:
+      console.error(
+        // @ts-expect-error
+        `The supplied action type does not match any actions in the reducer: ${action.type}`,
+      );
       return state;
   }
 };

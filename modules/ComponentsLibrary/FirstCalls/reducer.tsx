@@ -1,6 +1,5 @@
 import { DispatchableTech, DispatchCall } from '@kalos-core/kalos-rpc/Dispatch';
 import { JobType } from '@kalos-core/kalos-rpc/JobType';
-import { TimesheetDepartment } from '@kalos-core/kalos-rpc/TimesheetDepartment';
 
 export type FormData = {
   departmentIds: number[];
@@ -114,13 +113,25 @@ export interface State {
   showAddTech: boolean;
   tempAssigneeList: string;
   refreshCalls: boolean;
+  isApproved: boolean;
+  hasNotification: boolean;
+  notificationType: string;
+  notificationMessage: string;
 }
 
 export type Action = 
-  | { type: 'setTechs'; data: DispatchableTech[] }
+  | { type: 'setTechs'; data: {
+    techs: DispatchableTech[],
+  }}
+  | { type: 'setTechRefresh'; data: {
+    techs: DispatchableTech[],
+    formData: FormData,
+    scheduledOff: {id: number, name: string}[],
+  }}
   | { type: 'setModal'; data: {
     openModal: boolean,
     modalKey: string,
+    currentFC: FirstCallType,
     selectedCall?: DispatchCall,
     assigneeList?: {id: number, name: string}[],
   }}
@@ -199,6 +210,12 @@ export type Action =
   | { type: 'setShowAddTech'; data: boolean }
   | { type: 'setRefreshCalls'; data: boolean }
   | { type: 'setSectorList'; data: number[] }
+  | { type: 'setFinalApproval'; data: boolean }
+  | { type: 'setNotification'; data: {
+    hasNotification: boolean,
+    notificationType: string,
+    notificationMessage: string,
+  }}
 ;
 
 export const reducer = (state: State, action: Action) => {
@@ -206,7 +223,14 @@ export const reducer = (state: State, action: Action) => {
     case 'setTechs':
       return {
         ...state,
-        techs: action.data,
+        techs: action.data.techs,
+      }
+    case 'setTechRefresh':
+      return {
+        ...state,
+        techs: action.data.techs,
+        formData: action.data.formData,
+        scheduledOff: action.data.scheduledOff,
       }
     case 'setModal':
       return {
@@ -215,6 +239,7 @@ export const reducer = (state: State, action: Action) => {
         modalKey: action.data.modalKey,
         selectedCall: action.data.selectedCall ? action.data.selectedCall : new DispatchCall(),
         assigneeList: action.data.assigneeList ? action.data.assigneeList : [],
+        savedFirstCall: action.data.currentFC,
       }
     case 'setCalls':
       return {
@@ -389,6 +414,18 @@ export const reducer = (state: State, action: Action) => {
       return {
         ...state,
         sectorList: action.data,
+      }
+    case 'setFinalApproval':
+      return {
+        ...state,
+        isApproved: action.data,
+      }
+    case 'setNotification':
+      return {
+        ...state,
+        hasNotification: action.data.hasNotification,
+        notificationType: action.data.notificationType,
+        notificationMessage: action.data.notificationMessage,
       }
     default:
       return {

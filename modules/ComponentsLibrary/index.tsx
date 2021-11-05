@@ -112,6 +112,7 @@ import WeekPicker from './WeekPicker/examples';
 import './styles.less';
 import { UserClient } from '@kalos-core/kalos-rpc/User';
 import { ENDPOINT } from '../../constants';
+import { ErrorBoundary as ErrorBoundaryComponent } from './ErrorBoundary/index';
 
 const DEFAULT_COMPONENT_IDX = 0;
 
@@ -242,45 +243,47 @@ const ComponentsLibrary = () => {
   );
   return (
     <StyledPage>
-      <div className="ComponentsLibrary">
-        {matches ? (
-          <select
-            className="ComponentsLibrarySelect"
-            value={component}
-            onChange={handleSelect}
-          >
-            {Object.keys(COMPONENTS).map(key => (
-              <option key={key}>{key}</option>
-            ))}
-          </select>
-        ) : (
-          <div className="ComponentsLibraryMenu">
-            <div className="h6">Components Library</div>
-            <ol className="ComponentsLibraryList">
+      <ErrorBoundaryComponent>
+        <div className="ComponentsLibrary">
+          {matches ? (
+            <select
+              className="ComponentsLibrarySelect"
+              value={component}
+              onChange={handleSelect}
+            >
               {Object.keys(COMPONENTS).map(key => (
-                <li
-                  key={key}
-                  className="ComponentsLibraryItem"
-                  onClick={handleClickMenuItem(key)}
-                >
-                  <div
-                    className="ComponentsLibraryItemText"
-                    style={{
-                      backgroundColor:
-                        key === component ? 'gold' : 'transparent',
-                    }}
-                  >
-                    {key}
-                  </div>
-                </li>
+                <option key={key}>{key}</option>
               ))}
-            </ol>
+            </select>
+          ) : (
+            <div className="ComponentsLibraryMenu">
+              <div className="h6">Components Library</div>
+              <ol className="ComponentsLibraryList">
+                {Object.keys(COMPONENTS).map(key => (
+                  <li
+                    key={key}
+                    className="ComponentsLibraryItem"
+                    onClick={handleClickMenuItem(key)}
+                  >
+                    <div
+                      className="ComponentsLibraryItemText"
+                      style={{
+                        backgroundColor:
+                          key === component ? 'gold' : 'transparent',
+                      }}
+                    >
+                      {key}
+                    </div>
+                  </li>
+                ))}
+              </ol>
+            </div>
+          )}
+          <div className="ComponentsLibraryContent">
+            <Component />
           </div>
-        )}
-        <div className="ComponentsLibraryContent">
-          <Component />
         </div>
-      </div>
+      </ErrorBoundaryComponent>
     </StyledPage>
   );
 };

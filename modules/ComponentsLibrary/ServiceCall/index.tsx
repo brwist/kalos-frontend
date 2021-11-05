@@ -169,7 +169,7 @@ export const ServiceCall: FC<Props> = props => {
   );
 
   const handleSetError = useCallback(
-    (error: boolean) => setError(error),
+    (value: boolean) => setError(value),
     [setError],
   );
 
@@ -283,23 +283,22 @@ export const ServiceCall: FC<Props> = props => {
           resolve();
         }),
       );
-      /*
-      promises.push(
-        new Promise<void>(async resolve => {
-          const projects = await loadProjects();
-          setProjects(projects);
-          resolve();
-        }),
-        
-      );
-*/
+
+      // promises.push(
+      //   new Promise<void>(async resolve => {
+      //     const projects = await loadProjects();
+      //     setProjects(projects);
+      //     resolve();
+      //   }),
+      // );
+
       Promise.all(promises).then(() => {
         console.log('all processes complete');
         setLoaded(true);
         setLoading(false);
       });
-    } catch (err) {
-      //handleSetError(err);
+    } catch (e) {
+      handleSetError(true);
       setLoaded(true);
       setLoading(false);
     }
@@ -418,14 +417,12 @@ export const ServiceCall: FC<Props> = props => {
   }, [
     entry,
     serviceCallId,
-    propertyId,
-    saveInvoice,
-    loggedUserId,
-    property,
-    setSaving,
-    setLoading,
     onSave,
     onClose,
+    saveInvoice,
+    property,
+    propertyId,
+    loggedUserId,
     loadEntry,
     loadServicesRenderedData,
   ]);
@@ -860,7 +857,6 @@ export const ServiceCall: FC<Props> = props => {
                     loading={loading}
                     jobTypeOptions={jobTypeOptions}
                     jobSubtypeOptions={jobSubtypeOptions}
-                    jobTypeSubtypes={jobTypeSubtypes}
                     onChange={handleChangeEntry}
                     disabled={saving}
                     onValid={setRequestValid}
