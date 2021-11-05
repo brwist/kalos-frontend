@@ -24,6 +24,10 @@ type SelectorParams = {
   totalCount: number;
 };
 
+export type MergeDocuments = {
+  document1: string;
+  document2: string;
+};
 export type State = {
   transactionFilter: FilterType;
   transactions: SelectorParams[] | undefined;
@@ -34,6 +38,9 @@ export type State = {
   costCenterData: TransactionAccountList;
   loading: boolean;
   orderBy: string;
+  openMerge: boolean;
+  document1: string;
+  document2: string;
   orderDir: OrderDir | undefined;
   costCenters: { label: string; value: number }[];
   changingPage: boolean;
@@ -63,6 +70,7 @@ export type State = {
   transactionToSave: Transaction | undefined;
   imageNameToSave: string | undefined;
   openUploadPhotoTransaction: boolean;
+  mergeDocumentAlert: string;
 };
 
 export type PopupType = {
@@ -82,6 +90,10 @@ export enum ACTIONS {
   SET_LOADING = 'setLoading',
   SET_LOADED = 'setLoaded',
   SET_ORDER = 'setOrder',
+  SET_MERGE_DOCUMENT_ALERT = 'setMergeDocumentAlert',
+  SET_MERGE_DOCUMENT1 = 'setMergeDocument1',
+  SET_MERGE_DOCUMENT2 = 'setMergeDocument2',
+  SET_OPEN_MERGE = 'setOpenMerge',
   UPDATE_LOCAL_STATUS = 'updateLocalStatus',
   SET_CHANGING_PAGE = 'setChangingPage',
   SET_MERGING_TRANSACTION = 'setMergingTransaction',
@@ -135,6 +147,7 @@ export type Action =
   | { type: ACTIONS.SET_UPDATE_FROM_LOCAL_LIST; data: Transaction }
   | { type: ACTIONS.SET_PENDING_UPLOAD_PHOTO; data: Transaction | undefined }
   | { type: ACTIONS.SET_PAGE; data: number }
+  | { type: ACTIONS.SET_MERGE_DOCUMENT_ALERT; data: string }
   | { type: ACTIONS.SET_ERROR; data: string | undefined }
   | {
       type: ACTIONS.SET_STATUS;
@@ -161,6 +174,18 @@ export type Action =
   | {
       type: ACTIONS.SET_COST_CENTERS;
       data: { label: string; value: number }[];
+    }
+  | {
+      type: ACTIONS.SET_OPEN_MERGE;
+      data: boolean;
+    }
+  | {
+      type: ACTIONS.SET_MERGE_DOCUMENT1;
+      data: string;
+    }
+  | {
+      type: ACTIONS.SET_MERGE_DOCUMENT2;
+      data: string;
     }
   | {
       type: ACTIONS.SET_COST_CENTER_DATA;
@@ -211,6 +236,12 @@ export const reducer = (state: State, action: Action) => {
         totalTransactions: action.data,
       };
     }
+    case ACTIONS.SET_MERGE_DOCUMENT_ALERT: {
+      return {
+        ...state,
+        mergeDocumentAlert: action.data,
+      };
+    }
     case ACTIONS.SET_TRANSACTION_ACTIVITY_LOGS: {
       return {
         ...state,
@@ -259,6 +290,12 @@ export const reducer = (state: State, action: Action) => {
         employees: action.data,
       };
     }
+    case ACTIONS.SET_OPEN_MERGE: {
+      return {
+        ...state,
+        openMerge: action.data,
+      };
+    }
     case ACTIONS.SET_DEPARTMENTS: {
       return {
         ...state,
@@ -280,6 +317,20 @@ export const reducer = (state: State, action: Action) => {
       return {
         ...state,
         page: action.data,
+      };
+    }
+    case ACTIONS.SET_MERGE_DOCUMENT1: {
+      console.log('we set document1');
+      return {
+        ...state,
+        document1: action.data,
+      };
+    }
+    case ACTIONS.SET_MERGE_DOCUMENT2: {
+      console.log('we set document 2');
+      return {
+        ...state,
+        document2: action.data,
       };
     }
     case ACTIONS.SET_ASSIGNED_EMPLOYEE: {
@@ -352,7 +403,6 @@ export const reducer = (state: State, action: Action) => {
         let temp = state.transactions!.filter(
           transaction => transaction.txn.getId() != action.data.getId(),
         );
-        console.log(temp);
         return {
           ...state,
           transactions: temp,

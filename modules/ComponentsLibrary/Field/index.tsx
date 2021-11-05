@@ -10,6 +10,7 @@ import React, {
   RefObject,
   forwardRef,
   JSXElementConstructor,
+  Ref,
 } from 'react';
 import clsx from 'clsx';
 import { SvgIconProps } from '@material-ui/core/SvgIcon';
@@ -113,7 +114,7 @@ export interface Props<T> extends SchemaProps<T> {
   style?: CSSProperties;
   compact?: boolean;
   white?: boolean;
-  ref?: RefObject<T>;
+  ref?: RefObject<T> | Ref<T>;
 }
 
 export const getDefaultValueByType = (type: Type) => {
@@ -166,7 +167,7 @@ export const Field: <T>(
     const dateTimePart =
       type === 'date' ? (props.value + '').substr(11, 8) : '';
     const value =
-      type === 'date' ? (props.value + '').substr(0, 10) : props.value;
+      type === 'date' ? (props.value + '').substr(0, 10) : props.value; // props.value set by "data" prop on Form
     const [technicians, setTechnicians] = useState<User[]>([]);
     const [loadedTechnicians, setLoadedTechnicians] = useState<boolean>(false);
     const [eventsOpened, setEventsOpened] = useState<boolean>(false);
@@ -294,7 +295,6 @@ export const Field: <T>(
           let newValue = type === 'number' ? +value : value;
           if (type === 'date') {
             newValue = (newValue + ' ' + dateTimePart).trim();
-            console.log({ newValue });
           }
           onChange(newValue);
         }
@@ -775,11 +775,11 @@ export const Field: <T>(
             error={error}
           >
             {forceShrinkLabel && (
-              <InputLabel id={id} shrink={forceShrinkLabel}>{inputLabel}</InputLabel>  
+              <InputLabel id={id} shrink={forceShrinkLabel}>
+                {inputLabel}
+              </InputLabel>
             )}
-            {!forceShrinkLabel && (
-              <InputLabel id={id}>{inputLabel}</InputLabel>
-            )}
+            {!forceShrinkLabel && <InputLabel id={id}>{inputLabel}</InputLabel>}
             <Select
               labelId={id}
               id={`${name}-select`}
@@ -799,7 +799,7 @@ export const Field: <T>(
               }
             >
               {displayEmpty && (
-                <MenuItem value='' style={{fontWeight:'bold'}}>
+                <MenuItem value="" style={{ fontWeight: 'bold' }}>
                   {defaultLabel}
                 </MenuItem>
               )}
@@ -881,7 +881,10 @@ export const Field: <T>(
             className={clsx('FieldInput', { compact, disabled })}
             withinForm
             renderItem={i => (
-              <option value={i.getId()} key={`${i.getId()}-${i.getDescription()}`}>
+              <option
+                value={i.getId()}
+                key={`${i.getId()}-${i.getDescription()}`}
+              >
                 {i.getValue()} - {i.getDescription()}
               </option>
             )}

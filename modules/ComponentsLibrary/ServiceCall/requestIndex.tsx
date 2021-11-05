@@ -293,7 +293,7 @@ export const ServiceRequest: FC<Props> = props => {
           disabled: state.loading || state.saving,
         },
         {
-          label: 'Cancel',
+          label: 'Open Property',
           url: [
             '/index.cfm?action=admin:properties.details',
             `property_id=${propertyId}`,
@@ -301,6 +301,11 @@ export const ServiceRequest: FC<Props> = props => {
           ].join('&'),
           disabled: state.loading || state.saving,
         },
+        {
+          label: "Close",
+          onClick: onClose,
+          disabled: state.loading || state.saving,
+        }
       ]}
     >
       <Request

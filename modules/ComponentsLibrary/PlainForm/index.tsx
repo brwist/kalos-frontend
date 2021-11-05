@@ -5,6 +5,7 @@ import React, {
   ReactNode,
   forwardRef,
   RefObject,
+  Ref,
   JSXElementConstructor,
 } from 'react';
 import clsx from 'clsx';
@@ -74,7 +75,7 @@ export interface PlainFormProps<T> extends Style {
   error?: ReactNode;
   children?: ReactNode;
   className?: string;
-  ref?: RefObject<T>;
+  ref?: RefObject<T> | Ref<T>;
   inputFieldRefs?: T[];
 }
 
@@ -212,8 +213,7 @@ export const PlainForm: <T>(
               const { name } = props;
               return (
                 <Field
-                // @ts-ignore
-                  ref={functionRef => {
+                  ref={(functionRef: any) => {
                     if (functionRef && !inputFieldRefs?.includes(functionRef)) {
                       if (inputFieldRefs[indexOfInputField]) {
                         inputFieldRefs[indexOfInputField] = functionRef;

@@ -685,6 +685,10 @@ async function upload(target = '') {
 }
 
 async function bustCache(controller = '', filename = '') {
+  if (!sh.test('-e', 'tmp')) {
+    error('Please ensure the "tmp" directory exists in the project.');
+    return;
+  }
   if (typeof controller !== 'string' || controller === '') {
     controller = process.argv[4].replace(/-/g, '');
   }

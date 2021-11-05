@@ -217,9 +217,10 @@ export const InfoTable = ({
           schema={[
             [].concat.apply(
               Object.keys(fields).map((field: any, idx: number) => {
-                let columnType = rowButton?.columnDefinition.columnTypeOverrides.filter(
-                  type => type.columnName === field,
-                );
+                let columnType =
+                  rowButton?.columnDefinition.columnTypeOverrides.filter(
+                    type => type.columnName === field,
+                  );
                 return {
                   label: field,
                   name: field,
@@ -235,31 +236,31 @@ export const InfoTable = ({
                       : undefined,
                 };
               }) as any,
-              [
-                {
-                  label: 'Add Image / Document',
-                  name: 'image',
-                  type: 'file',
-                  onFileLoad: (data: string) => {
-                    if (rowButton) {
-                      if (rowButton.onFileLoad) rowButton.onFileLoad(data);
-                    }
-                  },
-                  actions: [
-                    {
-                      label: 'OK',
-                      onClick: () => {
-                        dispatch({
-                          type: ACTIONS.SET_IS_ADDING_ROW,
-                          payload: false,
-                        });
-                        if (onSaveRowButton) onSaveRowButton(temporaryResult);
-                      },
-                    },
-                  ],
-                } as any,
-              ],
             ),
+            [
+              {
+                label: 'Add Image / Document',
+                name: 'image',
+                type: 'file',
+                onFileLoad: (data: string) => {
+                  if (rowButton) {
+                    if (rowButton.onFileLoad) rowButton.onFileLoad(data);
+                  }
+                },
+                actions: [
+                  {
+                    label: 'OK',
+                    onClick: () => {
+                      dispatch({
+                        type: ACTIONS.SET_IS_ADDING_ROW,
+                        payload: false,
+                      });
+                      if (onSaveRowButton) onSaveRowButton(temporaryResult);
+                    },
+                  },
+                ],
+              } as any,
+            ],
           ]}
           data={fields}
         />
