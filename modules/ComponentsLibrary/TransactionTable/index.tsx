@@ -1019,6 +1019,7 @@ export const TransactionTable: FC<Props> = ({
   const saveFromRowButton = useCallback(
     async (saved: any) => {
       let newTxn = new Transaction();
+      newTxn.setTimestamp(saved['Date']);
 
       let newtimestamp = newTxn.getTimestamp();
       if (
