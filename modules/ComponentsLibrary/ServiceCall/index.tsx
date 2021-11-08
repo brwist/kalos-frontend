@@ -309,7 +309,7 @@ export const ServiceCall: FC<Props> = props => {
     serviceCallId,
     loggedUserId,
     loadServicesRenderedData,
-    //handleSetError,
+    handleSetError,
   ]);
 
   const handleSetParentId = useCallback(
