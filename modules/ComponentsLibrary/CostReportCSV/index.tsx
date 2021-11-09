@@ -19,12 +19,7 @@ import {
   UserClientService,
 } from '../../../helpers';
 import { ClassCode, ClassCodeClient } from '@kalos-core/kalos-rpc/ClassCode';
-import {
-  reducer,
-  ACTIONS,
-  EmployeeSubotal,
-  WeekClassCodeBreakdownSubtotal,
-} from './reducer';
+import { reducer, ACTIONS, WeekClassCodeBreakdownSubtotal } from './reducer';
 import { PrintList } from '../PrintList';
 import { PrintPage, Status } from '../PrintPage';
 import { PrintParagraph } from '../PrintParagraph';
@@ -47,6 +42,7 @@ import {
   format,
   addDays,
   differenceInCalendarWeeks,
+  endOfWeek,
 } from 'date-fns';
 import { roundNumber, downloadCSV } from '../../../helpers';
 import { Tabs } from '../Tabs';
@@ -102,7 +98,8 @@ export const CostReportCSV: FC<Props> = ({ serviceCallId, onClose }) => {
     classCodes: [],
     dropDowns: [],
     transactionDropDowns: [],
-    timesheetDropDowns: [],
+    classCodeDropdowns: [],
+    timesheetWeeklySubtotals: [],
     totalHoursWorked: 0,
     activeTab: tabs[0],
     printStatus: 'idle',
@@ -263,6 +260,14 @@ export const CostReportCSV: FC<Props> = ({ serviceCallId, onClose }) => {
           type: ACTIONS.SET_CLASS_CODES,
           data: classCodes,
         });
+        const mappedResults = classCodes.map(code => ({
+          classCodeId: code.getId(),
+          active: 0,
+        }));
+        dispatch({
+          type: ACTIONS.SET_CLASS_CODE_DROPDOWNS,
+          data: mappedResults,
+        });
         resolve();
       }),
     );
@@ -320,67 +325,36 @@ export const CostReportCSV: FC<Props> = ({ serviceCallId, onClose }) => {
       dispatch({ type: ACTIONS.SET_TIMESHEETS, data: timesheets });
 
       if (timesheets.length > 0) {
-        let earliestTimesheet = timesheets[0];
-        let latestTimesheet = timesheets[timesheets.length - 1];
-        let startWeek = new Date(parseISO(earliestTimesheet.getTimeStarted()));
-        startWeek = startOfWeek(startWeek, { weekStartsOn: 6 });
-        let endWeek = new Date(parseISO(latestTimesheet.getTimeStarted()));
-        endWeek = startOfWeek(endWeek, { weekStartsOn: 6 });
+        let weekList: WeekClassCodeBreakdownSubtotal[] = [];
 
-        let weeks = differenceInCalendarWeeks(endWeek, startWeek);
-        let weekList = [];
-        console.log('classCodes');
-        for (let i = 1; i < weeks + 1; i++) {
-          for (let j = 0; j < classCodes.length; j++) {
-            const newWeekStart = format(
-              addDays(new Date(startWeek), 7 * (i - 1)),
-              'yyyy-MM-dd',
-            );
-            const newWeekEnd = format(
-              addDays(new Date(startWeek), 7 * i),
-              'yyyy-MM-dd',
-            );
-            const result: EmployeeSubotal[] = [];
-
-            const weekStruct = {
-              weekStart: newWeekStart,
-              weekEnd: newWeekEnd,
-              employeeSubtotals: result,
-              classCodeId: classCodes[j].getId(),
-            };
+        for (let i = 0; i < timesheets.length; i++) {
+          let startWeek = new Date(parseISO(timesheets[i].getTimeStarted()));
+          startWeek = startOfWeek(startWeek, { weekStartsOn: 6 });
+          let endWeek = new Date(parseISO(timesheets[i].getTimeStarted()));
+          endWeek = endOfWeek(endWeek, { weekStartsOn: 6 });
+          const weekStruct = {
+            weekStart: format(startWeek, 'yyyy-MM-dd'),
+            weekEnd: format(endWeek, 'yyyy-MM-dd'),
+            employeeId: timesheets[i].getTechnicianUserId(),
+            hoursSubtotal: timesheets[i].getHoursWorked(),
+            classCodeId: timesheets[i].getClassCodeId(),
+          };
+          let findExisting = weekList.findIndex(
+            week =>
+              week.classCodeId == weekStruct.classCodeId &&
+              week.weekEnd == weekStruct.weekEnd &&
+              weekStruct.weekStart === weekStruct.weekStart,
+          );
+          if (findExisting != -1) {
+            weekList[findExisting].hoursSubtotal += weekStruct.hoursSubtotal;
+          } else {
             weekList.push(weekStruct);
           }
         }
-        console.log('weekList before time', weekList);
-        if (weekList.length > 0) {
-          for (let i = 0; i < weekList.length; i++) {
-            for (let j = 0; j < timesheets.length; j++) {
-              let timesheetStart = format(
-                new Date(parseISO(timesheets[j].getTimeStarted())),
-                'yyyy-MM-dd',
-              );
-              if (
-                timesheetStart < weekList[i].weekEnd &&
-                timesheetStart > weekList[i].weekStart &&
-                weekList[i].classCodeId == timesheets[j].getClassCodeId()
-              ) {
-                let newStruct = {
-                  employeeId: timesheets[j].getTechnicianUserId(),
-                  hours: timesheets[j].getHoursWorked(),
-                };
-                weekList[i].employeeSubtotals.push(newStruct);
-              }
-            }
-          }
-        }
-        const weekListFinal = weekList.filter(
-          week => week.employeeSubtotals.length != 0,
-        );
         dispatch({
-          type: ACTIONS.SET_TIMESHEET_DROPDOWNS,
-          data: weekListFinal,
+          type: ACTIONS.SET_TIMESHEET_WEEKLY_SUBTOTALS,
+          data: weekList,
         });
-        console.log('weekList', weekListFinal);
       }
 
       let temp = state.laborTotals;
@@ -1796,63 +1770,142 @@ export const CostReportCSV: FC<Props> = ({ serviceCallId, onClose }) => {
                         align: 'left',
                       },
                       {
-                        name: 'Department',
+                        name: 'Week',
                         align: 'left',
                       },
                       {
-                        name: 'Approved By',
+                        name: 'Total Hours',
                         align: 'left',
-                      },
-                      {
-                        name: 'Time Started',
-                        align: 'left',
-                      },
-                      {
-                        name: 'Time Finished',
-                        align: 'left',
-                      },
-                      {
-                        name: 'Brief Description',
-                        align: 'left',
-                      },
-                      {
-                        name: 'Hours Worked',
-                        align: 'left',
-                      },
-                      {
-                        name: 'Notes',
-                        align: 'right',
                       },
                     ]}
-                    data={state.timesheets
-                      .filter(
-                        timesheet =>
-                          timesheet.getClassCodeId() === code.getId(),
-                      )
-                      .map(tsl => {
+                    data={state.timesheetWeeklySubtotals
+                      .filter(week => week.classCodeId == code.getId())
+                      .map(week => {
                         return [
                           {
-                            value:
-                              tsl.getTechnicianUserName() +
-                              ` (${tsl.getTechnicianUserId()})`,
+                            value: `${state.users
+                              .find(user => user.getId() === week.employeeId)
+                              ?.getFirstname()}-${state.users
+                              .find(user => user.getId() === week.employeeId)
+                              ?.getLastname()}`,
                           },
-                          { value: tsl.getDepartmentName() },
-                          { value: tsl.getAdminApprovalUserName() },
-                          { value: formatDate(tsl.getTimeStarted()) || '-' },
-                          { value: formatDate(tsl.getTimeFinished()) || '-' },
-                          { value: tsl.getBriefDescription() },
                           {
-                            value:
-                              tsl.getHoursWorked() != 0
-                                ? tsl.getHoursWorked() > 1
-                                  ? `${tsl.getHoursWorked()} hrs`
-                                  : `${tsl.getHoursWorked()} hr`
-                                : '-',
+                            value: `${week.weekStart}-${week.weekEnd}`,
                           },
-                          { value: tsl.getNotes() },
+                          { value: `${week.hoursSubtotal} hour(s)` },
                         ];
                       })}
                   />
+                  <div key="TimesheetDetails">
+                    <Button
+                      key={'dropDownbutton' + code.getId().toString()}
+                      onClick={() => {
+                        let tempDropDowns = state.classCodeDropdowns;
+                        const dropdown = tempDropDowns.findIndex(
+                          dropdown => dropdown.classCodeId === code.getId(),
+                        );
+                        if (tempDropDowns[dropdown]) {
+                          if (tempDropDowns[dropdown].active == 0)
+                            tempDropDowns[dropdown].active = 1;
+                          else tempDropDowns[dropdown].active = 0;
+                        }
+                        dispatch({
+                          type: ACTIONS.SET_CLASS_CODE_DROPDOWNS,
+                          data: tempDropDowns,
+                        });
+                      }}
+                    >
+                      Details
+                      {state.classCodeDropdowns.find(
+                        dropdown => dropdown.classCodeId === code.getId(),
+                      )!.active == 1 ? (
+                        <ExpandLess></ExpandLess>
+                      ) : (
+                        <ExpandMore></ExpandMore>
+                      )}
+                    </Button>
+                    <Collapse
+                      key={code.getId().toString() + 'collapse'}
+                      in={
+                        state.classCodeDropdowns.find(
+                          dropdown => dropdown.classCodeId === code.getId(),
+                        )?.active == 1
+                          ? true
+                          : false
+                      }
+                    >
+                      <InfoTable
+                        columns={[
+                          {
+                            name: 'Technician',
+                            align: 'left',
+                          },
+                          {
+                            name: 'Department',
+                            align: 'left',
+                          },
+                          {
+                            name: 'Approved By',
+                            align: 'left',
+                          },
+                          {
+                            name: 'Time Started',
+                            align: 'left',
+                          },
+                          {
+                            name: 'Time Finished',
+                            align: 'left',
+                          },
+                          {
+                            name: 'Brief Description',
+                            align: 'left',
+                          },
+                          {
+                            name: 'Hours Worked',
+                            align: 'left',
+                          },
+                          {
+                            name: 'Notes',
+                            align: 'right',
+                          },
+                        ]}
+                        data={state.timesheets
+                          .filter(
+                            timesheet =>
+                              timesheet.getClassCodeId() === code.getId(),
+                          )
+                          .map(tsl => {
+                            return [
+                              {
+                                value:
+                                  tsl.getTechnicianUserName() +
+                                  ` (${tsl.getTechnicianUserId()})`,
+                              },
+                              { value: tsl.getDepartmentName() },
+                              {
+                                value: tsl.getAdminApprovalUserName(),
+                              },
+                              {
+                                value: formatDate(tsl.getTimeStarted()) || '-',
+                              },
+                              {
+                                value: formatDate(tsl.getTimeFinished()) || '-',
+                              },
+                              { value: tsl.getBriefDescription() },
+                              {
+                                value:
+                                  tsl.getHoursWorked() != 0
+                                    ? tsl.getHoursWorked() > 1
+                                      ? `${tsl.getHoursWorked()} hrs`
+                                      : `${tsl.getHoursWorked()} hr`
+                                    : '-',
+                              },
+                              { value: tsl.getNotes() },
+                            ];
+                          })}
+                      />
+                    </Collapse>
+                  </div>
                 </SectionBar>
               )),
           },
@@ -2021,3 +2074,6 @@ export const CostReportCSV: FC<Props> = ({ serviceCallId, onClose }) => {
     <Loader></Loader>
   );
 };
+/* Old timesheet, this will be shown via dropdown
+
+*/
