@@ -257,30 +257,20 @@ export const AdvancedSearch: FC<Props> = ({
     const loggedUser = await UserClientService.Get(userReq);
     setLoggedUser(loggedUser);
     let qlResults: QuoteLine[] = [];
-    let qlCheck = false;
     let startingPage = 0;
-    while (qlCheck == false) {
-      const quoteReq = new QuoteLine();
-      quoteReq.setIsActive(1);
-      quoteReq.setIsFlatrate('1');
-      quoteReq.setPageNumber(startingPage);
-      try {
-        const results = (
-          await QuoteLineClientService.BatchGet(quoteReq)
-        ).getResultsList();
-        if (results.length === 0) {
-          qlCheck = true;
-          break;
-        }
-        for (let i = 0; i < results.length; i++) {
-          qlResults.push(results[i]);
-        }
-        startingPage += 1;
-      } catch (e) {
-        console.log('could not fetch results for flat rate', e);
-        break;
-      }
+    const quoteReq = new QuoteLine();
+    quoteReq.setIsActive(1);
+    quoteReq.setIsFlatrate('1');
+    quoteReq.setPageNumber(startingPage);
+    quoteReq.setWithoutLimit(true);
+    try {
+      qlResults = (
+        await QuoteLineClientService.BatchGet(quoteReq)
+      ).getResultsList();
+    } catch (e) {
+      console.log('could not fetch results for flat rate', e);
     }
+
     qlResults = qlResults.sort(function (a, b) {
       if (a.getDescription() < b.getDescription()) {
         return -1;
