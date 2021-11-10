@@ -144,7 +144,13 @@ const Column = ({
           ) {
             return false;
           }
-          if (jobType && jobType !== call?.getJobTypeId()) {
+          let jobTypeTemp = jobType.toString().split(',');
+          jobTypeTemp = jobTypeTemp.filter(value => value != '');
+          console.log('data', jobTypeTemp);
+          if (
+            jobTypeTemp.length > 0 &&
+            !jobTypeTemp.includes(call?.getJobTypeId().toString())
+          ) {
             return false;
           }
           if (jobSubType && jobSubType !== call?.getJobSubtypeId()) {
@@ -312,11 +318,8 @@ const Column = ({
   filteredCalendarDay.setCompletedServiceCallsList(
     calendarDay!.getCompletedServiceCallsList(),
   );
-  const {
-    completedServiceCallsList,
-    remindersList,
-    serviceCallsList,
-  } = filterCalls(filteredCalendarDay);
+  const { completedServiceCallsList, remindersList, serviceCallsList } =
+    filterCalls(filteredCalendarDay);
   const timeoffRequestsList = calendarDay!.getTimeoffRequestsList();
   /*
   const {
