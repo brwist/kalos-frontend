@@ -106,7 +106,7 @@ const mapToObject = (mapping: jspb.Map<string | number, string>): MapList =>
 
 type Filters = {
   customers: string[];
-  jobType: number;
+  jobType: string;
   jobSubType: number;
   zip: string[];
   propertyUse: string[];
@@ -215,7 +215,7 @@ const initialFilters: Filters = cachedInitialFilters
   ? JSON.parse(cachedInitialFilters)
   : {
       customers: [],
-      jobType: 0,
+      jobType: '',
       jobSubType: 0,
       zip: [],
       propertyUse: [],
