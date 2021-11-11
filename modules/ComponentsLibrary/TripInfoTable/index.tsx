@@ -143,6 +143,13 @@ export const SCHEMA_GOOGLE_MAP_INPUT_FORM: Schema<AddressPair.AsObject> = [
       label: 'Time of Trip Start',
       name: 'Date',
       type: 'mui-datetime',
+      minutesStep: 1,
+    },
+    {
+      label: 'Time of Trip End',
+      name: 'DateEnded',
+      type: 'mui-datetime',
+      minutesStep: 1,
     },
   ],
 ];
