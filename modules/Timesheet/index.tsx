@@ -7,7 +7,7 @@ import { Timesheet } from './main';
 const u = new UserClient(ENDPOINT);
 u.GetToken('test', 'test').then(() => {
   ReactDOM.render(
-    <Timesheet userId={213} timesheetOwnerId={3490} />,
+    <Timesheet userId={213} timesheetOwnerId={213} />,
     document.getElementById('root'),
   );
 });
