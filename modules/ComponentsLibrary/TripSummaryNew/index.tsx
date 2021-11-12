@@ -7,6 +7,7 @@ import {
   perDiemTripMilesToUsd,
 } from '../../../helpers';
 import { Tooltip } from '../Tooltip';
+import { differenceInMinutes, parseISO } from 'date-fns';
 import IconButton from '@material-ui/core/IconButton';
 import DeleteIcon from '@material-ui/icons/Delete';
 import NotInterestedIcon from '@material-ui/icons/NotInterested';
@@ -15,6 +16,7 @@ import { Visibility } from '@material-ui/icons';
 import { SlackMessageButton } from '../SlackMessageButton';
 import { Loader } from '../../Loader/main';
 import { SectionBar } from '../SectionBar';
+import { Modal } from '../Modal';
 import {
   PerDiem,
   TripList,
@@ -40,6 +42,7 @@ import MessageIcon from '@material-ui/icons/Message';
 import { TripInfo, TripViewModal } from '../TripViewModal';
 import { TimesheetDepartment } from '@kalos-core/kalos-rpc/TimesheetDepartment';
 import { Button } from '../Button';
+import { TripCalulator } from '../TripCalulator';
 import { NULL_TIME } from '../../../constants';
 import { PlaceAutocompleteAddressForm } from '../PlaceAutocompleteAddressForm';
 import { SCHEMA_GOOGLE_MAP_INPUT_FORM } from '../TripInfoTable';
@@ -107,6 +110,8 @@ export const TripSummaryNew: FC<Props> = ({
   const startDay = startOfWeek(subDays(today, 7), { weekStartsOn: 6 });
   const endDay = addDays(startDay, 7);
   const [pendingDeleteAllTrips, setPendingDeleteAllTrips] = useState<boolean>();
+  const [openCalculator, setOpenCalculator] = useState<boolean>();
+
   const [pendingApproveAllTrips, setPendingApproveAllTrips] =
     useState<boolean>();
   const formatDateFns = (date: Date) => format(date, 'yyyy-MM-dd');
@@ -369,13 +374,8 @@ export const TripSummaryNew: FC<Props> = ({
     [
       {
         label: 'Start Time',
-        type: 'mui-datetime',
+        type: 'mui-date',
         name: 'date',
-      },
-      {
-        label: 'End Time',
-        type: 'mui-datetime',
-        name: 'dateEnded',
       },
     ],
     [
@@ -587,7 +587,6 @@ export const TripSummaryNew: FC<Props> = ({
     let trip = new Trip();
     trip.setOriginAddress(data.FullAddressOrigin);
     trip.setDestinationAddress(data.FullAddressDestination);
-    trip.setDateEnded(data.DateEnded);
     try {
       const tripDistance = await getTripDistance(
         String(data.FullAddressOrigin),
@@ -802,6 +801,15 @@ export const TripSummaryNew: FC<Props> = ({
           onClick={handleAddTrip}
         />
       )}
+
+      <Button
+        label="Trip"
+        size="small"
+        key={'calculateTrips'}
+        variant="contained"
+        onClick={() => setOpenCalculator(true)}
+      />
+
       {pendingTripToAdd && (
         <PlaceAutocompleteAddressForm
           key={'autocomplete'}
@@ -881,6 +889,18 @@ export const TripSummaryNew: FC<Props> = ({
             loadTrips();
           }}
         />
+      )}
+      {openCalculator && (
+        <Modal
+          key="calculatorModal"
+          open={openCalculator}
+          onClose={() => setOpenCalculator(false)}
+        >
+          <TripCalulator
+            loggedUserId={loggedUserId}
+            onClose={() => setOpenCalculator(false)}
+          />
+        </Modal>
       )}
       <InfoTable
         key={

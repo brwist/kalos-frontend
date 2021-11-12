@@ -374,6 +374,12 @@ export class TripInfoTable extends React.PureComponent<Props, State> {
                     : 'left',
                 },
                 {
+                  name: 'Employee Calculated Time',
+                  align: this.props.textAlignment
+                    ? this.props.textAlignment
+                    : 'left',
+                },
+                {
                   name: 'Miles',
                   align: this.props.textAlignment
                     ? this.props.textAlignment
