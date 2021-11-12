@@ -42,7 +42,6 @@ import MessageIcon from '@material-ui/icons/Message';
 import { TripInfo, TripViewModal } from '../TripViewModal';
 import { TimesheetDepartment } from '@kalos-core/kalos-rpc/TimesheetDepartment';
 import { Button } from '../Button';
-import { TripCalulator } from '../TripCalulator';
 import { NULL_TIME } from '../../../constants';
 import { PlaceAutocompleteAddressForm } from '../PlaceAutocompleteAddressForm';
 import { SCHEMA_GOOGLE_MAP_INPUT_FORM } from '../TripInfoTable';
@@ -110,7 +109,6 @@ export const TripSummaryNew: FC<Props> = ({
   const startDay = startOfWeek(subDays(today, 7), { weekStartsOn: 6 });
   const endDay = addDays(startDay, 7);
   const [pendingDeleteAllTrips, setPendingDeleteAllTrips] = useState<boolean>();
-  const [openCalculator, setOpenCalculator] = useState<boolean>();
 
   const [pendingApproveAllTrips, setPendingApproveAllTrips] =
     useState<boolean>();
@@ -802,14 +800,6 @@ export const TripSummaryNew: FC<Props> = ({
         />
       )}
 
-      <Button
-        label="Trip"
-        size="small"
-        key={'calculateTrips'}
-        variant="contained"
-        onClick={() => setOpenCalculator(true)}
-      />
-
       {pendingTripToAdd && (
         <PlaceAutocompleteAddressForm
           key={'autocomplete'}
@@ -889,18 +879,6 @@ export const TripSummaryNew: FC<Props> = ({
             loadTrips();
           }}
         />
-      )}
-      {openCalculator && (
-        <Modal
-          key="calculatorModal"
-          open={openCalculator}
-          onClose={() => setOpenCalculator(false)}
-        >
-          <TripCalulator
-            loggedUserId={loggedUserId}
-            onClose={() => setOpenCalculator(false)}
-          />
-        </Modal>
       )}
       <InfoTable
         key={
