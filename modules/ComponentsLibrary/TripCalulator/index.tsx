@@ -157,9 +157,18 @@ export const TripCalulator: FC<props> = ({ loggedUserId, onClose }) => {
   return (
     <div key="Calculator">
       {state.loadingData && (
-        <div style={{ position: 'absolute', color: '#FFF' }}>
-          <CircularProgress />
-        </div>
+        <CircularProgress
+          style={{
+            position: 'absolute',
+            left: '50%',
+            top: '50%',
+            zIndex: 5,
+            marginLeft: -20,
+            marginTop: -20,
+            width: 50,
+            height: 50,
+          }}
+        />
       )}
       <Form<TripInfo>
         schema={SCHEMA}
@@ -169,7 +178,11 @@ export const TripCalulator: FC<props> = ({ loggedUserId, onClose }) => {
         submitLabel={'Calculate'}
         onClose={() => onClose()}
         submitDisabled={
-          state.employeeId === 0 || state.jobNumber === 0 ? true : false
+          state.employeeId === 0 ||
+          state.jobNumber === 0 ||
+          state.loadingData == true
+            ? true
+            : false
         }
         data={{ employeeId: state.employeeId, jobId: state.jobNumber }}
         onChange={e => {
