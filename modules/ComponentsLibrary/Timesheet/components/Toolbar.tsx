@@ -132,12 +132,12 @@ const Toolbar: FC<Props> = ({
               <Button onClick={handleReject} label={'Reject Timesheet'} />
             </div>
           )}
-          {(userID == 103896 || userID == 103285) && (
+          {
             <Button
               label="Trip Calculator"
               onClick={() => setOpenCalculator(true)}
             ></Button>
-          )}
+          }
           {payrollOpen && (
             <Modal
               open={true}
@@ -165,6 +165,7 @@ const Toolbar: FC<Props> = ({
             >
               <TripCalulator
                 loggedUserId={userID}
+                role={role}
                 onClose={() => setOpenCalculator(false)}
               />
             </Modal>

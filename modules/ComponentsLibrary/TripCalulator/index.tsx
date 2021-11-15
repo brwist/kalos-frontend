@@ -28,6 +28,7 @@ import { InfoTable } from '../InfoTable';
 // add any prop types here
 interface props {
   loggedUserId: number;
+  role: string | undefined;
   onClose: () => void;
 }
 
@@ -36,7 +37,7 @@ export type TripInfo = {
   employeeId: number;
   jobId: number;
 };
-export const TripCalulator: FC<props> = ({ loggedUserId, onClose }) => {
+export const TripCalulator: FC<props> = ({ loggedUserId, onClose, role }) => {
   const [state, dispatch] = useReducer(reducer, {
     isLoaded: false,
     error: undefined,
@@ -119,7 +120,7 @@ export const TripCalulator: FC<props> = ({ loggedUserId, onClose }) => {
         label: 'Employee',
         type: 'technician',
         name: 'employeeId',
-        disabled: state.loadingData == true ? true : false,
+        disabled: state.loadingData == true || role == undefined ? true : false,
       },
 
       {
@@ -196,7 +197,7 @@ export const TripCalulator: FC<props> = ({ loggedUserId, onClose }) => {
       <Form<TripInfo>
         schema={SCHEMA}
         key="TripCalculatorForm"
-        title="Calculate Trip Distance"
+        title="Calculate Trip Distance To Job From Home"
         onSave={() => getTripData()}
         submitLabel={'Calculate'}
         onClose={() => onClose()}
@@ -207,7 +208,10 @@ export const TripCalulator: FC<props> = ({ loggedUserId, onClose }) => {
             ? true
             : false
         }
-        data={{ employeeId: state.employeeId, jobId: state.jobNumber }}
+        data={{
+          employeeId: role ? state.employeeId : loggedUserId,
+          jobId: state.jobNumber,
+        }}
         onChange={e => {
           dispatch({ type: ACTIONS.SET_ORIGIN, data: '' });
           dispatch({ type: ACTIONS.SET_DESTINATION, data: '' });
@@ -231,7 +235,10 @@ export const TripCalulator: FC<props> = ({ loggedUserId, onClose }) => {
               { name: 'Distance' },
               { name: ' Average Travel Time' },
               {
-                name: ' Round Trip Distance, Subtracting 60 minutes for Home Travel',
+                name: ' Travel Time, Subtracting 30 minutes for Home Travel',
+              },
+              {
+                name: 'Round Trip Time, Subtracting 60 minutes for Home Travel',
               },
               {
                 name: ' OTB Value',
@@ -246,6 +253,13 @@ export const TripCalulator: FC<props> = ({ loggedUserId, onClose }) => {
                   value: `${(state.distanceResults.duration / 60).toFixed(
                     0,
                   )} minutes`,
+                },
+                {
+                  value: `${
+                    state.distanceResults.duration / 60 - 30 > 0
+                      ? (state.distanceResults.duration / 60 - 30).toFixed(0)
+                      : 0
+                  } minutes`,
                 },
                 {
                   value: `${
