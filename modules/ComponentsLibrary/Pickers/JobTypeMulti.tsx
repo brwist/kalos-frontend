@@ -66,7 +66,7 @@ export class JobTypePickerMulti extends React.PureComponent<props, state> {
     let jobTypeReq = new JobType();
     const results = (await this.Client.BatchGet(jobTypeReq)).getResultsList();
     this.setState({ list: results });
-    console.log(results);
+    console.log('results', results);
   }
 
   async componentDidMount() {
@@ -80,7 +80,7 @@ export class JobTypePickerMulti extends React.PureComponent<props, state> {
           <InputLabel htmlFor="job-type-picker">Job Type</InputLabel>
           <Field
             name="jobTypeIds"
-            value={this.state.initValues || []}
+            value={this.state.initValues || ''}
             type="multiselect"
             options={this.state.list.map(acc => ({
               label: acc.getName(),
