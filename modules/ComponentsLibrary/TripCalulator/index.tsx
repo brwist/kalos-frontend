@@ -61,7 +61,28 @@ export const TripCalulator: FC<props> = ({ loggedUserId, onClose }) => {
     // TODO clean up your function calls here (called once the component is unmounted, prevents "Can't perform a React state update on an unmounted component" errors)
     // This is important for long-term performance of our components
   }, []);
-
+  const getOTB = (distance: number) => {
+    if (distance >= 61 && distance <= 90) {
+      return '(A) 61-90 miles, $34.80 ';
+    }
+    if (distance >= 91 && distance <= 120) {
+      return '(B) 91-120 miles ,$69.60  ';
+    }
+    if (distance >= 121 && distance <= 150) {
+      return '(C) 121-150 miles ,$104.40   ';
+    }
+    if (distance >= 151 && distance <= 180) {
+      return '(D) 151-180 miles ,$139.20  ';
+    }
+    if (distance >= 181 && distance <= 210) {
+      return '(E) 181-210 miles ,$174.00   ';
+    }
+    if (distance >= 151 && distance <= 180) {
+      return '(F) 211-240 miles ,$208.80   ';
+    } else {
+      return 'None';
+    }
+  };
   const handleError = useCallback(
     async (errorToSet: string) => {
       // This will send out an error devlog automatically when called
@@ -98,12 +119,14 @@ export const TripCalulator: FC<props> = ({ loggedUserId, onClose }) => {
         label: 'Employee',
         type: 'technician',
         name: 'employeeId',
+        disabled: state.loadingData == true ? true : false,
       },
 
       {
         label: 'Job Number',
         type: 'eventId',
         name: 'jobId',
+        disabled: state.loadingData == true ? true : false,
       },
     ],
   ];
@@ -206,7 +229,13 @@ export const TripCalulator: FC<props> = ({ loggedUserId, onClose }) => {
               { name: 'Employee Address' },
               { name: 'Job Address' },
               { name: 'Distance' },
-              { name: ' Average Distance' },
+              { name: ' Average Travel Time' },
+              {
+                name: ' Round Trip Distance, Subtracting 60 minutes for Home Travel',
+              },
+              {
+                name: ' OTB Value',
+              },
             ]}
             data={[
               [
@@ -217,6 +246,19 @@ export const TripCalulator: FC<props> = ({ loggedUserId, onClose }) => {
                   value: `${(state.distanceResults.duration / 60).toFixed(
                     0,
                   )} minutes`,
+                },
+                {
+                  value: `${
+                    (state.distanceResults.duration / 60) * 2 - 60 > 0
+                      ? (
+                          (state.distanceResults.duration / 60) * 2 -
+                          60
+                        ).toFixed(0)
+                      : 0
+                  } minutes`,
+                },
+                {
+                  value: getOTB(state.distanceResults.distance),
                 },
               ],
             ]}
