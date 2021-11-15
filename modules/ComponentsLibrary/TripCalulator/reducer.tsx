@@ -78,6 +78,10 @@ export const reducer = (state: State, action: Action) => {
       };
     }
     case ACTIONS.SET_JOB_NUMBER: {
+      if (action.data.toString() === '') {
+        action.data = 0;
+      }
+      console.log('value that got sent', action.data);
       return {
         ...state,
         jobNumber: action.data,
