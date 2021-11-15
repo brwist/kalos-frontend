@@ -77,7 +77,7 @@ export const TripCalulator: FC<props> = ({ loggedUserId, onClose }) => {
     if (distance >= 181 && distance <= 210) {
       return '(E) 181-210 miles ,$174.00   ';
     }
-    if (distance >= 151 && distance <= 180) {
+    if (distance >= 211 && distance <= 240) {
       return '(F) 211-240 miles ,$208.80   ';
     } else {
       return 'None';
