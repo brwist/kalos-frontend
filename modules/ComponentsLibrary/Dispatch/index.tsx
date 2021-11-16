@@ -66,7 +66,7 @@ const initialFormData: FormData = {
   dateStart: format(new Date(), 'yyyy-MM-dd'),
   timeStart: format(setHours(setMinutes(new Date(), 0), 0), 'yyyy-MM-dd HH:mm'),
   dateEnd: format(addDays(new Date(), 1), 'yyyy-MM-dd'),
-  timeEnd: format(setHours(setMinutes(new Date(), 45), 23), 'yyyy-MM-dd HH:mm'),
+  timeEnd: format(setHours(setMinutes(new Date(), 0), 0), 'yyyy-MM-dd HH:mm'),
   departmentIds: [],
   jobTypes: [],
   divisionMulti: [],
