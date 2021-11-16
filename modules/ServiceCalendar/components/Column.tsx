@@ -97,7 +97,9 @@ const Column = ({
         calendarDay.getServiceCallsList(),
       ];
       for (let i = 0; i < callList.length; i++) {
-        //
+        const jobTypeIdsFilterArry = compact((jobType || '0').split(','))
+          .map(Number)
+          .filter(e => e !== 0);
         callList[i] = callList[i].filter((call: Event) => {
           const techIdsFilterArr = compact((techIdsFilter || '0').split(','))
             .map(Number)
@@ -126,6 +128,7 @@ const Column = ({
               return false;
             }
           }
+
           if (
             customers.length &&
             !customers.includes(`${call?.getCustomer()?.getId()}`)
@@ -144,12 +147,10 @@ const Column = ({
           ) {
             return false;
           }
-          let jobTypeTemp = jobType.toString().split(',');
-          jobTypeTemp = jobTypeTemp.filter(value => value != '');
-          console.log('data', jobTypeTemp);
+
           if (
-            jobTypeTemp.length > 0 &&
-            !jobTypeTemp.includes(call?.getJobTypeId().toString())
+            jobTypeIdsFilterArry.length > 0 &&
+            !jobTypeIdsFilterArry.includes(call?.getJobTypeId())
           ) {
             return false;
           }

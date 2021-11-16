@@ -215,13 +215,16 @@ const initialFilters: Filters = cachedInitialFilters
   ? JSON.parse(cachedInitialFilters)
   : {
       customers: [],
-      jobType: '',
+      jobType: '0',
       jobSubType: 0,
       zip: [],
       propertyUse: [],
       techIds: '0',
     };
-
+let temp = initialFilters.jobType;
+if (typeof temp === 'number') {
+  initialFilters.jobType = initialFilters.jobType.toString();
+}
 const initialState: State = {
   fetchingCalendarData: true,
   speedDialOpen: false,

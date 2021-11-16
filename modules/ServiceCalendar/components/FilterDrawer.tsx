@@ -150,7 +150,7 @@ const FilterDrawer = ({ open, toggleDrawer }: Props) => {
   const handleClear = () => {
     const temp = {
       customers: [],
-      jobType: '',
+      jobType: '0',
       jobSubType: 0,
       zip: [],
       propertyUse: [],
@@ -237,7 +237,9 @@ const FilterDrawer = ({ open, toggleDrawer }: Props) => {
             {
               <JobTypePickerMulti
                 selected={jobType}
-                onSelect={value => dispatch({ type: 'jobType', value })}
+                onSelect={value =>
+                  dispatch({ type: 'jobType', value: String(value) })
+                }
               />
             }
 
