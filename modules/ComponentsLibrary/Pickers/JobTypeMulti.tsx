@@ -18,30 +18,29 @@ interface props {
 
 interface state {
   list: JobType[];
-  initValues: string;
+  initValues: string[];
 }
 
 export class JobTypePickerMulti extends React.PureComponent<props, state> {
   Client: JobTypeClient;
-
   constructor(props: props) {
     super(props);
     this.state = {
       list: [],
-      initValues: this.props.selected,
+      initValues: this.props.selected.split(','),
     };
     this.Client = new JobTypeClient(ENDPOINT);
-
+    console.log('selected', this.props.selected);
     this.handleSelect = this.handleSelect.bind(this);
     this.addItem = this.addItem.bind(this);
   }
 
-  handleSelect(e: string) {
+  handleSelect(e: string[]) {
     console.log('what we got', e);
     this.setState({ initValues: e });
     if (this.props.onSelect) {
       try {
-        this.props.onSelect(e);
+        this.props.onSelect(e.join(','));
       } catch (err) {
         console.log(err);
       }
@@ -80,7 +79,7 @@ export class JobTypePickerMulti extends React.PureComponent<props, state> {
           <InputLabel htmlFor="job-type-picker">Job Type</InputLabel>
           <Field
             name="jobTypeIds"
-            value={this.state.initValues || ''}
+            value={this.state.initValues.filter(value => value != '0') || []}
             type="multiselect"
             options={this.state.list.map(acc => ({
               label: acc.getName(),
