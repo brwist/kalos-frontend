@@ -18,7 +18,6 @@ interface props {
 
 interface state {
   list: JobType[];
-  initValues: string[];
 }
 
 export class JobTypePickerMulti extends React.PureComponent<props, state> {
@@ -27,17 +26,13 @@ export class JobTypePickerMulti extends React.PureComponent<props, state> {
     super(props);
     this.state = {
       list: [],
-      initValues: this.props.selected.split(','),
     };
     this.Client = new JobTypeClient(ENDPOINT);
-    console.log('selected', this.props.selected);
+    console.log('selected givne from props', this.props.selected);
     this.handleSelect = this.handleSelect.bind(this);
     this.addItem = this.addItem.bind(this);
   }
-
   handleSelect(e: string[]) {
-    console.log('what we got', e);
-    this.setState({ initValues: e });
     if (this.props.onSelect) {
       try {
         this.props.onSelect(e.join(','));
@@ -60,7 +55,6 @@ export class JobTypePickerMulti extends React.PureComponent<props, state> {
       }));
     }
   }
-
   async fetchAccounts() {
     let jobTypeReq = new JobType();
     const results = (await this.Client.BatchGet(jobTypeReq)).getResultsList();
@@ -79,7 +73,10 @@ export class JobTypePickerMulti extends React.PureComponent<props, state> {
           <InputLabel htmlFor="job-type-picker">Job Type</InputLabel>
           <Field
             name="jobTypeIds"
-            value={this.state.initValues.filter(value => value != '0') || []}
+            key="JobTypeMultiField"
+            value={
+              this.props.selected.split(',').filter(value => value != '0') || []
+            }
             type="multiselect"
             options={this.state.list.map(acc => ({
               label: acc.getName(),
@@ -87,7 +84,7 @@ export class JobTypePickerMulti extends React.PureComponent<props, state> {
             }))}
             //@ts-ignore
             onChange={e => this.handleSelect(e)}
-            label=" "
+            label="Select Job Type "
           />
         </div>
       );

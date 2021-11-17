@@ -236,6 +236,7 @@ const FilterDrawer = ({ open, toggleDrawer }: Props) => {
           >
             {
               <JobTypePickerMulti
+                key="JobTypeMultiPicker"
                 selected={jobType}
                 onSelect={value =>
                   dispatch({ type: 'jobType', value: String(value) })
@@ -244,6 +245,7 @@ const FilterDrawer = ({ open, toggleDrawer }: Props) => {
             }
 
             <JobSubtypePicker
+              key="jobTypeSubtypePicker"
               selected={jobSubType}
               onSelect={value => dispatch({ type: 'jobSubType', value })}
             />
