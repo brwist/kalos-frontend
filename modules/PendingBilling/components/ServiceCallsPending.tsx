@@ -327,6 +327,8 @@ export const ServiceCallsPending: FC<Props> = ({ loggedUserId }) => {
         schema={SCHEMA}
         data={filter}
         onChange={setFilter}
+        onEnter={true}
+        onSubmit={() => setLoaded(false)}
         compact
         className="ServiceCallsPendingForm"
       />

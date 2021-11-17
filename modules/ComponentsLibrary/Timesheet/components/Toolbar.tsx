@@ -14,7 +14,7 @@ import './toolbar.less';
 import { Payroll as PayrollComponent } from '../../Payroll';
 import { Modal } from '../../Modal';
 import { SectionBar } from '../../SectionBar';
-
+import { TripCalulator } from '../../TripCalulator';
 type Props = {
   selectedDate: Date;
   handleDateChange: (value: Date) => void;
@@ -47,7 +47,7 @@ const Toolbar: FC<Props> = ({
   userId: userID,
 }): JSX.Element => {
   const confirm = useConfirm();
-
+  const [openCalculator, setOpenCalculator] = useState<boolean>();
   const [payrollOpen, setPayrollOpen] = useState<boolean>();
   const handleSetPayrollOpen = useCallback(
     (open: boolean) => setPayrollOpen(open),
@@ -132,6 +132,12 @@ const Toolbar: FC<Props> = ({
               <Button onClick={handleReject} label={'Reject Timesheet'} />
             </div>
           )}
+          {
+            <Button
+              label="Trip Calculator"
+              onClick={() => setOpenCalculator(true)}
+            ></Button>
+          }
           {payrollOpen && (
             <Modal
               open={true}
@@ -149,6 +155,19 @@ const Toolbar: FC<Props> = ({
                 fixedActions
               />
               <PayrollComponent userID={userID}></PayrollComponent>
+            </Modal>
+          )}
+          {openCalculator && (
+            <Modal
+              key="calculatorModal"
+              open={openCalculator}
+              onClose={() => setOpenCalculator(false)}
+            >
+              <TripCalulator
+                loggedUserId={userID}
+                role={role}
+                onClose={() => setOpenCalculator(false)}
+              />
             </Modal>
           )}
           {onClose && <Button label="Close" onClick={onClose} />}
