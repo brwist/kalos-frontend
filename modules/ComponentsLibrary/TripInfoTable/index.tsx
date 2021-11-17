@@ -143,6 +143,13 @@ export const SCHEMA_GOOGLE_MAP_INPUT_FORM: Schema<AddressPair.AsObject> = [
       label: 'Time of Trip Start',
       name: 'Date',
       type: 'mui-datetime',
+      minutesStep: 1,
+    },
+    {
+      label: 'Time of Trip End',
+      name: 'DateEnded',
+      type: 'mui-datetime',
+      minutesStep: 1,
     },
   ],
 ];
@@ -362,6 +369,12 @@ export class TripInfoTable extends React.PureComponent<Props, State> {
                 },
                 {
                   name: 'Notes',
+                  align: this.props.textAlignment
+                    ? this.props.textAlignment
+                    : 'left',
+                },
+                {
+                  name: 'Employee Calculated Time',
                   align: this.props.textAlignment
                     ? this.props.textAlignment
                     : 'left',

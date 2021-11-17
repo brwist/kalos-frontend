@@ -80,6 +80,7 @@ import { stringify } from 'querystring';
 import { truncateSync } from 'fs';
 import { getMimeType } from '@kalos-core/kalos-rpc/Common';
 import { pdf } from '@react-pdf/renderer';
+import { NULL_TIME_VALUE } from '../Timesheet/constants';
 
 export interface Props {
   loggedUserId: number;
@@ -1021,11 +1022,14 @@ export const TransactionTable: FC<Props> = ({
       let newTxn = new Transaction();
       newTxn.setTimestamp(saved['Date']);
 
+      newTxn.setTimestamp(saved['Timestamp']);
       let newtimestamp = newTxn.getTimestamp();
+      console.log('time we got:', newtimestamp);
       if (
-        newtimestamp.includes('0000') ||
+        newtimestamp.includes('000') ||
         newtimestamp == '' ||
-        newtimestamp == undefined
+        newtimestamp == undefined ||
+        newtimestamp == NULL_TIME_VALUE
       ) {
         console.log('not valid date');
         const newTimestamp = format(new Date(), 'yyyy-MM-dd hh:mm:ss');

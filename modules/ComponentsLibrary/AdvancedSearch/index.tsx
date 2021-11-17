@@ -213,9 +213,6 @@ export const AdvancedSearch: FC<Props> = ({
   const [pendingEventEditing, setPendingEventEditing] = useState<Event>();
   const [pendingEventEditingNew, setPendingEventEditingNew] = useState<Event>();
   const [pendingEventDeleting, setPendingEventDeleting] = useState<Event>();
-  const [flatRate, setFlatRate] = useState<QuoteLine[]>();
-  const [flatRateOpen, setFlatRateIsOpen] = useState<boolean>(false);
-
   const [employeeUploadedPhoto, setEmployeeUploadedPhoto] =
     useState<string>('');
   const [employeeFormKey, setEmployeeFormKey] = useState<number>(0);
@@ -2754,7 +2751,7 @@ export const AdvancedSearch: FC<Props> = ({
           schema={getSchema()}
           data={filter}
           onChange={handleFormChange}
-          onSubmit={filter.kind === 'serviceCalls' ? handleLoad : undefined}
+          onSubmit={handleLoad}
           className="AdvancedSearchForm"
           disabled={loadingDicts}
         />

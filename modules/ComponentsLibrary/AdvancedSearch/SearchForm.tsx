@@ -23,19 +23,24 @@ export const SearchFormComponent: FC<Props> = ({
   const [formData, setFormData] = useState<SearchForm>(data);
   const handleChange = useCallback(
     (data: SearchForm) => {
-      console.log({ data });
       setFormData(data);
       onChange(data);
     },
     [onChange, setFormData],
   );
+  const handleSubmit = useCallback(() => {
+    if (onSubmit) {
+      onSubmit();
+    }
+  }, [onSubmit]);
   return (
     <PlainForm
       schema={schema}
       data={formData}
       onChange={debounce(handleChange, 300)}
-      onSubmit={onSubmit}
+      onSubmit={debounce(handleSubmit, 300)}
       compact
+      onEnter={true}
       className={className}
       disabled={disabled}
     />
