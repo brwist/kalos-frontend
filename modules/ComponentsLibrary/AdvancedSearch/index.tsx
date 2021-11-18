@@ -70,6 +70,9 @@ import {
   TimesheetDepartmentClientService,
   makeSafeFormObject,
   ActivityLogClientService,
+  QuoteLinePartClientService,
+  QuoteLineClientService,
+  usd,
 } from '../../../helpers';
 import {
   ROWS_PER_PAGE,
@@ -90,6 +93,7 @@ import { log } from 'console';
 import { ActivityLog } from '@kalos-core/kalos-rpc/ActivityLog';
 import format from 'date-fns/esm/format';
 import { ServiceRequest } from '../ServiceCall/requestIndex';
+import { QuoteLine } from '@kalos-core/kalos-rpc/QuoteLine';
 
 type Kind =
   | 'serviceCalls'
@@ -249,7 +253,33 @@ export const AdvancedSearch: FC<Props> = ({
     userReq.setId(loggedUserId);
     const loggedUser = await UserClientService.Get(userReq);
     setLoggedUser(loggedUser);
+    let qlResults: QuoteLine[] = [];
+    let startingPage = 0;
+    const quoteReq = new QuoteLine();
+    quoteReq.setIsActive(1);
+    quoteReq.setIsFlatrate('1');
+    quoteReq.setPageNumber(startingPage);
+    quoteReq.setWithoutLimit(true);
+    try {
+      qlResults = (
+        await QuoteLineClientService.BatchGet(quoteReq)
+      ).getResultsList();
+    } catch (e) {
+      console.log('could not fetch results for flat rate', e);
+    }
 
+    qlResults = qlResults.sort(function (a, b) {
+      if (a.getDescription() < b.getDescription()) {
+        return -1;
+      }
+      if (a.getDescription() > b.getDescription()) {
+        return 1;
+      }
+      return 0;
+    });
+    setFlatRate(qlResults);
+
+    console.log(qlResults.length);
     if (kinds.includes('employees')) {
       //const departments = await TimesheetDepartmentClientService.loadTimeSheetDepartments();
       const departmentRequest = new TimesheetDepartment();
@@ -2667,6 +2697,10 @@ export const AdvancedSearch: FC<Props> = ({
                   label: 'Add Service Call',
                   onClick: handlePendingEventAddingToggle(true),
                 },
+                {
+                  label: 'View Flat Rate',
+                  onClick: () => setFlatRateIsOpen(true),
+                },
               ]
             : []),
           ...(propertyCustomerId
@@ -2728,6 +2762,23 @@ export const AdvancedSearch: FC<Props> = ({
         loading={loading || loadingDicts}
         hoverable
       />
+      {flatRateOpen && flatRate && (
+        <Modal open onClose={() => setFlatRateIsOpen(false)}>
+          <InfoTable
+            columns={[{ name: 'Description' }, { name: 'Cost' }]}
+            data={flatRate.map(value => {
+              return [
+                {
+                  value: value.getDescription(),
+                },
+                {
+                  value: usd(parseInt(value.getAdjustment())),
+                },
+              ];
+            })}
+          />
+        </Modal>
+      )}
       {pendingEventAdding && (
         <Modal open onClose={handlePendingEventAddingToggle(false)} fullScreen>
           <AddServiceCall
