@@ -1,9 +1,9 @@
 import React from 'react';
-import ExpansionPanelSummary from '@material-ui/core/ExpansionPanelSummary';
+import AccordianSummary from '@material-ui/core/AccordionSummary';
 import ExpandMoreIcon from '@material-ui/icons/ExpandMore';
 import Typography from '@material-ui/core/Typography';
-import ExpansionPanelDetails from '@material-ui/core/ExpansionPanelDetails';
-import ExpansionPanel from '@material-ui/core/ExpansionPanel';
+import AccordianDetails from '@material-ui/core/AccordionDetails';
+import Accordian from '@material-ui/core/Accordion';
 import './filterPanel.less';
 
 type Props = {
@@ -21,8 +21,8 @@ const FilterPanel = ({
   handleChange,
   children,
 }: Props) => (
-  <ExpansionPanel expanded={expanded} onChange={handleChange}>
-    <ExpansionPanelSummary expandIcon={<ExpandMoreIcon />}>
+  <Accordian expanded={expanded} onChange={handleChange}>
+    <AccordianSummary expandIcon={<ExpandMoreIcon />}>
       <Typography className="ServiceCalendarFilterPanelHeading">
         {title}
       </Typography>
@@ -31,11 +31,11 @@ const FilterPanel = ({
           | {selectedCount} Selected
         </Typography>
       )}
-    </ExpansionPanelSummary>
-    <ExpansionPanelDetails className="ServiceCalendarFilterPanelPanelDetails">
+    </AccordianSummary>
+    <AccordianDetails className="ServiceCalendarFilterPanelPanelDetails">
       {children}
-    </ExpansionPanelDetails>
-  </ExpansionPanel>
+    </AccordianDetails>
+  </Accordian>
 );
 
 export default FilterPanel;
