@@ -2026,58 +2026,68 @@ export const CostReportCSV: FC<Props> = ({ serviceCallId, onClose }) => {
                   <SectionBar
                     key={user.getId() + 'Billable Tasks'}
                     title={`${user.getFirstname()} ${user.getLastname()} Billable Tasks`}
+                    subtitle={`Total: ${usd(
+                      state.tasks &&
+                        state.tasks
+                          .filter(task => task.getExternalId() === user.getId())
+                          .reduce((acc, val) => acc + val.getSpiffAmount(), 0),
+                    )}`}
                   >
                     {state.tasks &&
-                      state.tasks.map(task => {
-                        return (
-                          <div
-                            key={task.getId()}
-                            style={{
-                              breakInside: 'avoid',
-                              display: 'inline-block',
-                              width: '100%',
-                            }}
-                          >
-                            <InfoTable
-                              columns={[
-                                {
-                                  name: 'Type',
-                                  align: 'left',
-                                },
-                                {
-                                  name: 'Date Performed',
-                                  align: 'left',
-                                },
-                                {
-                                  name: 'Details',
-                                  align: 'left',
-                                },
-                                {
-                                  name: 'Amount',
-                                  align: 'left',
-                                },
-                                {
-                                  name: 'Notes',
-                                  align: 'right',
-                                },
-                              ]}
-                              data={[
-                                [
-                                  { value: task.getBillableType() },
+                      state.tasks
+                        .filter(task => task.getExternalId() === user.getId())
+                        .map(task => {
+                          return (
+                            <div
+                              key={task.getId()}
+                              style={{
+                                breakInside: 'avoid',
+                                display: 'inline-block',
+                                width: '100%',
+                              }}
+                            >
+                              <InfoTable
+                                columns={[
                                   {
-                                    value: formatDate(task.getDatePerformed()),
+                                    name: 'Type',
+                                    align: 'left',
                                   },
                                   {
-                                    value: task.getDetails(),
+                                    name: 'Date Performed',
+                                    align: 'left',
                                   },
-                                  { value: usd(task.getSpiffAmount()) },
-                                  { value: task.getNotes() },
-                                ],
-                              ]}
-                            />
-                          </div>
-                        );
-                      })}
+                                  {
+                                    name: 'Details',
+                                    align: 'left',
+                                  },
+                                  {
+                                    name: 'Amount',
+                                    align: 'left',
+                                  },
+                                  {
+                                    name: 'Notes',
+                                    align: 'right',
+                                  },
+                                ]}
+                                data={[
+                                  [
+                                    { value: task.getBillableType() },
+                                    {
+                                      value: formatDate(
+                                        task.getDatePerformed(),
+                                      ),
+                                    },
+                                    {
+                                      value: task.getDetails(),
+                                    },
+                                    { value: usd(task.getSpiffAmount()) },
+                                    { value: task.getNotes() },
+                                  ],
+                                ]}
+                              />
+                            </div>
+                          );
+                        })}
                   </SectionBar>
                 );
               }),
