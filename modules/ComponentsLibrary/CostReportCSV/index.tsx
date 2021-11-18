@@ -2016,56 +2016,71 @@ export const CostReportCSV: FC<Props> = ({ serviceCallId, onClose }) => {
               }),
           },
           {
-            label: 'Billable Tasks',
-            content: (
-              <div key={'TaskDAta'}>
-                <InfoTable
-                  columns={[
-                    {
-                      name: 'Type',
-                      align: 'left',
-                    },
-                    {
-                      name: 'Date Performed',
-                      align: 'left',
-                    },
-                    {
-                      name: 'Details',
-                      align: 'left',
-                    },
-                    {
-                      name: 'Flat Rate?',
-                      align: 'left',
-                    },
-                    {
-                      name: 'Amount',
-                      align: 'left',
-                    },
-                    {
-                      name: 'Notes',
-                      align: 'right',
-                    },
-                  ]}
-                  data={state.tasks.map(task => {
-                    return [
-                      {
-                        value: task.getBillableType(),
-                      },
-                      { value: formatDate(task.getDatePerformed()) },
-                      { value: task.getDetails() },
-                      { value: task.getFlatRate() === 1 ? 'Yes' : 'No' },
-                      {
-                        value:
-                          task.getBillableType() === 'Spiff'
-                            ? usd(task.getSpiffAmount())
-                            : usd(task.getToolpurchaseCost()),
-                      },
-                      { value: task.getNotes() },
-                    ];
-                  })}
-                />
-              </div>
-            ),
+            label: 'Task',
+            content: state.users
+              .filter(user =>
+                state.tasks.find(task => task.getExternalId() === user.getId()),
+              )
+              .map(user => {
+                return (
+                  <SectionBar
+                    key={user.getId() + 'Billable Tasks'}
+                    title={`${user.getFirstname()} ${user.getLastname()} Billable Tasks`}
+                  >
+                    {state.tasks &&
+                      state.tasks.map(task => {
+                        return (
+                          <div
+                            key={task.getId()}
+                            style={{
+                              breakInside: 'avoid',
+                              display: 'inline-block',
+                              width: '100%',
+                            }}
+                          >
+                            <InfoTable
+                              columns={[
+                                {
+                                  name: 'Type',
+                                  align: 'left',
+                                },
+                                {
+                                  name: 'Date Performed',
+                                  align: 'left',
+                                },
+                                {
+                                  name: 'Details',
+                                  align: 'left',
+                                },
+                                {
+                                  name: 'Amount',
+                                  align: 'left',
+                                },
+                                {
+                                  name: 'Notes',
+                                  align: 'right',
+                                },
+                              ]}
+                              data={[
+                                [
+                                  { value: task.getBillableType() },
+                                  {
+                                    value: formatDate(task.getDatePerformed()),
+                                  },
+                                  {
+                                    value: task.getDetails(),
+                                  },
+                                  { value: usd(task.getSpiffAmount()) },
+                                  { value: task.getNotes() },
+                                ],
+                              ]}
+                            />
+                          </div>
+                        );
+                      })}
+                  </SectionBar>
+                );
+              }),
           },
         ]}
       ></Tabs>
