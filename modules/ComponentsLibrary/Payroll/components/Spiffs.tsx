@@ -24,6 +24,8 @@ import { SpiffTool } from '../../../SpiffToolLogs/components/SpiffTool';
 import { Form, Schema } from '../../../ComponentsLibrary/Form';
 import { Option } from '../../../ComponentsLibrary/Field';
 import { Button } from '../../Button';
+import { SpiffToolAdminAction } from '@kalos-core/kalos-rpc/SpiffToolAdminAction';
+
 import { User } from '@kalos-core/kalos-rpc/User';
 import {
   makeFakeRows,
@@ -79,9 +81,7 @@ export const Spiffs: FC<Props> = ({
     setSpiffTypes(spiffTypes);
   }, []);
   const load = useCallback(async () => {
-    setLoading(
-      true,
-    ); /*
+    setLoading(true); /*
     const filter: GetPendingSpiffConfig = {
       page,
       technicianUserID: employeeId,
@@ -146,6 +146,10 @@ export const Spiffs: FC<Props> = ({
       req.setAdminActionId(0);
       req.setPayrollProcessed(true);
       req.setNotEqualsList(['AdminActionId', 'PayrollProcessed']);
+      //req.setFieldMaskList(['PayrollProcessed']);
+      const action = new SpiffToolAdminAction();
+      action.setStatus(1);
+      req.setSearchAction(action);
     }
     if (role === 'Payroll' && toggleButton == true) {
       req.setPayrollProcessed(false);
@@ -178,9 +182,10 @@ export const Spiffs: FC<Props> = ({
     (pendingView?: Task) => () => setPendingView(pendingView),
     [],
   );
-  const handleToggleAdd = useCallback(() => setPendingAdd(!pendingAdd), [
-    pendingAdd,
-  ]);
+  const handleToggleAdd = useCallback(
+    () => setPendingAdd(!pendingAdd),
+    [pendingAdd],
+  );
   const handleToggleButton = useCallback(() => {
     setToggleButton(!toggleButton);
     setPage(0);
