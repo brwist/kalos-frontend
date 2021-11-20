@@ -362,7 +362,9 @@ export const ServiceCalendar: FC<Props> = props => {
         req.setIsActive(1);
         req.setOrderBy('time_started');
         req.setOrderDir('asc');
+        console.log('req', req);
         const data = await eventClient.GetCalendarData(req);
+        console.log('data', data);
         dispatch({ type: 'fetchedCalendarData', data });
       })();
     }

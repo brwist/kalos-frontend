@@ -225,6 +225,7 @@ export const PerDiems: FC<Props> = ({
     const req = new PerDiem();
     req.setId(id);
     req.setDateSubmitted(NULL_TIME);
+    req.setFieldMaskList(['DateSubmitted']);
     setLoading(true);
     setPendingDeny(undefined);
     await PerDiemClientService.Update(req);
@@ -241,18 +242,29 @@ export const PerDiems: FC<Props> = ({
   }, [load, pendingAudited]);
   const handlePayroll = useCallback(async () => {
     if (pendingPayroll) {
+      console.log('handle process perdiem');
       const id = pendingPayroll.getId();
       setLoading(true);
-      setPendingPayroll(undefined);
       const perDiemReq = new PerDiem();
       perDiemReq.setId(id);
+      perDiemReq.setPayrollProcessed(true);
       perDiemReq.setAmountProcessedLodging(
         pendingPayroll.getAmountProcessedLodging(),
       );
       perDiemReq.setAmountProcessedMeals(
         pendingPayroll.getAmountProcessedMeals(),
       );
+
       perDiemReq.setDateProcessed(timestamp());
+      perDiemReq.setFieldMaskList([
+        'AmountProcessedLodging',
+        'AmountProcessedMeals',
+        'DateProcessed',
+        'PayrollProcessed',
+      ]);
+      await PerDiemClientService.Update(perDiemReq);
+
+      setPendingPayroll(undefined);
       load();
     }
   }, [load, pendingPayroll]);
@@ -278,7 +290,11 @@ export const PerDiems: FC<Props> = ({
       req.setId(id);
       req.setDateApproved(NULL_TIME);
       req.setApprovedById(0);
-      req.setFieldMaskList(['DateApproved', 'ApprovedById']);
+      req.setFieldMaskList([
+        'DateApproved',
+        'ApprovedById',
+        'PayrollProcessed',
+      ]);
       await PerDiemClientService.Update(req);
     }
     load();
@@ -516,7 +532,7 @@ export const PerDiems: FC<Props> = ({
       )}
       {pendingPayroll && (
         <Confirm
-          title="Confirm Approve"
+          title="Confirm Process"
           open
           onClose={handlePendingPayrollToggle()}
           onConfirm={handlePayroll}
