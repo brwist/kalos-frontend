@@ -110,108 +110,6 @@ export const CostReportCSV: FC<Props> = ({ serviceCallId, onClose }) => {
     0,
   );
 
-  const loadResources = useCallback(async () => {
-    const resultsList = (
-      await PerDiemClientService.loadPerDiemsByEventId(serviceCallId)
-    ).getResultsList();
-    const mappedResults = resultsList.map(perdiem => ({
-      perDiemId: perdiem.getId(),
-      active: 0,
-    }));
-    dispatch({ type: ACTIONS.SET_DROPDOWNS, data: mappedResults });
-
-    const users = await UserClientService.loadTechnicians();
-    dispatch({
-      type: ACTIONS.SET_USERS,
-      data: users,
-    });
-
-    let arr: PerDiem[] = [];
-    resultsList.forEach(result => {
-      let isIncluded = false;
-      arr.forEach(arrItem => {
-        if (arrItem.getId() == result.getId()) isIncluded = true;
-      });
-      if (!isIncluded) {
-        arr.push(result);
-      }
-    });
-    for (let i = 0; i < arr.length; i++) {
-      const tempRowList = arr[i]
-        .getRowsList()
-        .filter(row => row.getServiceCallId() === serviceCallId);
-      arr[i].setRowsList(tempRowList);
-    }
-
-    const tripReq = new Trip();
-    tripReq.setIsActive(true);
-    tripReq.setJobNumber(serviceCallId);
-    const allTrips = await (
-      await PerDiemClientService.BatchGetTrips(tripReq)
-    ).getResultsList();
-
-    dispatch({ type: ACTIONS.SET_TRIPS, data: allTrips });
-    const accountReq = new TransactionAccount();
-    accountReq.setIsActive(1);
-    const accountRes = (
-      await TransactionAccountClientService.BatchGet(accountReq)
-    ).getResultsList();
-    dispatch({ type: ACTIONS.SET_TRANSACTION_ACCOUNTS, data: accountRes });
-    const costCenterMap = accountRes.map(account => ({
-      costCenterId: account.getId(),
-      active: 0,
-    }));
-    dispatch({
-      type: ACTIONS.SET_TRANSACTION_DROPDOWNS,
-      data: costCenterMap,
-    });
-    const lodgings = await PerDiemClientService.loadPerDiemsLodging(arr); // first # is per diem id
-    dispatch({ type: ACTIONS.SET_LODGINGS, data: lodgings });
-
-    const transactions =
-      await TransactionClientService.loadTransactionsByEventId(
-        serviceCallId,
-        true,
-      );
-    let temp = state.costCenterTotals;
-    dispatch({ type: ACTIONS.SET_TRANSACTIONS, data: transactions });
-    for (let i = 0; i < transactions.length; i++) {
-      let keyValue = `${transactions[i].getCostCenterId()}-${transactions[i]
-        .getCostCenter()
-        ?.getDescription()}`;
-      if (temp[keyValue]) {
-        temp[keyValue] += transactions[i].getAmount();
-      } else {
-        //
-        temp[keyValue] = transactions[i].getAmount();
-      }
-    }
-    let allTripsTotal = 0;
-    allTrips.forEach(trip => {
-      // Subtracting 30 miles flat from trip distance in accordance
-      // with reimbursement from home rule
-      allTripsTotal +=
-        trip.getDistanceInMiles() > 30 && trip.getHomeTravel()
-          ? (trip.getDistanceInMiles() - 30) * IRS_SUGGESTED_MILE_FACTOR
-          : trip.getDistanceInMiles() * IRS_SUGGESTED_MILE_FACTOR;
-    });
-
-    dispatch({ type: ACTIONS.SET_TRIPS_TOTAL, data: allTripsTotal });
-
-    dispatch({ type: ACTIONS.SET_PER_DIEMS, data: arr });
-  }, [serviceCallId, state.costCenterTotals]);
-
-  const totalMeals =
-    state.perDiems.reduce((aggr, pd) => aggr + pd.getRowsList().length, 0) *
-    MEALS_RATE;
-  const totalLodging = state.perDiems
-    .reduce((aggr, pd) => [...aggr, ...pd.getRowsList()], [] as PerDiemRow[])
-    .filter(pd => !pd.getMealsOnly())
-    .reduce((aggr, pd) => aggr + state.lodgings[pd.getId()], 0);
-  const totalTransactions = state.transactions.reduce(
-    (aggr, pd) => aggr + pd.getAmount(),
-    0,
-  );
   const handlePrint = useCallback(async () => {
     dispatch({ type: ACTIONS.SET_PRINT_STATUS, data: 'loading' });
     dispatch({ type: ACTIONS.SET_PRINT_STATUS, data: 'loaded' });
@@ -245,35 +143,185 @@ export const CostReportCSV: FC<Props> = ({ serviceCallId, onClose }) => {
 
     promises.push(
       new Promise<void>(async resolve => {
-        await loadResources();
-        resolve();
+        try {
+          let transactions: Transaction[] = [];
+          transactions =
+            await TransactionClientService.loadTransactionsByEventId(
+              serviceCallId,
+              true,
+            );
+
+          let temp: { [key: string]: number } = {};
+          dispatch({ type: ACTIONS.SET_TRANSACTIONS, data: transactions });
+          for (let i = 0; i < transactions.length; i++) {
+            let keyValue = `${transactions[i].getCostCenterId()}-${transactions[
+              i
+            ]
+              .getCostCenter()
+              ?.getDescription()}`;
+            if (temp[keyValue]) {
+              temp[keyValue] += transactions[i].getAmount();
+            } else {
+              //
+              temp[keyValue] = transactions[i].getAmount();
+            }
+          }
+
+          resolve();
+        } catch (err) {
+          console.log('error loading transactions', err);
+        }
       }),
     );
     promises.push(
       new Promise<void>(async resolve => {
-        const cccs = new ClassCodeClient(ENDPOINT);
-        const classCodeReq = new ClassCode();
-        classCodeReq.setIsActive(true);
-
-        classCodes = (await cccs.BatchGet(classCodeReq)).getResultsList();
-        dispatch({
-          type: ACTIONS.SET_CLASS_CODES,
-          data: classCodes,
-        });
-        const mappedResults = classCodes.map(code => ({
-          classCodeId: code.getId(),
-          active: 0,
-        }));
-        dispatch({
-          type: ACTIONS.SET_CLASS_CODE_DROPDOWNS,
-          data: mappedResults,
-        });
+        let resultsList: PerDiem[] = [];
+        console.log('getting perdiem and trips');
+        const req = new PerDiem();
+        req.setWithRows(true);
+        req.setIsActive(true);
+        req.setWithoutLimit(true);
+        const row = new PerDiemRow();
+        row.setServiceCallId(serviceCallId);
+        req.setReferenceRow(row);
+        try {
+          resultsList = (
+            await PerDiemClientService.BatchGet(req)
+          ).getResultsList();
+          const mappedResults = resultsList.map(perdiem => ({
+            perDiemId: perdiem.getId(),
+            active: 0,
+          }));
+          dispatch({ type: ACTIONS.SET_DROPDOWNS, data: mappedResults });
+          let arr: PerDiem[] = [];
+          resultsList.forEach(result => {
+            let isIncluded = false;
+            arr.forEach(arrItem => {
+              if (arrItem.getId() == result.getId()) isIncluded = true;
+            });
+            if (!isIncluded) {
+              arr.push(result);
+            }
+          });
+          for (let i = 0; i < arr.length; i++) {
+            const tempRowList = arr[i]
+              .getRowsList()
+              .filter(row => row.getServiceCallId() === serviceCallId);
+            arr[i].setRowsList(tempRowList);
+          }
+          let lodgings: {};
+          lodgings = await PerDiemClientService.loadPerDiemsLodging(arr); // first # is per diem id
+          dispatch({ type: ACTIONS.SET_LODGINGS, data: lodgings });
+          dispatch({ type: ACTIONS.SET_PER_DIEMS, data: arr });
+        } catch (err) {
+          console.log('failed to load perdiems info');
+        }
         resolve();
       }),
     );
     promises.push(
       new Promise<void>(async resolve => {
         try {
+          console.log('getting classcodes');
+
+          const cccs = new ClassCodeClient(ENDPOINT);
+          const classCodeReq = new ClassCode();
+          classCodeReq.setIsActive(true);
+
+          classCodes = (await cccs.BatchGet(classCodeReq)).getResultsList();
+          dispatch({
+            type: ACTIONS.SET_CLASS_CODES,
+            data: classCodes,
+          });
+          const mappedResults = classCodes.map(code => ({
+            classCodeId: code.getId(),
+            active: 0,
+          }));
+          dispatch({
+            type: ACTIONS.SET_CLASS_CODE_DROPDOWNS,
+            data: mappedResults,
+          });
+          resolve();
+        } catch (err) {
+          console.log('error fetching class codes', err);
+        }
+      }),
+    );
+    promises.push(
+      new Promise<void>(async resolve => {
+        try {
+          const users = await UserClientService.loadTechnicians();
+          dispatch({
+            type: ACTIONS.SET_USERS,
+            data: users,
+          });
+          resolve();
+        } catch (err) {
+          console.log('error fetching users', err);
+        }
+      }),
+    );
+    promises.push(
+      new Promise<void>(async resolve => {
+        const tripReq = new Trip();
+        tripReq.setIsActive(true);
+        let allTrips: Trip[] = [];
+
+        tripReq.setJobNumber(serviceCallId);
+        tripReq.setWithoutLimit(true);
+        try {
+          const allTrips = (
+            await PerDiemClientService.BatchGetTrips(tripReq)
+          ).getResultsList();
+
+          dispatch({ type: ACTIONS.SET_TRIPS, data: allTrips });
+          let allTripsTotal = 0;
+          allTrips.forEach(trip => {
+            // Subtracting 30 miles flat from trip distance in accordance
+            // with reimbursement from home rule
+            allTripsTotal +=
+              trip.getDistanceInMiles() > 30 && trip.getHomeTravel()
+                ? (trip.getDistanceInMiles() - 30) * IRS_SUGGESTED_MILE_FACTOR
+                : trip.getDistanceInMiles() * IRS_SUGGESTED_MILE_FACTOR;
+          });
+
+          dispatch({ type: ACTIONS.SET_TRIPS_TOTAL, data: allTripsTotal });
+          resolve();
+        } catch (err) {
+          console.log('error getting trips,', err);
+        }
+      }),
+    );
+    promises.push(
+      new Promise<void>(async resolve => {
+        const accountReq = new TransactionAccount();
+        accountReq.setIsActive(1);
+        try {
+          const accountRes = (
+            await TransactionAccountClientService.BatchGet(accountReq)
+          ).getResultsList();
+          dispatch({
+            type: ACTIONS.SET_TRANSACTION_ACCOUNTS,
+            data: accountRes,
+          });
+          const costCenterMap = accountRes.map(account => ({
+            costCenterId: account.getId(),
+            active: 0,
+          }));
+          dispatch({
+            type: ACTIONS.SET_TRANSACTION_DROPDOWNS,
+            data: costCenterMap,
+          });
+          resolve();
+        } catch (err) {
+          console.log('error fetching accounts,', err);
+        }
+      }),
+    );
+    promises.push(
+      new Promise<void>(async resolve => {
+        try {
+          console.log('getting timesheets');
           let req = new TimesheetLine();
           req.setReferenceNumber(serviceCallId.toString());
           req.setOrderBy('time_started');
@@ -290,10 +338,11 @@ export const CostReportCSV: FC<Props> = ({ serviceCallId, onClose }) => {
         }
       }),
     );
-
     promises.push(
       new Promise<void>(async resolve => {
         try {
+          console.log('getting tasks');
+
           let req = new Task();
           req.setEventId(serviceCallId);
           req.setBillable(1);
@@ -310,8 +359,9 @@ export const CostReportCSV: FC<Props> = ({ serviceCallId, onClose }) => {
         }
       }),
     );
-
     Promise.all(promises).then(() => {
+      console.log('all promises executed without error, setting loaded');
+
       for (let i = 0; i < timesheets.length; i++) {
         timesheets[i].setHoursWorked(
           roundNumber(
@@ -357,7 +407,8 @@ export const CostReportCSV: FC<Props> = ({ serviceCallId, onClose }) => {
         });
       }
 
-      let temp = state.laborTotals;
+      let temp: { [key: string]: number } = {};
+
       for (let i = 0; i < timesheets.length; i++) {
         let keyValue = timesheets[i].getClassCodeId().toString();
         if (temp[keyValue]) {
@@ -373,11 +424,23 @@ export const CostReportCSV: FC<Props> = ({ serviceCallId, onClose }) => {
         timesheet => (total = total + timesheet.getHoursWorked()),
       );
       dispatch({ type: ACTIONS.SET_TOTAL_HOURS_WORKED, data: total });
+
       dispatch({ type: ACTIONS.SET_LOADING, data: false });
       dispatch({ type: ACTIONS.SET_LOADED, data: true });
     });
-  }, [loadResources, state.laborTotals, serviceCallId]);
+  }, [serviceCallId]);
   const createReport = (section: string) => {
+    const totalMeals =
+      state.perDiems.reduce((aggr, pd) => aggr + pd.getRowsList().length, 0) *
+      MEALS_RATE;
+    const totalLodging = state.perDiems
+      .reduce((aggr, pd) => [...aggr, ...pd.getRowsList()], [] as PerDiemRow[])
+      .filter(pd => !pd.getMealsOnly())
+      .reduce((aggr, pd) => aggr + state.lodgings[pd.getId()], 0);
+    const totalTransactions = state.transactions.reduce(
+      (aggr, pd) => aggr + pd.getAmount(),
+      0,
+    );
     let fullString = '';
     var find = ',';
     var re = new RegExp(find, 'g');
@@ -577,9 +640,12 @@ export const CostReportCSV: FC<Props> = ({ serviceCallId, onClose }) => {
   };
   useEffect(() => {
     if (!state.loadedInit) {
+      console.log('loadedInit in useEffect');
       loadInit();
     }
     if (state.loadedInit == true && state.loaded === false) {
+      console.log('calling load in useEffect');
+
       load();
     }
   }, [state.loadedInit, loadInit, state.loaded, load]);
@@ -602,7 +668,17 @@ export const CostReportCSV: FC<Props> = ({ serviceCallId, onClose }) => {
       laborCostArray.push(value);
     }
   });
-
+  const totalMeals =
+    state.perDiems.reduce((aggr, pd) => aggr + pd.getRowsList().length, 0) *
+    MEALS_RATE;
+  const totalLodging = state.perDiems
+    .reduce((aggr, pd) => [...aggr, ...pd.getRowsList()], [] as PerDiemRow[])
+    .filter(pd => !pd.getMealsOnly())
+    .reduce((aggr, pd) => aggr + state.lodgings[pd.getId()], 0);
+  const totalTransactions = state.transactions.reduce(
+    (aggr, pd) => aggr + pd.getAmount(),
+    0,
+  );
   return state.loaded ? (
     <SectionBar key="ReportPage" uncollapsable={true}>
       <style>{`
