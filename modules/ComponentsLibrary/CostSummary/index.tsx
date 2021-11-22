@@ -168,10 +168,11 @@ export const CostSummary: FC<Props> = ({
     return { totalDistance: distanceSubtotal, processed };
   }, [userId]);
   const getPerDiemTotals = useCallback(async () => {
-    const pdRes = await PerDiemClientService.loadPerDiemByUserIdAndDateStartedAudited(
-      userId,
-      formatDateFns(endDay),
-    );
+    const pdRes =
+      await PerDiemClientService.loadPerDiemByUserIdAndDateStartedAudited(
+        userId,
+        formatDateFns(endDay),
+      );
     //get PerDiems, set them
     const resultsList = pdRes.getResultsList();
     setPerDiems(resultsList);
@@ -591,20 +592,7 @@ export const CostSummary: FC<Props> = ({
   useEffect(() => {
     const load = async () => {
       let promises = [];
-      /*
-      promises.push(
-        new Promise<void>(async (resolve, reject) => {
-          try {
-            const totalPTO = await getTimeoffTotals();
-            setTotalPTO(totalPTO);
-            resolve();
-          } catch (err) {
-            console.log('error setting total PTO', err);
-            reject(err);
-          }
-        }),
-      );
-      */
+
       promises.push(
         new Promise<void>(async (resolve, reject) => {
           try {

@@ -155,8 +155,9 @@ export const AdvancedSearch: FC<Props> = ({
 }) => {
   const [isAdmin, setIsAdmin] = useState<number>(0);
   const [loggedUser, setLoggedUser] = useState<User>(new User());
-
   const [loadedDicts, setLoadedDicts] = useState<boolean>(false);
+  const [flatRateIsOpen, setFlatRateIsOpen] = useState<boolean>(false);
+  const [flatRate, setFlatRate] = useState<QuoteLine[]>([]);
   const [loadingDicts, setLoadingDicts] = useState<boolean>(false);
   const [jobTypes, setJobTypes] = useState<JobType[]>([]);
   const [jobSubtypes, setJobSubtypes] = useState<JobSubtype[]>([]);
@@ -2762,7 +2763,7 @@ export const AdvancedSearch: FC<Props> = ({
         loading={loading || loadingDicts}
         hoverable
       />
-      {flatRateOpen && flatRate && (
+      {flatRateIsOpen && flatRate && (
         <Modal open onClose={() => setFlatRateIsOpen(false)}>
           <InfoTable
             columns={[{ name: 'Description' }, { name: 'Cost' }]}
