@@ -1021,8 +1021,6 @@ export const TransactionTable: FC<Props> = ({
     async (saved: any) => {
       let newTxn = new Transaction();
       newTxn.setTimestamp(saved['Date']);
-
-      newTxn.setTimestamp(saved['Timestamp']);
       let newtimestamp = newTxn.getTimestamp();
       console.log('time we got:', newtimestamp);
       if (

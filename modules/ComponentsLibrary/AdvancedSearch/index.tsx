@@ -48,6 +48,7 @@ import {
   makeFakeRows,
   formatDate,
   EventsFilter,
+  MapClientService,
   EventsSort,
   LoadEventsByFilter,
   PropertiesFilter,
@@ -679,6 +680,18 @@ export const AdvancedSearch: FC<Props> = ({
           );
         }
         const newData = makeSafeFormObject(data, new User());
+        const address = newData.getAddress();
+        const city = newData.getCity();
+        const addressState = newData.getState();
+        const zip = newData.getZip();
+
+        const geo = await MapClientService.loadGeoLocationByAddress(
+          `${address}, ${city}, ${addressState} ${zip}`,
+        );
+        if (geo) {
+          newData.setGeolocationLat(geo.geolocationLat);
+          newData.setGeolocationLng(geo.geolocationLng);
+        }
         if (newData.getFieldMaskList().length > 0) {
           await UserClientService.saveUser(
             newData,
