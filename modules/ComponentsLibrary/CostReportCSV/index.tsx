@@ -388,17 +388,16 @@ export const CostReportCSV: FC<Props> = ({ serviceCallId, onClose }) => {
         });
       }
 
-      let classCodeMap: { [key: number]: number } = {};
-
+      let laborTemp = state.laborTotals;
       for (let i = 0; i < timesheets.length; i++) {
-        let keyValue = timesheets[i].getClassCodeId();
-        if (classCodeMap[keyValue]) {
-          classCodeMap[keyValue] += timesheets[i].getHoursWorked();
+        let keyValue = timesheets[i].getClassCodeId().toString();
+        if (laborTemp[keyValue]) {
+          laborTemp[keyValue] += timesheets[i].getHoursWorked();
         } else {
-          classCodeMap[keyValue] = timesheets[i].getHoursWorked();
+          laborTemp[keyValue] = timesheets[i].getHoursWorked();
         }
       }
-      dispatch({ type: ACTIONS.SET_LABOR_TOTALS, data: classCodeMap });
+      dispatch({ type: ACTIONS.SET_LABOR_TOTALS, data: temp });
 
       let total = 0;
       timesheets.forEach(
