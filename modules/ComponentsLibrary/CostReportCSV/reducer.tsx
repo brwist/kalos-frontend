@@ -71,6 +71,7 @@ export enum ACTIONS {
   SET_ACTIVE_TAB = 'setActiveTab',
   SET_PRINT_STATUS = 'setPrintStatus',
   SET_TRANSACTION_ACCOUNTS = 'setTransactionAccounts',
+  SET_ALL_DATA = 'setAllData',
 }
 
 export type Action =
@@ -85,6 +86,16 @@ export type Action =
   | {
       type: ACTIONS.SET_CLASS_CODE_DROPDOWNS;
       data: { classCodeId: number; active: number }[];
+    }
+  | {
+      type: ACTIONS.SET_ALL_DATA;
+      data: {
+        perDiemRes: PerDiem[];
+        transactionRes: Transaction[];
+        taskRes: Task[];
+        tripRes: Trip[];
+        timesheetRes: TimesheetLine[];
+      };
     }
   | { type: ACTIONS.SET_COST_CENTER_TOTALS; data: { [key: string]: number } }
   | { type: ACTIONS.SET_LABOR_TOTALS; data: { [key: string]: number } }
@@ -160,6 +171,17 @@ export const reducer = (state: State, action: Action) => {
         users: action.data,
       };
     }
+    case ACTIONS.SET_ALL_DATA: {
+      console.log('what we got in reducer', action.data);
+      return {
+        ...state,
+        timesheets: action.data.timesheetRes,
+        transactions: action.data.transactionRes,
+        tasks: action.data.taskRes,
+        perDiems: action.data.perDiemRes,
+        trips: action.data.tripRes,
+      };
+    }
     case ACTIONS.SET_LODGINGS: {
       return {
         ...state,
@@ -185,6 +207,7 @@ export const reducer = (state: State, action: Action) => {
       };
     }
     case ACTIONS.SET_TRANSACTION_ACCOUNTS: {
+      console.log(action.data);
       return {
         ...state,
         transactionAccounts: action.data,
