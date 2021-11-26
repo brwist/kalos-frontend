@@ -23,7 +23,7 @@ export type State = {
   transactions: Transaction[];
   lodgings: { [key: number]: number };
   costCenterTotals: { [key: string]: number };
-  laborTotals: { [key: number]: number };
+  laborTotals: { [key: string]: number };
   classCodeDropdowns: { classCodeId: number; active: number }[];
   transactionAccounts: TransactionAccount[];
   totalHoursWorked: number;
