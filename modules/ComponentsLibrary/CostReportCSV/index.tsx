@@ -127,7 +127,6 @@ export const CostReportCSV: FC<Props> = ({ serviceCallId, onClose }) => {
   const loadEvent = useCallback(async () => {
     dispatch({ type: ACTIONS.SET_LOADING_EVENT, data: true });
 
-    //const event = await loadEventById(serviceCallId);
     const event = await EventClientService.LoadEventByServiceCallID(
       serviceCallId,
     );
@@ -295,6 +294,19 @@ export const CostReportCSV: FC<Props> = ({ serviceCallId, onClose }) => {
             ? (trip.getDistanceInMiles() - 30) * IRS_SUGGESTED_MILE_FACTOR
             : trip.getDistanceInMiles() * IRS_SUGGESTED_MILE_FACTOR;
       });
+      let costCenterTemp: { [key: string]: number } = {};
+      for (let i = 0; i < transactions.length; i++) {
+        let keyValue = `${transactions[i].getCostCenterId()}-${transactions[i]
+          .getCostCenter()
+          ?.getDescription()}`;
+        if (costCenterTemp[keyValue]) {
+          costCenterTemp[keyValue] += transactions[i].getAmount();
+        } else {
+          //
+          costCenterTemp[keyValue] = transactions[i].getAmount();
+        }
+      }
+      dispatch({ type: ACTIONS.SET_COST_CENTER_TOTALS, data: costCenterTemp });
 
       dispatch({ type: ACTIONS.SET_TRIPS_TOTAL, data: allTripsTotal });
       const mappedResults = perDiems.map(perdiem => ({
@@ -376,10 +388,10 @@ export const CostReportCSV: FC<Props> = ({ serviceCallId, onClose }) => {
         });
       }
 
-      let classCodeMap: { [key: string]: number } = {};
+      let classCodeMap: { [key: number]: number } = {};
 
       for (let i = 0; i < timesheets.length; i++) {
-        let keyValue = timesheets[i].getClassCodeId().toString();
+        let keyValue = timesheets[i].getClassCodeId();
         if (classCodeMap[keyValue]) {
           classCodeMap[keyValue] += timesheets[i].getHoursWorked();
         } else {
@@ -623,17 +635,9 @@ export const CostReportCSV: FC<Props> = ({ serviceCallId, onClose }) => {
     }
     if (state.loadedInit == true && state.loaded === false) {
       console.log('calling load in useEffect');
-
       load();
     }
-    console.log(state.transactionAccounts);
-  }, [
-    state.loadedInit,
-    loadInit,
-    state.loaded,
-    load,
-    state.transactionAccounts,
-  ]);
+  }, [state.loadedInit, loadInit, state.loaded, load]);
   const costCenterArray = [['', '']];
   const laborCostArray = [['', '']];
   state.transactionAccounts.map(account => {

@@ -23,7 +23,7 @@ export type State = {
   transactions: Transaction[];
   lodgings: { [key: number]: number };
   costCenterTotals: { [key: string]: number };
-  laborTotals: { [key: string]: number };
+  laborTotals: { [key: number]: number };
   classCodeDropdowns: { classCodeId: number; active: number }[];
   transactionAccounts: TransactionAccount[];
   totalHoursWorked: number;
@@ -201,6 +201,7 @@ export const reducer = (state: State, action: Action) => {
       };
     }
     case ACTIONS.SET_LABOR_TOTALS: {
+      console.log('we set the labor total', action.data);
       return {
         ...state,
         setLaborTotals: action.data,
