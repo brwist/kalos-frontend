@@ -1,5 +1,6 @@
 import { DispatchableTech, DispatchCall } from '@kalos-core/kalos-rpc/Dispatch';
 import { JobType } from '@kalos-core/kalos-rpc/JobType';
+import { User } from '@kalos-core/kalos-rpc/User';
 
 export type FormData = {
   departmentIds: number[];
@@ -61,6 +62,7 @@ export type CallObj = {
 };
 
 export interface State {
+  users: User[];
   techs: DispatchableTech[];
   offTechs: {id: number, name: string}[];
   scheduledOff: {id: number, name: string}[];
@@ -68,6 +70,7 @@ export interface State {
   classTechs: DispatchableTech[];
   onCallTech: DispatchableTech;
   calls: DispatchCall[];
+  availableCalls: DispatchCall[];
   assignedCalls: DispatchCall[];
   jobTypeList: JobType[];
   sectorList: number[];
@@ -102,8 +105,10 @@ export interface State {
   firstCallManualOff: {id: number, name: string}[];
   firstCallScheduledOff: {id: number, name: string}[];
   selectedCall: DispatchCall;
+  currentFCCall: CallObj;
   isProcessing: boolean;
   assigneeList: {id: number, name: string}[];
+  callMsg: string;
   save: boolean;
   newFirstCall: boolean,
   saveTime: string;
@@ -116,10 +121,15 @@ export interface State {
   isApproved: boolean;
   hasNotification: boolean;
   notificationType: string;
-  notificationMessage: string;
+  notificationMessage: string[];
+  pendingAddInUse: number[];
+  pendingRemoveInUse: number[];
 }
 
 export type Action = 
+  | { type: 'setUsers'; data: {
+    users: User[],
+  }}
   | { type: 'setTechs'; data: {
     techs: DispatchableTech[],
   }}
@@ -134,18 +144,25 @@ export type Action =
     currentFC: FirstCallType,
     selectedCall?: DispatchCall,
     assigneeList?: {id: number, name: string}[],
+    callMsg?: string,
   }}
   | { type: 'setCalls'; data: {
+    calls: DispatchCall[],
     available: DispatchCall[],
-    assigned: DispatchCall[] 
+    assigned: DispatchCall[],
+  }}
+  | { type: 'setCallsOnly'; data: {
+    calls: DispatchCall[],
   }}
   | { type: 'setAssignedCalls'; data: DispatchCall[] }
   | { type: 'setApiKey'; data: string }
   | { type: 'setLoaded'; data: boolean }
   | { type: 'setInitialValues'; data:  {
+    users: User[],
     techs: DispatchableTech[],
     calls: DispatchCall[],
     jobTypes: JobType[],
+    availableCalls: DispatchCall[],
     assignedCalls: DispatchCall[],
     key: string,
     firstCall: FirstCallType,
@@ -184,6 +201,10 @@ export type Action =
   }}
   | { type: 'setFirstCallInUse'; data: number[] }
   | { type: 'setFirstCallManualOff'; data: {id: number, name: string}[] }
+  | { type: 'setFCCallsAndInUse'; data: {
+    calls: CallObj[],
+    inUse: number[],
+  }}
   | { type: 'setSave'; data: {
     save: boolean,
     saveTime: string,
@@ -214,12 +235,36 @@ export type Action =
   | { type: 'setNotification'; data: {
     hasNotification: boolean,
     notificationType: string,
-    notificationMessage: string,
+    notificationMessage: string[],
   }}
+  | { type: 'setPendingInUse'; data: {
+    add: number[],
+    remove: number[],
+  }}
+  | { type: 'setCurrentFCCallAndPendingInUse'; data: {
+    currentFCCall: CallObj,
+    pendingAdd: number[],
+    pendingRemove: number[],
+  }}
+  | { type: 'setAssigneeListAndPendingInUse'; data: {
+    assigneeList: {id: number, name: string}[],
+    pendingAdd: number[],
+    pendingRemove: number[],
+  }}
+  | { type: 'resetProcessAndApproved'; data: {
+    process: boolean,
+    approved: boolean,
+  }}
+  | { type: 'setCallMsg'; data: string }
 ;
 
 export const reducer = (state: State, action: Action) => {
   switch (action.type) {
+    case 'setUsers':
+      return {
+        ...state,
+        users: action.data.users,
+      }
     case 'setTechs':
       return {
         ...state,
@@ -232,22 +277,40 @@ export const reducer = (state: State, action: Action) => {
         formData: action.data.formData,
         scheduledOff: action.data.scheduledOff,
       }
-    case 'setModal':
-      return {
-        ...state,
-        openModal: action.data.openModal,
-        modalKey: action.data.modalKey,
-        selectedCall: action.data.selectedCall ? action.data.selectedCall : new DispatchCall(),
-        assigneeList: action.data.assigneeList ? action.data.assigneeList : [],
-        savedFirstCall: action.data.currentFC,
+    case 'setModal': {
+      if (action.data.selectedCall && action.data.assigneeList && action.data.callMsg) {
+        return {
+          ...state,
+          openModal: action.data.openModal,
+          modalKey: action.data.modalKey,
+          selectedCall: action.data.selectedCall,
+          assigneeList: action.data.assigneeList,
+          savedFirstCall: action.data.currentFC,
+          callMsg: action.data.callMsg,
+        }
       }
+      else {
+        return {
+          ...state,
+          openModal: action.data.openModal,
+          modalKey: action.data.modalKey,
+          savedFirstCall: action.data.currentFC,
+        }
+      }
+    }
     case 'setCalls':
       return {
         ...state,
-        calls: action.data.available,
+        calls: action.data.calls,
+        availableCalls: action.data.available,
         assignedCalls: action.data.assigned,
         saveCall: false,
         refreshCalls: false,
+      }
+    case 'setCallsOnly':
+      return {
+        ...state,
+        calls: action.data.calls,
       }
     case 'setAssignedCalls':
       return {
@@ -267,9 +330,11 @@ export const reducer = (state: State, action: Action) => {
     case 'setInitialValues':
       return {
         ...state,
+        users: action.data.users,
         techs: action.data.techs,
         calls: action.data.calls,
         jobTypeList: action.data.jobTypes,
+        availableCalls: action.data.availableCalls,
         assignedCalls: action.data.assignedCalls,
         googleApiKey: action.data.key,
         savedFirstCall: action.data.firstCall,
@@ -314,6 +379,7 @@ export const reducer = (state: State, action: Action) => {
         ...state,
         firstCallCalls: action.data,
         save: true,
+        assigneeList: [],
       }
     case 'setFirstCallMeeting':
       return {
@@ -355,6 +421,14 @@ export const reducer = (state: State, action: Action) => {
         ...state,
         firstCallManualOff: action.data,
         save: true,
+      }
+    case 'setFCCallsAndInUse' :
+      return {
+        ...state,
+        firstCallCalls: action.data.calls,
+        firstCallInUse: action.data.inUse,
+        save: true,
+        assigneeList: [],
       }
     case 'setSave':
       return {
@@ -426,6 +500,37 @@ export const reducer = (state: State, action: Action) => {
         hasNotification: action.data.hasNotification,
         notificationType: action.data.notificationType,
         notificationMessage: action.data.notificationMessage,
+      }
+    case 'setPendingInUse':
+      return {
+        ...state,
+        pendingAddInUse: action.data.add,
+        pendingRemoveInUse: action.data.remove,
+      }
+    case 'setCurrentFCCallAndPendingInUse':
+      return {
+        ...state,
+        currentFCCall: action.data.currentFCCall,
+        pendingAddInUse: action.data.pendingAdd,
+        pendingRemoveInUse: action.data.pendingRemove,
+      }
+    case 'setAssigneeListAndPendingInUse':
+      return {
+        ...state,
+        assigneeList: action.data.assigneeList,
+        pendingAddInUse: action.data.pendingAdd,
+        pendingRemoveInUse: action.data.pendingRemove,
+      }
+    case 'resetProcessAndApproved':
+      return {
+        ...state,
+        isProcessing: action.data.process,
+        isApproved: action.data.approved,
+      }
+    case 'setCallMsg':
+      return {
+        ...state,
+        callMsg: action.data,
       }
     default:
       return {
