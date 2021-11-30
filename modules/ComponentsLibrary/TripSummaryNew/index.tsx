@@ -583,6 +583,16 @@ export const TripSummaryNew: FC<Props> = ({
     userId: number,
   ) => {
     let trip = new Trip();
+    data.FullAddressDestination = data.FullAddressDestination.replace(
+      'Highway',
+      '',
+    );
+    data.FullAddressDestination = data.FullAddressDestination.replace(
+      'Hwy',
+      '',
+    );
+    data.FullAddressOrigin = data.FullAddressOrigin.replace('Hwy', '');
+    data.FullAddressOrigin = data.FullAddressOrigin.replace('Highway', '');
     trip.setOriginAddress(data.FullAddressOrigin);
     trip.setDestinationAddress(data.FullAddressDestination);
     try {
