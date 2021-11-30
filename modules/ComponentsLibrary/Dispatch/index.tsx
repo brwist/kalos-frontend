@@ -515,7 +515,7 @@ export const DispatchDashboard: React.FC<Props> = function DispatchDashboard({
     }
   }
 
-  const handleMapClick = (call: DispatchCall, tech: DispatchableTech) => {
+  const handleMapClick = (call: DispatchCall, edit = false, tech: DispatchableTech) => {
     updateDispatchState({ type: 'setModal', data: {
       openModal: true,
       modalKey: 'mapInfo',
@@ -739,6 +739,7 @@ export const DispatchDashboard: React.FC<Props> = function DispatchDashboard({
                     calls={state.calls}
                     handleMapClick={handleMapClick}
                     loading={state.isLoadingMap}
+                    handleGeocodeUpdate={() => {}}
                   />
                 )}
               </Grid>
