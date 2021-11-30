@@ -933,6 +933,7 @@ export class TripSummary extends React.PureComponent<Props, State> {
           <TripViewModal
             key={'tripView'}
             fullScreen
+            reloadResults={() => console.log('reload')}
             schema={SCHEMA_TRIP_INFO}
             data={{
               ...this.state.tripToView.toObject(),

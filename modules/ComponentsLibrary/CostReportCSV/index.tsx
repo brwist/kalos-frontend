@@ -202,11 +202,14 @@ export const CostReportCSV: FC<Props> = ({ serviceCallId, onClose }) => {
           const taskReq = new Task();
           taskReq.setEventId(serviceCallId);
           taskReq.setBillable(1);
+          taskReq.setIsActive(true);
           taskReq.setWithoutLimit(true);
           const timesheetReq = new TimesheetLine();
+          //Currently using custom sql, so only Reference number matters
           timesheetReq.setWithoutLimit(true);
           timesheetReq.setReferenceNumber(serviceCallId.toString());
           timesheetReq.setIsActive(1);
+          timesheetReq.setPayrollProcessed(true);
           timesheetReq.setOrderBy('time_started');
           timesheetReq.setOrderDir('ASC');
           const tripReq = new Trip();
@@ -332,18 +335,6 @@ export const CostReportCSV: FC<Props> = ({ serviceCallId, onClose }) => {
       }
       const lodgings = await PerDiemClientService.loadPerDiemsLodging(arr); // first # is per diem id
       dispatch({ type: ACTIONS.SET_LODGINGS, data: lodgings });
-      let temp: { [key: string]: number } = {};
-      for (let i = 0; i < transactions.length; i++) {
-        let keyValue = `${transactions[i].getCostCenterId()}-${transactions[i]
-          .getCostCenter()
-          ?.getDescription()}`;
-        if (temp[keyValue]) {
-          temp[keyValue] += transactions[i].getAmount();
-        } else {
-          //
-          temp[keyValue] = transactions[i].getAmount();
-        }
-      }
       for (let i = 0; i < timesheets.length; i++) {
         timesheets[i].setHoursWorked(
           roundNumber(
@@ -397,7 +388,7 @@ export const CostReportCSV: FC<Props> = ({ serviceCallId, onClose }) => {
           laborTemp[keyValue] = timesheets[i].getHoursWorked();
         }
       }
-      dispatch({ type: ACTIONS.SET_LABOR_TOTALS, data: temp });
+      dispatch({ type: ACTIONS.SET_LABOR_TOTALS, data: laborTemp });
 
       let total = 0;
       timesheets.forEach(
