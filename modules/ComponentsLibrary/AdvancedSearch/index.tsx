@@ -48,6 +48,7 @@ import {
   makeFakeRows,
   formatDate,
   EventsFilter,
+  MapClientService,
   EventsSort,
   LoadEventsByFilter,
   PropertiesFilter,
@@ -70,6 +71,9 @@ import {
   TimesheetDepartmentClientService,
   makeSafeFormObject,
   ActivityLogClientService,
+  QuoteLinePartClientService,
+  QuoteLineClientService,
+  usd,
 } from '../../../helpers';
 import {
   ROWS_PER_PAGE,
@@ -90,6 +94,7 @@ import { log } from 'console';
 import { ActivityLog } from '@kalos-core/kalos-rpc/ActivityLog';
 import format from 'date-fns/esm/format';
 import { ServiceRequest } from '../ServiceCall/requestIndex';
+import { QuoteLine } from '@kalos-core/kalos-rpc/QuoteLine';
 
 type Kind =
   | 'serviceCalls'
@@ -151,8 +156,9 @@ export const AdvancedSearch: FC<Props> = ({
 }) => {
   const [isAdmin, setIsAdmin] = useState<number>(0);
   const [loggedUser, setLoggedUser] = useState<User>(new User());
-
   const [loadedDicts, setLoadedDicts] = useState<boolean>(false);
+  const [flatRateIsOpen, setFlatRateIsOpen] = useState<boolean>(false);
+  const [flatRate, setFlatRate] = useState<QuoteLine[]>([]);
   const [loadingDicts, setLoadingDicts] = useState<boolean>(false);
   const [jobTypes, setJobTypes] = useState<JobType[]>([]);
   const [jobSubtypes, setJobSubtypes] = useState<JobSubtype[]>([]);
@@ -249,7 +255,33 @@ export const AdvancedSearch: FC<Props> = ({
     userReq.setId(loggedUserId);
     const loggedUser = await UserClientService.Get(userReq);
     setLoggedUser(loggedUser);
+    let qlResults: QuoteLine[] = [];
+    let startingPage = 0;
+    const quoteReq = new QuoteLine();
+    quoteReq.setIsActive(1);
+    quoteReq.setIsFlatrate('1');
+    quoteReq.setPageNumber(startingPage);
+    quoteReq.setWithoutLimit(true);
+    try {
+      qlResults = (
+        await QuoteLineClientService.BatchGet(quoteReq)
+      ).getResultsList();
+    } catch (e) {
+      console.log('could not fetch results for flat rate', e);
+    }
 
+    qlResults = qlResults.sort(function (a, b) {
+      if (a.getDescription() < b.getDescription()) {
+        return -1;
+      }
+      if (a.getDescription() > b.getDescription()) {
+        return 1;
+      }
+      return 0;
+    });
+    setFlatRate(qlResults);
+
+    console.log(qlResults.length);
     if (kinds.includes('employees')) {
       //const departments = await TimesheetDepartmentClientService.loadTimeSheetDepartments();
       const departmentRequest = new TimesheetDepartment();
@@ -648,6 +680,18 @@ export const AdvancedSearch: FC<Props> = ({
           );
         }
         const newData = makeSafeFormObject(data, new User());
+        const address = newData.getAddress();
+        const city = newData.getCity();
+        const addressState = newData.getState();
+        const zip = newData.getZip();
+
+        const geo = await MapClientService.loadGeoLocationByAddress(
+          `${address}, ${city}, ${addressState} ${zip}`,
+        );
+        if (geo) {
+          newData.setGeolocationLat(geo.geolocationLat);
+          newData.setGeolocationLng(geo.geolocationLng);
+        }
         if (newData.getFieldMaskList().length > 0) {
           await UserClientService.saveUser(
             newData,
@@ -2667,6 +2711,10 @@ export const AdvancedSearch: FC<Props> = ({
                   label: 'Add Service Call',
                   onClick: handlePendingEventAddingToggle(true),
                 },
+                {
+                  label: 'View Flat Rate',
+                  onClick: () => setFlatRateIsOpen(true),
+                },
               ]
             : []),
           ...(propertyCustomerId
@@ -2728,6 +2776,23 @@ export const AdvancedSearch: FC<Props> = ({
         loading={loading || loadingDicts}
         hoverable
       />
+      {flatRateIsOpen && flatRate && (
+        <Modal open onClose={() => setFlatRateIsOpen(false)}>
+          <InfoTable
+            columns={[{ name: 'Description' }, { name: 'Cost' }]}
+            data={flatRate.map(value => {
+              return [
+                {
+                  value: value.getDescription(),
+                },
+                {
+                  value: usd(parseInt(value.getAdjustment())),
+                },
+              ];
+            })}
+          />
+        </Modal>
+      )}
       {pendingEventAdding && (
         <Modal open onClose={handlePendingEventAddingToggle(false)} fullScreen>
           <AddServiceCall

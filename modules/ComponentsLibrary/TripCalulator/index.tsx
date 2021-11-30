@@ -144,7 +144,7 @@ export const TripCalulator: FC<props> = ({ loggedUserId, onClose, role }) => {
     const userResult = await UserClientService.Get(userReq);
     try {
       fullUserAddress =
-        userResult.getAddress() +
+        userResult.getAddress().replace('Hwy', '') +
         ',' +
         userResult.getCity() +
         ',' +
@@ -156,7 +156,12 @@ export const TripCalulator: FC<props> = ({ loggedUserId, onClose, role }) => {
         fullUserAddress = 'None';
       }
       const property = eventResults.getProperty();
-      fullPropertyAddress = `${property!.getAddress()},${property!.getCity()},${property!.getState()},${property!.getZip()}`;
+      fullPropertyAddress = `${property!
+        .getAddress()
+        .replace(
+          'Hwy',
+          '',
+        )},${property!.getCity()},${property!.getState()},${property!.getZip()}`;
       fullPropertyAddress = fullPropertyAddress.replace(/(?:\r\n|\r|\n)/g, '');
       const results = await MapClientService.getTripDistance(
         fullUserAddress,

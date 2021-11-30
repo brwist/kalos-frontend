@@ -1020,8 +1020,7 @@ export const TransactionTable: FC<Props> = ({
   const saveFromRowButton = useCallback(
     async (saved: any) => {
       let newTxn = new Transaction();
-
-      newTxn.setTimestamp(saved['Timestamp']);
+      newTxn.setTimestamp(saved['Date']);
       let newtimestamp = newTxn.getTimestamp();
       console.log('time we got:', newtimestamp);
       if (
@@ -1078,6 +1077,7 @@ export const TransactionTable: FC<Props> = ({
         log.setUserId(loggedUserId);
         log.setStatusId(2);
         log.setIsActive(1);
+        log.setTransactionId(res!.getId());
         log.setDescription(`Transaction created with id: ${res!.getId()}`);
         await TransactionActivityClientService.Create(log);
       } catch (err) {

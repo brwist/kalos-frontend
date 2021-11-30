@@ -6,6 +6,8 @@ import { Button } from '../../ComponentsLibrary/Button';
 import FilterPanel from './FilterPanel';
 import SearchableList from './SearchableList';
 import { JobTypePicker } from '../../ComponentsLibrary/Pickers/JobType';
+import { JobTypePickerMulti } from '../../ComponentsLibrary/Pickers/JobTypeMulti';
+
 import { JobSubtypePicker } from '../../ComponentsLibrary/Pickers/JobSubtype';
 import { useWindowSize } from '../../ComponentsLibrary/hooks';
 import { Field } from '../../ComponentsLibrary/Field';
@@ -15,7 +17,7 @@ import './filterDrawer.less';
 type State = {
   customers: string[];
   zip: string[];
-  jobType: number;
+  jobType: string;
   jobSubType: number;
   propertyUse: string[];
   techIds: string;
@@ -25,7 +27,7 @@ type Action =
   | { type: 'toggleAll'; key: string; value: string[] }
   | { type: 'customers'; value: string }
   | { type: 'zip'; value: string }
-  | { type: 'jobType'; value: number }
+  | { type: 'jobType'; value: string }
   | { type: 'jobSubType'; value: number }
   | { type: 'techIds'; value: string }
   | { type: 'propertyUse'; value: string }
@@ -67,6 +69,7 @@ const reducer = (state: State, action: Action): State => {
       };
     }
     case 'jobType': {
+      console.log('what we received to reducer', action.value.toString());
       return {
         ...state,
         jobType: action.value,
@@ -147,7 +150,7 @@ const FilterDrawer = ({ open, toggleDrawer }: Props) => {
   const handleClear = () => {
     const temp = {
       customers: [],
-      jobType: 0,
+      jobType: '0',
       jobSubType: 0,
       zip: [],
       propertyUse: [],
@@ -231,13 +234,19 @@ const FilterDrawer = ({ open, toggleDrawer }: Props) => {
             expanded={expanded === 'jobType'}
             handleChange={() => toggleExpanded('jobType')}
           >
-            <JobTypePicker
-              selected={jobType}
-              onSelect={value => dispatch({ type: 'jobType', value })}
-            />
+            {
+              <JobTypePickerMulti
+                key="JobTypeMultiPicker"
+                selected={jobType}
+                onSelect={value =>
+                  dispatch({ type: 'jobType', value: String(value) })
+                }
+              />
+            }
+
             <JobSubtypePicker
+              key="jobTypeSubtypePicker"
               selected={jobSubType}
-              jobTypeID={jobType}
               onSelect={value => dispatch({ type: 'jobSubType', value })}
             />
           </FilterPanel>
