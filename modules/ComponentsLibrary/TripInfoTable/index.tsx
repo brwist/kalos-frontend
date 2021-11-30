@@ -140,14 +140,8 @@ export const SCHEMA_GOOGLE_MAP_INPUT_FORM: Schema<AddressPair.AsObject> = [
   ],
   [
     {
-      label: 'Time of Trip Start',
+      label: 'Date of Trip ',
       name: 'Date',
-      type: 'mui-datetime',
-      minutesStep: 1,
-    },
-    {
-      label: 'Time of Trip End',
-      name: 'DateEnded',
       type: 'mui-datetime',
       minutesStep: 1,
     },
@@ -202,8 +196,19 @@ export class TripInfoTable extends React.PureComponent<Props, State> {
     userId: number,
   ) => {
     let trip = new Trip();
+    data.FullAddressDestination = data.FullAddressDestination.replace(
+      'Highway',
+      '',
+    );
+    data.FullAddressDestination = data.FullAddressDestination.replace(
+      'Hwy',
+      '',
+    );
+    data.FullAddressOrigin = data.FullAddressOrigin.replace('Hwy', '');
+    data.FullAddressOrigin = data.FullAddressOrigin.replace('Highway', '');
 
     trip.setOriginAddress(data.FullAddressOrigin);
+
     trip.setDestinationAddress(data.FullAddressDestination);
 
     await this.getTripDistance(

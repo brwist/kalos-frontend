@@ -28,6 +28,11 @@ import { getPropertyAddress } from '@kalos-core/kalos-rpc/Property';
 import { PerDiem, PerDiemRow } from '@kalos-core/kalos-rpc/PerDiem';
 import { Transaction } from '@kalos-core/kalos-rpc/Transaction';
 import { Event } from '@kalos-core/kalos-rpc/Event';
+import {
+  CostReportData,
+  CostReportReq,
+} from '@kalos-core/kalos-rpc/compiled-protos/event_pb';
+
 import { SectionBar } from '../SectionBar';
 import { InfoTable } from '../InfoTable';
 import { Loader } from '../../Loader/main';
@@ -50,6 +55,7 @@ import ExpandLess from '@material-ui/icons/ExpandLess';
 import ExpandMore from '@material-ui/icons/ExpandMore';
 import Collapse from '@material-ui/core/Collapse/Collapse';
 import { TransactionAccount } from '@kalos-core/kalos-rpc/TransactionAccount';
+import { task } from 'gulp';
 export interface Props {
   serviceCallId: number;
   loggedUserId: number;
@@ -121,7 +127,6 @@ export const CostReportCSV: FC<Props> = ({ serviceCallId, onClose }) => {
   const loadEvent = useCallback(async () => {
     dispatch({ type: ACTIONS.SET_LOADING_EVENT, data: true });
 
-    //const event = await loadEventById(serviceCallId);
     const event = await EventClientService.LoadEventByServiceCallID(
       serviceCallId,
     );
@@ -138,92 +143,15 @@ export const CostReportCSV: FC<Props> = ({ serviceCallId, onClose }) => {
     let promises = [];
     let timesheets: TimesheetLine[] = [];
     let classCodes: ClassCode[] = [];
+    let perDiems: PerDiem[] = [];
+    let transactions: Transaction[] = [];
+    let trips: Trip[] = [];
+    let tasks: Task[] = [];
 
     dispatch({ type: ACTIONS.SET_LOADING, data: true });
-
     promises.push(
       new Promise<void>(async resolve => {
         try {
-          let transactions: Transaction[] = [];
-          transactions =
-            await TransactionClientService.loadTransactionsByEventId(
-              serviceCallId,
-              true,
-            );
-
-          let temp: { [key: string]: number } = {};
-          dispatch({ type: ACTIONS.SET_TRANSACTIONS, data: transactions });
-          for (let i = 0; i < transactions.length; i++) {
-            let keyValue = `${transactions[i].getCostCenterId()}-${transactions[
-              i
-            ]
-              .getCostCenter()
-              ?.getDescription()}`;
-            if (temp[keyValue]) {
-              temp[keyValue] += transactions[i].getAmount();
-            } else {
-              //
-              temp[keyValue] = transactions[i].getAmount();
-            }
-          }
-
-          resolve();
-        } catch (err) {
-          console.log('error loading transactions', err);
-        }
-      }),
-    );
-    promises.push(
-      new Promise<void>(async resolve => {
-        let resultsList: PerDiem[] = [];
-        console.log('getting perdiem and trips');
-        const req = new PerDiem();
-        req.setWithRows(true);
-        req.setIsActive(true);
-        req.setWithoutLimit(true);
-        const row = new PerDiemRow();
-        row.setServiceCallId(serviceCallId);
-        req.setReferenceRow(row);
-        try {
-          resultsList = (
-            await PerDiemClientService.BatchGet(req)
-          ).getResultsList();
-          const mappedResults = resultsList.map(perdiem => ({
-            perDiemId: perdiem.getId(),
-            active: 0,
-          }));
-          dispatch({ type: ACTIONS.SET_DROPDOWNS, data: mappedResults });
-          let arr: PerDiem[] = [];
-          resultsList.forEach(result => {
-            let isIncluded = false;
-            arr.forEach(arrItem => {
-              if (arrItem.getId() == result.getId()) isIncluded = true;
-            });
-            if (!isIncluded) {
-              arr.push(result);
-            }
-          });
-          for (let i = 0; i < arr.length; i++) {
-            const tempRowList = arr[i]
-              .getRowsList()
-              .filter(row => row.getServiceCallId() === serviceCallId);
-            arr[i].setRowsList(tempRowList);
-          }
-          let lodgings: {};
-          lodgings = await PerDiemClientService.loadPerDiemsLodging(arr); // first # is per diem id
-          dispatch({ type: ACTIONS.SET_LODGINGS, data: lodgings });
-          dispatch({ type: ACTIONS.SET_PER_DIEMS, data: arr });
-        } catch (err) {
-          console.log('failed to load perdiems info');
-        }
-        resolve();
-      }),
-    );
-    promises.push(
-      new Promise<void>(async resolve => {
-        try {
-          console.log('getting classcodes');
-
           const cccs = new ClassCodeClient(ENDPOINT);
           const classCodeReq = new ClassCode();
           classCodeReq.setIsActive(true);
@@ -263,32 +191,70 @@ export const CostReportCSV: FC<Props> = ({ serviceCallId, onClose }) => {
     );
     promises.push(
       new Promise<void>(async resolve => {
-        const tripReq = new Trip();
-        tripReq.setIsActive(true);
-        let allTrips: Trip[] = [];
-
-        tripReq.setJobNumber(serviceCallId);
-        tripReq.setWithoutLimit(true);
         try {
-          const allTrips = (
-            await PerDiemClientService.BatchGetTrips(tripReq)
-          ).getResultsList();
+          const perDiemReq = new PerDiem();
+          perDiemReq.setWithRows(true);
+          perDiemReq.setIsActive(true);
+          perDiemReq.setWithoutLimit(true);
+          const row = new PerDiemRow();
+          row.setServiceCallId(serviceCallId);
+          perDiemReq.setReferenceRow(row);
+          const taskReq = new Task();
+          taskReq.setEventId(serviceCallId);
+          taskReq.setBillable(1);
+          taskReq.setIsActive(true);
+          taskReq.setWithoutLimit(true);
+          const timesheetReq = new TimesheetLine();
+          //Currently using custom sql, so only Reference number matters
+          timesheetReq.setWithoutLimit(true);
+          timesheetReq.setReferenceNumber(serviceCallId.toString());
+          timesheetReq.setIsActive(1);
+          timesheetReq.setPayrollProcessed(true);
+          timesheetReq.setOrderBy('time_started');
+          timesheetReq.setOrderDir('ASC');
+          const tripReq = new Trip();
+          tripReq.setIsActive(true);
+          tripReq.setJobNumber(serviceCallId);
+          tripReq.setWithoutLimit(true);
+          const transactionReq = new Transaction();
+          transactionReq.setJobId(serviceCallId);
+          transactionReq.setIsActive(1);
+          transactionReq.setWithoutLimit(true);
+          const reportReq = new CostReportReq();
+          reportReq.setPerdiemReq(perDiemReq);
+          reportReq.setTaskReq(taskReq);
+          reportReq.setTimesheetReq(timesheetReq);
+          reportReq.setTransactionReq(transactionReq);
+          reportReq.setTripReq(tripReq);
 
-          dispatch({ type: ACTIONS.SET_TRIPS, data: allTrips });
-          let allTripsTotal = 0;
-          allTrips.forEach(trip => {
-            // Subtracting 30 miles flat from trip distance in accordance
-            // with reimbursement from home rule
-            allTripsTotal +=
-              trip.getDistanceInMiles() > 30 && trip.getHomeTravel()
-                ? (trip.getDistanceInMiles() - 30) * IRS_SUGGESTED_MILE_FACTOR
-                : trip.getDistanceInMiles() * IRS_SUGGESTED_MILE_FACTOR;
-          });
+          try {
+            const allResults = await EventClientService.BatchGetCostReportData(
+              reportReq,
+            );
+            if (allResults.getPerDiemResults() !== undefined) {
+              perDiems = allResults.getPerDiemResults()!.getResultsList();
+            }
+            if (allResults.getTaskResults() !== undefined) {
+              tasks = allResults.getTaskResults()!.getResultsList();
+            }
+            if (allResults.getTimesheetResults() !== undefined) {
+              timesheets = allResults.getTimesheetResults()!.getResultsList();
+            }
+            if (allResults.getTripResults() !== undefined) {
+              trips = allResults.getTripResults()!.getResultsList();
+            }
+            if (allResults.getTransactionResults() !== undefined) {
+              transactions = allResults
+                .getTransactionResults()!
+                .getResultsList();
+            }
+          } catch (err) {
+            console.log('error with fetch data function:', err);
+          }
 
-          dispatch({ type: ACTIONS.SET_TRIPS_TOTAL, data: allTripsTotal });
           resolve();
         } catch (err) {
-          console.log('error getting trips,', err);
+          console.log('error fetching data', err);
         }
       }),
     );
@@ -304,6 +270,7 @@ export const CostReportCSV: FC<Props> = ({ serviceCallId, onClose }) => {
             type: ACTIONS.SET_TRANSACTION_ACCOUNTS,
             data: accountRes,
           });
+
           const costCenterMap = accountRes.map(account => ({
             costCenterId: account.getId(),
             active: 0,
@@ -318,50 +285,56 @@ export const CostReportCSV: FC<Props> = ({ serviceCallId, onClose }) => {
         }
       }),
     );
-    promises.push(
-      new Promise<void>(async resolve => {
-        try {
-          console.log('getting timesheets');
-          let req = new TimesheetLine();
-          req.setReferenceNumber(serviceCallId.toString());
-          req.setOrderBy('time_started');
-          req.setOrderDir('ASC');
-          timesheets = (
-            await TimesheetLineClientService.BatchGet(req)
-          ).getResultsList();
-          resolve();
-        } catch (err) {
-          console.error(
-            'Error occurred while loading the timesheet lines for the cost report. Error: ',
-            err,
-          );
-        }
-      }),
-    );
-    promises.push(
-      new Promise<void>(async resolve => {
-        try {
-          console.log('getting tasks');
-
-          let req = new Task();
-          req.setEventId(serviceCallId);
-          req.setBillable(1);
-          const tasks = (
-            await TaskClientService.BatchGet(req)
-          ).getResultsList();
-          dispatch({ type: ACTIONS.SET_TASKS, data: tasks });
-
-          resolve();
-        } catch (err) {
-          console.error(
-            `Error occurred while loading the tasks for the cost report. Error: ${err}`,
-          );
-        }
-      }),
-    );
-    Promise.all(promises).then(() => {
+    Promise.all(promises).then(async () => {
       console.log('all promises executed without error, setting loaded');
 
+      let allTripsTotal = 0;
+      trips.forEach(trip => {
+        // Subtracting 30 miles flat from trip distance in accordance
+        // with reimbursement from home rule
+        allTripsTotal +=
+          trip.getDistanceInMiles() > 30 && trip.getHomeTravel()
+            ? (trip.getDistanceInMiles() - 30) * IRS_SUGGESTED_MILE_FACTOR
+            : trip.getDistanceInMiles() * IRS_SUGGESTED_MILE_FACTOR;
+      });
+      let costCenterTemp: { [key: string]: number } = {};
+      for (let i = 0; i < transactions.length; i++) {
+        let keyValue = `${transactions[i].getCostCenterId()}-${transactions[i]
+          .getCostCenter()
+          ?.getDescription()}`;
+        if (costCenterTemp[keyValue]) {
+          costCenterTemp[keyValue] += transactions[i].getAmount();
+        } else {
+          //
+          costCenterTemp[keyValue] = transactions[i].getAmount();
+        }
+      }
+      dispatch({ type: ACTIONS.SET_COST_CENTER_TOTALS, data: costCenterTemp });
+
+      dispatch({ type: ACTIONS.SET_TRIPS_TOTAL, data: allTripsTotal });
+      const mappedResults = perDiems.map(perdiem => ({
+        perDiemId: perdiem.getId(),
+        active: 0,
+      }));
+      dispatch({ type: ACTIONS.SET_DROPDOWNS, data: mappedResults });
+      let arr: PerDiem[] = [];
+      perDiems.forEach(result => {
+        let isIncluded = false;
+        arr.forEach(arrItem => {
+          if (arrItem.getId() == result.getId()) isIncluded = true;
+        });
+        if (!isIncluded) {
+          arr.push(result);
+        }
+      });
+      for (let i = 0; i < arr.length; i++) {
+        const tempRowList = arr[i]
+          .getRowsList()
+          .filter(row => row.getServiceCallId() === serviceCallId);
+        arr[i].setRowsList(tempRowList);
+      }
+      const lodgings = await PerDiemClientService.loadPerDiemsLodging(arr); // first # is per diem id
+      dispatch({ type: ACTIONS.SET_LODGINGS, data: lodgings });
       for (let i = 0; i < timesheets.length; i++) {
         timesheets[i].setHoursWorked(
           roundNumber(
@@ -372,7 +345,6 @@ export const CostReportCSV: FC<Props> = ({ serviceCallId, onClose }) => {
           ),
         );
       }
-      dispatch({ type: ACTIONS.SET_TIMESHEETS, data: timesheets });
 
       if (timesheets.length > 0) {
         let weekList: WeekClassCodeBreakdownSubtotal[] = [];
@@ -407,24 +379,32 @@ export const CostReportCSV: FC<Props> = ({ serviceCallId, onClose }) => {
         });
       }
 
-      let temp: { [key: string]: number } = {};
-
+      let laborTemp = state.laborTotals;
       for (let i = 0; i < timesheets.length; i++) {
         let keyValue = timesheets[i].getClassCodeId().toString();
-        if (temp[keyValue]) {
-          temp[keyValue] += timesheets[i].getHoursWorked();
+        if (laborTemp[keyValue]) {
+          laborTemp[keyValue] += timesheets[i].getHoursWorked();
         } else {
-          temp[keyValue] = timesheets[i].getHoursWorked();
+          laborTemp[keyValue] = timesheets[i].getHoursWorked();
         }
       }
-      dispatch({ type: ACTIONS.SET_LABOR_TOTALS, data: temp });
+      dispatch({ type: ACTIONS.SET_LABOR_TOTALS, data: laborTemp });
 
       let total = 0;
       timesheets.forEach(
         timesheet => (total = total + timesheet.getHoursWorked()),
       );
+      dispatch({
+        type: ACTIONS.SET_ALL_DATA,
+        data: {
+          timesheetRes: timesheets,
+          transactionRes: transactions,
+          perDiemRes: arr,
+          taskRes: tasks,
+          tripRes: trips,
+        },
+      });
       dispatch({ type: ACTIONS.SET_TOTAL_HOURS_WORKED, data: total });
-
       dispatch({ type: ACTIONS.SET_LOADING, data: false });
       dispatch({ type: ACTIONS.SET_LOADED, data: true });
     });
@@ -645,7 +625,6 @@ export const CostReportCSV: FC<Props> = ({ serviceCallId, onClose }) => {
     }
     if (state.loadedInit == true && state.loaded === false) {
       console.log('calling load in useEffect');
-
       load();
     }
   }, [state.loadedInit, loadInit, state.loaded, load]);
