@@ -19,7 +19,7 @@ import {
   UserClientService,
 } from '../../../helpers';
 import { ClassCode, ClassCodeClient } from '@kalos-core/kalos-rpc/ClassCode';
-import { reducer, ACTIONS } from './reducer';
+import { reducer, ACTIONS, WeekClassCodeBreakdownSubtotal } from './reducer';
 import { PrintList } from '../PrintList';
 import { PrintPage, Status } from '../PrintPage';
 import { PrintParagraph } from '../PrintParagraph';
@@ -35,16 +35,21 @@ import Button from '@material-ui/core/Button';
 import { Button as KalosButton } from '../Button';
 import { Trip } from '@kalos-core/kalos-rpc/compiled-protos/perdiem_pb';
 import { Task } from '@kalos-core/kalos-rpc/Task';
-import { differenceInMinutes, parseISO } from 'date-fns';
+import {
+  differenceInMinutes,
+  parseISO,
+  startOfWeek,
+  format,
+  addDays,
+  differenceInCalendarWeeks,
+  endOfWeek,
+} from 'date-fns';
 import { roundNumber, downloadCSV } from '../../../helpers';
 import { Tabs } from '../Tabs';
 import ExpandLess from '@material-ui/icons/ExpandLess';
 import ExpandMore from '@material-ui/icons/ExpandMore';
 import Collapse from '@material-ui/core/Collapse/Collapse';
-import { PrintHeader } from '../PrintHeader';
-import { PinDrop } from '@material-ui/icons';
 import { TransactionAccount } from '@kalos-core/kalos-rpc/TransactionAccount';
-import { User } from '@kalos-core/kalos-rpc/User';
 export interface Props {
   serviceCallId: number;
   loggedUserId: number;
@@ -93,7 +98,8 @@ export const CostReportCSV: FC<Props> = ({ serviceCallId, onClose }) => {
     classCodes: [],
     dropDowns: [],
     transactionDropDowns: [],
-    timesheetDropDowns: [],
+    classCodeDropdowns: [],
+    timesheetWeeklySubtotals: [],
     totalHoursWorked: 0,
     activeTab: tabs[0],
     printStatus: 'idle',
@@ -104,122 +110,6 @@ export const CostReportCSV: FC<Props> = ({ serviceCallId, onClose }) => {
     0,
   );
 
-  const loadResources = useCallback(async () => {
-    const resultsList = (
-      await PerDiemClientService.loadPerDiemsByEventId(serviceCallId)
-    ).getResultsList();
-    const mappedResults = resultsList.map(perdiem => ({
-      perDiemId: perdiem.getId(),
-      active: 0,
-    }));
-    dispatch({ type: ACTIONS.SET_DROPDOWNS, data: mappedResults });
-    const cccs = new ClassCodeClient(ENDPOINT);
-    const classCodeReq = new ClassCode();
-    classCodeReq.setIsActive(true);
-    const cccsResults = (await cccs.BatchGet(classCodeReq)).getResultsList();
-    dispatch({
-      type: ACTIONS.SET_CLASS_CODES,
-      data: cccsResults,
-    });
-    const users = await UserClientService.loadTechnicians();
-    dispatch({
-      type: ACTIONS.SET_USERS,
-      data: users,
-    });
-    const classCodeMap = cccsResults.map(classCode => ({
-      classCodeId: classCode.getId(),
-      active: 0,
-    }));
-    dispatch({
-      type: ACTIONS.SET_TIMESHEET_DROPDOWNS,
-      data: classCodeMap,
-    });
-    let arr: PerDiem[] = [];
-    resultsList.forEach(result => {
-      let isIncluded = false;
-      arr.forEach(arrItem => {
-        if (arrItem.getId() == result.getId()) isIncluded = true;
-      });
-      if (!isIncluded) {
-        arr.push(result);
-      }
-    });
-    for (let i = 0; i < arr.length; i++) {
-      const tempRowList = arr[i]
-        .getRowsList()
-        .filter(row => row.getServiceCallId() === serviceCallId);
-      arr[i].setRowsList(tempRowList);
-    }
-
-    const tripReq = new Trip();
-    tripReq.setIsActive(true);
-    tripReq.setJobNumber(serviceCallId);
-    const allTrips = await (
-      await PerDiemClientService.BatchGetTrips(tripReq)
-    ).getResultsList();
-
-    dispatch({ type: ACTIONS.SET_TRIPS, data: allTrips });
-    const accountReq = new TransactionAccount();
-    accountReq.setIsActive(1);
-    const accountRes = (
-      await TransactionAccountClientService.BatchGet(accountReq)
-    ).getResultsList();
-    dispatch({ type: ACTIONS.SET_TRANSACTION_ACCOUNTS, data: accountRes });
-    const costCenterMap = accountRes.map(account => ({
-      costCenterId: account.getId(),
-      active: 0,
-    }));
-    dispatch({
-      type: ACTIONS.SET_TRANSACTION_DROPDOWNS,
-      data: costCenterMap,
-    });
-    const lodgings = await PerDiemClientService.loadPerDiemsLodging(arr); // first # is per diem id
-    dispatch({ type: ACTIONS.SET_LODGINGS, data: lodgings });
-
-    const transactions = await TransactionClientService.loadTransactionsByEventId(
-      serviceCallId,
-      true,
-    );
-    let temp = state.costCenterTotals;
-    dispatch({ type: ACTIONS.SET_TRANSACTIONS, data: transactions });
-    for (let i = 0; i < transactions.length; i++) {
-      let keyValue = `${transactions[i].getCostCenterId()}-${transactions[i]
-        .getCostCenter()
-        ?.getDescription()}`;
-      if (temp[keyValue]) {
-        temp[keyValue] += transactions[i].getAmount();
-      } else {
-        //
-        temp[keyValue] = transactions[i].getAmount();
-      }
-    }
-    console.log(temp);
-    let allTripsTotal = 0;
-    allTrips.forEach(trip => {
-      // Subtracting 30 miles flat from trip distance in accordance
-      // with reimbursement from home rule
-      allTripsTotal +=
-        trip.getDistanceInMiles() > 30 && trip.getHomeTravel()
-          ? (trip.getDistanceInMiles() - 30) * IRS_SUGGESTED_MILE_FACTOR
-          : trip.getDistanceInMiles() * IRS_SUGGESTED_MILE_FACTOR;
-    });
-
-    dispatch({ type: ACTIONS.SET_TRIPS_TOTAL, data: allTripsTotal });
-
-    dispatch({ type: ACTIONS.SET_PER_DIEMS, data: arr });
-  }, [serviceCallId, state.costCenterTotals]);
-
-  const totalMeals =
-    state.perDiems.reduce((aggr, pd) => aggr + pd.getRowsList().length, 0) *
-    MEALS_RATE;
-  const totalLodging = state.perDiems
-    .reduce((aggr, pd) => [...aggr, ...pd.getRowsList()], [] as PerDiemRow[])
-    .filter(pd => !pd.getMealsOnly())
-    .reduce((aggr, pd) => aggr + state.lodgings[pd.getId()], 0);
-  const totalTransactions = state.transactions.reduce(
-    (aggr, pd) => aggr + pd.getAmount(),
-    0,
-  );
   const handlePrint = useCallback(async () => {
     dispatch({ type: ACTIONS.SET_PRINT_STATUS, data: 'loading' });
     dispatch({ type: ACTIONS.SET_PRINT_STATUS, data: 'loaded' });
@@ -247,26 +137,198 @@ export const CostReportCSV: FC<Props> = ({ serviceCallId, onClose }) => {
   const load = useCallback(async () => {
     let promises = [];
     let timesheets: TimesheetLine[] = [];
+    let classCodes: ClassCode[] = [];
 
     dispatch({ type: ACTIONS.SET_LOADING, data: true });
 
     promises.push(
       new Promise<void>(async resolve => {
-        await loadResources();
+        try {
+          let transactions: Transaction[] = [];
+          transactions =
+            await TransactionClientService.loadTransactionsByEventId(
+              serviceCallId,
+              true,
+            );
+
+          let temp: { [key: string]: number } = {};
+          dispatch({ type: ACTIONS.SET_TRANSACTIONS, data: transactions });
+          for (let i = 0; i < transactions.length; i++) {
+            let keyValue = `${transactions[i].getCostCenterId()}-${transactions[
+              i
+            ]
+              .getCostCenter()
+              ?.getDescription()}`;
+            if (temp[keyValue]) {
+              temp[keyValue] += transactions[i].getAmount();
+            } else {
+              //
+              temp[keyValue] = transactions[i].getAmount();
+            }
+          }
+
+          resolve();
+        } catch (err) {
+          console.log('error loading transactions', err);
+        }
+      }),
+    );
+    promises.push(
+      new Promise<void>(async resolve => {
+        let resultsList: PerDiem[] = [];
+        console.log('getting perdiem and trips');
+        const req = new PerDiem();
+        req.setWithRows(true);
+        req.setIsActive(true);
+        req.setWithoutLimit(true);
+        const row = new PerDiemRow();
+        row.setServiceCallId(serviceCallId);
+        req.setReferenceRow(row);
+        try {
+          resultsList = (
+            await PerDiemClientService.BatchGet(req)
+          ).getResultsList();
+          const mappedResults = resultsList.map(perdiem => ({
+            perDiemId: perdiem.getId(),
+            active: 0,
+          }));
+          dispatch({ type: ACTIONS.SET_DROPDOWNS, data: mappedResults });
+          let arr: PerDiem[] = [];
+          resultsList.forEach(result => {
+            let isIncluded = false;
+            arr.forEach(arrItem => {
+              if (arrItem.getId() == result.getId()) isIncluded = true;
+            });
+            if (!isIncluded) {
+              arr.push(result);
+            }
+          });
+          for (let i = 0; i < arr.length; i++) {
+            const tempRowList = arr[i]
+              .getRowsList()
+              .filter(row => row.getServiceCallId() === serviceCallId);
+            arr[i].setRowsList(tempRowList);
+          }
+          let lodgings: {};
+          lodgings = await PerDiemClientService.loadPerDiemsLodging(arr); // first # is per diem id
+          dispatch({ type: ACTIONS.SET_LODGINGS, data: lodgings });
+          dispatch({ type: ACTIONS.SET_PER_DIEMS, data: arr });
+        } catch (err) {
+          console.log('failed to load perdiems info');
+        }
         resolve();
       }),
     );
-
     promises.push(
       new Promise<void>(async resolve => {
         try {
+          console.log('getting classcodes');
+
+          const cccs = new ClassCodeClient(ENDPOINT);
+          const classCodeReq = new ClassCode();
+          classCodeReq.setIsActive(true);
+
+          classCodes = (await cccs.BatchGet(classCodeReq)).getResultsList();
+          dispatch({
+            type: ACTIONS.SET_CLASS_CODES,
+            data: classCodes,
+          });
+          const mappedResults = classCodes.map(code => ({
+            classCodeId: code.getId(),
+            active: 0,
+          }));
+          dispatch({
+            type: ACTIONS.SET_CLASS_CODE_DROPDOWNS,
+            data: mappedResults,
+          });
+          resolve();
+        } catch (err) {
+          console.log('error fetching class codes', err);
+        }
+      }),
+    );
+    promises.push(
+      new Promise<void>(async resolve => {
+        try {
+          const users = await UserClientService.loadTechnicians();
+          dispatch({
+            type: ACTIONS.SET_USERS,
+            data: users,
+          });
+          resolve();
+        } catch (err) {
+          console.log('error fetching users', err);
+        }
+      }),
+    );
+    promises.push(
+      new Promise<void>(async resolve => {
+        const tripReq = new Trip();
+        tripReq.setIsActive(true);
+        let allTrips: Trip[] = [];
+
+        tripReq.setJobNumber(serviceCallId);
+        tripReq.setWithoutLimit(true);
+        try {
+          const allTrips = (
+            await PerDiemClientService.BatchGetTrips(tripReq)
+          ).getResultsList();
+
+          dispatch({ type: ACTIONS.SET_TRIPS, data: allTrips });
+          let allTripsTotal = 0;
+          allTrips.forEach(trip => {
+            // Subtracting 30 miles flat from trip distance in accordance
+            // with reimbursement from home rule
+            allTripsTotal +=
+              trip.getDistanceInMiles() > 30 && trip.getHomeTravel()
+                ? (trip.getDistanceInMiles() - 30) * IRS_SUGGESTED_MILE_FACTOR
+                : trip.getDistanceInMiles() * IRS_SUGGESTED_MILE_FACTOR;
+          });
+
+          dispatch({ type: ACTIONS.SET_TRIPS_TOTAL, data: allTripsTotal });
+          resolve();
+        } catch (err) {
+          console.log('error getting trips,', err);
+        }
+      }),
+    );
+    promises.push(
+      new Promise<void>(async resolve => {
+        const accountReq = new TransactionAccount();
+        accountReq.setIsActive(1);
+        try {
+          const accountRes = (
+            await TransactionAccountClientService.BatchGet(accountReq)
+          ).getResultsList();
+          dispatch({
+            type: ACTIONS.SET_TRANSACTION_ACCOUNTS,
+            data: accountRes,
+          });
+          const costCenterMap = accountRes.map(account => ({
+            costCenterId: account.getId(),
+            active: 0,
+          }));
+          dispatch({
+            type: ACTIONS.SET_TRANSACTION_DROPDOWNS,
+            data: costCenterMap,
+          });
+          resolve();
+        } catch (err) {
+          console.log('error fetching accounts,', err);
+        }
+      }),
+    );
+    promises.push(
+      new Promise<void>(async resolve => {
+        try {
+          console.log('getting timesheets');
           let req = new TimesheetLine();
           req.setReferenceNumber(serviceCallId.toString());
-
+          req.setOrderBy('time_started');
+          req.setOrderDir('ASC');
           timesheets = (
             await TimesheetLineClientService.BatchGet(req)
           ).getResultsList();
-          console.log('timesheets', timesheets);
           resolve();
         } catch (err) {
           console.error(
@@ -276,10 +338,11 @@ export const CostReportCSV: FC<Props> = ({ serviceCallId, onClose }) => {
         }
       }),
     );
-
     promises.push(
       new Promise<void>(async resolve => {
         try {
+          console.log('getting tasks');
+
           let req = new Task();
           req.setEventId(serviceCallId);
           req.setBillable(1);
@@ -296,8 +359,9 @@ export const CostReportCSV: FC<Props> = ({ serviceCallId, onClose }) => {
         }
       }),
     );
-
     Promise.all(promises).then(() => {
+      console.log('all promises executed without error, setting loaded');
+
       for (let i = 0; i < timesheets.length; i++) {
         timesheets[i].setHoursWorked(
           roundNumber(
@@ -309,13 +373,47 @@ export const CostReportCSV: FC<Props> = ({ serviceCallId, onClose }) => {
         );
       }
       dispatch({ type: ACTIONS.SET_TIMESHEETS, data: timesheets });
-      let temp = state.laborTotals;
+
+      if (timesheets.length > 0) {
+        let weekList: WeekClassCodeBreakdownSubtotal[] = [];
+
+        for (let i = 0; i < timesheets.length; i++) {
+          let startWeek = new Date(parseISO(timesheets[i].getTimeStarted()));
+          startWeek = startOfWeek(startWeek, { weekStartsOn: 6 });
+          let endWeek = new Date(parseISO(timesheets[i].getTimeStarted()));
+          endWeek = endOfWeek(endWeek, { weekStartsOn: 6 });
+          const weekStruct = {
+            weekStart: format(startWeek, 'yyyy-MM-dd'),
+            weekEnd: format(endWeek, 'yyyy-MM-dd'),
+            employeeId: timesheets[i].getTechnicianUserId(),
+            hoursSubtotal: timesheets[i].getHoursWorked(),
+            classCodeId: timesheets[i].getClassCodeId(),
+          };
+          let findExisting = weekList.findIndex(
+            week =>
+              week.classCodeId == weekStruct.classCodeId &&
+              week.weekEnd == weekStruct.weekEnd &&
+              weekStruct.weekStart === weekStruct.weekStart,
+          );
+          if (findExisting != -1) {
+            weekList[findExisting].hoursSubtotal += weekStruct.hoursSubtotal;
+          } else {
+            weekList.push(weekStruct);
+          }
+        }
+        dispatch({
+          type: ACTIONS.SET_TIMESHEET_WEEKLY_SUBTOTALS,
+          data: weekList,
+        });
+      }
+
+      let temp: { [key: string]: number } = {};
+
       for (let i = 0; i < timesheets.length; i++) {
         let keyValue = timesheets[i].getClassCodeId().toString();
         if (temp[keyValue]) {
           temp[keyValue] += timesheets[i].getHoursWorked();
         } else {
-          //
           temp[keyValue] = timesheets[i].getHoursWorked();
         }
       }
@@ -326,11 +424,23 @@ export const CostReportCSV: FC<Props> = ({ serviceCallId, onClose }) => {
         timesheet => (total = total + timesheet.getHoursWorked()),
       );
       dispatch({ type: ACTIONS.SET_TOTAL_HOURS_WORKED, data: total });
+
       dispatch({ type: ACTIONS.SET_LOADING, data: false });
       dispatch({ type: ACTIONS.SET_LOADED, data: true });
     });
-  }, [loadResources, state.laborTotals, serviceCallId]);
+  }, [serviceCallId]);
   const createReport = (section: string) => {
+    const totalMeals =
+      state.perDiems.reduce((aggr, pd) => aggr + pd.getRowsList().length, 0) *
+      MEALS_RATE;
+    const totalLodging = state.perDiems
+      .reduce((aggr, pd) => [...aggr, ...pd.getRowsList()], [] as PerDiemRow[])
+      .filter(pd => !pd.getMealsOnly())
+      .reduce((aggr, pd) => aggr + state.lodgings[pd.getId()], 0);
+    const totalTransactions = state.transactions.reduce(
+      (aggr, pd) => aggr + pd.getAmount(),
+      0,
+    );
     let fullString = '';
     var find = ',';
     var re = new RegExp(find, 'g');
@@ -460,7 +570,6 @@ export const CostReportCSV: FC<Props> = ({ serviceCallId, onClose }) => {
           ',' +
           t.getNotes() +
           `\r\n`;
-        console.log(tempString);
         fullString = fullString + tempString;
       }
     }
@@ -531,11 +640,11 @@ export const CostReportCSV: FC<Props> = ({ serviceCallId, onClose }) => {
   };
   useEffect(() => {
     if (!state.loadedInit) {
-      console.log('loading init');
+      console.log('loadedInit in useEffect');
       loadInit();
     }
     if (state.loadedInit == true && state.loaded === false) {
-      console.log('loading');
+      console.log('calling load in useEffect');
 
       load();
     }
@@ -559,7 +668,17 @@ export const CostReportCSV: FC<Props> = ({ serviceCallId, onClose }) => {
       laborCostArray.push(value);
     }
   });
-
+  const totalMeals =
+    state.perDiems.reduce((aggr, pd) => aggr + pd.getRowsList().length, 0) *
+    MEALS_RATE;
+  const totalLodging = state.perDiems
+    .reduce((aggr, pd) => [...aggr, ...pd.getRowsList()], [] as PerDiemRow[])
+    .filter(pd => !pd.getMealsOnly())
+    .reduce((aggr, pd) => aggr + state.lodgings[pd.getId()], 0);
+  const totalTransactions = state.transactions.reduce(
+    (aggr, pd) => aggr + pd.getAmount(),
+    0,
+  );
   return state.loaded ? (
     <SectionBar key="ReportPage" uncollapsable={true}>
       <style>{`
@@ -1259,8 +1378,7 @@ export const CostReportCSV: FC<Props> = ({ serviceCallId, onClose }) => {
                                 key={'dropDownbuttonLabor'}
                                 onClick={() => {
                                   dispatch({
-                                    type:
-                                      ACTIONS.SET_LABOR_TOTALS_DROPDOWN_ACTIVE,
+                                    type: ACTIONS.SET_LABOR_TOTALS_DROPDOWN_ACTIVE,
                                     data: !state.laborTotalsDropDownActive,
                                   });
                                 }}
@@ -1351,8 +1469,7 @@ export const CostReportCSV: FC<Props> = ({ serviceCallId, onClose }) => {
                                 key={'dropDownbuttonTransactions'}
                                 onClick={() => {
                                   dispatch({
-                                    type:
-                                      ACTIONS.SET_COST_CENTER_DROPDOWN_ACTIVE,
+                                    type: ACTIONS.SET_COST_CENTER_DROPDOWN_ACTIVE,
                                     data: !state.costCenterDropDownActive,
                                   });
                                 }}
@@ -1582,9 +1699,10 @@ export const CostReportCSV: FC<Props> = ({ serviceCallId, onClose }) => {
                                   data={[
                                     [
                                       {
-                                        value: TimesheetDepartmentClientService.getDepartmentName(
-                                          pd.getDepartment()!,
-                                        ),
+                                        value:
+                                          TimesheetDepartmentClientService.getDepartmentName(
+                                            pd.getDepartment()!,
+                                          ),
                                       },
                                       { value: pd.getOwnerName() },
                                       {
@@ -1624,7 +1742,6 @@ export const CostReportCSV: FC<Props> = ({ serviceCallId, onClose }) => {
                                         tempDropDowns[dropdown].active = 1;
                                       else tempDropDowns[dropdown].active = 0;
                                     }
-                                    console.log(tempDropDowns);
                                     dispatch({
                                       type: ACTIONS.SET_DROPDOWNS,
                                       data: tempDropDowns,
@@ -1729,63 +1846,142 @@ export const CostReportCSV: FC<Props> = ({ serviceCallId, onClose }) => {
                         align: 'left',
                       },
                       {
-                        name: 'Department',
+                        name: 'Week',
                         align: 'left',
                       },
                       {
-                        name: 'Approved By',
+                        name: 'Total Hours',
                         align: 'left',
-                      },
-                      {
-                        name: 'Time Started',
-                        align: 'left',
-                      },
-                      {
-                        name: 'Time Finished',
-                        align: 'left',
-                      },
-                      {
-                        name: 'Brief Description',
-                        align: 'left',
-                      },
-                      {
-                        name: 'Hours Worked',
-                        align: 'left',
-                      },
-                      {
-                        name: 'Notes',
-                        align: 'right',
                       },
                     ]}
-                    data={state.timesheets
-                      .filter(
-                        timesheet =>
-                          timesheet.getClassCodeId() === code.getId(),
-                      )
-                      .map(tsl => {
+                    data={state.timesheetWeeklySubtotals
+                      .filter(week => week.classCodeId == code.getId())
+                      .map(week => {
                         return [
                           {
-                            value:
-                              tsl.getTechnicianUserName() +
-                              ` (${tsl.getTechnicianUserId()})`,
+                            value: `${state.users
+                              .find(user => user.getId() === week.employeeId)
+                              ?.getFirstname()}-${state.users
+                              .find(user => user.getId() === week.employeeId)
+                              ?.getLastname()}`,
                           },
-                          { value: tsl.getDepartmentName() },
-                          { value: tsl.getAdminApprovalUserName() },
-                          { value: formatDate(tsl.getTimeStarted()) || '-' },
-                          { value: formatDate(tsl.getTimeFinished()) || '-' },
-                          { value: tsl.getBriefDescription() },
                           {
-                            value:
-                              tsl.getHoursWorked() != 0
-                                ? tsl.getHoursWorked() > 1
-                                  ? `${tsl.getHoursWorked()} hrs`
-                                  : `${tsl.getHoursWorked()} hr`
-                                : '-',
+                            value: `${week.weekStart}-${week.weekEnd}`,
                           },
-                          { value: tsl.getNotes() },
+                          { value: `${week.hoursSubtotal} hour(s)` },
                         ];
                       })}
                   />
+                  <div key="TimesheetDetails">
+                    <Button
+                      key={'dropDownbutton' + code.getId().toString()}
+                      onClick={() => {
+                        let tempDropDowns = state.classCodeDropdowns;
+                        const dropdown = tempDropDowns.findIndex(
+                          dropdown => dropdown.classCodeId === code.getId(),
+                        );
+                        if (tempDropDowns[dropdown]) {
+                          if (tempDropDowns[dropdown].active == 0)
+                            tempDropDowns[dropdown].active = 1;
+                          else tempDropDowns[dropdown].active = 0;
+                        }
+                        dispatch({
+                          type: ACTIONS.SET_CLASS_CODE_DROPDOWNS,
+                          data: tempDropDowns,
+                        });
+                      }}
+                    >
+                      Details
+                      {state.classCodeDropdowns.find(
+                        dropdown => dropdown.classCodeId === code.getId(),
+                      )!.active == 1 ? (
+                        <ExpandLess></ExpandLess>
+                      ) : (
+                        <ExpandMore></ExpandMore>
+                      )}
+                    </Button>
+                    <Collapse
+                      key={code.getId().toString() + 'collapse'}
+                      in={
+                        state.classCodeDropdowns.find(
+                          dropdown => dropdown.classCodeId === code.getId(),
+                        )?.active == 1
+                          ? true
+                          : false
+                      }
+                    >
+                      <InfoTable
+                        columns={[
+                          {
+                            name: 'Technician',
+                            align: 'left',
+                          },
+                          {
+                            name: 'Department',
+                            align: 'left',
+                          },
+                          {
+                            name: 'Approved By',
+                            align: 'left',
+                          },
+                          {
+                            name: 'Time Started',
+                            align: 'left',
+                          },
+                          {
+                            name: 'Time Finished',
+                            align: 'left',
+                          },
+                          {
+                            name: 'Brief Description',
+                            align: 'left',
+                          },
+                          {
+                            name: 'Hours Worked',
+                            align: 'left',
+                          },
+                          {
+                            name: 'Notes',
+                            align: 'right',
+                          },
+                        ]}
+                        data={state.timesheets
+                          .filter(
+                            timesheet =>
+                              timesheet.getClassCodeId() === code.getId(),
+                          )
+                          .map(tsl => {
+                            return [
+                              {
+                                value:
+                                  tsl.getTechnicianUserName() +
+                                  ` (${tsl.getTechnicianUserId()})`,
+                              },
+                              { value: tsl.getDepartmentName() },
+                              {
+                                value: tsl.getAdminApprovalUserName(),
+                              },
+                              {
+                                value: formatDate(tsl.getTimeStarted()) || '-',
+                              },
+                              {
+                                value: formatDate(tsl.getTimeFinished()) || '-',
+                              },
+                              { value: tsl.getBriefDescription() },
+                              {
+                                value:
+                                  tsl.getHoursWorked() != 0
+                                    ? tsl.getHoursWorked() > 1
+                                      ? `${tsl.getHoursWorked()} hrs`
+                                      : `${tsl.getHoursWorked()} hr`
+                                    : '-',
+                              },
+                              { value: tsl.getNotes() },
+                            ];
+                          })}
+                      />
+                    </Collapse>
+                  </div>
                 </SectionBar>
               )),
           },
@@ -1896,56 +2092,81 @@ export const CostReportCSV: FC<Props> = ({ serviceCallId, onClose }) => {
               }),
           },
           {
-            label: 'Billable Tasks',
-            content: (
-              <div key={'TaskDAta'}>
-                <InfoTable
-                  columns={[
-                    {
-                      name: 'Type',
-                      align: 'left',
-                    },
-                    {
-                      name: 'Date Performed',
-                      align: 'left',
-                    },
-                    {
-                      name: 'Details',
-                      align: 'left',
-                    },
-                    {
-                      name: 'Flat Rate?',
-                      align: 'left',
-                    },
-                    {
-                      name: 'Amount',
-                      align: 'left',
-                    },
-                    {
-                      name: 'Notes',
-                      align: 'right',
-                    },
-                  ]}
-                  data={state.tasks.map(task => {
-                    return [
-                      {
-                        value: task.getBillableType(),
-                      },
-                      { value: formatDate(task.getDatePerformed()) },
-                      { value: task.getDetails() },
-                      { value: task.getFlatRate() === 1 ? 'Yes' : 'No' },
-                      {
-                        value:
-                          task.getBillableType() === 'Spiff'
-                            ? usd(task.getSpiffAmount())
-                            : usd(task.getToolpurchaseCost()),
-                      },
-                      { value: task.getNotes() },
-                    ];
-                  })}
-                />
-              </div>
-            ),
+            label: 'Task',
+            content: state.users
+              .filter(user =>
+                state.tasks.find(task => task.getExternalId() === user.getId()),
+              )
+              .map(user => {
+                return (
+                  <SectionBar
+                    key={user.getId() + 'Billable Tasks'}
+                    title={`${user.getFirstname()} ${user.getLastname()} Billable Tasks`}
+                    subtitle={`Total: ${usd(
+                      state.tasks &&
+                        state.tasks
+                          .filter(task => task.getExternalId() === user.getId())
+                          .reduce((acc, val) => acc + val.getSpiffAmount(), 0),
+                    )}`}
+                  >
+                    {state.tasks &&
+                      state.tasks
+                        .filter(task => task.getExternalId() === user.getId())
+                        .map(task => {
+                          return (
+                            <div
+                              key={task.getId()}
+                              style={{
+                                breakInside: 'avoid',
+                                display: 'inline-block',
+                                width: '100%',
+                              }}
+                            >
+                              <InfoTable
+                                columns={[
+                                  {
+                                    name: 'Type',
+                                    align: 'left',
+                                  },
+                                  {
+                                    name: 'Date Performed',
+                                    align: 'left',
+                                  },
+                                  {
+                                    name: 'Details',
+                                    align: 'left',
+                                  },
+                                  {
+                                    name: 'Amount',
+                                    align: 'left',
+                                  },
+                                  {
+                                    name: 'Notes',
+                                    align: 'right',
+                                  },
+                                ]}
+                                data={[
+                                  [
+                                    { value: task.getBillableType() },
+                                    {
+                                      value: formatDate(
+                                        task.getDatePerformed(),
+                                      ),
+                                    },
+                                    {
+                                      value: task.getDetails(),
+                                    },
+                                    { value: usd(task.getSpiffAmount()) },
+                                    { value: task.getNotes() },
+                                  ],
+                                ]}
+                              />
+                            </div>
+                          );
+                        })}
+                  </SectionBar>
+                );
+              }),
           },
         ]}
       ></Tabs>
@@ -1954,3 +2175,6 @@ export const CostReportCSV: FC<Props> = ({ serviceCallId, onClose }) => {
     <Loader></Loader>
   );
 };
+/* Old timesheet, this will be shown via dropdown
+
+*/

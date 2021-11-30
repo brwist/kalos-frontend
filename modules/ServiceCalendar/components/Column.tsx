@@ -97,7 +97,9 @@ const Column = ({
         calendarDay.getServiceCallsList(),
       ];
       for (let i = 0; i < callList.length; i++) {
-        //
+        const jobTypeIdsFilterArry = compact((jobType || '0').split(','))
+          .map(Number)
+          .filter(e => e !== 0);
         callList[i] = callList[i].filter((call: Event) => {
           const techIdsFilterArr = compact((techIdsFilter || '0').split(','))
             .map(Number)
@@ -126,6 +128,7 @@ const Column = ({
               return false;
             }
           }
+
           if (
             customers.length &&
             !customers.includes(`${call?.getCustomer()?.getId()}`)
@@ -144,7 +147,11 @@ const Column = ({
           ) {
             return false;
           }
-          if (jobType && jobType !== call?.getJobTypeId()) {
+
+          if (
+            jobTypeIdsFilterArry.length > 0 &&
+            !jobTypeIdsFilterArry.includes(call?.getJobTypeId())
+          ) {
             return false;
           }
           if (jobSubType && jobSubType !== call?.getJobSubtypeId()) {
@@ -312,11 +319,8 @@ const Column = ({
   filteredCalendarDay.setCompletedServiceCallsList(
     calendarDay!.getCompletedServiceCallsList(),
   );
-  const {
-    completedServiceCallsList,
-    remindersList,
-    serviceCallsList,
-  } = filterCalls(filteredCalendarDay);
+  const { completedServiceCallsList, remindersList, serviceCallsList } =
+    filterCalls(filteredCalendarDay);
   const timeoffRequestsList = calendarDay!.getTimeoffRequestsList();
   /*
   const {

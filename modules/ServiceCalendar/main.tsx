@@ -106,7 +106,7 @@ const mapToObject = (mapping: jspb.Map<string | number, string>): MapList =>
 
 type Filters = {
   customers: string[];
-  jobType: number;
+  jobType: string;
   jobSubType: number;
   zip: string[];
   propertyUse: string[];
@@ -215,13 +215,16 @@ const initialFilters: Filters = cachedInitialFilters
   ? JSON.parse(cachedInitialFilters)
   : {
       customers: [],
-      jobType: 0,
+      jobType: '0',
       jobSubType: 0,
       zip: [],
       propertyUse: [],
       techIds: '0',
     };
-
+let temp = initialFilters.jobType;
+if (typeof temp === 'number') {
+  initialFilters.jobType = initialFilters.jobType.toString();
+}
 const initialState: State = {
   fetchingCalendarData: true,
   speedDialOpen: false,
@@ -359,7 +362,9 @@ export const ServiceCalendar: FC<Props> = props => {
         req.setIsActive(1);
         req.setOrderBy('time_started');
         req.setOrderDir('asc');
+        console.log('req', req);
         const data = await eventClient.GetCalendarData(req);
+        console.log('data', data);
         dispatch({ type: 'fetchedCalendarData', data });
       })();
     }

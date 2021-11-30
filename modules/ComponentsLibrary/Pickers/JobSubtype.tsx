@@ -13,7 +13,6 @@ import { ENDPOINT } from '../../../constants';
 
 interface props {
   selected: number;
-  jobTypeID: number;
   disabled?: boolean;
   onSelect?(id: number): void;
   useDevClient?: boolean;
@@ -61,7 +60,6 @@ export class JobSubtypePicker extends React.PureComponent<props, state> {
   fetchSubtypeList() {
     return new Promise(async resolve => {
       const jtst = new JobTypeSubtype();
-      jtst.setJobTypeId(this.props.jobTypeID);
       const res = await this.JobTypeSubtypeClient.BatchGet(jtst);
       const allowed = res.getResultsList().map(st => st.getJobSubtypeId());
       this.setState({ allowed }, () => resolve(true));
