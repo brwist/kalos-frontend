@@ -368,7 +368,7 @@ export const FirstCallDashboard: React.FC<Props> = function FirstCallDashboard({
         updateFormData.departmentIds = departments.getResultsList().map(dep => dep.getId());
       } catch (err) {
         console.error(err);
-        handleNotification("Failed to Retrieve Departments.", "error", "handleFormUpdate");
+        handleNotification("- Failed to Retrieve Departments.", "error", "handleFormUpdate");
       }
       if (state.loaded) {
         resetPage = true;
@@ -432,7 +432,7 @@ export const FirstCallDashboard: React.FC<Props> = function FirstCallDashboard({
           }
         }
         if (techsAlreadyAssigned.length) {
-          errorMessage += `Could Not Add `;
+          errorMessage += `- Could Not Add `;
           for (const i in techsAlreadyAssigned) {
             if (i === "0") {
               errorMessage += techsAlreadyAssigned[i];
@@ -450,7 +450,7 @@ export const FirstCallDashboard: React.FC<Props> = function FirstCallDashboard({
           errorMessage += '     '; // Necessary for split to move to next line
         }
         if (techsNotFound.length) {
-          errorMessage += `Could Not Add `;
+          errorMessage += `- Could Not Add `;
           const usersNotFound = state.users.filter(user => techsNotFound.includes(user.getId()));
           for (const j in usersNotFound) {
             if (j === "0") {
@@ -599,11 +599,11 @@ export const FirstCallDashboard: React.FC<Props> = function FirstCallDashboard({
           console.error(
             `An error occurred while geocoding: ${err}`
           );
-          handleNotification("Failed to Retrieve Latitude and Longitude.", "error", "handleMapRecenter1");
+          handleNotification("- Failed to Retrieve Latitude and Longitude.", "error", "handleMapRecenter1");
           newCenter = {lat: 0, lng: 0};
         }
       } else {
-        handleNotification("No Valid Latitude, Longitude, or Address found.", "error", "handleMapRecenter2");
+        handleNotification("- No Valid Latitude, Longitude, or Address found.", "error", "handleMapRecenter2");
       }
     }
     if (newCenter.lat != 0 || newCenter.lng != 0) {
@@ -647,7 +647,7 @@ export const FirstCallDashboard: React.FC<Props> = function FirstCallDashboard({
           if (errorMessage !== "") {
             errorMessage += `     `;
           }
-          errorMessage += `Failed to Assign ${state.firstCallCalls[i].assigned[j].name} to Call ${state.selectedCall.getId()}`;
+          errorMessage += `- Failed to Assign ${state.firstCallCalls[i].assigned[j].name} to Call ${state.selectedCall.getId()}`;
         }
       }
       call.setLogTechnicianAssigned(techAssigned.toString());
@@ -660,7 +660,7 @@ export const FirstCallDashboard: React.FC<Props> = function FirstCallDashboard({
         if (errorMessage !== "") {
           errorMessage += `     `;
         }
-        errorMessage += `Failed to Update Call ${state.selectedCall.getId()}`;
+        errorMessage += `- Failed to Update Call ${state.selectedCall.getId()}`;
       }
     }
     if (errorMessage !== "") {
@@ -714,7 +714,7 @@ export const FirstCallDashboard: React.FC<Props> = function FirstCallDashboard({
       firstCall.setJson(firstCallJSON);
       if (!allowSave) {
         updateFirstCallState({ type: 'setFailedSave', data: {save: false, error: 'DateMismatch'}});
-        handleNotification("A Newer Version Exists.  Please Refresh the Page.", "warning", "handleSave1");
+        handleNotification("- A Newer Version Exists.  Please Refresh the Page.", "warning", "handleSave1");
       } else {
         if (state.newFirstCall) {
           const newCall = await FirstCallClientService.Create(firstCall);
@@ -723,12 +723,12 @@ export const FirstCallDashboard: React.FC<Props> = function FirstCallDashboard({
           await FirstCallClientService.Update(firstCall);
         } 
         updateFirstCallState({ type: 'setSave', data: {save: false, saveTime: saveTime, firstCallId: id, isNew: false}});
-        handleNotification("Save Successful!", "success", "handleSave2");
+        handleNotification("- Save Successful!", "success", "handleSave2");
       }
     } catch (err) {
       console.error(err);
       updateFirstCallState({ type: 'setFailedSave', data: {save: false, error: 'Error'}});
-      handleNotification("Failed to Save First Call Information.", "error", "handleSave3");
+      handleNotification("- Failed to Save First Call Information.", "error", "handleSave3");
     }
     updateFirstCallState({type: 'setProcessing', data: false});
   }, [
@@ -865,7 +865,7 @@ export const FirstCallDashboard: React.FC<Props> = function FirstCallDashboard({
       return {techList: techList, scheduledOff: timeoffIds};
     } catch (err) {
       console.error(err)
-      handleNotification('Failed to Retrieve Technician List.', 'error', "getTechs");
+      handleNotification('- Failed to Retrieve Technician List.', 'error', "getTechs");
       return {techList: [], scheduledOff: []}
     }
   }, [state.formData.departmentIds, state.users, handleNotification]);
@@ -925,7 +925,7 @@ export const FirstCallDashboard: React.FC<Props> = function FirstCallDashboard({
       return filteredCallList;
     } catch (err) {
       console.error(err);
-      handleNotification("Failed to Retrieve Service Calls", "error", "getCalls");
+      handleNotification("- Failed to Retrieve Service Calls", "error", "getCalls");
       return [];
     }
   }, [state.formData.jobTypes, state.formData.division, handleNotification])
@@ -983,7 +983,7 @@ export const FirstCallDashboard: React.FC<Props> = function FirstCallDashboard({
       return {jobTypes: jobTypes.getResultsList()};
     } catch (err) {
       console.error(`An error occurred while getting Job Types: ${err}`);
-      handleNotification("Failed to Retrieve Job Types.", "error","getJobTypes");
+      handleNotification("- Failed to Retrieve Job Types.", "error","getJobTypes");
       return {jobTypes: []};
     }
   }, [handleNotification])
@@ -999,7 +999,7 @@ export const FirstCallDashboard: React.FC<Props> = function FirstCallDashboard({
       console.error(
         `An error occurred while getting Google API Key: ${err}`
       );
-      handleNotification("Failed to Load Google Maps.", "error","getapikey");
+      handleNotification("- Failed to Load Google Maps.", "error","getapikey");
       return {googleKey: ''};
     }
   }, [handleNotification])
@@ -1053,7 +1053,7 @@ export const FirstCallDashboard: React.FC<Props> = function FirstCallDashboard({
         data: sectorList});
     } catch(err) {
       console.error(err);
-      handleNotification("Failed to User Department Information", "error","checkDivision");
+      handleNotification("- Failed to User Department Information", "error","checkDivision");
     }
   }, [handleFormDataUpdate, loggedUserId, handleNotification])
 
@@ -1497,7 +1497,7 @@ export const FirstCallDashboard: React.FC<Props> = function FirstCallDashboard({
                 <Typography style={{textAlign:'center', fontWeight:'bold', fontSize:'32px'}}>
                   Available Calls
                 </Typography>
-                <div style={{opacity: state.saveCall ? 0.2 : 1}}>
+                <div style={{opacity: state.isProcessing ? 0.2 : 1}}>
                   <DispatchCalls
                     userID={loggedUserId}
                     calls={state.availableCalls}
@@ -1543,7 +1543,7 @@ export const FirstCallDashboard: React.FC<Props> = function FirstCallDashboard({
                 <Typography style={{fontWeight:'bold', fontSize:'32px', textAlign:'center'}}>
                   First Call Queue                    
                 </Typography>
-                <div style={{opacity: state.saveCall ? 0.2 : 1}}>
+                <div style={{opacity: state.isProcessing ? 0.2 : 1}}>
                   <DispatchCalls 
                     userID={loggedUserId}
                     calls={state.assignedCalls}
