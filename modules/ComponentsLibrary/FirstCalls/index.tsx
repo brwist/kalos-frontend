@@ -201,6 +201,7 @@ export const FirstCallDashboard: React.FC<Props> = function FirstCallDashboard({
         openModal: !state.openModal,
         modalKey: modalKey,
         currentFC: state.savedFirstCall,
+        callMsg: '',
       }
     });
   }
@@ -336,6 +337,7 @@ export const FirstCallDashboard: React.FC<Props> = function FirstCallDashboard({
         openModal: !state.openModal,
         modalKey: '',
         currentFC: state.savedFirstCall,
+        callMsg: '',
       }
     });
   }
@@ -385,6 +387,7 @@ export const FirstCallDashboard: React.FC<Props> = function FirstCallDashboard({
   }, [state.formData, state.loaded, handleNotification])
 
   const handleCallDetails = async (call : DispatchCall, editCall = false, techAssign? : DispatchableTech) => {
+    console.log(call);
     if (editCall) {
       updateFirstCallState({
         type: 'setModal',
@@ -673,6 +676,7 @@ export const FirstCallDashboard: React.FC<Props> = function FirstCallDashboard({
         openModal: true,
         modalKey: 'fcPreview',
         currentFC: currentFC.firstCall,
+        callMsg: '',
       }
     })
   }
@@ -1637,19 +1641,23 @@ export const FirstCallDashboard: React.FC<Props> = function FirstCallDashboard({
                         <TableBody>
                           <TableRow>
                             <TableCell style={{width:"35%", fontWeight:"bold", fontSize:"15px"}}>Call ID:</TableCell>
-                            <TableCell style={{width:"65%", textAlign:"center"}}>{state.selectedCall.getId()}</TableCell>
+                            <TableCell style={{width:"65%", textAlign:"center"}}>{state.currentFCCall.id}</TableCell>
+                            {/* <TableCell style={{width:"65%", textAlign:"center"}}>{state.selectedCall.getId()}</TableCell> */}
                           </TableRow>
                           <TableRow>
                             <TableCell style={{width:"35%", fontWeight:"bold", fontSize:"15px"}}>Location:</TableCell>
-                            <TableCell style={{width:"65%", textAlign:"center"}}>{state.selectedCall.getPropertyCity()}</TableCell>
+                            <TableCell style={{width:"65%", textAlign:"center"}}>{state.currentFCCall.propertyCity}</TableCell>
+                            {/* <TableCell style={{width:"65%", textAlign:"center"}}>{state.selectedCall.getPropertyCity()}</TableCell> */}
                           </TableRow>
                           <TableRow>
                             <TableCell style={{fontWeight:"bold", fontSize:"15px"}}>Type:</TableCell>
-                            <TableCell style={{textAlign:"center"}}>{`${state.selectedCall.getJobType()}/${state.selectedCall.getJobSubtype()}`}</TableCell>
+                            <TableCell style={{textAlign:"center"}}>{`${state.currentFCCall.jobType}/${state.currentFCCall.subType}`}</TableCell>
+                            {/* <TableCell style={{textAlign:"center"}}>{`${state.selectedCall.getJobType()}/${state.selectedCall.getJobSubtype()}`}</TableCell> */}
                           </TableRow>
                           <TableRow>
                             <TableCell style={{fontWeight:"bold", fontSize:"15px"}}>Description:</TableCell>
-                            <TableCell style={{textAlign:"center"}}>{state.selectedCall.getDescription().length >= 200 ? state.selectedCall.getDescription().slice(0,150).concat(" ...") : state.selectedCall.getDescription()}</TableCell>
+                            <TableCell style={{textAlign:"center"}}>{state.currentFCCall.description.length >= 200 ? state.currentFCCall.description.slice(0,150).concat(" ...") : state.currentFCCall.description}</TableCell>
+                            {/* <TableCell style={{textAlign:"center"}}>{state.selectedCall.getDescription().length >= 200 ? state.selectedCall.getDescription().slice(0,150).concat(" ...") : state.selectedCall.getDescription()}</TableCell> */}
                           </TableRow>
                         </TableBody>
                       </Table>
@@ -1797,7 +1805,7 @@ export const FirstCallDashboard: React.FC<Props> = function FirstCallDashboard({
             </Grid>
           </Confirm>
         )}
-        {state.modalKey === 'editRequest' && (
+        {state.modalKey === 'editRequest' && state.selectedCall.getPropertyId() !== 0 && (
           <ServiceRequest
             loggedUserId={loggedUserId}
             propertyId={state.selectedCall.getPropertyId()}

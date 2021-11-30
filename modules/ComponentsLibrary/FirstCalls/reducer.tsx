@@ -142,9 +142,9 @@ export type Action =
     openModal: boolean,
     modalKey: string,
     currentFC: FirstCallType,
+    callMsg: string,
     selectedCall?: DispatchCall,
     assigneeList?: {id: number, name: string}[],
-    callMsg?: string,
   }}
   | { type: 'setCalls'; data: {
     calls: DispatchCall[],
@@ -278,7 +278,7 @@ export const reducer = (state: State, action: Action) => {
         scheduledOff: action.data.scheduledOff,
       }
     case 'setModal': {
-      if (action.data.selectedCall && action.data.assigneeList && action.data.callMsg) {
+      if (action.data.selectedCall && action.data.assigneeList) {
         return {
           ...state,
           openModal: action.data.openModal,
@@ -295,6 +295,7 @@ export const reducer = (state: State, action: Action) => {
           openModal: action.data.openModal,
           modalKey: action.data.modalKey,
           savedFirstCall: action.data.currentFC,
+          callMsg: action.data.callMsg,
         }
       }
     }
