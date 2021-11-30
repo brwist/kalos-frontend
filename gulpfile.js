@@ -553,8 +553,6 @@ async function rollupBuild(t) {
       }),
       globals(),
       builtins(),
-      image(),
-      jsonPlugin(),
       typescript({
         module: 'ES2015',
         noEmitOnError: false,
@@ -563,6 +561,8 @@ async function rollupBuild(t) {
         output: `build/modules/${target}Less.css`,
       }),
       minify && terser(),
+      image(),
+      jsonPlugin(),
       peerDependencies(),
       replace({
         'process.env.NODE_ENV': JSON.stringify('production'),
