@@ -42,6 +42,7 @@ export const DispatchCalls: FC<props> = props => {
   } = props;
 
   useEffect(() => {
+    // console.log("DispatchCalls");
   }, [calls]);
 
   return (
