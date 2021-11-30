@@ -31,7 +31,7 @@ import ListItem from '@material-ui/core/ListItem';
 import ListItemIcon from '@material-ui/core/ListItemIcon';
 import Checkbox from '@material-ui/core/Checkbox';
 import Alert from '@material-ui/lab/Alert';
-// import AlertTitle from '@material-ui/lab/AlertTitle';
+import AlertTitle from '@material-ui/lab/AlertTitle';
 import Collapse from '@material-ui/core/Collapse';
 import Box from '@material-ui/core/Box';
 import IconButton from '@material-ui/core/IconButton';
@@ -1247,14 +1247,14 @@ export const FirstCallDashboard: React.FC<Props> = function FirstCallDashboard({
               state.notificationType === "warning" ? "warning" : 
               state.notificationType === "info" ? "info" : undefined}
           >
-            {/* <AlertTitle>
+            <AlertTitle>
               {
               state.notificationType === "error" ? "ERROR!" : 
               state.notificationType === "success" ? "SUCCESS!" : 
               state.notificationType === "warning" ? "WARNING!" : 
               state.notificationType === "info" ? "" : ""
               }
-            </AlertTitle> */}
+            </AlertTitle>
             {state.notificationMessage.map((message) => 
               message.split('     ').map((msg, index) => (
                 <Typography key={`${index}_notifications`}>
@@ -1608,9 +1608,9 @@ export const FirstCallDashboard: React.FC<Props> = function FirstCallDashboard({
                   }
                   severity={state.notificationType === 'error' ? "error" : state.notificationType === 'success' ? "success" : state.notificationType === "warning" ? "warning" : undefined}
                 >
-                  {/* <AlertTitle>
+                  <AlertTitle>
                     {state.notificationType === 'error' ? "ERROR!" : state.notificationType === 'success' ? "SUCCESS!" : state.notificationType === "warning" ? "WARNING!" : ""}
-                  </AlertTitle> */}
+                  </AlertTitle>
                   {state.notificationMessage.map((message) => message.split('     ').map((msg, index) => (
                     <Typography key={`${index}_notifications`}>
                       {msg}
