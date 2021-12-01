@@ -7,6 +7,7 @@ import {
   perDiemTripMilesToUsd,
 } from '../../../helpers';
 import { Tooltip } from '../Tooltip';
+import { differenceInMinutes, parseISO } from 'date-fns';
 import IconButton from '@material-ui/core/IconButton';
 import DeleteIcon from '@material-ui/icons/Delete';
 import NotInterestedIcon from '@material-ui/icons/NotInterested';
@@ -15,6 +16,7 @@ import { Visibility } from '@material-ui/icons';
 import { SlackMessageButton } from '../SlackMessageButton';
 import { Loader } from '../../Loader/main';
 import { SectionBar } from '../SectionBar';
+import { Modal } from '../Modal';
 import {
   PerDiem,
   TripList,
@@ -107,20 +109,17 @@ export const TripSummaryNew: FC<Props> = ({
   const startDay = startOfWeek(subDays(today, 7), { weekStartsOn: 6 });
   const endDay = addDays(startDay, 7);
   const [pendingDeleteAllTrips, setPendingDeleteAllTrips] = useState<boolean>();
-  const [
-    pendingApproveAllTrips,
-    setPendingApproveAllTrips,
-  ] = useState<boolean>();
+
+  const [pendingApproveAllTrips, setPendingApproveAllTrips] =
+    useState<boolean>();
   const formatDateFns = (date: Date) => format(date, 'yyyy-MM-dd');
 
   const [loaded, setLoaded] = useState<boolean>(false);
   const [pendingTripToDelete, setPendingTripToDelete] = useState<
     Trip | undefined
   >();
-  const [
-    pendingTripToProcessPayroll,
-    setPendingTripToProcessPayroll,
-  ] = useState<Trip | undefined>();
+  const [pendingTripToProcessPayroll, setPendingTripToProcessPayroll] =
+    useState<Trip | undefined>();
   const [pendingTripToApprove, setPendingTripToApprove] = useState<
     Trip | undefined
   >();
@@ -128,9 +127,8 @@ export const TripSummaryNew: FC<Props> = ({
   const [pendingTripToDeny, setPendingTripToDeny] = useState<
     Trip | undefined
   >();
-  const [toggleApproveOrProcess, setToggleApproveOrProcess] = useState<boolean>(
-    false,
-  );
+  const [toggleApproveOrProcess, setToggleApproveOrProcess] =
+    useState<boolean>(false);
 
   const [tripsLoaded, setTripsLoaded] = useState<Trip[] | undefined>([]);
   const [totalTripCount, setTotalTripCount] = useState<number>(0);
@@ -167,16 +165,18 @@ export const TripSummaryNew: FC<Props> = ({
     (tripToAdd: Trip | undefined) => setPendingTripToAdd(tripToAdd),
     [setPendingTripToAdd],
   );
-  const handleSetSearch = useCallback((newTrip: Trip) => setSearch(newTrip), [
-    setSearch,
-  ]);
+  const handleSetSearch = useCallback(
+    (newTrip: Trip) => setSearch(newTrip),
+    [setSearch],
+  );
   const handleSetCheckboxFilter = useCallback(
     (newFilter: Checkboxes) => setCheckboxFilter(newFilter),
     [setCheckboxFilter],
   );
-  const handleSetPage = useCallback((newPage: number) => setPage(newPage), [
-    setPage,
-  ]);
+  const handleSetPage = useCallback(
+    (newPage: number) => setPage(newPage),
+    [setPage],
+  );
   const handleSetToggleApproveOrProcess = useCallback(
     () => setToggleApproveOrProcess(!toggleApproveOrProcess),
     [toggleApproveOrProcess],
@@ -371,8 +371,8 @@ export const TripSummaryNew: FC<Props> = ({
     ],
     [
       {
-        label: 'Day Of',
-        type: 'date',
+        label: 'Start Time',
+        type: 'mui-date',
         name: 'date',
       },
     ],
@@ -449,6 +449,9 @@ export const TripSummaryNew: FC<Props> = ({
 
   const loadTrips = useCallback(async () => {
     let tripReq = new Trip();
+    const today = new Date();
+    const startDay = startOfWeek(subDays(today, 7), { weekStartsOn: 6 });
+    const endDay = addDays(startDay, 7);
     let criteria = {
       page,
       sort: {
@@ -491,6 +494,7 @@ export const TripSummaryNew: FC<Props> = ({
     page,
     tripFilter,
     search,
+    managerView,
     checkboxFilter.approved,
     checkboxFilter.payrollProcessed,
   ]);
@@ -554,11 +558,12 @@ export const TripSummaryNew: FC<Props> = ({
   const getTripDistance = useCallback(
     async (origin: string, destination: string) => {
       try {
-        const distance = await MapClientService.getTripDistance(
+        const results = await MapClientService.getTripDistance(
           origin,
           destination,
         );
-        return distance;
+        console.log('getTripDistance results, ', results);
+        return { distance: results.distance, duration: results.duration };
       } catch (error: any) {
         console.error(
           'An error occurred while calculating the trip distance in the Trip Summary: ',
@@ -578,6 +583,16 @@ export const TripSummaryNew: FC<Props> = ({
     userId: number,
   ) => {
     let trip = new Trip();
+    data.FullAddressDestination = data.FullAddressDestination.replace(
+      'Highway',
+      '',
+    );
+    data.FullAddressDestination = data.FullAddressDestination.replace(
+      'Hwy',
+      '',
+    );
+    data.FullAddressOrigin = data.FullAddressOrigin.replace('Hwy', '');
+    data.FullAddressOrigin = data.FullAddressOrigin.replace('Highway', '');
     trip.setOriginAddress(data.FullAddressOrigin);
     trip.setDestinationAddress(data.FullAddressDestination);
     try {
@@ -586,7 +601,9 @@ export const TripSummaryNew: FC<Props> = ({
         String(data.FullAddressDestination),
       );
       if (tripDistance != undefined) {
-        trip.setDistanceInMiles(tripDistance);
+        console.log({ tripDistance });
+        trip.setDistanceInMiles(tripDistance.distance);
+        trip.setCalculatedDurationInSeconds(tripDistance.duration);
       } else {
         console.log('we should not create a trip with 0 distance');
         return;
@@ -637,7 +654,7 @@ export const TripSummaryNew: FC<Props> = ({
       //await PerDiemClientService.upsertTrip(trip, rowId!, userId);
       await PerDiemClientService.CreateTrip(trip);
 
-      console.log(trip);
+      console.log({ trip });
     } catch (err) {
       console.error('An error occurred while upserting a trip: ', err);
     }
@@ -792,6 +809,7 @@ export const TripSummaryNew: FC<Props> = ({
           onClick={handleAddTrip}
         />
       )}
+
       {pendingTripToAdd && (
         <PlaceAutocompleteAddressForm
           key={'autocomplete'}

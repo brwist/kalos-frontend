@@ -16,6 +16,7 @@ import CloseIcon from '@material-ui/icons/Close';
 import UploadIcon from '@material-ui/icons/CloudUploadSharp';
 import DoneIcon from '@material-ui/icons/Done';
 import Save from '@material-ui/icons/Save';
+import { PDFDocument, PDFImage, PDFPage, PageSizes } from 'pdf-lib';
 import CopyIcon from '@material-ui/icons/FileCopySharp';
 import RejectIcon from '@material-ui/icons/ThumbDownSharp';
 import SubmitIcon from '@material-ui/icons/ThumbUpSharp';
@@ -33,7 +34,7 @@ import {
   OPTION_ALL,
   WaiverTypes,
 } from '../../../constants';
-import { FilterType, PopupType, reducer } from './reducer';
+import { FilterType, PopupType, reducer, MergeDocuments } from './reducer';
 import {
   makeFakeRows,
   OrderDir,
@@ -74,6 +75,12 @@ import { UploadPhotoToExistingTransaction } from '../UploadPhotoToExistingTransa
 import { Form } from '../Form';
 import { ACTIONS } from './reducer';
 import { Devlog } from '@kalos-core/kalos-rpc/Devlog';
+import { TxnDepartment } from '@kalos-core/kalos-rpc/compiled-protos/transaction_pb';
+import { stringify } from 'querystring';
+import { truncateSync } from 'fs';
+import { getMimeType } from '@kalos-core/kalos-rpc/Common';
+import { pdf } from '@react-pdf/renderer';
+import { NULL_TIME_VALUE } from '../Timesheet/constants';
 
 export interface Props {
   loggedUserId: number;
@@ -129,6 +136,10 @@ export const TransactionTable: FC<Props> = ({
     transactionFilter: filter,
     transactions: undefined,
     totalTransactions: 0,
+    openMerge: false,
+    document1: '',
+    document2: '',
+    mergeDocumentAlert: '',
     costCenterData: new TransactionAccountList(),
     transactionActivityLogs: [],
     costCenters: [{ label: 'temp', value: 0 }],
@@ -287,7 +298,6 @@ export const TransactionTable: FC<Props> = ({
     }
 
     await makeUpdateStatus(txn.getId(), 4, 'rejected', reason);
-    refresh();
   };
   const resetTransactions = useCallback(async () => {
     let req = new Transaction();
@@ -313,7 +323,7 @@ export const TransactionTable: FC<Props> = ({
     if (state.transactionFilter.departmentId != 0)
       req.setDepartmentId(state.transactionFilter.departmentId);
     if (state.transactionFilter.employeeId != 0)
-      req.setAssignedEmployeeId(state.transactionFilter.employeeId);
+      req.setOwnerId(state.transactionFilter.employeeId);
     if (state.transactionFilter.amount)
       req.setAmount(state.transactionFilter.amount);
     req.setIsBillingRecorded(state.transactionFilter.billingRecorded);
@@ -537,6 +547,11 @@ export const TransactionTable: FC<Props> = ({
     txn.setStatusId(statusID);
     txn.setFieldMaskList(['StatusId']);
     txn.setIsBillingRecorded(true);
+    dispatch({
+      type: ACTIONS.UPDATE_LOCAL_STATUS,
+      data: { transactionId: id, statusId: statusID },
+    });
+
     try {
       await TransactionClientService.Update(txn);
     } catch (err) {
@@ -555,8 +570,6 @@ export const TransactionTable: FC<Props> = ({
     );
     if (ok) {
       await makeUpdateStatus(txn.getId(), 3, 'accepted');
-      await resetTransactions();
-      await refresh();
     }
   };
   const updateStatusProcessed = async (txn: Transaction) => {
@@ -565,8 +578,6 @@ export const TransactionTable: FC<Props> = ({
     );
     if (ok) {
       await makeUpdateStatus(txn.getId(), 5, 'Recorded and Processed');
-      await resetTransactions();
-      await refresh();
     }
   };
   const forceAccept = async (txn: Transaction) => {
@@ -575,7 +586,6 @@ export const TransactionTable: FC<Props> = ({
     );
     if (ok) {
       await makeUpdateStatus(txn.getId(), 3, 'accepted');
-      await refresh();
     }
   };
 
@@ -654,8 +664,33 @@ export const TransactionTable: FC<Props> = ({
       }
       try {
         await TransactionClientService.Update(transactionToSave);
+        const temp = transactionToSave;
+        transactionToSave.setCostCenterId(
+          parseInt(transactionToSave.getCostCenterId().toString()),
+        );
+        transactionToSave.setDepartmentId(
+          parseInt(transactionToSave.getDepartmentId().toString()),
+        );
+        const costCenterReq = new TransactionAccount();
+        costCenterReq.setId(transactionToSave.getCostCenterId());
+        const costCenterResult = await TransactionAccountClientService.Get(
+          costCenterReq,
+        );
+        transactionToSave.setCostCenter(costCenterResult);
+        const departmentReq = new TimesheetDepartment();
+        departmentReq.setId(transactionToSave.getDepartmentId());
+        const departmentResult = await TimesheetDepartmentClientService.Get(
+          departmentReq,
+        );
+        const txnDepartment = new TxnDepartment();
+        txnDepartment.setDescription(departmentResult.getDescription());
+        transactionToSave.setDepartment(txnDepartment);
+        dispatch({
+          type: ACTIONS.SET_UPDATE_FROM_LOCAL_LIST,
+          data: transactionToSave,
+        });
+
         dispatch({ type: ACTIONS.SET_TRANSACTION_TO_EDIT, data: undefined });
-        refresh();
       } catch (err) {
         try {
           let errLog = new TransactionActivity();
@@ -675,7 +710,7 @@ export const TransactionTable: FC<Props> = ({
         dispatch({ type: ACTIONS.SET_TRANSACTION_TO_EDIT, data: undefined });
       }
     },
-    [refresh, loggedUserId, state.page],
+    [loggedUserId, state.page],
   );
   const getJobNumberInfo = async (number: number) => {
     let returnString = ['No Job Info Found'];
@@ -854,6 +889,40 @@ export const TransactionTable: FC<Props> = ({
       },
     ],
   ];
+  const handleFileLoad = useCallback((stateFile: string, file) => {
+    if (stateFile == 'document1') {
+      dispatch({
+        type: ACTIONS.SET_MERGE_DOCUMENT1,
+        data: file,
+      });
+    }
+    if (stateFile == 'document2') {
+      dispatch({
+        type: ACTIONS.SET_MERGE_DOCUMENT2,
+        data: file,
+      });
+    }
+  }, []);
+  const SCHEMA_MERGE_DOCUMENTS: Schema<MergeDocuments> = [
+    [
+      {
+        name: 'document1',
+        label: 'File',
+        type: 'file',
+        required: true,
+        onFileLoad: e => handleFileLoad('document1', e),
+      },
+    ],
+    [
+      {
+        name: 'document2',
+        label: 'File2',
+        type: 'file',
+        required: true,
+        onFileLoad: e => handleFileLoad('document2', e),
+      },
+    ],
+  ];
 
   const SCHEMA: Schema<FilterData> = [
     [
@@ -951,30 +1020,35 @@ export const TransactionTable: FC<Props> = ({
   const saveFromRowButton = useCallback(
     async (saved: any) => {
       let newTxn = new Transaction();
-      let timestamp = saved['Date'];
-      if (timestamp != '') {
-        newTxn.setTimestamp(saved['Date']);
-      } else {
+      newTxn.setTimestamp(saved['Date']);
+      let newtimestamp = newTxn.getTimestamp();
+      console.log('time we got:', newtimestamp);
+      if (
+        newtimestamp.includes('000') ||
+        newtimestamp == '' ||
+        newtimestamp == undefined ||
+        newtimestamp == NULL_TIME_VALUE
+      ) {
         console.log('not valid date');
         const newTimestamp = format(new Date(), 'yyyy-MM-dd hh:mm:ss');
         console.log('new date', newTimestamp);
         newTxn.setTimestamp(newTimestamp);
       }
       newTxn.setOrderNumber(saved['Order #']);
-      newTxn.setAssignedEmployeeId(saved['Purchaser']);
-      if (saved['Purchaser'] != 0 && saved['Purchaser'] != undefined) {
-        newTxn.setOwnerId(newTxn.getAssignedEmployeeId());
-      } else {
-        newTxn.setOwnerId(loggedUserId);
-      }
+      newTxn.setAssignedEmployeeId(loggedUserId);
+      newTxn.setOwnerId(saved['Purchaser']);
       newTxn.setDepartmentId(saved['Department']);
       newTxn.setJobId(saved['Job #']);
+      newTxn.setNotes(saved['Notes']);
       newTxn.setCostCenterId(saved['Cost Center ID']);
       newTxn.setAmount(saved['Amount']);
       newTxn.setVendor(saved['Vendor']);
       newTxn.setStatusId(2);
       newTxn.setVendorCategory('Receipt');
-
+      if (saved['Notes'] === '')
+        newTxn.setNotes(
+          `Order Number-${newTxn.getOrderNumber()},Job Number-${newTxn.getJobId()}`,
+        );
       let res: Transaction | undefined;
       try {
         res = await TransactionClientService.Create(newTxn);
@@ -1003,6 +1077,7 @@ export const TransactionTable: FC<Props> = ({
         log.setUserId(loggedUserId);
         log.setStatusId(2);
         log.setIsActive(1);
+        log.setTransactionId(res!.getId());
         log.setDescription(`Transaction created with id: ${res!.getId()}`);
         await TransactionActivityClientService.Create(log);
       } catch (err) {
@@ -1026,13 +1101,16 @@ export const TransactionTable: FC<Props> = ({
         );
       }
       await TransactionClientService.Delete(state.transactionToDelete);
+      dispatch({
+        type: ACTIONS.SET_DELETE_FROM_LOCAL_LIST,
+        data: state.transactionToDelete,
+      });
+
       dispatch({ type: ACTIONS.SET_TRANSACTION_TO_DELETE, data: undefined });
-      await resetTransactions();
-      await refresh();
     } catch (err) {
       console.error(`An error occurred while deleting a transaction: ${err}`);
     }
-  }, [state.transactionToDelete, refresh, resetTransactions]);
+  }, [state.transactionToDelete]);
 
   useEffect(() => {
     async function refreshEverything() {
@@ -1048,7 +1126,9 @@ export const TransactionTable: FC<Props> = ({
       resetTransactions();
     }
     if (state.searching) {
-      refreshEverything();
+      dispatch({ type: ACTIONS.SET_PAGE, data: 0 });
+      dispatch({ type: ACTIONS.SET_CHANGING_PAGE, data: true });
+
       dispatch({ type: ACTIONS.SET_SEARCHING, data: false });
     }
   }, [
@@ -1060,6 +1140,155 @@ export const TransactionTable: FC<Props> = ({
     state.searching,
   ]);
 
+  const imageDimensionToFit = (
+    image: PDFImage,
+    container: { width: number; height: number },
+  ) => {
+    if (
+      Math.min(image.width, container.width) === image.width &&
+      Math.min(image.height, container.height) === image.height
+    )
+      return { width: image.width, height: image.height };
+    const image_ratio = image.width / image.height;
+    const container_ratio = container.width / container.height;
+    if (container_ratio > image_ratio) {
+      return {
+        width: (image.width * container.height) / image.height,
+        height: container.height,
+      };
+    } else {
+      return {
+        width: container.width,
+        height: (image.height * container.width) / image.width,
+      };
+    }
+  };
+  const toPdfPromise = async (file: string) => {
+    const pdf = await PDFDocument.create();
+
+    const page = pdf.addPage(PageSizes.A4);
+    const imageUInt8Array = file;
+
+    try {
+      console.log('embed jpeg');
+      const tempImage = await pdf.embedJpg(imageUInt8Array);
+      const [a4_width, a4_height] = PageSizes.A4;
+      const dimensions = imageDimensionToFit(tempImage, {
+        width: a4_width,
+        height: a4_height,
+      });
+      page.drawImage(tempImage, {
+        x: (a4_width - dimensions.width) / 2,
+        y: (a4_height - dimensions.height) / 2,
+        width: dimensions.width,
+        height: dimensions.height,
+      });
+      return { pdf: pdf.save(), error: '' };
+    } catch (e) {
+      console.log('failed to embed jpeg, trying png');
+      try {
+        const tempImage = await pdf.embedPng(imageUInt8Array);
+        const [a4_width, a4_height] = PageSizes.A4;
+        const dimensions = imageDimensionToFit(tempImage, {
+          width: a4_width,
+          height: a4_height,
+        });
+        page.drawImage(tempImage, {
+          x: (a4_width - dimensions.width) / 2,
+          y: (a4_height - dimensions.height) / 2,
+          width: dimensions.width,
+          height: dimensions.height,
+        });
+        return { pdf: pdf.save(), error: '' };
+      } catch (e) {
+        console.log('something went wrong with drawing the image', e);
+        return { pdf: pdf.save(), error: 'Could not Draw Image on PDF' };
+      }
+    }
+  };
+
+  const mergePdf = async () => {
+    const mergedPdf = await PDFDocument.create();
+    let pdfA = await PDFDocument.create();
+    let pdfB = await PDFDocument.create();
+    let error = '';
+    try {
+      pdfA = await PDFDocument.load(state.document1);
+    } catch (e) {
+      try {
+        let resultA = await toPdfPromise(state.document1);
+        pdfA = await PDFDocument.load(await resultA.pdf);
+        if (resultA.error != '') {
+          error = resultA.error;
+        }
+        console.log('first document not a pdf');
+      } catch (e) {
+        console.log('failed to load document a as pdf or image ', e);
+        dispatch({
+          type: ACTIONS.SET_MERGE_DOCUMENT_ALERT,
+          data: 'Could not generate PDF',
+        });
+      }
+    }
+    try {
+      pdfB = await PDFDocument.load(state.document2);
+    } catch (e) {
+      try {
+        let resultB = await toPdfPromise(state.document2);
+        pdfB = await PDFDocument.load(await resultB.pdf);
+        if (resultB.error != '') {
+          error = resultB.error;
+        }
+      } catch (e) {
+        console.log('failed to load document b as a pdf and image ', e);
+        dispatch({
+          type: ACTIONS.SET_MERGE_DOCUMENT_ALERT,
+          data: 'Could not generate PDF',
+        });
+      }
+
+      console.log('second document not a pdf ', e);
+    }
+    console.log('loading documents');
+    if (error != '') {
+      dispatch({
+        type: ACTIONS.SET_MERGE_DOCUMENT_ALERT,
+        data: 'Could not generate PDF',
+      });
+    } else {
+      const copiedPagesA = await mergedPdf.copyPages(
+        pdfA,
+        pdfA.getPageIndices(),
+      );
+      console.log('copying from a');
+
+      copiedPagesA.forEach(page => mergedPdf.addPage(page));
+
+      const copiedPagesB = await mergedPdf.copyPages(
+        pdfB,
+        pdfB.getPageIndices(),
+      );
+      console.log('copying from b');
+
+      copiedPagesB.forEach(page => mergedPdf.addPage(page));
+
+      const mergedPdfFile = await mergedPdf.save();
+      console.log('copying saving');
+
+      var link = document.createElement('a');
+      var blob = new Blob([mergedPdfFile], { type: 'application/pdf' });
+      link.href = window.URL.createObjectURL(blob);
+      console.log('creating url');
+
+      var fileName = 'MergedDocument';
+      link.download = fileName;
+      link.click();
+      dispatch({
+        type: ACTIONS.SET_OPEN_MERGE,
+        data: false,
+      });
+    }
+  };
   return (
     <ErrorBoundary key="ErrorBoundary">
       {state.imageWaiverTypePopupOpen && (
@@ -1150,6 +1379,41 @@ export const TransactionTable: FC<Props> = ({
           />
         </Modal>
       )}
+      {state.openMerge && (
+        <Modal
+          open={state.openMerge}
+          onClose={() => {
+            dispatch({ type: ACTIONS.SET_MERGE_DOCUMENT1, data: '' });
+            dispatch({ type: ACTIONS.SET_MERGE_DOCUMENT2, data: '' });
+            dispatch({ type: ACTIONS.SET_OPEN_MERGE, data: false });
+          }}
+        >
+          <Alert
+            open={state.mergeDocumentAlert != ''}
+            onClose={() =>
+              dispatch({ type: ACTIONS.SET_MERGE_DOCUMENT_ALERT, data: '' })
+            }
+            label="Okay"
+          >
+            There was an Error generating your PDF. There may be something wrong
+            with the file. If you continue to notice this error, please contact
+            webtech
+          </Alert>
+          <Form<MergeDocuments>
+            key="mergeDocuments"
+            title="Merge PDFs"
+            schema={SCHEMA_MERGE_DOCUMENTS}
+            data={{ document1: state.document1, document2: state.document2 }}
+            onSave={mergePdf}
+            submitLabel="Save"
+            onClose={() => {
+              dispatch({ type: ACTIONS.SET_MERGE_DOCUMENT1, data: '' });
+              dispatch({ type: ACTIONS.SET_MERGE_DOCUMENT2, data: '' });
+              dispatch({ type: ACTIONS.SET_OPEN_MERGE, data: false });
+            }}
+          ></Form>
+        </Modal>
+      )}
       {state.loading ? <Loader /> : <> </>}
       {state.error && (
         <Alert
@@ -1190,7 +1454,6 @@ export const TransactionTable: FC<Props> = ({
             onSave={saved => {
               saved.setId(state.transactionToEdit!.getId());
               updateTransaction(saved);
-              dispatch({ type: ACTIONS.SET_SEARCHING, data: true });
             }}
             onClose={() =>
               dispatch({
@@ -1281,6 +1544,15 @@ export const TransactionTable: FC<Props> = ({
           hasActions &&
           (state.role == 'AccountsPayable' || state.role == 'Manager')
             ? [
+                {
+                  label: 'Merge 2 Documents',
+                  onClick: () => {
+                    dispatch({
+                      type: ACTIONS.SET_OPEN_MERGE,
+                      data: true,
+                    });
+                  },
+                },
                 {
                   label: 'New Transaction',
                   onClick: () => {
@@ -1375,7 +1647,7 @@ export const TransactionTable: FC<Props> = ({
           externalButton: true,
           type: new Transaction(),
           columnDefinition: {
-            columnsToIgnore: ['Actions', 'Accepted / Rejected'],
+            columnsToIgnore: ['Actions', 'Accepted / Rejected', 'Creator'],
             columnTypeOverrides: [
               { columnName: 'Type', columnType: 'text' },
               {
@@ -1403,6 +1675,14 @@ export const TransactionTable: FC<Props> = ({
                 columnName: 'Purchaser',
                 columnType: 'technician',
               },
+              {
+                columnName: 'Notes',
+                columnType: 'text',
+              },
+              {
+                columnName: 'Creator',
+                columnType: 'technician',
+              },
             ],
           },
         }}
@@ -1425,6 +1705,14 @@ export const TransactionTable: FC<Props> = ({
             name: 'Purchaser',
             dir: state.orderBy == 'owner_id' ? state.orderDir : undefined,
             onClick: () => changeSort('owner_id'),
+          },
+          {
+            name: 'Creator',
+            dir:
+              state.orderBy == 'assigned_employee_id'
+                ? state.orderDir
+                : undefined,
+            onClick: () => changeSort('assigned_employee_id'),
           },
           {
             name: 'Department',
@@ -1452,6 +1740,11 @@ export const TransactionTable: FC<Props> = ({
             dir: state.orderBy == 'vendor' ? state.orderDir : undefined,
             onClick: () => changeSort('vendor'),
           },
+          {
+            name: 'Notes',
+            dir: state.orderBy == 'notes' ? state.orderDir : undefined,
+            onClick: () => changeSort('notes'),
+          },
           { name: 'Actions' },
           {
             name: 'Accepted / Rejected',
@@ -1459,7 +1752,7 @@ export const TransactionTable: FC<Props> = ({
         ]}
         data={
           state.loading
-            ? makeFakeRows(10, 15)
+            ? makeFakeRows(11, 15)
             : (state.transactions?.map((selectorParam, idx) => {
                 let txnWithId = state.selectedTransactions.filter(
                   txn => txn.getId() === selectorParam.txn.getId(),
@@ -1504,7 +1797,19 @@ export const TransactionTable: FC<Props> = ({
                     },
                     {
                       value: (
-                        <div key="OwnernameValue">{`${selectorParam.txn.getOwnerName()} (${selectorParam.txn.getOwnerId()})`}</div>
+                        <div key="OwnernameValue">
+                          {selectorParam.txn.getOwnerId() != 0
+                            ? `${selectorParam.txn.getOwnerName()} (${selectorParam.txn.getOwnerId()})`
+                            : 'No Purchaser'}
+                        </div>
+                      ),
+                      onClick: isSelector
+                        ? () => setTransactionChecked(idx)
+                        : undefined,
+                    },
+                    {
+                      value: (
+                        <div key="CreatornameValue">{`${selectorParam.txn.getAssignedEmployeeName()} (${selectorParam.txn.getAssignedEmployeeId()})`}</div>
                       ),
                       onClick: isSelector
                         ? () => setTransactionChecked(idx)
@@ -1567,6 +1872,16 @@ export const TransactionTable: FC<Props> = ({
                       value: (
                         <div key="VendorValue">
                           {selectorParam.txn.getVendor()}
+                        </div>
+                      ),
+                      onClick: isSelector
+                        ? () => setTransactionChecked(idx)
+                        : undefined,
+                    },
+                    {
+                      value: (
+                        <div key="NotesValue">
+                          {selectorParam.txn.getNotes()}
                         </div>
                       ),
                       onClick: isSelector

@@ -24,6 +24,8 @@ import { SpiffTool } from '../../../SpiffToolLogs/components/SpiffTool';
 import { Form, Schema } from '../../../ComponentsLibrary/Form';
 import { Option } from '../../../ComponentsLibrary/Field';
 import { Button } from '../../Button';
+import { SpiffToolAdminAction } from '@kalos-core/kalos-rpc/SpiffToolAdminAction';
+
 import { User } from '@kalos-core/kalos-rpc/User';
 import {
   makeFakeRows,
@@ -72,16 +74,9 @@ export const Spiffs: FC<Props> = ({
   const [endDay, setEndDay] = useState<Date>(addDays(new Date(startDay), 7));
   const [toggleButton, setToggleButton] = useState<boolean>(false);
   const [spiffTypes, setSpiffTypes] = useState<SpiffType[]>([]);
-  const init = useCallback(async () => {
-    const spiffTypes = await (
-      await TaskClientService.GetSpiffTypes()
-    ).getResultsList();
-    setSpiffTypes(spiffTypes);
-  }, []);
+
   const load = useCallback(async () => {
-    setLoading(
-      true,
-    ); /*
+    setLoading(true); /*
     const filter: GetPendingSpiffConfig = {
       page,
       technicianUserID: employeeId,
@@ -146,6 +141,10 @@ export const Spiffs: FC<Props> = ({
       req.setAdminActionId(0);
       req.setPayrollProcessed(true);
       req.setNotEqualsList(['AdminActionId', 'PayrollProcessed']);
+      //req.setFieldMaskList(['PayrollProcessed']);
+      const action = new SpiffToolAdminAction();
+      action.setStatus(1);
+      req.setSearchAction(action);
     }
     if (role === 'Payroll' && toggleButton == true) {
       req.setPayrollProcessed(false);
@@ -163,24 +162,33 @@ export const Spiffs: FC<Props> = ({
     const results = await TaskClientService.BatchGet(req);
     const resultsList = results.getResultsList();
     const totalCount = results.getTotalCount();
+    console.log('we are in load');
     setSpiffs(resultsList);
     setCount(totalCount);
     setLoading(false);
   }, [page, employeeId, week, role, toggleButton, departmentId, endDay]);
+  const init = useCallback(async () => {
+    const spiffTypes = await (
+      await TaskClientService.GetSpiffTypes()
+    ).getResultsList();
+    setSpiffTypes(spiffTypes);
+    load();
+  }, [load]);
   useEffect(() => {
     if (!initiated) {
       setInitiated(true);
       init();
     }
-    load();
-  }, [page, employeeId, week, initiated, init, load]);
+  }, [page, employeeId, week, initiated, init]);
+
   const handleTogglePendingView = useCallback(
     (pendingView?: Task) => () => setPendingView(pendingView),
     [],
   );
-  const handleToggleAdd = useCallback(() => setPendingAdd(!pendingAdd), [
-    pendingAdd,
-  ]);
+  const handleToggleAdd = useCallback(
+    () => setPendingAdd(!pendingAdd),
+    [pendingAdd],
+  );
   const handleToggleButton = useCallback(() => {
     setToggleButton(!toggleButton);
     setPage(0);

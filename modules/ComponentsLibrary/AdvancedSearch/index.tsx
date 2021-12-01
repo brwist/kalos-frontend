@@ -48,6 +48,7 @@ import {
   makeFakeRows,
   formatDate,
   EventsFilter,
+  MapClientService,
   EventsSort,
   LoadEventsByFilter,
   PropertiesFilter,
@@ -70,6 +71,9 @@ import {
   TimesheetDepartmentClientService,
   makeSafeFormObject,
   ActivityLogClientService,
+  QuoteLinePartClientService,
+  QuoteLineClientService,
+  usd,
 } from '../../../helpers';
 import {
   ROWS_PER_PAGE,
@@ -90,6 +94,7 @@ import { log } from 'console';
 import { ActivityLog } from '@kalos-core/kalos-rpc/ActivityLog';
 import format from 'date-fns/esm/format';
 import { ServiceRequest } from '../ServiceCall/requestIndex';
+import { QuoteLine } from '@kalos-core/kalos-rpc/QuoteLine';
 
 type Kind =
   | 'serviceCalls'
@@ -151,8 +156,9 @@ export const AdvancedSearch: FC<Props> = ({
 }) => {
   const [isAdmin, setIsAdmin] = useState<number>(0);
   const [loggedUser, setLoggedUser] = useState<User>(new User());
-
   const [loadedDicts, setLoadedDicts] = useState<boolean>(false);
+  const [flatRateIsOpen, setFlatRateIsOpen] = useState<boolean>(false);
+  const [flatRate, setFlatRate] = useState<QuoteLine[]>([]);
   const [loadingDicts, setLoadingDicts] = useState<boolean>(false);
   const [jobTypes, setJobTypes] = useState<JobType[]>([]);
   const [jobSubtypes, setJobSubtypes] = useState<JobSubtype[]>([]);
@@ -209,42 +215,29 @@ export const AdvancedSearch: FC<Props> = ({
   const [pendingEventEditing, setPendingEventEditing] = useState<Event>();
   const [pendingEventEditingNew, setPendingEventEditingNew] = useState<Event>();
   const [pendingEventDeleting, setPendingEventDeleting] = useState<Event>();
-  const [employeeUploadedPhoto, setEmployeeUploadedPhoto] = useState<string>(
-    '',
-  );
+  const [employeeUploadedPhoto, setEmployeeUploadedPhoto] =
+    useState<string>('');
   const [employeeFormKey, setEmployeeFormKey] = useState<number>(0);
   const [pendingEmployeeViewing, setPendingEmployeeViewing] = useState<User>();
   const [pendingEmployeeEditing, setPendingEmployeeEditing] = useState<User>();
-  const [
-    pendingEmployeeDeleting,
-    setPendingEmployeeDeleting,
-  ] = useState<User>();
+  const [pendingEmployeeDeleting, setPendingEmployeeDeleting] =
+    useState<User>();
   const [pendingCustomerViewing, setPendingCustomerViewing] = useState<User>();
   const [pendingCustomerEditing, setPendingCustomerEditing] = useState<User>();
-  const [
-    pendingCustomerDeleting,
-    setPendingCustomerDeleting,
-  ] = useState<User>();
-  const [
-    pendingPropertyViewing,
-    setPendingPropertyViewing,
-  ] = useState<Property>();
-  const [
-    pendingPropertyEditing,
-    setPendingPropertyEditing,
-  ] = useState<Property>();
-  const [
-    pendingPropertyDeleting,
-    setPendingPropertyDeleting,
-  ] = useState<Property>();
+  const [pendingCustomerDeleting, setPendingCustomerDeleting] =
+    useState<User>();
+  const [pendingPropertyViewing, setPendingPropertyViewing] =
+    useState<Property>();
+  const [pendingPropertyEditing, setPendingPropertyEditing] =
+    useState<Property>();
+  const [pendingPropertyDeleting, setPendingPropertyDeleting] =
+    useState<Property>();
   const [departments, setDepartments] = useState<TimesheetDepartment[]>([]);
   const [employeeFunctions, setEmployeeFunctions] = useState<
     EmployeeFunction[]
   >([]);
-  const [
-    employeeDepartmentsOpen,
-    setEmployeeDepartmentsOpen,
-  ] = useState<boolean>(false);
+  const [employeeDepartmentsOpen, setEmployeeDepartmentsOpen] =
+    useState<boolean>(false);
   const [pendingAddProperty, setPendingAddProperty] = useState<boolean>(false);
   const handleTogglePendingAddProperty = useCallback(
     (pendingAddProperty: boolean) => () =>
@@ -262,7 +255,33 @@ export const AdvancedSearch: FC<Props> = ({
     userReq.setId(loggedUserId);
     const loggedUser = await UserClientService.Get(userReq);
     setLoggedUser(loggedUser);
+    let qlResults: QuoteLine[] = [];
+    let startingPage = 0;
+    const quoteReq = new QuoteLine();
+    quoteReq.setIsActive(1);
+    quoteReq.setIsFlatrate('1');
+    quoteReq.setPageNumber(startingPage);
+    quoteReq.setWithoutLimit(true);
+    try {
+      qlResults = (
+        await QuoteLineClientService.BatchGet(quoteReq)
+      ).getResultsList();
+    } catch (e) {
+      console.log('could not fetch results for flat rate', e);
+    }
 
+    qlResults = qlResults.sort(function (a, b) {
+      if (a.getDescription() < b.getDescription()) {
+        return -1;
+      }
+      if (a.getDescription() > b.getDescription()) {
+        return 1;
+      }
+      return 0;
+    });
+    setFlatRate(qlResults);
+
+    console.log(qlResults.length);
     if (kinds.includes('employees')) {
       //const departments = await TimesheetDepartmentClientService.loadTimeSheetDepartments();
       const departmentRequest = new TimesheetDepartment();
@@ -271,7 +290,8 @@ export const AdvancedSearch: FC<Props> = ({
         await TimesheetDepartmentClientService.BatchGet(departmentRequest)
       ).getResultsList();
       setDepartments(departments);
-      const employeeFunctions = await EmployeeFunctionClientService.loadEmployeeFunctions();
+      const employeeFunctions =
+        await EmployeeFunctionClientService.loadEmployeeFunctions();
       setEmployeeFunctions(employeeFunctions);
 
       setIsAdmin(loggedUser.getIsAdmin());
@@ -327,10 +347,8 @@ export const AdvancedSearch: FC<Props> = ({
       }
       let userResults = [new User()];
       if (kind === 'customers') {
-        const {
-          results,
-          totalCount,
-        } = await UserClientService.loadUsersByFilter(criteria);
+        const { results, totalCount } =
+          await UserClientService.loadUsersByFilter(criteria);
         setUsers(results);
         setCount(totalCount);
       } else {
@@ -548,7 +566,7 @@ export const AdvancedSearch: FC<Props> = ({
     [],
   );
   const handlePendingEventEditingNewToggle = useCallback(
-    (pendingEventEditingNew?: Event) => () => 
+    (pendingEventEditingNew?: Event) => () =>
       setPendingEventEditingNew(pendingEventEditingNew),
     [setPendingEventEditingNew],
   );
@@ -662,6 +680,18 @@ export const AdvancedSearch: FC<Props> = ({
           );
         }
         const newData = makeSafeFormObject(data, new User());
+        const address = newData.getAddress();
+        const city = newData.getCity();
+        const addressState = newData.getState();
+        const zip = newData.getZip();
+
+        const geo = await MapClientService.loadGeoLocationByAddress(
+          `${address}, ${city}, ${addressState} ${zip}`,
+        );
+        if (geo) {
+          newData.setGeolocationLat(geo.geolocationLat);
+          newData.setGeolocationLng(geo.geolocationLng);
+        }
         if (newData.getFieldMaskList().length > 0) {
           await UserClientService.saveUser(
             newData,
@@ -706,10 +736,10 @@ export const AdvancedSearch: FC<Props> = ({
       setPendingPropertyDeleting(pendingPropertyDeleting),
     [setPendingPropertyDeleting],
   );
-  const handleAccountingToggle = useCallback(() => setAccounting(!accounting), [
-    accounting,
-    setAccounting,
-  ]);
+  const handleAccountingToggle = useCallback(
+    () => setAccounting(!accounting),
+    [accounting, setAccounting],
+  );
   const handleSelectEvent = useCallback(
     (event: Event) => () => {
       if (accounting) {
@@ -2059,12 +2089,15 @@ export const AdvancedSearch: FC<Props> = ({
                               <Tooltip
                                 key="jsxEditSC"
                                 content="Edit Service Request"
-                                placement="top">
+                                placement="top"
+                              >
                                 <IconButton
                                   key="editNew"
                                   size="small"
-                                  onClick={handlePendingEventEditingNewToggle(entry,)}   
-                                  >
+                                  onClick={handlePendingEventEditingNewToggle(
+                                    entry,
+                                  )}
+                                >
                                   <RateReviewOutlined />
                                 </IconButton>
                               </Tooltip>,
@@ -2678,6 +2711,10 @@ export const AdvancedSearch: FC<Props> = ({
                   label: 'Add Service Call',
                   onClick: handlePendingEventAddingToggle(true),
                 },
+                {
+                  label: 'View Flat Rate',
+                  onClick: () => setFlatRateIsOpen(true),
+                },
               ]
             : []),
           ...(propertyCustomerId
@@ -2728,7 +2765,7 @@ export const AdvancedSearch: FC<Props> = ({
           schema={getSchema()}
           data={filter}
           onChange={handleFormChange}
-          onSubmit={filter.kind === 'serviceCalls' ? handleLoad : undefined}
+          onSubmit={handleLoad}
           className="AdvancedSearchForm"
           disabled={loadingDicts}
         />
@@ -2739,6 +2776,23 @@ export const AdvancedSearch: FC<Props> = ({
         loading={loading || loadingDicts}
         hoverable
       />
+      {flatRateIsOpen && flatRate && (
+        <Modal open onClose={() => setFlatRateIsOpen(false)}>
+          <InfoTable
+            columns={[{ name: 'Description' }, { name: 'Cost' }]}
+            data={flatRate.map(value => {
+              return [
+                {
+                  value: value.getDescription(),
+                },
+                {
+                  value: usd(parseInt(value.getAdjustment())),
+                },
+              ];
+            })}
+          />
+        </Modal>
+      )}
       {pendingEventAdding && (
         <Modal open onClose={handlePendingEventAddingToggle(false)} fullScreen>
           <AddServiceCall
@@ -2765,7 +2819,11 @@ export const AdvancedSearch: FC<Props> = ({
         </Modal>
       )}
       {pendingEventEditingNew && (
-        <Modal open onClose={handlePendingEventEditingNewToggle(undefined)} fullScreen>
+        <Modal
+          open
+          onClose={handlePendingEventEditingNewToggle(undefined)}
+          fullScreen
+        >
           <ServiceRequest
             loggedUserId={loggedUserId}
             serviceCallId={pendingEventEditingNew.getId()}

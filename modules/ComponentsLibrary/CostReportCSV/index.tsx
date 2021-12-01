@@ -16,9 +16,10 @@ import {
   TimesheetDepartmentClientService,
   TaskClientService,
   TransactionAccountClientService,
+  UserClientService,
 } from '../../../helpers';
 import { ClassCode, ClassCodeClient } from '@kalos-core/kalos-rpc/ClassCode';
-import { reducer, ACTIONS } from './reducer';
+import { reducer, ACTIONS, WeekClassCodeBreakdownSubtotal } from './reducer';
 import { PrintList } from '../PrintList';
 import { PrintPage, Status } from '../PrintPage';
 import { PrintParagraph } from '../PrintParagraph';
@@ -27,6 +28,11 @@ import { getPropertyAddress } from '@kalos-core/kalos-rpc/Property';
 import { PerDiem, PerDiemRow } from '@kalos-core/kalos-rpc/PerDiem';
 import { Transaction } from '@kalos-core/kalos-rpc/Transaction';
 import { Event } from '@kalos-core/kalos-rpc/Event';
+import {
+  CostReportData,
+  CostReportReq,
+} from '@kalos-core/kalos-rpc/compiled-protos/event_pb';
+
 import { SectionBar } from '../SectionBar';
 import { InfoTable } from '../InfoTable';
 import { Loader } from '../../Loader/main';
@@ -34,15 +40,22 @@ import Button from '@material-ui/core/Button';
 import { Button as KalosButton } from '../Button';
 import { Trip } from '@kalos-core/kalos-rpc/compiled-protos/perdiem_pb';
 import { Task } from '@kalos-core/kalos-rpc/Task';
-import { differenceInMinutes, parseISO } from 'date-fns';
+import {
+  differenceInMinutes,
+  parseISO,
+  startOfWeek,
+  format,
+  addDays,
+  differenceInCalendarWeeks,
+  endOfWeek,
+} from 'date-fns';
 import { roundNumber, downloadCSV } from '../../../helpers';
 import { Tabs } from '../Tabs';
 import ExpandLess from '@material-ui/icons/ExpandLess';
 import ExpandMore from '@material-ui/icons/ExpandMore';
 import Collapse from '@material-ui/core/Collapse/Collapse';
-import { PrintHeader } from '../PrintHeader';
-import { PinDrop } from '@material-ui/icons';
 import { TransactionAccount } from '@kalos-core/kalos-rpc/TransactionAccount';
+import { task } from 'gulp';
 export interface Props {
   serviceCallId: number;
   loggedUserId: number;
@@ -76,6 +89,7 @@ export const CostReportCSV: FC<Props> = ({ serviceCallId, onClose }) => {
     timesheets: [],
     transactions: [],
     lodgings: {},
+    users: [],
     costCenterTotals: {},
     loadingEvent: true,
     loadedInit: false,
@@ -89,6 +103,9 @@ export const CostReportCSV: FC<Props> = ({ serviceCallId, onClose }) => {
     tasks: [],
     classCodes: [],
     dropDowns: [],
+    transactionDropDowns: [],
+    classCodeDropdowns: [],
+    timesheetWeeklySubtotals: [],
     totalHoursWorked: 0,
     activeTab: tabs[0],
     printStatus: 'idle',
@@ -99,102 +116,6 @@ export const CostReportCSV: FC<Props> = ({ serviceCallId, onClose }) => {
     0,
   );
 
-  const loadResources = useCallback(async () => {
-    const resultsList = (
-      await PerDiemClientService.loadPerDiemsByEventId(serviceCallId)
-    ).getResultsList();
-    const mappedResults = resultsList.map(perdiem => ({
-      perDiemId: perdiem.getId(),
-      active: 0,
-    }));
-    dispatch({ type: ACTIONS.SET_DROPDOWNS, data: mappedResults });
-    const cccs = new ClassCodeClient(ENDPOINT);
-    const classCodeReq = new ClassCode();
-    classCodeReq.setIsActive(true);
-    dispatch({
-      type: ACTIONS.SET_CLASS_CODES,
-      data: (await cccs.BatchGet(classCodeReq)).getResultsList(),
-    });
-
-    let arr: PerDiem[] = [];
-    resultsList.forEach(result => {
-      let isIncluded = false;
-      arr.forEach(arrItem => {
-        if (arrItem.getId() == result.getId()) isIncluded = true;
-      });
-      if (!isIncluded) {
-        arr.push(result);
-      }
-    });
-    for (let i = 0; i < arr.length; i++) {
-      const tempRowList = arr[i]
-        .getRowsList()
-        .filter(row => row.getServiceCallId() === serviceCallId);
-      arr[i].setRowsList(tempRowList);
-    }
-
-    const tripReq = new Trip();
-    tripReq.setIsActive(true);
-    tripReq.setJobNumber(serviceCallId);
-    const allTrips = await (
-      await PerDiemClientService.BatchGetTrips(tripReq)
-    ).getResultsList();
-
-    dispatch({ type: ACTIONS.SET_TRIPS, data: allTrips });
-    const accountReq = new TransactionAccount();
-    accountReq.setIsActive(1);
-    const accountRes = (
-      await TransactionAccountClientService.BatchGet(accountReq)
-    ).getResultsList();
-    dispatch({ type: ACTIONS.SET_TRANSACTION_ACCOUNTS, data: accountRes });
-
-    const lodgings = await PerDiemClientService.loadPerDiemsLodging(arr); // first # is per diem id
-    dispatch({ type: ACTIONS.SET_LODGINGS, data: lodgings });
-
-    const transactions = await TransactionClientService.loadTransactionsByEventId(
-      serviceCallId,
-      true,
-    );
-    let temp = state.costCenterTotals;
-    dispatch({ type: ACTIONS.SET_TRANSACTIONS, data: transactions });
-    for (let i = 0; i < transactions.length; i++) {
-      let keyValue = `${transactions[i].getCostCenterId()}-${transactions[i]
-        .getCostCenter()
-        ?.getDescription()}`;
-      if (temp[keyValue]) {
-        temp[keyValue] += transactions[i].getAmount();
-      } else {
-        //
-        temp[keyValue] = transactions[i].getAmount();
-      }
-    }
-    console.log(temp);
-    let allTripsTotal = 0;
-    allTrips.forEach(trip => {
-      // Subtracting 30 miles flat from trip distance in accordance
-      // with reimbursement from home rule
-      allTripsTotal +=
-        trip.getDistanceInMiles() > 30 && trip.getHomeTravel()
-          ? (trip.getDistanceInMiles() - 30) * IRS_SUGGESTED_MILE_FACTOR
-          : trip.getDistanceInMiles() * IRS_SUGGESTED_MILE_FACTOR;
-    });
-
-    dispatch({ type: ACTIONS.SET_TRIPS_TOTAL, data: allTripsTotal });
-
-    dispatch({ type: ACTIONS.SET_PER_DIEMS, data: arr });
-  }, [serviceCallId, state.costCenterTotals]);
-
-  const totalMeals =
-    state.perDiems.reduce((aggr, pd) => aggr + pd.getRowsList().length, 0) *
-    MEALS_RATE;
-  const totalLodging = state.perDiems
-    .reduce((aggr, pd) => [...aggr, ...pd.getRowsList()], [] as PerDiemRow[])
-    .filter(pd => !pd.getMealsOnly())
-    .reduce((aggr, pd) => aggr + state.lodgings[pd.getId()], 0);
-  const totalTransactions = state.transactions.reduce(
-    (aggr, pd) => aggr + pd.getAmount(),
-    0,
-  );
   const handlePrint = useCallback(async () => {
     dispatch({ type: ACTIONS.SET_PRINT_STATUS, data: 'loading' });
     dispatch({ type: ACTIONS.SET_PRINT_STATUS, data: 'loaded' });
@@ -206,7 +127,6 @@ export const CostReportCSV: FC<Props> = ({ serviceCallId, onClose }) => {
   const loadEvent = useCallback(async () => {
     dispatch({ type: ACTIONS.SET_LOADING_EVENT, data: true });
 
-    //const event = await loadEventById(serviceCallId);
     const event = await EventClientService.LoadEventByServiceCallID(
       serviceCallId,
     );
@@ -222,57 +142,199 @@ export const CostReportCSV: FC<Props> = ({ serviceCallId, onClose }) => {
   const load = useCallback(async () => {
     let promises = [];
     let timesheets: TimesheetLine[] = [];
+    let classCodes: ClassCode[] = [];
+    let perDiems: PerDiem[] = [];
+    let transactions: Transaction[] = [];
+    let trips: Trip[] = [];
+    let tasks: Task[] = [];
 
     dispatch({ type: ACTIONS.SET_LOADING, data: true });
-
-    promises.push(
-      new Promise<void>(async resolve => {
-        await loadResources();
-        resolve();
-      }),
-    );
-
     promises.push(
       new Promise<void>(async resolve => {
         try {
-          let req = new TimesheetLine();
-          req.setReferenceNumber(serviceCallId.toString());
+          const cccs = new ClassCodeClient(ENDPOINT);
+          const classCodeReq = new ClassCode();
+          classCodeReq.setIsActive(true);
 
-          timesheets = (
-            await TimesheetLineClientService.BatchGet(req)
-          ).getResultsList();
-          console.log('timesheets', timesheets);
+          classCodes = (await cccs.BatchGet(classCodeReq)).getResultsList();
+          dispatch({
+            type: ACTIONS.SET_CLASS_CODES,
+            data: classCodes,
+          });
+          const mappedResults = classCodes.map(code => ({
+            classCodeId: code.getId(),
+            active: 0,
+          }));
+          dispatch({
+            type: ACTIONS.SET_CLASS_CODE_DROPDOWNS,
+            data: mappedResults,
+          });
           resolve();
         } catch (err) {
-          console.error(
-            'Error occurred while loading the timesheet lines for the cost report. Error: ',
-            err,
-          );
+          console.log('error fetching class codes', err);
         }
       }),
     );
-
     promises.push(
       new Promise<void>(async resolve => {
         try {
-          let req = new Task();
-          req.setEventId(serviceCallId);
-          req.setBillable(1);
-          const tasks = (
-            await TaskClientService.BatchGet(req)
-          ).getResultsList();
-          dispatch({ type: ACTIONS.SET_TASKS, data: tasks });
-
+          const users = await UserClientService.loadTechnicians();
+          dispatch({
+            type: ACTIONS.SET_USERS,
+            data: users,
+          });
           resolve();
         } catch (err) {
-          console.error(
-            `Error occurred while loading the tasks for the cost report. Error: ${err}`,
-          );
+          console.log('error fetching users', err);
         }
       }),
     );
+    promises.push(
+      new Promise<void>(async resolve => {
+        try {
+          const perDiemReq = new PerDiem();
+          perDiemReq.setWithRows(true);
+          perDiemReq.setIsActive(true);
+          perDiemReq.setWithoutLimit(true);
+          const row = new PerDiemRow();
+          row.setServiceCallId(serviceCallId);
+          perDiemReq.setReferenceRow(row);
+          const taskReq = new Task();
+          taskReq.setEventId(serviceCallId);
+          taskReq.setBillable(1);
+          taskReq.setIsActive(true);
+          taskReq.setWithoutLimit(true);
+          const timesheetReq = new TimesheetLine();
+          //Currently using custom sql, so only Reference number matters
+          timesheetReq.setWithoutLimit(true);
+          timesheetReq.setReferenceNumber(serviceCallId.toString());
+          timesheetReq.setIsActive(1);
+          timesheetReq.setPayrollProcessed(true);
+          timesheetReq.setOrderBy('time_started');
+          timesheetReq.setOrderDir('ASC');
+          const tripReq = new Trip();
+          tripReq.setIsActive(true);
+          tripReq.setJobNumber(serviceCallId);
+          tripReq.setWithoutLimit(true);
+          const transactionReq = new Transaction();
+          transactionReq.setJobId(serviceCallId);
+          transactionReq.setIsActive(1);
+          transactionReq.setWithoutLimit(true);
+          const reportReq = new CostReportReq();
+          reportReq.setPerdiemReq(perDiemReq);
+          reportReq.setTaskReq(taskReq);
+          reportReq.setTimesheetReq(timesheetReq);
+          reportReq.setTransactionReq(transactionReq);
+          reportReq.setTripReq(tripReq);
 
-    Promise.all(promises).then(() => {
+          try {
+            const allResults = await EventClientService.BatchGetCostReportData(
+              reportReq,
+            );
+            if (allResults.getPerDiemResults() !== undefined) {
+              perDiems = allResults.getPerDiemResults()!.getResultsList();
+            }
+            if (allResults.getTaskResults() !== undefined) {
+              tasks = allResults.getTaskResults()!.getResultsList();
+            }
+            if (allResults.getTimesheetResults() !== undefined) {
+              timesheets = allResults.getTimesheetResults()!.getResultsList();
+            }
+            if (allResults.getTripResults() !== undefined) {
+              trips = allResults.getTripResults()!.getResultsList();
+            }
+            if (allResults.getTransactionResults() !== undefined) {
+              transactions = allResults
+                .getTransactionResults()!
+                .getResultsList();
+            }
+          } catch (err) {
+            console.log('error with fetch data function:', err);
+          }
+
+          resolve();
+        } catch (err) {
+          console.log('error fetching data', err);
+        }
+      }),
+    );
+    promises.push(
+      new Promise<void>(async resolve => {
+        const accountReq = new TransactionAccount();
+        accountReq.setIsActive(1);
+        try {
+          const accountRes = (
+            await TransactionAccountClientService.BatchGet(accountReq)
+          ).getResultsList();
+          dispatch({
+            type: ACTIONS.SET_TRANSACTION_ACCOUNTS,
+            data: accountRes,
+          });
+
+          const costCenterMap = accountRes.map(account => ({
+            costCenterId: account.getId(),
+            active: 0,
+          }));
+          dispatch({
+            type: ACTIONS.SET_TRANSACTION_DROPDOWNS,
+            data: costCenterMap,
+          });
+          resolve();
+        } catch (err) {
+          console.log('error fetching accounts,', err);
+        }
+      }),
+    );
+    Promise.all(promises).then(async () => {
+      console.log('all promises executed without error, setting loaded');
+
+      let allTripsTotal = 0;
+      trips.forEach(trip => {
+        // Subtracting 30 miles flat from trip distance in accordance
+        // with reimbursement from home rule
+        allTripsTotal +=
+          trip.getDistanceInMiles() > 30 && trip.getHomeTravel()
+            ? (trip.getDistanceInMiles() - 30) * IRS_SUGGESTED_MILE_FACTOR
+            : trip.getDistanceInMiles() * IRS_SUGGESTED_MILE_FACTOR;
+      });
+      let costCenterTemp: { [key: string]: number } = {};
+      for (let i = 0; i < transactions.length; i++) {
+        let keyValue = `${transactions[i].getCostCenterId()}-${transactions[i]
+          .getCostCenter()
+          ?.getDescription()}`;
+        if (costCenterTemp[keyValue]) {
+          costCenterTemp[keyValue] += transactions[i].getAmount();
+        } else {
+          //
+          costCenterTemp[keyValue] = transactions[i].getAmount();
+        }
+      }
+      dispatch({ type: ACTIONS.SET_COST_CENTER_TOTALS, data: costCenterTemp });
+
+      dispatch({ type: ACTIONS.SET_TRIPS_TOTAL, data: allTripsTotal });
+      const mappedResults = perDiems.map(perdiem => ({
+        perDiemId: perdiem.getId(),
+        active: 0,
+      }));
+      dispatch({ type: ACTIONS.SET_DROPDOWNS, data: mappedResults });
+      let arr: PerDiem[] = [];
+      perDiems.forEach(result => {
+        let isIncluded = false;
+        arr.forEach(arrItem => {
+          if (arrItem.getId() == result.getId()) isIncluded = true;
+        });
+        if (!isIncluded) {
+          arr.push(result);
+        }
+      });
+      for (let i = 0; i < arr.length; i++) {
+        const tempRowList = arr[i]
+          .getRowsList()
+          .filter(row => row.getServiceCallId() === serviceCallId);
+        arr[i].setRowsList(tempRowList);
+      }
+      const lodgings = await PerDiemClientService.loadPerDiemsLodging(arr); // first # is per diem id
+      dispatch({ type: ACTIONS.SET_LODGINGS, data: lodgings });
       for (let i = 0; i < timesheets.length; i++) {
         timesheets[i].setHoursWorked(
           roundNumber(
@@ -283,29 +345,82 @@ export const CostReportCSV: FC<Props> = ({ serviceCallId, onClose }) => {
           ),
         );
       }
-      dispatch({ type: ACTIONS.SET_TIMESHEETS, data: timesheets });
-      let temp = state.laborTotals;
+
+      if (timesheets.length > 0) {
+        let weekList: WeekClassCodeBreakdownSubtotal[] = [];
+
+        for (let i = 0; i < timesheets.length; i++) {
+          let startWeek = new Date(parseISO(timesheets[i].getTimeStarted()));
+          startWeek = startOfWeek(startWeek, { weekStartsOn: 6 });
+          let endWeek = new Date(parseISO(timesheets[i].getTimeStarted()));
+          endWeek = endOfWeek(endWeek, { weekStartsOn: 6 });
+          const weekStruct = {
+            weekStart: format(startWeek, 'yyyy-MM-dd'),
+            weekEnd: format(endWeek, 'yyyy-MM-dd'),
+            employeeId: timesheets[i].getTechnicianUserId(),
+            hoursSubtotal: timesheets[i].getHoursWorked(),
+            classCodeId: timesheets[i].getClassCodeId(),
+          };
+          let findExisting = weekList.findIndex(
+            week =>
+              week.classCodeId == weekStruct.classCodeId &&
+              week.weekEnd == weekStruct.weekEnd &&
+              weekStruct.weekStart === weekStruct.weekStart,
+          );
+          if (findExisting != -1) {
+            weekList[findExisting].hoursSubtotal += weekStruct.hoursSubtotal;
+          } else {
+            weekList.push(weekStruct);
+          }
+        }
+        dispatch({
+          type: ACTIONS.SET_TIMESHEET_WEEKLY_SUBTOTALS,
+          data: weekList,
+        });
+      }
+
+      let laborTemp = state.laborTotals;
       for (let i = 0; i < timesheets.length; i++) {
         let keyValue = timesheets[i].getClassCodeId().toString();
-        if (temp[keyValue]) {
-          temp[keyValue] += timesheets[i].getHoursWorked();
+        if (laborTemp[keyValue]) {
+          laborTemp[keyValue] += timesheets[i].getHoursWorked();
         } else {
-          //
-          temp[keyValue] = timesheets[i].getHoursWorked();
+          laborTemp[keyValue] = timesheets[i].getHoursWorked();
         }
       }
-      dispatch({ type: ACTIONS.SET_LABOR_TOTALS, data: temp });
+      dispatch({ type: ACTIONS.SET_LABOR_TOTALS, data: laborTemp });
 
       let total = 0;
       timesheets.forEach(
         timesheet => (total = total + timesheet.getHoursWorked()),
       );
+      dispatch({
+        type: ACTIONS.SET_ALL_DATA,
+        data: {
+          timesheetRes: timesheets,
+          transactionRes: transactions,
+          perDiemRes: arr,
+          taskRes: tasks,
+          tripRes: trips,
+        },
+      });
       dispatch({ type: ACTIONS.SET_TOTAL_HOURS_WORKED, data: total });
       dispatch({ type: ACTIONS.SET_LOADING, data: false });
       dispatch({ type: ACTIONS.SET_LOADED, data: true });
     });
-  }, [loadResources, state.laborTotals, serviceCallId]);
+  }, [serviceCallId]);
   const createReport = (section: string) => {
+    const totalMeals =
+      state.perDiems.reduce((aggr, pd) => aggr + pd.getRowsList().length, 0) *
+      MEALS_RATE;
+    const totalLodging = state.perDiems
+      .reduce((aggr, pd) => [...aggr, ...pd.getRowsList()], [] as PerDiemRow[])
+      .filter(pd => !pd.getMealsOnly())
+      .reduce((aggr, pd) => aggr + state.lodgings[pd.getId()], 0);
+    const totalTransactions = state.transactions.reduce(
+      (aggr, pd) => aggr + pd.getAmount(),
+      0,
+    );
     let fullString = '';
     var find = ',';
     var re = new RegExp(find, 'g');
@@ -399,7 +514,7 @@ export const CostReportCSV: FC<Props> = ({ serviceCallId, onClose }) => {
         fullString = fullString + tempString;
       }
     }
-    if (section == 'PerDiems' && state.transactions) {
+    if (section == 'PerDiems' && state.perDiems) {
       fullString =
         ' Department,Owner,Submitted Date,Approved By,Approved Date,Total Meals,Total Lodging,Notes' +
         `\r\n`;
@@ -435,11 +550,10 @@ export const CostReportCSV: FC<Props> = ({ serviceCallId, onClose }) => {
           ',' +
           t.getNotes() +
           `\r\n`;
-        console.log(tempString);
         fullString = fullString + tempString;
       }
     }
-    if (section == 'Trips' && state.transactions) {
+    if (section == 'Trips' && state.trips) {
       fullString =
         ' Type,Date ,Destination,Distance (in Miles),Home Travel ,Cost, Notes' +
         `\r\n`;
@@ -506,12 +620,11 @@ export const CostReportCSV: FC<Props> = ({ serviceCallId, onClose }) => {
   };
   useEffect(() => {
     if (!state.loadedInit) {
-      console.log('loading init');
+      console.log('loadedInit in useEffect');
       loadInit();
     }
     if (state.loadedInit == true && state.loaded === false) {
-      console.log('loading');
-
+      console.log('calling load in useEffect');
       load();
     }
   }, [state.loadedInit, loadInit, state.loaded, load]);
@@ -534,7 +647,17 @@ export const CostReportCSV: FC<Props> = ({ serviceCallId, onClose }) => {
       laborCostArray.push(value);
     }
   });
-
+  const totalMeals =
+    state.perDiems.reduce((aggr, pd) => aggr + pd.getRowsList().length, 0) *
+    MEALS_RATE;
+  const totalLodging = state.perDiems
+    .reduce((aggr, pd) => [...aggr, ...pd.getRowsList()], [] as PerDiemRow[])
+    .filter(pd => !pd.getMealsOnly())
+    .reduce((aggr, pd) => aggr + state.lodgings[pd.getId()], 0);
+  const totalTransactions = state.transactions.reduce(
+    (aggr, pd) => aggr + pd.getAmount(),
+    0,
+  );
   return state.loaded ? (
     <SectionBar key="ReportPage" uncollapsable={true}>
       <style>{`
@@ -661,60 +784,81 @@ export const CostReportCSV: FC<Props> = ({ serviceCallId, onClose }) => {
           <PrintParagraph tag="h2" key="transactionColumns">
             Transactions
           </PrintParagraph>
-          <PrintTable
-            columns={[
-              {
-                title: 'Department',
-                align: 'left',
-              },
-              {
-                title: 'Owner',
-                align: 'left',
-                widthPercentage: 10,
-              },
-              {
-                title: 'Cost Center / Vendor',
-                align: 'left',
-                widthPercentage: 10,
-              },
-              {
-                title: 'Date',
-                align: 'left',
-                widthPercentage: 10,
-              },
-              {
-                title: 'Amount',
-                align: 'left',
-                widthPercentage: 10,
-              },
-              {
-                title: 'Notes',
-                align: 'right',
-                widthPercentage: 20,
-              },
-            ]}
-            data={state.transactions.map(txn => {
-              return [
-                txn.getDepartment() ? (
-                  <>
-                    {txn.getDepartment()?.getClassification()} -{' '}
-                    {txn.getDepartment()?.getDescription()}
-                  </>
-                ) : (
-                  '-'
-                ),
-                txn.getOwnerName(),
-                <>
-                  {`${txn.getCostCenter()?.getDescription()}` + ' - '}
-                  <br />
-                  {txn.getVendor()}
-                </>,
-                formatDate(txn.getTimestamp()),
-                usd(txn.getAmount()),
-                txn.getNotes(),
-              ];
-            })}
-          />
+          {state.transactionAccounts
+            .filter(
+              account =>
+                state.costCenterTotals[
+                  `${account.getId()}-${account.getDescription()}`
+                ] != undefined,
+            )
+            .map(account => (
+              <div key={account.getId()}>
+                <PrintParagraph
+                  tag="h3"
+                  key={`${account.getId()}-${account.getDescription()}`}
+                >{`${account.getId()}-${account.getDescription()}`}</PrintParagraph>
+                <PrintTable
+                  key={`${account.getId()}-${account.getDescription()}${account.getAccountCategory()}`}
+                  columns={[
+                    {
+                      title: 'Department',
+                      align: 'left',
+                    },
+                    {
+                      title: 'Owner',
+                      align: 'left',
+                      widthPercentage: 10,
+                    },
+                    {
+                      title: 'Cost Center / Vendor',
+                      align: 'left',
+                      widthPercentage: 10,
+                    },
+                    {
+                      title: 'Date',
+                      align: 'left',
+                      widthPercentage: 10,
+                    },
+                    {
+                      title: 'Amount',
+                      align: 'left',
+                      widthPercentage: 10,
+                    },
+                    {
+                      title: 'Notes',
+                      align: 'right',
+                      widthPercentage: 20,
+                    },
+                  ]}
+                  data={state.transactions
+                    .filter(
+                      transaction =>
+                        transaction.getCostCenterId() === account.getId(),
+                    )
+                    .map(txn => {
+                      return [
+                        txn.getDepartment() ? (
+                          <>
+                            {txn.getDepartment()?.getClassification()} -{' '}
+                            {txn.getDepartment()?.getDescription()}
+                          </>
+                        ) : (
+                          '-'
+                        ),
+                        txn.getOwnerName(),
+                        <>
+                          {`${txn.getCostCenter()?.getDescription()}` + ' - '}
+                          <br />
+                          {txn.getVendor()}
+                        </>,
+                        formatDate(txn.getTimestamp()),
+                        usd(txn.getAmount()),
+                        txn.getNotes(),
+                      ];
+                    })}
+                />
+              </div>
+            ))}
           <PrintParagraph tag="h2" key="perDiemColumns">
             Per Diem
           </PrintParagraph>
@@ -731,7 +875,7 @@ export const CostReportCSV: FC<Props> = ({ serviceCallId, onClose }) => {
                 0,
               );
               if (totalMeals == 0 && totalLodging == 0) {
-                return <></>; // Don't show it
+                return null; // Don't show it
               }
               return (
                 <div key={pd.getId() + 'pdf'}>
@@ -876,11 +1020,17 @@ export const CostReportCSV: FC<Props> = ({ serviceCallId, onClose }) => {
               );
             })}
           <PrintParagraph tag="h2" key="timesheetsHeader">
-            Timesheet Lines
+            Labor Summary
           </PrintParagraph>
-          {state.timesheets.map(tsl => {
-            return (
-              <div key={tsl.getId() + 'pdf'}>
+          {state.classCodes
+            .filter(code => state.laborTotals[code.getId()] != undefined)
+            .map(code => (
+              <div key={code.getId()}>
+                <PrintParagraph
+                  key={`${code.getId()}-${code.getDescription()}`}
+                  tag="h3"
+                >{`${code.getId()}-${code.getDescription()}`}</PrintParagraph>
+
                 <PrintTable
                   columns={[
                     {
@@ -923,27 +1073,23 @@ export const CostReportCSV: FC<Props> = ({ serviceCallId, onClose }) => {
                       widthPercentage: 20,
                     },
                   ]}
-                  data={[
-                    [
-                      tsl.getTechnicianUserName() +
-                        ` (${tsl.getTechnicianUserId()})`,
-                      tsl.getDepartmentName(),
-                      tsl.getAdminApprovalUserName(),
-                      formatDate(tsl.getTimeStarted()) || '-',
-                      formatDate(tsl.getTimeFinished()) || '-',
-                      tsl.getBriefDescription(),
-                      tsl.getHoursWorked() != 0
-                        ? tsl.getHoursWorked() > 1
-                          ? `${tsl.getHoursWorked()} hrs`
-                          : `${tsl.getHoursWorked()} hr`
-                        : '-',
-                      tsl.getNotes(),
-                    ],
-                  ]}
+                  data={state.timesheets
+                    .filter(tsl => tsl.getClassCodeId() === code.getId())
+                    .map(tsl => {
+                      return [
+                        tsl.getTechnicianUserName(),
+                        tsl.getDepartmentName(),
+                        tsl.getAdminApprovalUserName(),
+                        formatDate(tsl.getTimeStarted()),
+                        formatDate(tsl.getTimeFinished()),
+                        tsl.getBriefDescription(),
+                        `${tsl.getHoursWorked()} hour(s)`,
+                        tsl.getNotes(),
+                      ];
+                    })}
                 />
               </div>
-            );
-          })}
+            ))}
           <PrintParagraph tag="h2" key="tripsHeader">
             Related Trips
           </PrintParagraph>
@@ -1150,7 +1296,7 @@ export const CostReportCSV: FC<Props> = ({ serviceCallId, onClose }) => {
                           value: (
                             <div key="laborheader">
                               Total Hours Worked
-                              <table key="LaborTypesContainer">
+                              <div key="LaborTypesContainer">
                                 <Collapse
                                   key={'LaborCollapseTypes'}
                                   in={state.laborTotalsDropDownActive === true}
@@ -1159,14 +1305,14 @@ export const CostReportCSV: FC<Props> = ({ serviceCallId, onClose }) => {
                                     let findAccount = code.getId();
                                     if (state.laborTotals[findAccount]) {
                                       return (
-                                        <tr key={'laborValue' + findAccount}>
+                                        <div key={'laborValue' + findAccount}>
                                           {code.getDescription()}
-                                        </tr>
+                                        </div>
                                       );
                                     }
                                   })}
                                 </Collapse>
-                              </table>
+                              </div>
                             </div>
                           ),
                         },
@@ -1178,7 +1324,7 @@ export const CostReportCSV: FC<Props> = ({ serviceCallId, onClose }) => {
                                 : state.totalHoursWorked == 0
                                 ? 'None'
                                 : `${state.totalHoursWorked} hr`}
-                              <table key="LaborCollapseValueHeader">
+                              <div key="LaborCollapseValueHeader">
                                 <Collapse
                                   key={'LaborCollapseValues'}
                                   in={state.laborTotalsDropDownActive === true}
@@ -1187,7 +1333,7 @@ export const CostReportCSV: FC<Props> = ({ serviceCallId, onClose }) => {
                                     let findAccount = code.getId();
                                     if (state.laborTotals[findAccount]) {
                                       return (
-                                        <tr
+                                        <div
                                           key={
                                             'laborTotal' +
                                             state.laborTotals[findAccount] +
@@ -1195,12 +1341,12 @@ export const CostReportCSV: FC<Props> = ({ serviceCallId, onClose }) => {
                                           }
                                         >
                                           {`${state.laborTotals[findAccount]} hour(s)`}
-                                        </tr>
+                                        </div>
                                       );
                                     }
                                   })}
                                 </Collapse>
-                              </table>
+                              </div>
                             </div>
                           ),
                         },
@@ -1211,8 +1357,7 @@ export const CostReportCSV: FC<Props> = ({ serviceCallId, onClose }) => {
                                 key={'dropDownbuttonLabor'}
                                 onClick={() => {
                                   dispatch({
-                                    type:
-                                      ACTIONS.SET_LABOR_TOTALS_DROPDOWN_ACTIVE,
+                                    type: ACTIONS.SET_LABOR_TOTALS_DROPDOWN_ACTIVE,
                                     data: !state.laborTotalsDropDownActive,
                                   });
                                 }}
@@ -1240,7 +1385,7 @@ export const CostReportCSV: FC<Props> = ({ serviceCallId, onClose }) => {
                       [
                         {
                           value: (
-                            <table key="CostCenterCollapseTypesContainer">
+                            <div key="CostCenterCollapseTypesContainer">
                               Transactions
                               <Collapse
                                 key={'CostCenterCollapseTypes'}
@@ -1250,24 +1395,25 @@ export const CostReportCSV: FC<Props> = ({ serviceCallId, onClose }) => {
                                   let findAccount = `${account.getId()}-${account.getDescription()}`;
                                   if (state.costCenterTotals[findAccount]) {
                                     return (
-                                      <tr
+                                      <div
                                         key={
                                           'transactionAccountValue' +
-                                          findAccount
+                                          findAccount +
+                                          account.getId()
                                         }
                                       >
                                         {findAccount}
-                                      </tr>
+                                      </div>
                                     );
                                   }
                                 })}
                               </Collapse>
-                            </table>
+                            </div>
                           ),
                         },
                         {
                           value: (
-                            <table key="CostCenterCollapseValueHeader">
+                            <div key="CostCenterCollapseValueHeader">
                               {usd(totalTransactions)}
                               <Collapse
                                 key={'CostCenterCollapseValues'}
@@ -1277,21 +1423,22 @@ export const CostReportCSV: FC<Props> = ({ serviceCallId, onClose }) => {
                                   let findAccount = `${account.getId()}-${account.getDescription()}`;
                                   if (state.costCenterTotals[findAccount]) {
                                     return (
-                                      <tr
+                                      <div
                                         key={
                                           'transactionAccountValue' +
-                                          state.costCenterTotals[findAccount]
+                                          state.costCenterTotals[findAccount] +
+                                          findAccount
                                         }
                                       >
                                         {usd(
                                           state.costCenterTotals[findAccount],
                                         )}
-                                      </tr>
+                                      </div>
                                     );
                                   }
                                 })}
                               </Collapse>
-                            </table>
+                            </div>
                           ),
                         },
                         {
@@ -1301,8 +1448,7 @@ export const CostReportCSV: FC<Props> = ({ serviceCallId, onClose }) => {
                                 key={'dropDownbuttonTransactions'}
                                 onClick={() => {
                                   dispatch({
-                                    type:
-                                      ACTIONS.SET_COST_CENTER_DROPDOWN_ACTIVE,
+                                    type: ACTIONS.SET_COST_CENTER_DROPDOWN_ACTIVE,
                                     data: !state.costCenterDropDownActive,
                                   });
                                 }}
@@ -1365,125 +1511,392 @@ export const CostReportCSV: FC<Props> = ({ serviceCallId, onClose }) => {
 
           {
             label: 'Transactions',
-            content: (
-              <InfoTable
-                styles={{ width: '100%', padding: 10 }}
-                columns={[
-                  {
-                    name: 'Department',
-                    align: 'left',
-                  },
-                  {
-                    name: 'Owner',
-                    align: 'left',
-                  },
-                  {
-                    name: 'Cost Center / Vendor',
-                    align: 'left',
-                  },
-                  {
-                    name: 'Date',
-                    align: 'left',
-                  },
-                  {
-                    name: 'Amount',
-                    align: 'left',
-                  },
-                  {
-                    name: 'Notes',
-                    align: 'left',
-                  },
-                ]}
-                data={state.transactions.map(txn => {
-                  return [
-                    {
-                      value: txn.getDepartment() ? (
-                        <div>
-                          {txn.getDepartment()?.getClassification()} -{' '}
-                          {txn.getDepartment()?.getDescription()}
-                        </div>
-                      ) : (
-                        '-'
-                      ),
-                    },
+            content: state.transactionAccounts
+              .filter(
+                account =>
+                  state.costCenterTotals[
+                    `${account.getId()}-${account.getDescription()}`
+                  ] != undefined,
+              )
+              .map(account => (
+                <SectionBar
+                  title={`${account.getId()}-${account.getDescription()}`}
+                  subtitle={usd(
+                    state.costCenterTotals[
+                      `${account.getId()}-${account.getDescription()}`
+                    ],
+                  )}
+                  key={'header' + account.getId()}
+                >
+                  <InfoTable
+                    key={account.getId()}
+                    styles={{ width: '100%', padding: 10 }}
+                    columns={[
+                      {
+                        name: 'Department',
+                        align: 'left',
+                      },
+                      {
+                        name: 'Owner',
+                        align: 'left',
+                      },
+                      {
+                        name: 'Cost Center / Vendor',
+                        align: 'left',
+                      },
+                      {
+                        name: 'Date',
+                        align: 'left',
+                      },
+                      {
+                        name: 'Amount',
+                        align: 'left',
+                      },
+                      {
+                        name: 'Notes',
+                        align: 'left',
+                      },
+                    ]}
+                    data={state.transactions
+                      .filter(
+                        transaction =>
+                          transaction.getCostCenterId() === account.getId(),
+                      )
+                      .map(txn => {
+                        return [
+                          {
+                            value: txn.getDepartment() ? (
+                              <div key={txn.getId() + txn.getDescription()}>
+                                {txn.getDepartment()?.getClassification()} -{' '}
+                                {txn.getDepartment()?.getDescription()}
+                              </div>
+                            ) : (
+                              '-'
+                            ),
+                          },
 
-                    { value: txn.getOwnerName() },
+                          { value: txn.getOwnerName() },
 
-                    {
-                      value: `${txn
-                        .getCostCenter()
-                        ?.getDescription()} - ${txn.getVendor()}`,
-                    },
-                    { value: formatDate(txn.getTimestamp()) },
-                    { value: usd(txn.getAmount()) },
+                          {
+                            value: `${txn
+                              .getCostCenter()
+                              ?.getDescription()} - ${txn.getVendor()}`,
+                          },
+                          { value: formatDate(txn.getTimestamp()) },
+                          { value: usd(txn.getAmount()) },
 
-                    {
-                      value: (
-                        <div style={{ fontSizeAdjust: '0.5' }}>
-                          {txn.getNotes()}
-                        </div>
-                      ),
-                    },
-                  ];
-                })}
-              />
-            ),
+                          {
+                            value: (
+                              <div style={{ fontSizeAdjust: '0.5' }}>
+                                {txn.getNotes()}
+                              </div>
+                            ),
+                          },
+                        ];
+                      })}
+                  />
+                </SectionBar>
+              )),
           },
 
           {
             label: 'PerDiems',
-            content: state.perDiems
-              .sort((a, b) =>
-                a.getDateSubmitted() > b.getDateSubmitted() ? -1 : 1,
+            content: state.users
+              .filter(user =>
+                state.perDiems.find(
+                  perDiem => perDiem.getUserId() === user.getId(),
+                ),
               )
-              .map(pd => {
-                const rowsList = pd.getRowsList();
-                const totalMeals = MEALS_RATE * rowsList.length;
-                const totalLodging = rowsList.reduce(
-                  (aggr, pd) =>
-                    aggr + (pd.getMealsOnly() ? 0 : state.lodgings[pd.getId()]),
-                  0,
-                );
-                if (totalMeals == 0 && totalLodging == 0) {
-                  return <></>; // Don't show it
+              .map(user => {
+                {
+                  return (
+                    <SectionBar
+                      key={user.getId() + user.getDateCreated()}
+                      title={`PerDiems For ${user.getFirstname()} ${user.getLastname()}`}
+                    >
+                      {state.perDiems
+                        .sort((a, b) =>
+                          a.getDateSubmitted() > b.getDateSubmitted() ? -1 : 1,
+                        )
+                        .filter(perdiem => perdiem.getUserId() == user.getId())
+                        .map(pd => {
+                          const rowsList = pd.getRowsList();
+                          const totalMeals = MEALS_RATE * rowsList.length;
+                          const totalLodging = rowsList.reduce(
+                            (aggr, pd) =>
+                              aggr +
+                              (pd.getMealsOnly()
+                                ? 0
+                                : state.lodgings[pd.getId()]),
+                            0,
+                          );
+                          return (
+                            <div key={pd.getId().toString() + 'div'}>
+                              <div
+                                style={{
+                                  breakInside: 'avoid',
+                                  display: 'inline-block',
+                                  width: '100%',
+                                }}
+                                key="PerDiemContainer"
+                              >
+                                <InfoTable
+                                  columns={[
+                                    {
+                                      name: 'Department',
+                                      align: 'left',
+                                    },
+                                    {
+                                      name: 'Owner',
+                                      align: 'left',
+                                    },
+                                    {
+                                      name: 'Submitted At',
+                                      align: 'left',
+                                    },
+                                    {
+                                      name: 'Approved By',
+                                      align: 'left',
+                                    },
+                                    {
+                                      name: 'Approved At',
+                                      align: 'left',
+                                    },
+                                    {
+                                      name: 'Total Meals',
+                                      align: 'left',
+                                    },
+                                    {
+                                      name: 'Total Lodging',
+                                      align: 'left',
+                                    },
+                                    {
+                                      name: 'Notes',
+                                      align: 'left',
+                                    },
+                                  ]}
+                                  data={[
+                                    [
+                                      {
+                                        value:
+                                          TimesheetDepartmentClientService.getDepartmentName(
+                                            pd.getDepartment()!,
+                                          ),
+                                      },
+                                      { value: pd.getOwnerName() },
+                                      {
+                                        value:
+                                          pd.getDateSubmitted() != NULL_TIME
+                                            ? formatDate(pd.getDateSubmitted())
+                                            : '-' || '-',
+                                      },
+                                      { value: pd.getApprovedByName() || '-' },
+                                      {
+                                        value:
+                                          pd.getDateApproved() != NULL_TIME
+                                            ? formatDate(pd.getDateApproved())
+                                            : '-' || '-',
+                                      },
+                                      { value: usd(totalMeals) },
+                                      {
+                                        value:
+                                          totalLodging != 0
+                                            ? usd(totalLodging)
+                                            : '-',
+                                      },
+                                      { value: pd.getNotes() },
+                                    ],
+                                  ]}
+                                />
+                                <Button
+                                  key={'dropDownbutton' + pd.getId().toString()}
+                                  onClick={() => {
+                                    let tempDropDowns = state.dropDowns;
+                                    const dropdown = tempDropDowns.findIndex(
+                                      dropdown =>
+                                        dropdown.perDiemId === pd.getId(),
+                                    );
+                                    if (tempDropDowns[dropdown]) {
+                                      if (tempDropDowns[dropdown].active == 0)
+                                        tempDropDowns[dropdown].active = 1;
+                                      else tempDropDowns[dropdown].active = 0;
+                                    }
+                                    dispatch({
+                                      type: ACTIONS.SET_DROPDOWNS,
+                                      data: tempDropDowns,
+                                    });
+                                  }}
+                                >
+                                  Details
+                                  {state.dropDowns.find(
+                                    dropdown =>
+                                      dropdown.perDiemId === pd.getId(),
+                                  )!.active == 1 ? (
+                                    <ExpandLess></ExpandLess>
+                                  ) : (
+                                    <ExpandMore></ExpandMore>
+                                  )}
+                                </Button>
+                              </div>
+                              <Collapse
+                                key={pd.getId().toString() + 'collapse'}
+                                in={
+                                  state.dropDowns.find(
+                                    dropdown =>
+                                      dropdown.perDiemId === pd.getId(),
+                                  )?.active == 1
+                                    ? true
+                                    : false
+                                }
+                              >
+                                <InfoTable
+                                  key={pd.getId().toString() + 'days'}
+                                  columns={[
+                                    {
+                                      name: 'Date',
+                                      align: 'left',
+                                    },
+                                    {
+                                      name: 'Zip Code',
+                                      align: 'left',
+                                    },
+                                    {
+                                      name: 'Meals Only',
+                                      align: 'left',
+                                    },
+                                    {
+                                      name: 'Meals',
+                                      align: 'left',
+                                    },
+                                    {
+                                      name: 'Lodging',
+                                      align: 'left',
+                                    },
+                                    {
+                                      name: 'Notes',
+                                      align: 'left',
+                                    },
+                                  ]}
+                                  data={rowsList.map(pdr => {
+                                    return [
+                                      {
+                                        value: formatDate(pdr.getDateString()),
+                                      },
+                                      { value: pdr.getZipCode() },
+                                      {
+                                        value: pdr.getMealsOnly()
+                                          ? 'Yes'
+                                          : 'No',
+                                      },
+                                      { value: usd(MEALS_RATE) },
+                                      {
+                                        value: state.lodgings[pdr.getId()]
+                                          ? usd(state.lodgings[pdr.getId()])
+                                          : '-',
+                                      },
+                                      { value: pdr.getNotes() },
+                                    ];
+                                  })}
+                                />
+                              </Collapse>
+                            </div>
+                          );
+                        })}
+                    </SectionBar>
+                  );
                 }
-                return (
-                  <SectionBar
-                    key={pd.getId().toString() + 'Header'}
-                    title={`Per Diem  ${
-                      pd.getDateSubmitted().split(' ')[0] !=
-                      NULL_TIME.split(' ')[0]
-                        ? '-'
-                        : ''
-                    }
-                  ${
-                    pd.getDateSubmitted().split(' ')[0] !=
-                    NULL_TIME.split(' ')[0]
-                      ? pd.getDateSubmitted().split(' ')[0]
-                      : ''
-                  }
-                  ${pd.getOwnerName() ? '-' : ''} ${pd.getOwnerName()}`}
-                  >
-                    <div
-                      style={{
-                        breakInside: 'avoid',
-                        display: 'inline-block',
-                        width: '100%',
+              }),
+          },
+
+          {
+            label: 'Timesheets',
+            content: state.classCodes
+              .filter(code => state.laborTotals[code.getId()] != undefined)
+              .map(code => (
+                <SectionBar
+                  title={`${code.getId()}-${code.getDescription()}`}
+                  subtitle={`${state.laborTotals[code.getId()]} hour(s)`}
+                  key={'header' + code.getId()}
+                >
+                  <InfoTable
+                    columns={[
+                      {
+                        name: 'Technician',
+                        align: 'left',
+                      },
+                      {
+                        name: 'Week',
+                        align: 'left',
+                      },
+                      {
+                        name: 'Total Hours',
+                        align: 'left',
+                      },
+                    ]}
+                    data={state.timesheetWeeklySubtotals
+                      .filter(week => week.classCodeId == code.getId())
+                      .map(week => {
+                        return [
+                          {
+                            value: `${state.users
+                              .find(user => user.getId() === week.employeeId)
+                              ?.getFirstname()}-${state.users
+                              .find(user => user.getId() === week.employeeId)
+                              ?.getLastname()}`,
+                          },
+                          {
+                            value: `${week.weekStart}-${week.weekEnd}`,
+                          },
+                          { value: `${week.hoursSubtotal} hour(s)` },
+                        ];
+                      })}
+                  />
+                  <div key="TimesheetDetails">
+                    <Button
+                      key={'dropDownbutton' + code.getId().toString()}
+                      onClick={() => {
+                        let tempDropDowns = state.classCodeDropdowns;
+                        const dropdown = tempDropDowns.findIndex(
+                          dropdown => dropdown.classCodeId === code.getId(),
+                        );
+                        if (tempDropDowns[dropdown]) {
+                          if (tempDropDowns[dropdown].active == 0)
+                            tempDropDowns[dropdown].active = 1;
+                          else tempDropDowns[dropdown].active = 0;
+                        }
+                        dispatch({
+                          type: ACTIONS.SET_CLASS_CODE_DROPDOWNS,
+                          data: tempDropDowns,
+                        });
                       }}
-                      key="PerDiemContainer"
+                    >
+                      Details
+                      {state.classCodeDropdowns.find(
+                        dropdown => dropdown.classCodeId === code.getId(),
+                      )!.active == 1 ? (
+                        <ExpandLess></ExpandLess>
+                      ) : (
+                        <ExpandMore></ExpandMore>
+                      )}
+                    </Button>
+                    <Collapse
+                      key={code.getId().toString() + 'collapse'}
+                      in={
+                        state.classCodeDropdowns.find(
+                          dropdown => dropdown.classCodeId === code.getId(),
+                        )?.active == 1
+                          ? true
+                          : false
+                      }
                     >
                       <InfoTable
                         columns={[
                           {
+                            name: 'Technician',
+                            align: 'left',
+                          },
+                          {
                             name: 'Department',
-                            align: 'left',
-                          },
-                          {
-                            name: 'Owner',
-                            align: 'left',
-                          },
-                          {
-                            name: 'Submitted At',
                             align: 'left',
                           },
                           {
@@ -1491,355 +1904,248 @@ export const CostReportCSV: FC<Props> = ({ serviceCallId, onClose }) => {
                             align: 'left',
                           },
                           {
-                            name: 'Approved At',
+                            name: 'Time Started',
                             align: 'left',
                           },
                           {
-                            name: 'Total Meals',
+                            name: 'Time Finished',
                             align: 'left',
                           },
                           {
-                            name: 'Total Lodging',
+                            name: 'Brief Description',
                             align: 'left',
                           },
                           {
-                            name: 'Notes',
-                            align: 'left',
-                          },
-                        ]}
-                        data={[
-                          [
-                            {
-                              value: TimesheetDepartmentClientService.getDepartmentName(
-                                pd.getDepartment()!,
-                              ),
-                            },
-                            { value: pd.getOwnerName() },
-                            {
-                              value:
-                                pd.getDateSubmitted() != NULL_TIME
-                                  ? formatDate(pd.getDateSubmitted())
-                                  : '-' || '-',
-                            },
-                            { value: pd.getApprovedByName() || '-' },
-                            {
-                              value:
-                                pd.getDateApproved() != NULL_TIME
-                                  ? formatDate(pd.getDateApproved())
-                                  : '-' || '-',
-                            },
-                            { value: usd(totalMeals) },
-                            {
-                              value:
-                                totalLodging != 0 ? usd(totalLodging) : '-',
-                            },
-                            { value: pd.getNotes() },
-                          ],
-                        ]}
-                      />
-                      <Button
-                        key={'dropDownbutton' + pd.getId().toString()}
-                        onClick={() => {
-                          let tempDropDowns = state.dropDowns;
-                          const dropdown = tempDropDowns.findIndex(
-                            dropdown => dropdown.perDiemId === pd.getId(),
-                          );
-                          if (tempDropDowns[dropdown]) {
-                            console.log('we found the dropdown');
-                            if (tempDropDowns[dropdown].active == 0)
-                              tempDropDowns[dropdown].active = 1;
-                            else tempDropDowns[dropdown].active = 0;
-                          }
-                          console.log(tempDropDowns);
-                          dispatch({
-                            type: ACTIONS.SET_DROPDOWNS,
-                            data: tempDropDowns,
-                          });
-                        }}
-                      >
-                        Details
-                        {state.dropDowns.find(
-                          dropdown => dropdown.perDiemId === pd.getId(),
-                        )!.active == 1 ? (
-                          <ExpandLess></ExpandLess>
-                        ) : (
-                          <ExpandMore></ExpandMore>
-                        )}
-                      </Button>
-                    </div>
-                    <Collapse
-                      key={pd.getId().toString() + 'collapse'}
-                      in={
-                        state.dropDowns.find(
-                          dropdown => dropdown.perDiemId === pd.getId(),
-                        )?.active == 1
-                          ? true
-                          : false
-                      }
-                    >
-                      <InfoTable
-                        key={pd.getId().toString() + 'days'}
-                        columns={[
-                          {
-                            name: 'Date',
-                            align: 'left',
-                          },
-                          {
-                            name: 'Zip Code',
-                            align: 'left',
-                          },
-                          {
-                            name: 'Meals Only',
-                            align: 'left',
-                          },
-                          {
-                            name: 'Meals',
-                            align: 'left',
-                          },
-                          {
-                            name: 'Lodging',
+                            name: 'Hours Worked',
                             align: 'left',
                           },
                           {
                             name: 'Notes',
-                            align: 'left',
+                            align: 'right',
                           },
                         ]}
-                        data={rowsList.map(pdr => {
-                          return [
-                            { value: formatDate(pdr.getDateString()) },
-                            { value: pdr.getZipCode() },
-                            { value: pdr.getMealsOnly() ? 'Yes' : 'No' },
-                            { value: usd(MEALS_RATE) },
-                            {
-                              value: state.lodgings[pdr.getId()]
-                                ? usd(state.lodgings[pdr.getId()])
-                                : '-',
-                            },
-                            { value: pdr.getNotes() },
-                          ];
-                        })}
+                        data={state.timesheets
+                          .filter(
+                            timesheet =>
+                              timesheet.getClassCodeId() === code.getId(),
+                          )
+                          .map(tsl => {
+                            return [
+                              {
+                                value:
+                                  tsl.getTechnicianUserName() +
+                                  ` (${tsl.getTechnicianUserId()})`,
+                              },
+                              { value: tsl.getDepartmentName() },
+                              {
+                                value: tsl.getAdminApprovalUserName(),
+                              },
+                              {
+                                value: formatDate(tsl.getTimeStarted()) || '-',
+                              },
+                              {
+                                value: formatDate(tsl.getTimeFinished()) || '-',
+                              },
+                              { value: tsl.getBriefDescription() },
+                              {
+                                value:
+                                  tsl.getHoursWorked() != 0
+                                    ? tsl.getHoursWorked() > 1
+                                      ? `${tsl.getHoursWorked()} hrs`
+                                      : `${tsl.getHoursWorked()} hr`
+                                    : '-',
+                              },
+                              { value: tsl.getNotes() },
+                            ];
+                          })}
                       />
                     </Collapse>
-                  </SectionBar>
-                );
-              }),
-          },
-
-          {
-            label: 'Timesheets',
-            content: (
-              <div key={'TimesheetData'}>
-                <InfoTable
-                  columns={[
-                    {
-                      name: 'Technician',
-                      align: 'left',
-                    },
-                    {
-                      name: 'Department',
-                      align: 'left',
-                    },
-                    {
-                      name: 'Approved By',
-                      align: 'left',
-                    },
-                    {
-                      name: 'Time Started',
-                      align: 'left',
-                    },
-                    {
-                      name: 'Time Finished',
-                      align: 'left',
-                    },
-                    {
-                      name: 'Brief Description',
-                      align: 'left',
-                    },
-                    {
-                      name: 'Hours Worked',
-                      align: 'left',
-                    },
-                    {
-                      name: 'Notes',
-                      align: 'right',
-                    },
-                  ]}
-                  data={state.timesheets.map(tsl => {
-                    return [
-                      {
-                        value:
-                          tsl.getTechnicianUserName() +
-                          ` (${tsl.getTechnicianUserId()})`,
-                      },
-                      { value: tsl.getDepartmentName() },
-                      { value: tsl.getAdminApprovalUserName() },
-                      { value: formatDate(tsl.getTimeStarted()) || '-' },
-                      { value: formatDate(tsl.getTimeFinished()) || '-' },
-                      { value: tsl.getBriefDescription() },
-                      {
-                        value:
-                          tsl.getHoursWorked() != 0
-                            ? tsl.getHoursWorked() > 1
-                              ? `${tsl.getHoursWorked()} hrs`
-                              : `${tsl.getHoursWorked()} hr`
-                            : '-',
-                      },
-                      { value: tsl.getNotes() },
-                    ];
-                  })}
-                />
-              </div>
-            ),
+                  </div>
+                </SectionBar>
+              )),
           },
 
           {
             label: 'Trips',
-            content:
-              state.trips &&
-              state.trips.map(trip => {
-                let included = false;
-                tripsRendered.forEach(tripRendered => {
-                  if (tripRendered.getId() == trip.getId()) included = true;
-                });
-                if (included) return <> </>;
-
-                tripsRendered.push(trip);
+            content: state.users
+              .filter(user =>
+                state.trips.find(trip => trip.getUserId() === user.getId()),
+              )
+              .map(user => {
                 return (
-                  <div
-                    key={trip.getId()}
-                    style={{
-                      breakInside: 'avoid',
-                      display: 'inline-block',
-                      width: '100%',
-                    }}
+                  <SectionBar
+                    key={user.getId() + 'Trips'}
+                    title={`${user.getFirstname()} ${user.getLastname()} Trips`}
                   >
-                    <InfoTable
-                      columns={[
-                        {
-                          name: 'Date',
-                          align: 'left',
-                        },
-                        {
-                          name: 'Origin Address',
-                          align: 'left',
-                        },
-                        {
-                          name: 'Destination Address',
-                          align: 'left',
-                        },
-                        {
-                          name: 'Distance (Miles)',
-                          align: 'left',
-                        },
-                        {
-                          name: 'Notes',
-                          align: 'left',
-                        },
-                        {
-                          name: 'Home Travel',
-                          align: 'right',
-                        },
-                        {
-                          name: `Cost (${usd(IRS_SUGGESTED_MILE_FACTOR)}/mi)`,
-                          align: 'right',
-                        },
-                        {
-                          name: 'Per Diem Row ID',
-                          align: 'right',
-                        },
-                      ]}
-                      data={[
-                        [
-                          { value: formatDate(trip.getDate()) },
-                          { value: trip.getOriginAddress() },
-                          { value: trip.getDestinationAddress() },
-                          { value: trip.getDistanceInMiles().toFixed(2) },
-                          { value: trip.getNotes() },
-                          { value: trip.getHomeTravel() },
-                          {
-                            value: `${usd(
-                              trip.getDistanceInMiles() > 30 &&
-                                trip.getHomeTravel()
-                                ? Number(
-                                    (
-                                      (trip.getDistanceInMiles() - 30) *
-                                      IRS_SUGGESTED_MILE_FACTOR
-                                    ).toFixed(2),
-                                  )
-                                : Number(
-                                    (
-                                      trip.getDistanceInMiles() *
-                                      IRS_SUGGESTED_MILE_FACTOR
-                                    ).toFixed(2),
-                                  ),
-                            )} 
+                    {state.trips &&
+                      state.trips.map(trip => {
+                        return (
+                          <div
+                            key={trip.getId()}
+                            style={{
+                              breakInside: 'avoid',
+                              display: 'inline-block',
+                              width: '100%',
+                            }}
+                          >
+                            <InfoTable
+                              columns={[
+                                {
+                                  name: 'Date',
+                                  align: 'left',
+                                },
+                                {
+                                  name: 'Origin Address',
+                                  align: 'left',
+                                },
+                                {
+                                  name: 'Destination Address',
+                                  align: 'left',
+                                },
+                                {
+                                  name: 'Distance (Miles)',
+                                  align: 'left',
+                                },
+                                {
+                                  name: 'Notes',
+                                  align: 'left',
+                                },
+                                {
+                                  name: 'Home Travel',
+                                  align: 'right',
+                                },
+                                {
+                                  name: `Cost (${usd(
+                                    IRS_SUGGESTED_MILE_FACTOR,
+                                  )}/mi)`,
+                                  align: 'right',
+                                },
+                                {
+                                  name: 'Per Diem Row ID',
+                                  align: 'right',
+                                },
+                              ]}
+                              data={[
+                                [
+                                  { value: formatDate(trip.getDate()) },
+                                  { value: trip.getOriginAddress() },
+                                  { value: trip.getDestinationAddress() },
+                                  {
+                                    value: trip.getDistanceInMiles().toFixed(2),
+                                  },
+                                  { value: trip.getNotes() },
+                                  { value: trip.getHomeTravel() },
+                                  {
+                                    value: `${usd(
+                                      trip.getDistanceInMiles() > 30 &&
+                                        trip.getHomeTravel()
+                                        ? Number(
+                                            (
+                                              (trip.getDistanceInMiles() - 30) *
+                                              IRS_SUGGESTED_MILE_FACTOR
+                                            ).toFixed(2),
+                                          )
+                                        : Number(
+                                            (
+                                              trip.getDistanceInMiles() *
+                                              IRS_SUGGESTED_MILE_FACTOR
+                                            ).toFixed(2),
+                                          ),
+                                    )} 
                           ${
                             trip.getDistanceInMiles() > 30 &&
                             trip.getHomeTravel()
                               ? '(30 miles docked for home travel)'
                               : ''
                           }`,
-                          },
-                          { value: trip.getPerDiemRowId() },
-                        ],
-                      ]}
-                    />
-                  </div>
+                                  },
+                                  { value: trip.getPerDiemRowId() },
+                                ],
+                              ]}
+                            />
+                          </div>
+                        );
+                      })}
+                  </SectionBar>
                 );
               }),
           },
           {
-            label: 'Billable Tasks',
-            content: (
-              <div key={'TaskDAta'}>
-                <InfoTable
-                  columns={[
-                    {
-                      name: 'Type',
-                      align: 'left',
-                    },
-                    {
-                      name: 'Date Performed',
-                      align: 'left',
-                    },
-                    {
-                      name: 'Details',
-                      align: 'left',
-                    },
-                    {
-                      name: 'Flat Rate?',
-                      align: 'left',
-                    },
-                    {
-                      name: 'Amount',
-                      align: 'left',
-                    },
-                    {
-                      name: 'Notes',
-                      align: 'right',
-                    },
-                  ]}
-                  data={state.tasks.map(task => {
-                    return [
-                      {
-                        value: task.getBillableType(),
-                      },
-                      { value: formatDate(task.getDatePerformed()) },
-                      { value: task.getDetails() },
-                      { value: task.getFlatRate() === 1 ? 'Yes' : 'No' },
-                      {
-                        value:
-                          task.getBillableType() === 'Spiff'
-                            ? usd(task.getSpiffAmount())
-                            : usd(task.getToolpurchaseCost()),
-                      },
-                      { value: task.getNotes() },
-                    ];
-                  })}
-                />
-              </div>
-            ),
+            label: 'Task',
+            content: state.users
+              .filter(user =>
+                state.tasks.find(task => task.getExternalId() === user.getId()),
+              )
+              .map(user => {
+                return (
+                  <SectionBar
+                    key={user.getId() + 'Billable Tasks'}
+                    title={`${user.getFirstname()} ${user.getLastname()} Billable Tasks`}
+                    subtitle={`Total: ${usd(
+                      state.tasks &&
+                        state.tasks
+                          .filter(task => task.getExternalId() === user.getId())
+                          .reduce((acc, val) => acc + val.getSpiffAmount(), 0),
+                    )}`}
+                  >
+                    {state.tasks &&
+                      state.tasks
+                        .filter(task => task.getExternalId() === user.getId())
+                        .map(task => {
+                          return (
+                            <div
+                              key={task.getId()}
+                              style={{
+                                breakInside: 'avoid',
+                                display: 'inline-block',
+                                width: '100%',
+                              }}
+                            >
+                              <InfoTable
+                                columns={[
+                                  {
+                                    name: 'Type',
+                                    align: 'left',
+                                  },
+                                  {
+                                    name: 'Date Performed',
+                                    align: 'left',
+                                  },
+                                  {
+                                    name: 'Details',
+                                    align: 'left',
+                                  },
+                                  {
+                                    name: 'Amount',
+                                    align: 'left',
+                                  },
+                                  {
+                                    name: 'Notes',
+                                    align: 'right',
+                                  },
+                                ]}
+                                data={[
+                                  [
+                                    { value: task.getBillableType() },
+                                    {
+                                      value: formatDate(
+                                        task.getDatePerformed(),
+                                      ),
+                                    },
+                                    {
+                                      value: task.getDetails(),
+                                    },
+                                    { value: usd(task.getSpiffAmount()) },
+                                    { value: task.getNotes() },
+                                  ],
+                                ]}
+                              />
+                            </div>
+                          );
+                        })}
+                  </SectionBar>
+                );
+              }),
           },
         ]}
       ></Tabs>
@@ -1848,3 +2154,6 @@ export const CostReportCSV: FC<Props> = ({ serviceCallId, onClose }) => {
     <Loader></Loader>
   );
 };
+/* Old timesheet, this will be shown via dropdown
+
+*/

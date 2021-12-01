@@ -6,7 +6,15 @@ import { Trip } from '@kalos-core/kalos-rpc/compiled-protos/perdiem_pb';
 import { Task } from '@kalos-core/kalos-rpc/Task';
 import { TransactionAccount } from '@kalos-core/kalos-rpc/TransactionAccount';
 import { ClassCode, ClassCodeClient } from '@kalos-core/kalos-rpc/ClassCode';
+import { User } from '@kalos-core/kalos-rpc/User';
 
+export interface WeekClassCodeBreakdownSubtotal {
+  weekStart: string;
+  weekEnd: string;
+  classCodeId: number;
+  employeeId: number;
+  hoursSubtotal: number;
+}
 export type State = {
   loading: boolean;
   loadingEvent: boolean;
@@ -16,6 +24,7 @@ export type State = {
   lodgings: { [key: number]: number };
   costCenterTotals: { [key: string]: number };
   laborTotals: { [key: string]: number };
+  classCodeDropdowns: { classCodeId: number; active: number }[];
   transactionAccounts: TransactionAccount[];
   totalHoursWorked: number;
   loadedInit: boolean;
@@ -24,7 +33,10 @@ export type State = {
   trips: Trip[];
   tripsTotal: number;
   tasks: Task[];
+  users: User[];
   classCodes: ClassCode[];
+  transactionDropDowns: { costCenterId: number; active: number }[];
+  timesheetWeeklySubtotals: WeekClassCodeBreakdownSubtotal[];
   dropDowns: { perDiemId: number; active: number }[];
   activeTab: string;
   costCenterDropDownActive: boolean;
@@ -39,6 +51,7 @@ export enum ACTIONS {
   SET_TIMESHEETS = 'setTimesheets',
   SET_TRANSACTIONS = 'setTransactions',
   SET_LODGINGS = 'setLodgings',
+  SET_USERS = 'setUsers',
   SET_TOTAL_HOURS_WORKED = 'setTotalHoursWorked',
   SET_LOADED_INIT = 'setLoadedInit',
   SET_EVENT = 'setEvent',
@@ -49,12 +62,16 @@ export enum ACTIONS {
   SET_TRIPS_TOTAL = 'setTripsTotal',
   SET_TASKS = 'setTasks',
   SET_DROPDOWNS = 'setDropDowns',
+  SET_CLASS_CODE_DROPDOWNS = 'setClassCodeDropdowns',
+  SET_TRANSACTION_DROPDOWNS = 'setTransactionDropDowns',
+  SET_TIMESHEET_WEEKLY_SUBTOTALS = 'setTimesheetWeeklySubtotals',
   SET_COST_CENTER_DROPDOWN_ACTIVE = 'setCostCenterDropdownActive',
   SET_LABOR_TOTALS_DROPDOWN_ACTIVE = 'setLaborTotalsDropdownActive',
   SET_LABOR_TOTALS = 'setLaborTotals',
   SET_ACTIVE_TAB = 'setActiveTab',
   SET_PRINT_STATUS = 'setPrintStatus',
   SET_TRANSACTION_ACCOUNTS = 'setTransactionAccounts',
+  SET_ALL_DATA = 'setAllData',
 }
 
 export type Action =
@@ -66,6 +83,20 @@ export type Action =
   | { type: ACTIONS.SET_TIMESHEETS; data: TimesheetLine[] }
   | { type: ACTIONS.SET_TRANSACTIONS; data: Transaction[] }
   | { type: ACTIONS.SET_LODGINGS; data: { [key: number]: number } }
+  | {
+      type: ACTIONS.SET_CLASS_CODE_DROPDOWNS;
+      data: { classCodeId: number; active: number }[];
+    }
+  | {
+      type: ACTIONS.SET_ALL_DATA;
+      data: {
+        perDiemRes: PerDiem[];
+        transactionRes: Transaction[];
+        taskRes: Task[];
+        tripRes: Trip[];
+        timesheetRes: TimesheetLine[];
+      };
+    }
   | { type: ACTIONS.SET_COST_CENTER_TOTALS; data: { [key: string]: number } }
   | { type: ACTIONS.SET_LABOR_TOTALS; data: { [key: string]: number } }
   | { type: ACTIONS.SET_TOTAL_HOURS_WORKED; data: number }
@@ -73,6 +104,7 @@ export type Action =
   | { type: ACTIONS.SET_COST_CENTER_DROPDOWN_ACTIVE; data: boolean }
   | { type: ACTIONS.SET_LABOR_TOTALS_DROPDOWN_ACTIVE; data: boolean }
   | { type: ACTIONS.SET_EVENT; data: Event }
+  | { type: ACTIONS.SET_USERS; data: User[] }
   | { type: ACTIONS.SET_TRIPS; data: Trip[] }
   | { type: ACTIONS.SET_TRANSACTION_ACCOUNTS; data: TransactionAccount[] }
   | { type: ACTIONS.SET_TRIPS_TOTAL; data: number }
@@ -85,6 +117,14 @@ export type Action =
   | {
       type: ACTIONS.SET_DROPDOWNS;
       data: { perDiemId: number; active: number }[];
+    }
+  | {
+      type: ACTIONS.SET_TIMESHEET_WEEKLY_SUBTOTALS;
+      data: WeekClassCodeBreakdownSubtotal[];
+    }
+  | {
+      type: ACTIONS.SET_TRANSACTION_DROPDOWNS;
+      data: { costCenterId: number; active: number }[];
     };
 
 export const reducer = (state: State, action: Action) => {
@@ -113,10 +153,33 @@ export const reducer = (state: State, action: Action) => {
         timesheets: action.data,
       };
     }
+    case ACTIONS.SET_TIMESHEET_WEEKLY_SUBTOTALS: {
+      return {
+        ...state,
+        timesheetWeeklySubtotals: action.data,
+      };
+    }
     case ACTIONS.SET_TRANSACTIONS: {
       return {
         ...state,
         transactions: action.data,
+      };
+    }
+    case ACTIONS.SET_USERS: {
+      return {
+        ...state,
+        users: action.data,
+      };
+    }
+    case ACTIONS.SET_ALL_DATA: {
+      console.log('what we got in reducer', action.data);
+      return {
+        ...state,
+        timesheets: action.data.timesheetRes,
+        transactions: action.data.transactionRes,
+        tasks: action.data.taskRes,
+        perDiems: action.data.perDiemRes,
+        trips: action.data.tripRes,
       };
     }
     case ACTIONS.SET_LODGINGS: {
@@ -131,13 +194,21 @@ export const reducer = (state: State, action: Action) => {
         costCenterTotals: action.data,
       };
     }
+    case ACTIONS.SET_CLASS_CODE_DROPDOWNS: {
+      return {
+        ...state,
+        classCodeDropdowns: action.data,
+      };
+    }
     case ACTIONS.SET_LABOR_TOTALS: {
+      console.log('we set the labor total', action.data);
       return {
         ...state,
         setLaborTotals: action.data,
       };
     }
     case ACTIONS.SET_TRANSACTION_ACCOUNTS: {
+      console.log(action.data);
       return {
         ...state,
         transactionAccounts: action.data,
