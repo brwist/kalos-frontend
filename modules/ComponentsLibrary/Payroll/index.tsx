@@ -269,7 +269,6 @@ export const Payroll: FC<Props> = ({ userID }) => {
             {role === 'Manager' && (
               <Button
                 label={'Open Job Report(s)'}
-                disabled={true}
                 onClick={() => setOpenReport(true)}
               ></Button>
             )}
