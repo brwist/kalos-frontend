@@ -514,7 +514,7 @@ export const CostReportCSV: FC<Props> = ({ serviceCallId, onClose }) => {
         fullString = fullString + tempString;
       }
     }
-    if (section == 'PerDiems' && state.transactions) {
+    if (section == 'PerDiems' && state.perDiems) {
       fullString =
         ' Department,Owner,Submitted Date,Approved By,Approved Date,Total Meals,Total Lodging,Notes' +
         `\r\n`;
@@ -553,7 +553,7 @@ export const CostReportCSV: FC<Props> = ({ serviceCallId, onClose }) => {
         fullString = fullString + tempString;
       }
     }
-    if (section == 'Trips' && state.transactions) {
+    if (section == 'Trips' && state.trips) {
       fullString =
         ' Type,Date ,Destination,Distance (in Miles),Home Travel ,Cost, Notes' +
         `\r\n`;
