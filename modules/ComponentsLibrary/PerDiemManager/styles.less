@@ -1,0 +1,41 @@
+@import '../../../styles/index.less';
+
+.PerDiem {
+  &Department {
+    margin-top: .spacing() [];
+  }
+  &Calendar {
+    background-color: @grey-300;
+    padding-bottom: .spacing() [];
+  }
+  &Row {
+    margin-bottom: .spacing(0.5) [];
+  }
+  &FormFooter {
+    text-align: center;
+  }
+  &Button {
+    margin-left: 0 !important;
+  }
+  &OtherDepartmentCard {
+    opacity: 0.3;
+    pointer-events: none;
+  }
+  &OtherDepartmentText {
+    margin-top: .spacing(2) [];
+    margin-bottom: .spacing(5.75) [];
+    text-align: center;
+    line-height: 20px;
+    font-style: italic;
+  }
+  &ManagerDepartment {
+    width: auto;
+    min-width: 250px;
+    flex-grow: 0;
+    margin-left: .spacing(2) [];
+    @media @bp-md-down {
+      margin-top: .spacing(2) [];
+      margin-left: 0;
+    }
+  }
+}

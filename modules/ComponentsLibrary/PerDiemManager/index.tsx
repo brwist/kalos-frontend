@@ -68,20 +68,6 @@ export const SCHEMA_KALOS_MAP_INPUT_FORM: Schema<Trip> = [
 
 const formatDateFns = (date: Date) => format(date, 'yyyy-MM-dd');
 
-const handleGetTripDistance = async (origin: string, destination: string) => {
-  try {
-    await MapClientService.getTripDistance(origin, destination);
-  } catch (error: any) {
-    console.error(
-      'An error occurred while calculating the trip distance: ',
-      error,
-    );
-    alert(
-      'An error occurred while calculating the trip distance. Please try again, or contact your administrator if this error persists.',
-    );
-  }
-};
-
 export const getStatus = (
   dateApproved: string,
   dateSubmitted: string,
@@ -104,14 +90,14 @@ export const getStatus = (
       text: 'Processed By Payroll',
       color: '#' + JOB_STATUS_COLORS['Requested'],
     };
-  if (dateApproved != NULL_TIME && dateApproved != '')
+  if (dateApproved != NULL_TIME)
     return {
       status: 'APPROVED',
       button: isManager ? 'Approve' : 'Submit',
       text: 'Approved',
       color: '#' + JOB_STATUS_COLORS['Completed'],
     };
-  if (dateSubmitted != NULL_TIME && dateSubmitted != '')
+  if (dateSubmitted != NULL_TIME)
     return {
       status: 'PENDING_APPROVE',
       button: isManager ? 'Approve' : 'Submit',
@@ -178,7 +164,7 @@ const SCHEMA_PER_DIEM_ROW: Schema<PerDiemRow> = [
   ],
 ];
 
-export const PerDiemComponent: FC<Props> = ({
+export const PerDiemManager: FC<Props> = ({
   loggedUserId = 0,
   onClose,
   perDiem,
@@ -255,6 +241,7 @@ export const PerDiemComponent: FC<Props> = ({
         month,
       );
       setGovPerDiems(govPerDiems);
+      console.log('we got called');
       const rows = loadedPerDiem.getRowsList();
       const test = [];
       for (let j = 0; j < rows.length; j++) {
@@ -266,19 +253,12 @@ export const PerDiemComponent: FC<Props> = ({
       }
       setJobLinkList(test);
     }
-
     if (loggedUserId) {
       setInitializing(true);
       const user = await UserClientService.loadUserById(loggedUserId);
       setUser(user);
-      if (ownerId) {
-        const owner = await UserClientService.loadUserById(ownerId);
-        setOwner(owner);
-      }
-      if (!ownerId) {
-        const owner = await UserClientService.loadUserById(loggedUserId);
-        setOwner(owner);
-      }
+      const owner = await UserClientService.loadUserById(loggedUserId);
+      setOwner(owner);
       //const depeartments = await TimesheetDepartmentClientService.loadTimeSheetDepartments() For some reason, this isn't loading data
       const client = new TimesheetDepartmentClient(ENDPOINT);
       const departmentReq = new TimesheetDepartment();
@@ -319,13 +299,13 @@ export const PerDiemComponent: FC<Props> = ({
       setInitializing(false);
     }
     setInitialized(true);
-  }, [dateStarted, loggedUserId, ownerId, loadedPerDiem]);
+  }, [dateStarted, loggedUserId, loadedPerDiem]);
   const load = useCallback(async () => {
     if (!loggedUserId) return;
     setLoading(true);
     const resultsList = (
       await PerDiemClientService.loadPerDiemByUserIdAndDateStarted(
-        ownerId ? ownerId : loggedUserId,
+        loggedUserId,
         formatDateFns(dateStarted),
       )
     ).getResultsList();
@@ -368,7 +348,6 @@ export const PerDiemComponent: FC<Props> = ({
     setPerDiems,
     loadedPerDiem,
     dateStarted,
-    ownerId,
     managerDepartmentIds,
     setManagerPerDiems,
     setGovPerDiems,
@@ -411,25 +390,21 @@ export const PerDiemComponent: FC<Props> = ({
   );
   const handleSavePerDiem = useCallback(
     async (data: PerDiem) => {
-      const temp = makeSafeFormObject(data, new PerDiem());
       setPendingPerDiemEditDuplicated(false);
       if (
         managerPerDiems.find(
           loadedPerDiem =>
-            loadedPerDiem.getUserId() === temp.getUserId() &&
-            loadedPerDiem.getDepartmentId() === temp.getDepartmentId(),
+            loadedPerDiem.getUserId() === data.getUserId() &&
+            loadedPerDiem.getDepartmentId() === data.getDepartmentId(),
         )
       ) {
         setPendingPerDiemEditDuplicated(true);
         return;
       }
       setSaving(true);
-      if (temp.getUserId() === 0) {
-        const newPerDiem = makeNewPerDiem();
-        await PerDiemClientService.Create(newPerDiem);
-      } else {
-        await PerDiemClientService.upsertPerDiem(temp);
-      }
+      const temp = makeSafeFormObject(data, new PerDiem());
+      await PerDiemClientService.upsertPerDiem(temp);
+      setLoadedPerDiem(temp);
 
       setPendingPerDiemEdit(undefined);
       setSaving(false);
@@ -449,37 +424,26 @@ export const PerDiemComponent: FC<Props> = ({
       setSaving(true);
       const temp = makeSafeFormObject(perDiemRow, new PerDiemRow());
       const req = new PerDiemRow();
-      let res = new PerDiemRow();
       if (temp.getId() == 0) {
-        res = await PerDiemClientService.CreateRow(temp);
+        await PerDiemClientService.CreateRow(temp);
       } else {
-        res = await PerDiemClientService.UpdateRow(temp);
+        await PerDiemClientService.UpdateRow(temp);
       }
-      if (loadedPerDiem) {
-        let found = false;
-        const tempPerDiem = loadedPerDiem;
-        for (let i = 0; i < tempPerDiem!.getRowsList().length; i++) {
-          if (tempPerDiem?.getRowsList()[i].getId() === temp.getId()) {
-            const newRowList = tempPerDiem.getRowsList();
-            found = true;
-            newRowList[i] = temp;
-            tempPerDiem.setRowsList(newRowList);
-          }
+      const tempPerDiem = loadedPerDiem;
+      for (let i = 0; i < tempPerDiem!.getRowsList().length; i++) {
+        if (tempPerDiem?.getRowsList()[i].getId() === temp.getId()) {
+          const newRowList = tempPerDiem.getRowsList();
+          newRowList[i] = temp;
+          tempPerDiem.setRowsList(newRowList);
         }
-        if (found == false) {
-          let tempRows = tempPerDiem.getRowsList();
-          tempRows.push(res);
-          tempPerDiem.setRowsList(tempRows);
-        }
-        console.log('saving row');
-        setLoadedPerDiem(tempPerDiem);
       }
+      setLoadedPerDiem(tempPerDiem);
       setPendingPerDiemRowEdit(undefined);
       setInitialized(false);
       setSaving(false);
       setLoaded(false);
     },
-    [setSaving, setPendingPerDiemRowEdit, loadedPerDiem, setLoaded],
+    [setSaving, loadedPerDiem, setPendingPerDiemRowEdit, setLoaded],
   );
   const handlePendingPerDiemDeleteToggle = useCallback(
     (pendingPerDiemDelete?: PerDiem) => () =>
@@ -543,19 +507,9 @@ export const PerDiemComponent: FC<Props> = ({
       setPendingPerDiemRowDelete(false);
       setPendingPerDiemRowEdit(undefined);
       await PerDiemClientService.deletePerDiemRowById(id);
-      if (loadedPerDiem) {
-        const tempPerDiem = loadedPerDiem;
-        const newRowList = tempPerDiem
-          .getRowsList()
-          .filter(a => a.getId() != id);
-        tempPerDiem.setRowsList(newRowList);
-
-        console.log('deleting row');
-        setLoadedPerDiem(tempPerDiem);
-      }
       setLoaded(false);
     }
-  }, [pendingPerDiemRowEdit, loadedPerDiem, pendingPerDiemRowDelete]);
+  }, [pendingPerDiemRowEdit, pendingPerDiemRowDelete]);
   const handleToggleCheckLodging = useCallback(
     (checkLodging: boolean) => () => setCheckLodging(checkLodging),
     [setCheckLodging],
@@ -628,7 +582,10 @@ export const PerDiemComponent: FC<Props> = ({
     [usedDepartments, departments],
   );
 
-  const isAnyManager = role === 'Manager';
+  const isAnyManager =
+    departments
+      .map(managerId => managerId.getManagerId())
+      .includes(loggedUserId) || role === 'Manager';
   const isOwner = !isAnyManager;
   const addPerDiemDisabled = availableDapartments.length === 0;
   const SCHEMA_PER_DIEM: Schema<PerDiem> = pendingPerDiemEdit
@@ -712,7 +669,14 @@ export const PerDiemComponent: FC<Props> = ({
     [],
   );
   if (initializing) return <Loader />;
-  const filteredPerDiems = loadedPerDiem ? [loadedPerDiem] : perDiems;
+  const filteredPerDiems = loadedPerDiem
+    ? [loadedPerDiem]
+    : isAnyManager
+    ? managerPerDiems.filter(departmentId => {
+        if (managerFilterDepartmentId === 0) return true;
+        return managerFilterDepartmentId === departmentId.getDepartmentId();
+      })
+    : perDiems;
 
   const allRowsList = filteredPerDiems.reduce(
     (aggr, pd) => [...aggr, ...pd.getRowsList()],
@@ -822,7 +786,7 @@ export const PerDiemComponent: FC<Props> = ({
       )}
       {!loading &&
         filteredPerDiems.map(entry => {
-          const isManager = !isOwner && role === 'Manager';
+          const isManager = !isOwner;
           const status = getStatus(
             entry.getDateApproved(),
             entry.getDateSubmitted(),
@@ -960,7 +924,10 @@ export const PerDiemComponent: FC<Props> = ({
                         dateString.getDateString().startsWith(date),
                       );
                     const isPerDiemRowUndefined =
-                      filteredPerDiems
+                      (isAnyManager && !perDiem
+                        ? managerPerDiemsOther[entry.getUserId()]
+                        : filteredPerDiems
+                      )
                         .reduce(
                           (aggr: PerDiemRow[], pd) => [
                             ...aggr,

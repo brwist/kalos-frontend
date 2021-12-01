@@ -15,6 +15,7 @@ import NotInterestedIcon from '@material-ui/icons/NotInterested';
 import { Tooltip } from '../../Tooltip';
 import { Confirm } from '../../Confirm';
 import { Button } from '../../Button';
+import { PerDiemManager } from '../../PerDiemManager';
 import {
   makeFakeRows,
   formatDate,
@@ -64,6 +65,7 @@ export const PerDiems: FC<Props> = ({
   const [pendingDeny, setPendingDeny] = useState<PerDiem>();
   const [rejectionMessage, setRejectionMessage] = useState<string>('');
   const [toggleButton, setToggleButton] = useState<boolean>(false);
+  const [openManagerPerDiem, setOpenManagerPerDiem] = useState<boolean>(false);
   const [pendingPayroll, setPendingPayroll] = useState<PerDiem>();
   const [pendingPayrollReject, setPendingPayrollReject] = useState<PerDiem>();
   const managerFilter = role === 'Manager';
@@ -320,6 +322,12 @@ export const PerDiems: FC<Props> = ({
           onClick={() => handleToggleButton()}
         ></Button>
       )}
+      {role === 'Manager' && (
+        <Button
+          label={'Manage PerDiems'}
+          onClick={() => setOpenManagerPerDiem(true)}
+        ></Button>
+      )}
       <InfoTable
         columns={[
           { name: 'Employee' },
@@ -488,10 +496,14 @@ export const PerDiems: FC<Props> = ({
           />
         </Modal>
       )}
+
+      <Modal open onClose={() => setOpenManagerPerDiem(false)} fullScreen>
+        <PerDiemManager loggedUserId={loggedUserId}></PerDiemManager>
+      </Modal>
       {pendingApprove && (
         <Confirm
           title="Confirm Approve"
-          open
+          open={openManagerPerDiem}
           onClose={handlePendingApproveToggle()}
           onConfirm={handleApprove}
         >
