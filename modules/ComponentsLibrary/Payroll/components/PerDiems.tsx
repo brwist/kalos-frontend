@@ -16,6 +16,7 @@ import { Tooltip } from '../../Tooltip';
 import { Confirm } from '../../Confirm';
 import { Button } from '../../Button';
 import { PerDiemManager } from '../../PerDiemManager';
+import { TimesheetDepartment } from '@kalos-core/kalos-rpc/TimesheetDepartment';
 import {
   makeFakeRows,
   formatDate,
@@ -41,6 +42,7 @@ interface Props {
   employeeId: number;
   week: string;
   role: RoleType;
+  departmentList: TimesheetDepartment[];
 }
 
 const formatWeek = (date: string) => {
@@ -52,6 +54,7 @@ export const PerDiems: FC<Props> = ({
   loggedUserId,
   departmentId,
   employeeId,
+  departmentList,
   week,
   role,
 }) => {
@@ -497,13 +500,21 @@ export const PerDiems: FC<Props> = ({
         </Modal>
       )}
 
-      <Modal open onClose={() => setOpenManagerPerDiem(false)} fullScreen>
-        <PerDiemManager loggedUserId={loggedUserId}></PerDiemManager>
+      <Modal
+        open={openManagerPerDiem}
+        fullScreen
+        onClose={() => setOpenManagerPerDiem(false)}
+      >
+        <PerDiemManager
+          loggedUserId={loggedUserId}
+          departmentsInit={departmentList}
+          onClose={() => setOpenManagerPerDiem(false)}
+        ></PerDiemManager>
       </Modal>
       {pendingApprove && (
         <Confirm
           title="Confirm Approve"
-          open={openManagerPerDiem}
+          open
           onClose={handlePendingApproveToggle()}
           onConfirm={handleApprove}
         >
