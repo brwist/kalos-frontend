@@ -26,10 +26,7 @@ import './styles.less';
 import { JobSummaryNew } from './components/JobSummaryNew';
 import { CostReportForEmployee } from '../CostReportForEmployee';
 import { Trips } from './components/Trips';
-import {
-  PerDiemList,
-  PerDiem as pd,
-} from '@kalos-core/kalos-rpc/compiled-protos/perdiem_pb';
+import { PerDiem as pd } from '@kalos-core/kalos-rpc/compiled-protos/perdiem_pb';
 import { dateTimePickerDefaultProps } from '@material-ui/pickers/constants/prop-types';
 
 export type RoleType =
@@ -382,6 +379,14 @@ export const Payroll: FC<Props> = ({ userID }) => {
                             week={filter.week}
                             loggedUserId={userID}
                             role={role}
+                            departmentList={departments.filter(department =>
+                              loggedUser
+                                ?.getPermissionGroupsList()
+                                .find(
+                                  permission =>
+                                    permission.getId() === department.getId(),
+                                ),
+                            )}
                           />
                         ),
                       },
