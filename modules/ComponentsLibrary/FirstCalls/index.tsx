@@ -1078,15 +1078,12 @@ export const FirstCallDashboard: React.FC<Props> = function FirstCallDashboard({
     const apiKey = new ApiKey();
     const secretApiKey = new ApiKey();
     secretApiKey.setTextId("slack_client_secret");
-    if (url.searchParams.get("code")) {
-      apiKey.setTextId("slack_client_secret");
-    } else {
-      apiKey.setApiUser(loggedUserId);
-      apiKey.setTextId("slack_dispatch_as_user");
-    }
+    apiKey.setApiUser(loggedUserId);
+    apiKey.setTextId("slack_dispatch_as_user");
     try {
       if (url.searchParams.get("code")) {
         const secretKey = await ApiKeyClientService.Get(secretApiKey);
+        console.log(secretKey);
         const token = await axios.get(`https://slack.com/api/oauth.access?client_id=${slackClientId}&client_secret=${secretKey}&code=${url.searchParams.get("code")}&redirect_uri=https://app.kalosflorida.com/index.cfm?action=admin:dispatch.firstcall}`)
         console.log(token);
         const apiToken = token.data.access_token;
