@@ -1229,6 +1229,7 @@ export const FirstCallDashboard: React.FC<Props> = function FirstCallDashboard({
 
   useEffect(() => {
     if (!state.checkUser) {
+      console.log(window.location.href);
       console.log("here");
       userCheck();
     }
