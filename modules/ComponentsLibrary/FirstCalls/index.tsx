@@ -70,11 +70,13 @@ import RemoveCircleOutlineTwoTone from '@material-ui/icons/RemoveCircleOutlineTw
 import CircleProgress from '@material-ui/core/CircularProgress';
 import AddCircleOutlineTwoTone from '@material-ui/icons/AddCircleOutlineTwoTone';
 import CloseIcon from '@material-ui/icons/Close';
+import axios from 'axios';
 
 export interface Props {
   loggedUserId: number;
   testUserId?: number;
   disableSlack?: boolean;
+  slackClientId?: string;
 }
 
 const initialFCCall : CallObj = {
@@ -193,6 +195,7 @@ export const FirstCallDashboard: React.FC<Props> = function FirstCallDashboard({
   loggedUserId,
   testUserId=0,
   disableSlack=false,
+  slackClientId="11208000564.292497115846",
 }) {
   const [state, updateFirstCallState] = useReducer(reducer, initialState);
 
@@ -1071,17 +1074,34 @@ export const FirstCallDashboard: React.FC<Props> = function FirstCallDashboard({
   }, [handleFormDataUpdate, loggedUserId, handleNotification, checkErrors])
 
   const userCheck = useCallback(async () => {
+    const url = new URL(window.location.href);
     const apiKey = new ApiKey();
-    apiKey.setApiUser(loggedUserId);
-    apiKey.setTextId("slack_dispatch_as_user");
+    const secretApiKey = new ApiKey();
+    secretApiKey.setTextId("slack_client_secret");
+    if (url.searchParams.get("code")) {
+      apiKey.setTextId("slack_client_secret");
+    } else {
+      apiKey.setApiUser(loggedUserId);
+      apiKey.setTextId("slack_dispatch_as_user");
+    }
     try {
-      const key = await ApiKeyClientService.Get(apiKey);
-      console.log(key);
+      if (url.searchParams.get("code")) {
+        const secretKey = await ApiKeyClientService.Get(secretApiKey);
+        const token = await axios.get(`https://slack.com/api/oauth.access?client_id=${slackClientId}&client_secret=${secretKey}&code=${url.searchParams.get("code")}&redirect_uri=https://app.kalosflorida.com/index.cfm?action=admin:dispatch.firstcall}`)
+        const apiToken = token.data.access_token;
+        const slackApiKey = new ApiKey();
+        slackApiKey.setApiUser(loggedUserId);
+        slackApiKey.setTextId("slack_dispatch_as_user");
+        slackApiKey.setApiKey(apiToken);
+        await ApiKeyClientService.Create(slackApiKey);
+      } else {
+        await ApiKeyClientService.Get(apiKey);
+      }
       updateFirstCallState({type: 'setUserHasApiKey', data: true});
     } catch (err) {
       updateFirstCallState({type: 'setUserHasApiKey', data: false});
     }
-  }, [loggedUserId])
+  }, [loggedUserId, slackClientId])
 
   const getInitialConstructor = useCallback(async () => {
     const users = await getAllEmployees();
@@ -1229,15 +1249,6 @@ export const FirstCallDashboard: React.FC<Props> = function FirstCallDashboard({
 
   useEffect(() => {
     if (!state.checkUser) {
-      const url =  new URL(window.location.href);
-      const secret = url.searchParams.get("secret");
-      const client = url.searchParams.get("client");
-      const code = url.searchParams.get("code");
-      console.log("code: ", code);
-      console.log("secret: ", secret);
-      console.log("client: ", client);
-      console.log(window.location.href);
-      console.log("here");
       userCheck();
     }
     if (state.formData.division === 0) {
