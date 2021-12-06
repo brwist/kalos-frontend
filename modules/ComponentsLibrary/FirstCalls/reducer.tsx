@@ -124,6 +124,8 @@ export interface State {
   notificationMessage: string[];
   pendingAddInUse: number[];
   pendingRemoveInUse: number[];
+  checkUser: boolean;
+  userHasApiKey: boolean;
 }
 
 export type Action = 
@@ -256,6 +258,15 @@ export type Action =
     approved: boolean,
   }}
   | { type: 'setCallMsg'; data: string }
+  | { type: 'refreshCallsAndTechs'; data: {
+    techs: DispatchableTech[],
+    newFormData: FormData,
+    scheduledOff: {id: number, name: string}[],
+    calls: DispatchCall[],
+    available: DispatchCall[],
+    assigned: DispatchCall[],
+  }}
+  | {type: 'setUserHasApiKey'; data: boolean}
 ;
 
 export const reducer = (state: State, action: Action) => {
@@ -532,6 +543,12 @@ export const reducer = (state: State, action: Action) => {
       return {
         ...state,
         callMsg: action.data,
+      }
+    case 'setUserHasApiKey':
+      return {
+        ...state,
+        userHasApiKey: action.data,
+        checkUser: true,
       }
     default:
       return {
