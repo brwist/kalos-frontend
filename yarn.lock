@@ -1466,9 +1466,9 @@
   integrity sha512-ZXRY4jNvVgSVQ8DL3LTcakaAtXwTVUxE81hslsyD2AtoXW/wVob10HkOJ1X/pAlcI7D+2YoZKg5do8G/w6RYgA==
 
 "@kalos-core/kalos-rpc@^3.3.7":
-  version "3.5.46"
-  resolved "https://registry.yarnpkg.com/@kalos-core/kalos-rpc/-/kalos-rpc-3.5.46.tgz#c9614f99d568c7c394e12ede341be568776b9ddf"
-  integrity sha512-eEqa30cZsNtnoU1GjttppdDwKVZBtjJ5/nthSQQkK+Pf8GhZ+NR/Mxm585QjGxZm7Mrhg7VLM9PkCw2/ACKDAA==
+  version "3.5.49"
+  resolved "https://registry.yarnpkg.com/@kalos-core/kalos-rpc/-/kalos-rpc-3.5.49.tgz#f332020103803869663e37bacad8f80cbc50489a"
+  integrity sha512-feLD6PkMjTqqtKIH0MwcH3EDp/PxH0bMCSTRlIWCXGcNfdpBv/nz9ucTFqkcI1OVl6YcZUfJVwKagqyy+ZrDlg==
   dependencies:
     "@improbable-eng/grpc-web" "^0.9.6"
     "@types/pako" "^1.0.1"
@@ -3738,7 +3738,7 @@ core-js@^2.4.0, core-js@^2.5.0, core-js@^2.6.10, core-js@^2.6.5:
   resolved "https://registry.yarnpkg.com/core-js/-/core-js-2.6.12.tgz#d9333dfa7b065e347cc5682219d6f690859cc2ec"
   integrity sha512-Kb2wC0fvsWfQrgk8HU5lW6U/Lcs8+9aaYcy4ZFc6DDlo4nZ7n70dEgE5rtR0oG6ufKDUnrwfWL1mXR5ljDatrQ==
 
-core-js@^3.15.2, core-js@^3.19.0, core-js@^3.6.4:
+core-js@^3.19.0, core-js@^3.6.4:
   version "3.19.2"
   resolved "https://registry.yarnpkg.com/core-js/-/core-js-3.19.2.tgz#ae216d7f4f7e924d9a2e3ff1e4b1940220f9157b"
   integrity sha512-ciYCResnLIATSsXuXnIOH4CbdfgV+H1Ltg16hJFN7/v6OxqnFr/IFGeLacaZ+fHLAm0TBbXwNK9/DNBzBUrO/g==
@@ -4478,9 +4478,9 @@ each-props@^1.3.2:
     object.defaults "^1.1.0"
 
 electron-to-chromium@^1.3.896:
-  version "1.4.8"
-  resolved "https://registry.yarnpkg.com/electron-to-chromium/-/electron-to-chromium-1.4.8.tgz#e1b7752ac1a75e39b5dd90cc7e29ea08b351c484"
-  integrity sha512-Cu5+dbg55+1E3ohlsa8HT0s4b8D0gBewXEGG8s5wBl8ynWv60VuvYW25GpsOeTVXpulhyU/U8JYZH+yxASSJBQ==
+  version "1.4.5"
+  resolved "https://registry.yarnpkg.com/electron-to-chromium/-/electron-to-chromium-1.4.5.tgz#912e8fd1645edee2f0f212558f40916eb538b1f9"
+  integrity sha512-YKaB+t8ul5crdh6OeqT2qXdxJGI0fAYb6/X8pDIyye+c3a7ndOCk5gVeKX+ABwivCGNS56vOAif3TN0qJMpEHw==
 
 elliptic@^6.5.3:
   version "6.5.4"
@@ -6432,9 +6432,9 @@ istanbul-lib-source-maps@^4.0.0:
     source-map "^0.6.1"
 
 istanbul-reports@^3.0.2:
-  version "3.1.1"
-  resolved "https://registry.yarnpkg.com/istanbul-reports/-/istanbul-reports-3.1.1.tgz#7085857f17d2441053c6ce5c3b8fdf6882289397"
-  integrity sha512-q1kvhAXWSsXfMjCdNHNPKZZv94OlspKnoGv+R9RGbnqOOQ0VbNfLFgQDVgi7hHenKsndGq3/o0OBdzDXthWcNw==
+  version "3.0.5"
+  resolved "https://registry.yarnpkg.com/istanbul-reports/-/istanbul-reports-3.0.5.tgz#a2580107e71279ea6d661ddede929ffc6d693384"
+  integrity sha512-5+19PlhnGabNWB7kOFnuxT8H3T/iIyQzIbQMxXsURmmvKg86P2sbkrGOT77VnHw0Qr0gc2XzRaRfMZYYbSQCJQ==
   dependencies:
     html-escaper "^2.0.0"
     istanbul-lib-report "^3.0.0"
@@ -7277,9 +7277,9 @@ mochawesome@^6.2.2:
     uuid "^8.3.2"
 
 mock-local-storage@^1.1.17:
-  version "1.1.18"
-  resolved "https://registry.yarnpkg.com/mock-local-storage/-/mock-local-storage-1.1.18.tgz#3cf1d7b3bb613e4e95608e5915e36e6b6c17a631"
-  integrity sha512-42rE56r91pPOg6CbV1kaFH+byo4azsQXnN0qpGf+CefucXaA5pdkCupYy1UlJniDJRclwGlx4jyZOCyZRs/mbg==
+  version "1.1.19"
+  resolved "https://registry.yarnpkg.com/mock-local-storage/-/mock-local-storage-1.1.19.tgz#baf00a0b7f1991871fdf9bb51932b9ab3a257c34"
+  integrity sha512-YwTEsgWqFw6uRBvhKScanKwfSIpjING50y9UaHb6BGfsdlFY3Zumdnf8RLBvHRVkLh31+G2WEz0xNeYhd5f5fA==
   dependencies:
     core-js "^3.19.0"
     global "^4.3.2"

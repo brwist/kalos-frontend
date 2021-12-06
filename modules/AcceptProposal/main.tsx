@@ -415,14 +415,14 @@ export class AcceptProposal extends React.PureComponent<props, state> {
                 { name: 'Confirm', width: 80, align: 'center' },
               ]}
               data={[
-                ...this.state.quoteLines.map((id, description, adjustment) => [
-                  { value: description },
-                  { value: usd(+adjustment) },
+                ...this.state.quoteLines.map(quote => [
+                  { value: quote.getDescription() },
+                  { value: usd(+quote.getAdjustment()) },
                   {
                     value: (
                       <Checkbox
-                        checked={this.state.selected.includes(id.getId())}
-                        value={id}
+                        checked={this.state.selected.includes(quote.getId())}
+                        value={quote.getId()}
                         onChange={this.handleSelect}
                       />
                     ),
@@ -470,6 +470,14 @@ export class AcceptProposal extends React.PureComponent<props, state> {
                   type="signature"
                   onChange={this.sign}
                 />
+              </div>
+              <div
+                style={{
+                  display: 'flex',
+                  justifyContent: 'left',
+                  margin: 16,
+                }}
+              >
                 <Button
                   label={'Approve Proposal'}
                   onClick={this.toggleModal}
@@ -481,13 +489,6 @@ export class AcceptProposal extends React.PureComponent<props, state> {
                   }
                 ></Button>
               </div>
-              <div
-                style={{
-                  display: 'flex',
-                  justifyContent: 'left',
-                  margin: 16,
-                }}
-              ></div>
             </div>
           </>
         )}
@@ -511,9 +512,9 @@ export class AcceptProposal extends React.PureComponent<props, state> {
             data={[
               ...this.state.quoteLines
                 .filter(ql => this.state.selected.includes(ql.getId()))
-                .map((description, adjustment) => [
-                  { value: description },
-                  { value: usd(+adjustment) },
+                .map(quote => [
+                  { value: quote.getDescription() },
+                  { value: usd(+quote.getAdjustment()) },
                 ]),
               [
                 {
