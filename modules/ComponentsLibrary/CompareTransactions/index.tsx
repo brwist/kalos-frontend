@@ -9,6 +9,7 @@ import {
   S3ClientService,
   uploadPhotoToExistingTransaction,
   SimpleFile,
+  TransactionActivityClientService,
 } from '../../../helpers';
 import { Modal } from '../Modal';
 import { MergeTable, SelectedChoice } from '../MergeTable';
@@ -21,8 +22,7 @@ import { TransactionTable } from '../TransactionTable';
 import { Transaction } from '@kalos-core/kalos-rpc/compiled-protos/transaction_pb';
 import { TransactionDocument } from '@kalos-core/kalos-rpc/TransactionDocument';
 import { File } from '@kalos-core/kalos-rpc/File';
-import { FileObject, S3Client, URLObject } from '@kalos-core/kalos-rpc/S3File';
-import { update } from 'lodash';
+import { MergeTransactionIds } from '@kalos-core/kalos-rpc/compiled-protos/transaction_activity_pb';
 
 /*
   Compares transactions with each other and has the ability to create a "diff view" sort of table which shows conflicts in the 
@@ -194,7 +194,12 @@ export const CompareTransactions: FC<Props> = ({
         );
         activityLog.setUserId(loggedUserId);
         activityLog.setActivityDate(format(new Date(), 'yyyy-MM-dd hh:mm:ss'));
-
+        const mergeReq = new MergeTransactionIds();
+        mergeReq.setMergedtransaction(txnMade.getId());
+        mergeReq.setTransactionidlistList(
+          transactions!.map(transaction => transaction.getId()),
+        );
+        TransactionActivityClientService.MergeTransactionLogs(mergeReq);
         await deleteTransactions();
 
         await handleSaveActivityLog(activityLog);
