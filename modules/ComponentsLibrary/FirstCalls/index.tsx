@@ -1229,6 +1229,13 @@ export const FirstCallDashboard: React.FC<Props> = function FirstCallDashboard({
 
   useEffect(() => {
     if (!state.checkUser) {
+      const url =  new URL(window.location.href);
+      const secret = url.searchParams.get("secret");
+      const client = url.searchParams.get("client");
+      const code = url.searchParams.get("code");
+      console.log("code: ", code);
+      console.log("secret: ", secret);
+      console.log("client: ", client);
       console.log(window.location.href);
       console.log("here");
       userCheck();
