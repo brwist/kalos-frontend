@@ -11,10 +11,7 @@ import {
   usd,
   PerDiemClientService,
   EventClientService,
-  TimesheetLineClientService,
-  TransactionClientService,
   TimesheetDepartmentClientService,
-  TaskClientService,
   TransactionAccountClientService,
   UserClientService,
 } from '../../../helpers';
@@ -110,11 +107,6 @@ export const CostReportCSV: FC<Props> = ({ serviceCallId, onClose }) => {
     activeTab: tabs[0],
     printStatus: 'idle',
   });
-
-  const totalTasksBillable = state.tasks.reduce(
-    (aggr, task) => aggr + task.getBillable(),
-    0,
-  );
 
   const handlePrint = useCallback(async () => {
     dispatch({ type: ACTIONS.SET_PRINT_STATUS, data: 'loading' });
@@ -404,6 +396,7 @@ export const CostReportCSV: FC<Props> = ({ serviceCallId, onClose }) => {
           tripRes: trips,
         },
       });
+
       dispatch({ type: ACTIONS.SET_TOTAL_HOURS_WORKED, data: total });
       dispatch({ type: ACTIONS.SET_LOADING, data: false });
       dispatch({ type: ACTIONS.SET_LOADED, data: true });
@@ -656,6 +649,10 @@ export const CostReportCSV: FC<Props> = ({ serviceCallId, onClose }) => {
     .reduce((aggr, pd) => aggr + state.lodgings[pd.getId()], 0);
   const totalTransactions = state.transactions.reduce(
     (aggr, pd) => aggr + pd.getAmount(),
+    0,
+  );
+  const totalTasksBillable = state.tasks.reduce(
+    (aggr, pd) => aggr + pd.getSpiffAmount(),
     0,
   );
   return state.loaded ? (
