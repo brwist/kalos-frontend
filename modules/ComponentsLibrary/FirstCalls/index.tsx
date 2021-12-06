@@ -1383,7 +1383,7 @@ export const FirstCallDashboard: React.FC<Props> = function FirstCallDashboard({
             Please click the following link to register.  In the dropdown, select the dispatch channel for your department.
           </Typography>
           <Button
-            href={`https://slack.com/oauth/authorize?client_id=11208000564.292497115846&scope=incoming-webhook,chat:write:user,chat:write:bot,links:write,bot,users.profile:read,users:read,users:read.email&redirect_url=${window.location.href}`}
+            href={`https://slack.com/oauth/authorize?client_id=11208000564.292497115846&scope=incoming-webhook,chat:write:user,chat:write:bot,links:write,bot,users.profile:read,users:read,users:read.email&redirect_uri=${window.location.href}`}
             variant="outlined"
           >
             Add to Slack
