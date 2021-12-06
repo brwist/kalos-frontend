@@ -408,7 +408,7 @@ export const CostReportCSV: FC<Props> = ({ serviceCallId, onClose }) => {
       dispatch({ type: ACTIONS.SET_LOADING, data: false });
       dispatch({ type: ACTIONS.SET_LOADED, data: true });
     });
-  }, [serviceCallId]);
+  }, [serviceCallId, state.laborTotals]);
   const createReport = (section: string) => {
     const totalMeals =
       state.perDiems.reduce((aggr, pd) => aggr + pd.getRowsList().length, 0) *
