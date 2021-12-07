@@ -124,6 +124,8 @@ export interface State {
   notificationMessage: string[];
   pendingAddInUse: number[];
   pendingRemoveInUse: number[];
+  checkUser: boolean;
+  userHasApiKey: boolean;
 }
 
 export type Action = 
@@ -256,6 +258,15 @@ export type Action =
     approved: boolean,
   }}
   | { type: 'setCallMsg'; data: string }
+  | { type: 'refreshCallsAndTechs'; data: {
+    techs: DispatchableTech[],
+    newFormData: FormData,
+    scheduledOff: {id: number, name: string}[],
+    calls: DispatchCall[],
+    available: DispatchCall[],
+    assigned: DispatchCall[],
+  }}
+  | {type: 'setUserHasApiKey'; data: boolean}
 ;
 
 export const reducer = (state: State, action: Action) => {
@@ -422,6 +433,7 @@ export const reducer = (state: State, action: Action) => {
         ...state,
         firstCallManualOff: action.data,
         save: true,
+        isProcessing: false,
       }
     case 'setFCCallsAndInUse' :
       return {
@@ -532,6 +544,24 @@ export const reducer = (state: State, action: Action) => {
       return {
         ...state,
         callMsg: action.data,
+      }
+    case 'setUserHasApiKey':
+      return {
+        ...state,
+        userHasApiKey: action.data,
+        checkUser: true,
+      }
+    case 'refreshCallsAndTechs':
+      return {
+        ...state,
+        techs: action.data.techs,
+        formData: action.data.newFormData,
+        scheduledOff: action.data.scheduledOff,
+        calls: action.data.calls,
+        availableCalls: action.data.available,
+        assignedCalls: action.data.assigned,
+        saveCall: false,
+        refreshCalls: false,
       }
     default:
       return {
