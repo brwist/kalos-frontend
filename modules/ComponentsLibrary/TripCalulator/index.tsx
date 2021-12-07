@@ -24,6 +24,7 @@ import { Alert } from '../Alert';
 import CircularProgress from '@material-ui/core/CircularProgress';
 
 import { InfoTable } from '../InfoTable';
+import { parseInt } from 'lodash';
 
 // add any prop types here
 interface props {
@@ -183,6 +184,31 @@ export const TripCalulator: FC<props> = ({ loggedUserId, onClose, role }) => {
     }
     dispatch({ type: ACTIONS.SET_LOADING_DATA, data: false });
   };
+  const hours = Math.floor(state.distanceResults.duration! / 3600);
+  const minutes = (state.distanceResults.duration! / 60).toFixed(0);
+  console.log(minutes);
+
+  const remainingMinutes = state.distanceResults.duration! / 60 - hours * 60;
+
+  const minutesAfterHomeAdjustment = (
+    state.distanceResults.duration! / 60 -
+    30
+  ).toFixed();
+  const hoursAfterHomeAdjustment = Math.floor(
+    (state.distanceResults.duration! / 60 - 30) / 60,
+  );
+  const remainingMinutesAfterAdjustment =
+    parseInt(minutesAfterHomeAdjustment) - hoursAfterHomeAdjustment * 60;
+  const minutesAfterDoubleHomeAdjustment = (
+    (state.distanceResults.duration! * 2) / 60 -
+    60
+  ).toFixed();
+  const hoursAfterDoubleHomeAdjustment = Math.floor(
+    ((state.distanceResults.duration! * 2) / 60 - 60) / 60,
+  );
+  const remainingMinutesAfterDoubleHomeAdjustment =
+    parseInt(minutesAfterDoubleHomeAdjustment) -
+    hoursAfterDoubleHomeAdjustment * 60;
   return (
     <div key="Calculator">
       {state.loadingData && (
@@ -255,24 +281,25 @@ export const TripCalulator: FC<props> = ({ loggedUserId, onClose, role }) => {
                 { value: state.destination },
                 { value: `${state.distanceResults.distance.toFixed(2)} miles` },
                 {
-                  value: `${(state.distanceResults.duration / 60).toFixed(
+                  value: `${hours} hours ${remainingMinutes.toFixed(
                     0,
-                  )} minutes`,
+                  )} minutes `,
                 },
                 {
                   value: `${
                     state.distanceResults.duration / 60 - 30 > 0
-                      ? (state.distanceResults.duration / 60 - 30).toFixed(0)
+                      ? `${hoursAfterHomeAdjustment} hours ${remainingMinutesAfterAdjustment.toFixed(
+                          0,
+                        )} minutes `
                       : 0
                   } minutes`,
                 },
                 {
                   value: `${
-                    (state.distanceResults.duration / 60) * 2 - 60 > 0
-                      ? (
-                          (state.distanceResults.duration / 60) * 2 -
-                          60
-                        ).toFixed(0)
+                    state.distanceResults.duration / 60 - 30 > 0
+                      ? `${hoursAfterDoubleHomeAdjustment} hours ${remainingMinutesAfterDoubleHomeAdjustment.toFixed(
+                          0,
+                        )} minutes `
                       : 0
                   } minutes`,
                 },
