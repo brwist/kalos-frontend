@@ -433,6 +433,7 @@ export const reducer = (state: State, action: Action) => {
         ...state,
         firstCallManualOff: action.data,
         save: true,
+        isProcessing: false,
       }
     case 'setFCCallsAndInUse' :
       return {
@@ -549,6 +550,18 @@ export const reducer = (state: State, action: Action) => {
         ...state,
         userHasApiKey: action.data,
         checkUser: true,
+      }
+    case 'refreshCallsAndTechs':
+      return {
+        ...state,
+        techs: action.data.techs,
+        formData: action.data.newFormData,
+        scheduledOff: action.data.scheduledOff,
+        calls: action.data.calls,
+        availableCalls: action.data.available,
+        assignedCalls: action.data.assigned,
+        saveCall: false,
+        refreshCalls: false,
       }
     default:
       return {
