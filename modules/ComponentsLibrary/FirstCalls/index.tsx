@@ -334,6 +334,7 @@ export const FirstCallDashboard: React.FC<Props> = function FirstCallDashboard({
             calls: firstCalls,
             inUse: fcInUse,
           }});
+          console.log("here");
           updateFirstCallState({ type: 'setRefreshCalls', data: true });
         }
         updateFirstCallState({type: 'setAssigneeListAndPendingInUse', data: {
@@ -1254,7 +1255,9 @@ export const FirstCallDashboard: React.FC<Props> = function FirstCallDashboard({
       load();
     }
     if (state.refreshCalls && state.loaded) {
-      async() => {
+      console.log("it is in the spot");
+      (async() => {
+        console.log("refresh call reached");
         const calls = setCalls(true);
         const techs = setTechs();
         const results = await Promise.all([calls, techs]);
@@ -1268,6 +1271,8 @@ export const FirstCallDashboard: React.FC<Props> = function FirstCallDashboard({
         if (errorMessage.length > 0) {
           handleNotification(errorMessage, "error");
         }
+        console.log(results[0]);
+        console.log(results[1]);
         updateFirstCallState({type: 'refreshCallsAndTechs', data: {
           techs: results[1].techList,
           scheduledOff: results[1].scheduledOff,
@@ -1276,7 +1281,7 @@ export const FirstCallDashboard: React.FC<Props> = function FirstCallDashboard({
           available: results[0].availableCalls,
           assigned: results[0].assignedCalls,
         }});
-      }
+      })()
     }
     if (state.save && !state.isProcessing) {
       handleSave();
@@ -1286,6 +1291,7 @@ export const FirstCallDashboard: React.FC<Props> = function FirstCallDashboard({
     }
     if (state.loaded && !state.isProcessing) {
       const interval = setInterval(async() => {
+        console.log("auto reset");
         const calls = setCalls();
         const techs = setTechs();
         const results = await Promise.all([calls, techs]);
