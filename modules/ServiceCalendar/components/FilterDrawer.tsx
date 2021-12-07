@@ -13,6 +13,7 @@ import { useWindowSize } from '../../ComponentsLibrary/hooks';
 import { Field } from '../../ComponentsLibrary/Field';
 import { useCalendarData } from '../hooks';
 import './filterDrawer.less';
+import { DepartmentMulti } from '../../ComponentsLibrary/Pickers/DepartmentMulti';
 
 type State = {
   customers: string[];
@@ -21,6 +22,7 @@ type State = {
   jobSubType: number;
   propertyUse: string[];
   techIds: string;
+  timeoffDepartmentIds: string;
 };
 
 type Action =
@@ -28,6 +30,7 @@ type Action =
   | { type: 'customers'; value: string }
   | { type: 'zip'; value: string }
   | { type: 'jobType'; value: string }
+  | { type: 'departmentIds'; value: string }
   | { type: 'jobSubType'; value: number }
   | { type: 'techIds'; value: string }
   | { type: 'propertyUse'; value: string }
@@ -69,10 +72,15 @@ const reducer = (state: State, action: Action): State => {
       };
     }
     case 'jobType': {
-      console.log('what we received to reducer', action.value.toString());
       return {
         ...state,
         jobType: action.value,
+      };
+    }
+    case 'departmentIds': {
+      return {
+        ...state,
+        timeoffDepartmentIds: action.value,
       };
     }
     case 'jobSubType': {
@@ -124,7 +132,15 @@ const FilterDrawer = ({ open, toggleDrawer }: Props) => {
   } = useCalendarData();
   const [expanded, setExpanded] = useState('');
   const [state, dispatch] = useReducer(reducer, filters);
-  const { customers, zip, jobType, jobSubType, propertyUse, techIds } = state;
+  const {
+    customers,
+    zip,
+    jobType,
+    jobSubType,
+    propertyUse,
+    techIds,
+    timeoffDepartmentIds,
+  } = state;
 
   const [, wHeight] = useWindowSize();
   const maxListHeight = wHeight - 64 * 4 - 46 - 46 - 32;
@@ -155,6 +171,7 @@ const FilterDrawer = ({ open, toggleDrawer }: Props) => {
       zip: [],
       propertyUse: [],
       techIds: '0',
+      timeoffDepartmentIds: '0',
     };
     dispatch({ type: 'resetFilters', value: temp });
     changeFilters(temp);
@@ -250,6 +267,23 @@ const FilterDrawer = ({ open, toggleDrawer }: Props) => {
               onSelect={value => dispatch({ type: 'jobSubType', value })}
             />
           </FilterPanel>
+
+          <FilterPanel
+            title="Filter TimeOff"
+            expanded={expanded === 'timeoffDepartmentIds'}
+            handleChange={() => toggleExpanded('timeoffDepartmentIds')}
+          >
+            {
+              <DepartmentMulti
+                key="department"
+                selected={timeoffDepartmentIds}
+                onSelect={value =>
+                  dispatch({ type: 'departmentIds', value: String(value) })
+                }
+              />
+            }
+          </FilterPanel>
+
           <FilterPanel
             title="Technician Assigned"
             expanded={expanded === 'techAssigned'}
