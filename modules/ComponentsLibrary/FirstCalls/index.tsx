@@ -554,15 +554,15 @@ export const FirstCallDashboard: React.FC<Props> = function FirstCallDashboard({
     const inUseTechs = inUse.length ? inUse : state.firstCallInUse;
     const scheduledOffTechs = scheduledOff.length ? scheduledOff : state.firstCallScheduledOff;
     const availableTechs = technicians.filter(tech => {
-      const notAvailable = [];
+      let notAvailable : number[] = [];
       for (let i in manualOffTechs) {
-        notAvailable.push(manualOffTechs[i].id);
+        notAvailable = notAvailable.concat(manualOffTechs[i].id);
       }
       for (let j in inUseTechs) {
-        notAvailable.push(inUseTechs[j]);
+        notAvailable = notAvailable.concat(inUseTechs[j]);
       }
       for (let k in scheduledOffTechs) {
-        notAvailable.push(scheduledOffTechs[k].id);
+        notAvailable = notAvailable.concat(scheduledOffTechs[k].id);
       }
       return !notAvailable.includes(tech.getUserId());
     });
@@ -1255,31 +1255,27 @@ export const FirstCallDashboard: React.FC<Props> = function FirstCallDashboard({
       load();
     }
     if (state.refreshCalls && state.loaded) {
-      console.log("it is in the spot");
       (async() => {
-        console.log("refresh call reached");
         const calls = setCalls(true);
         const techs = setTechs();
-        const results = await Promise.all([calls, techs]);
+        const [callList, techList] = await Promise.all([calls, techs]);
         let errorMessage : string[] = [];
-        if (results[0].error) {
-          errorMessage = errorMessage.concat(results[0].error);
+        if (callList.error) {
+          errorMessage = errorMessage.concat(callList.error);
         }
-        if (results[1].error) {
-          errorMessage = errorMessage.concat(results[1].error);
+        if (techList.error) {
+          errorMessage = errorMessage.concat(techList.error);
         }
         if (errorMessage.length > 0) {
           handleNotification(errorMessage, "error");
         }
-        console.log(results[0]);
-        console.log(results[1]);
         updateFirstCallState({type: 'refreshCallsAndTechs', data: {
-          techs: results[1].techList,
-          scheduledOff: results[1].scheduledOff,
-          newFormData: results[1].newFormData,
-          calls: results[0].calls,
-          available: results[0].availableCalls,
-          assigned: results[0].assignedCalls,
+          techs: techList.techList,
+          scheduledOff: techList.scheduledOff,
+          newFormData: techList.newFormData,
+          calls: callList.calls,
+          available: callList.availableCalls,
+          assigned: callList.assignedCalls,
         }});
       })()
     }
@@ -1291,27 +1287,26 @@ export const FirstCallDashboard: React.FC<Props> = function FirstCallDashboard({
     }
     if (state.loaded && !state.isProcessing) {
       const interval = setInterval(async() => {
-        console.log("auto reset");
         const calls = setCalls();
         const techs = setTechs();
-        const results = await Promise.all([calls, techs]);
+        const [callList, techList] = await Promise.all([calls, techs]);
         let errorMessage : string[] = [];
-        if (results[0].error) {
-          errorMessage = errorMessage.concat(results[0].error);
+        if (callList.error) {
+          errorMessage = errorMessage.concat(callList.error);
         }
-        if (results[1].error) {
-          errorMessage = errorMessage.concat(results[1].error);
+        if (techList.error) {
+          errorMessage = errorMessage.concat(techList.error);
         }
         if (errorMessage.length > 0) {
           handleNotification(errorMessage, "error");
         }
         updateFirstCallState({type: 'refreshCallsAndTechs', data: {
-          techs: results[1].techList,
-          scheduledOff: results[1].scheduledOff,
-          newFormData: results[1].newFormData,
-          calls: results[0].calls,
-          available: results[0].availableCalls,
-          assigned: results[0].assignedCalls,
+          techs: techList.techList,
+          scheduledOff: techList.scheduledOff,
+          newFormData: techList.newFormData,
+          calls: callList.calls,
+          available: callList.availableCalls,
+          assigned: callList.assignedCalls,
         }});
       }, 30000);
       return () => clearInterval(interval);
@@ -1454,9 +1449,9 @@ export const FirstCallDashboard: React.FC<Props> = function FirstCallDashboard({
                 }
                 case 'dismissTech': {
                   updateFirstCallState({ type: 'setProcessing', data: true });
-                  const manualOffTechs = state.firstCallManualOff;
+                  let manualOffTechs = state.firstCallManualOff;
                   const selectedTech = state.techs.find(tech => tech.getUserId() === Number(callback.draggableId));
-                  manualOffTechs.push({id: selectedTech!.getUserId(), name: selectedTech!.getTechname()});
+                  manualOffTechs = manualOffTechs.concat({id: selectedTech!.getUserId(), name: selectedTech!.getTechname()});
                   getAvailableTechs([], manualOffTechs, [], [], false);
                   updateFirstCallState({ type: 'setFirstCallManualOff', data: manualOffTechs });
                   break;
