@@ -450,13 +450,23 @@ export const CostReportCSV: FC<Props> = ({ serviceCallId, onClose }) => {
         formatDate(state.event!.getDateStarted()) +
         formatDate(state.event!.getDateEnded()) +
         `\r\n`;
-      const costString = `Type, Total \r\n Total Hours Worked ,${state.totalHoursWorked} \r\n
-     Transactions, ${totalTransactions} \r\n
-     ${costCenterString}
-     Meals,${totalMeals} \r\n 
-     Lodging,${totalLodging} \r\n 
-     Tasks Billable,${totalTasksBillable} \r\n 
-     Trips Total,${state.tripsTotal} \r\n `;
+      const costString =
+        'Type, Total \r\n Total Hours Worked ,' +
+        state.totalHoursWorked +
+        ' \r\n Transactions,' +
+        totalTransactions +
+        '\r\n' +
+        'Meals,' +
+        totalMeals +
+        '\r\n' +
+        'Lodging,' +
+        totalLodging +
+        '\r\n' +
+        'Tasks Billable,' +
+        totalTasksBillable +
+        '\r\nTrips Total,' +
+        state.tripsTotal +
+        '\r\n ';
 
       fullString = costString;
     }
@@ -615,16 +625,14 @@ export const CostReportCSV: FC<Props> = ({ serviceCallId, onClose }) => {
         fullString = fullString + tempString;
       }
     }
-
+    console.log(fullString);
     downloadCSV(state.activeTab + ' Report For ' + serviceCallId, fullString);
   };
   useEffect(() => {
     if (!state.loadedInit) {
-      console.log('loadedInit in useEffect');
       loadInit();
     }
     if (state.loadedInit == true && state.loaded === false) {
-      console.log('calling load in useEffect');
       load();
     }
   }, [state.loadedInit, loadInit, state.loaded, load]);
