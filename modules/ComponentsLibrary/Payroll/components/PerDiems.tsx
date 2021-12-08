@@ -494,7 +494,7 @@ export const PerDiems: FC<Props> = ({
           <PerDiemComponent
             onClose={handlePerDiemViewedToggle(undefined)}
             perDiem={perDiemViewed}
-            ownerId={employeeId}
+            ownerId={perDiemViewed.getUserId()}
             loggedUserId={loggedUserId}
           />
         </Modal>
