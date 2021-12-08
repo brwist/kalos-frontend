@@ -1388,22 +1388,35 @@ export const FirstCallDashboard: React.FC<Props> = function FirstCallDashboard({
         <Modal
           open={true}
           onClose={()=>{}}
+          maxWidth={window.innerWidth*.3}
         >
-          <Typography style={{fontSize:"24px", fontWeight:"bold", textAlign:"center"}}>
-            Validation Error!
-          </Typography>
-          <Typography style={{textAlign:"center"}}>
-            You need to register your Slack account to the Dispatch App before you can use First Calls.
-          </Typography>
-          <Typography style={{textAlign:"center"}}>
-            Please click the following link to register.  In the dropdown, select the dispatch channel for your department.
-          </Typography>
-          <Button
-            href={`https://slack.com/oauth/authorize?client_id=11208000564.292497115846&scope=incoming-webhook,chat:write:user,chat:write:bot,links:write,bot,users.profile:read,users:read,users:read.email&redirect_uri=${window.location.href}`}
-            variant="outlined"
-          >
-            Add to Slack
-          </Button>
+          <div style={{margin:"auto", paddingLeft:"20px", paddingRight:"20px", paddingTop:"20px", paddingBottom:"20px"}}>
+            <Typography style={{fontSize:"26px", fontWeight:"bold", textAlign:"center", paddingBottom:"15px"}}>
+              Slack Registration Required!
+            </Typography>
+            <div style={{borderStyle:'solid', borderBottom:'1px', width:'98%', margin:'auto', color:'#711313'}}></div>
+            <Typography style={{textAlign:"center", paddingTop:"15px", fontSize:"20px"}}>
+              You need to register your Slack account to the Dispatch App before you can use First Calls.
+            </Typography>
+            <Typography style={{textAlign:"center", paddingTop:"15px", paddingBottom:"15px", fontSize:"20px"}}>
+              Please click the following link to register.  In the dropdown, enter and select the dispatch channel for your department and then click Authorize.
+            </Typography>
+            <div style={{display:"block", margin:"auto", textAlign:"center", alignItems:"center", paddingBottom:"15px"}}>
+              <Button
+                href={`https://slack.com/oauth/authorize?client_id=11208000564.292497115846&scope=incoming-webhook,chat:write:user,chat:write:bot,links:write,bot,users.profile:read,users:read,users:read.email&redirect_uri=${window.location.href}`}
+                style={{color:"white", backgroundColor:"#711313"}}
+                >
+                Add to Slack
+              </Button>
+            </div>
+            <div style={{borderStyle:'solid', borderBottom:'1px', width:'98%', margin:'auto', color:'#711313'}}></div>
+            <Typography style={{textAlign:"center", paddingTop:"15px", fontSize:"20px"}}>
+              You will be returned to this page after registration is complete.
+            </Typography>
+            <Typography style={{textAlign:"center", paddingTop:"15px", fontSize:"20px"}}>
+              If you have any issues registering, please contact Webtech.
+            </Typography>
+          </div>
         </Modal>
       )}
       {!state.loaded && state.formData.division !== 0 && (

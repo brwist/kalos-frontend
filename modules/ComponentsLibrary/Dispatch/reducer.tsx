@@ -37,6 +37,8 @@ export interface State {
   isInitialLoad: boolean;
   isLoadingFilters: boolean;
   assigneeList: {id: number, name: string}[];
+  userHasApiKey: boolean;
+  checkUser: boolean;
 }
 
 export type Action =
@@ -77,6 +79,7 @@ export type Action =
   | {type: 'setLoadingCall'; data: boolean}
   | {type: 'setLoadingMap'; data: boolean}
   | {type: 'setAssigneeList'; data: {id: number, name: string}[]}
+  | {type: 'setUserHasApiKey'; data: boolean}
   ;
 
 export const reducer = (state: State, action: Action) => {
@@ -163,6 +166,12 @@ export const reducer = (state: State, action: Action) => {
         ...state,
         assigneeList: action.data,
         isProcessing: false,
+      }
+    case 'setUserHasApiKey':
+      return {
+        ...state,
+        userHasApiKey: action.data,
+        checkUser: true,
       }
     default:
       return state;
