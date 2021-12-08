@@ -89,6 +89,7 @@ const Column = ({
         propertyUse,
         jobType,
         jobSubType,
+        timeoffDepartmentIds,
         techIds: techIdsFilter,
       } = filters!;
       const callList = [
@@ -100,6 +101,7 @@ const Column = ({
         const jobTypeIdsFilterArry = compact((jobType || '0').split(','))
           .map(Number)
           .filter(e => e !== 0);
+
         callList[i] = callList[i].filter((call: Event) => {
           const techIdsFilterArr = compact((techIdsFilter || '0').split(','))
             .map(Number)
@@ -154,6 +156,7 @@ const Column = ({
           ) {
             return false;
           }
+
           if (jobSubType && jobSubType !== call?.getJobSubtypeId()) {
             return false;
           }
@@ -167,88 +170,32 @@ const Column = ({
       };
     },
     [filters, isAdmin, userId],
-  ); /*
-  const filterCalls_old = useCallback(
-    (calendarDay: CalendarDay): CallsList => {
-      const {
-        customers,
-        zip,
-        propertyUse,
-        jobType,
-        jobSubType,
-        techIds: techIdsFilter,
-      } = filters!;
-
-      return Object.keys(calendarDay).reduce(
-        (acc: CallsList, key) => {
-          let calls = calendarDay[key];
-          acc[key] = calls.filter((call: Event) => {
-            const techIdsFilterArr = compact((techIdsFilter || '0').split(','))
-              .map(Number)
-              .filter(e => e !== 0);
-            if (techIdsFilterArr.length > 0) {
-              if (
-                !call.getLogTechnicianAssigned() ||
-                call.getLogTechnicianAssigned() === '0'
-              )
-                return false;
-              const techIds = call
-                .getLogTechnicianAssigned()
-                .split(',')
-                .map(Number);
-              if (techIdsFilterArr.find(item => techIds.includes(item))) {
-                return true;
-              } else {
-                return false;
-              }
-            } else if (!isAdmin && call.getLogTechnicianAssigned()) {
-              const techIds = call
-                .getLogTechnicianAssigned()
-                .split(',')
-                .map(Number);
-              if (!techIds.includes(userId)) {
-                return false;
-              }
-            }
-            if (
-              customers.length &&
-              !customers.includes(`${call?.getCustomer()?.getId()}`)
-            ) {
-              return false;
-            }
-            if (
-              zip.length &&
-              !zip.includes(call?.getProperty()?.getZip() || '')
-            ) {
-              return false;
-            }
-            if (
-              propertyUse.length &&
-              !propertyUse.includes(`${call?.getIsResidential()}`)
-            ) {
-              return false;
-            }
-            if (jobType && jobType !== call?.getJobTypeId()) {
-              return false;
-            }
-            if (jobSubType && jobSubType !== call?.getJobSubtypeId()) {
-              return false;
-            }
-            return true;
-          });
-          return acc;
-        },
-        {
-          completedServiceCallsList: [],
-          remindersList: [],
-          serviceCallsList: [],
-          timeoffRequestsList: [],
-        },
-      );
-    },
-    [isAdmin, userId, filters],
   );
-*/
+  const filterTimeoff = useCallback(
+    (requestList: TimeoffRequest[]) => {
+      const { timeoffDepartmentIds } = filters!;
+
+      const departmentIds = compact((timeoffDepartmentIds || '0').split(','))
+        .map(Number)
+        .filter(e => e !== 0);
+      console.log('department ids', departmentIds);
+
+      let filteredRequestList = requestList.filter((call: TimeoffRequest) => {
+        console.log('call', call.toObject());
+        if (
+          departmentIds.length > 0 &&
+          !departmentIds.includes(call?.getDepartmentCode())
+        ) {
+          return false;
+        }
+
+        return true;
+      });
+
+      return filteredRequestList;
+    },
+    [filters],
+  );
   if (fetchingCalendarData || !datesMap?.get(date)) {
     if (fetchingCalendarData)
       return (
@@ -321,7 +268,9 @@ const Column = ({
   );
   const { completedServiceCallsList, remindersList, serviceCallsList } =
     filterCalls(filteredCalendarDay);
-  const timeoffRequestsList = calendarDay!.getTimeoffRequestsList();
+  const timeoffRequestsList = filterTimeoff(
+    calendarDay!.getTimeoffRequestsList(),
+  );
   /*
   const {
     completedServiceCallsList,

@@ -204,9 +204,10 @@ export const DispatchCalls: FC<props> = props => {
                     <TableCell align="center">{`${call.getJobType()}/${call.getJobSubtype()}`}</TableCell>
                     {showAssigned && (
                       <TableCell align="center">
-                        {call.getLogTechnicianAssigned() != '0' && call.getLogTechnicianAssigned() != ''
+                        {call.getAssigned()}
+                        {/* {call.getLogTechnicianAssigned() != '0' && call.getLogTechnicianAssigned() != ''
                           ? call.getAssigned()
-                          : 'Unassigned'}
+                          : 'Unassigned'} */}
                       </TableCell>
                     )}
                     <TableCell align="center">
