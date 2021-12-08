@@ -56,10 +56,13 @@ import RemoveCircleOutlineTwoTone from '@material-ui/icons/RemoveCircleOutlineTw
 import ListItem from '@material-ui/core/ListItem';
 import CircleProgress from '@material-ui/core/CircularProgress';
 import { ServiceRequest } from '../ServiceCall/requestIndex';
+import Typography from '@material-ui/core/Typography';
+import axios from 'axios';
 export interface Props {
   loggedUserId: number;
   testUserId?: number;
   disableSlack?: boolean;
+  slackClientId?: string;
 }
 
 const initialFormData: FormData = {
@@ -97,12 +100,15 @@ const initialState: State = {
   isInitialLoad: true,
   isLoadingFilters: true,
   assigneeList: [],
+  userHasApiKey: false,
+  checkUser: false,
 };
 
 export const DispatchDashboard: React.FC<Props> = function DispatchDashboard({
   loggedUserId,
   testUserId,
   disableSlack,
+  slackClientId="11208000564.292497115846",
 }) {
   const [state, updateDispatchState] = useReducer(reducer, initialState);
 
@@ -525,6 +531,32 @@ export const DispatchDashboard: React.FC<Props> = function DispatchDashboard({
     }})
   }
 
+  const userCheck = useCallback(async () => {
+    const url = new URL(window.location.href);
+    const apiKey = new ApiKey();
+    const secretApiKey = new ApiKey();
+    secretApiKey.setTextId("slack_client_secret");
+    apiKey.setApiUser(loggedUserId);
+    apiKey.setTextId("slack_dispatch_as_user");
+    try {
+      if (url.searchParams.get("code")) {
+        const secretKey = await ApiKeyClientService.Get(secretApiKey);
+        const token = await axios.get(`https://slack.com/api/oauth.access?client_id=${slackClientId}&client_secret=${secretKey.getApiKey()}&code=${url.searchParams.get("code")}&redirect_uri=https://app.kalosflorida.com/index.cfm?action=admin:dispatch.firstcall`)
+        const apiToken = token.data.access_token;
+        const slackApiKey = new ApiKey();
+        slackApiKey.setApiUser(loggedUserId);
+        slackApiKey.setTextId("slack_dispatch_as_user");
+        slackApiKey.setApiKey(apiToken);
+        await ApiKeyClientService.Create(slackApiKey);
+      } else {
+        await ApiKeyClientService.Get(apiKey);
+      }
+      updateDispatchState({type: 'setUserHasApiKey', data: true});
+    } catch (err) {
+      updateDispatchState({type: 'setUserHasApiKey', data: false});
+    }
+  }, [loggedUserId, slackClientId])
+
   const setInitialValues = useCallback(async () => {
     const departmentReq = getDepartments();
     const jobTypeReq = getJobTypes();
@@ -642,15 +674,53 @@ export const DispatchDashboard: React.FC<Props> = function DispatchDashboard({
   }
 
   useEffect(() => {
-    if (state.isInitialLoad) {
+    if (!state.checkUser) {
+      userCheck();
+    }
+    if (state.isInitialLoad && state.userHasApiKey) {
       setInitialValues();
       handleFilterLoad();
     }
-  }, [setInitialValues, state.isInitialLoad]);
+  }, [setInitialValues, state.isInitialLoad, state.userHasApiKey, state.checkUser, userCheck]);
 
   return (
     <PageWrapper userID={loggedUserId}>
-      {state.isLoadingMap && state.isLoadingTech && state.isLoadingCall && (
+      {!state.userHasApiKey && state.checkUser && (
+        <Modal
+          open={true}
+          onClose={()=>{}}
+          maxWidth={window.innerWidth*.3}
+        >
+          <div style={{margin:"auto", paddingLeft:"20px", paddingRight:"20px", paddingTop:"20px", paddingBottom:"20px"}}>
+            <Typography style={{fontSize:"26px", fontWeight:"bold", textAlign:"center", paddingBottom:"15px"}}>
+              Slack Registration Required!
+            </Typography>
+            <div style={{borderStyle:'solid', borderBottom:'1px', width:'98%', margin:'auto', color:'#711313'}}></div>
+            <Typography style={{textAlign:"center", paddingTop:"15px", fontSize:"20px"}}>
+              You need to register your Slack account to the Dispatch App before you can use First Calls.
+            </Typography>
+            <Typography style={{textAlign:"center", paddingTop:"15px", paddingBottom:"15px", fontSize:"20px"}}>
+              Please click the following link to register.  In the dropdown, enter and select the dispatch channel for your department and then click Authorize.
+            </Typography>
+            <div style={{display:"block", margin:"auto", textAlign:"center", alignItems:"center", paddingBottom:"15px"}}>
+              <Button
+                href={`https://slack.com/oauth/authorize?client_id=11208000564.292497115846&scope=incoming-webhook,chat:write:user,chat:write:bot,links:write,bot,users.profile:read,users:read,users:read.email&redirect_uri=${window.location.href}`}
+                style={{color:"white", backgroundColor:"#711313"}}
+                >
+                Add to Slack
+              </Button>
+            </div>
+            <div style={{borderStyle:'solid', borderBottom:'1px', width:'98%', margin:'auto', color:'#711313'}}></div>
+            <Typography style={{textAlign:"center", paddingTop:"15px", fontSize:"20px"}}>
+              You will be returned to this page after registration is complete.
+            </Typography>
+            <Typography style={{textAlign:"center", paddingTop:"15px", fontSize:"20px"}}>
+              If you have any issues registering, please contact Webtech.
+            </Typography>
+          </div>
+        </Modal>
+      )}
+      {state.isLoadingMap && state.isLoadingTech && state.isLoadingCall && state.checkUser && (
         <Loader
           backgroundColor={'black'}
           opacity={0.5}
