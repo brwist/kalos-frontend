@@ -760,7 +760,7 @@ const NAMED_EXPORTS = {
     'isValidElementType',
     'isContextConsumer',
   ],
-  'node_modules/lodash/lodash.js': ['delay', 'debounce', 'isArray'],
+  'node_modules/lodash/lodash.js': ['delay', 'debounce', 'isArray','parseInt'],
   'node_modules/@kalos-core/kalos-rpc/compiled-protos/dispatch_pb.js': [
     'DispatchableTechList',
     'DispatchableTech',

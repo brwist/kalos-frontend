@@ -398,7 +398,12 @@ export class Dashboard extends React.PureComponent<props, state> {
                     },
                     ...(this.state.currentUser
                       .getPermissionGroupsList()
-                      .find(p => p.getType() === 'role')
+                      .find(
+                        p =>
+                          p.getType() === 'role' &&
+                          (p.getName() == 'Manager' ||
+                            p.getName() === 'Payroll'),
+                      )
                       ? [
                           {
                             value: (
