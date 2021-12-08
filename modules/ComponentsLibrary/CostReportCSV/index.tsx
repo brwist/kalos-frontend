@@ -11,10 +11,7 @@ import {
   usd,
   PerDiemClientService,
   EventClientService,
-  TimesheetLineClientService,
-  TransactionClientService,
   TimesheetDepartmentClientService,
-  TaskClientService,
   TransactionAccountClientService,
   UserClientService,
 } from '../../../helpers';
@@ -110,11 +107,6 @@ export const CostReportCSV: FC<Props> = ({ serviceCallId, onClose }) => {
     activeTab: tabs[0],
     printStatus: 'idle',
   });
-
-  const totalTasksBillable = state.tasks.reduce(
-    (aggr, task) => aggr + task.getBillable(),
-    0,
-  );
 
   const handlePrint = useCallback(async () => {
     dispatch({ type: ACTIONS.SET_PRINT_STATUS, data: 'loading' });
@@ -404,11 +396,12 @@ export const CostReportCSV: FC<Props> = ({ serviceCallId, onClose }) => {
           tripRes: trips,
         },
       });
+
       dispatch({ type: ACTIONS.SET_TOTAL_HOURS_WORKED, data: total });
       dispatch({ type: ACTIONS.SET_LOADING, data: false });
       dispatch({ type: ACTIONS.SET_LOADED, data: true });
     });
-  }, [serviceCallId]);
+  }, [serviceCallId, state.laborTotals]);
   const createReport = (section: string) => {
     const totalMeals =
       state.perDiems.reduce((aggr, pd) => aggr + pd.getRowsList().length, 0) *
@@ -450,13 +443,23 @@ export const CostReportCSV: FC<Props> = ({ serviceCallId, onClose }) => {
         formatDate(state.event!.getDateStarted()) +
         formatDate(state.event!.getDateEnded()) +
         `\r\n`;
-      const costString = `Type, Total \r\n Total Hours Worked ,${state.totalHoursWorked} \r\n
-     Transactions, ${totalTransactions} \r\n
-     ${costCenterString}
-     Meals,${totalMeals} \r\n 
-     Lodging,${totalLodging} \r\n 
-     Tasks Billable,${totalTasksBillable} \r\n 
-     Trips Total,${state.tripsTotal} \r\n `;
+      const costString =
+        'Type, Total \r\n Total Hours Worked ,' +
+        state.totalHoursWorked +
+        ' \r\n Transactions,' +
+        totalTransactions +
+        '\r\n' +
+        'Meals,' +
+        totalMeals +
+        '\r\n' +
+        'Lodging,' +
+        totalLodging +
+        '\r\n' +
+        'Tasks Billable,' +
+        totalTasksBillable +
+        '\r\nTrips Total,' +
+        state.tripsTotal +
+        '\r\n ';
 
       fullString = costString;
     }
@@ -615,16 +618,14 @@ export const CostReportCSV: FC<Props> = ({ serviceCallId, onClose }) => {
         fullString = fullString + tempString;
       }
     }
-
+    console.log(fullString);
     downloadCSV(state.activeTab + ' Report For ' + serviceCallId, fullString);
   };
   useEffect(() => {
     if (!state.loadedInit) {
-      console.log('loadedInit in useEffect');
       loadInit();
     }
     if (state.loadedInit == true && state.loaded === false) {
-      console.log('calling load in useEffect');
       load();
     }
   }, [state.loadedInit, loadInit, state.loaded, load]);
@@ -656,6 +657,10 @@ export const CostReportCSV: FC<Props> = ({ serviceCallId, onClose }) => {
     .reduce((aggr, pd) => aggr + state.lodgings[pd.getId()], 0);
   const totalTransactions = state.transactions.reduce(
     (aggr, pd) => aggr + pd.getAmount(),
+    0,
+  );
+  const totalTasksBillable = state.tasks.reduce(
+    (aggr, pd) => aggr + pd.getSpiffAmount(),
     0,
   );
   return state.loaded ? (

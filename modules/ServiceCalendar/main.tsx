@@ -111,6 +111,7 @@ type Filters = {
   zip: string[];
   propertyUse: string[];
   techIds: string;
+  timeoffDepartmentIds: string;
 };
 
 type State = {
@@ -220,10 +221,14 @@ const initialFilters: Filters = cachedInitialFilters
       zip: [],
       propertyUse: [],
       techIds: '0',
+      timeoffDepartmentIds: '0',
     };
 let temp = initialFilters.jobType;
 if (typeof temp === 'number') {
   initialFilters.jobType = initialFilters.jobType.toString();
+}
+if (initialFilters.timeoffDepartmentIds === undefined) {
+  initialFilters.timeoffDepartmentIds = '0';
 }
 const initialState: State = {
   fetchingCalendarData: true,
