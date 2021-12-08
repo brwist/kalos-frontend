@@ -561,51 +561,6 @@ export const PerDiemComponent: FC<Props> = ({
     [setCheckLodging],
   );
 
-  /*const handleConfirmTripDelete = useCallback(
-    (confirmTripDelete: Trip | undefined) => {
-      setConfirmTripDelete(confirmTripDelete);
-    },
-    [setConfirmTripDelete],
-  );
-  const handleDeleteTrip = async (trip: Trip) => {
-    try {
-      await PerDiemClientService.DeleteTrip(trip);
-    } catch (err: any) {
-      console.error('An error occurred while deleting a trip: ', err);
-      alert(
-        'The trip was not able to be deleted. Please try again, or if this keeps happening please contact your administrator.',
-      );
-      handleConfirmTripDelete(undefined);
-      return Error(err);
-    }
-    //alert('The trip was deleted successfully!');
-    handleConfirmTripDelete(undefined);
-    getTrips();
-  };
-  const handleDeleteAllTripsInRow = async (row: number) => {
-    try {
-      let i32 = new Int32();
-      i32.setValue(row);
-      await PerDiemClientService.BatchDeleteTrips(i32);
-    } catch (err: any) {
-      console.error(
-        'An error occurred while deleting the trips for this week: ',
-        err,
-      );
-      alert(
-        'The trips were not able to be deleted. Please try again, or if this keeps happening please contact your administrator.',
-      );
-      handleConfirmTripDeleteAll(false);
-      return;
-    }
-    handleConfirmTripDeleteAll(false);
-    getTrips();
-  };
-  const handleConfirmTripDeleteAll = useCallback(
-    (confirmTripDeleteAll: boolean) =>
-      setConfirmTripDeleteAll(confirmTripDeleteAll),
-    [setConfirmTripDeleteAll],
-  );*/
   const departmentsOptions = useMemo(() => {
     const usedDepartments = perDiems.map(perDiem => perDiem.getDepartmentId());
     return departments
@@ -791,25 +746,6 @@ export const PerDiemComponent: FC<Props> = ({
                 Lodging:
                 <strong> {usd(totalLodging)}</strong>
               </Typography>
-              <Typography variant="subtitle2">
-                All {isAnyManager ? 'Technicians' : 'Departments'} Total Miles
-                for Trips:
-                <strong>
-                  {' '}
-                  {allRowsList.reduce((total: any, current, index, arr) => {
-                    let tot = current
-                      .getTripsList()
-                      .reduce((acc: number, trip) => {
-                        return acc + trip.getDistanceInMiles();
-                      }, 0);
-
-                    if (index == arr.length - 1) {
-                      return (total + tot).toFixed(2);
-                    }
-                    return total + tot;
-                  }, 0)}
-                </strong>
-              </Typography>
             </>
           )}
         </CalendarHeader>
@@ -822,7 +758,7 @@ export const PerDiemComponent: FC<Props> = ({
       )}
       {!loading &&
         filteredPerDiems.map(entry => {
-          const isManager = !isOwner && role === 'Manager';
+          const isManager = !isOwner;
           const status = getStatus(
             entry.getDateApproved(),
             entry.getDateSubmitted(),
@@ -853,17 +789,6 @@ export const PerDiemComponent: FC<Props> = ({
           return (
             <div key={entry.getId()} className="PerDiemDepartment">
               <SectionBar
-                title={
-                  perDiem
-                    ? ''
-                    : isAnyManager && entry.getDepartment() != undefined
-                    ? `Department: ${TimesheetDepartmentClientService.getDepartmentName(
-                        entry.getDepartment()!,
-                      )}, User: ${entry.getOwnerName()}`
-                    : `Department: ${TimesheetDepartmentClientService.getDepartmentName(
-                        entry.getDepartment()!,
-                      )}`
-                }
                 subtitle={
                   <>
                     <div>Total Meals: {usd(totalMeals)}</div>
@@ -882,24 +807,7 @@ export const PerDiemComponent: FC<Props> = ({
                         ? ` ${owner!.getZip()} `
                         : ' No ZipCode '}
                     </strong>
-                    {entry
-                      .getRowsList()
-                      .reduce((total: any, current, index, arr) => {
-                        let tot = current
-                          .getTripsList()
-                          .reduce((acc: number, trip) => {
-                            return acc + trip.getDistanceInMiles();
-                          }, 0);
 
-                        if (index == arr.length - 1) {
-                          return (
-                            <div>
-                              Total Miles: {(total + tot).toFixed(2)} miles
-                            </div>
-                          );
-                        }
-                        return total + tot;
-                      }, 0)}
                     {+entry.getDateSubmitted()[0] > 0 && (
                       <div>
                         Submited Date: {formatDate(entry.getDateSubmitted())}
@@ -1070,21 +978,7 @@ export const PerDiemComponent: FC<Props> = ({
                                   )}
                                 </div>
                               )}
-                              {entry
-                                .getTripsList()
-                                .reduce((total: any, current, index, arr) => {
-                                  if (index == arr.length - 1) {
-                                    return (
-                                      <div>
-                                        <strong>Total Miles: </strong>
-                                        {(
-                                          total + current.getDistanceInMiles()
-                                        ).toFixed(2) + ' mi'}
-                                      </div>
-                                    );
-                                  }
-                                  return total + current.getDistanceInMiles();
-                                }, 0)}
+
                               <div className="PerDiemRow">
                                 <strong>Notes: </strong>
                                 {entry.getNotes()}
