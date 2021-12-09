@@ -38,13 +38,11 @@ import { JOB_STATUS_COLORS, MEALS_RATE, OPTION_ALL } from '../../../constants';
 import './styles.less';
 import { NULL_TIME, ENDPOINT } from '@kalos-core/kalos-rpc/constants';
 import { RoleType } from '../Payroll';
-import { TimesheetLineClient } from '@kalos-core/kalos-rpc/TimesheetLine';
 
 export interface Props {
   loggedUserId: number;
   onClose?: () => void;
-  perDiem?: PerDiem;
-  ownerId?: number;
+  departmentsInit: TimesheetDepartment[];
 }
 
 export const SCHEMA_KALOS_MAP_INPUT_FORM: Schema<Trip> = [
@@ -68,59 +66,33 @@ export const SCHEMA_KALOS_MAP_INPUT_FORM: Schema<Trip> = [
 
 const formatDateFns = (date: Date) => format(date, 'yyyy-MM-dd');
 
-const handleGetTripDistance = async (origin: string, destination: string) => {
-  try {
-    await MapClientService.getTripDistance(origin, destination);
-  } catch (error: any) {
-    console.error(
-      'An error occurred while calculating the trip distance: ',
-      error,
-    );
-    alert(
-      'An error occurred while calculating the trip distance. Please try again, or contact your administrator if this error persists.',
-    );
-  }
-};
-
 export const getStatus = (
   dateApproved: string,
   dateSubmitted: string,
-  payrollProcessed: boolean,
   isManager: boolean,
 ): {
-  status:
-    | 'APPROVED'
-    | 'PENDING_APPROVE'
-    | 'PENDING_SUBMIT'
-    | 'PAYROLL_PROCESSED';
+  status: 'APPROVED' | 'PENDING_APPROVE' | 'PENDING_SUBMIT';
   button: string;
   text: string;
   color: string;
 } => {
-  if (payrollProcessed != false)
-    return {
-      status: 'PAYROLL_PROCESSED',
-      button: isManager ? 'Approve' : 'Submit',
-      text: 'Processed By Payroll',
-      color: '#' + JOB_STATUS_COLORS['Requested'],
-    };
-  if (dateApproved != NULL_TIME && dateApproved != '')
+  if (dateApproved != NULL_TIME)
     return {
       status: 'APPROVED',
-      button: isManager ? 'Approve' : 'Submit',
+      button: isManager ? 'Approved' : 'Submitted',
       text: 'Approved',
       color: '#' + JOB_STATUS_COLORS['Completed'],
     };
-  if (dateSubmitted != NULL_TIME && dateSubmitted != '')
+  if (dateSubmitted != NULL_TIME)
     return {
       status: 'PENDING_APPROVE',
-      button: isManager ? 'Approve' : 'Submit',
+      button: isManager ? 'Approve' : 'Submit and Approve',
       text: 'Pending approve',
       color: '#' + JOB_STATUS_COLORS['Pend Sched'],
     };
   return {
     status: 'PENDING_SUBMIT',
-    button: 'Submit',
+    button: 'Submit and Approve',
     text: 'Pending submit',
     color: '#' + JOB_STATUS_COLORS['Incomplete'],
   };
@@ -178,19 +150,18 @@ const SCHEMA_PER_DIEM_ROW: Schema<PerDiemRow> = [
   ],
 ];
 
-export const PerDiemComponent: FC<Props> = ({
+export const PerDiemManager: FC<Props> = ({
   loggedUserId = 0,
   onClose,
-  perDiem,
-  ownerId,
+  departmentsInit,
 }) => {
   const [loaded, setLoaded] = useState<boolean>(false);
   const [loading, setLoading] = useState<boolean>(false);
   const [saving, setSaving] = useState<boolean>(false);
   const [initialized, setInitialized] = useState<boolean>(false);
   const [initializing, setInitializing] = useState<boolean>(false);
+  const [employees, setEmployees] = useState<User[]>();
   const [user, setUser] = useState<User>();
-  const [owner, setOwner] = useState<User>();
 
   const [perDiems, setPerDiems] = useState<PerDiem[]>([]);
   const [managerPerDiems, setManagerPerDiems] = useState<PerDiem[]>([]);
@@ -210,13 +181,10 @@ export const PerDiemComponent: FC<Props> = ({
       lodging: number;
     };
   }>({});
-  const [pendingPerDiemSubmit, setPendingPerDiemSubmit] = useState<PerDiem>();
+  const [pendingPerDiemSubmitAndApprove, setPendingPerDiemSubmitAndApprove] =
+    useState<PerDiem>();
   const [pendingPerDiemApprove, setPendingPerDiemApprove] = useState<PerDiem>();
   const [pendingPerDiemEdit, setPendingPerDiemEdit] = useState<PerDiem>();
-  const [loadedPerDiem, setLoadedPerDiem] = useState<PerDiem | undefined>(
-    perDiem ? perDiem : undefined,
-  );
-
   const [pendingPerDiemDelete, setPendingPerDiemDelete] = useState<PerDiem>();
   const [pendingPerDiemRowDelete, setPendingPerDiemRowDelete] =
     useState<boolean>(false);
@@ -226,15 +194,14 @@ export const PerDiemComponent: FC<Props> = ({
     url: string;
   };
   const [jobLinkList, setJobLinkList] = useState<RowURLs[]>([]);
-  const [departments, setDepartments] = useState<TimesheetDepartment[]>([]);
+  const [departments, setDepartments] = useState<TimesheetDepartment[]>(
+    sortBy(departmentsInit, TimesheetDepartmentClientService.getDepartmentName),
+  );
   const [dateStarted, setDateStarted] = useState<Date>(
     addDays(
-      startOfWeek(
-        loadedPerDiem ? parseISO(loadedPerDiem.getDateStarted()) : new Date(),
-        {
-          weekStartsOn: 6,
-        },
-      ),
+      startOfWeek(new Date(), {
+        weekStartsOn: 6,
+      }),
       -0,
     ),
   );
@@ -243,89 +210,38 @@ export const PerDiemComponent: FC<Props> = ({
   const [pendingPerDiemEditDuplicated, setPendingPerDiemEditDuplicated] =
     useState<boolean>(false);
   const initialize = useCallback(async () => {
-    if (loadedPerDiem) {
-      const year = +format(dateStarted, 'yyyy');
-      const month = +format(dateStarted, 'M');
-      const zipCodes = [loadedPerDiem]
-        .reduce((aggr: PerDiemRow[], pd) => [...aggr, ...pd.getRowsList()], [])
-        .map(pd => pd.getZipCode());
-      const govPerDiems = await PerDiemClientService.loadGovPerDiem(
-        zipCodes,
-        year,
-        month,
-      );
-      setGovPerDiems(govPerDiems);
-      const rows = loadedPerDiem.getRowsList();
-      const test = [];
-      for (let j = 0; j < rows.length; j++) {
-        const url = await TimesheetLineClientService.getReferenceURL(
-          rows[j].getServiceCallId(),
-        );
-        const newObject = { key: rows[j].getId(), url };
-        test.push(newObject);
-      }
-      setJobLinkList(test);
-    }
+    setInitializing(true);
+    const user = await UserClientService.loadUserById(loggedUserId);
+    setUser(user);
+    const employeeReq = new User();
+    employeeReq.setIsActive(1);
+    employeeReq.setIsEmployee(1);
+    employeeReq.setOverrideLimit(true);
+    const employees = await UserClientService.BatchGet(employeeReq);
+    setEmployees(employees.getResultsList());
 
-    if (loggedUserId) {
-      setInitializing(true);
-      const user = await UserClientService.loadUserById(loggedUserId);
-      setUser(user);
-      if (ownerId) {
-        const owner = await UserClientService.loadUserById(ownerId);
-        setOwner(owner);
-      }
-      if (!ownerId) {
-        const owner = await UserClientService.loadUserById(loggedUserId);
-        setOwner(owner);
-      }
-      //const depeartments = await TimesheetDepartmentClientService.loadTimeSheetDepartments() For some reason, this isn't loading data
-      const client = new TimesheetDepartmentClient(ENDPOINT);
-      const departmentReq = new TimesheetDepartment();
-      departmentReq.setIsActive(1);
-      const departments = (
-        await client.BatchGet(departmentReq)
-      ).getResultsList();
-      setDepartments(
-        sortBy(departments, TimesheetDepartmentClientService.getDepartmentName),
-      );
-      const role = user
-        .getPermissionGroupsList()
-        .find(p => p.getType() === 'role');
-      if (role) {
-        setRole(role.getName() as RoleType);
-      }
-      //This is where we get the department IDs from permission groups
-      const groupDepartments = user
-        .getPermissionGroupsList()
-        .filter(group => group.getType() === 'department');
-      const managerDepartments = departments.filter(
-        manager => manager.getManagerId() === loggedUserId,
-      );
-      const totalDepartments = [];
-      //New method, based on permission groups, where we setState the new department IDs
-      //Since Not everyone has a permission group yet, this will be on hold for now.
-      //Uncomment when ready.
-      //if (groupDepartments.length > 0) {
-      //  for (let i = 0; i < groupDepartments.length; i++) {
-      //    totalDepartments.push(groupDepartments[i].id);
-      //  }
-      //  setManagerDepartmentIds(totalDepartments);
-      //}
-      //Current method for getting department IDS
-      if (managerDepartments.length > 0) {
-        setManagerDepartmentIds(managerDepartments.map(id => id.getId()));
-      }
-      setInitializing(false);
+    const role = user
+      .getPermissionGroupsList()
+      .find(p => p.getType() === 'role');
+    if (role) {
+      setRole(role.getName() as RoleType);
     }
+    //This is where we get the department IDs from permission groups
+
+    //Current method for getting department IDS
+    if (departments.length > 0) {
+      setManagerDepartmentIds(departments.map(id => id.getId()));
+    }
+    setInitializing(false);
+
     setInitialized(true);
-  }, [dateStarted, loggedUserId, ownerId, loadedPerDiem]);
+  }, [loggedUserId, departments]);
   const load = useCallback(async () => {
     if (!loggedUserId) return;
     setLoading(true);
     const resultsList = (
       await PerDiemClientService.loadPerDiemByUserIdAndDateStarted(
-        ownerId ? ownerId : loggedUserId,
+        loggedUserId,
         formatDateFns(dateStarted),
       )
     ).getResultsList();
@@ -355,9 +271,6 @@ export const PerDiemComponent: FC<Props> = ({
       year,
       month,
     );
-    if (!loadedPerDiem) {
-      setGovPerDiems(govPerDiems);
-    }
     setPerDiems(resultsList);
     setManagerPerDiemsOther(managerPerDiemsOther);
     setManagerPerDiems(managerPerDiemsList);
@@ -366,12 +279,9 @@ export const PerDiemComponent: FC<Props> = ({
     loggedUserId,
     setLoading,
     setPerDiems,
-    loadedPerDiem,
     dateStarted,
-    ownerId,
     managerDepartmentIds,
     setManagerPerDiems,
-    setGovPerDiems,
   ]);
   useEffect(() => {
     if (!loaded && initialized) {
@@ -411,29 +321,24 @@ export const PerDiemComponent: FC<Props> = ({
   );
   const handleSavePerDiem = useCallback(
     async (data: PerDiem) => {
-      const temp = makeSafeFormObject(data, new PerDiem());
+      const safeData = makeSafeFormObject(data, new PerDiem());
       setPendingPerDiemEditDuplicated(false);
       if (
         managerPerDiems.find(
-          loadedPerDiem =>
-            loadedPerDiem.getUserId() === temp.getUserId() &&
-            loadedPerDiem.getDepartmentId() === temp.getDepartmentId(),
+          perDiem =>
+            perDiem.getUserId() === safeData.getUserId() &&
+            perDiem.getDepartmentId() === safeData.getDepartmentId(),
         )
       ) {
         setPendingPerDiemEditDuplicated(true);
         return;
       }
       setSaving(true);
-      if (temp.getUserId() === 0) {
-        const newPerDiem = makeNewPerDiem();
-        await PerDiemClientService.Create(newPerDiem);
-      } else {
-        await PerDiemClientService.upsertPerDiem(temp);
-      }
-
+      const temp = makeSafeFormObject(data, new PerDiem());
+      temp.setDateStarted(format(dateStarted, 'yyyy-MM-dd hh:mm:ss'));
+      await PerDiemClientService.upsertPerDiem(temp);
       setPendingPerDiemEdit(undefined);
       setSaving(false);
-      setInitialized(false);
       setLoaded(false);
     },
     [
@@ -442,6 +347,7 @@ export const PerDiemComponent: FC<Props> = ({
       setLoaded,
       setPendingPerDiemEditDuplicated,
       managerPerDiems,
+      dateStarted,
     ],
   );
   const handleSavePerDiemRow = useCallback(
@@ -449,37 +355,16 @@ export const PerDiemComponent: FC<Props> = ({
       setSaving(true);
       const temp = makeSafeFormObject(perDiemRow, new PerDiemRow());
       const req = new PerDiemRow();
-      let res = new PerDiemRow();
       if (temp.getId() == 0) {
-        res = await PerDiemClientService.CreateRow(temp);
+        await PerDiemClientService.CreateRow(temp);
       } else {
-        res = await PerDiemClientService.UpdateRow(temp);
-      }
-      if (loadedPerDiem) {
-        let found = false;
-        const tempPerDiem = loadedPerDiem;
-        for (let i = 0; i < tempPerDiem!.getRowsList().length; i++) {
-          if (tempPerDiem?.getRowsList()[i].getId() === temp.getId()) {
-            const newRowList = tempPerDiem.getRowsList();
-            found = true;
-            newRowList[i] = temp;
-            tempPerDiem.setRowsList(newRowList);
-          }
-        }
-        if (found == false) {
-          let tempRows = tempPerDiem.getRowsList();
-          tempRows.push(res);
-          tempPerDiem.setRowsList(tempRows);
-        }
-        console.log('saving row');
-        setLoadedPerDiem(tempPerDiem);
+        await PerDiemClientService.UpdateRow(temp);
       }
       setPendingPerDiemRowEdit(undefined);
-      setInitialized(false);
       setSaving(false);
       setLoaded(false);
     },
-    [setSaving, setPendingPerDiemRowEdit, loadedPerDiem, setLoaded],
+    [setSaving, setPendingPerDiemRowEdit, setLoaded],
   );
   const handlePendingPerDiemDeleteToggle = useCallback(
     (pendingPerDiemDelete?: PerDiem) => () =>
@@ -498,26 +383,27 @@ export const PerDiemComponent: FC<Props> = ({
     },
     [setPendingPerDiemEdit, setPendingPerDiemEditDuplicated],
   );
-  const handlePendingPerDiemSubmitToggle = useCallback(
+  const handlePendingPerDiemSubmitAndApproveToggle = useCallback(
     (pendingPerDiemSubmit?: PerDiem) => () =>
-      setPendingPerDiemSubmit(pendingPerDiemSubmit),
-    [setPendingPerDiemSubmit],
+      setPendingPerDiemSubmitAndApprove(pendingPerDiemSubmit),
+    [setPendingPerDiemSubmitAndApprove],
   );
   const handlePendingPerDiemApproveToggle = useCallback(
     (pendingPerDiemApprove?: PerDiem) => () =>
       setPendingPerDiemApprove(pendingPerDiemApprove),
     [setPendingPerDiemApprove],
   );
-  const submitPerDiem = useCallback(async () => {
-    if (pendingPerDiemSubmit) {
-      const id = pendingPerDiemSubmit.getId();
-      setPendingPerDiemSubmit(undefined);
+  const submitAndApprovePerDiem = useCallback(async () => {
+    if (pendingPerDiemSubmitAndApprove) {
+      const id = pendingPerDiemSubmitAndApprove.getId();
+      setPendingPerDiemSubmitAndApprove(undefined);
       setSaving(true);
       await PerDiemClientService.submitPerDiemById(id);
+      await PerDiemClientService.approvePerDiemById(id, loggedUserId);
       setSaving(false);
       setLoaded(false);
     }
-  }, [setSaving, setLoaded, pendingPerDiemSubmit]);
+  }, [setSaving, setLoaded, loggedUserId, pendingPerDiemSubmitAndApprove]);
   const approvePerDiem = useCallback(async () => {
     if (pendingPerDiemApprove) {
       const id = pendingPerDiemApprove.getId();
@@ -526,9 +412,8 @@ export const PerDiemComponent: FC<Props> = ({
       await PerDiemClientService.approvePerDiemById(id, loggedUserId);
       setSaving(false);
       setLoaded(false);
-      if (onClose) onClose();
     }
-  }, [setSaving, onClose, setLoaded, loggedUserId, pendingPerDiemApprove]);
+  }, [setSaving, setLoaded, loggedUserId, pendingPerDiemApprove]);
   const handleDeletePerDiem = useCallback(async () => {
     if (pendingPerDiemDelete) {
       const id = pendingPerDiemDelete.getId();
@@ -543,24 +428,59 @@ export const PerDiemComponent: FC<Props> = ({
       setPendingPerDiemRowDelete(false);
       setPendingPerDiemRowEdit(undefined);
       await PerDiemClientService.deletePerDiemRowById(id);
-      if (loadedPerDiem) {
-        const tempPerDiem = loadedPerDiem;
-        const newRowList = tempPerDiem
-          .getRowsList()
-          .filter(a => a.getId() != id);
-        tempPerDiem.setRowsList(newRowList);
-
-        console.log('deleting row');
-        setLoadedPerDiem(tempPerDiem);
-      }
       setLoaded(false);
     }
-  }, [pendingPerDiemRowEdit, loadedPerDiem, pendingPerDiemRowDelete]);
+  }, [pendingPerDiemRowEdit, pendingPerDiemRowDelete]);
   const handleToggleCheckLodging = useCallback(
     (checkLodging: boolean) => () => setCheckLodging(checkLodging),
     [setCheckLodging],
   );
 
+  /*const handleConfirmTripDelete = useCallback(
+    (confirmTripDelete: Trip | undefined) => {
+      setConfirmTripDelete(confirmTripDelete);
+    },
+    [setConfirmTripDelete],
+  );
+  const handleDeleteTrip = async (trip: Trip) => {
+    try {
+      await PerDiemClientService.DeleteTrip(trip);
+    } catch (err: any) {
+      console.error('An error occurred while deleting a trip: ', err);
+      alert(
+        'The trip was not able to be deleted. Please try again, or if this keeps happening please contact your administrator.',
+      );
+      handleConfirmTripDelete(undefined);
+      return Error(err);
+    }
+    //alert('The trip was deleted successfully!');
+    handleConfirmTripDelete(undefined);
+    getTrips();
+  };
+  const handleDeleteAllTripsInRow = async (row: number) => {
+    try {
+      let i32 = new Int32();
+      i32.setValue(row);
+      await PerDiemClientService.BatchDeleteTrips(i32);
+    } catch (err: any) {
+      console.error(
+        'An error occurred while deleting the trips for this week: ',
+        err,
+      );
+      alert(
+        'The trips were not able to be deleted. Please try again, or if this keeps happening please contact your administrator.',
+      );
+      handleConfirmTripDeleteAll(false);
+      return;
+    }
+    handleConfirmTripDeleteAll(false);
+    getTrips();
+  };
+  const handleConfirmTripDeleteAll = useCallback(
+    (confirmTripDeleteAll: boolean) =>
+      setConfirmTripDeleteAll(confirmTripDeleteAll),
+    [setConfirmTripDeleteAll],
+  );*/
   const departmentsOptions = useMemo(() => {
     const usedDepartments = perDiems.map(perDiem => perDiem.getDepartmentId());
     return departments
@@ -583,7 +503,10 @@ export const PerDiemComponent: FC<Props> = ({
     [usedDepartments, departments],
   );
 
-  const isAnyManager = role === 'Manager';
+  const isAnyManager =
+    departments
+      .map(managerId => managerId.getManagerId())
+      .includes(loggedUserId) || role === 'Manager';
   const isOwner = !isAnyManager;
   const addPerDiemDisabled = availableDapartments.length === 0;
   const SCHEMA_PER_DIEM: Schema<PerDiem> = pendingPerDiemEdit
@@ -625,38 +548,7 @@ export const PerDiemComponent: FC<Props> = ({
         ],
       ]
     : [];
-  const makeNewPerDiem = useCallback(() => {
-    const req = new PerDiem();
-    if (user) {
-      if (loggedUserId && ownerId) {
-        req.setUserId(ownerId);
-      } else {
-        req.setUserId(loggedUserId);
-      }
-      req.setDateStarted(formatDateFns(dateStarted));
-      const usedDepartments = perDiems.map(departmentId =>
-        departmentId.getDepartmentId(),
-      );
-      req.setDepartmentId(
-        usedDepartments.includes(user.getEmployeeDepartmentId())
-          ? (availableDapartments[0] || [{}]).getId()
-          : departments
-              .map(id => id.getId())
-              .includes(user.getEmployeeDepartmentId())
-          ? user.getEmployeeDepartmentId()
-          : departments[0].getId(),
-      );
-    }
-    return req;
-  }, [
-    loggedUserId,
-    dateStarted,
-    user,
-    ownerId,
-    perDiems,
-    departments,
-    availableDapartments,
-  ]);
+
   const makeNewPerDiemRow = useCallback(
     (perDiemId: number, dateString: string) => {
       const req = new PerDiemRow();
@@ -667,7 +559,10 @@ export const PerDiemComponent: FC<Props> = ({
     [],
   );
   if (initializing) return <Loader />;
-  const filteredPerDiems = loadedPerDiem ? [loadedPerDiem] : perDiems;
+  const filteredPerDiems = managerPerDiems.filter(departmentId => {
+    if (managerFilterDepartmentId === 0) return true;
+    return managerFilterDepartmentId === departmentId.getDepartmentId();
+  });
 
   const allRowsList = filteredPerDiems.reduce(
     (aggr, pd) => [...aggr, ...pd.getRowsList()],
@@ -688,19 +583,11 @@ export const PerDiemComponent: FC<Props> = ({
       {loggedUserId > 0 && (
         <CalendarHeader
           onDateChange={handleSetDateStarted}
-          onSubmit={
-            role === 'Manager' && isOwner == false && loadedPerDiem
-              ? handlePendingPerDiemApproveToggle(perDiem)
-              : handlePendingPerDiemEditToggle(makeNewPerDiem())
-          }
+          onSubmit={handlePendingPerDiemEditToggle(new PerDiem())}
           selectedDate={dateStarted}
           title={UserClientService.getCustomerName(user!)}
           weekStartsOn={6}
-          submitLabel={
-            role === 'Manager' && isOwner == false && loadedPerDiem
-              ? 'Approve Per Diem'
-              : 'Add Per Diem'
-          }
+          submitLabel={'Add Per Diem'}
           submitDisabled={loading || saving || addPerDiemDisabled}
           actions={[
             {
@@ -746,6 +633,25 @@ export const PerDiemComponent: FC<Props> = ({
                 Lodging:
                 <strong> {usd(totalLodging)}</strong>
               </Typography>
+              <Typography variant="subtitle2">
+                All {isAnyManager ? 'Technicians' : 'Departments'} Total Miles
+                for Trips:
+                <strong>
+                  {' '}
+                  {allRowsList.reduce((total: any, current, index, arr) => {
+                    let tot = current
+                      .getTripsList()
+                      .reduce((acc: number, trip) => {
+                        return acc + trip.getDistanceInMiles();
+                      }, 0);
+
+                    if (index == arr.length - 1) {
+                      return (total + tot).toFixed(2);
+                    }
+                    return total + tot;
+                  }, 0)}
+                </strong>
+              </Typography>
             </>
           )}
         </CalendarHeader>
@@ -762,7 +668,6 @@ export const PerDiemComponent: FC<Props> = ({
           const status = getStatus(
             entry.getDateApproved(),
             entry.getDateSubmitted(),
-            entry.getPayrollProcessed(),
             isManager,
           );
           const buttonDisabled =
@@ -786,9 +691,15 @@ export const PerDiemComponent: FC<Props> = ({
                   : govPerDiemByZipCode(pdr.getZipCode()).lodging),
               0,
             );
+          const owner = employees!.find(
+            employee => employee.getId() === entry.getUserId(),
+          );
           return (
             <div key={entry.getId()} className="PerDiemDepartment">
               <SectionBar
+                title={`Employee : ${owner?.getFirstname()} ${owner?.getLastname()},Department: ${TimesheetDepartmentClientService.getDepartmentName(
+                  entry.getDepartment()!,
+                )}`}
                 subtitle={
                   <>
                     <div>Total Meals: {usd(totalMeals)}</div>
@@ -807,7 +718,24 @@ export const PerDiemComponent: FC<Props> = ({
                         ? ` ${owner!.getZip()} `
                         : ' No ZipCode '}
                     </strong>
+                    {entry
+                      .getRowsList()
+                      .reduce((total: any, current, index, arr) => {
+                        let tot = current
+                          .getTripsList()
+                          .reduce((acc: number, trip) => {
+                            return acc + trip.getDistanceInMiles();
+                          }, 0);
 
+                        if (index == arr.length - 1) {
+                          return (
+                            <div>
+                              Total Miles: {(total + tot).toFixed(2)} miles
+                            </div>
+                          );
+                        }
+                        return total + tot;
+                      }, 0)}
                     {+entry.getDateSubmitted()[0] > 0 && (
                       <div>
                         Submited Date: {formatDate(entry.getDateSubmitted())}
@@ -823,32 +751,28 @@ export const PerDiemComponent: FC<Props> = ({
                     )}
                   </>
                 }
-                actions={
-                  perDiem && role! != 'Manager'
-                    ? []
-                    : [
-                        {
-                          label: 'Delete',
-                          variant: 'outlined',
-                          onClick: handlePendingPerDiemDeleteToggle(entry),
-                          disabled: buttonDisabled && role != 'Manager',
-                        },
-                        {
-                          label: 'Edit',
-                          variant: 'outlined',
-                          onClick: handlePendingPerDiemEditToggle(entry),
-                          disabled: buttonDisabled && role != 'Manager',
-                        },
-                        {
-                          label: status.button,
-                          onClick:
-                            isAnyManager && status.status === 'PENDING_APPROVE'
-                              ? handlePendingPerDiemApproveToggle(entry)
-                              : handlePendingPerDiemSubmitToggle(entry),
-                          disabled: buttonDisabled && role != 'Manager',
-                        },
-                      ]
-                }
+                actions={[
+                  {
+                    label: 'Delete',
+                    variant: 'outlined',
+                    onClick: handlePendingPerDiemDeleteToggle(entry),
+                    disabled: buttonDisabled,
+                  },
+                  {
+                    label: 'Edit',
+                    variant: 'outlined',
+                    onClick: handlePendingPerDiemEditToggle(entry),
+                    disabled: buttonDisabled,
+                  },
+                  {
+                    label: status.button,
+                    onClick:
+                      isAnyManager && status.status === 'PENDING_APPROVE'
+                        ? handlePendingPerDiemApproveToggle(entry)
+                        : handlePendingPerDiemSubmitAndApproveToggle(entry),
+                    disabled: buttonDisabled,
+                  },
+                ]}
                 footer={
                   entry.getNotes().trim() ? (
                     <span>
@@ -857,7 +781,6 @@ export const PerDiemComponent: FC<Props> = ({
                     </span>
                   ) : null
                 }
-                uncollapsable={!!perDiem}
               >
                 <Calendar className="PerDiemCalendar">
                   {[...Array(7)].map((_, dayOffset) => {
@@ -868,7 +791,7 @@ export const PerDiemComponent: FC<Props> = ({
                         dateString.getDateString().startsWith(date),
                       );
                     const isPerDiemRowUndefined =
-                      filteredPerDiems
+                      managerPerDiemsOther[entry.getUserId()]
                         .reduce(
                           (aggr: PerDiemRow[], pd) => [
                             ...aggr,
@@ -978,7 +901,21 @@ export const PerDiemComponent: FC<Props> = ({
                                   )}
                                 </div>
                               )}
-
+                              {entry
+                                .getTripsList()
+                                .reduce((total: any, current, index, arr) => {
+                                  if (index == arr.length - 1) {
+                                    return (
+                                      <div>
+                                        <strong>Total Miles: </strong>
+                                        {(
+                                          total + current.getDistanceInMiles()
+                                        ).toFixed(2) + ' mi'}
+                                      </div>
+                                    );
+                                  }
+                                  return total + current.getDistanceInMiles();
+                                }, 0)}
                               <div className="PerDiemRow">
                                 <strong>Notes: </strong>
                                 {entry.getNotes()}
@@ -1036,94 +973,7 @@ export const PerDiemComponent: FC<Props> = ({
                   />
                 </div>
               )}
-              {/*<Button
-                label="Add Trip"
-                size="medium"
-                variant="contained"
-                compact
-                onClick={handleTripEditOpen(makeNewTrip())}
-              />*/}
-              {/*
-                <>
-                  <SectionBar
-                    title="Total Miles This Week"
-                    footer={
-                      totalTripMiles != undefined && totalTripMiles != 0.0
-                        ? totalTripMiles?.toFixed(1) + ' miles'
-                        : 'None'
-                    }
-                    small
-                  />
-                  <InfoTable
-                    columns={[
-                      { name: 'Origin' },
-                      { name: 'Destination' },
-                      {
-                        name: 'Miles',
-                        actions: [
-                          {
-                            label: 'Delete All Trips For This Week',
-                            compact: false,
-                            variant: 'outlined',
-                            onClick: () => {
-                              handleConfirmTripDeleteAll(true);
-                            },
-                          },
-                        ],
-                      },
-                    ]}
-                    data={
-                      loading
-                        ? makeFakeRows(3, 1)
-                        : trips!
-                            .getResultsList()
-                            .filter((trip: Trip) => {
-                              return (
-                                trip.getPerDiemRowId() ==
-                                pendingPerDiemRowEdit.perDiemId
-                              );
-                            })
-                            .map((currentTrip: Trip) => {
-                              setTotalTripDistance(
-                                pendingPerDiemRowEdit.perDiemId,
-                              );
-                              return [
-                                { value: currentTrip.getOriginAddress() },
-                                { value: currentTrip.getDestinationAddress() },
-                                {
-                                  value: currentTrip
-                                    .getDistanceInMiles()
-                                    .toFixed(1),
-                                  actions: [
-                                    <IconButton
-                                      key={currentTrip.getId() + 'edit'}
-                                      size="small"
-                                      onClick={() =>
-                                        handleConfirmTripDelete(currentTrip)
-                                      }
-                                    >
-                                      <DeleteIcon />
-                                    </IconButton>,
-                                  ],
-                                },
-                              ];
-                            })
-                    }
-                    compact
-                  />
-                </>
-                  */}
             </Form>
-            {/*<TripInfoTable
-              canAddTrips
-              canDeleteTrips
-              perDiemRowIds={[pendingPerDiemRowEdit.perDiemId]}
-              loggedUserId={loggedUserId}
-              onNoPerDiem={() => {
-                setPendingPerDiemEdit(undefined);
-                load();
-              }}
-            />*/}
           </Modal>
         </>
       )}
@@ -1147,28 +997,31 @@ export const PerDiemComponent: FC<Props> = ({
           name=""
         />
       )}
-      {pendingPerDiemSubmit && pendingPerDiemSubmit.getRowsList().length == 0 && (
-        <AlertPopup
-          open
-          onClose={handlePendingPerDiemSubmitToggle(undefined)}
-          title="Error"
-          label="Okay"
-        >
-          Empty per diems are not valid. Please add details to each day that you
-          are requesting per diems for by clicking the ADD PER DIEM DAY button.
-        </AlertPopup>
-      )}
-      {pendingPerDiemSubmit && pendingPerDiemSubmit.getRowsList().length > 0 && (
-        <Confirm
-          open
-          onClose={handlePendingPerDiemSubmitToggle(undefined)}
-          onConfirm={submitPerDiem}
-          title="Confirm Submit"
-          submitLabel="Submit"
-        >
-          Are you sure you want to submit this Per Diem?
-        </Confirm>
-      )}
+      {pendingPerDiemSubmitAndApprove &&
+        pendingPerDiemSubmitAndApprove.getRowsList().length == 0 && (
+          <AlertPopup
+            open
+            onClose={handlePendingPerDiemSubmitAndApproveToggle(undefined)}
+            title="Error"
+            label="Okay"
+          >
+            Empty per diems are not valid. Please add details to each day that
+            you are requesting per diems for by clicking the ADD PER DIEM DAY
+            button.
+          </AlertPopup>
+        )}
+      {pendingPerDiemSubmitAndApprove &&
+        pendingPerDiemSubmitAndApprove.getRowsList().length > 0 && (
+          <Confirm
+            open
+            onClose={handlePendingPerDiemSubmitAndApproveToggle(undefined)}
+            onConfirm={submitAndApprovePerDiem}
+            title="Confirm Submit"
+            submitLabel="Submit"
+          >
+            Are you sure you want to Submit and Approve this Per Diem?
+          </Confirm>
+        )}
       {pendingPerDiemApprove && (
         <Confirm
           open

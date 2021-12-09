@@ -357,7 +357,8 @@ export const CostReportCSV: FC<Props> = ({ serviceCallId, onClose }) => {
             week =>
               week.classCodeId == weekStruct.classCodeId &&
               week.weekEnd == weekStruct.weekEnd &&
-              weekStruct.weekStart === weekStruct.weekStart,
+              week.weekStart === weekStruct.weekStart &&
+              week.employeeId == weekStruct.employeeId,
           );
           if (findExisting != -1) {
             weekList[findExisting].hoursSubtotal += weekStruct.hoursSubtotal;
