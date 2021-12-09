@@ -23,12 +23,14 @@ type State = {
   propertyUse: string[];
   techIds: string;
   timeoffDepartmentIds: string;
+  states: string[];
 };
 
 type Action =
   | { type: 'toggleAll'; key: string; value: string[] }
   | { type: 'customers'; value: string }
   | { type: 'zip'; value: string }
+  | { type: 'state'; value: string }
   | { type: 'jobType'; value: string }
   | { type: 'departmentIds'; value: string }
   | { type: 'jobSubType'; value: number }
@@ -69,6 +71,20 @@ const reducer = (state: State, action: Action): State => {
       return {
         ...state,
         zip,
+      };
+    }
+    case 'state': {
+      const states = [...state.states];
+      const currentIndex = states.indexOf(action.value);
+
+      if (currentIndex === -1) {
+        states.push(action.value);
+      } else {
+        states.splice(currentIndex, 1);
+      }
+      return {
+        ...state,
+        states,
       };
     }
     case 'jobType': {
@@ -129,6 +145,7 @@ const FilterDrawer = ({ open, toggleDrawer }: Props) => {
     changeFilters,
     customersMap,
     zipCodesMap,
+    statesMap,
   } = useCalendarData();
   const [expanded, setExpanded] = useState('');
   const [state, dispatch] = useReducer(reducer, filters);
@@ -140,6 +157,7 @@ const FilterDrawer = ({ open, toggleDrawer }: Props) => {
     propertyUse,
     techIds,
     timeoffDepartmentIds,
+    states,
   } = state;
 
   const [, wHeight] = useWindowSize();
@@ -172,6 +190,7 @@ const FilterDrawer = ({ open, toggleDrawer }: Props) => {
       propertyUse: [],
       techIds: '0',
       timeoffDepartmentIds: '0',
+      states: [],
     };
     dispatch({ type: 'resetFilters', value: temp });
     changeFilters(temp);
@@ -225,6 +244,28 @@ const FilterDrawer = ({ open, toggleDrawer }: Props) => {
                   type: 'toggleAll',
                   key: 'zip',
                   value: value ? Object.keys(zipCodesMap || {}) : [],
+                })
+              }
+            />
+          </FilterPanel>
+          <FilterPanel
+            title="States"
+            selectedCount={states.length}
+            expanded={expanded === 'state'}
+            handleChange={() => toggleExpanded('state')}
+          >
+            <SearchableList
+              title="States"
+              options={statesMap}
+              values={states}
+              loading={fetchingCalendarData}
+              maxListHeight={maxListHeight}
+              handleChange={value => dispatch({ type: 'state', value })}
+              handleToggleAll={value =>
+                dispatch({
+                  type: 'toggleAll',
+                  key: 'state',
+                  value: value ? Object.keys(statesMap || {}) : [],
                 })
               }
             />

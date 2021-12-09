@@ -109,6 +109,7 @@ type Filters = {
   jobType: string;
   jobSubType: number;
   zip: string[];
+  states: string[];
   propertyUse: string[];
   techIds: string;
   timeoffDepartmentIds: string;
@@ -120,6 +121,7 @@ type State = {
   datesMap?: jspb.Map<string, CalendarDay>;
   customersMap: MapList;
   zipCodesMap: MapList;
+  statesMap: MapList;
   speedDialOpen: boolean;
   viewBy: string | '';
   defaultView?: string;
@@ -168,6 +170,8 @@ const reducer = (state: State, action: Action): State => {
         datesMap: CalendarData.getDatesMap(),
         customersMap: mapToObject(CalendarData.getCustomersMap()),
         zipCodesMap: mapToObject(CalendarData.getZipCodesMap()),
+        statesMap: mapToObject(CalendarData.getStatesMap()),
+
         fetchingCalendarData: false,
       };
     }
@@ -222,6 +226,7 @@ const initialFilters: Filters = cachedInitialFilters
       propertyUse: [],
       techIds: '0',
       timeoffDepartmentIds: '0',
+      states: [],
     };
 let temp = initialFilters.jobType;
 if (typeof temp === 'number') {
@@ -229,6 +234,9 @@ if (typeof temp === 'number') {
 }
 if (initialFilters.timeoffDepartmentIds === undefined) {
   initialFilters.timeoffDepartmentIds = '0';
+}
+if (initialFilters.states === undefined) {
+  initialFilters.states = [];
 }
 const initialState: State = {
   fetchingCalendarData: true,
@@ -239,6 +247,7 @@ const initialState: State = {
   filters: initialFilters,
   customersMap: {},
   zipCodesMap: {},
+  statesMap: {},
   addCustomer: false,
 };
 
@@ -258,6 +267,7 @@ type CalendarData = {
   getDatesMap(): jspb.Map<string, CalendarDay>;
   getCustomersMap(): jspb.Map<number, string>;
   getZipCodesMap(): jspb.Map<string, string>;
+  getStatesMap(): jspb.Map<string, string>;
 };
 
 type CalendarDataContext = {
@@ -265,6 +275,7 @@ type CalendarDataContext = {
   datesMap?: jspb.Map<string, CalendarDay>;
   customersMap?: MapList;
   zipCodesMap?: MapList;
+  statesMap?: MapList;
   initialFilters: Filters;
   filters: Filters;
   changeFilters: (value: Filters) => void;
@@ -299,6 +310,7 @@ export const ServiceCalendar: FC<Props> = props => {
       datesMap,
       customersMap,
       zipCodesMap,
+      statesMap,
       viewBy,
       shownDates,
       selectedDate,
@@ -442,6 +454,7 @@ export const ServiceCalendar: FC<Props> = props => {
           datesMap,
           customersMap,
           zipCodesMap,
+          statesMap,
           initialFilters,
           filters,
           changeFilters,
