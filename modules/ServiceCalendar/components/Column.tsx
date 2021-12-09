@@ -89,7 +89,7 @@ const Column = ({
         propertyUse,
         jobType,
         jobSubType,
-        timeoffDepartmentIds,
+        states,
         techIds: techIdsFilter,
       } = filters!;
       const callList = [
@@ -140,6 +140,12 @@ const Column = ({
           if (
             zip.length &&
             !zip.includes(call?.getProperty()?.getZip() || '')
+          ) {
+            return false;
+          }
+          if (
+            states.length &&
+            !states.includes(call?.getProperty()?.getState() || '')
           ) {
             return false;
           }
