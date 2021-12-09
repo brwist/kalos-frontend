@@ -52,7 +52,7 @@ import ExpandLess from '@material-ui/icons/ExpandLess';
 import ExpandMore from '@material-ui/icons/ExpandMore';
 import Collapse from '@material-ui/core/Collapse/Collapse';
 import { TransactionAccount } from '@kalos-core/kalos-rpc/TransactionAccount';
-import { task } from 'gulp';
+import { PrintHeader } from '../PrintHeader';
 export interface Props {
   serviceCallId: number;
   loggedUserId: number;
@@ -64,7 +64,11 @@ export type SearchType = {
   statusId: number;
   priorityId: number;
 };
-
+export type Week = {
+  weekStart: string;
+  weekEnd: string;
+  code: number;
+};
 export const GetTotalTransactions = (transactions: Transaction[]) => {
   return transactions.reduce((aggr, txn) => aggr + txn.getAmount(), 0);
 };
@@ -664,6 +668,24 @@ export const CostReportCSV: FC<Props> = ({ serviceCallId, onClose }) => {
     (aggr, pd) => aggr + pd.getSpiffAmount(),
     0,
   );
+
+  const weekArray: Week[] = [];
+
+  for (let i = 0; i < state.timesheetWeeklySubtotals.length; i++) {
+    let temp = state.timesheetWeeklySubtotals[i];
+    let found = weekArray.find(
+      week => temp.weekStart == week.weekStart && week.code == temp.classCodeId,
+    );
+    console.log(temp);
+    if (found == undefined) {
+      weekArray.push({
+        weekEnd: temp.weekEnd,
+        weekStart: temp.weekStart,
+        code: temp.classCodeId,
+      });
+    }
+  }
+  console.log(weekArray);
   return state.loaded ? (
     <SectionBar key="ReportPage" uncollapsable={true}>
       <style>{`
@@ -1824,39 +1846,54 @@ export const CostReportCSV: FC<Props> = ({ serviceCallId, onClose }) => {
                   subtitle={`${state.laborTotals[code.getId()]} hour(s)`}
                   key={'header' + code.getId()}
                 >
-                  <InfoTable
-                    columns={[
-                      {
-                        name: 'Technician',
-                        align: 'left',
-                      },
-                      {
-                        name: 'Week',
-                        align: 'left',
-                      },
-                      {
-                        name: 'Total Hours',
-                        align: 'left',
-                      },
-                    ]}
-                    data={state.timesheetWeeklySubtotals
-                      .filter(week => week.classCodeId == code.getId())
-                      .map(week => {
-                        return [
-                          {
-                            value: `${state.users
-                              .find(user => user.getId() === week.employeeId)
-                              ?.getFirstname()}-${state.users
-                              .find(user => user.getId() === week.employeeId)
-                              ?.getLastname()}`,
-                          },
-                          {
-                            value: `${week.weekStart}-${week.weekEnd}`,
-                          },
-                          { value: `${week.hoursSubtotal} hour(s)` },
-                        ];
-                      })}
-                  />
+                  {weekArray
+                    .filter(week => week.code === code.getId())
+                    .map(weekMapValue => (
+                      <div key={weekMapValue.weekStart}>
+                        <PrintParagraph tag="h2">{`Week Of ${weekMapValue.weekStart}`}</PrintParagraph>
+                        <InfoTable
+                          columns={[
+                            {
+                              name: 'Technician',
+                              align: 'left',
+                            },
+                            {
+                              name: 'Week',
+                              align: 'left',
+                            },
+                            {
+                              name: 'Total Hours',
+                              align: 'left',
+                            },
+                          ]}
+                          data={state.timesheetWeeklySubtotals
+                            .filter(
+                              week =>
+                                week.classCodeId == code.getId() &&
+                                weekMapValue.weekStart == week.weekStart,
+                            )
+                            .map(week => {
+                              return [
+                                {
+                                  value: `${state.users
+                                    .find(
+                                      user => user.getId() === week.employeeId,
+                                    )
+                                    ?.getFirstname()}-${state.users
+                                    .find(
+                                      user => user.getId() === week.employeeId,
+                                    )
+                                    ?.getLastname()}`,
+                                },
+                                {
+                                  value: `${week.weekStart}-${week.weekEnd}`,
+                                },
+                                { value: `${week.hoursSubtotal} hour(s)` },
+                              ];
+                            })}
+                        />
+                      </div>
+                    ))}
                   <div key="TimesheetDetails">
                     <Button
                       key={'dropDownbutton' + code.getId().toString()}
@@ -2160,6 +2197,3 @@ export const CostReportCSV: FC<Props> = ({ serviceCallId, onClose }) => {
     <Loader></Loader>
   );
 };
-/* Old timesheet, this will be shown via dropdown
-
-*/
