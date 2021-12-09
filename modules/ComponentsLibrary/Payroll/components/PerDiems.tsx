@@ -15,6 +15,8 @@ import NotInterestedIcon from '@material-ui/icons/NotInterested';
 import { Tooltip } from '../../Tooltip';
 import { Confirm } from '../../Confirm';
 import { Button } from '../../Button';
+import { PerDiemManager } from '../../PerDiemManager';
+import { TimesheetDepartment } from '@kalos-core/kalos-rpc/TimesheetDepartment';
 import {
   makeFakeRows,
   formatDate,
@@ -40,6 +42,7 @@ interface Props {
   employeeId: number;
   week: string;
   role: RoleType;
+  departmentList: TimesheetDepartment[];
 }
 
 const formatWeek = (date: string) => {
@@ -51,6 +54,7 @@ export const PerDiems: FC<Props> = ({
   loggedUserId,
   departmentId,
   employeeId,
+  departmentList,
   week,
   role,
 }) => {
@@ -64,6 +68,7 @@ export const PerDiems: FC<Props> = ({
   const [pendingDeny, setPendingDeny] = useState<PerDiem>();
   const [rejectionMessage, setRejectionMessage] = useState<string>('');
   const [toggleButton, setToggleButton] = useState<boolean>(false);
+  const [openManagerPerDiem, setOpenManagerPerDiem] = useState<boolean>(false);
   const [pendingPayroll, setPendingPayroll] = useState<PerDiem>();
   const [pendingPayrollReject, setPendingPayrollReject] = useState<PerDiem>();
   const managerFilter = role === 'Manager';
@@ -320,6 +325,12 @@ export const PerDiems: FC<Props> = ({
           onClick={() => handleToggleButton()}
         ></Button>
       )}
+      {role === 'Manager' && (
+        <Button
+          label={'Manage PerDiems'}
+          onClick={() => setOpenManagerPerDiem(true)}
+        ></Button>
+      )}
       <InfoTable
         columns={[
           { name: 'Employee' },
@@ -483,11 +494,23 @@ export const PerDiems: FC<Props> = ({
           <PerDiemComponent
             onClose={handlePerDiemViewedToggle(undefined)}
             perDiem={perDiemViewed}
-            ownerId={employeeId}
+            ownerId={perDiemViewed.getUserId()}
             loggedUserId={loggedUserId}
           />
         </Modal>
       )}
+
+      <Modal
+        open={openManagerPerDiem}
+        fullScreen
+        onClose={() => setOpenManagerPerDiem(false)}
+      >
+        <PerDiemManager
+          loggedUserId={loggedUserId}
+          departmentsInit={departmentList}
+          onClose={() => setOpenManagerPerDiem(false)}
+        ></PerDiemManager>
+      </Modal>
       {pendingApprove && (
         <Confirm
           title="Confirm Approve"
