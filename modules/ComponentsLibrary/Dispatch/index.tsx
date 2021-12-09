@@ -160,6 +160,7 @@ export const DispatchDashboard: React.FC<Props> = function DispatchDashboard({
     call.setDateRangeList(['>=', state.formData.dateStart, '<=', state.formData.dateEnd]);
     call.setDateTargetList(['date_started', 'date_ended']);
     call.setJobTypeIdList(state.formData.jobTypes.toString());
+    call.setLogJobstatus("Confirmed");
     if (state.formData.divisionMulti.length) {
       call.setSectorGroupList(state.formData.divisionMulti.toString());
     } else {
