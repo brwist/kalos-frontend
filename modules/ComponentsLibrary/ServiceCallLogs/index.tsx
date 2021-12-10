@@ -9,11 +9,15 @@
 import React, { useReducer, useEffect, useCallback, FC } from 'react';
 import { reducer, ACTIONS } from './reducer';
 import { Devlog } from '@kalos-core/kalos-rpc/Devlog';
-import { DevlogClientService } from '../../../helpers';
+import {
+  ActivityLogClientService,
+  DevlogClientService,
+} from '../../../helpers';
 import { format } from 'date-fns';
 import Typography from '@material-ui/core/Typography';
 import { SectionBar } from '../SectionBar';
 import { Loader } from '../../Loader/main';
+import { ActivityLog } from '@kalos-core/kalos-rpc/ActivityLog';
 
 // add any prop types here
 interface props {
@@ -28,13 +32,18 @@ export const ServiceCallLogs: FC<props> = ({ loggedUserId, eventId }) => {
     activityLogs: undefined,
   });
 
-  const load = useCallback(() => {
-    // RPCs that are in here should be stubbed in the tests at least 9 times out of 10.
-    // This ensures that the fake data gets "loaded" instantly and the tests can progress quickly and without RPC errors
-    // For some examples, check out /test/modules/Teams or /test/modules/Payroll
+  const loadActivityLogs = useCallback(async () => {
+    let req = new ActivityLog();
+    req.setEventId(eventId);
+    const res = await ActivityLogClientService.BatchGet(req);
+    dispatch({ type: ACTIONS.SET_ACTIVITY_LOGS, data: res.getResultsList() });
+  }, [eventId]);
+
+  const load = useCallback(async () => {
+    await loadActivityLogs();
 
     dispatch({ type: ACTIONS.SET_LOADED, data: true });
-  }, []);
+  }, [loadActivityLogs]);
 
   const cleanup = useCallback(() => {
     // TODO clean up your function calls here (called once the component is unmounted, prevents "Can't perform a React state update on an unmounted component" errors)
@@ -76,7 +85,7 @@ export const ServiceCallLogs: FC<props> = ({ loggedUserId, eventId }) => {
       <SectionBar title={`Service Call Logs of Event ID: ${eventId}`}>
         {!state.activityLogs && <Loader />}
         {state.activityLogs && state.activityLogs.length === 0 && (
-          <Typography>No activity logs found.</Typography>
+          <Typography>No activity logs found for this event.</Typography>
         )}
       </SectionBar>
     </>
