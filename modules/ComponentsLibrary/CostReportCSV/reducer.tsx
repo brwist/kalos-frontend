@@ -7,6 +7,7 @@ import { Task } from '@kalos-core/kalos-rpc/Task';
 import { TransactionAccount } from '@kalos-core/kalos-rpc/TransactionAccount';
 import { ClassCode, ClassCodeClient } from '@kalos-core/kalos-rpc/ClassCode';
 import { User } from '@kalos-core/kalos-rpc/User';
+import { OrderDir } from '../../../helpers';
 
 export interface WeekClassCodeBreakdownSubtotal {
   weekStart: string;
@@ -35,6 +36,7 @@ export type State = {
   tasks: Task[];
   users: User[];
   classCodes: ClassCode[];
+  transactionSort: { sortBy: string; sortDir: OrderDir };
   transactionDropDowns: { costCenterId: number; active: number }[];
   timesheetWeeklySubtotals: WeekClassCodeBreakdownSubtotal[];
   dropDowns: { perDiemId: number; active: number }[];
@@ -57,6 +59,7 @@ export enum ACTIONS {
   SET_EVENT = 'setEvent',
   SET_CLASS_CODES = 'setClassCodes',
   SET_COST_CENTER_TOTALS = 'setCostCenterTotals',
+  SET_TRANSACTION_SORT = 'setTransactionSort',
   SET_LOADING = 'setLoading',
   SET_TRIPS = 'setTrips',
   SET_TRIPS_TOTAL = 'setTripsTotal',
@@ -113,6 +116,10 @@ export type Action =
       data: 'idle' | 'loading' | 'loaded' | undefined;
     }
   | { type: ACTIONS.SET_TASKS; data: Task[] }
+  | {
+      type: ACTIONS.SET_TRANSACTION_SORT;
+      data: { sortBy: string; sortDir: OrderDir };
+    }
   | { type: ACTIONS.SET_ACTIVE_TAB; data: string }
   | {
       type: ACTIONS.SET_DROPDOWNS;
@@ -205,6 +212,13 @@ export const reducer = (state: State, action: Action) => {
       return {
         ...state,
         setLaborTotals: action.data,
+      };
+    }
+    case ACTIONS.SET_TRANSACTION_SORT: {
+      console.log('we set the transaction sort', action.data);
+      return {
+        ...state,
+        transactionSort: action.data,
       };
     }
     case ACTIONS.SET_TRANSACTION_ACCOUNTS: {
