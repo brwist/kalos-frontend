@@ -27,9 +27,14 @@ import { Option } from '../../ComponentsLibrary/Field';
 interface props {
   loggedUserId: number;
   onClose: () => void;
+  serviceCallId: number;
 }
 
-export const SpiffApplyComponent: FC<props> = ({ loggedUserId, onClose }) => {
+export const SpiffApplyComponent: FC<props> = ({
+  loggedUserId,
+  onClose,
+  serviceCallId,
+}) => {
   const [state, dispatch] = useReducer(reducer, {
     isLoaded: false,
     error: undefined,
@@ -62,12 +67,6 @@ export const SpiffApplyComponent: FC<props> = ({ loggedUserId, onClose }) => {
         required: true,
       },
       {
-        name: 'getSpiffJobNumber',
-        label: 'Job #',
-        type: 'eventId',
-        required: true,
-      },
-      {
         name: 'getDatePerformed',
         label: 'Date Performed',
         type: 'date',
@@ -87,18 +86,11 @@ export const SpiffApplyComponent: FC<props> = ({ loggedUserId, onClose }) => {
         multiline: true,
       },
     ],
-    [
-      { name: 'getReferenceNumber', label: 'Reference #' },
-      {
-        name: 'getBriefDescription',
-        label: 'Tool Description',
-        multiline: true,
-      },
-    ],
   ];
   const makeNewTask = useCallback(() => {
     const newTask = new Task();
     newTask.setTimeDue(timestamp());
+    newTask.setSpiffJobNumber(serviceCallId.toString());
 
     newTask.setDatePerformed(timestamp());
     if (SPIFF_TYPES_OPTIONS.length > 0) {
@@ -106,7 +98,7 @@ export const SpiffApplyComponent: FC<props> = ({ loggedUserId, onClose }) => {
     }
     newTask.setExternalId(loggedUserId);
     return newTask;
-  }, [SPIFF_TYPES_OPTIONS, loggedUserId]);
+  }, [SPIFF_TYPES_OPTIONS, loggedUserId, serviceCallId]);
 
   const load = useCallback(async () => {
     const spiffTypes = (
