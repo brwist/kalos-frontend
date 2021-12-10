@@ -26,6 +26,7 @@ import { InfoTable, Data } from '../InfoTable';
 import { Tabs } from '../Tabs';
 import { Option } from '../Field';
 import { Form, Schema } from '../Form';
+import { SpiffApplyComponent } from '../SpiffApplyComponent';
 import { Request } from './components/Request';
 import { Equipment } from './components/Equipment';
 import { Services } from './components/Services';
@@ -126,6 +127,10 @@ export const ServiceCall: FC<Props> = props => {
     },
     [setEntry, serviceCallId],
   );
+  const [openSpiffApply, setOpenSpiffApply] = useState<boolean>(false);
+  const toggleOpenSpiffApply = () => {
+    setOpenSpiffApply(!openSpiffApply);
+  };
   const loadServicesRenderedData = useCallback(
     async (_serviceCallId = serviceCallId, passLoading?: boolean) => {
       if (_serviceCallId) {
@@ -710,14 +715,7 @@ export const ServiceCall: FC<Props> = props => {
             ? [
                 {
                   label: 'Spiff Apply',
-                  url: cfURL(
-                    [
-                      'tasks.addtask',
-                      'type=Spiff',
-                      `job_no=${logJobNumber}`,
-                    ].join('&'),
-                  ),
-                  target: '_blank',
+                  onClick: () => toggleOpenSpiffApply(),
                 },
                 {
                   label: 'Job Activity',
@@ -999,6 +997,12 @@ export const ServiceCall: FC<Props> = props => {
             }
           />
         </Modal>
+      )}
+      {openSpiffApply && (
+        <SpiffApplyComponent
+          loggedUserId={loggedUserId}
+          onClose={() => toggleOpenSpiffApply()}
+        />
       )}
     </>
   );
