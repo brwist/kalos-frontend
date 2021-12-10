@@ -19,6 +19,7 @@ import { SectionBar } from '../SectionBar';
 import { Loader } from '../../Loader/main';
 import { ActivityLog } from '@kalos-core/kalos-rpc/ActivityLog';
 import { Alert } from '../Alert';
+import { InfoTable } from '../InfoTable';
 
 // add any prop types here
 interface props {
@@ -37,7 +38,6 @@ export const ServiceCallLogs: FC<props> = ({ loggedUserId, eventId }) => {
     async (errorToSet: string) => {
       // This will send out an error devlog automatically when called
       // The idea is that this will be used for any errors which we should be able to look up for debugging
-
       try {
         let errorLog = new Devlog();
         errorLog.setUserId(loggedUserId);
@@ -79,10 +79,7 @@ export const ServiceCallLogs: FC<props> = ({ loggedUserId, eventId }) => {
     dispatch({ type: ACTIONS.SET_LOADED, data: true });
   }, [loadActivityLogs]);
 
-  const cleanup = useCallback(() => {
-    // TODO clean up your function calls here (called once the component is unmounted, prevents "Can't perform a React state update on an unmounted component" errors)
-    // This is important for long-term performance of our components
-  }, []);
+  const cleanup = useCallback(() => {}, []);
 
   useEffect(() => {
     if (!state.isLoaded) load();
@@ -94,8 +91,8 @@ export const ServiceCallLogs: FC<props> = ({ loggedUserId, eventId }) => {
 
   return (
     <>
+      {!state.activityLogs && <Loader />}
       <SectionBar title={`Service Call Logs of Event ID: ${eventId}`}>
-        {!state.activityLogs && <Loader />}
         {state.activityLogs && state.activityLogs.length === 0 && (
           <Typography>No activity logs found for this event.</Typography>
         )}
@@ -106,6 +103,41 @@ export const ServiceCallLogs: FC<props> = ({ loggedUserId, eventId }) => {
         >
           {state.error}
         </Alert>
+        <InfoTable
+          key={state.activityLogs?.toString()}
+          columns={[
+            {
+              name: 'Date / Time',
+            },
+            {
+              name: 'User',
+            },
+            {
+              name: 'Activity Type',
+            },
+          ]}
+          data={
+            !state.activityLogs
+              ? []
+              : state.activityLogs.map(activityLog => {
+                  return [
+                    { value: `${activityLog.getActivityDate()}` },
+                    {
+                      value: `${activityLog
+                        .getUser()
+                        ?.getFirstname()} ${activityLog
+                        .getUser()
+                        ?.getLastname()}`,
+                    },
+                    {
+                      value: activityLog.getActivityName(),
+                    },
+                  ];
+                })
+          }
+          loading={!state.activityLogs}
+          error={state.error !== undefined}
+        />
       </SectionBar>
     </>
   );
