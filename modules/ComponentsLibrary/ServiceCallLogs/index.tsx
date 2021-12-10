@@ -13,6 +13,7 @@ import { DevlogClientService } from '../../../helpers';
 import { format } from 'date-fns';
 import Typography from '@material-ui/core/Typography';
 import { SectionBar } from '../SectionBar';
+import { Loader } from '../../Loader/main';
 
 // add any prop types here
 interface props {
@@ -24,6 +25,7 @@ export const ServiceCallLogs: FC<props> = ({ loggedUserId, eventId }) => {
   const [state, dispatch] = useReducer(reducer, {
     isLoaded: false,
     error: undefined,
+    activityLogs: undefined,
   });
 
   const load = useCallback(() => {
@@ -71,9 +73,12 @@ export const ServiceCallLogs: FC<props> = ({ loggedUserId, eventId }) => {
 
   return (
     <>
-      <SectionBar
-        title={`Service Call Logs of Event ID: ${eventId}`}
-      ></SectionBar>
+      <SectionBar title={`Service Call Logs of Event ID: ${eventId}`}>
+        {!state.activityLogs && <Loader />}
+        {state.activityLogs && state.activityLogs.length === 0 && (
+          <Typography>No activity logs found.</Typography>
+        )}
+      </SectionBar>
     </>
   );
 };
