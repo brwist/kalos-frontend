@@ -33,6 +33,7 @@ import {
 import { SectionBar } from '../SectionBar';
 import { InfoTable } from '../InfoTable';
 import { Loader } from '../../Loader/main';
+import { AltGallery, GalleryData } from '../../AltGallery/main';
 import Button from '@material-ui/core/Button';
 import { Button as KalosButton } from '../Button';
 import { Trip } from '@kalos-core/kalos-rpc/compiled-protos/perdiem_pb';
@@ -53,6 +54,7 @@ import ExpandMore from '@material-ui/icons/ExpandMore';
 import Collapse from '@material-ui/core/Collapse/Collapse';
 import { TransactionAccount } from '@kalos-core/kalos-rpc/TransactionAccount';
 import { PrintHeader } from '../PrintHeader';
+import { OrderDir } from '@kalos-core/kalos-rpc/Common';
 export interface Props {
   serviceCallId: number;
   loggedUserId: number;
@@ -96,6 +98,7 @@ export const CostReportCSV: FC<Props> = ({ serviceCallId, onClose }) => {
     loadedInit: false,
     event: undefined,
     laborTotals: {},
+    transactionSort: { sortBy: 'amount', sortDir: 'ASC' },
     laborTotalsDropDownActive: false,
     transactionAccounts: [],
     trips: [],
@@ -134,7 +137,101 @@ export const CostReportCSV: FC<Props> = ({ serviceCallId, onClose }) => {
     await loadEvent();
     dispatch({ type: ACTIONS.SET_LOADED_INIT, data: true });
   }, [loadEvent]);
+  const sortTransactions = useCallback(
+    (transactions: Transaction[], sortDir: OrderDir, sortBy: string) => {
+      let temp = transactions;
+      if (sortBy === 'timestamp') {
+        temp = temp.sort((a, b) => {
+          const dateA = new Date(a.getTimestamp().split(' ')[0]);
+          const dateB = new Date(b.getTimestamp().split(' ')[0]);
 
+          if (sortDir === 'ASC') {
+            return dateA.valueOf() - dateB.valueOf();
+          } else {
+            return dateB.valueOf() - dateA.valueOf();
+          }
+        });
+      }
+
+      if (sortBy === 'amount') {
+        temp = temp.sort((a, b) => {
+          if (sortDir === 'ASC') {
+            return a.getAmount() - b.getAmount();
+          } else {
+            return b.getAmount() - a.getAmount();
+          }
+        });
+      }
+
+      if (sortBy === 'cost_center_id') {
+        temp = temp.sort((a, b) => {
+          if (sortDir === 'ASC') {
+            return a.getCostCenterId() - b.getCostCenterId();
+          } else {
+            return b.getCostCenterId() - a.getCostCenterId();
+          }
+        });
+      }
+
+      if (sortBy === 'job_number') {
+        temp = temp.sort((a, b) => {
+          if (sortDir === 'ASC') {
+            return a.getJobId() - b.getJobId();
+          } else {
+            return b.getJobId() - a.getJobId();
+          }
+        });
+      }
+      if (sortBy === 'owner_name') {
+        temp = temp.sort((a, b) => {
+          if (sortDir === 'ASC') {
+            const splitA = a.getOwnerName().split(' ');
+            const splitB = b.getOwnerName().split(' ');
+            const lastA = splitA[splitA.length - 1].toLowerCase();
+            const lastB = splitB[splitB.length - 1].toLowerCase();
+            const firstA = splitA[0].toLowerCase();
+            const firstB = splitB[0].toLowerCase();
+
+            if (lastA + firstA < lastB + firstB) {
+              return -1;
+            }
+
+            if (lastA + firstA > lastB + firstB) {
+              return 1;
+            }
+            return 0;
+          } else {
+            const splitA = a.getOwnerName().split(' ');
+            const splitB = b.getOwnerName().split(' ');
+            const lastA = splitA[splitA.length - 1].toLowerCase();
+            const lastB = splitB[splitB.length - 1].toLowerCase();
+            const firstA = splitA[0].toLowerCase();
+            const firstB = splitB[0].toLowerCase();
+
+            if (lastA + firstA > lastB + firstB) {
+              return -1;
+            }
+
+            if (lastA + firstA < lastB + firstB) {
+              return 1;
+            }
+            return 0;
+          }
+        });
+      }
+      if (sortBy === 'description') {
+        temp = temp.sort((a, b) => {
+          if (sortDir === 'ASC') {
+            return a.getVendor().localeCompare(b.getVendor());
+          } else {
+            return b.getVendor().localeCompare(a.getVendor());
+          }
+        });
+      }
+      return temp;
+    },
+    [],
+  );
   const load = useCallback(async () => {
     let promises = [];
     let timesheets: TimesheetLine[] = [];
@@ -395,7 +492,7 @@ export const CostReportCSV: FC<Props> = ({ serviceCallId, onClose }) => {
         type: ACTIONS.SET_ALL_DATA,
         data: {
           timesheetRes: timesheets,
-          transactionRes: transactions,
+          transactionRes: sortTransactions(transactions, 'ASC', 'amount'),
           perDiemRes: arr,
           taskRes: tasks,
           tripRes: trips,
@@ -406,7 +503,7 @@ export const CostReportCSV: FC<Props> = ({ serviceCallId, onClose }) => {
       dispatch({ type: ACTIONS.SET_LOADING, data: false });
       dispatch({ type: ACTIONS.SET_LOADED, data: true });
     });
-  }, [serviceCallId, state.laborTotals]);
+  }, [serviceCallId, state.laborTotals, sortTransactions]);
   const createReport = (section: string) => {
     const totalMeals =
       state.perDiems.reduce((aggr, pd) => aggr + pd.getRowsList().length, 0) *
@@ -623,7 +720,6 @@ export const CostReportCSV: FC<Props> = ({ serviceCallId, onClose }) => {
         fullString = fullString + tempString;
       }
     }
-    console.log(fullString);
     downloadCSV(state.activeTab + ' Report For ' + serviceCallId, fullString);
   };
   useEffect(() => {
@@ -643,6 +739,16 @@ export const CostReportCSV: FC<Props> = ({ serviceCallId, onClose }) => {
       costCenterArray.push(value);
     }
   });
+  function getGalleryData(txn: Transaction): GalleryData[] {
+    return txn.getDocumentsList().map(d => {
+      return {
+        key: `${txn.getId()}-${d.getReference()}`,
+        bucket: 'kalos-transactions',
+        typeId: d.getTypeId(),
+        description: d.getDescription(),
+      };
+    });
+  }
   state.classCodes.map(code => {
     let findAccount = code.getId();
     if (state.laborTotals[findAccount]) {
@@ -676,7 +782,6 @@ export const CostReportCSV: FC<Props> = ({ serviceCallId, onClose }) => {
     let found = weekArray.find(
       week => temp.weekStart == week.weekStart && week.code == temp.classCodeId,
     );
-    console.log(temp);
     if (found == undefined) {
       weekArray.push({
         weekEnd: temp.weekEnd,
@@ -685,7 +790,6 @@ export const CostReportCSV: FC<Props> = ({ serviceCallId, onClose }) => {
       });
     }
   }
-  console.log(weekArray);
   return state.loaded ? (
     <SectionBar key="ReportPage" uncollapsable={true}>
       <style>{`
@@ -1575,13 +1679,69 @@ export const CostReportCSV: FC<Props> = ({ serviceCallId, onClose }) => {
                       {
                         name: 'Date',
                         align: 'left',
+                        dir:
+                          state.transactionSort.sortDir &&
+                          state.transactionSort.sortBy == 'timestamp'
+                            ? state.transactionSort.sortDir
+                            : undefined,
+                        onClick: () => {
+                          const dir =
+                            state.transactionSort.sortDir == 'ASC'
+                              ? 'DESC'
+                              : 'ASC';
+                          dispatch({
+                            type: ACTIONS.SET_TRANSACTION_SORT,
+                            data: {
+                              sortBy: 'timestamp',
+                              sortDir: dir,
+                            },
+                          });
+                          dispatch({
+                            type: ACTIONS.SET_TRANSACTIONS,
+                            data: sortTransactions(
+                              state.transactions,
+                              dir,
+                              'timestamp',
+                            ),
+                          });
+                        },
                       },
                       {
                         name: 'Amount',
                         align: 'left',
+                        dir:
+                          state.transactionSort.sortDir &&
+                          state.transactionSort.sortBy == 'amount'
+                            ? state.transactionSort.sortDir
+                            : undefined,
+                        onClick: () => {
+                          const dir =
+                            state.transactionSort.sortDir == 'ASC'
+                              ? 'DESC'
+                              : 'ASC';
+                          dispatch({
+                            type: ACTIONS.SET_TRANSACTION_SORT,
+                            data: {
+                              sortBy: 'amount',
+                              sortDir: dir,
+                            },
+                          });
+                          dispatch({
+                            type: ACTIONS.SET_TRANSACTIONS,
+                            data: sortTransactions(
+                              state.transactions,
+                              dir,
+                              'amount',
+                            ),
+                          });
+                        },
                       },
                       {
                         name: 'Notes',
+                        align: 'left',
+                      },
+                      {
+                        name: 'Actions',
                         align: 'left',
                       },
                     ]}
@@ -1618,6 +1778,18 @@ export const CostReportCSV: FC<Props> = ({ serviceCallId, onClose }) => {
                               <div style={{ fontSizeAdjust: '0.5' }}>
                                 {txn.getNotes()}
                               </div>
+                            ),
+                          },
+                          {
+                            value: (
+                              <AltGallery
+                                key="receiptPhotos"
+                                title="Transaction Photos"
+                                fileList={getGalleryData(txn)}
+                                transactionID={txn.getId()}
+                                text="View photos"
+                                iconButton
+                              />
                             ),
                           },
                         ];
