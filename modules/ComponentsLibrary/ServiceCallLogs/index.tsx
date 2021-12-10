@@ -18,6 +18,7 @@ import Typography from '@material-ui/core/Typography';
 import { SectionBar } from '../SectionBar';
 import { Loader } from '../../Loader/main';
 import { ActivityLog } from '@kalos-core/kalos-rpc/ActivityLog';
+import { Alert } from '../Alert';
 
 // add any prop types here
 interface props {
@@ -31,24 +32,6 @@ export const ServiceCallLogs: FC<props> = ({ loggedUserId, eventId }) => {
     error: undefined,
     activityLogs: undefined,
   });
-
-  const loadActivityLogs = useCallback(async () => {
-    let req = new ActivityLog();
-    req.setEventId(eventId);
-    const res = await ActivityLogClientService.BatchGet(req);
-    dispatch({ type: ACTIONS.SET_ACTIVITY_LOGS, data: res.getResultsList() });
-  }, [eventId]);
-
-  const load = useCallback(async () => {
-    await loadActivityLogs();
-
-    dispatch({ type: ACTIONS.SET_LOADED, data: true });
-  }, [loadActivityLogs]);
-
-  const cleanup = useCallback(() => {
-    // TODO clean up your function calls here (called once the component is unmounted, prevents "Can't perform a React state update on an unmounted component" errors)
-    // This is important for long-term performance of our components
-  }, []);
 
   const handleError = useCallback(
     async (errorToSet: string) => {
@@ -72,6 +55,35 @@ export const ServiceCallLogs: FC<props> = ({ loggedUserId, eventId }) => {
     [loggedUserId],
   );
 
+  const loadActivityLogs = useCallback(async () => {
+    try {
+      let req = new ActivityLog();
+      req.setEventId(eventId);
+      const res = await ActivityLogClientService.BatchGet(req);
+      dispatch({ type: ACTIONS.SET_ACTIVITY_LOGS, data: res.getResultsList() });
+    } catch (err) {
+      console.error(`An error occurred while getting activity logs: ${err}`);
+      dispatch({
+        type: ACTIONS.SET_ERROR,
+        data: `An error occurred while getting activity logs: ${err}`,
+      });
+      dispatch({ type: ACTIONS.SET_LOADED, data: true });
+
+      await handleError(`${err}`);
+    }
+  }, [eventId, handleError]);
+
+  const load = useCallback(async () => {
+    await loadActivityLogs();
+
+    dispatch({ type: ACTIONS.SET_LOADED, data: true });
+  }, [loadActivityLogs]);
+
+  const cleanup = useCallback(() => {
+    // TODO clean up your function calls here (called once the component is unmounted, prevents "Can't perform a React state update on an unmounted component" errors)
+    // This is important for long-term performance of our components
+  }, []);
+
   useEffect(() => {
     if (!state.isLoaded) load();
 
@@ -87,6 +99,13 @@ export const ServiceCallLogs: FC<props> = ({ loggedUserId, eventId }) => {
         {state.activityLogs && state.activityLogs.length === 0 && (
           <Typography>No activity logs found for this event.</Typography>
         )}
+        <Alert
+          open={state.error !== undefined}
+          onClose={() => dispatch({ type: ACTIONS.SET_ERROR, data: undefined })}
+          title="Error"
+        >
+          {state.error}
+        </Alert>
       </SectionBar>
     </>
   );
