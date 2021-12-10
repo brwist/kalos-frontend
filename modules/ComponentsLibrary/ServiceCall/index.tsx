@@ -1,4 +1,11 @@
-import React, { FC, useState, useEffect, useCallback, useReducer, useRef } from 'react';
+import React, {
+  FC,
+  useState,
+  useEffect,
+  useCallback,
+  useReducer,
+  useRef,
+} from 'react';
 import { EventClient, Event } from '@kalos-core/kalos-rpc/Event';
 import { UserClient, User } from '@kalos-core/kalos-rpc/User';
 import { JobType } from '@kalos-core/kalos-rpc/JobType';
@@ -63,37 +70,6 @@ export interface Props {
   projectParentId?: number;
 }
 
-const initialState : State = {
-  requestFields : [],
-  tabIdx : 0,
-  tabKey : 0,
-  pendingSave : false,
-  saveInvoice : false,
-  requestValid : false,
-  serviceCallId : 0,
-  entry : new Event(),
-  property : new Property(),
-  customer : new User(),
-  propertyEvents : [],
-  loaded : false,
-  loading : true,
-  saving : false,
-  error : false,
-  errorMessage : "",
-  jobTypes : [],
-  jobSubtypes : [],
-  jobTypeSubtypes : [],
-  jobSubTypeOptions : [],
-  servicesRendered : [],
-  loggedUser : new User(),
-  notificationEditing : false,
-  notificationViewing : false,
-  projects : [],
-  parentId : null,
-  confirmedParentId : null,
-  projectData : new Event(),
-}
-
 const SCHEMA_PROPERTY_NOTIFICATION: Schema<User> = [
   [
     {
@@ -115,6 +91,38 @@ export const ServiceCall: FC<Props> = props => {
     onSave,
     asProject = false,
   } = props;
+
+  const initialState: State = {
+    requestFields: [],
+    tabIdx: 0,
+    tabKey: 0,
+    pendingSave: false,
+    saveInvoice: false,
+    requestValid: false,
+    serviceCallId: props.serviceCallId ? props.serviceCallId : 0,
+    entry: new Event(),
+    property: new Property(),
+    customer: new User(),
+    propertyEvents: [],
+    loaded: false,
+    loading: true,
+    saving: false,
+    openSpiffApply: false,
+    error: false,
+    errorMessage: '',
+    jobTypes: [],
+    jobSubtypes: [],
+    jobTypeSubtypes: [],
+    jobSubTypeOptions: [],
+    servicesRendered: [],
+    loggedUser: new User(),
+    notificationEditing: false,
+    notificationViewing: false,
+    projects: [],
+    parentId: null,
+    confirmedParentId: null,
+    projectData: new Event(),
+  };
   const [state, updateServiceCallState] = useReducer(reducer, initialState);
   const requestRef = useRef(null);
   const loadEntry = useCallback(
@@ -123,26 +131,32 @@ export const ServiceCall: FC<Props> = props => {
         const req = new Event();
         req.setId(_serviceCallId);
         const entry = await EventClientService.Get(req);
-        updateServiceCallState({type: 'setEntry', data: entry});
+        updateServiceCallState({ type: 'setEntry', data: entry });
       }
     },
     [state.serviceCallId],
   );
-  const [openSpiffApply, setOpenSpiffApply] = useState<boolean>(false);
+
   const toggleOpenSpiffApply = () => {
-    setOpenSpiffApply(!openSpiffApply);
+    updateServiceCallState({
+      type: 'setOpenSpiffApply',
+      data: !state.openSpiffApply,
+    });
   };
   const loadServicesRenderedData = useCallback(
     async (_serviceCallId = state.serviceCallId) => {
       if (_serviceCallId) {
-        updateServiceCallState({type:'setLoading', data: true});
+        updateServiceCallState({ type: 'setLoading', data: true });
         const req = new ServicesRendered();
         req.setIsActive(1);
         req.setEventId(_serviceCallId);
         const servicesRendered = (
           await ServicesRenderedClientService.BatchGet(req)
         ).getResultsList();
-        updateServiceCallState({type: 'setServicesRendered', data: {servicesRendered: servicesRendered, loading: true}});
+        updateServiceCallState({
+          type: 'setServicesRendered',
+          data: { servicesRendered: servicesRendered, loading: true },
+        });
         console.log(servicesRendered);
         console.log('we are here getting sr data');
         return servicesRendered;
@@ -155,18 +169,21 @@ export const ServiceCall: FC<Props> = props => {
   const loadServicesRenderedDataForProp = useCallback(
     async (_serviceCallId = state.serviceCallId) => {
       if (_serviceCallId) {
-        updateServiceCallState({type:'setLoading', data: true});
+        updateServiceCallState({ type: 'setLoading', data: true });
         const req = new ServicesRendered();
         req.setIsActive(1);
         req.setEventId(_serviceCallId);
         const servicesRendered = (
           await ServicesRenderedClientService.BatchGet(req)
         ).getResultsList();
-        updateServiceCallState({type: 'setServicesRendered', data: {servicesRendered: servicesRendered, loading: false}});
+        updateServiceCallState({
+          type: 'setServicesRendered',
+          data: { servicesRendered: servicesRendered, loading: false },
+        });
         console.log(servicesRendered);
         console.log('we are here getting sr data');
       } else {
-        updateServiceCallState({type: 'setLoading', data: false});
+        updateServiceCallState({ type: 'setLoading', data: false });
       }
     },
     [state.serviceCallId],
@@ -179,41 +196,40 @@ export const ServiceCall: FC<Props> = props => {
   // );
 
   const load = useCallback(async () => {
-    updateServiceCallState({type: 'setLoading', data: true});
+    updateServiceCallState({ type: 'setLoading', data: true });
     // let newProjectData = projectData;
     // newProjectData.setPropertyId(propertyId);
     // setProjectData(newProjectData);
     try {
-      let entry : Event = new Event();
+      let entry: Event = new Event();
       const property = PropertyClientService.loadPropertyByID(propertyId);
       const customer = UserClientService.loadUserById(userID);
-      const propertyEvents = EventClientService.loadEventsByPropertyId(propertyId);
+      const propertyEvents =
+        EventClientService.loadEventsByPropertyId(propertyId);
       const jobTypes = JobTypeClientService.loadJobTypes();
       const jobSubtypes = JobSubtypeClientService.loadJobSubtypes();
-      const jobTypeSubtypes = JobTypeSubtypeClientService.loadJobTypeSubtypes();  
+      const jobTypeSubtypes = JobTypeSubtypeClientService.loadJobTypeSubtypes();
       const loggedUser = UserClientService.loadUserById(loggedUserId);
       const servicesRendered = loadServicesRenderedData();
       const [
-        propertyDetails
-        ,customerDetails
-        ,propertyEventDetails
-        ,jobTypeList
-        ,jobSubTypeList
-        ,jobTypeSubtypesList
-        ,loggedUserDetails
-        ,servicesRenderedList
-      ] = await Promise.all(
-        [
-          property
-          ,customer
-          ,propertyEvents
-          ,jobTypes
-          ,jobSubtypes
-          ,jobTypeSubtypes
-          ,loggedUser
-          ,servicesRendered
-        ]
-      )
+        propertyDetails,
+        customerDetails,
+        propertyEventDetails,
+        jobTypeList,
+        jobSubTypeList,
+        jobTypeSubtypesList,
+        loggedUserDetails,
+        servicesRenderedList,
+      ] = await Promise.all([
+        property,
+        customer,
+        propertyEvents,
+        jobTypes,
+        jobSubtypes,
+        jobTypeSubtypes,
+        loggedUser,
+        servicesRendered,
+      ]);
       if (state.serviceCallId) {
         const req = new Event();
         req.setId(state.serviceCallId);
@@ -234,29 +250,38 @@ export const ServiceCall: FC<Props> = props => {
         );
         entry = req;
       }
-      updateServiceCallState({ type: 'setData', data: {
-        property: propertyDetails
-        ,customer: customerDetails
-        ,propertyEvents: propertyEventDetails
-        ,jobTypes: jobTypeList
-        ,jobSubtypes: jobSubTypeList
-        ,jobTypeSubtypes: jobTypeSubtypesList
-        ,loggedUser: loggedUserDetails
-        ,entry: entry
-        ,servicesRendered: servicesRenderedList
-        ,loaded: true
-        ,loading: false,
-      }});
-      console.log("All Processes are Loaded");
+      updateServiceCallState({
+        type: 'setData',
+        data: {
+          property: propertyDetails,
+          customer: customerDetails,
+          propertyEvents: propertyEventDetails,
+          jobTypes: jobTypeList,
+          jobSubtypes: jobSubTypeList,
+          jobTypeSubtypes: jobTypeSubtypesList,
+          loggedUser: loggedUserDetails,
+          entry: entry,
+          servicesRendered: servicesRenderedList,
+          loaded: true,
+          loading: false,
+        },
+      });
+      console.log('All Processes are Loaded');
     } catch (err) {
-      updateServiceCallState({ type: 'setError', data: {
-        error: true,
-        msg: err,
-      }});
-      updateServiceCallState({ type: 'setLoadedLoading', data: {
-        loaded: true,
-        loading: false,
-      }});
+      updateServiceCallState({
+        type: 'setError',
+        data: {
+          error: true,
+          msg: err,
+        },
+      });
+      updateServiceCallState({
+        type: 'setLoadedLoading',
+        data: {
+          loaded: true,
+          loading: false,
+        },
+      });
     }
     /* Keeping this here as reminder that Projects needs to be Updated and added.
       promises.push(
@@ -291,22 +316,27 @@ export const ServiceCall: FC<Props> = props => {
 
   const handleSave = useCallback(async () => {
     if (state.tabIdx !== 0) {
-      updateServiceCallState({type: 'setTabAndPendingSave', data: {
-        tabIdx: 0,
-        tabKey: state.tabKey + 1,
-        pendingSave: true,
-      }})
+      updateServiceCallState({
+        type: 'setTabAndPendingSave',
+        data: {
+          tabIdx: 0,
+          tabKey: state.tabKey + 1,
+          pendingSave: true,
+        },
+      });
     } else {
-      updateServiceCallState({type: 'setPendingSave', data: true});
+      updateServiceCallState({ type: 'setPendingSave', data: true });
     }
-
   }, [state.tabKey, state.tabIdx]);
 
   const saveServiceCall = useCallback(async () => {
-    updateServiceCallState({type: 'setSavingLoading', data: {
-      saving: true,
-      loading: true,
-    }});
+    updateServiceCallState({
+      type: 'setSavingLoading',
+      data: {
+        saving: true,
+        loading: true,
+      },
+    });
     const temp = state.entry;
     let res = new Event();
     try {
@@ -323,7 +353,10 @@ export const ServiceCall: FC<Props> = props => {
           await EventClientService.Update(temp);
         }
         const newActivity = new ActivityLog();
-        if (state.property.getGeolocationLat() && state.property.getGeolocationLng()) {
+        if (
+          state.property.getGeolocationLat() &&
+          state.property.getGeolocationLng()
+        ) {
           newActivity.setGeolocationLat(state.property.getGeolocationLat());
           newActivity.setGeolocationLng(state.property.getGeolocationLng());
         } else {
@@ -350,7 +383,10 @@ export const ServiceCall: FC<Props> = props => {
         await EventClientService.Update(newEvent);
         const newActivity = new ActivityLog();
         let activityName = `${logNumber} Added Service Call`;
-        if (state.property.getGeolocationLat() && state.property.getGeolocationLng()) {
+        if (
+          state.property.getGeolocationLat() &&
+          state.property.getGeolocationLng()
+        ) {
           newActivity.setGeolocationLat(state.property.getGeolocationLat());
           newActivity.setGeolocationLng(state.property.getGeolocationLng());
         } else {
@@ -368,7 +404,7 @@ export const ServiceCall: FC<Props> = props => {
     console.log('finished Update');
     if (!state.serviceCallId) {
       console.log('no service call Id');
-      updateServiceCallState({type:'setServiceCallId', data: res.getId()});
+      updateServiceCallState({ type: 'setServiceCallId', data: res.getId() });
       await loadEntry(res.getId());
       await loadServicesRenderedData(res.getId());
     }
@@ -378,10 +414,13 @@ export const ServiceCall: FC<Props> = props => {
     if (onClose) {
       onClose();
     } else {
-      updateServiceCallState({type: 'setSavingLoading', data: {
-        saving: false,
-        loading:false,
-      }});
+      updateServiceCallState({
+        type: 'setSavingLoading',
+        data: {
+          saving: false,
+          loading: false,
+        },
+      });
     }
   }, [
     state.entry,
@@ -417,18 +456,18 @@ export const ServiceCall: FC<Props> = props => {
 
   useEffect(() => {
     if (eventId !== 0 && true)
-    if (!state.loaded) {
-      load();
-    }
+      if (!state.loaded) {
+        load();
+      }
     if (
       state.entry &&
       state.entry.getCustomer() &&
       state.entry.getCustomer()!.getNotification() !== ''
     ) {
-      updateServiceCallState({type: 'setNotificationViewing', data: true});
+      updateServiceCallState({ type: 'setNotificationViewing', data: true });
     }
     if (state.pendingSave && state.requestValid) {
-      updateServiceCallState({type: 'setPendingSave', data: false});
+      updateServiceCallState({ type: 'setPendingSave', data: false });
       saveServiceCall();
     }
     if (state.pendingSave && state.tabIdx === 0 && requestRef.current) {
@@ -444,41 +483,50 @@ export const ServiceCall: FC<Props> = props => {
     saveServiceCall,
     state.tabIdx,
     requestRef,
-    eventId
+    eventId,
   ]);
 
   const handleSetRequestfields = useCallback(
     fields => {
-      updateServiceCallState({type: 'setRequestFields', data: [...state.requestFields, ...fields]});
+      updateServiceCallState({
+        type: 'setRequestFields',
+        data: [...state.requestFields, ...fields],
+      });
     },
     [state.requestFields],
   );
 
-  const handleChangeEntry = useCallback(
-    (data: Event) => {
-      updateServiceCallState({type: 'setChangeEntry', data: {
+  const handleChangeEntry = useCallback((data: Event) => {
+    updateServiceCallState({
+      type: 'setChangeEntry',
+      data: {
         entry: data,
         pendingSave: false,
-      }});
-    },
-    [],
-  );
+      },
+    });
+  }, []);
 
   const handleSetNotificationEditing = useCallback(
     (notificationEditing: boolean) => () =>
-      updateServiceCallState({type: 'setNotificationEditing', data: notificationEditing}),
-      [],
+      updateServiceCallState({
+        type: 'setNotificationEditing',
+        data: notificationEditing,
+      }),
+    [],
   );
 
   const handleSetNotificationViewing = useCallback(
     (notificationViewing: boolean) => () =>
-      updateServiceCallState({type: 'setNotificationViewing', data: notificationViewing}),
+      updateServiceCallState({
+        type: 'setNotificationViewing',
+        data: notificationViewing,
+      }),
     [],
   );
 
   const handleSaveCustomer = useCallback(
     async (data: User) => {
-      updateServiceCallState({type: 'setSaving', data: true});
+      updateServiceCallState({ type: 'setSaving', data: true });
       const temp = makeSafeFormObject(data, new User());
       const entry = new User();
       entry.setId(userID);
@@ -491,10 +539,13 @@ export const ServiceCall: FC<Props> = props => {
       }
       entry.setFieldMaskList(fieldMaskList);
       await loadEntry();
-      updateServiceCallState({type: 'setSavingNoteEditing', data: {
-        saving: false,
-        notificationEditing: false,
-      }});
+      updateServiceCallState({
+        type: 'setSavingNoteEditing',
+        data: {
+          saving: false,
+          notificationEditing: false,
+        },
+      });
     },
     [userID, loadEntry],
   );
@@ -519,7 +570,9 @@ export const ServiceCall: FC<Props> = props => {
   const jobSubtypeOptions: Option[] = [
     { label: OPTION_BLANK, value: 0 },
     ...state.jobTypeSubtypes
-      .filter(jobTypeId => jobTypeId.getJobTypeId() === state.entry.getJobTypeId())
+      .filter(
+        jobTypeId => jobTypeId.getJobTypeId() === state.entry.getJobTypeId(),
+      )
       .map(jobSubtypeId => ({
         value: jobSubtypeId.getJobSubtypeId(),
         label:
@@ -716,69 +769,68 @@ export const ServiceCall: FC<Props> = props => {
         <InfoTable data={data} error={state.error} />
       </SectionBar>
       {
-      // asProject ? (
-      //   <>
-      //     <Form
-      //       title="Project Data"
-      //       schema={SCHEMA_PROJECT}
-      //       data={projectData}
-      //       onClose={onClose || (() => {})}
-      //       onSave={(data: Event) => {
-      //         let newData = makeSafeFormObject(data, new Event());
-      //         newData.setDepartmentId(Number(newData.getDepartmentId()));
-      //         saveProject(newData);
-      //       }}
-      //     />
-      //     {parentId != confirmedParentId && parentId != null && (
-      //       <Confirm
-      //         title="Confirm Parent"
-      //         open={true}
-      //         onClose={() => handleSetParentId(null)}
-      //         onConfirm={() => handleSetConfirmedIsChild(parentId)}
-      //       >
-      //         Are you sure you want to set this project as the parent to the new
-      //         project?
-      //       </Confirm>
-      //     )}
-      //     {confirmedParentId && (
-      //       <Typography variant="h5">Parent ID: {confirmedParentId}</Typography>
-      //     )}
-      //     {loaded && projects.length > 0 ? (
-      //       <GanttChart
-      //         events={projects.map(task => {
-      //           const id = task.getId();
-      //           const description = task.getDescription();
-      //           const dateStart = task.getDateStarted();
-      //           const dateEnd = task.getDateEnded();
-      //           const logJobStatus = task.getLogJobNumber();
-      //           const color = task.getColor();
-      //           const [startDate, startHour] = dateStart.split(' ');
-      //           const [endDate, endHour] = dateEnd.split(' ');
-      //           return {
-      //             id,
-      //             startDate,
-      //             endDate,
-      //             startHour,
-      //             endHour,
-      //             notes: description,
-      //             statusColor: '#' + color,
-      //             onClick: () => {
-      //               handleSetParentId(id);
-      //             },
-      //           };
-      //         })}
-      //         startDate={projects[0].getDateStarted().substr(0, 10)}
-      //         endDate={projects[projects.length - 1]
-      //           .getDateEnded()
-      //           .substr(0, 10)}
-      //         loading={loading}
-      //       />
-      //     ) : (
-      //       <Loader />
-      //     )}
-      //   </>
-      // ) : 
-      (
+        // asProject ? (
+        //   <>
+        //     <Form
+        //       title="Project Data"
+        //       schema={SCHEMA_PROJECT}
+        //       data={projectData}
+        //       onClose={onClose || (() => {})}
+        //       onSave={(data: Event) => {
+        //         let newData = makeSafeFormObject(data, new Event());
+        //         newData.setDepartmentId(Number(newData.getDepartmentId()));
+        //         saveProject(newData);
+        //       }}
+        //     />
+        //     {parentId != confirmedParentId && parentId != null && (
+        //       <Confirm
+        //         title="Confirm Parent"
+        //         open={true}
+        //         onClose={() => handleSetParentId(null)}
+        //         onConfirm={() => handleSetConfirmedIsChild(parentId)}
+        //       >
+        //         Are you sure you want to set this project as the parent to the new
+        //         project?
+        //       </Confirm>
+        //     )}
+        //     {confirmedParentId && (
+        //       <Typography variant="h5">Parent ID: {confirmedParentId}</Typography>
+        //     )}
+        //     {loaded && projects.length > 0 ? (
+        //       <GanttChart
+        //         events={projects.map(task => {
+        //           const id = task.getId();
+        //           const description = task.getDescription();
+        //           const dateStart = task.getDateStarted();
+        //           const dateEnd = task.getDateEnded();
+        //           const logJobStatus = task.getLogJobNumber();
+        //           const color = task.getColor();
+        //           const [startDate, startHour] = dateStart.split(' ');
+        //           const [endDate, endHour] = dateEnd.split(' ');
+        //           return {
+        //             id,
+        //             startDate,
+        //             endDate,
+        //             startHour,
+        //             endHour,
+        //             notes: description,
+        //             statusColor: '#' + color,
+        //             onClick: () => {
+        //               handleSetParentId(id);
+        //             },
+        //           };
+        //         })}
+        //         startDate={projects[0].getDateStarted().substr(0, 10)}
+        //         endDate={projects[projects.length - 1]
+        //           .getDateEnded()
+        //           .substr(0, 10)}
+        //         loading={loading}
+        //       />
+        //     ) : (
+        //       <Loader />
+        //     )}
+        //   </>
+        // ) :
         <>
           <SectionBar
             title="Service Call Data"
@@ -790,11 +842,16 @@ export const ServiceCall: FC<Props> = props => {
               },
               {
                 label: 'Save and Invoice',
-                onClick: () => {updateServiceCallState({type: 'setSaveInvoice', data: {
-                  pendingSave: true,
-                  requestValid: true,
-                  saveInvoice: true,
-                }})},
+                onClick: () => {
+                  updateServiceCallState({
+                    type: 'setSaveInvoice',
+                    data: {
+                      pendingSave: true,
+                      requestValid: true,
+                      saveInvoice: true,
+                    },
+                  });
+                },
                 disabled: state.loading || state.saving,
               },
               {
@@ -811,7 +868,9 @@ export const ServiceCall: FC<Props> = props => {
           <Tabs
             key={state.tabKey + state.loading.toString()}
             defaultOpenIdx={state.tabIdx}
-            onChange={(data) => {updateServiceCallState({type: 'setTabId', data: data})}}
+            onChange={data => {
+              updateServiceCallState({ type: 'setTabId', data: data });
+            }}
             tabs={[
               {
                 label: 'Request',
@@ -827,7 +886,12 @@ export const ServiceCall: FC<Props> = props => {
                     jobSubtypeOptions={jobSubtypeOptions}
                     onChange={handleChangeEntry}
                     disabled={state.saving}
-                    onValid={(data)=>{updateServiceCallState({type: 'setRequestValid', data: data})}}
+                    onValid={data => {
+                      updateServiceCallState({
+                        type: 'setRequestValid',
+                        data: data,
+                      });
+                    }}
                     onInitSchema={handleSetRequestfields}
                   />
                 ),
@@ -915,7 +979,7 @@ export const ServiceCall: FC<Props> = props => {
             ]}
           />
         </>
-      )}
+      }
       {state.customer && state.serviceCallId > 0 && (
         <Modal
           open={state.notificationEditing || state.notificationViewing}
@@ -968,9 +1032,10 @@ export const ServiceCall: FC<Props> = props => {
           />
         </Modal>
       )}
-      {openSpiffApply && (
+      {state.openSpiffApply && state.serviceCallId != 0 && (
         <SpiffApplyComponent
           loggedUserId={loggedUserId}
+          serviceCallId={state.serviceCallId}
           onClose={() => toggleOpenSpiffApply()}
         />
       )}

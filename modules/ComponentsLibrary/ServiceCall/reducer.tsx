@@ -1,120 +1,154 @@
-import { JobSubtype } from "@kalos-core/kalos-rpc/JobSubtype";
-import { JobType } from "@kalos-core/kalos-rpc/JobType";
-import { JobTypeSubtype } from "@kalos-core/kalos-rpc/JobTypeSubtype";
-import { Property } from "@kalos-core/kalos-rpc/Property";
-import { ServicesRendered } from "@kalos-core/kalos-rpc/ServicesRendered";
-import { User } from "@kalos-core/kalos-rpc/User";
-import { Event } from "@kalos-core/kalos-rpc/Event";
+import { JobSubtype } from '@kalos-core/kalos-rpc/JobSubtype';
+import { JobType } from '@kalos-core/kalos-rpc/JobType';
+import { JobTypeSubtype } from '@kalos-core/kalos-rpc/JobTypeSubtype';
+import { Property } from '@kalos-core/kalos-rpc/Property';
+import { ServicesRendered } from '@kalos-core/kalos-rpc/ServicesRendered';
+import { User } from '@kalos-core/kalos-rpc/User';
+import { Event } from '@kalos-core/kalos-rpc/Event';
 import { Option } from '../Field';
 
 export interface State {
-  requestFields : string[];
-  tabIdx : number;
-  tabKey : number;
-  pendingSave : boolean;
-  saveInvoice : boolean;
-  requestValid : boolean;
-  serviceCallId : number;
-  entry : Event;
-  property : Property;
-  customer : User;
-  propertyEvents : Event[];
-  loaded : boolean;
-  loading : boolean;
-  saving : boolean;
-  error : boolean;
-  errorMessage : string;
-  jobTypes : JobType[];
-  jobSubtypes : JobSubtype[];
-  jobTypeSubtypes : JobTypeSubtype[];
-  jobSubTypeOptions : Option[];
-  servicesRendered : ServicesRendered[];
-  loggedUser : User;
-  notificationEditing : boolean;
-  notificationViewing : boolean;
-  projects : Event[];
-  parentId : number | null;
-  confirmedParentId : number | null;
-  projectData : Event;
+  requestFields: string[];
+  tabIdx: number;
+  tabKey: number;
+  pendingSave: boolean;
+  saveInvoice: boolean;
+  requestValid: boolean;
+  serviceCallId: number;
+  entry: Event;
+  property: Property;
+  customer: User;
+  propertyEvents: Event[];
+  loaded: boolean;
+  loading: boolean;
+  saving: boolean;
+  error: boolean;
+  errorMessage: string;
+  jobTypes: JobType[];
+  jobSubtypes: JobSubtype[];
+  jobTypeSubtypes: JobTypeSubtype[];
+  jobSubTypeOptions: Option[];
+  servicesRendered: ServicesRendered[];
+  loggedUser: User;
+  notificationEditing: boolean;
+  notificationViewing: boolean;
+  projects: Event[];
+  parentId: number | null;
+  confirmedParentId: number | null;
+  projectData: Event;
+  openSpiffApply: boolean;
 }
 
-export type Action = 
-  | {type: 'setServiceCallId'; data: number}
-  | {type: 'setData'; data: {
-    property: Property,
-    customer: User,
-    propertyEvents: Event[],
-    jobTypes: JobType[],
-    jobSubtypes: JobSubtype[],
-    jobTypeSubtypes: JobTypeSubtype[],
-    loggedUser: User,
-    entry: Event,
-    servicesRendered: ServicesRendered[],
-    loaded: boolean,
-    loading: boolean,
-  }}
-  | {type: 'setEntry'; data: Event}
-  | {type: 'setChangeEntry'; data: {
-    entry: Event,
-    pendingSave: boolean,
-  }}
-  | {type: 'setHandleSave'; data: {
-    pendingSave: boolean,
-    requestValid: boolean,
-  }}
-  | {type: 'setSaving'; data: boolean}
-  | {type: 'setLoading'; data: boolean}
-  | {type: 'setLoadedLoading'; data: {
-    loaded: boolean,
-    loading: boolean,
-  }}
-  | {type: 'setSaveServiceCall'; data: {
-    saving: boolean,
-    loading: boolean,
-    pendingSave: boolean,
-  }}
-  | {type: 'setRequestValid'; data: boolean}
-  | {type: 'setRequestFields'; data: string[]}
-  | {type: 'setPendingSave'; data: boolean}
-  | {type: 'setError'; data: {
-    error: boolean,
-    msg: string,
-  }}
-  | {type: 'setServicesRendered'; data: {
-    servicesRendered: ServicesRendered[],
-    loading: boolean,
-  }}
-  | {type: 'setTabId'; data: number}
-  | {type: 'setTabAndPendingSave'; data: {
-    tabIdx: number,
-    tabKey: number,
-    pendingSave: boolean,
-  }}
-  | {type: 'setSaveInvoice'; data: {
-    pendingSave: boolean,
-    requestValid: boolean,
-    saveInvoice: boolean,
-  }}
-  | {type: 'setSavingLoading'; data: {
-    saving: boolean,
-    loading: boolean,
-  }}
-  | {type: 'setSavingNoteEditing'; data: {
-    saving: boolean,
-    notificationEditing: boolean,
-  }}
-  | {type: 'setNotificationEditing'; data: boolean}
-  | {type: 'setNotificationViewing'; data: boolean}
-  ;
+export type Action =
+  | { type: 'setServiceCallId'; data: number }
+  | {
+      type: 'setData';
+      data: {
+        property: Property;
+        customer: User;
+        propertyEvents: Event[];
+        jobTypes: JobType[];
+        jobSubtypes: JobSubtype[];
+        jobTypeSubtypes: JobTypeSubtype[];
+        loggedUser: User;
+        entry: Event;
+        servicesRendered: ServicesRendered[];
+        loaded: boolean;
+        loading: boolean;
+      };
+    }
+  | { type: 'setEntry'; data: Event }
+  | {
+      type: 'setChangeEntry';
+      data: {
+        entry: Event;
+        pendingSave: boolean;
+      };
+    }
+  | {
+      type: 'setHandleSave';
+      data: {
+        pendingSave: boolean;
+        requestValid: boolean;
+      };
+    }
+  | { type: 'setSaving'; data: boolean }
+  | { type: 'setLoading'; data: boolean }
+  | {
+      type: 'setLoadedLoading';
+      data: {
+        loaded: boolean;
+        loading: boolean;
+      };
+    }
+  | {
+      type: 'setSaveServiceCall';
+      data: {
+        saving: boolean;
+        loading: boolean;
+        pendingSave: boolean;
+      };
+    }
+  | { type: 'setRequestValid'; data: boolean }
+  | { type: 'setRequestFields'; data: string[] }
+  | { type: 'setPendingSave'; data: boolean }
+  | {
+      type: 'setError';
+      data: {
+        error: boolean;
+        msg: string;
+      };
+    }
+  | {
+      type: 'setServicesRendered';
+      data: {
+        servicesRendered: ServicesRendered[];
+        loading: boolean;
+      };
+    }
+  | { type: 'setTabId'; data: number }
+  | {
+      type: 'setTabAndPendingSave';
+      data: {
+        tabIdx: number;
+        tabKey: number;
+        pendingSave: boolean;
+      };
+    }
+  | {
+      type: 'setSaveInvoice';
+      data: {
+        pendingSave: boolean;
+        requestValid: boolean;
+        saveInvoice: boolean;
+      };
+    }
+  | {
+      type: 'setSavingLoading';
+      data: {
+        saving: boolean;
+        loading: boolean;
+      };
+    }
+  | {
+      type: 'setSavingNoteEditing';
+      data: {
+        saving: boolean;
+        notificationEditing: boolean;
+      };
+    }
+  | { type: 'setOpenSpiffApply'; data: boolean }
+  | { type: 'setNotificationEditing'; data: boolean }
+  | { type: 'setNotificationViewing'; data: boolean };
 
 export const reducer = (state: State, action: Action) => {
   switch (action.type) {
-    case 'setServiceCallId' :
+    case 'setServiceCallId':
       return {
         ...state,
         serviceCallID: action.data,
       };
-    case 'setData' : 
+    case 'setData':
       return {
         ...state,
         property: action.data.property,
@@ -129,115 +163,120 @@ export const reducer = (state: State, action: Action) => {
         loaded: action.data.loaded,
         loading: action.data.loading,
       };
-    case 'setEntry' :
+    case 'setEntry':
       return {
         ...state,
         entry: action.data,
-      }
-    case 'setChangeEntry' :
+      };
+    case 'setChangeEntry':
       return {
         ...state,
         entry: action.data.entry,
         pendingSave: action.data.pendingSave,
       };
-    case 'setHandleSave' :
+    case 'setHandleSave':
       return {
         ...state,
         pendingSave: action.data.pendingSave,
         requestValid: action.data.requestValid,
       };
-    case 'setSaving' :
+    case 'setSaving':
       return {
         ...state,
         saving: action.data,
-      }
-    case 'setLoading' :
+      };
+    case 'setLoading':
       return {
         ...state,
         loading: action.data,
       };
-    case 'setLoadedLoading' :
+    case 'setLoadedLoading':
       return {
         ...state,
         loaded: action.data.loaded,
         loading: action.data.loading,
       };
-    case 'setSaveServiceCall' :
+    case 'setSaveServiceCall':
       return {
         ...state,
         saving: action.data.saving,
         loading: action.data.loading,
         pendingSave: action.data.pendingSave,
       };
-    case 'setRequestValid' :
+    case 'setRequestValid':
       return {
         ...state,
         requestValid: action.data,
       };
-    case 'setRequestFields' :
+    case 'setRequestFields':
       return {
         ...state,
         requestFields: action.data,
       };
-    case 'setPendingSave' :
+    case 'setPendingSave':
       return {
         ...state,
         pendingSave: action.data,
-      }
-    case 'setError' :
+      };
+    case 'setError':
       return {
         ...state,
         error: action.data.error,
         errorMessage: action.data.msg,
-      }
-    case 'setServicesRendered' :
+      };
+    case 'setServicesRendered':
       return {
         ...state,
         servicesRendered: action.data.servicesRendered,
         loading: action.data.loading,
-      }
-    case 'setTabId' :
+      };
+    case 'setTabId':
       return {
         ...state,
         tabIdx: action.data,
-      }
-    case 'setTabAndPendingSave' :
+      };
+    case 'setTabAndPendingSave':
       return {
         ...state,
         tabIdx: action.data.tabIdx,
         tabKey: action.data.tabKey,
         pendingSave: action.data.pendingSave,
-      }
-    case 'setSaveInvoice' :
+      };
+    case 'setSaveInvoice':
       return {
         ...state,
         pendingSave: action.data.pendingSave,
         requestValid: action.data.requestValid,
         saveInvoice: action.data.saveInvoice,
-      }
-    case 'setSavingLoading' :
+      };
+    case 'setSavingLoading':
       return {
         ...state,
         saving: action.data.saving,
         loading: action.data.loading,
-      }
-    case 'setSavingNoteEditing' :
+      };
+    case 'setSavingNoteEditing':
       return {
         ...state,
         saving: action.data.saving,
         notificationEditing: action.data.notificationEditing,
-      }
-    case 'setNotificationViewing' :
+      };
+    case 'setNotificationViewing':
       return {
         ...state,
         notificationViewing: action.data,
-      }
-    case 'setNotificationEditing' :
+      };
+    case 'setNotificationEditing':
       return {
         ...state,
         notificationEditing: action.data,
-      }
+      };
+    case 'setOpenSpiffApply':
+      return {
+        ...state,
+        openSpiffApply: action.data,
+      };
     default:
       return state;
   }
-}
+};
