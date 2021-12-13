@@ -197,6 +197,7 @@ export const Spiffs: FC<Props> = ({
       {edited && (
         <Modal open onClose={handleSetEdited()} fullScreen>
           <SpiffToolLogEdit
+            role={'Manager'}
             onClose={handleSetEdited()}
             data={edited}
             onSave={() => {

@@ -30,7 +30,6 @@ export const Equipment: FC<Props> = ({
   property,
   ...props
 }) => {
-  //const { notes, logJobNumber, id } = serviceItem;
   const notes = serviceItem.getNotes();
   const logJobNumber = serviceItem.getLogJobNumber();
   const id = serviceItem.getId();
@@ -78,23 +77,10 @@ export const Equipment: FC<Props> = ({
     },
     [setSelected, serviceItem],
   );
-  const handleSubmit = useCallback(() => {
-    // TODO handle submit
-    console.log({
-      ...data,
-      selected,
-      repairs,
-    });
-  }, [data, selected, repairs]);
+
   return (
     <ServiceItems
       title="Property Service Items"
-      actions={[
-        {
-          label: 'Submit',
-          onClick: handleSubmit,
-        },
-      ]}
       selectable
       repair
       disableRepair={!id}
@@ -102,16 +88,6 @@ export const Equipment: FC<Props> = ({
       onSelect={debounce(handleSetSelected, 1000)}
       selected={selected}
       onRepairsChange={debounce(handleSetRepair, 1000)}
-      asideContent={
-        <ProposalPrint
-          displayName={data.displayName}
-          notes={data.withJobNotes ? data.jobNotes : undefined}
-          logJobNumber={logJobNumber}
-          property={property}
-          entries={repairs}
-          withDiagnosis
-        />
-      }
       {...props}
     />
   );
