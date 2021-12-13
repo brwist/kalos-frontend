@@ -149,17 +149,17 @@ export const SpiffTool: FC<Props> = ({
   const [pendingAdd, setPendingAdd] = useState<boolean>(false);
 
   const [serviceCallEditing, setServiceCallEditing] = useState<TaskEventData>();
-  const [unlinkedSpiffJobNumber, setUnlinkedSpiffJobNumber] = useState<string>(
-    '',
-  );
+  const [unlinkedSpiffJobNumber, setUnlinkedSpiffJobNumber] =
+    useState<string>('');
   const [statusEditing, setStatusEditing] = useState<SpiffToolAdminAction>();
   const SPIFF_TYPES_OPTIONS: Option[] = spiffTypes.map(type => ({
     label: escapeText(type.getType()),
     value: type.getId(),
   }));
-  const handleToggleAdd = useCallback(() => setPendingAdd(!pendingAdd), [
-    pendingAdd,
-  ]);
+  const handleToggleAdd = useCallback(
+    () => setPendingAdd(!pendingAdd),
+    [pendingAdd],
+  );
   const SPIFF_EXT: { [key: number]: string } = spiffTypes.reduce(
     (aggr, id) => ({ ...aggr, [id.getId()]: id.getExt() }),
     {},
@@ -582,14 +582,13 @@ export const SpiffTool: FC<Props> = ({
     [setStatusEditing, handleSetExtendedEditing],
   );
   const handleClickTechnician = useCallback(
-    (technician: number) => (
-      event: React.MouseEvent<HTMLAnchorElement, MouseEvent>,
-    ) => {
-      event.preventDefault();
-      setSearchForm({ ...searchForm, technician });
-      setSearchFormKey(searchFormKey + 1);
-      handleMakeSearch();
-    },
+    (technician: number) =>
+      (event: React.MouseEvent<HTMLAnchorElement, MouseEvent>) => {
+        event.preventDefault();
+        setSearchForm({ ...searchForm, technician });
+        setSearchFormKey(searchFormKey + 1);
+        handleMakeSearch();
+      },
     [
       searchForm,
       setSearchForm,
@@ -607,32 +606,30 @@ export const SpiffTool: FC<Props> = ({
     },
     [setServiceCallEditing],
   );
-  const handleOpenServiceCallOld = (entry: Task) => (
-    e: React.MouseEvent<HTMLAnchorElement, MouseEvent>,
-  ) => {
-    e.preventDefault();
-    const taskEvent = entry.getEvent();
-    console.log('we called the window');
-    if (taskEvent) {
-      const url = `https://app.kalosflorida.com/index.cfm?action=admin:service.editServiceCall&id=${taskEvent.getId()}&user_id=${
-        taskEvent?.getCustomerId() ? taskEvent.getCustomerId() : 0
-      }&property_id=${taskEvent?.getPropertyId()}`;
-      console.log(url);
-      window.open(url);
-    }
-  };
+  const handleOpenServiceCallOld =
+    (entry: Task) => (e: React.MouseEvent<HTMLAnchorElement, MouseEvent>) => {
+      e.preventDefault();
+      const taskEvent = entry.getEvent();
+      console.log('we called the window');
+      if (taskEvent) {
+        const url = `https://app.kalosflorida.com/index.cfm?action=admin:service.editServiceCall&id=${taskEvent.getId()}&user_id=${
+          taskEvent?.getCustomerId() ? taskEvent.getCustomerId() : 0
+        }&property_id=${taskEvent?.getPropertyId()}`;
+        console.log(url);
+        window.open(url);
+      }
+    };
 
   const handleUnsetServiceCallEditing = useCallback(
     () => setServiceCallEditing(undefined),
     [setServiceCallEditing],
   );
   const handleClickSpiffJobNumber = useCallback(
-    (spiffJobNumber: string) => (
-      e: React.MouseEvent<HTMLAnchorElement, MouseEvent>,
-    ) => {
-      e.preventDefault();
-      setUnlinkedSpiffJobNumber(spiffJobNumber);
-    },
+    (spiffJobNumber: string) =>
+      (e: React.MouseEvent<HTMLAnchorElement, MouseEvent>) => {
+        e.preventDefault();
+        setUnlinkedSpiffJobNumber(spiffJobNumber);
+      },
     [setUnlinkedSpiffJobNumber],
   );
   const handleClearUnlinkedSpiffJobNumber = useCallback(
@@ -895,8 +892,20 @@ export const SpiffTool: FC<Props> = ({
                 ),
               ]
             : [
-                <IconButton key={0} size="small">
+                <IconButton
+                  key={0}
+                  size="small"
+                  onClick={handleSetExtendedEditing(entry)}
+                >
                   <SearchIcon />
+                </IconButton>,
+                <IconButton
+                  key={6}
+                  disabled={entry.getActionsList()[0] ? true : false}
+                  size="small"
+                  onClick={handleSetDeleting(entry)}
+                >
+                  <DeleteIcon />
                 </IconButton>,
               ];
         if (disableActions) {
