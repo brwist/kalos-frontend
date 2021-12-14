@@ -123,8 +123,27 @@ const SCHEMA_SIGNATURE: Schema<SignatureType> = [
 ];
 
 const SCHEMA_PAYMENT: Schema<PaymentType> = [
-  ...SCHEMA_SIGNATURE,
   [
+    {
+      label: 'Signature',
+      name: 'signature',
+      type: 'signature',
+    },
+  ],
+  [
+    {
+      label: 'Authorized Signor Name',
+      name: 'authorizedSignorName',
+    },
+    {
+      label: 'Authorized Signor Role',
+      name: 'authorizedSignorRole',
+    },
+    {
+      label: 'Signor Notes',
+      name: 'signorNotes',
+      multiline: true,
+    },
     {
       label: 'Payment Type',
       name: 'paymentType',
@@ -193,17 +212,13 @@ export const Services: FC<Props> = ({
   onAddMaterials,
 }) => {
   const [paymentFormKey, setPaymentFormKey] = useState<number>(0);
-  const [
-    serviceRenderedForm,
-    setServicesRenderedForm,
-  ] = useState<ServicesRendered>(new ServicesRendered());
+  const [serviceRenderedForm, setServicesRenderedForm] =
+    useState<ServicesRendered>(new ServicesRendered());
   const [paymentForm, setPaymentForm] = useState<PaymentType>(PAYMENT_INITIAL);
-  const [signatureForm, setSignatureForm] = useState<SignatureType>(
-    SIGNATURE_INITIAL,
-  );
-  const [paymentFormPart, setPaymentFormPart] = useState<PaymentPartType>(
-    PAYMENT_PART_INITIAL,
-  );
+  const [signatureForm, setSignatureForm] =
+    useState<SignatureType>(SIGNATURE_INITIAL);
+  const [paymentFormPart, setPaymentFormPart] =
+    useState<PaymentPartType>(PAYMENT_PART_INITIAL);
   const [deleting, setDeleting] = useState<ServicesRendered>();
   const [editing, setEditing] = useState<ServicesRendered>();
   const [saving, setSaving] = useState<boolean>(false);

@@ -131,38 +131,40 @@ export const Spiffs: FC<Props> = ({
           {
             value: '',
             actions: [
-              ...(lastStatus != 0 && role == 'Manager'
+              ...(lastStatus != 0
                 ? []
                 : [
                     <Tooltip key="approve" content="Approve" placement="bottom">
                       <IconButton
                         size="small"
                         onClick={handleSetEdited(entry, 1)}
+                        disabled={role != 'Manager'}
                       >
                         <ApproveIcon />
                       </IconButton>
                     </Tooltip>,
                   ]),
-              ...(lastStatus != 0 && role == 'Manager'
+              ...(lastStatus != 0
                 ? []
                 : [
                     <Tooltip key="reject" content="Reject" placement="bottom">
                       <IconButton
                         size="small"
                         onClick={handleSetEdited(entry, 2)}
+                        disabled={role != 'Manager'}
                       >
                         <RejectIcon />
                       </IconButton>
                     </Tooltip>,
                   ]),
-              ...(lastStatus === 3 && role == 'Manager'
+              ...(lastStatus != 1
                 ? []
                 : [
                     <Tooltip key="revoke" content="Revoke" placement="bottom">
                       <IconButton
                         size="small"
                         onClick={handleSetEdited(entry, 3)}
-                        disabled={lastStatus != 1}
+                        disabled={role != 'Manager'}
                       >
                         <RevokeIcon />
                       </IconButton>
