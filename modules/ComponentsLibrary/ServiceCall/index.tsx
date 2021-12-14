@@ -107,6 +107,7 @@ export const ServiceCall: FC<Props> = props => {
     loaded: false,
     loading: true,
     saving: false,
+    loggedUserRole: '',
     openSpiffApply: false,
     error: false,
     errorMessage: '',
@@ -245,6 +246,7 @@ export const ServiceCall: FC<Props> = props => {
         req.setTimeEnded(
           format(setMinutes(setHours(new Date(), 18), 0), 'HH:mm'),
         );
+
         req.setName(
           `${propertyDetails.getAddress()} ${propertyDetails.getCity()}, ${propertyDetails.getState()} ${propertyDetails.getZip()}`,
         );
@@ -966,6 +968,7 @@ export const ServiceCall: FC<Props> = props => {
                         <InfoTable data={makeFakeRows(8, 5)} loading />
                       ) : (
                         <Spiffs
+                          role={state.loggedUserRole}
                           serviceItem={state.entry}
                           loggedUserId={loggedUserId}
                           loggedUserName={UserClientService.getCustomerName(

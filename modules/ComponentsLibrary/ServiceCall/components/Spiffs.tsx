@@ -24,16 +24,19 @@ import {
 } from '../../../../helpers';
 import { ROWS_PER_PAGE } from '../../../../constants';
 import { SpiffType, Task } from '@kalos-core/kalos-rpc/Task';
+import { last } from 'lodash';
 
 interface Props {
   serviceItem: EventType;
   loggedUserId: number;
   loggedUserName: string;
+  role: string;
 }
 
 export const Spiffs: FC<Props> = ({
   serviceItem,
   loggedUserId,
+  role,
   loggedUserName,
 }) => {
   const [loading, setLoading] = useState<boolean>(false);
@@ -128,7 +131,7 @@ export const Spiffs: FC<Props> = ({
           {
             value: '',
             actions: [
-              ...(lastStatus === 1
+              ...(lastStatus != 0 && role == 'Manager'
                 ? []
                 : [
                     <Tooltip key="approve" content="Approve" placement="bottom">
@@ -140,7 +143,7 @@ export const Spiffs: FC<Props> = ({
                       </IconButton>
                     </Tooltip>,
                   ]),
-              ...(lastStatus === 2
+              ...(lastStatus != 0 && role == 'Manager'
                 ? []
                 : [
                     <Tooltip key="reject" content="Reject" placement="bottom">
@@ -152,13 +155,14 @@ export const Spiffs: FC<Props> = ({
                       </IconButton>
                     </Tooltip>,
                   ]),
-              ...(lastStatus === 3
+              ...(lastStatus === 3 && role == 'Manager'
                 ? []
                 : [
                     <Tooltip key="revoke" content="Revoke" placement="bottom">
                       <IconButton
                         size="small"
                         onClick={handleSetEdited(entry, 3)}
+                        disabled={lastStatus != 1}
                       >
                         <RevokeIcon />
                       </IconButton>
@@ -167,6 +171,7 @@ export const Spiffs: FC<Props> = ({
               <IconButton
                 key="delete"
                 size="small"
+                disabled={entry.getExternalId() != loggedUserId}
                 onClick={handleToggleDeleting(entry)}
               >
                 <DeleteIcon />
@@ -197,7 +202,7 @@ export const Spiffs: FC<Props> = ({
       {edited && (
         <Modal open onClose={handleSetEdited()} fullScreen>
           <SpiffToolLogEdit
-            role={'Manager'}
+            role={role}
             onClose={handleSetEdited()}
             data={edited}
             onSave={() => {
