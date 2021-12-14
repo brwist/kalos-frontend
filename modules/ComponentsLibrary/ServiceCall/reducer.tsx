@@ -23,6 +23,7 @@ export interface State {
   loading: boolean;
   saving: boolean;
   error: boolean;
+  loggedUserRole: string;
   errorMessage: string;
   jobTypes: JobType[];
   jobSubtypes: JobSubtype[];
@@ -148,7 +149,14 @@ export const reducer = (state: State, action: Action) => {
         ...state,
         serviceCallID: action.data,
       };
-    case 'setData':
+    case 'setData': {
+      let roleType = '';
+      let role = action.data.loggedUser
+        .getPermissionGroupsList()
+        .find(permission => permission.getType() == 'role');
+      if (role) {
+        roleType = role.getName();
+      }
       return {
         ...state,
         property: action.data.property,
@@ -162,7 +170,9 @@ export const reducer = (state: State, action: Action) => {
         servicesRendered: action.data.servicesRendered,
         loaded: action.data.loaded,
         loading: action.data.loading,
+        loggedUserRole: roleType,
       };
+    }
     case 'setEntry':
       return {
         ...state,

@@ -302,7 +302,6 @@ export const CostReportCSV: FC<Props> = ({ serviceCallId, onClose }) => {
           timesheetReq.setWithoutLimit(true);
           timesheetReq.setReferenceNumber(serviceCallId.toString());
           timesheetReq.setIsActive(1);
-          timesheetReq.setPayrollProcessed(true);
           timesheetReq.setOrderBy('time_started');
           timesheetReq.setOrderDir('ASC');
           const tripReq = new Trip();
@@ -1314,7 +1313,7 @@ export const CostReportCSV: FC<Props> = ({ serviceCallId, onClose }) => {
               );
             })}
           <PrintParagraph tag="h2" key="tasksHeader">
-            Billable Tasks
+            Spiffs/Bonus/Commission
           </PrintParagraph>
           {state.tasks &&
             state.tasks.map(task => {
