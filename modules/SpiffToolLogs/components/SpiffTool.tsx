@@ -149,17 +149,17 @@ export const SpiffTool: FC<Props> = ({
   const [pendingAdd, setPendingAdd] = useState<boolean>(false);
 
   const [serviceCallEditing, setServiceCallEditing] = useState<TaskEventData>();
-  const [unlinkedSpiffJobNumber, setUnlinkedSpiffJobNumber] = useState<string>(
-    '',
-  );
+  const [unlinkedSpiffJobNumber, setUnlinkedSpiffJobNumber] =
+    useState<string>('');
   const [statusEditing, setStatusEditing] = useState<SpiffToolAdminAction>();
   const SPIFF_TYPES_OPTIONS: Option[] = spiffTypes.map(type => ({
     label: escapeText(type.getType()),
     value: type.getId(),
   }));
-  const handleToggleAdd = useCallback(() => setPendingAdd(!pendingAdd), [
-    pendingAdd,
-  ]);
+  const handleToggleAdd = useCallback(
+    () => setPendingAdd(!pendingAdd),
+    [pendingAdd],
+  );
   const SPIFF_EXT: { [key: number]: string } = spiffTypes.reduce(
     (aggr, id) => ({ ...aggr, [id.getId()]: id.getExt() }),
     {},
@@ -482,31 +482,26 @@ export const SpiffTool: FC<Props> = ({
       req.setStatusId(1);
       //req.addFieldMask('AdminActionId');
       let tempEvent;
-      try {
-        tempEvent = await EventClientService.LoadEventByServiceCallID(
-          parseInt(req.getSpiffJobNumber()),
-        );
-      } catch (err) {
-        console.error(
-          `An error occurred while loading event by server: ${err}`,
-        );
-        return;
-      }
-      if (!tempEvent) {
-        console.error(
-          `No tempEvent variable was set to set spiff address with, aborting save.`,
-        );
-        return;
-      }
-      req.setSpiffAddress(
-        tempEvent.getProperty()?.getAddress() === undefined
-          ? tempEvent.getCustomer()?.getAddress() === undefined
-            ? ''
-            : tempEvent.getCustomer()!.getAddress()
-          : tempEvent.getProperty()!.getAddress(),
-      );
+      if (req.getSpiffJobNumber() != '') {
+        try {
+          tempEvent = await EventClientService.LoadEventByServiceCallID(
+            parseInt(req.getSpiffJobNumber()),
+          );
+          req.setSpiffAddress(
+            tempEvent.getProperty()?.getAddress() === undefined
+              ? tempEvent.getCustomer()?.getAddress() === undefined
+                ? ''
+                : tempEvent.getCustomer()!.getAddress()
+              : tempEvent.getProperty()!.getAddress(),
+          );
 
-      req.setSpiffJobNumber(tempEvent.getLogJobNumber());
+          req.setSpiffJobNumber(tempEvent.getLogJobNumber());
+        } catch (err) {
+          console.error(
+            `An error occurred while loading event by server: ${err}`,
+          );
+        }
+      }
       req.setFieldMaskList([]);
       const res = await TaskClientService.Create(req);
       const id = res.getId();
@@ -582,14 +577,13 @@ export const SpiffTool: FC<Props> = ({
     [setStatusEditing, handleSetExtendedEditing],
   );
   const handleClickTechnician = useCallback(
-    (technician: number) => (
-      event: React.MouseEvent<HTMLAnchorElement, MouseEvent>,
-    ) => {
-      event.preventDefault();
-      setSearchForm({ ...searchForm, technician });
-      setSearchFormKey(searchFormKey + 1);
-      handleMakeSearch();
-    },
+    (technician: number) =>
+      (event: React.MouseEvent<HTMLAnchorElement, MouseEvent>) => {
+        event.preventDefault();
+        setSearchForm({ ...searchForm, technician });
+        setSearchFormKey(searchFormKey + 1);
+        handleMakeSearch();
+      },
     [
       searchForm,
       setSearchForm,
@@ -607,32 +601,30 @@ export const SpiffTool: FC<Props> = ({
     },
     [setServiceCallEditing],
   );
-  const handleOpenServiceCallOld = (entry: Task) => (
-    e: React.MouseEvent<HTMLAnchorElement, MouseEvent>,
-  ) => {
-    e.preventDefault();
-    const taskEvent = entry.getEvent();
-    console.log('we called the window');
-    if (taskEvent) {
-      const url = `https://app.kalosflorida.com/index.cfm?action=admin:service.editServiceCall&id=${taskEvent.getId()}&user_id=${
-        taskEvent?.getCustomerId() ? taskEvent.getCustomerId() : 0
-      }&property_id=${taskEvent?.getPropertyId()}`;
-      console.log(url);
-      window.open(url);
-    }
-  };
+  const handleOpenServiceCallOld =
+    (entry: Task) => (e: React.MouseEvent<HTMLAnchorElement, MouseEvent>) => {
+      e.preventDefault();
+      const taskEvent = entry.getEvent();
+      console.log('we called the window');
+      if (taskEvent) {
+        const url = `https://app.kalosflorida.com/index.cfm?action=admin:service.editServiceCall&id=${taskEvent.getId()}&user_id=${
+          taskEvent?.getCustomerId() ? taskEvent.getCustomerId() : 0
+        }&property_id=${taskEvent?.getPropertyId()}`;
+        console.log(url);
+        window.open(url);
+      }
+    };
 
   const handleUnsetServiceCallEditing = useCallback(
     () => setServiceCallEditing(undefined),
     [setServiceCallEditing],
   );
   const handleClickSpiffJobNumber = useCallback(
-    (spiffJobNumber: string) => (
-      e: React.MouseEvent<HTMLAnchorElement, MouseEvent>,
-    ) => {
-      e.preventDefault();
-      setUnlinkedSpiffJobNumber(spiffJobNumber);
-    },
+    (spiffJobNumber: string) =>
+      (e: React.MouseEvent<HTMLAnchorElement, MouseEvent>) => {
+        e.preventDefault();
+        setUnlinkedSpiffJobNumber(spiffJobNumber);
+      },
     [setUnlinkedSpiffJobNumber],
   );
   const handleClearUnlinkedSpiffJobNumber = useCallback(
@@ -688,7 +680,6 @@ export const SpiffTool: FC<Props> = ({
               name: 'getSpiffJobNumber',
               label: 'Job #',
               type: 'eventId',
-              required: true,
             },
             {
               name: 'getDatePerformed',
