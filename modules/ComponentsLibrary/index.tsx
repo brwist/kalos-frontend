@@ -81,6 +81,7 @@ import RotatedImage from './RotatedImage/examples';
 import Search from './Search/examples';
 import SectionBar from './SectionBar/examples';
 import ServiceCall from './ServiceCall/examples';
+import ServiceCallLogs from './ServiceCallLogs/examples';
 import ServiceCallMetrics from './ServiceCallMetrics/examples';
 import ServiceCallMetricsGraph from './ServiceCallMetricsGraph/examples';
 import ServiceItemLinks from './ServiceItemLinks/examples';
@@ -195,6 +196,7 @@ const COMPONENTS = {
   Search,
   SectionBar,
   ServiceCall,
+  ServiceCallLogs,
   ServiceCallMetrics,
   ServiceCallMetricsGraph,
   ServiceItemLinks,
