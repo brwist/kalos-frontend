@@ -678,7 +678,7 @@ export const Timesheet: FC<Props> = props => {
   }
   return (
     <div>
-      {userId === 103233 && (
+      {(userId === 103233 || userId === 8418) && (
         <Button
           label="Report this in webtech if you see it"
           onClick={() => debug_HandleGetInvoiceData()}
