@@ -1036,6 +1036,11 @@ export const TransactionTable: FC<Props> = ({
       }
       newTxn.setOrderNumber(saved['Order #']);
       newTxn.setAssignedEmployeeId(loggedUserId);
+      if (saved['Purchaser'] == null || saved['Purchaser'] === '') {
+        newTxn.setOwnerId(loggedUserId);
+      } else {
+        newTxn.setOwnerId(saved['Purchaser']);
+      }
       newTxn.setOwnerId(saved['Purchaser']);
       newTxn.setDepartmentId(saved['Department']);
       newTxn.setJobId(saved['Job #']);
