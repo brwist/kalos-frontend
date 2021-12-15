@@ -32,6 +32,7 @@ import Column from './components/Column';
 import EditTimesheetModal from './components/EditModal';
 import { ENDPOINT } from '../../../constants';
 import {
+  EmailClientService,
   PerDiemClientService,
   TimeoffRequestClientService,
   TimeoffRequestTypes,
@@ -47,6 +48,7 @@ import { RoleType } from '../Payroll';
 import { NULL_TIME_VALUE } from './constants';
 import { TimeoffRequest } from '@kalos-core/kalos-rpc/TimeoffRequest';
 import { Button } from '../Button';
+import { Document } from '@kalos-core/kalos-rpc/Document';
 
 const tslClient = new TimesheetLineClient(ENDPOINT);
 const txnClient = new TransactionClient(ENDPOINT);
@@ -631,7 +633,18 @@ export const Timesheet: FC<Props> = props => {
   };
 
   const debug_HandleGetInvoiceData = useCallback(async () => {
-    alert('Button works');
+    try {
+      let req = new Document();
+      req.setFilename('8_21.pdf');
+      req.setPropertyId(4404);
+      req.setInvoiceId(15);
+      const res = await EmailClientService.GetInvoiceBody(req);
+      console.log('Got res: ', res);
+    } catch (err) {
+      console.error(`An error occurred while getting an invoice body:`);
+      console.error(err);
+    }
+    // property id invoice id filename
   }, []);
 
   useEffect(reload, [shownDates, timesheetOwnerId]);
