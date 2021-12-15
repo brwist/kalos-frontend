@@ -59,6 +59,7 @@ export const ServiceCallLogs: FC<props> = ({ loggedUserId, eventId }) => {
     try {
       let req = new ActivityLog();
       req.setEventId(eventId);
+      req.setWithUser(true);
       const res = await ActivityLogClientService.BatchGet(req);
       dispatch({ type: ACTIONS.SET_ACTIVITY_LOGS, data: res.getResultsList() });
     } catch (err) {
