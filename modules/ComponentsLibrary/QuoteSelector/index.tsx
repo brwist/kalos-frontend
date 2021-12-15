@@ -11,9 +11,12 @@ import {
   usd,
   EventClientService,
   makeSafeFormObject,
+  QuoteLineClientService,
 } from '../../../helpers';
 import { QuotableRead } from '@kalos-core/kalos-rpc/compiled-protos/event_pb';
-
+import { QuoteUsed, QuoteUsedClient } from '@kalos-core/kalos-rpc/QuoteUsed';
+import { ENDPOINT } from '@kalos-core/kalos-rpc/constants';
+import { QuoteLine } from '@kalos-core/kalos-rpc/QuoteLine';
 export type SelectedQuote = {
   quotePart: Quotable;
   billable: boolean;
@@ -21,6 +24,7 @@ export type SelectedQuote = {
 };
 interface Props {
   serviceCallId: number;
+  servicesRenderedId: number;
   onAdd?: () => void;
   onAddQuotes?: (quotes: SelectedQuote[]) => void;
 }
@@ -69,6 +73,7 @@ const SCHEMA_NEW_QUOTABLE: Schema<Quotable> = [
 
 export const QuoteSelector: FC<Props> = ({
   serviceCallId,
+  servicesRenderedId,
   onAdd,
   onAddQuotes,
 }) => {
@@ -81,6 +86,7 @@ export const QuoteSelector: FC<Props> = ({
   const [quoteParts, setQuoteParts] = useState<Quotable[]>([]);
   const [pendingQuotable, setPendingQuotable] = useState<Quotable[]>([]);
   const [pendingNewQuotable, setPendingNewQuotable] = useState<Quotable[]>([]);
+
   const [selectedQuoteLineIds, setSelectedQuoteLineIds] = useState<number[]>(
     [],
   );
@@ -92,19 +98,37 @@ export const QuoteSelector: FC<Props> = ({
   }>({});
   const load = useCallback(async () => {
     setLoading(true);
+    const flatRateReq = new QuoteLine();
+    flatRateReq.setIsFlatrate('1');
+    flatRateReq.setIsActive(1);
+    flatRateReq.setWithoutLimit(true);
     const req = new QuotableRead();
-    req.setPageNumber(0);
-    req.setIsFlatrate(true);
-    const [quoteParts, quotable] = await Promise.all([
-      EventClientService.loadQuoteParts(req),
-      EventClientService.loadQuotable(serviceCallId),
+    req.setServicesRenderedId(servicesRenderedId);
+    req.setIsActive(true);
+    req.setFieldMaskList(['IsActive']);
+
+    const [flatRate, quotable] = await Promise.all([
+      QuoteLineClientService.BatchGet(flatRateReq), //this should be the flat rate items
+      EventClientService.ReadQuotes(req), //this should be the all materials/services associated with the service call
     ]);
-    console.log(quoteParts);
-    setQuoteParts(quoteParts);
-    setQuotable(quotable);
+    const flatRateQuotable = flatRate.getResultsList().map(item => {
+      let quote = new Quotable();
+      quote.setIsActive(true);
+      quote.setIsBillable(true);
+      quote.setIsFlatrate(true);
+      quote.setQuantity(1);
+      quote.setQuotedPrice(parseInt(item.getAdjustment()));
+      quote.setId(item.getId());
+      quote.setQuoteLineId(item.getId());
+      quote.setDescription(item.getDescription());
+
+      return quote;
+    });
+    setQuoteParts(flatRateQuotable);
+    setQuotable(quotable.getDataList());
     setLoaded(true);
     setLoading(false);
-  }, [setLoaded, setLoading, serviceCallId, setQuoteParts, setQuotable]);
+  }, [setLoaded, setLoading, servicesRenderedId, setQuoteParts, setQuotable]);
   useEffect(() => {
     if (!loaded) {
       load();
@@ -155,21 +179,16 @@ export const QuoteSelector: FC<Props> = ({
     [billable],
   );
   const handleAddQuotes = useCallback(() => {
-    let tempPending = [];
-    for (let i = 0; i < quoteParts.length; i++) {
-      if (billable[quoteParts[i].getQuoteLineId()]) {
-        tempPending.push(quoteParts[i]);
+    const temp: Quotable[] = [];
+    Object.keys(billable).map(id => {
+      let quote = quoteParts.find(q => q.getQuoteLineId() === +id);
+      if (quote) {
+        quote.setQuantity(billable[+id].quantity);
+        temp.push(quote);
       }
-    }
-    setPendingQuotable(tempPending);
-    /*
-    setPendingQuotable([
-      ...Object.keys(billable).map(id => ({
-        quoteParts.find(q => q.quoteLineId === +id)!,
-        quantity: billable[+id].quantity,
-      })),
-    ]);
-    */
+    });
+    setPendingQuotable(temp);
+
     if (onAddQuotes) {
       onAddQuotes([
         ...Object.keys(billable).map(id => ({
@@ -190,6 +209,30 @@ export const QuoteSelector: FC<Props> = ({
     () => setNewQuotable(!newQuotable),
     [newQuotable],
   );
+  const handleSavePendingQuotable = useCallback(async () => {
+    let tempList = pendingQuotable;
+    const quoteUsedClientService = new QuoteUsedClient(ENDPOINT);
+
+    if (tempList.length > 0) {
+      for (let i = 0; i < tempList.length; i++) {
+        let quotePart = tempList[i];
+        const req = new QuoteUsed();
+        req.setQuoteLineId(quotePart.getQuoteLineId());
+        req.setQuotedPrice(quotePart.getQuotedPrice());
+        req.setQuantity(quotePart.getQuantity());
+        req.setServicesRenderedId(servicesRenderedId);
+        req.setBillable(quotePart.getIsBillable() === true ? 1 : 0);
+
+        try {
+          await quoteUsedClientService.Create(req);
+        } catch (err) {
+          console.log('failed to add quotable item');
+        }
+      }
+      setQuotable(quotable.concat(...tempList));
+      setPendingQuotable([]);
+    }
+  }, [pendingQuotable, quotable, servicesRenderedId]);
   const handleSaveNewQuotable = useCallback(
     (data: Quotable) => {
       const safeData = makeSafeFormObject(data, new Quotable());
@@ -221,7 +264,6 @@ export const QuoteSelector: FC<Props> = ({
     },
     [pendingNewQuotable, onAddQuotes, billable, quoteParts],
   );
-  // console.log({ quotable, quoteParts });
   const data: Data = loading
     ? makeFakeRows(6, 20)
     : quoteParts
@@ -326,6 +368,11 @@ export const QuoteSelector: FC<Props> = ({
                   label: 'Add',
                   onClick: handleToggleOpen,
                   disabled: loading,
+                },
+                {
+                  label: 'Save',
+                  onClick: handleSavePendingQuotable,
+                  disabled: loading || pendingQuotable.length == 0,
                 },
               ]
             : undefined

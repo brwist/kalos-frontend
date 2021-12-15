@@ -8,6 +8,8 @@ import {
 } from '@kalos-core/kalos-rpc/ServicesRendered';
 import { Payment } from '@kalos-core/kalos-rpc/Payment';
 import { Quotable } from '@kalos-core/kalos-rpc/Event';
+import AddBoxIcon from '@material-ui/icons/AddBox';
+
 import { SectionBar } from '../../SectionBar';
 import { ConfirmDelete } from '../../ConfirmDelete';
 import { InfoTable, Data, Columns } from '../../InfoTable';
@@ -36,6 +38,7 @@ import {
 } from '../../../../constants';
 import './services.less';
 import { User } from '@kalos-core/kalos-rpc/User';
+import ToolTip from '@material-ui/core/Tooltip';
 
 const ServicesRenderedClientService = new ServicesRenderedClient(ENDPOINT);
 
@@ -226,10 +229,16 @@ export const Services: FC<Props> = ({
     SelectedQuote[]
   >([]);
   const [changingStatus, setChangingStatus] = useState<boolean>(false);
+  const [openAddPart, setOpenAddPart] = useState<boolean>(false);
+
   const handleDeleting = useCallback(
     (deleting?: ServicesRendered) => () => setDeleting(deleting),
     [setDeleting],
   );
+  const toggleAddPart = useCallback(() => {
+    console.log('toggle add part');
+    setOpenAddPart(!openAddPart);
+  }, [openAddPart]);
   const handleDelete = useCallback(async () => {
     if (deleting) {
       setDeleting(undefined);
@@ -397,7 +406,7 @@ export const Services: FC<Props> = ({
               </span>
             ),
             actions: [
-              ...([COMPLETED, INCOMPLETE].includes(status)
+              ...([COMPLETED, INCOMPLETE].includes(props.getStatus())
                 ? [
                     <IconButton
                       key={1}
@@ -463,16 +472,6 @@ export const Services: FC<Props> = ({
   ];
   return (
     <>
-      {[ON_CALL, ADMIN].includes(lastStatus) && (
-        <QuoteSelector
-          serviceCallId={serviceCallId}
-          onAdd={console.log}
-          onAddQuotes={setPendingSelectedQuote}
-        />
-      )}
-      {[COMPLETED, INCOMPLETE, ENROUTE].includes(lastStatus) && (
-        <QuoteSelector serviceCallId={serviceCallId} />
-      )}
       {[COMPLETED, INCOMPLETE, ENROUTE, ADMIN].includes(lastStatus) &&
         servicesRenderedData.length > 0 && (
           <>
@@ -634,6 +633,15 @@ export const Services: FC<Props> = ({
       {editing && (
         <Modal open onClose={handleSetEditing()}>
           <div className="ServicesEditing">
+            <ToolTip title="Add Service/Part">
+              <IconButton
+                key={'AddPartButton'}
+                size="medium"
+                onClick={() => toggleAddPart()}
+              >
+                <AddBoxIcon />
+              </IconButton>
+            </ToolTip>
             <Form<ServicesRendered>
               title="Services Rendered Edit"
               schema={SCHEMA_ON_CALL}
@@ -652,6 +660,16 @@ export const Services: FC<Props> = ({
               />
             </Form>
           </div>
+        </Modal>
+      )}
+      {openAddPart && editing && (
+        <Modal onClose={() => toggleAddPart()} open={openAddPart}>
+          <QuoteSelector
+            serviceCallId={serviceCallId}
+            servicesRenderedId={editing.getId()}
+            onAddQuotes={setPendingSelectedQuote}
+            onAdd={console.log}
+          ></QuoteSelector>
         </Modal>
       )}
     </>
