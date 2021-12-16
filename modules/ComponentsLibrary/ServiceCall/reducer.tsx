@@ -38,6 +38,7 @@ export interface State {
   confirmedParentId: number | null;
   projectData: Event;
   openSpiffApply: boolean;
+  openJobActivity: boolean;
 }
 
 export type Action =
@@ -140,7 +141,11 @@ export type Action =
     }
   | { type: 'setOpenSpiffApply'; data: boolean }
   | { type: 'setNotificationEditing'; data: boolean }
-  | { type: 'setNotificationViewing'; data: boolean };
+  | { type: 'setNotificationViewing'; data: boolean }
+  | {
+      type: 'setOpenJobActivity';
+      data: boolean;
+    };
 
 export const reducer = (state: State, action: Action) => {
   switch (action.type) {
@@ -286,6 +291,12 @@ export const reducer = (state: State, action: Action) => {
         ...state,
         openSpiffApply: action.data,
       };
+    case 'setOpenJobActivity': {
+      return {
+        ...state,
+        openJobActivity: action.data,
+      };
+    }
     default:
       return state;
   }

@@ -51,6 +51,7 @@ import setHours from 'date-fns/esm/setHours';
 import setMinutes from 'date-fns/esm/setMinutes';
 import { State, reducer } from './reducer';
 import { update } from 'lodash';
+import { ServiceCallLogs } from '../ServiceCallLogs';
 
 const EventClientService = new EventClient(ENDPOINT);
 const UserClientService = new UserClient(ENDPOINT);
@@ -123,6 +124,7 @@ export const ServiceCall: FC<Props> = props => {
     parentId: null,
     confirmedParentId: null,
     projectData: new Event(),
+    openJobActivity: false,
   };
   const [state, updateServiceCallState] = useReducer(reducer, initialState);
   const requestRef = useRef(null);
@@ -142,6 +144,12 @@ export const ServiceCall: FC<Props> = props => {
     updateServiceCallState({
       type: 'setOpenSpiffApply',
       data: !state.openSpiffApply,
+    });
+  };
+  const toggleOpenJobActivity = () => {
+    updateServiceCallState({
+      type: 'setOpenJobActivity',
+      data: !state.openJobActivity,
     });
   };
   const loadServicesRenderedData = useCallback(
@@ -274,7 +282,7 @@ export const ServiceCall: FC<Props> = props => {
         type: 'setError',
         data: {
           error: true,
-          msg: err,
+          msg: err as string,
         },
       });
       updateServiceCallState({
@@ -738,7 +746,7 @@ export const ServiceCall: FC<Props> = props => {
                 },
                 {
                   label: 'Job Activity',
-                  url: cfURL(['service.viewlogs', `id=${id}`].join('&')),
+                  onClick: () => toggleOpenJobActivity(),
                 },
                 {
                   label: notification ? 'Notification' : 'Add Notification',
@@ -983,6 +991,14 @@ export const ServiceCall: FC<Props> = props => {
           />
         </>
       }
+      {state.openJobActivity && (
+        <Modal
+          open={state.openJobActivity}
+          onClose={() => toggleOpenJobActivity()}
+        >
+          <ServiceCallLogs loggedUserId={loggedUserId} eventId={eventId} />
+        </Modal>
+      )}
       {state.customer && state.serviceCallId > 0 && (
         <Modal
           open={state.notificationEditing || state.notificationViewing}
