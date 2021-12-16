@@ -83,6 +83,7 @@ export const QuoteSelector: FC<Props> = ({
   const [newQuotable, setNewQuotable] = useState<boolean>(false);
   const [filter, setFilter] = useState<string>('');
   const [quotable, setQuotable] = useState<Quotable[]>([]);
+  const [originalQuotable, setOriginalQuotable] = useState<Quotable[]>([]);
   const [quoteParts, setQuoteParts] = useState<Quotable[]>([]);
   const [pendingQuotable, setPendingQuotable] = useState<Quotable[]>([]);
   const [pendingNewQuotable, setPendingNewQuotable] = useState<Quotable[]>([]);
@@ -126,6 +127,7 @@ export const QuoteSelector: FC<Props> = ({
     });
     setQuoteParts(flatRateQuotable);
     setQuotable(quotable.getDataList());
+    setOriginalQuotable(quotable.getDataList());
     setLoaded(true);
     setLoading(false);
   }, [setLoaded, setLoading, servicesRenderedId, setQuoteParts, setQuotable]);
@@ -187,6 +189,7 @@ export const QuoteSelector: FC<Props> = ({
         temp.push(quote);
       }
     });
+    console.log('adding quotes', temp);
     setPendingQuotable(temp);
 
     if (onAddQuotes) {
@@ -229,10 +232,10 @@ export const QuoteSelector: FC<Props> = ({
           console.log('failed to add quotable item');
         }
       }
-      setQuotable(quotable.concat(...tempList));
+      setQuotable(originalQuotable.concat(...tempList));
       setPendingQuotable([]);
     }
-  }, [pendingQuotable, quotable, servicesRenderedId]);
+  }, [pendingQuotable, originalQuotable, servicesRenderedId]);
   const handleSaveNewQuotable = useCallback(
     (data: Quotable) => {
       const safeData = makeSafeFormObject(data, new Quotable());

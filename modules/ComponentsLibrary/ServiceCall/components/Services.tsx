@@ -633,15 +633,6 @@ export const Services: FC<Props> = ({
       {editing && (
         <Modal open onClose={handleSetEditing()}>
           <div className="ServicesEditing">
-            <ToolTip title="Add Service/Part">
-              <IconButton
-                key={'AddPartButton'}
-                size="medium"
-                onClick={() => toggleAddPart()}
-              >
-                <AddBoxIcon />
-              </IconButton>
-            </ToolTip>
             <Form<ServicesRendered>
               title="Services Rendered Edit"
               schema={SCHEMA_ON_CALL}
@@ -659,17 +650,13 @@ export const Services: FC<Props> = ({
                 fullWidth
               />
             </Form>
+            <QuoteSelector
+              serviceCallId={serviceCallId}
+              servicesRenderedId={editing.getId()}
+              onAddQuotes={setPendingSelectedQuote}
+              onAdd={console.log}
+            ></QuoteSelector>
           </div>
-        </Modal>
-      )}
-      {openAddPart && editing && (
-        <Modal onClose={() => toggleAddPart()} open={openAddPart}>
-          <QuoteSelector
-            serviceCallId={serviceCallId}
-            servicesRenderedId={editing.getId()}
-            onAddQuotes={setPendingSelectedQuote}
-            onAdd={console.log}
-          ></QuoteSelector>
         </Modal>
       )}
     </>
