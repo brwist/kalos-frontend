@@ -1,11 +1,15 @@
 import React, { FC, useState, useCallback, useEffect } from 'react';
-import { Quotable } from '@kalos-core/kalos-rpc/Event';
+import { EventClient, Quotable } from '@kalos-core/kalos-rpc/Event';
 import { SectionBar } from '../SectionBar';
 import { Modal } from '../Modal';
 import { InfoTable, Data, Columns } from '../InfoTable';
 import { Field, Value } from '../Field';
 import { Form, Schema } from '../Form';
 import { Filter } from './filter';
+import IconButton from '@material-ui/core/IconButton';
+import DeleteIcon from '@material-ui/icons/Delete';
+import { Tooltip } from '../../ComponentsLibrary/Tooltip';
+
 import {
   makeFakeRows,
   usd,
@@ -42,6 +46,7 @@ const COLUMNS_QUOTABLE: Columns = [
   { name: 'Quantity' },
   { name: 'Price' },
   { name: 'Amount' },
+  { name: 'Actions' },
 ];
 
 const SCHEMA_NEW_QUOTABLE: Schema<Quotable> = [
@@ -87,6 +92,9 @@ export const QuoteSelector: FC<Props> = ({
   const [quoteParts, setQuoteParts] = useState<Quotable[]>([]);
   const [pendingQuotable, setPendingQuotable] = useState<Quotable[]>([]);
   const [pendingNewQuotable, setPendingNewQuotable] = useState<Quotable[]>([]);
+  const [pendingDeleteQuotable, setPendingDeleteQuotable] = useState<
+    Quotable[]
+  >([]);
 
   const [selectedQuoteLineIds, setSelectedQuoteLineIds] = useState<number[]>(
     [],
@@ -125,7 +133,15 @@ export const QuoteSelector: FC<Props> = ({
 
       return quote;
     });
-    setQuoteParts(flatRateQuotable);
+    let tempFlatRate = flatRateQuotable;
+    let tempQuotable = quotable.getDataList();
+    for (let i = 0; i < tempQuotable.length; i++) {
+      tempFlatRate = tempFlatRate.filter(
+        flatRate =>
+          flatRate.getQuoteLineId() != tempQuotable[i].getQuoteLineId(),
+      );
+    }
+    setQuoteParts(tempFlatRate);
     setQuotable(quotable.getDataList());
     setOriginalQuotable(quotable.getDataList());
     setLoaded(true);
@@ -180,6 +196,43 @@ export const QuoteSelector: FC<Props> = ({
     },
     [billable],
   );
+  const handleDeleteQuoteLine = useCallback(async () => {
+    const quoteUsedClientService = new QuoteUsedClient(ENDPOINT);
+    for (let i = 0; i < pendingDeleteQuotable.length; i++) {
+      let temp = pendingDeleteQuotable[i];
+      let quoteUsed = new QuoteUsed();
+      quoteUsed.setId(temp.getQuoteUsedId());
+      await quoteUsedClientService.Delete(quoteUsed);
+    }
+    setPendingDeleteQuotable([]);
+  }, [pendingDeleteQuotable]);
+  const handleAddToPendingDelete = useCallback(
+    async (pendingRemoveQuotable: Quotable) => {
+      let tempQuotable = quotable.filter(
+        quote =>
+          quote.getQuoteUsedId() != pendingRemoveQuotable.getQuoteUsedId(),
+      );
+      setQuotable(tempQuotable);
+      let tempPendingDelete = pendingDeleteQuotable;
+      tempPendingDelete.push(pendingRemoveQuotable);
+      setPendingDeleteQuotable(tempPendingDelete);
+    },
+    [pendingDeleteQuotable, quotable],
+  );
+  const handleRemovePending = useCallback(
+    async (pendingRemoveQuotable: Quotable) => {
+      const tempSelected = selectedQuoteLineIds.filter(
+        quote => quote != pendingRemoveQuotable.getQuoteLineId(),
+      );
+      setSelectedQuoteLineIds(tempSelected);
+      const newPendingList = pendingQuotable.filter(
+        quote =>
+          quote.getQuoteLineId() != pendingRemoveQuotable.getQuoteLineId(),
+      );
+      setPendingQuotable(newPendingList);
+    },
+    [pendingQuotable, selectedQuoteLineIds],
+  );
   const handleAddQuotes = useCallback(() => {
     const temp: Quotable[] = [];
     Object.keys(billable).map(id => {
@@ -211,7 +264,13 @@ export const QuoteSelector: FC<Props> = ({
       ]);
     }
     setOpen(false);
-  }, [billable, quoteParts, onAddQuotes, pendingNewQuotable]);
+  }, [
+    billable,
+    quoteParts,
+    onAddQuotes,
+    selectedQuoteLineIds,
+    pendingNewQuotable,
+  ]);
   const handleToggleNewQuotable = useCallback(
     () => setNewQuotable(!newQuotable),
     [newQuotable],
@@ -219,7 +278,9 @@ export const QuoteSelector: FC<Props> = ({
   const handleSavePendingQuotable = useCallback(async () => {
     let tempList = pendingQuotable;
     const quoteUsedClientService = new QuoteUsedClient(ENDPOINT);
-
+    if (pendingDeleteQuotable.length > 0) {
+      handleDeleteQuoteLine();
+    }
     if (tempList.length > 0) {
       for (let i = 0; i < tempList.length; i++) {
         let quotePart = tempList[i];
@@ -238,8 +299,15 @@ export const QuoteSelector: FC<Props> = ({
       }
       setQuotable(originalQuotable.concat(...tempList));
       setPendingQuotable([]);
+      setSelectedQuoteLineIds([]);
     }
-  }, [pendingQuotable, originalQuotable, servicesRenderedId]);
+  }, [
+    pendingQuotable,
+    originalQuotable,
+    servicesRenderedId,
+    handleDeleteQuoteLine,
+    pendingDeleteQuotable,
+  ]);
   const handleSaveNewQuotable = useCallback(
     (data: Quotable) => {
       const safeData = makeSafeFormObject(data, new Quotable());
@@ -344,6 +412,21 @@ export const QuoteSelector: FC<Props> = ({
               </strong>
             ),
           },
+          {
+            value: (
+              <div>
+                <Tooltip key="delete" content="Delete">
+                  <IconButton
+                    key="deleteIcon"
+                    size="small"
+                    onClick={() => handleRemovePending(quote)}
+                  >
+                    <DeleteIcon />
+                  </IconButton>
+                </Tooltip>
+              </div>
+            ),
+          },
         ]),
         ...pendingNewQuotable.map(quote => [
           { value: <strong>{quote.getDescription()}</strong> },
@@ -362,6 +445,21 @@ export const QuoteSelector: FC<Props> = ({
           { value: quote.getQuantity() },
           { value: usd(quote.getQuotedPrice()) },
           { value: usd(quote.getQuantity() * quote.getQuotedPrice()) },
+          {
+            value: (
+              <div>
+                <Tooltip key="delete" content="Delete">
+                  <IconButton
+                    key="deleteIcon"
+                    size="small"
+                    onClick={() => handleAddToPendingDelete(quote)}
+                  >
+                    <DeleteIcon />
+                  </IconButton>
+                </Tooltip>
+              </div>
+            ),
+          },
         ]),
       ];
   return (
@@ -379,7 +477,10 @@ export const QuoteSelector: FC<Props> = ({
                 {
                   label: 'Save',
                   onClick: handleSavePendingQuotable,
-                  disabled: loading || pendingQuotable.length == 0,
+                  disabled:
+                    loading ||
+                    (pendingQuotable.length == 0 &&
+                      pendingDeleteQuotable.length == 0),
                 },
               ]
             : undefined
