@@ -183,7 +183,11 @@ export const QuoteSelector: FC<Props> = ({
   const handleAddQuotes = useCallback(() => {
     const temp: Quotable[] = [];
     Object.keys(billable).map(id => {
-      let quote = quoteParts.find(q => q.getQuoteLineId() === +id);
+      let quote = quoteParts.find(
+        q =>
+          q.getQuoteLineId() === +id &&
+          selectedQuoteLineIds.includes(q.getQuoteLineId()),
+      );
       if (quote) {
         quote.setQuantity(billable[+id].quantity);
         temp.push(quote);

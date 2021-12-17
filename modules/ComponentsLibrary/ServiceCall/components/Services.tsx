@@ -235,10 +235,7 @@ export const Services: FC<Props> = ({
     (deleting?: ServicesRendered) => () => setDeleting(deleting),
     [setDeleting],
   );
-  const toggleAddPart = useCallback(() => {
-    console.log('toggle add part');
-    setOpenAddPart(!openAddPart);
-  }, [openAddPart]);
+
   const handleDelete = useCallback(async () => {
     if (deleting) {
       setDeleting(undefined);
