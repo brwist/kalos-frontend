@@ -95,8 +95,12 @@ export const PerDiems: FC<Props> = ({
     console.log(lodging);
     for (let i = 0; i < results.length; i++) {
       const totalMeals = results[i].getRowsList().length * MEALS_RATE;
-
-      const totalLodging = lodging[results[i].getId()];
+      const totalLodging = results[i]
+        .getRowsList()
+        .reduce(
+          (aggr, pd) => aggr + (pd.getMealsOnly() ? 0 : lodging[pd.getId()]),
+          0,
+        );
       console.log(totalLodging);
       results[i].setAmountProcessedLodging(totalLodging);
       results[i].setAmountProcessedMeals(totalMeals);
