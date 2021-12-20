@@ -90,18 +90,29 @@ export const PerDiems: FC<Props> = ({
       'ASC',
     );
     const results = perDiems.getResultsList();
-    const lodging: { [key: number]: number } =
-      await PerDiemClientService.loadPerDiemsLodging(results);
-    console.log(lodging);
     for (let i = 0; i < results.length; i++) {
       const totalMeals = results[i].getRowsList().length * MEALS_RATE;
-      const totalLodging = results[i]
-        .getRowsList()
-        .reduce(
-          (aggr, pd) => aggr + (pd.getMealsOnly() ? 0 : lodging[pd.getId()]),
-          0,
-        );
-      console.log(totalLodging);
+      const year = +format(
+        new Date(parseISO(results[i].getDateStarted())),
+        'yyyy',
+      );
+      const month = +format(
+        new Date(parseISO(results[i].getDateStarted())),
+        'M',
+      );
+      const zipCodes = results[i].getRowsList().map(pd => pd.getZipCode());
+      const govPerDiems = await PerDiemClientService.loadGovPerDiem(
+        zipCodes,
+        year,
+        month,
+      );
+      let totalLodging = 0;
+      for (let j = 0; j < results[i].getRowsList().length; j++) {
+        let row = results[i].getRowsList()[j];
+        if (row.getMealsOnly() == false) {
+          totalLodging += govPerDiems[row.getZipCode()].lodging;
+        }
+      }
       results[i].setAmountProcessedLodging(totalLodging);
       results[i].setAmountProcessedMeals(totalMeals);
     }
