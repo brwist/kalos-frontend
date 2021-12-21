@@ -6,7 +6,7 @@ import {
   ServicesRenderedClient,
   ServicesRendered,
 } from '@kalos-core/kalos-rpc/ServicesRendered';
-import { Payment } from '@kalos-core/kalos-rpc/Payment';
+import { Payment, PaymentClient } from '@kalos-core/kalos-rpc/Payment';
 import { Quotable } from '@kalos-core/kalos-rpc/Event';
 import AddBoxIcon from '@material-ui/icons/AddBox';
 
@@ -39,6 +39,7 @@ import {
 import './services.less';
 import { User } from '@kalos-core/kalos-rpc/User';
 import ToolTip from '@material-ui/core/Tooltip';
+import { endsWith } from 'lodash';
 
 const ServicesRenderedClientService = new ServicesRenderedClient(ENDPOINT);
 
@@ -69,13 +70,6 @@ type SignatureType = {
   authorizedSignorName: string;
   authorizedSignorRole: string;
   signorNotes: string;
-};
-
-type PaymentPartType = {
-  paymentCollected: number;
-  paymentType: string;
-  amountCollected: number;
-  dateProcessed: string;
 };
 
 interface Props {
@@ -199,13 +193,6 @@ const SIGNATURE_INITIAL: SignatureType = {
   signorNotes: '',
 };
 
-const PAYMENT_PART_INITIAL: PaymentPartType = {
-  amountCollected: 0,
-  dateProcessed: timestamp(true),
-  paymentCollected: 0,
-  paymentType: OPTION_BLANK,
-};
-
 export const Services: FC<Props> = ({
   serviceCallId,
   loggedUser,
@@ -220,8 +207,9 @@ export const Services: FC<Props> = ({
   const [paymentForm, setPaymentForm] = useState<PaymentType>(PAYMENT_INITIAL);
   const [signatureForm, setSignatureForm] =
     useState<SignatureType>(SIGNATURE_INITIAL);
-  const [paymentFormPart, setPaymentFormPart] =
-    useState<PaymentPartType>(PAYMENT_PART_INITIAL);
+  const [paymentFormPart, setPaymentFormPart] = useState<Payment>(
+    new Payment(),
+  );
   const [deleting, setDeleting] = useState<ServicesRendered>();
   const [editing, setEditing] = useState<ServicesRendered>();
   const [saving, setSaving] = useState<boolean>(false);
@@ -229,13 +217,11 @@ export const Services: FC<Props> = ({
     SelectedQuote[]
   >([]);
   const [changingStatus, setChangingStatus] = useState<boolean>(false);
-  const [openAddPart, setOpenAddPart] = useState<boolean>(false);
 
   const handleDeleting = useCallback(
     (deleting?: ServicesRendered) => () => setDeleting(deleting),
     [setDeleting],
   );
-
   const handleDelete = useCallback(async () => {
     if (deleting) {
       setDeleting(undefined);
@@ -325,7 +311,7 @@ export const Services: FC<Props> = ({
       }
 
       setServicesRenderedForm(new ServicesRendered());
-      setPaymentFormPart(PAYMENT_PART_INITIAL);
+
       setPaymentForm(PAYMENT_INITIAL);
       setSignatureForm(SIGNATURE_INITIAL);
       setChangingStatus(false);
@@ -336,7 +322,6 @@ export const Services: FC<Props> = ({
       loadServicesRendered,
       setSignatureForm,
       setServicesRenderedForm,
-      setPaymentFormPart,
       setPaymentForm,
       signatureForm,
       paymentForm,
@@ -350,36 +335,63 @@ export const Services: FC<Props> = ({
       if (editing) {
         setSaving(true);
         const req = makeSafeFormObject(data, new ServicesRendered());
-        req.setId(editing.getId());
-        await ServicesRenderedClientService.Update(req);
+        if (req.getFieldMaskList().length > 0) {
+          await ServicesRenderedClientService.Update(req);
+        }
+        const paymentClientService = new PaymentClient(ENDPOINT);
+        console.log('Save Payment', paymentFormPart);
+        if (
+          paymentFormPart.getServicesRenderedId() == null ||
+          paymentFormPart.getServicesRenderedId() == 0
+        ) {
+          console.log('create payment');
+          if (req.getId() == undefined) {
+            paymentFormPart.setServicesRenderedId(editing.getId());
+          } else {
+            paymentFormPart.setServicesRenderedId(req.getId());
+          }
+
+          paymentClientService.Create(paymentFormPart);
+        } else {
+          console.log('update payment');
+          paymentClientService.Update(paymentFormPart);
+        }
         await loadServicesRendered();
         setSaving(false);
         setEditing(undefined);
       }
     },
-    [editing, setSaving, setEditing, loadServicesRendered],
+    [editing, setSaving, setEditing, paymentFormPart, loadServicesRendered],
   );
   const handleSetEditing = useCallback(
-    (editing?: ServicesRendered) => () => setEditing(editing),
+    (editing?: ServicesRendered) => async () => {
+      const tempPayment = new Payment();
+      tempPayment.setAmountCollected(0);
+      tempPayment.setCollected(0);
+      tempPayment.setType(OPTION_BLANK);
+      if (editing != undefined) {
+        const paymentReq = new Payment();
+        const paymentClientService = new PaymentClient(ENDPOINT);
+        paymentReq.setServicesRenderedId(editing.getId());
+        try {
+          const results = await paymentClientService.Get(paymentReq);
+          setPaymentFormPart(results);
+        } catch (err) {
+          setPaymentFormPart(tempPayment);
+        }
+      } else {
+        setPaymentFormPart(tempPayment);
+      }
+      setEditing(editing);
+    },
     [setEditing],
   );
   const handlePaymentFormChange = useCallback(
-    (data: PaymentPartType) => {
-      const hasPaymentCollectedChanged =
-        data.paymentCollected !== paymentFormPart.paymentCollected;
-      setPaymentFormPart({
-        ...data,
-        ...(hasPaymentCollectedChanged
-          ? {
-              paymentType: OPTION_BLANK,
-            }
-          : {}),
-      });
-      if (hasPaymentCollectedChanged) {
-        setPaymentFormKey(paymentFormKey + 1);
-      }
+    (data: Payment) => {
+      const safeData = makeSafeFormObject(data, new Payment());
+      setPaymentFormPart(safeData);
     },
-    [setPaymentFormPart, paymentFormPart, paymentFormKey, setPaymentFormKey],
+    [setPaymentFormPart],
   );
   const data: Data = loading
     ? makeFakeRows(4, 3)
@@ -437,36 +449,7 @@ export const Services: FC<Props> = ({
       { value: sr.getServiceRendered() },
       { value: sr.getTechNotes() },
     ]);
-  const SCHEMA_PAYMENT_PART: Schema<PaymentPartType> = [
-    [
-      {
-        label: 'Payment Collected',
-        name: 'paymentCollected',
-        type: 'checkbox',
-      },
-      {
-        label: 'Payment Type',
-        name: 'paymentType',
-        options: [
-          OPTION_BLANK,
-          ...(paymentFormPart.paymentCollected
-            ? PAYMENT_COLLECTED_LIST
-            : PAYMENT_NOT_COLLECTED_LIST),
-        ],
-      },
-      {
-        label: 'Amount Collected',
-        name: 'amountCollected',
-        type: 'number',
-        startAdornment: '$',
-      },
-      {
-        label: 'Date Processed',
-        name: 'dateProcessed',
-        type: 'date',
-      },
-    ],
-  ];
+
   return (
     <>
       {[COMPLETED, INCOMPLETE, ENROUTE, ADMIN].includes(lastStatus) &&
@@ -595,7 +578,8 @@ export const Services: FC<Props> = ({
           onChange={setSignatureForm}
         />
       )}
-      {[ON_CALL, ADMIN].includes(lastStatus) && (
+
+      {/*[ON_CALL, ADMIN].includes(lastStatus) && (
         <>
           <PlainForm
             schema={SCHEMA_ON_CALL}
@@ -612,7 +596,7 @@ export const Services: FC<Props> = ({
             compact
           />
         </>
-      )}
+      )*/}
       <InfoTable
         columns={COLUMNS_SERVICES_RENDERED_HISTORY}
         data={data}
@@ -640,7 +624,31 @@ export const Services: FC<Props> = ({
             >
               <PlainForm
                 key={paymentFormKey}
-                schema={SCHEMA_PAYMENT_PART}
+                schema={[
+                  [
+                    {
+                      label: 'Payment Collected',
+                      name: 'getCollected',
+                      type: 'checkbox',
+                    },
+                    {
+                      label: 'Payment Type',
+                      name: 'getType',
+                      options: [
+                        OPTION_BLANK,
+                        ...(paymentFormPart.getCollected()
+                          ? PAYMENT_COLLECTED_LIST
+                          : PAYMENT_NOT_COLLECTED_LIST),
+                      ],
+                    },
+                    {
+                      label: 'Amount Collected',
+                      name: 'getAmountCollected',
+                      type: 'number',
+                      startAdornment: '$',
+                    },
+                  ],
+                ]}
                 data={paymentFormPart}
                 onChange={handlePaymentFormChange}
                 compact
