@@ -168,6 +168,10 @@ const SCHEMA_ON_CALL: Schema<ServicesRendered> = [
       multiline: true,
     },
     {
+      name: 'getId',
+      type: 'hidden',
+    },
+    {
       label: 'Technician Notes',
       name: 'getTechNotes',
       multiline: true,
@@ -357,6 +361,7 @@ export const Services: FC<Props> = ({
           paymentClientService.Update(paymentFormPart);
         }
         await loadServicesRendered();
+        setPaymentFormPart(new Payment());
         setSaving(false);
         setEditing(undefined);
       }
@@ -619,6 +624,11 @@ export const Services: FC<Props> = ({
               schema={SCHEMA_ON_CALL}
               data={editing}
               onClose={handleSetEditing()}
+              onChange={data => {
+                let safe = makeSafeFormObject(data, new ServicesRendered());
+                console.log('changes', data);
+                setEditing(safe);
+              }}
               onSave={handleChangeServiceRendered}
               disabled={saving}
             >
@@ -630,6 +640,11 @@ export const Services: FC<Props> = ({
                       label: 'Payment Collected',
                       name: 'getCollected',
                       type: 'checkbox',
+                    },
+                    {
+                      label: 'Id',
+                      name: 'getId',
+                      type: 'hidden',
                     },
                     {
                       label: 'Payment Type',
