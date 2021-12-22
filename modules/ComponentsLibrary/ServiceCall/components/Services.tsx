@@ -273,7 +273,7 @@ export const Services: FC<Props> = ({
       const req = new ServicesRendered();
       req.setId(deleting.getId());
       await ServicesRenderedClientService.Delete(req);
-      () => loadServicesRendered();
+      loadServicesRendered();
     }
   }, [deleting, loadServicesRendered]);
   const handleChangeStatus = useCallback(
@@ -392,11 +392,14 @@ export const Services: FC<Props> = ({
         paymentReq.setId(data.paymentId);
         paymentReq.setCollected(data.paymentCollected);
         paymentReq.setAmountCollected(data.amountCollected);
+        paymentReq.setType(data.paymentType);
+
         //if payment ID, update, else create
         if (paymentReq.getId() == 0) {
+          paymentReq.setServicesRenderedId(srReq.getId());
           paymentClientService.Create(paymentReq);
         } else {
-          paymentReq.setFieldMaskList(['Collected', 'AmountCollected']);
+          paymentReq.setFieldMaskList(['Collected', 'AmountCollected', 'Type']);
           paymentClientService.Update(paymentReq);
         }
         setSaving(false);
@@ -434,13 +437,18 @@ export const Services: FC<Props> = ({
         temp.servicesRendered = sr.getServiceRendered();
         temp.servicesRenderedId = sr.getId();
         temp.technicianNotes = sr.getTechNotes();
-        paymentReq.setServicesRenderedId(sr.getId());
-        const paymentResults = await paymentClientService.Get(paymentReq);
-        if (paymentResults) {
-          temp.amountCollected = paymentResults.getAmountCollected();
-          temp.paymentCollected = paymentResults.getCollected();
-          temp.paymentId = paymentResults.getId();
-          temp.paymentType = paymentResults.getType();
+
+        try {
+          paymentReq.setServicesRenderedId(sr.getId());
+          const paymentResults = await paymentClientService.Get(paymentReq);
+          if (paymentResults) {
+            temp.amountCollected = paymentResults.getAmountCollected();
+            temp.paymentCollected = paymentResults.getCollected();
+            temp.paymentId = paymentResults.getId();
+            temp.paymentType = paymentResults.getType();
+          }
+        } catch (error) {
+          console.log('no payment found, stick with default');
         }
       }
       setEditing(temp);
@@ -488,7 +496,9 @@ export const Services: FC<Props> = ({
           },
         ];
       });
-  let lastStatus = servicesRendered[0] ? servicesRendered[0].getStatus() : '';
+  let lastStatus = servicesRendered[servicesRendered.length - 1]
+    ? servicesRendered[servicesRendered.length - 1].getStatus()
+    : '';
   if (lastStatus.startsWith(SIGNED_AS)) {
     lastStatus = SIGNED_AS;
   }
