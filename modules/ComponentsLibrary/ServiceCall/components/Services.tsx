@@ -55,6 +55,16 @@ const {
   SIGNED_AS,
 } = SERVICE_STATUSES;
 
+type ServicesRenderedPaymentType = {
+  servicesRenderedId: number;
+  servicesRendered: string;
+  technicianNotes: string;
+  paymentCollected: number;
+  amountCollected: number;
+  paymentType: string;
+  dateProcessed: string;
+  paymentId: number;
+};
 type PaymentType = {
   signature: string;
   authorizedSignorName: string;
@@ -64,7 +74,6 @@ type PaymentType = {
   date: string;
   paymentType: string;
 };
-
 type SignatureType = {
   signature: string;
   authorizedSignorName: string;
@@ -160,26 +169,6 @@ const SCHEMA_PAYMENT: Schema<PaymentType> = [
   ],
 ];
 
-const SCHEMA_ON_CALL: Schema<ServicesRendered> = [
-  [
-    {
-      label: 'Services Rendered',
-      name: 'getServiceRendered',
-      multiline: true,
-    },
-    {
-      name: 'getId',
-      type: 'hidden',
-    },
-    {
-      label: 'Technician Notes',
-      name: 'getTechNotes',
-      multiline: true,
-      helperText: 'For internal use',
-    },
-  ],
-];
-
 const PAYMENT_INITIAL: PaymentType = {
   signature: '',
   authorizedSignorName: '',
@@ -205,23 +194,75 @@ export const Services: FC<Props> = ({
   loading,
   onAddMaterials,
 }) => {
-  const [paymentFormKey, setPaymentFormKey] = useState<number>(0);
   const [serviceRenderedForm, setServicesRenderedForm] =
     useState<ServicesRendered>(new ServicesRendered());
   const [paymentForm, setPaymentForm] = useState<PaymentType>(PAYMENT_INITIAL);
   const [signatureForm, setSignatureForm] =
     useState<SignatureType>(SIGNATURE_INITIAL);
-  const [paymentFormPart, setPaymentFormPart] = useState<Payment>(
-    new Payment(),
-  );
   const [deleting, setDeleting] = useState<ServicesRendered>();
-  const [editing, setEditing] = useState<ServicesRendered>();
+  const init: ServicesRenderedPaymentType = {
+    servicesRenderedId: 0,
+    servicesRendered: '',
+    technicianNotes: '',
+    paymentType: OPTION_BLANK,
+    amountCollected: 0,
+    paymentCollected: 0,
+    paymentId: 0,
+    dateProcessed: '',
+  };
+  const [editing, setEditing] = useState<ServicesRenderedPaymentType>(init);
   const [saving, setSaving] = useState<boolean>(false);
   const [pendingSelectedQuote, setPendingSelectedQuote] = useState<
     SelectedQuote[]
   >([]);
   const [changingStatus, setChangingStatus] = useState<boolean>(false);
-
+  const SCHEMA_ON_CALL: Schema<ServicesRenderedPaymentType> = [
+    [
+      {
+        label: 'Services Rendered',
+        name: 'servicesRendered',
+        multiline: true,
+      },
+      {
+        name: 'servicesRenderedId',
+        type: 'hidden',
+      },
+      {
+        label: 'Technician Notes',
+        name: 'technicianNotes',
+        multiline: true,
+        helperText: 'For internal use',
+      },
+    ],
+    [
+      {
+        label: 'Payment Collected',
+        name: 'paymentCollected',
+        type: 'checkbox',
+      },
+      {
+        label: 'Id',
+        name: 'paymentId',
+        type: 'hidden',
+      },
+      {
+        label: 'Payment Type',
+        name: 'paymentType',
+        options: [
+          OPTION_BLANK,
+          ...(editing?.paymentCollected
+            ? PAYMENT_COLLECTED_LIST
+            : PAYMENT_NOT_COLLECTED_LIST),
+        ],
+      },
+      {
+        label: 'Amount Collected',
+        name: 'amountCollected',
+        type: 'number',
+        startAdornment: '$',
+      },
+    ],
+  ];
   const handleDeleting = useCallback(
     (deleting?: ServicesRendered) => () => setDeleting(deleting),
     [setDeleting],
@@ -335,69 +376,78 @@ export const Services: FC<Props> = ({
     ],
   );
   const handleChangeServiceRendered = useCallback(
-    async (data: ServicesRendered) => {
+    async (data: ServicesRenderedPaymentType) => {
       if (editing) {
-        setSaving(true);
-        const req = makeSafeFormObject(data, new ServicesRendered());
-        if (req.getFieldMaskList().length > 0) {
-          await ServicesRenderedClientService.Update(req);
-        }
         const paymentClientService = new PaymentClient(ENDPOINT);
-        console.log('Save Payment', paymentFormPart);
-        if (
-          paymentFormPart.getServicesRenderedId() == null ||
-          paymentFormPart.getServicesRenderedId() == 0
-        ) {
-          console.log('create payment');
-          if (req.getId() == undefined) {
-            paymentFormPart.setServicesRenderedId(editing.getId());
-          } else {
-            paymentFormPart.setServicesRenderedId(req.getId());
-          }
+        setSaving(true);
+        let srReq = new ServicesRendered();
+        srReq.setServiceRendered(data.servicesRendered);
+        srReq.setTechNotes(data.technicianNotes);
+        srReq.setId(data.servicesRenderedId);
+        srReq.setFieldMaskList(['TechNotes', 'ServicesRendered']);
+        //update sr
+        await ServicesRenderedClientService.Update(srReq);
 
-          paymentClientService.Create(paymentFormPart);
+        const paymentReq = new Payment();
+        paymentReq.setId(data.paymentId);
+        paymentReq.setCollected(data.paymentCollected);
+        paymentReq.setAmountCollected(data.amountCollected);
+        //if payment ID, update, else create
+        if (paymentReq.getId() == 0) {
+          paymentClientService.Create(paymentReq);
         } else {
-          console.log('update payment');
-          paymentClientService.Update(paymentFormPart);
+          paymentReq.setFieldMaskList(['Collected', 'AmountCollected']);
+          paymentClientService.Update(paymentReq);
         }
-        await loadServicesRendered();
-        setPaymentFormPart(new Payment());
         setSaving(false);
-        setEditing(undefined);
+        const init: ServicesRenderedPaymentType = {
+          servicesRenderedId: 0,
+          servicesRendered: '',
+          technicianNotes: '',
+          paymentType: OPTION_BLANK,
+          amountCollected: 0,
+          paymentCollected: 0,
+          paymentId: 0,
+          dateProcessed: '',
+        };
+        setEditing(init);
       }
+      loadServicesRendered();
     },
-    [editing, setSaving, setEditing, paymentFormPart, loadServicesRendered],
+    [editing, setSaving, setEditing, loadServicesRendered],
   );
   const handleSetEditing = useCallback(
-    (editing?: ServicesRendered) => async () => {
-      const tempPayment = new Payment();
-      tempPayment.setAmountCollected(0);
-      tempPayment.setCollected(0);
-      tempPayment.setType(OPTION_BLANK);
-      if (editing != undefined) {
-        const paymentReq = new Payment();
-        const paymentClientService = new PaymentClient(ENDPOINT);
-        paymentReq.setServicesRenderedId(editing.getId());
-        try {
-          const results = await paymentClientService.Get(paymentReq);
-          setPaymentFormPart(results);
-        } catch (err) {
-          setPaymentFormPart(tempPayment);
+    (sr?: ServicesRendered) => async () => {
+      const paymentReq = new Payment();
+      const paymentClientService = new PaymentClient(ENDPOINT);
+      const temp: ServicesRenderedPaymentType = {
+        servicesRenderedId: 0,
+        servicesRendered: '',
+        technicianNotes: '',
+        paymentType: OPTION_BLANK,
+        amountCollected: 0,
+        paymentCollected: 0,
+        paymentId: 0,
+        dateProcessed: '',
+      };
+      if (sr) {
+        temp.servicesRendered = sr.getServiceRendered();
+        temp.servicesRenderedId = sr.getId();
+        temp.technicianNotes = sr.getTechNotes();
+        paymentReq.setServicesRenderedId(sr.getId());
+        const paymentResults = await paymentClientService.Get(paymentReq);
+        if (paymentResults) {
+          temp.amountCollected = paymentResults.getAmountCollected();
+          temp.paymentCollected = paymentResults.getCollected();
+          temp.paymentId = paymentResults.getId();
+          temp.paymentType = paymentResults.getType();
         }
-      } else {
-        setPaymentFormPart(tempPayment);
       }
-      setEditing(editing);
+      setEditing(temp);
     },
-    [setEditing],
+    [],
   );
-  const handlePaymentFormChange = useCallback(
-    (data: Payment) => {
-      const safeData = makeSafeFormObject(data, new Payment());
-      setPaymentFormPart(safeData);
-    },
-    [setPaymentFormPart],
-  );
+
   const data: Data = loading
     ? makeFakeRows(4, 3)
     : servicesRendered.map(props => {
@@ -616,63 +666,20 @@ export const Services: FC<Props> = ({
           onConfirm={handleDelete}
         />
       )}
-      {editing && (
+      {editing.servicesRenderedId != 0 && (
         <Modal open onClose={handleSetEditing()}>
           <div className="ServicesEditing">
-            <Form<ServicesRendered>
+            <Form<ServicesRenderedPaymentType>
               title="Services Rendered Edit"
               schema={SCHEMA_ON_CALL}
               data={editing}
               onClose={handleSetEditing()}
-              onChange={data => {
-                let safe = makeSafeFormObject(data, new ServicesRendered());
-                console.log('changes', data);
-                setEditing(safe);
-              }}
               onSave={handleChangeServiceRendered}
               disabled={saving}
-            >
-              <PlainForm
-                key={paymentFormKey}
-                schema={[
-                  [
-                    {
-                      label: 'Payment Collected',
-                      name: 'getCollected',
-                      type: 'checkbox',
-                    },
-                    {
-                      label: 'Id',
-                      name: 'getId',
-                      type: 'hidden',
-                    },
-                    {
-                      label: 'Payment Type',
-                      name: 'getType',
-                      options: [
-                        OPTION_BLANK,
-                        ...(paymentFormPart.getCollected()
-                          ? PAYMENT_COLLECTED_LIST
-                          : PAYMENT_NOT_COLLECTED_LIST),
-                      ],
-                    },
-                    {
-                      label: 'Amount Collected',
-                      name: 'getAmountCollected',
-                      type: 'number',
-                      startAdornment: '$',
-                    },
-                  ],
-                ]}
-                data={paymentFormPart}
-                onChange={handlePaymentFormChange}
-                compact
-                fullWidth
-              />
-            </Form>
+            ></Form>
             <QuoteSelector
               serviceCallId={serviceCallId}
-              servicesRenderedId={editing.getId()}
+              servicesRenderedId={editing.servicesRenderedId}
               onAddQuotes={setPendingSelectedQuote}
               onAdd={console.log}
             ></QuoteSelector>
