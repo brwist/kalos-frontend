@@ -9,13 +9,15 @@ import {
 import { Payment, PaymentClient } from '@kalos-core/kalos-rpc/Payment';
 import { Quotable } from '@kalos-core/kalos-rpc/Event';
 import AddBoxIcon from '@material-ui/icons/AddBox';
-
+import { ZoomIn } from '@material-ui/icons';
 import { SectionBar } from '../../SectionBar';
 import { ConfirmDelete } from '../../ConfirmDelete';
 import { InfoTable, Data, Columns } from '../../InfoTable';
 import { PlainForm, Schema } from '../../PlainForm';
 import { Form } from '../../Form';
 import { Modal } from '../../Modal';
+import { File } from '@kalos-core/kalos-rpc/File';
+import { format } from 'date-fns';
 import { QuoteSelector, SelectedQuote } from '../../QuoteSelector';
 import {
   makeFakeRows,
@@ -27,6 +29,8 @@ import {
   formatTime,
   EventClientService,
   makeSafeFormObject,
+  uploadFileToS3Bucket,
+  FileClientService,
 } from '../../../../helpers';
 import {
   ENDPOINT,
@@ -38,8 +42,6 @@ import {
 } from '../../../../constants';
 import './services.less';
 import { User } from '@kalos-core/kalos-rpc/User';
-import ToolTip from '@material-ui/core/Tooltip';
-import { endsWith } from 'lodash';
 
 const ServicesRenderedClientService = new ServicesRenderedClient(ENDPOINT);
 
@@ -185,7 +187,16 @@ const SIGNATURE_INITIAL: SignatureType = {
   authorizedSignorRole: '',
   signorNotes: '',
 };
-
+const SERVICES_RENDERED_PAYMENT_INITIAL: ServicesRenderedPaymentType = {
+  servicesRenderedId: 0,
+  servicesRendered: '',
+  technicianNotes: '',
+  paymentType: OPTION_BLANK,
+  amountCollected: 0,
+  paymentCollected: 0,
+  paymentId: 0,
+  dateProcessed: '',
+};
 export const Services: FC<Props> = ({
   serviceCallId,
   loggedUser,
@@ -197,20 +208,16 @@ export const Services: FC<Props> = ({
   const [serviceRenderedForm, setServicesRenderedForm] =
     useState<ServicesRendered>(new ServicesRendered());
   const [paymentForm, setPaymentForm] = useState<PaymentType>(PAYMENT_INITIAL);
+  const [viewPayment, setViewPayment] = useState<PaymentType>();
+  const [viewSignature, setViewSignature] = useState<PaymentType>();
+
   const [signatureForm, setSignatureForm] =
     useState<SignatureType>(SIGNATURE_INITIAL);
   const [deleting, setDeleting] = useState<ServicesRendered>();
-  const init: ServicesRenderedPaymentType = {
-    servicesRenderedId: 0,
-    servicesRendered: '',
-    technicianNotes: '',
-    paymentType: OPTION_BLANK,
-    amountCollected: 0,
-    paymentCollected: 0,
-    paymentId: 0,
-    dateProcessed: '',
-  };
-  const [editing, setEditing] = useState<ServicesRenderedPaymentType>(init);
+
+  const [editing, setEditing] = useState<ServicesRenderedPaymentType>(
+    SERVICES_RENDERED_PAYMENT_INITIAL,
+  );
   const [saving, setSaving] = useState<boolean>(false);
   const [pendingSelectedQuote, setPendingSelectedQuote] = useState<
     SelectedQuote[]
@@ -303,58 +310,46 @@ export const Services: FC<Props> = ({
       const fieldMaskList = ['EventId', 'Status', 'Name', 'Datetime'];
       req.setFieldMaskList(fieldMaskList);
       const res = await ServicesRenderedClientService.Create(req);
-      if (pendingSelectedQuote.length > 0) {
-        await Promise.all(
-          pendingSelectedQuote.map(
-            async ({ billable, quantity, quotePart }) => {
-              const req = new Quotable();
-              req.setEventId(serviceCallId);
-              req.setServicesRenderedId(res.getId());
-              req.setQuoteLineId(quotePart.getQuoteLineId());
-              req.setIsBillable(billable);
-              req.setQuantity(quantity);
-              req.setDescription(quotePart.getDescription());
-              req.setQuotedPrice(quotePart.getQuotedPrice());
-              req.setIsLmpc(quotePart.getIsLmpc());
-              req.setIsFlatrate(quotePart.getIsFlatrate());
-              req.setIsComplex(quotePart.getIsComplex());
-              req.setIsActive(true);
-              await EventClientService.WriteQuotes(req);
-            },
-          ),
+      if (isSignature) {
+        console.log('we are signing');
+        const fileReq = new File();
+        fileReq.setMimeType('image/png');
+        fileReq.setBucket('kalosdoc-prod');
+        const fileName = `signature/${res.getId()}-${serviceCallId}-${format(
+          new Date(),
+          'hhmmss',
+        )}.png`;
+        await uploadFileToS3Bucket(
+          fileName,
+          signatureForm.signature,
+          fileReq.getBucket(),
+          'signature',
         );
-        const [date, hour] = timestamp().split(' ');
-        const materialUsed =
-          formatDay(date) +
-          ', ' +
-          formatDate(date) +
-          ' ' +
-          formatTime(hour) +
-          ' ' +
-          `${loggedUser.getFirstname()} ${loggedUser.getLastname()}` +
-          ' - ' +
-          pendingSelectedQuote
-            .map(
-              ({ quantity, quotePart }) =>
-                '(' +
-                quantity +
-                ')' +
-                quotePart.getDescription() +
-                ' - $' +
-                quantity * quotePart.getQuotedPrice(),
-            )
-            .join(', ') +
-          `
-`;
-        const materialTotal = pendingSelectedQuote
-          .map(
-            ({ quantity, quotePart }) => quantity * quotePart.getQuotedPrice(),
-          )
-          .reduce((aggr, item) => aggr + item, 0);
-        onAddMaterials(materialUsed, materialTotal);
-        setPendingSelectedQuote([]);
-      }
 
+        fileReq.setName(fileName);
+        FileClientService.Create(fileReq);
+        console.log(fileReq);
+      }
+      if (paymentForm != PAYMENT_INITIAL) {
+        console.log('create payment');
+        const paymentReq = new Payment();
+        paymentReq.setCollected(1);
+        paymentReq.setAmountCollected(paymentForm.amountCollected);
+        paymentReq.setType(paymentForm.paymentType);
+        const paymentClientService = new PaymentClient(ENDPOINT);
+        const paymentServicesRender = servicesRendered.find(
+          service => service.getStatus() == PAYMENT,
+        );
+        if (paymentServicesRender) {
+          paymentReq.setServicesRenderedId(paymentServicesRender.getId());
+          await paymentClientService.Create(paymentReq);
+        } else {
+          console.log('we did not find a payment');
+        }
+      }
+      //create png image, upload Name of signature is
+      //"signature/#form.event_id#-#local.services_rendered_id#-#timeFormat(now(),'hhmmss')#.png"
+      //After successful creation,Signature ID=file ID in table
       setServicesRenderedForm(new ServicesRendered());
 
       setPaymentForm(PAYMENT_INITIAL);
@@ -370,9 +365,7 @@ export const Services: FC<Props> = ({
       setPaymentForm,
       signatureForm,
       paymentForm,
-      pendingSelectedQuote,
       serviceCallId,
-      onAddMaterials,
     ],
   );
   const handleChangeServiceRendered = useCallback(
@@ -455,7 +448,23 @@ export const Services: FC<Props> = ({
     },
     [],
   );
-
+  const handleSetViewSignaturePreview = useCallback(
+    (sr: ServicesRendered, status: string) => async () => {
+      if (status === PAYMENT) {
+        console.log('payment');
+        const paymentClientService = new PaymentClient(ENDPOINT);
+        const paymentReq = new Payment();
+        paymentReq.setServicesRenderedId(sr.getId());
+        const paymentResults = await paymentClientService.Get(paymentReq);
+      } else {
+        console.log('signature');
+        const fileReq = new File();
+        fileReq.setName(`%signature/${sr.getEventId()}-${sr.getId()}%`);
+        const fileRes = FileClientService.Get(fileReq);
+      }
+    },
+    [],
+  );
   const data: Data = loading
     ? makeFakeRows(4, 3)
     : servicesRendered.map(props => {
@@ -486,6 +495,22 @@ export const Services: FC<Props> = ({
                       size="small"
                     >
                       <EditIcon />
+                    </IconButton>,
+                  ]
+                : []),
+              ...([SIGNED_AS, PAYMENT].includes(props.getStatus())
+                ? [
+                    <IconButton
+                      key={1}
+                      onClick={handleSetViewSignaturePreview(
+                        props,
+                        SIGNED_AS.includes(props.getStatus())
+                          ? SIGNED_AS
+                          : PAYMENT,
+                      )}
+                      size="small"
+                    >
+                      <ZoomIn />
                     </IconButton>,
                   ]
                 : []),
@@ -617,7 +642,7 @@ export const Services: FC<Props> = ({
                       },
                     ]
                   : []),
-                ...([PAYMENT, SIGNATURE].includes(lastStatus)
+                ...([SIGNATURE, PAYMENT].includes(lastStatus)
                   ? [
                       {
                         label: 'SAVE',
