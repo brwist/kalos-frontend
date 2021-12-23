@@ -67,11 +67,17 @@ type ServicesRenderedPaymentType = {
   dateProcessed: string;
   paymentId: number;
 };
-type PaymentType = {
+type PaymentAndSignatureType = {
   signature: string;
   authorizedSignorName: string;
   authorizedSignorRole: string;
   signorNotes: string;
+  amountCollected: number;
+  date: string;
+  paymentType: string;
+};
+type PaymentType = {
+  paymentCollected: number;
   amountCollected: number;
   date: string;
   paymentType: string;
@@ -130,7 +136,7 @@ const SCHEMA_SIGNATURE: Schema<SignatureType> = [
   ],
 ];
 
-const SCHEMA_PAYMENT: Schema<PaymentType> = [
+const SCHEMA_PAYMENT_AND_SIGNATURE: Schema<PaymentAndSignatureType> = [
   [
     {
       label: 'Signature',
@@ -170,8 +176,32 @@ const SCHEMA_PAYMENT: Schema<PaymentType> = [
     },
   ],
 ];
-
-const PAYMENT_INITIAL: PaymentType = {
+const SCHEMA_PAYMENT: Schema<PaymentType> = [
+  [
+    {
+      label: 'Payment Type',
+      name: 'paymentType',
+      options: [OPTION_BLANK, ...SIGNATURE_PAYMENT_TYPE_LIST],
+    },
+    {
+      label: 'Amount Collected',
+      name: 'amountCollected',
+      type: 'number',
+      startAdornment: '$',
+    },
+    {
+      label: 'Payment Collected?',
+      name: 'paymentCollected',
+      type: 'checkbox',
+    },
+    {
+      label: 'Date Processed',
+      name: 'date',
+      type: 'date',
+    },
+  ],
+];
+const PAYMENT_INITIAL: PaymentAndSignatureType = {
   signature: '',
   authorizedSignorName: '',
   authorizedSignorRole: '',
@@ -207,7 +237,8 @@ export const Services: FC<Props> = ({
 }) => {
   const [serviceRenderedForm, setServicesRenderedForm] =
     useState<ServicesRendered>(new ServicesRendered());
-  const [paymentForm, setPaymentForm] = useState<PaymentType>(PAYMENT_INITIAL);
+  const [paymentForm, setPaymentForm] =
+    useState<PaymentAndSignatureType>(PAYMENT_INITIAL);
   const [viewPayment, setViewPayment] = useState<PaymentType>();
   const [viewSignature, setViewSignature] = useState<PaymentType>();
 
@@ -270,6 +301,7 @@ export const Services: FC<Props> = ({
       },
     ],
   ];
+
   const handleDeleting = useCallback(
     (deleting?: ServicesRendered) => () => setDeleting(deleting),
     [setDeleting],
@@ -363,11 +395,13 @@ export const Services: FC<Props> = ({
       setSignatureForm,
       setServicesRenderedForm,
       setPaymentForm,
+      servicesRendered,
       signatureForm,
       paymentForm,
       serviceCallId,
     ],
   );
+
   const handleChangeServiceRendered = useCallback(
     async (data: ServicesRenderedPaymentType) => {
       if (editing) {
@@ -448,7 +482,7 @@ export const Services: FC<Props> = ({
     },
     [],
   );
-  const handleSetViewSignaturePreview = useCallback(
+  const handleSetViewPreview = useCallback(
     (sr: ServicesRendered, status: string) => async () => {
       if (status === PAYMENT) {
         console.log('payment');
@@ -456,6 +490,14 @@ export const Services: FC<Props> = ({
         const paymentReq = new Payment();
         paymentReq.setServicesRenderedId(sr.getId());
         const paymentResults = await paymentClientService.Get(paymentReq);
+        if (paymentResults) {
+          setViewPayment({
+            paymentType: paymentResults.getType(),
+            amountCollected: paymentResults.getAmountCollected(),
+            paymentCollected: paymentResults.getCollected(),
+            date: format(new Date(), 'yyyy-MM-dd'),
+          });
+        }
       } else {
         console.log('signature');
         const fileReq = new File();
@@ -502,7 +544,7 @@ export const Services: FC<Props> = ({
                 ? [
                     <IconButton
                       key={1}
-                      onClick={handleSetViewSignaturePreview(
+                      onClick={handleSetViewPreview(
                         props,
                         SIGNED_AS.includes(props.getStatus())
                           ? SIGNED_AS
@@ -656,7 +698,7 @@ export const Services: FC<Props> = ({
       />
       {[PAYMENT].includes(lastStatus) && (
         <PlainForm
-          schema={SCHEMA_PAYMENT}
+          schema={SCHEMA_PAYMENT_AND_SIGNATURE}
           data={paymentForm}
           onChange={setPaymentForm}
         />
@@ -718,6 +760,18 @@ export const Services: FC<Props> = ({
               onAddQuotes={setPendingSelectedQuote}
               onAdd={console.log}
             ></QuoteSelector>
+          </div>
+        </Modal>
+      )}
+      {viewPayment != undefined && (
+        <Modal open onClose={() => setViewPayment(undefined)}>
+          <div className="ServicesEditing">
+            <PlainForm<PaymentType>
+              schema={SCHEMA_PAYMENT}
+              onChange={console.log}
+              data={viewPayment}
+              disabled={saving}
+            ></PlainForm>
           </div>
         </Modal>
       )}
