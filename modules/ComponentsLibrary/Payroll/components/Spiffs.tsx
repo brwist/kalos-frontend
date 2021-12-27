@@ -1,12 +1,5 @@
 import React, { FC, useState, useEffect, useCallback } from 'react';
-import {
-  format,
-  addDays,
-  startOfWeek,
-  getMonth,
-  getYear,
-  getDaysInMonth,
-} from 'date-fns';
+import { format, addDays, startOfWeek } from 'date-fns';
 import {
   TaskClient,
   Task,
@@ -110,10 +103,14 @@ export const Spiffs: FC<Props> = ({
       req.setSearchUser(u);
     }
     if (role === 'Manager' && toggleButton == false) {
-      //req.setAdminActionId(0);
-      req.setFieldMaskList(['AdminActionId']);
+      console.log('manager, toggled false');
+
+      req.setAdminActionId(0);
+      //req.setFieldMaskList(['AdminActionId']);
     }
     if (role === 'Manager' && toggleButton == true) {
+      console.log('manager, toggled true');
+
       req.setAdminActionId(0);
       req.addNotEquals('AdminActionId');
     }
@@ -138,17 +135,18 @@ export const Spiffs: FC<Props> = ({
     }
 
     if (role === 'Payroll' && toggleButton == false) {
-      req.setAdminActionId(0);
+      console.log('payroll, toggled false');
+
       req.setPayrollProcessed(true);
+      req.setAdminActionId(0);
       req.setNotEqualsList(['AdminActionId', 'PayrollProcessed']);
-      //req.setFieldMaskList(['PayrollProcessed']);
       const action = new SpiffToolAdminAction();
       action.setStatus(1);
       req.setSearchAction(action);
     }
     if (role === 'Payroll' && toggleButton == true) {
-      req.setPayrollProcessed(false);
-      req.setNotEqualsList(['PayrollProcessed']);
+      console.log('payroll, toggled true');
+      req.setPayrollProcessed(true);
     }
     if (role === 'Auditor') {
       req.setNotEqualsList(['AdminActionId']);
@@ -158,6 +156,7 @@ export const Spiffs: FC<Props> = ({
     if (employeeId) {
       req.setExternalId(employeeId);
     }
+    console.log('toggleButton', toggleButton);
     req.setBillableType('Spiff');
     const results = await TaskClientService.BatchGet(req);
     const resultsList = results.getResultsList();
@@ -191,6 +190,7 @@ export const Spiffs: FC<Props> = ({
   );
   const handleToggleButton = useCallback(() => {
     setToggleButton(!toggleButton);
+    setInitiated(false);
     setPage(0);
   }, [toggleButton]);
 

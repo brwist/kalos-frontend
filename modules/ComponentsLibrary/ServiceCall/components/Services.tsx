@@ -7,8 +7,6 @@ import {
   ServicesRendered,
 } from '@kalos-core/kalos-rpc/ServicesRendered';
 import { Payment, PaymentClient } from '@kalos-core/kalos-rpc/Payment';
-import { Quotable } from '@kalos-core/kalos-rpc/Event';
-import AddBoxIcon from '@material-ui/icons/AddBox';
 import { ZoomIn } from '@material-ui/icons';
 import { SectionBar } from '../../SectionBar';
 import { ConfirmDelete } from '../../ConfirmDelete';
@@ -24,13 +22,9 @@ import {
   timestamp,
   formatDateTime,
   formatDateTimeDay,
-  formatDay,
-  formatDate,
-  formatTime,
-  EventClientService,
-  makeSafeFormObject,
   uploadFileToS3Bucket,
   FileClientService,
+  S3ClientService,
 } from '../../../../helpers';
 import {
   ENDPOINT,
@@ -42,7 +36,7 @@ import {
 } from '../../../../constants';
 import './services.less';
 import { User } from '@kalos-core/kalos-rpc/User';
-
+import ZoomInSharp from '@material-ui/icons/ZoomInSharp';
 const ServicesRenderedClientService = new ServicesRenderedClient(ENDPOINT);
 
 const {
@@ -84,6 +78,12 @@ type PaymentType = {
 };
 type SignatureType = {
   signature: string;
+  authorizedSignorName: string;
+  authorizedSignorRole: string;
+  signorNotes: string;
+};
+type SavedSignatureType = {
+  signatureData: string;
   authorizedSignorName: string;
   authorizedSignorRole: string;
   signorNotes: string;
@@ -135,7 +135,26 @@ const SCHEMA_SIGNATURE: Schema<SignatureType> = [
     },
   ],
 ];
-
+const SCHEMA_SIGNATURE_SAVED: Schema<SavedSignatureType> = [
+  [
+    {
+      label: 'Authorized Signor Name',
+      name: 'authorizedSignorName',
+      disabled: true,
+    },
+    {
+      label: 'Authorized Signor Role',
+      name: 'authorizedSignorRole',
+      disabled: true,
+    },
+    {
+      label: 'Signor Notes',
+      name: 'signorNotes',
+      multiline: true,
+      disabled: true,
+    },
+  ],
+];
 const SCHEMA_PAYMENT_AND_SIGNATURE: Schema<PaymentAndSignatureType> = [
   [
     {
@@ -237,10 +256,11 @@ export const Services: FC<Props> = ({
 }) => {
   const [serviceRenderedForm, setServicesRenderedForm] =
     useState<ServicesRendered>(new ServicesRendered());
+  const bucket = 'testbuckethelios';
   const [paymentForm, setPaymentForm] =
     useState<PaymentAndSignatureType>(PAYMENT_INITIAL);
   const [viewPayment, setViewPayment] = useState<PaymentType>();
-  const [viewSignature, setViewSignature] = useState<PaymentType>();
+  const [viewSignature, setViewSignature] = useState<SavedSignatureType>();
 
   const [signatureForm, setSignatureForm] =
     useState<SignatureType>(SIGNATURE_INITIAL);
@@ -342,15 +362,17 @@ export const Services: FC<Props> = ({
       const fieldMaskList = ['EventId', 'Status', 'Name', 'Datetime'];
       req.setFieldMaskList(fieldMaskList);
       const res = await ServicesRenderedClientService.Create(req);
+      console.log({ res });
       if (isSignature) {
         console.log('we are signing');
         const fileReq = new File();
         fileReq.setMimeType('image/png');
-        fileReq.setBucket('kalosdoc-prod');
+        fileReq.setBucket(bucket);
         const fileName = `signature/${res.getId()}-${serviceCallId}-${format(
           new Date(),
           'hhmmss',
         )}.png`;
+
         await uploadFileToS3Bucket(
           fileName,
           signatureForm.signature,
@@ -359,8 +381,10 @@ export const Services: FC<Props> = ({
         );
 
         fileReq.setName(fileName);
-        FileClientService.Create(fileReq);
-        console.log(fileReq);
+        const fileRes = await FileClientService.Create(fileReq);
+        res.setSignatureId(fileRes.getId());
+        res.setFieldMaskList(['SignatureId']);
+        ServicesRenderedClientService.Update(res);
       }
       if (paymentForm != PAYMENT_INITIAL) {
         console.log('create payment');
@@ -485,7 +509,6 @@ export const Services: FC<Props> = ({
   const handleSetViewPreview = useCallback(
     (sr: ServicesRendered, status: string) => async () => {
       if (status === PAYMENT) {
-        console.log('payment');
         const paymentClientService = new PaymentClient(ENDPOINT);
         const paymentReq = new Payment();
         paymentReq.setServicesRenderedId(sr.getId());
@@ -501,8 +524,19 @@ export const Services: FC<Props> = ({
       } else {
         console.log('signature');
         const fileReq = new File();
-        fileReq.setName(`%signature/${sr.getEventId()}-${sr.getId()}%`);
-        const fileRes = FileClientService.Get(fileReq);
+        fileReq.setId(sr.getSignatureId());
+        const fileRes = await FileClientService.Get(fileReq);
+        console.log('fileRes', fileRes);
+        const s3Data = await S3ClientService.getFileS3BucketUrl(
+          fileRes.getName(),
+          fileRes.getBucket(),
+        );
+        setViewSignature({
+          signatureData: s3Data,
+          signorNotes: '',
+          authorizedSignorName: sr.getName(),
+          authorizedSignorRole: sr.getStatus(),
+        });
       }
     },
     [],
@@ -540,10 +574,10 @@ export const Services: FC<Props> = ({
                     </IconButton>,
                   ]
                 : []),
-              ...([SIGNED_AS, PAYMENT].includes(props.getStatus())
+              ...([PAYMENT].includes(props.getStatus())
                 ? [
                     <IconButton
-                      key={1}
+                      key={2}
                       onClick={handleSetViewPreview(
                         props,
                         SIGNED_AS.includes(props.getStatus())
@@ -553,6 +587,17 @@ export const Services: FC<Props> = ({
                       size="small"
                     >
                       <ZoomIn />
+                    </IconButton>,
+                  ]
+                : []),
+              ...(props.getStatus().includes(SIGNED_AS)
+                ? [
+                    <IconButton
+                      key={3}
+                      onClick={handleSetViewPreview(props, SIGNED_AS)}
+                      size="small"
+                    >
+                      <ZoomInSharp />
                     </IconButton>,
                   ]
                 : []),
@@ -772,6 +817,19 @@ export const Services: FC<Props> = ({
               data={viewPayment}
               disabled={saving}
             ></PlainForm>
+          </div>
+        </Modal>
+      )}
+      {viewSignature != undefined && (
+        <Modal open onClose={() => setViewSignature(undefined)}>
+          <div className="ServicesEditing">
+            <PlainForm<SavedSignatureType>
+              schema={SCHEMA_SIGNATURE_SAVED}
+              onChange={console.log}
+              data={viewSignature}
+              disabled={saving}
+            ></PlainForm>
+            <img src={viewSignature.signatureData}></img>
           </div>
         </Modal>
       )}
