@@ -13,7 +13,11 @@ import { ENDPOINT, API_FAILED_GENERAL_ERROR_MSG } from '../../../constants';
 import { SectionBar } from '../SectionBar';
 import { InfoTable, Data } from '../InfoTable';
 import { ConfirmDelete } from '../ConfirmDelete';
-import { Form, Schema, Options } from '..//Form';
+import { Form, Schema, Options } from '../Form';
+import {
+  ServiceItem,
+  ServiceItemClient,
+} from '@kalos-core/kalos-rpc/ServiceItem';
 import {
   makeFakeRows,
   getRPCFields,
@@ -109,61 +113,6 @@ const HEAT_EXCHANGE_OPTIONS: Options = [
   { label: 'Major Corrosion', value: 4 },
 ];
 
-const SCHEMA_READING: Schema<Entry> = [
-  [{ label: 'Refrigerant', headline: true }],
-  [
-    {
-      label: 'Refrigerant Type',
-      name: 'getRefrigerantType',
-      options: REFRIGERANT_TYPES,
-    },
-    { label: 'Tstat brand', name: 'getTstatBrand' },
-    { label: 'Blower Capacitor', name: 'getBlowerCapacitor' },
-  ],
-  [
-    { label: 'Blower Amps', name: 'getBlowerAmps' },
-    { label: 'Return Temp DB', name: 'getReturnDb' },
-    { label: 'Supply Temp DB', name: 'getSupplyTemperature' },
-  ],
-  [
-    { label: 'Compressor Amps', name: 'getCompressorAmps' },
-    { label: 'Pool supply temp', name: 'getPoolSupplyTemp' },
-    { label: 'Pool return temp', name: 'getPoolReturnTemp' },
-  ],
-  [
-    { label: 'Ambient air temp', name: 'getAmbientAirTemp' },
-    { label: 'Coil Static Drop', name: 'getCoilStaticDrop' },
-    { label: 'Return WB', name: 'getReturnWb' },
-  ],
-  [
-    { label: 'Evap TD', name: 'getEvapTd' },
-    { label: 'Tesp', name: 'getTesp' },
-  ],
-  [{ label: 'Compressor', headline: true }],
-  [
-    { label: 'Condenser Fan Amps', name: 'getCondensingFanAmps' },
-    { label: 'Compressor Capacitor', name: 'getCompressorCapacitor' },
-    { label: 'Condenser Fan Capacitor', name: 'getCondenserFanCapacitor' },
-  ],
-  [
-    { label: 'Suction Pressure', name: 'getSuctionPressure' },
-    { label: 'Head Pressure', name: 'getHeadPressure' },
-    { label: 'Discharge Temperature', name: 'getDischargeTemperature' },
-  ],
-  [
-    { label: 'Subcool', name: 'getSubcool' },
-    { label: 'Superheat', name: 'getSuperheat' },
-    { label: 'Gas Pressure In', name: 'getGasPressureIn' },
-  ],
-  [
-    { label: 'Gas Pressure Out', name: 'getGasPressureOut' },
-    { label: 'LL Temp Drop', name: 'getLlTempDrop' },
-    { label: 'SL Temp Drop', name: 'getSlTempDrop' },
-  ],
-  [{ label: 'Notes', headline: true }],
-  [{ label: 'Notes', name: 'getNotes', multiline: true }],
-];
-
 const SCHEMA_MAINTENANCE: Schema<MaintenanceEntry> = [
   [{ label: '#1', headline: true }],
   [
@@ -250,13 +199,15 @@ type Entry = Reading;
 type MaintenanceEntry = MaintenanceQuestion;
 
 interface Props {
-  serviceItemId: number;
+  eventId: number;
+  propertyId: number;
   loggedUserId: number;
 }
 
-export const ServiceItemReadings: FC<Props> = ({
-  serviceItemId,
+export const ServiceCallReadings: FC<Props> = ({
+  eventId,
   loggedUserId,
+  propertyId,
 }) => {
   const [entries, setEntries] = useState<Entry[]>([]);
   const [users, setUsers] = useState<User[]>([]);
@@ -264,6 +215,9 @@ export const ServiceItemReadings: FC<Props> = ({
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<boolean>(false);
   const [saving, setSaving] = useState<boolean>(false);
+  const [existingServiceItems, setExistingServiceItems] = useState<
+    ServiceItem[]
+  >([]);
   const [editedEntry, setEditedEntry] = useState<Entry>();
   const [deletingEntry, setDeletingEntry] = useState<Entry>();
   const [editedMaintenanceEntry, setEditedMaintenanceEntry] =
@@ -298,11 +252,83 @@ export const ServiceItemReadings: FC<Props> = ({
       [key: number]: MaintenanceEntry;
     };
   };
-
+  const SCHEMA_READING: Schema<Entry> = [
+    [
+      {
+        label: 'Selected Service Item',
+        name: 'getServiceItemId',
+        required: true,
+        options: existingServiceItems.map(item => {
+          return { label: item.getType(), value: item.getId() };
+        }),
+      },
+    ],
+    [{ label: 'Refrigerant', headline: true }],
+    [
+      {
+        label: 'Refrigerant Type',
+        name: 'getRefrigerantType',
+        options: REFRIGERANT_TYPES,
+      },
+      { label: 'Tstat brand', name: 'getTstatBrand' },
+      { label: 'Blower Capacitor', name: 'getBlowerCapacitor' },
+    ],
+    [
+      { label: 'Blower Amps', name: 'getBlowerAmps' },
+      { label: 'Return Temp DB', name: 'getReturnDb' },
+      { label: 'Supply Temp DB', name: 'getSupplyTemperature' },
+    ],
+    [
+      { label: 'Compressor Amps', name: 'getCompressorAmps' },
+      { label: 'Pool supply temp', name: 'getPoolSupplyTemp' },
+      { label: 'Pool return temp', name: 'getPoolReturnTemp' },
+    ],
+    [
+      { label: 'Ambient air temp', name: 'getAmbientAirTemp' },
+      { label: 'Coil Static Drop', name: 'getCoilStaticDrop' },
+      { label: 'Return WB', name: 'getReturnWb' },
+    ],
+    [
+      { label: 'Evap TD', name: 'getEvapTd' },
+      { label: 'Tesp', name: 'getTesp' },
+    ],
+    [{ label: 'Compressor', headline: true }],
+    [
+      { label: 'Condenser Fan Amps', name: 'getCondensingFanAmps' },
+      { label: 'Compressor Capacitor', name: 'getCompressorCapacitor' },
+      { label: 'Condenser Fan Capacitor', name: 'getCondenserFanCapacitor' },
+    ],
+    [
+      { label: 'Suction Pressure', name: 'getSuctionPressure' },
+      { label: 'Head Pressure', name: 'getHeadPressure' },
+      { label: 'Discharge Temperature', name: 'getDischargeTemperature' },
+    ],
+    [
+      { label: 'Subcool', name: 'getSubcool' },
+      { label: 'Superheat', name: 'getSuperheat' },
+      { label: 'Gas Pressure In', name: 'getGasPressureIn' },
+    ],
+    [
+      { label: 'Gas Pressure Out', name: 'getGasPressureOut' },
+      { label: 'LL Temp Drop', name: 'getLlTempDrop' },
+      { label: 'SL Temp Drop', name: 'getSlTempDrop' },
+    ],
+    [{ label: 'Notes', headline: true }],
+    [{ label: 'Notes', name: 'getNotes', multiline: true }],
+  ];
   const load = useCallback(async () => {
     setLoading(true);
+    const serviceItemReq = new ServiceItem();
+    serviceItemReq.setIsActive(1);
+    serviceItemReq.setPropertyId(propertyId);
+    const ServiceItemClientService = new ServiceItemClient(ENDPOINT);
+    const serviceItems = await ServiceItemClientService.BatchGet(
+      serviceItemReq,
+    );
+    setExistingServiceItems(serviceItems.getResultsList());
     const entry = new Reading();
-    entry.setServiceItemId(serviceItemId);
+    entry.setEventId(eventId);
+    //entry.setServiceItemId(serviceItemId);
     try {
       const response = await ReadingClientService.BatchGet(entry);
       const resultsList = response.getResultsList();
@@ -323,7 +349,7 @@ export const ServiceItemReadings: FC<Props> = ({
       setError(true);
       setLoading(false);
     }
-  }, [serviceItemId]);
+  }, [eventId, propertyId]);
 
   useEffect(() => {
     if (!loaded) {
@@ -362,7 +388,7 @@ export const ServiceItemReadings: FC<Props> = ({
         if (!isNew) {
           entry.setId(editedEntry.getId());
         }
-        entry.setServiceItemId(serviceItemId);
+        entry.setEventId(eventId);
         entry.setDate(timestamp(true));
         entry.setUserId(loggedUserId);
         try {
@@ -376,7 +402,7 @@ export const ServiceItemReadings: FC<Props> = ({
         }
       }
     },
-    [editedEntry, serviceItemId, loggedUserId, setEditing, load],
+    [editedEntry, eventId, loggedUserId, setEditing, load],
   );
 
   const handleSaveMaintenance = useCallback(
@@ -434,8 +460,14 @@ export const ServiceItemReadings: FC<Props> = ({
     ? makeFakeRows()
     : entries.map(entry => {
         const newMaintenanceQuestion = new MaintenanceQuestion();
+        const serviceItem = existingServiceItems.find(
+          value => value.getId() === entry.getServiceItemId(),
+        );
         newMaintenanceQuestion.setReadingId(entry.getId());
         return [
+          {
+            value: [serviceItem?.getType()],
+          },
           {
             value: [
               formatDate(entry.getDate()),
@@ -518,7 +550,12 @@ export const ServiceItemReadings: FC<Props> = ({
             ]}
             fixedActions
           />
-          <InfoTable data={data} loading={loading} hoverable />
+          <InfoTable
+            columns={[{ name: 'Service Item' }, { name: 'Reading Info' }]}
+            data={data}
+            loading={loading}
+            hoverable
+          />
         </>
       )}
       {deletingEntry && (

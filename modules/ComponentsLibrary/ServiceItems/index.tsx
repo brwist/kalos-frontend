@@ -537,13 +537,14 @@ export const ServiceItems: FC<Props> = props => {
   );
 
   const handleDeleteRepair = useCallback(
-    ({ id }: Repair) => () => {
-      const newRepairs = repairs.filter(item => item.id !== id);
-      setRepairs(newRepairs);
-      if (onRepairsChange) {
-        onRepairsChange(newRepairs);
-      }
-    },
+    ({ id }: Repair) =>
+      () => {
+        const newRepairs = repairs.filter(item => item.id !== id);
+        setRepairs(newRepairs);
+        if (onRepairsChange) {
+          onRepairsChange(newRepairs);
+        }
+      },
     [repairs, onRepairsChange],
   );
 

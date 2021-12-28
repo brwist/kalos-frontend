@@ -69,28 +69,7 @@ export const Spiffs: FC<Props> = ({
   const [spiffTypes, setSpiffTypes] = useState<SpiffType[]>([]);
 
   const load = useCallback(async () => {
-    setLoading(true); /*
-    const filter: GetPendingSpiffConfig = {
-      page,
-      technicianUserID: employeeId,
-      role,
-      departmentId,
-      //processed: toggleButton === true ? true : undefined,
-    };
-
-    Object.assign(filter, {
-      startDate: '0001-01-01',
-      endDate: format(endDay, 'yyyy-MM-dd'),
-    });
-    if (week !== OPTION_ALL) {
-      Object.assign(filter, {
-        startDate: week,
-        endDate: format(addDays(new Date(week), 7), 'yyyy-MM-dd'),
-      });
-    }
-   const results = await TaskClientService.loadPendingSpiffs(filter);
-    console.log(filter);*/
-
+    setLoading(true);
     const req = new Task();
     req.setPageNumber(page);
     req.setIsActive(true);
@@ -103,10 +82,8 @@ export const Spiffs: FC<Props> = ({
       req.setSearchUser(u);
     }
     if (role === 'Manager' && toggleButton == false) {
-      console.log('manager, toggled false');
-
-      req.setAdminActionId(0);
-      //req.setFieldMaskList(['AdminActionId']);
+      //req.setAdminActionId(0);
+      req.setFieldMaskList(['AdminActionId']);
     }
     if (role === 'Manager' && toggleButton == true) {
       console.log('manager, toggled true');
