@@ -4,7 +4,7 @@ import { ServiceItems, Repair } from '../../ServiceItems';
 import { Property } from '@kalos-core/kalos-rpc/Property';
 import { User } from '@kalos-core/kalos-rpc/User';
 import { Event } from '@kalos-core/kalos-rpc/Event';
-
+import { ServiceCallReadings } from '../../ServiceCallReadings';
 import { ProposalPrint } from './ProposalPrint';
 import './equipment.less';
 import { ServiceItem } from '@kalos-core/kalos-rpc/ServiceItem';
@@ -14,7 +14,7 @@ interface Props {
   loggedUserId: number;
   propertyId: number;
   property: Property;
-  serviceItem: Event;
+  event: Event;
   customer: User;
 }
 
@@ -25,14 +25,15 @@ type Form = {
 };
 
 export const Equipment: FC<Props> = ({
-  serviceItem,
+  event,
   customer,
   property,
+  loggedUserId,
   ...props
 }) => {
-  const notes = serviceItem.getNotes();
-  const logJobNumber = serviceItem.getLogJobNumber();
-  const id = serviceItem.getId();
+  const notes = event.getNotes();
+  const logJobNumber = event.getLogJobNumber();
+  const id = event.getId();
   const localStorageKey = `SERVICE_CALL_EQUIPMENT_${id}`;
   const localStorageSelectedKey = `SERVICE_CALL_EQUIPMENT_SELECTED_${id}`;
   let repairsInitial = [];
@@ -54,41 +55,12 @@ export const Equipment: FC<Props> = ({
     );
   }
   const customerName = `${customer?.getFirstname()} ${customer?.getLastname()}`;
-  const [selected, setSelected] = useState<ServiceItem[]>(selectedInitial);
-  const [repairs, setRepairs] = useState<Repair[]>(repairsInitial);
-  const [data, setData] = useState<Form>({
-    displayName: customerName,
-    withJobNotes: 0,
-    jobNotes: notes,
-  });
-  const handleSetRepair = useCallback(
-    (repairs: Repair[]) => {
-      setRepairs(repairs);
-      localStorage.setItem(localStorageKey, JSON.stringify(repairs));
-    },
-    [setRepairs, localStorageKey],
-  );
-  const handleSetSelected = useCallback(
-    (selected: ServiceItem[]) => {
-      setSelected(selected);
-      const id = serviceItem.getId();
-      const localStorageKey = `SERVICE_CALL_EQUIPMENT_SELECTED_${id}`;
-      localStorage.setItem(localStorageKey, JSON.stringify(selected));
-    },
-    [setSelected, serviceItem],
-  );
 
   return (
-    <ServiceItems
-      title="Property Service Items"
-      selectable
-      repair
-      disableRepair={!id}
-      repairs={repairs}
-      onSelect={debounce(handleSetSelected, 1000)}
-      selected={selected}
-      onRepairsChange={debounce(handleSetRepair, 1000)}
-      {...props}
-    />
+    <ServiceCallReadings
+      propertyId={props.propertyId}
+      eventId={event.getId()}
+      loggedUserId={loggedUserId}
+    ></ServiceCallReadings>
   );
 };

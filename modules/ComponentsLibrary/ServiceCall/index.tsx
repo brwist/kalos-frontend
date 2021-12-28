@@ -913,7 +913,7 @@ export const ServiceCall: FC<Props> = props => {
                 ) : (
                   <Equipment
                     {...props}
-                    serviceItem={state.entry}
+                    event={state.entry}
                     customer={state.customer}
                     property={state.property}
                   />
