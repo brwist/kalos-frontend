@@ -114,6 +114,7 @@ export const UploadPhotoTransactionCreditCard: FC<Props> = ({
       newTransaction.setAssignedEmployeeId(loggedUserId);
       newTransaction.setAmount(data.cost);
       newTransaction.setDescription(data.description);
+      newTransaction.setNotes(data.description);
       newTransaction.setVendor(data.vendor);
       newTransaction.setCostCenterId(data.costCenter);
       newTransaction.setTimestamp(timestamp());
