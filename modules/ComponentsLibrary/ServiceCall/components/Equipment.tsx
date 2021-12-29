@@ -57,10 +57,17 @@ export const Equipment: FC<Props> = ({
   const customerName = `${customer?.getFirstname()} ${customer?.getLastname()}`;
 
   return (
-    <ServiceCallReadings
-      propertyId={props.propertyId}
-      eventId={event.getId()}
-      loggedUserId={loggedUserId}
-    ></ServiceCallReadings>
+    <div>
+      <ServiceItems
+        userID={props.userID}
+        loggedUserId={loggedUserId}
+        propertyId={props.propertyId}
+      ></ServiceItems>
+      <ServiceCallReadings
+        propertyId={props.propertyId}
+        eventId={event.getId()}
+        loggedUserId={loggedUserId}
+      ></ServiceCallReadings>
+    </div>
   );
 };
