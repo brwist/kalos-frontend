@@ -3,10 +3,7 @@ import Alert from '@material-ui/lab/Alert';
 
 import { Form, Schema } from '../Form';
 import { Transaction } from '@kalos-core/kalos-rpc/Transaction';
-import {
-  getFileExt,
-  uploadPhotoToExistingTransaction,
-} from '../../../helpers';
+import { getFileExt, uploadPhotoToExistingTransaction } from '../../../helpers';
 import './styles.less';
 import { WaiverTypes } from '../../../constants';
 import { RoleType } from '../Payroll';
@@ -32,7 +29,7 @@ export const UploadPhotoToExistingTransaction: FC<Props> = ({
   loggedUserId,
   transactionPassed,
   onUpload,
-  title = 'Add Photo To Transaction',
+  title = 'Submit File To Transaction',
   fullWidth = true,
 }) => {
   const [fileData, setFileData] = useState<string>('');
