@@ -30,7 +30,7 @@ export default () => (
       type="regular"
     />
     <ExampleTitle>
-      Autofill name to Justin Farrell and message to "Hi!"
+      Autofill name to Justin Farrell and message to Hi!
     </ExampleTitle>
     <SlackMessageButton
       label="Message on slack!"

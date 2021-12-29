@@ -340,6 +340,7 @@ export const ServiceCallReadings: FC<Props> = ({
       const maintenanceQuestions = await loadMaintenanceQuestions(
         resultsList.map(id => id.getId()),
       );
+      console.log(maintenanceQuestions);
       setEntries(resultsList.sort(sort));
       setMaintenanceQuestions(maintenanceQuestions);
       setUsers(userArray);
@@ -421,7 +422,7 @@ export const ServiceCallReadings: FC<Props> = ({
             entry,
           );
           setSaving(false);
-          setEditingMaintenance()();
+          setEditingMaintenance();
           await load();
         } catch (e) {
           setError(true);
@@ -488,8 +489,7 @@ export const ServiceCallReadings: FC<Props> = ({
                 style={{ marginLeft: 4 }}
                 size="small"
                 onClick={setEditingMaintenance(
-                  maintenanceQuestions[entry.getId()] ||
-                    newMaintenanceQuestion.toObject(),
+                  maintenanceQuestions[entry.getId()] || newMaintenanceQuestion,
                 )}
               >
                 <BuildIcon />
@@ -516,10 +516,10 @@ export const ServiceCallReadings: FC<Props> = ({
       });
   return (
     <>
-      {editedMaintenanceEntry !== undefined ? (
+      {editedMaintenanceEntry ? (
         <Form<MaintenanceEntry>
           title={`${
-            editedMaintenanceEntry.getId() ? 'Edit' : 'Add'
+            editedMaintenanceEntry.getId() != 0 ? 'Edit' : 'Add'
           } Maintenance`}
           schema={SCHEMA_MAINTENANCE}
           data={editedMaintenanceEntry}
