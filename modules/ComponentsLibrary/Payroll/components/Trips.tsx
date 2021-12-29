@@ -60,6 +60,7 @@ export const Trips: FC<Props> = ({
     const startDay = startOfWeek(subDays(today, 7), { weekStartsOn: 6 });
     const endDay = addDays(startDay, 7);
     const tripReq = new Trip();
+    tripReq.setPage(page);
     tripReq.setGroupBy('user_id');
     tripReq.setIsActive(true);
     if (departmentId) {
@@ -100,6 +101,7 @@ export const Trips: FC<Props> = ({
   }, [
     departmentId,
     employeeId,
+    page,
     payrollFilter,
     toggleButton,
     managerFilter,
