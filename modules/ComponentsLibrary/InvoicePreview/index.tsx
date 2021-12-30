@@ -13,6 +13,7 @@ import { DevlogClientService, EmailClientService } from '../../../helpers';
 import { format } from 'date-fns';
 import Typography from '@material-ui/core/Typography';
 import { Document } from '@kalos-core/kalos-rpc/Document';
+import ReactHtmlParser from 'react-html-parser';
 
 // add any prop types here
 interface props {
@@ -29,6 +30,7 @@ export const InvoicePreview: FC<props> = ({
   const [state, dispatch] = useReducer(reducer, {
     isLoaded: false,
     error: undefined,
+    invoiceHTML: undefined,
   });
 
   const cleanup = useCallback(() => {
@@ -85,6 +87,7 @@ export const InvoicePreview: FC<props> = ({
       req.setInvoiceId(invoiceId);
       const res = await EmailClientService.GetInvoiceBody(req);
       console.log('Got res: ', res);
+      dispatch({ type: ACTIONS.SET_INVOICE_HTML, data: res.getValue() });
       return res;
     } catch (err) {
       console.error(`An error occurred while getting an invoice body:`);
@@ -118,6 +121,9 @@ export const InvoicePreview: FC<props> = ({
             {state.error !== undefined ? state.error : ''}
           </h4>
         </>
+      )}
+      {!state.error && state.invoiceHTML && (
+        <> {ReactHtmlParser(state.invoiceHTML)} </>
       )}
     </>
   );
