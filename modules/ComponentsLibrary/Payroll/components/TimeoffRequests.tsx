@@ -61,17 +61,12 @@ export const TimeoffRequests: FC<Props> = ({
   const [count, setCount] = useState<number>(0);
   const [pendingView, setPendingView] = useState<TimeoffRequest>();
   const [pendingPayroll, setPendingPayroll] = useState<TimeoffRequest>();
-  const [
-    pendingPayrollReject,
-    setPendingPayrollReject,
-  ] = useState<TimeoffRequest>();
+  const [pendingPayrollReject, setPendingPayrollReject] =
+    useState<TimeoffRequest>();
   const [toggleButton, setToggleButton] = useState<boolean>(false);
   const [pendingApproval, setPendingApproval] = useState<TimeoffRequest>();
   const load = useCallback(async () => {
     setLoading(true);
-    //Lets grab the Timeoff requests,
-    //for managers, we should show all fo their departments
-    //For Payroll/Auditor, just PTO thats approved
     const filter: GetTimesheetConfig = {
       page,
       departmentID: departmentId,
@@ -84,6 +79,8 @@ export const TimeoffRequests: FC<Props> = ({
       payrollProcessed: role === 'Payroll' ? toggleButton : undefined,
       technicianUserID: employeeId,
       requestType: role === 'Payroll' ? 9 : 0,
+      orderBy: 'time_started',
+      orderDir: 'DESC',
     };
     if (week !== OPTION_ALL) {
       Object.assign(filter, {
