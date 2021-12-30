@@ -108,13 +108,15 @@ export const InvoicePreview: FC<props> = ({
 
   return (
     <>
-      <Typography variant="h1">Invoice Preview</Typography>
+      <Typography variant="h5">Invoice Preview</Typography>
       {state.error && (
         <>
-          <Typography variant="h2">
+          <Typography variant="h6">
             An error occurred while getting the invoice body:{' '}
           </Typography>
-          <Typography variant="h4">{state.error}</Typography>
+          <h4 style={{ color: 'red' }}>
+            {state.error !== undefined ? state.error : ''}
+          </h4>
         </>
       )}
     </>
