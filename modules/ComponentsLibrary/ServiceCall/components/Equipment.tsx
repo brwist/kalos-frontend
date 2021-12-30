@@ -31,31 +31,6 @@ export const Equipment: FC<Props> = ({
   loggedUserId,
   ...props
 }) => {
-  const notes = event.getNotes();
-  const logJobNumber = event.getLogJobNumber();
-  const id = event.getId();
-  const localStorageKey = `SERVICE_CALL_EQUIPMENT_${id}`;
-  const localStorageSelectedKey = `SERVICE_CALL_EQUIPMENT_SELECTED_${id}`;
-  let repairsInitial = [];
-  let selectedInitial = [];
-  try {
-    repairsInitial = JSON.parse(localStorage.getItem(localStorageKey) || '[]');
-  } catch (e) {
-    console.error(
-      `An error occurred while attempting to get the local storage key: ${e}`,
-    );
-  }
-  try {
-    selectedInitial = JSON.parse(
-      localStorage.getItem(localStorageSelectedKey) || '[]',
-    );
-  } catch (e) {
-    console.error(
-      `An error occurred while attempting to get the local storage selected key: ${e}`,
-    );
-  }
-  const customerName = `${customer?.getFirstname()} ${customer?.getLastname()}`;
-
   return (
     <div>
       <ServiceItems

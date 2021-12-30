@@ -1,4 +1,4 @@
-import React, { FC, useState, useEffect, useCallback } from 'react';
+import React, { FC, useState, useEffect, useCallback, useReducer } from 'react';
 import IconButton from '@material-ui/core/IconButton';
 import EditIcon from '@material-ui/icons/Edit';
 import DeleteIcon from '@material-ui/icons/Delete';
@@ -6,6 +6,7 @@ import RevokeIcon from '@material-ui/icons/History';
 import RejectIcon from '@material-ui/icons/Block';
 import ApproveIcon from '@material-ui/icons/CheckCircleOutline';
 import { SectionBar } from '../../SectionBar';
+import { reducer, ACTIONS } from './spiffReducer';
 import { InfoTable, Columns, Data } from '../../InfoTable';
 import {
   SpiffToolLogEdit,
@@ -39,70 +40,74 @@ export const Spiffs: FC<Props> = ({
   role,
   loggedUserName,
 }) => {
-  const [loading, setLoading] = useState<boolean>(false);
-  const [loaded, setLoaded] = useState<boolean>(false);
-  const [page, setPage] = useState<number>(0);
-  const [count, setCount] = useState<number>(0);
-  const [entries, setEntries] = useState<Task[]>([]);
-  const [deleting, setDeleting] = useState<Task>();
-  const [spiffTypes, setSpiffTypes] = useState<{
-    [key: number]: SpiffType;
-  }>({});
-  const [edited, setEdited] = useState<Task>();
-  const [status, setStatus] = useState<number>();
+  const [state, dispatch] = useReducer(reducer, {
+    loading: true,
+    loaded: false,
+    entries: [],
+    page: 0,
+    count: 0,
+    spiffTypes: {},
+    edited: undefined,
+    deleting: undefined,
+    status: 0,
+  });
+
   const load = useCallback(async () => {
-    setLoading(true);
+    dispatch({ type: ACTIONS.SET_LOADING, data: true });
+
     const spiffTypes = await TaskClientService.loadSpiffTypes();
-    setSpiffTypes(
-      spiffTypes.reduce(
+    dispatch({
+      type: ACTIONS.SET_SPIFF_TYPES,
+      data: spiffTypes.reduce(
         (aggr, item) => ({ ...aggr, [item.getId()]: item }),
         {},
       ),
-    );
+    });
     const { resultsList, count } = await TaskClientService.loadSpiffToolLogs({
-      page,
+      page: state.page,
       type: 'Spiff',
       jobNumber: serviceItem.getLogJobNumber(),
     });
-    setEntries(resultsList);
-    setCount(count);
-    if (edited) {
-      setEdited(resultsList.find(task => task.getId() === edited.getId()));
+    dispatch({ type: ACTIONS.SET_ENTRIES, data: resultsList });
+    dispatch({ type: ACTIONS.SET_COUNT, data: count });
+    if (state.edited != undefined) {
+      dispatch({
+        type: ACTIONS.SET_EDITED,
+        data: resultsList.find(task => task.getId() === state.edited!.getId()),
+      });
     }
-    setLoading(false);
-  }, [page, serviceItem, edited]);
+    dispatch({ type: ACTIONS.SET_LOADING, data: false });
+  }, [state.page, serviceItem, state.edited]);
   useEffect(() => {
-    if (!loaded) {
-      setLoaded(true);
+    if (!state.loaded) {
+      dispatch({ type: ACTIONS.SET_LOADED, data: true });
       load();
     }
-  }, [loaded, setLoaded, load]);
-  const handlePageChange = useCallback(
-    (page: number) => {
-      setPage(page);
-      setLoaded(false);
-    },
-    [setPage],
-  );
+  }, [state.loaded, load]);
+  const handlePageChange = useCallback((page: number) => {
+    dispatch({ type: ACTIONS.SET_PAGE, data: page });
+    dispatch({ type: ACTIONS.SET_LOADED, data: false });
+  }, []);
   const handleSetEdited = useCallback(
     (edited?: Task, status?: number) => () => {
-      setEdited(edited);
-      setStatus(status);
+      dispatch({ type: ACTIONS.SET_EDITED, data: edited });
+      dispatch({ type: ACTIONS.SET_STATUS, data: status });
     },
-    [setEdited, setStatus],
+    [],
   );
   const handleToggleDeleting = useCallback(
-    (entry?: Task) => () => setDeleting(entry),
-    [setDeleting],
+    (entry?: Task) => () =>
+      dispatch({ type: ACTIONS.SET_DELETING, data: entry }),
+    [],
   );
   const handleDelete = useCallback(async () => {
-    if (deleting) {
-      setDeleting(undefined);
-      setLoading(true);
-      await TaskClientService.deleteSpiffTool(deleting.getId());
-      setLoaded(false);
+    if (state.deleting) {
+      dispatch({ type: ACTIONS.SET_LOADING, data: true });
+      await TaskClientService.deleteSpiffTool(state.deleting.getId());
+      dispatch({ type: ACTIONS.SET_LOADED, data: false });
+      dispatch({ type: ACTIONS.SET_DELETING, data: undefined });
     }
-  }, [deleting, setLoading, setLoaded, setDeleting]);
+  }, [state.deleting]);
   const COLUMNS: Columns = [
     { name: 'Claim Date' },
     { name: 'Spiff ID' },
@@ -113,9 +118,9 @@ export const Spiffs: FC<Props> = ({
     { name: 'Amount' },
     { name: '' },
   ];
-  const data: Data = loading
+  const data: Data = state.loading
     ? makeFakeRows(8, 5)
-    : entries.map(entry => {
+    : state.entries.map(entry => {
         const lastStatus = entry.getActionsList()[0]
           ? entry.getActionsList()[0].getStatus()
           : 0;
@@ -123,7 +128,7 @@ export const Spiffs: FC<Props> = ({
           { value: formatDate(entry.getDatePerformed()) },
           { value: entry.getReferenceNumber() },
           { value: entry.getBriefDescription() },
-          { value: spiffTypes[entry.getSpiffTypeId()].getExt() },
+          { value: state.spiffTypes[entry.getSpiffTypeId()].getExt() },
           { value: entry.getOwnerName() },
           { value: <SpiffActionsList actionsList={entry.getActionsList()} /> },
           { value: usd(entry.getSpiffAmount()) },
@@ -194,45 +199,49 @@ export const Spiffs: FC<Props> = ({
       <SectionBar
         title="Spiffs"
         pagination={{
-          count,
-          page,
+          count: state.count,
+          page: state.page,
           rowsPerPage: ROWS_PER_PAGE,
           onPageChange: handlePageChange,
         }}
       />
-      <InfoTable columns={COLUMNS} data={data} loading={loading} />
-      {edited && (
+      <InfoTable columns={COLUMNS} data={data} loading={state.loading} />
+      {state.edited && (
         <Modal open onClose={handleSetEdited()} fullScreen>
           <SpiffToolLogEdit
             role={role}
             onClose={handleSetEdited()}
-            data={edited}
+            data={state.edited}
             onSave={() => {
               handleSetEdited()();
-              setLoaded(false);
+              dispatch({ type: ACTIONS.SET_LOADED, data: false });
             }}
-            onStatusChange={() => setLoaded(false)}
+            onStatusChange={() =>
+              dispatch({ type: ACTIONS.SET_LOADED, data: false })
+            }
             type="Spiff"
             loggedUserId={loggedUserId}
-            loading={loading}
+            loading={state.loading}
             cancelLabel="Close"
             statusEditing={
-              status ? getStatusFormInit(status, loggedUserName) : undefined
+              state.status
+                ? getStatusFormInit(state.status, loggedUserName)
+                : undefined
             }
           />
         </Modal>
       )}
-      {deleting && (
+      {state.deleting && (
         <ConfirmDelete
           open
           onClose={handleToggleDeleting()}
           kind="Spiff"
           name={[
-            `claimed by ${deleting.getOwnerName()}`,
-            ...(deleting.getDatePerformed()
-              ? [`at ${formatDate(deleting.getDatePerformed())}`]
+            `claimed by ${state.deleting.getOwnerName()}`,
+            ...(state.deleting.getDatePerformed()
+              ? [`at ${formatDate(state.deleting.getDatePerformed())}`]
               : []),
-            `for amount ${usd(deleting.getSpiffAmount())}`,
+            `for amount ${usd(state.deleting.getSpiffAmount())}`,
           ].join(' ')}
           onConfirm={handleDelete}
         />

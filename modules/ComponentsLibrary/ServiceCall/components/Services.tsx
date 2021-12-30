@@ -1,4 +1,4 @@
-import React, { FC, useState, useCallback } from 'react';
+import React, { FC, useState, useCallback, useReducer } from 'react';
 import IconButton from '@material-ui/core/IconButton';
 import DeleteIcon from '@material-ui/icons/Delete';
 import EditIcon from '@material-ui/icons/Edit';
@@ -8,6 +8,7 @@ import {
 } from '@kalos-core/kalos-rpc/ServicesRendered';
 import { Payment, PaymentClient } from '@kalos-core/kalos-rpc/Payment';
 import { ZoomIn } from '@material-ui/icons';
+import { reducer } from './servicesReducer';
 import { SectionBar } from '../../SectionBar';
 import { ConfirmDelete } from '../../ConfirmDelete';
 import { InfoTable, Data, Columns } from '../../InfoTable';
@@ -51,7 +52,7 @@ const {
   SIGNED_AS,
 } = SERVICE_STATUSES;
 
-type ServicesRenderedPaymentType = {
+export type ServicesRenderedPaymentType = {
   servicesRenderedId: number;
   servicesRendered: string;
   technicianNotes: string;
@@ -61,7 +62,7 @@ type ServicesRenderedPaymentType = {
   dateProcessed: string;
   paymentId: number;
 };
-type PaymentAndSignatureType = {
+export type PaymentAndSignatureType = {
   signature: string;
   authorizedSignorName: string;
   authorizedSignorRole: string;
@@ -70,19 +71,19 @@ type PaymentAndSignatureType = {
   date: string;
   paymentType: string;
 };
-type PaymentType = {
+export type PaymentType = {
   paymentCollected: number;
   amountCollected: number;
   date: string;
   paymentType: string;
 };
-type SignatureType = {
+export type SignatureType = {
   signature: string;
   authorizedSignorName: string;
   authorizedSignorRole: string;
   signorNotes: string;
 };
-type SavedSignatureType = {
+export type SavedSignatureType = {
   signatureData: string;
   authorizedSignorName: string;
   authorizedSignorRole: string;
@@ -254,8 +255,16 @@ export const Services: FC<Props> = ({
   loading,
   onAddMaterials,
 }) => {
-  const [serviceRenderedForm, setServicesRenderedForm] =
-    useState<ServicesRendered>(new ServicesRendered());
+  const [state, dispatch] = useReducer(reducer, {
+    paymentForm: PAYMENT_INITIAL,
+    viewPayment: undefined,
+    viewSignature: undefined,
+    signatureForm: SIGNATURE_INITIAL,
+    deleting: undefined,
+    saving: false,
+    editing: undefined,
+    changingStatus: false,
+  });
   const bucket = 'testbuckethelios';
   const [paymentForm, setPaymentForm] =
     useState<PaymentAndSignatureType>(PAYMENT_INITIAL);
@@ -270,9 +279,7 @@ export const Services: FC<Props> = ({
     SERVICES_RENDERED_PAYMENT_INITIAL,
   );
   const [saving, setSaving] = useState<boolean>(false);
-  const [pendingSelectedQuote, setPendingSelectedQuote] = useState<
-    SelectedQuote[]
-  >([]);
+
   const [changingStatus, setChangingStatus] = useState<boolean>(false);
   const SCHEMA_ON_CALL: Schema<ServicesRenderedPaymentType> = [
     [
@@ -406,7 +413,6 @@ export const Services: FC<Props> = ({
       //create png image, upload Name of signature is
       //"signature/#form.event_id#-#local.services_rendered_id#-#timeFormat(now(),'hhmmss')#.png"
       //After successful creation,Signature ID=file ID in table
-      setServicesRenderedForm(new ServicesRendered());
 
       setPaymentForm(PAYMENT_INITIAL);
       setSignatureForm(SIGNATURE_INITIAL);
@@ -417,7 +423,6 @@ export const Services: FC<Props> = ({
       loggedUser,
       loadServicesRendered,
       setSignatureForm,
-      setServicesRenderedForm,
       setPaymentForm,
       servicesRendered,
       signatureForm,
@@ -802,7 +807,7 @@ export const Services: FC<Props> = ({
             <QuoteSelector
               serviceCallId={serviceCallId}
               servicesRenderedId={editing.servicesRenderedId}
-              onAddQuotes={setPendingSelectedQuote}
+              onAddQuotes={console.log}
               onAdd={console.log}
             ></QuoteSelector>
           </div>

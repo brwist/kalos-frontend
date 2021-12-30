@@ -87,7 +87,7 @@ export const PerDiems: FC<Props> = ({
       week === OPTION_ALL ? undefined : week,
       toggleButton,
       'date_submitted',
-      'ASC',
+      'DESC',
     );
     const results = perDiems.getResultsList();
     for (let i = 0; i < results.length; i++) {
