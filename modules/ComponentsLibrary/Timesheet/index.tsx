@@ -635,7 +635,6 @@ export const Timesheet: FC<Props> = props => {
   const debug_HandleGetInvoiceData = useCallback(async () => {
     try {
       let req = new Document();
-      req.setFilename('8_21.pdf');
       req.setPropertyId(4404);
       req.setInvoiceId(15);
       const res = await EmailClientService.GetInvoiceBody(req);
