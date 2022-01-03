@@ -9,12 +9,12 @@ import {
 import { ServicesRendered } from '@kalos-core/kalos-rpc/ServicesRendered';
 
 export type State = {
-  paymentForm: PaymentAndSignatureType | undefined;
+  paymentForm: PaymentAndSignatureType;
   viewPayment: PaymentType | undefined;
   viewSignature: SavedSignatureType | undefined;
-  signatureForm: SignatureType | undefined;
+  signatureForm: SignatureType;
   deleting: ServicesRendered | undefined;
-  editing: ServicesRenderedPaymentType | undefined;
+  editing: ServicesRenderedPaymentType;
   saving: boolean;
   changingStatus: boolean;
 };
@@ -33,14 +33,14 @@ export enum ACTIONS {
 export type Action =
   | {
       type: ACTIONS.SET_PAYMENT_FORM;
-      data: PaymentAndSignatureType | undefined;
+      data: PaymentAndSignatureType;
     }
   | { type: ACTIONS.SET_VIEW_PAYMENT; data: PaymentType | undefined }
   | { type: ACTIONS.SET_VIEW_SIGNATURE; data: SavedSignatureType | undefined }
-  | { type: ACTIONS.SET_SIGNATURE_FORM; data: SignatureType | undefined }
+  | { type: ACTIONS.SET_SIGNATURE_FORM; data: SignatureType }
   | { type: ACTIONS.SET_DELETING; data: ServicesRendered | undefined }
   | { type: ACTIONS.SET_CHANGING_STATUS; data: boolean }
-  | { type: ACTIONS.SET_EDITING; data: ServicesRenderedPaymentType | undefined }
+  | { type: ACTIONS.SET_EDITING; data: ServicesRenderedPaymentType }
   | { type: ACTIONS.SET_SAVING; data: boolean };
 
 export const reducer = (state: State, action: Action) => {

@@ -8,7 +8,7 @@ import {
 } from '@kalos-core/kalos-rpc/ServicesRendered';
 import { Payment, PaymentClient } from '@kalos-core/kalos-rpc/Payment';
 import { ZoomIn } from '@material-ui/icons';
-import { reducer } from './servicesReducer';
+import { reducer, ACTIONS } from './servicesReducer';
 import { SectionBar } from '../../SectionBar';
 import { ConfirmDelete } from '../../ConfirmDelete';
 import { InfoTable, Data, Columns } from '../../InfoTable';
@@ -262,25 +262,11 @@ export const Services: FC<Props> = ({
     signatureForm: SIGNATURE_INITIAL,
     deleting: undefined,
     saving: false,
-    editing: undefined,
+    editing: SERVICES_RENDERED_PAYMENT_INITIAL,
     changingStatus: false,
   });
   const bucket = 'testbuckethelios';
-  const [paymentForm, setPaymentForm] =
-    useState<PaymentAndSignatureType>(PAYMENT_INITIAL);
-  const [viewPayment, setViewPayment] = useState<PaymentType>();
-  const [viewSignature, setViewSignature] = useState<SavedSignatureType>();
 
-  const [signatureForm, setSignatureForm] =
-    useState<SignatureType>(SIGNATURE_INITIAL);
-  const [deleting, setDeleting] = useState<ServicesRendered>();
-
-  const [editing, setEditing] = useState<ServicesRenderedPaymentType>(
-    SERVICES_RENDERED_PAYMENT_INITIAL,
-  );
-  const [saving, setSaving] = useState<boolean>(false);
-
-  const [changingStatus, setChangingStatus] = useState<boolean>(false);
   const SCHEMA_ON_CALL: Schema<ServicesRenderedPaymentType> = [
     [
       {
@@ -315,7 +301,7 @@ export const Services: FC<Props> = ({
         name: 'paymentType',
         options: [
           OPTION_BLANK,
-          ...(editing?.paymentCollected
+          ...(state.editing?.paymentCollected
             ? PAYMENT_COLLECTED_LIST
             : PAYMENT_NOT_COLLECTED_LIST),
         ],
@@ -330,29 +316,30 @@ export const Services: FC<Props> = ({
   ];
 
   const handleDeleting = useCallback(
-    (deleting?: ServicesRendered) => () => setDeleting(deleting),
-    [setDeleting],
+    (deleting?: ServicesRendered) => () =>
+      dispatch({ type: ACTIONS.SET_DELETING, data: deleting }),
+    [],
   );
   const handleDelete = useCallback(async () => {
-    if (deleting) {
-      setDeleting(undefined);
+    if (state.deleting) {
+      dispatch({ type: ACTIONS.SET_DELETING, data: undefined });
       const req = new ServicesRendered();
-      req.setId(deleting.getId());
+      req.setId(state.deleting.getId());
       await ServicesRenderedClientService.Delete(req);
       loadServicesRendered();
     }
-  }, [deleting, loadServicesRendered]);
+  }, [state.deleting, loadServicesRendered]);
   const handleChangeStatus = useCallback(
     (status: string) => async () => {
-      setChangingStatus(true);
+      dispatch({ type: ACTIONS.SET_CHANGING_STATUS, data: true });
       const req = new ServicesRendered();
       req.setEventId(serviceCallId);
       const isSignature = status === SIGNED_AS;
       const statusToSave = `${status}${
         isSignature
           ? ` ${
-              signatureForm.authorizedSignorRole ||
-              paymentForm.authorizedSignorRole
+              state.signatureForm.authorizedSignorRole ||
+              state.paymentForm.authorizedSignorRole
             }`
           : ''
       }`;
@@ -360,8 +347,8 @@ export const Services: FC<Props> = ({
       req.setName(
         isSignature
           ? `${
-              signatureForm.authorizedSignorName ||
-              paymentForm.authorizedSignorName
+              state.signatureForm.authorizedSignorName ||
+              state.paymentForm.authorizedSignorName
             }`
           : `${loggedUser.getFirstname()} ${loggedUser.getLastname()}`,
       );
@@ -382,7 +369,7 @@ export const Services: FC<Props> = ({
 
         await uploadFileToS3Bucket(
           fileName,
-          signatureForm.signature,
+          state.signatureForm.signature,
           fileReq.getBucket(),
           'signature',
         );
@@ -393,12 +380,12 @@ export const Services: FC<Props> = ({
         res.setFieldMaskList(['SignatureId']);
         ServicesRenderedClientService.Update(res);
       }
-      if (paymentForm != PAYMENT_INITIAL) {
+      if (state.paymentForm != PAYMENT_INITIAL) {
         console.log('create payment');
         const paymentReq = new Payment();
         paymentReq.setCollected(1);
-        paymentReq.setAmountCollected(paymentForm.amountCollected);
-        paymentReq.setType(paymentForm.paymentType);
+        paymentReq.setAmountCollected(state.paymentForm.amountCollected);
+        paymentReq.setType(state.paymentForm.paymentType);
         const paymentClientService = new PaymentClient(ENDPOINT);
         const paymentServicesRender = servicesRendered.find(
           service => service.getStatus() == PAYMENT,
@@ -413,29 +400,27 @@ export const Services: FC<Props> = ({
       //create png image, upload Name of signature is
       //"signature/#form.event_id#-#local.services_rendered_id#-#timeFormat(now(),'hhmmss')#.png"
       //After successful creation,Signature ID=file ID in table
+      dispatch({ type: ACTIONS.SET_PAYMENT_FORM, data: PAYMENT_INITIAL });
+      dispatch({ type: ACTIONS.SET_SIGNATURE_FORM, data: SIGNATURE_INITIAL });
 
-      setPaymentForm(PAYMENT_INITIAL);
-      setSignatureForm(SIGNATURE_INITIAL);
-      setChangingStatus(false);
+      dispatch({ type: ACTIONS.SET_CHANGING_STATUS, data: false });
       await loadServicesRendered();
     },
     [
       loggedUser,
       loadServicesRendered,
-      setSignatureForm,
-      setPaymentForm,
       servicesRendered,
-      signatureForm,
-      paymentForm,
+      state.signatureForm,
+      state.paymentForm,
       serviceCallId,
     ],
   );
 
   const handleChangeServiceRendered = useCallback(
     async (data: ServicesRenderedPaymentType) => {
-      if (editing) {
+      if (state.editing) {
         const paymentClientService = new PaymentClient(ENDPOINT);
-        setSaving(true);
+        dispatch({ type: ACTIONS.SET_SAVING, data: true });
         let srReq = new ServicesRendered();
         srReq.setServiceRendered(data.servicesRendered);
         srReq.setTechNotes(data.technicianNotes);
@@ -458,7 +443,7 @@ export const Services: FC<Props> = ({
           paymentReq.setFieldMaskList(['Collected', 'AmountCollected', 'Type']);
           paymentClientService.Update(paymentReq);
         }
-        setSaving(false);
+        dispatch({ type: ACTIONS.SET_SAVING, data: false });
         const init: ServicesRenderedPaymentType = {
           servicesRenderedId: 0,
           servicesRendered: '',
@@ -469,11 +454,11 @@ export const Services: FC<Props> = ({
           paymentId: 0,
           dateProcessed: '',
         };
-        setEditing(init);
+        dispatch({ type: ACTIONS.SET_EDITING, data: init });
       }
       loadServicesRendered();
     },
-    [editing, setSaving, setEditing, loadServicesRendered],
+    [state.editing, loadServicesRendered],
   );
   const handleSetEditing = useCallback(
     (sr?: ServicesRendered) => async () => {
@@ -507,7 +492,7 @@ export const Services: FC<Props> = ({
           console.log('no payment found, stick with default');
         }
       }
-      setEditing(temp);
+      dispatch({ type: ACTIONS.SET_EDITING, data: temp });
     },
     [],
   );
@@ -519,11 +504,14 @@ export const Services: FC<Props> = ({
         paymentReq.setServicesRenderedId(sr.getId());
         const paymentResults = await paymentClientService.Get(paymentReq);
         if (paymentResults) {
-          setViewPayment({
-            paymentType: paymentResults.getType(),
-            amountCollected: paymentResults.getAmountCollected(),
-            paymentCollected: paymentResults.getCollected(),
-            date: format(new Date(), 'yyyy-MM-dd'),
+          dispatch({
+            type: ACTIONS.SET_VIEW_PAYMENT,
+            data: {
+              paymentType: paymentResults.getType(),
+              amountCollected: paymentResults.getAmountCollected(),
+              paymentCollected: paymentResults.getCollected(),
+              date: format(new Date(), 'yyyy-MM-dd'),
+            },
           });
         }
       } else {
@@ -536,11 +524,14 @@ export const Services: FC<Props> = ({
           fileRes.getName(),
           fileRes.getBucket(),
         );
-        setViewSignature({
-          signatureData: s3Data,
-          signorNotes: '',
-          authorizedSignorName: sr.getName(),
-          authorizedSignorRole: sr.getStatus(),
+        dispatch({
+          type: ACTIONS.SET_VIEW_SIGNATURE,
+          data: {
+            signatureData: s3Data,
+            signorNotes: '',
+            authorizedSignorName: sr.getName(),
+            authorizedSignorRole: sr.getStatus(),
+          },
         });
       }
     },
@@ -641,7 +632,7 @@ export const Services: FC<Props> = ({
             <InfoTable
               columns={COLUMNS_SERVICES_RENDERED}
               data={servicesRenderedData}
-              loading={saving}
+              loading={state.saving}
             />
           </>
         )}
@@ -668,7 +659,7 @@ export const Services: FC<Props> = ({
                         onClick: handleChangeStatus(ENROUTE),
                         disabled:
                           [ENROUTE, ON_CALL, ADMIN].includes(lastStatus) ||
-                          changingStatus,
+                          state.changingStatus,
                       },
                     ]
                   : []),
@@ -676,7 +667,8 @@ export const Services: FC<Props> = ({
                   ? [
                       {
                         label: ON_CALL,
-                        onClick: handleChangeStatus(ON_CALL) || changingStatus,
+                        onClick:
+                          handleChangeStatus(ON_CALL) || state.changingStatus,
                         disabled: [ON_CALL].includes(lastStatus),
                       },
                     ]
@@ -694,7 +686,7 @@ export const Services: FC<Props> = ({
                       {
                         label: ADMIN,
                         onClick: handleChangeStatus(ADMIN),
-                        disabled: changingStatus,
+                        disabled: state.changingStatus,
                       },
                     ]
                   : []),
@@ -703,13 +695,13 @@ export const Services: FC<Props> = ({
                       {
                         label: COMPLETED,
                         onClick: handleChangeStatus(COMPLETED),
-                        disabled: changingStatus,
+                        disabled: state.changingStatus,
                         status: 'success' as const,
                       },
                       {
                         label: INCOMPLETE,
                         onClick: handleChangeStatus(INCOMPLETE),
-                        disabled: changingStatus,
+                        disabled: state.changingStatus,
                         status: 'failure' as const,
                       },
                     ]
@@ -725,12 +717,12 @@ export const Services: FC<Props> = ({
                       {
                         label: PAYMENT,
                         onClick: handleChangeStatus(PAYMENT),
-                        disabled: changingStatus,
+                        disabled: state.changingStatus,
                       },
                       {
                         label: SIGNATURE,
                         onClick: handleChangeStatus(SIGNATURE),
-                        disabled: changingStatus,
+                        disabled: state.changingStatus,
                       },
                     ]
                   : []),
@@ -739,7 +731,7 @@ export const Services: FC<Props> = ({
                       {
                         label: 'SAVE',
                         onClick: handleChangeStatus(SIGNED_AS),
-                        disabled: changingStatus,
+                        disabled: state.changingStatus,
                       },
                     ]
                   : []),
@@ -749,15 +741,19 @@ export const Services: FC<Props> = ({
       {[PAYMENT].includes(lastStatus) && (
         <PlainForm
           schema={SCHEMA_PAYMENT_AND_SIGNATURE}
-          data={paymentForm}
-          onChange={setPaymentForm}
+          data={state.paymentForm}
+          onChange={data =>
+            dispatch({ type: ACTIONS.SET_PAYMENT_FORM, data: data })
+          }
         />
       )}
       {[SIGNATURE].includes(lastStatus) && (
         <PlainForm
           schema={SCHEMA_SIGNATURE}
-          data={signatureForm}
-          onChange={setSignatureForm}
+          data={state.signatureForm}
+          onChange={data =>
+            dispatch({ type: ACTIONS.SET_SIGNATURE_FORM, data: data })
+          }
         />
       )}
 
@@ -784,57 +780,67 @@ export const Services: FC<Props> = ({
         data={data}
         loading={loading}
       />
-      {deleting && (
+      {state.deleting && (
         <ConfirmDelete
           open
           onClose={handleDeleting()}
           kind="Service Rendered Item"
-          name={`Technician: ${deleting.getName()}, Status: ${deleting.getStatus()}`}
+          name={`Technician: ${state.deleting.getName()}, Status: ${state.deleting.getStatus()}`}
           onConfirm={handleDelete}
         />
       )}
-      {editing.servicesRenderedId != 0 && (
+      {state.editing.servicesRenderedId != 0 && (
         <Modal open onClose={handleSetEditing()}>
           <div className="ServicesEditing">
             <Form<ServicesRenderedPaymentType>
               title="Services Rendered Edit"
               schema={SCHEMA_ON_CALL}
-              data={editing}
+              data={state.editing}
               onClose={handleSetEditing()}
               onSave={handleChangeServiceRendered}
-              disabled={saving}
+              disabled={state.saving}
             ></Form>
             <QuoteSelector
               serviceCallId={serviceCallId}
-              servicesRenderedId={editing.servicesRenderedId}
+              servicesRenderedId={state.editing.servicesRenderedId}
               onAddQuotes={console.log}
               onAdd={console.log}
             ></QuoteSelector>
           </div>
         </Modal>
       )}
-      {viewPayment != undefined && (
-        <Modal open onClose={() => setViewPayment(undefined)}>
+      {state.viewPayment != undefined && (
+        <Modal
+          open
+          onClose={() =>
+            dispatch({ type: ACTIONS.SET_VIEW_PAYMENT, data: undefined })
+          }
+        >
           <div className="ServicesEditing">
             <PlainForm<PaymentType>
               schema={SCHEMA_PAYMENT}
               onChange={console.log}
-              data={viewPayment}
-              disabled={saving}
+              data={state.viewPayment}
+              disabled={state.saving}
             ></PlainForm>
           </div>
         </Modal>
       )}
-      {viewSignature != undefined && (
-        <Modal open onClose={() => setViewSignature(undefined)}>
+      {state.viewSignature != undefined && (
+        <Modal
+          open
+          onClose={() =>
+            dispatch({ type: ACTIONS.SET_VIEW_SIGNATURE, data: undefined })
+          }
+        >
           <div className="ServicesEditing">
             <PlainForm<SavedSignatureType>
               schema={SCHEMA_SIGNATURE_SAVED}
               onChange={console.log}
-              data={viewSignature}
-              disabled={saving}
+              data={state.viewSignature}
+              disabled={state.saving}
             ></PlainForm>
-            <img src={viewSignature.signatureData}></img>
+            <img src={state.viewSignature.signatureData}></img>
           </div>
         </Modal>
       )}
