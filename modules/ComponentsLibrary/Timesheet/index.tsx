@@ -196,8 +196,7 @@ export const Timesheet: FC<Props> = props => {
     {
       icon: <AddAlertIcon />,
       name: 'Reminder',
-      url:
-        'https://app.kalosflorida.com/index.cfm?action=admin:service.addReminder',
+      url: 'https://app.kalosflorida.com/index.cfm?action=admin:service.addReminder',
     },
     {
       icon: <AssignmentIndIcon />,
@@ -559,7 +558,8 @@ export const Timesheet: FC<Props> = props => {
   }, [timesheetOwnerId, userId]);
 
   const fetchTimeoffRequestTypes = useCallback(async () => {
-    const timeoffRequestTypes = await TimeoffRequestClientService.getTimeoffRequestTypes();
+    const timeoffRequestTypes =
+      await TimeoffRequestClientService.getTimeoffRequestTypes();
     setTimeoffRequestTypes(
       timeoffRequestTypes.reduce(
         (aggr, item) => ({ ...aggr, [item.getId()]: item.getRequestType() }),
@@ -619,9 +619,8 @@ export const Timesheet: FC<Props> = props => {
         ),
       ]);
       toReq.setDateTargetList(['time_started', 'time_started']);
-      const timeoffs = await TimeoffRequestClientService.getTimeoffRequestByFilter(
-        toReq,
-      );
+      const timeoffs =
+        await TimeoffRequestClientService.getTimeoffRequestByFilter(toReq);
       dispatch({
         type: 'fetchedTimesheetData',
         data: result,
@@ -717,7 +716,8 @@ export const Timesheet: FC<Props> = props => {
             )}
           </Box>
           {editing.modalShown &&
-            editing.entry.getPayrollProcessed() != true && (
+            (editing.entry.getPayrollProcessed() != true ||
+              role === 'Payroll') && (
               <EditTimesheetModal
                 entry={editing.entry}
                 timesheetOwnerId={timesheetOwnerId}

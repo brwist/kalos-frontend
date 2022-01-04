@@ -57,6 +57,12 @@ export const reducer = (state: State, action: Action) => {
         viewPayment: action.data,
       };
     }
+    case ACTIONS.SET_SAVING: {
+      return {
+        ...state,
+        saving: action.data,
+      };
+    }
     case ACTIONS.SET_VIEW_SIGNATURE: {
       return {
         ...state,

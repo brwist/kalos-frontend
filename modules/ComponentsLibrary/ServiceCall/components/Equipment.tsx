@@ -38,11 +38,6 @@ export const Equipment: FC<Props> = ({
         loggedUserId={loggedUserId}
         propertyId={props.propertyId}
       ></ServiceItems>
-      <ServiceCallReadings
-        propertyId={props.propertyId}
-        eventId={event.getId()}
-        loggedUserId={loggedUserId}
-      ></ServiceCallReadings>
     </div>
   );
 };
