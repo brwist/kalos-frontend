@@ -252,14 +252,17 @@ type MaintenanceEntry = MaintenanceQuestion;
 interface Props {
   serviceItemId: number;
   loggedUserId: number;
+  onClose?: () => void;
 }
 
 export const ServiceItemReadings: FC<Props> = ({
   serviceItemId,
   loggedUserId,
+  onClose,
 }) => {
   const [entries, setEntries] = useState<Entry[]>([]);
   const [users, setUsers] = useState<User[]>([]);
+
   const [loaded, setLoaded] = useState<boolean>(false);
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<boolean>(false);
@@ -510,12 +513,25 @@ export const ServiceItemReadings: FC<Props> = ({
         <>
           <SectionBar
             title="Readings"
-            actions={[
-              {
-                label: 'Add',
-                onClick: setEditing(new Reading()),
-              },
-            ]}
+            actions={
+              onClose
+                ? [
+                    {
+                      label: 'Close',
+                      onClick: onClose,
+                    },
+                    {
+                      label: 'Add',
+                      onClick: setEditing(new Reading()),
+                    },
+                  ]
+                : [
+                    {
+                      label: 'Add',
+                      onClick: setEditing(new Reading()),
+                    },
+                  ]
+            }
             fixedActions
           />
           <InfoTable data={data} loading={loading} hoverable />
