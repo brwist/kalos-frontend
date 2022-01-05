@@ -871,7 +871,7 @@ export const ServiceItems: FC<Props> = props => {
         <Modal
           open
           onClose={handleEditing(undefined)}
-          fullScreen={!viewedAsCustomer}
+          //fullScreen={!viewedAsCustomer}
         >
           <div className="ServiceItemsModal">
             <Form<ServiceItem>

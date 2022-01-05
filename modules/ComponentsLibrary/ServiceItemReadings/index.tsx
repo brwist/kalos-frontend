@@ -14,6 +14,7 @@ import { SectionBar } from '../SectionBar';
 import { InfoTable, Data } from '../InfoTable';
 import { ConfirmDelete } from '../ConfirmDelete';
 import { Form, Schema, Options } from '..//Form';
+import { Modal } from '../Modal';
 import {
   makeFakeRows,
   getRPCFields,
@@ -459,8 +460,7 @@ export const ServiceItemReadings: FC<Props> = ({
                 style={{ marginLeft: 4 }}
                 size="small"
                 onClick={setEditingMaintenance(
-                  maintenanceQuestions[entry.getId()] ||
-                    newMaintenanceQuestion.toObject(),
+                  maintenanceQuestions[entry.getId()] || newMaintenanceQuestion,
                 )}
               >
                 <BuildIcon />
@@ -487,55 +487,64 @@ export const ServiceItemReadings: FC<Props> = ({
       });
   return (
     <>
-      {editedMaintenanceEntry !== undefined ? (
-        <Form<MaintenanceEntry>
-          title={`${
-            editedMaintenanceEntry.getId() ? 'Edit' : 'Add'
-          } Maintenance`}
-          schema={SCHEMA_MAINTENANCE}
-          data={editedMaintenanceEntry}
-          onSave={handleSaveMaintenance}
-          onClose={setEditingMaintenance()}
-          disabled={saving}
-          error={error ? API_FAILED_GENERAL_ERROR_MSG : undefined}
-        />
-      ) : editedEntry ? (
-        <Form<Entry>
-          title={`${editedEntry.getId() ? 'Edit' : 'Add'} Reading`}
-          schema={SCHEMA_READING}
-          data={editedEntry}
-          onSave={handleSave}
-          onClose={setEditing()}
-          disabled={saving}
-          error={error ? API_FAILED_GENERAL_ERROR_MSG : undefined}
-        />
-      ) : (
-        <>
-          <SectionBar
-            title="Readings"
-            actions={
-              onClose
-                ? [
-                    {
-                      label: 'Close',
-                      onClick: onClose,
-                    },
-                    {
-                      label: 'Add',
-                      onClick: setEditing(new Reading()),
-                    },
-                  ]
-                : [
-                    {
-                      label: 'Add',
-                      onClick: setEditing(new Reading()),
-                    },
-                  ]
-            }
-            fixedActions
-          />
-          <InfoTable data={data} loading={loading} hoverable />
-        </>
+      <SectionBar
+        title="Readings"
+        actions={
+          onClose
+            ? [
+                {
+                  label: 'Close',
+                  onClick: onClose,
+                },
+                {
+                  label: 'Add',
+                  onClick: setEditing(new Reading()),
+                },
+              ]
+            : [
+                {
+                  label: 'Add',
+                  onClick: setEditing(new Reading()),
+                },
+              ]
+        }
+        fixedActions
+      />
+      <InfoTable data={data} loading={loading} hoverable />
+      {editedEntry && (
+        <div className="ServiceItemsReadings">
+          <Modal open={editedEntry !== undefined} onClose={setEditing()}>
+            <Form<Entry>
+              title={`${editedEntry.getId() ? 'Edit' : 'Add'} Reading`}
+              schema={SCHEMA_READING}
+              data={editedEntry}
+              onSave={handleSave}
+              onClose={setEditing()}
+              disabled={saving}
+              error={error ? API_FAILED_GENERAL_ERROR_MSG : undefined}
+            />
+          </Modal>
+        </div>
+      )}
+      {editedMaintenanceEntry !== undefined && (
+        <div className="ServiceItemsMaintenence">
+          <Modal
+            open={editedMaintenanceEntry !== undefined}
+            onClose={setEditingMaintenance()}
+          >
+            <Form<MaintenanceEntry>
+              title={`${
+                editedMaintenanceEntry.getId() ? 'Edit' : 'Add'
+              } Maintenance`}
+              schema={SCHEMA_MAINTENANCE}
+              data={editedMaintenanceEntry}
+              onSave={handleSaveMaintenance}
+              onClose={setEditingMaintenance()}
+              disabled={saving}
+              error={error ? API_FAILED_GENERAL_ERROR_MSG : undefined}
+            />
+          </Modal>
+        </div>
       )}
       {deletingEntry && (
         <ConfirmDelete
