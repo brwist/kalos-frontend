@@ -18,6 +18,7 @@ import {
   makeSafeFormObject,
 } from '../../../helpers';
 import { Form, Schema } from '../../ComponentsLibrary/Form';
+import { Event } from '@kalos-core/kalos-rpc/Event';
 import { format } from 'date-fns';
 import { SpiffType, TaskEventData, Task } from '@kalos-core/kalos-rpc/Task';
 import { Modal } from '../Modal';
@@ -40,6 +41,7 @@ export const SpiffApplyComponent: FC<props> = ({
     error: undefined,
     spiffTypes: [],
     saving: false,
+    event: new Event(),
   });
   const SPIFF_TYPES_OPTIONS: Option[] = state.spiffTypes.map(type => ({
     label: escapeText(type.getType()),
@@ -108,9 +110,20 @@ export const SpiffApplyComponent: FC<props> = ({
     const spiffTypes = (
       await TaskClientService.GetSpiffTypes()
     ).getResultsList();
+
     dispatch({ type: ACTIONS.SET_SPIFF_TYPES, data: spiffTypes });
-    dispatch({ type: ACTIONS.SET_LOADED, data: true });
-  }, []);
+    let tempEvent = new Event();
+    try {
+      tempEvent = await EventClientService.LoadEventByServiceCallID(
+        serviceCallId,
+      );
+      dispatch({ type: ACTIONS.SET_EVENT, data: tempEvent });
+      dispatch({ type: ACTIONS.SET_LOADED, data: true });
+    } catch (err) {
+      console.error(`An error occurred while loading event by server: ${err}`);
+      return;
+    }
+  }, [serviceCallId]);
 
   const cleanup = useCallback(() => {
     // TODO clean up your function calls here (called once the component is unmounted, prevents "Can't perform a React state update on an unmounted component" errors)
@@ -161,32 +174,15 @@ export const SpiffApplyComponent: FC<props> = ({
       req.setBillableType('Spiff');
       req.setStatusId(1);
       //req.addFieldMask('AdminActionId');
-      let tempEvent;
-      try {
-        tempEvent = await EventClientService.LoadEventByServiceCallID(
-          parseInt(req.getSpiffJobNumber()),
-        );
-      } catch (err) {
-        console.error(
-          `An error occurred while loading event by server: ${err}`,
-        );
-        return;
-      }
-      if (!tempEvent) {
-        console.error(
-          `No tempEvent variable was set to set spiff address with, aborting save.`,
-        );
-        return;
-      }
       req.setSpiffAddress(
-        tempEvent.getProperty()?.getAddress() === undefined
-          ? tempEvent.getCustomer()?.getAddress() === undefined
+        state.event.getProperty()?.getAddress() === undefined
+          ? state.event.getCustomer()?.getAddress() === undefined
             ? ''
-            : tempEvent.getCustomer()!.getAddress()
-          : tempEvent.getProperty()!.getAddress(),
+            : state.event.getCustomer()!.getAddress()
+          : state.event.getProperty()!.getAddress(),
       );
 
-      req.setSpiffJobNumber(tempEvent.getLogJobNumber());
+      req.setSpiffJobNumber(state.event.getLogJobNumber());
       req.setFieldMaskList([]);
       const res = await TaskClientService.Create(req);
       const id = res.getId();
@@ -199,7 +195,7 @@ export const SpiffApplyComponent: FC<props> = ({
       await TaskClientService.Update(updateReq);
       onClose();
     },
-    [loggedUserId, onClose],
+    [loggedUserId, state.event, onClose],
   );
   return (
     <Modal open onClose={onClose}>
