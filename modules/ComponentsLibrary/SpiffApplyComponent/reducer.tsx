@@ -34,6 +34,12 @@ export const reducer = (state: State, action: Action) => {
         error: action.data,
       };
     }
+    case ACTIONS.SET_SAVING: {
+      return {
+        ...state,
+        saving: action.data,
+      };
+    }
     case ACTIONS.SET_SPIFF_TYPES: {
       return {
         ...state,

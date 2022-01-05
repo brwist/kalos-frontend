@@ -126,7 +126,7 @@ export const Spiffs: FC<Props> = ({
           : 0;
         return [
           { value: formatDate(entry.getDatePerformed()) },
-          { value: entry.getReferenceNumber() },
+          { value: entry.getSpiffToolId() },
           { value: entry.getBriefDescription() },
           { value: state.spiffTypes[entry.getSpiffTypeId()].getExt() },
           { value: entry.getOwnerName() },
