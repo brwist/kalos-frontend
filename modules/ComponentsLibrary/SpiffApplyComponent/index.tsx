@@ -85,6 +85,10 @@ export const SpiffApplyComponent: FC<props> = ({
         label: 'Description',
         multiline: true,
       },
+      {
+        name: 'getSpiffJobNumber',
+        type: 'hidden',
+      },
     ],
   ];
   const makeNewTask = useCallback(() => {
@@ -147,11 +151,11 @@ export const SpiffApplyComponent: FC<props> = ({
       dispatch({ type: ACTIONS.SET_SAVING, data: true });
       const now = timestamp();
       const req = makeSafeFormObject(data, new Task());
+      console.log('what we got', data);
+      console.log('safe object??', req);
       req.setTimeCreated(now);
       req.setTimeDue(now);
       req.setPriorityId(2);
-      req.setSpiffToolId('');
-
       req.setExternalCode('user');
       req.setCreatorUserId(loggedUserId);
       req.setBillableType('Spiff');
@@ -190,9 +194,12 @@ export const SpiffApplyComponent: FC<props> = ({
       updateReq.setId(id);
       updateReq.setFieldMaskList(['AdminActionId']);
       updateReq.setAdminActionId(0);
+      dispatch({ type: ACTIONS.SET_SAVING, data: false });
+
       await TaskClientService.Update(updateReq);
+      onClose();
     },
-    [loggedUserId],
+    [loggedUserId, onClose],
   );
   return (
     <Modal open onClose={onClose}>
@@ -202,7 +209,7 @@ export const SpiffApplyComponent: FC<props> = ({
         onClose={onClose}
         data={makeNewTask()}
         onSave={handleSaveNewSpiff}
-        disabled={state.saving}
+        disabled={state.saving == true}
       />
     </Modal>
   );
