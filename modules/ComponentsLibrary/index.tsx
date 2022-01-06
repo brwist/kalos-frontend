@@ -50,6 +50,7 @@ import GanttChart from './GanttChart/examples';
 import ImagePreview from './ImagePreview/examples';
 import InfoTable from './InfoTable/examples';
 import InternalDocuments from './InternalDocuments/examples';
+import InvoicePreview from './InvoicePreview/examples';
 import Link from './Link/examples';
 import LodgingByZipCode from './LodgingByZipCode/examples';
 import ManagerTimeoffs from './ManagerTimeoffs/examples';
@@ -164,6 +165,7 @@ const COMPONENTS = {
   ImagePreview,
   InfoTable,
   InternalDocuments,
+  InvoicePreview,
   Link,
   LodgingByZipCode,
   ManagerTimeoffs,
