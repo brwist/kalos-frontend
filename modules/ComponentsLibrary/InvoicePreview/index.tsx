@@ -14,6 +14,12 @@ import { format } from 'date-fns';
 import Typography from '@material-ui/core/Typography';
 import { Document } from '@kalos-core/kalos-rpc/Document';
 import ReactHtmlParser from 'react-html-parser';
+import {
+  InvoiceBodyRequest,
+  SQSEmail,
+  SQSEmailAndDocument,
+} from '@kalos-core/kalos-rpc/compiled-protos/email_pb';
+import { Button } from '../Button';
 
 // add any prop types here
 interface props {
@@ -82,9 +88,10 @@ export const InvoicePreview: FC<props> = ({
       return;
     }
     try {
-      let req = new Document();
+      let req = new InvoiceBodyRequest();
       req.setPropertyId(propertyId);
       req.setInvoiceId(invoiceId);
+      console.log(`Property id: ${propertyId}, invoice id: ${invoiceId}`);
       const res = await EmailClientService.GetInvoiceBody(req);
       console.log('Got res: ', res);
       dispatch({ type: ACTIONS.SET_INVOICE_HTML, data: res.getValue() });
@@ -95,6 +102,31 @@ export const InvoicePreview: FC<props> = ({
       handleError(err as string);
     }
   }, [handleError, invoiceId, propertyId]);
+
+  // ? This function is for reference on how to send invoices via email
+  const sendInvoice = useCallback(async () => {
+    if (!state.invoiceHTML) {
+      console.error(`No invoice HTML set, returning. `);
+      return;
+    }
+    try {
+      let document = new Document();
+      document.setPropertyId(propertyId);
+      document.setInvoiceId(invoiceId);
+      let sqsEmail = new SQSEmail();
+      // Email to send the message to
+      sqsEmail.setTo('justin.farrell@kalosflorida.com');
+      sqsEmail.setSubject('Doc test');
+      let req = new SQSEmailAndDocument();
+      req.setEmail(sqsEmail);
+      req.setDocument(document);
+      const res = await EmailClientService.SendSQSInvoiceEmail(req);
+      console.log('res: ', res);
+    } catch (err) {
+      console.error(`An error occurred while sending out an invoice: ${err}`);
+      handleError(err as string);
+    }
+  }, [handleError, invoiceId, propertyId, state.invoiceHTML]);
 
   const load = useCallback(async () => {
     await getInvoiceBody();
