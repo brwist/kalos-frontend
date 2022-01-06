@@ -59,6 +59,7 @@ export type State = {
     | undefined;
   employees: User[];
   searching: boolean;
+  notify: number;
   assignedEmployee: number | undefined;
   selectedTransactions: Transaction[];
   status: 'Accepted' | 'Rejected' | 'Accepted / Rejected';
@@ -113,6 +114,7 @@ export enum ACTIONS {
   SET_ASSIGNED_EMPLOYEE = 'setAssignedEmployee',
   SET_UNIVERSAL_SEARCH = 'setUniversalSearch',
   SET_FILE_DATA = 'setFileData',
+  SET_NOTIFY = 'setNotify',
   SET_IMAGE_WAIVER_TYPE_POPUP_OPEN = 'setImageWaiverTypePopupOpen',
   SET_IMAGE_WAIVER_TYPE_FORM_DATA = 'setImageWaiverTypeFormData',
   SET_TRANSACTION_TO_SAVE = 'setTransactionToSave',
@@ -129,6 +131,7 @@ export type Action =
   | { type: ACTIONS.SET_TRANSACTION_TO_EDIT; data: Transaction | undefined }
   | { type: ACTIONS.SET_LOADING; data: boolean }
   | { type: ACTIONS.SET_LOADED; data: boolean }
+  | { type: ACTIONS.SET_NOTIFY; data: number }
   | {
       type: ACTIONS.UPDATE_LOCAL_STATUS;
       data: { transactionId: number; statusId: number };
@@ -282,6 +285,12 @@ export const reducer = (state: State, action: Action) => {
       return {
         ...state,
         assigningUser: action.data,
+      };
+    }
+    case ACTIONS.SET_NOTIFY: {
+      return {
+        ...state,
+        notify: action.data,
       };
     }
     case ACTIONS.SET_EMPLOYEES: {

@@ -47,7 +47,10 @@ import {
   EmailClientService,
   uploadPhotoToExistingTransaction,
   DevlogClientService,
+  getSlackID,
+  slackNotify,
   TransactionAccountClientService,
+  getSlackList,
 } from '../../../helpers';
 import { AltGallery } from '../../AltGallery/main';
 import { Tooltip } from '../../ComponentsLibrary/Tooltip';
@@ -139,6 +142,7 @@ export const TransactionTable: FC<Props> = ({
     openMerge: false,
     document1: '',
     document2: '',
+    notify: 0,
     mergeDocumentAlert: '',
     costCenterData: new TransactionAccountList(),
     transactionActivityLogs: [],
@@ -619,6 +623,10 @@ export const TransactionTable: FC<Props> = ({
     },
     [],
   );
+  const handleSetNotify = useCallback((notify: number) => {
+    console.log('we changed notify', notify);
+    dispatch({ type: ACTIONS.SET_NOTIFY, data: notify });
+  }, []);
 
   const handleSetFilter = useCallback(async (d: FilterData) => {
     if (!d.week) {
@@ -1034,6 +1042,7 @@ export const TransactionTable: FC<Props> = ({
         console.log('new date', newTimestamp);
         newTxn.setTimestamp(newTimestamp);
       }
+
       newTxn.setOrderNumber(saved['Order #']);
       newTxn.setAssignedEmployeeId(loggedUserId);
       if (saved['Purchaser'] == null || saved['Purchaser'] == '') {
@@ -1042,6 +1051,29 @@ export const TransactionTable: FC<Props> = ({
         newTxn.setOwnerId(saved['Purchaser']);
       }
       newTxn.setDepartmentId(saved['Department']);
+      if (state.notify == 1 && newTxn.getDepartmentId() != 0) {
+        console.log('we should notify');
+        dispatch({ type: ACTIONS.SET_NOTIFY, data: 0 });
+        const foundDepartment = state.departments.find(
+          department => department.getId() == newTxn.getDepartmentId(),
+        );
+        if (foundDepartment) {
+          const messageToSend = `A new transaction has been created in Accounts Payable that requires your attention, Order Number: ${newTxn.getOrderNumber()}, Amount: ${newTxn.getAmount()}`;
+          console.log(messageToSend);
+          const user = new User();
+          user.setId(foundDepartment.getManagerId());
+          const slackUser = await getSlackID('Austin Kempa', true);
+          const data = await getSlackList(false);
+          console.log(data);
+          if (slackUser === '0') {
+            console.log('failed to send message');
+            return;
+          }
+          // await slackNotify(slackUser, messageToSend);
+
+          console.log('Message sent successfully.');
+        }
+      }
       newTxn.setJobId(saved['Job #']);
       newTxn.setNotes(saved['Notes']);
       newTxn.setCostCenterId(saved['Cost Center ID']);
@@ -1094,7 +1126,7 @@ export const TransactionTable: FC<Props> = ({
       refresh();
       return res;
     },
-    [loggedUserId, resetTransactions, refresh],
+    [loggedUserId, resetTransactions, state.departments, state.notify, refresh],
   );
 
   const deleteTransaction = useCallback(async () => {
@@ -1648,6 +1680,7 @@ export const TransactionTable: FC<Props> = ({
           onFileLoad: data =>
             dispatch({ type: ACTIONS.SET_FILE_DATA, data: data }),
           externalButtonClicked: state.creatingTransaction,
+          onNotify: handleSetNotify,
           externalButton: true,
           type: new Transaction(),
           columnDefinition: {
