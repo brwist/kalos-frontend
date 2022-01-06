@@ -29,6 +29,7 @@ interface props {
   showAssigned?: boolean;
   isFirstCall?: boolean;
   startingIndex?: number;
+  isRequested?: boolean;
 }
 
 export const DispatchCalls: FC<props> = props => {
@@ -39,6 +40,7 @@ export const DispatchCalls: FC<props> = props => {
     showAssigned = true,
     isFirstCall = false,
     startingIndex = 0,
+    isRequested = false,
   } = props;
 
   useEffect(() => {
@@ -54,7 +56,7 @@ export const DispatchCalls: FC<props> = props => {
         <TableBody>
           <TableRow>
             {/* Temporarily using hardcoded for variable for Estimated End */}
-            {!isFirstCall &&(
+            {!isFirstCall && !isRequested && (
               <TableCell
                 align="center"
                 style={{ fontWeight: 'bolder', fontSize: '16px' }}
@@ -80,12 +82,14 @@ export const DispatchCalls: FC<props> = props => {
       <Table stickyHeader>
         <TableHead key="Header">
           <TableRow>
-            <TableCell
-              align="center"
-              style={{ fontWeight: 'bolder', fontSize: '16px', width: '8%' }}
-            >
-              Map Id
-            </TableCell>
+            {!isRequested && (
+              <TableCell
+                align="center"
+                style={{ fontWeight: 'bolder', fontSize: '16px', width: '8%' }}
+              >
+                Map Id
+              </TableCell>
+            )}
             <TableCell
               align="center"
               style={{ fontWeight: 'bolder', fontSize: '16px', width: '13%' }}
@@ -135,7 +139,7 @@ export const DispatchCalls: FC<props> = props => {
         {calls.length === 0 && (
           <TableBody>
             <TableRow>
-              <TableCell colSpan={7} style={{textAlign: 'center', width: '15%'}}>
+              <TableCell colSpan={8} style={{textAlign: 'center', width: '15%'}}>
                 No Entries Found!
               </TableCell>
             </TableRow>
@@ -163,6 +167,7 @@ export const DispatchCalls: FC<props> = props => {
             <Droppable
               droppableId={call.getId().toString()}
               key={call.getId() + call.getLogNotes()}
+              isDropDisabled={isRequested}
             >
               {(provided, snapshot) => (
                 <TableBody
@@ -186,9 +191,11 @@ export const DispatchCalls: FC<props> = props => {
                         call.getPropertyAddress(),
                       )
                     }
-                    onDoubleClick={() => props.handleDblClick(call)}
+                    onDoubleClick={() => {if (!isRequested) props.handleDblClick(call)}}
                   >
-                    <TableCell align="center">{index + 1 + startingIndex}</TableCell>
+                    {!isRequested && (
+                      <TableCell align="center">{index + 1 + startingIndex}</TableCell>
+                    )}
                     <TableCell align="center">
                       {`${dateStarted}`} <br></br> {`${format(timeStarted, 'h:mm aa')} - ${format(timeEnded, 'h:mm aa')}`}
                     </TableCell>

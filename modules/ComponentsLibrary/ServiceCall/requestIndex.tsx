@@ -294,11 +294,10 @@ export const ServiceRequest: FC<Props> = props => {
         },
         {
           label: 'Open Property',
-          url: [
-            '/index.cfm?action=admin:properties.details',
-            `property_id=${propertyId}`,
-            `user_id=${userID}`,
-          ].join('&'),
+          onClick: () => {
+            const url = `/index.cfm?action=admin:properties.details&property_id=${propertyId}&user_id=${userID}`;
+            window.open(url, `_blank`);
+          },
           disabled: state.loading || state.saving,
         },
         {

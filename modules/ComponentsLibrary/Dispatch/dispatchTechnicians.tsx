@@ -9,14 +9,20 @@ import TableHead from '@material-ui/core/TableHead';
 import TableCell from '@material-ui/core/TableCell';
 import differenceInMinutes from 'date-fns/esm/differenceInMinutes';
 import parseISO from 'date-fns/esm/parseISO';
+import format from 'date-fns/esm/format';
 import DeleteOutlineIcon from '@material-ui/icons/DeleteOutline';
 import { InfoTable } from '../InfoTable';
 import { makeFakeRows } from '../../../helpers';
+import Tooltip from '@material-ui/core/Tooltip';
+import IconButton from '@material-ui/core/IconButton';
+import ErrorOutline from '@material-ui/icons/ErrorOutline';
+import addMinutes from 'date-fns/esm/addMinutes';
 
 interface props {
   userID: number;
   techs: DispatchableTech[];
   dismissedTechs: DispatchableTech[];
+  offTechs?: {tech: DispatchableTech, start: string, end: string}[];
   handleMapRecenter?: (center: {lat: number, lng: number}, zoom: number) => void;
   loading: boolean;
   isFirstCall?: boolean;
@@ -39,7 +45,7 @@ export const DispatchTechs: FC<props> = props => {
   useEffect(() => {
     // console.log("DispatchTechs");
     sortTechs(techs);
-  }, [props.dismissedTechs, techs]);
+  }, [props.dismissedTechs, techs, loading]);
 
   return (
     <div>
@@ -79,6 +85,10 @@ export const DispatchTechs: FC<props> = props => {
                     const minutesWorked = Math.floor((tech.getHoursWorked() - hoursWorked * 3600) / 60);
                     const techLatitude = tech.getGeolocationLat() ? tech.getGeolocationLat() : 0;
                     const techLongitude = tech.getGeolocationLng() ? tech.getGeolocationLng() : 0;
+                    let timeoffData : {tech: DispatchableTech, start: string, end: string};
+                    if (props.offTechs && props.offTechs.length) {
+                      timeoffData = props.offTechs.find(req => req.tech.getUserId() === tech.getUserId())!;
+                    }
                     return (
                       <Draggable
                         key={`${tech.getUserId()}`}
@@ -92,7 +102,7 @@ export const DispatchTechs: FC<props> = props => {
                             key={`tech_id_${tech.getUserId}`}
                             ref={dragProvided.innerRef}
                             style={{
-                              backgroundColor: snapshot.draggingOver === 'dismissTech' || snapshot.draggingOver === 'onCallDroppable' ? '#711313' :  snapshot.draggingOver ? 'grey' : snapshot.isDragging ? 'beige' : '',
+                              backgroundColor: snapshot.draggingOver === 'dismissTech' || snapshot.draggingOver === 'onCallDroppable' ? '#711313' :  snapshot.draggingOver ? 'grey' : snapshot.isDragging ? 'beige' : timeoffData && format(addMinutes(new Date(), 30), 'yyyy-MM-dd HH:mm:ss') >= timeoffData.start ? '#ffcccb' : '',
                               width:'100%',
                               height:'auto',
                               margin:'auto',
@@ -102,7 +112,16 @@ export const DispatchTechs: FC<props> = props => {
                             hover
                             onClick={props.handleMapRecenter ? () => props.handleMapRecenter!({lat: techLatitude, lng: techLongitude}, 12) : () => {}}
                           >
-                            <TableCell align="center" style={{color: snapshot.draggingOver && snapshot.draggingOver !== "techDroppable" ? 'white' : 'black'}}>{tech.getTechname()}</TableCell>
+                            <TableCell align="center" style={{color: snapshot.draggingOver && snapshot.draggingOver !== "techDroppable" ? 'white' : 'black'}}>
+                              {timeoffData && (
+                                <Tooltip title={<h2 style={{}}>{`Time Off: ${format(parseISO(timeoffData.start), 'h:mm aaa')} - ${format(parseISO(timeoffData.end), 'h:mm aaa')}`}</h2>} placement={"top"}>
+                                  <IconButton>
+                                    <ErrorOutline/>
+                                  </IconButton>
+                                </Tooltip>
+                              )}
+                              {tech.getTechname()}
+                            </TableCell>
                             <TableCell align="center" style={{display:isFirstCall?'none':'', color: snapshot.draggingOver && snapshot.draggingOver !== "techDroppable" ? 'white' : 'black'}}>
                               {tech.getActivity() != 'Standby' ? (
                                 <a
