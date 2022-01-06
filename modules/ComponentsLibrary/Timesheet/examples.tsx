@@ -7,6 +7,6 @@ export default () => (
     <ExampleTitle>Default</ExampleTitle>
     <Timesheet userId={102412} timesheetOwnerId={103285} />
     <ExampleTitle>DEBUG</ExampleTitle>
-    <Timesheet userId={103233} timesheetOwnerId={103285} />
+    <Timesheet userId={103233} timesheetOwnerId={8418} />
   </>
 );
