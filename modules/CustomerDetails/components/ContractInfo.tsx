@@ -435,7 +435,12 @@ export const ContractInfo: FC<Props> = props => {
               actions={[
                 {
                   label: 'Edit',
-                  onClick: handleToggleEditing,
+                  url: [
+                    getCFAppUrl('admin:contracts.edit'),
+                    `contract_id=${entry.getId()}`,
+                    'p=1',
+                  ].join('&'),
+                  //onClick:// handleToggleEditing,
                 },
                 {
                   label: 'Materials',
