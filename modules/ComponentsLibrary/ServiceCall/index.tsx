@@ -86,7 +86,7 @@ export const ServiceCall: FC<Props> = props => {
   const {
     userID,
     propertyId,
-    serviceCallId: eventId = 0,
+    serviceCallId: eventId,
     loggedUserId,
     onClose,
     onSave,
@@ -991,7 +991,7 @@ export const ServiceCall: FC<Props> = props => {
           />
         </>
       }
-      {state.openJobActivity && (
+      {state.openJobActivity && eventId != undefined && (
         <Modal
           open={state.openJobActivity}
           onClose={() => toggleOpenJobActivity()}
