@@ -54,6 +54,8 @@ interface state {
   acceptOverride: boolean;
   search: string;
   editingCostCenter: { [key: number]: boolean };
+  editingDepartment: { [key: number]: boolean };
+
   showCreateModal: boolean;
 }
 
@@ -112,6 +114,7 @@ export class TransactionAdminView extends React.Component<props, state> {
       count: 0,
       search: '',
       editingCostCenter: {},
+      editingDepartment: {},
       showCreateModal: false,
     };
     this.TxnClient = new TransactionClient(ENDPOINT);
@@ -156,7 +159,14 @@ export class TransactionAdminView extends React.Component<props, state> {
       },
     }));
   };
-
+  toggleEditingDepartment = (id: number) => {
+    this.setState(prevState => ({
+      editingDepartment: {
+        ...prevState.editingDepartment,
+        [id]: !prevState.editingDepartment[id],
+      },
+    }));
+  };
   toggleView() {
     this.setState(prevState => ({
       departmentView: !prevState.departmentView,
@@ -319,6 +329,7 @@ export class TransactionAdminView extends React.Component<props, state> {
       txn.setDepartmentId(departmentID);
       txn.setFieldMaskList(['DepartmentId']);
       await this.TxnClient.Update(txn);
+      await this.fetchTxns();
     };
   }
 
@@ -954,11 +965,14 @@ export class TransactionAdminView extends React.Component<props, state> {
                     updateCostCenter: this.makeUpdateCostCenter(txn.getId()),
                     updateDepartment: this.makeUpdateDepartment(txn.getId()),
                     toggleLoading: this.toggleLoading,
-                    editingCostCenter: this.state.editingCostCenter[
-                      txn.getId()
-                    ],
+                    editingCostCenter:
+                      this.state.editingCostCenter[txn.getId()],
+                    editingDepartment:
+                      this.state.editingDepartment[txn.getId()],
                     toggleEditingCostCenter: () =>
                       this.toggleEditingCostCenter(txn.getId()),
+                    toggleEditingDepartment: () =>
+                      this.toggleEditingDepartment(txn.getId()),
                   }),
                 )
           }
