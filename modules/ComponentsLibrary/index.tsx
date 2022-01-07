@@ -37,6 +37,7 @@ import EditContractInfo from './EditContractInfo/examples';
 import EditInvoiceData from './EditInvoiceData/examples';
 import EditProject from './EditProject/examples';
 import EditTransaction from './EditTransaction/examples';
+import EmailInvoice from './EmailInvoice/examples';
 import EmployeeDepartments from './EmployeeDepartments/examples';
 import ErrorBoundary from './ErrorBoundary/examples';
 import EventsReport from './EventsReport/examples';
@@ -152,6 +153,7 @@ const COMPONENTS = {
   EditInvoiceData,
   EditProject,
   EditTransaction,
+  EmailInvoice,
   EmployeeDepartments,
   ErrorBoundary,
   EventsReport,
