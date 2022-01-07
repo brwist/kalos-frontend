@@ -37,13 +37,10 @@ export const DispatchTechs: FC<props> = props => {
   } = props
 
   const sortTechs = useCallback((techs : DispatchableTech[], dismissed : DispatchableTech[]) => {
-    console.log(techs);
-    console.log(dismissed);
     let sorted = techs.sort((a,b) => (a.getTechname() > b.getTechname()) ? 1 : ((b.getTechname() > a.getTechname()) ? -1 : 0));
     if (isFirstCall) {
       sorted = sorted.concat(dismissed.sort((a,b) => (a.getTechname() > b.getTechname()) ? 1 : ((b.getTechname() > a.getTechname()) ? -1 : 0)));
     }
-    console.log(sorted);
     setSortedTechnicians(sorted);
   }, [isFirstCall])
 
