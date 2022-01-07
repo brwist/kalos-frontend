@@ -19,12 +19,14 @@ import {
   SQSEmail,
   SQSEmailAndDocument,
 } from '@kalos-core/kalos-rpc/compiled-protos/email_pb';
+import { Loader } from '../../Loader/main';
 
 interface props {
   loggedUserId: number;
   invoiceId: number;
   propertyId: number;
   recipientEmail: string;
+  subject?: string;
 }
 
 export const EmailInvoice: FC<props> = ({
@@ -32,6 +34,7 @@ export const EmailInvoice: FC<props> = ({
   invoiceId,
   propertyId,
   recipientEmail,
+  subject = 'Invoice from Kalos Florida',
 }) => {
   const [state, dispatch] = useReducer(reducer, {
     isLoaded: false,
@@ -62,6 +65,7 @@ export const EmailInvoice: FC<props> = ({
   );
 
   const sendInvoice = useCallback(async () => {
+    dispatch({ type: ACTIONS.SET_LOADED, data: false });
     if (!state.invoiceHTML) {
       console.error(`No invoice HTML set, returning. `);
       return;
@@ -71,19 +75,25 @@ export const EmailInvoice: FC<props> = ({
       document.setPropertyId(propertyId);
       document.setInvoiceId(invoiceId);
       let sqsEmail = new SQSEmail();
-      // Email to send the message to
       sqsEmail.setTo(recipientEmail);
-      sqsEmail.setSubject('Doc test');
+      sqsEmail.setSubject(subject);
       let req = new SQSEmailAndDocument();
       req.setEmail(sqsEmail);
       req.setDocument(document);
-      const res = await EmailClientService.SendSQSInvoiceEmail(req);
-      console.log('res: ', res);
+      await EmailClientService.SendSQSInvoiceEmail(req);
     } catch (err) {
       console.error(`An error occurred while sending out an invoice: ${err}`);
       handleError(err as string);
     }
-  }, [handleError, invoiceId, propertyId, state.invoiceHTML]);
+    dispatch({ type: ACTIONS.SET_LOADED, data: true });
+  }, [
+    handleError,
+    invoiceId,
+    propertyId,
+    recipientEmail,
+    state.invoiceHTML,
+    subject,
+  ]);
 
   useEffect(() => {
     return () => {
@@ -93,6 +103,7 @@ export const EmailInvoice: FC<props> = ({
 
   return (
     <>
+      {!state.isLoaded && <Loader />}
       <Confirm
         title="Notice"
         open={state.isConfirming}
@@ -104,7 +115,7 @@ export const EmailInvoice: FC<props> = ({
           dispatch({ type: ACTIONS.SET_IS_CONFIRMING, data: false });
         }}
       >
-        Are you sure you want to send this email?
+        Are you sure you want to send this email? (Recipient: {recipientEmail})
       </Confirm>
       <SectionBar
         title="Send Invoice Email"
