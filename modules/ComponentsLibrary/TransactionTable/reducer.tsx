@@ -48,6 +48,7 @@ export type State = {
   creatingTransaction: boolean;
   mergingTransaction: boolean;
   role: RoleType | undefined;
+  accountsPayableAdmin: boolean;
   page: number;
   error: string | undefined;
   pendingUploadPhoto: Transaction | undefined;
@@ -100,6 +101,7 @@ export enum ACTIONS {
   SET_MERGING_TRANSACTION = 'setMergingTransaction',
   SET_SEARCHING = 'setSearching',
   SET_ROLE = 'setRole',
+  SET_ACCOUNTS_PAYABLE_ADMIN = 'setAccountsPayableAdmin',
   SET_COST_CENTERS = 'setCostCenters',
   SET_CREATING_TRANSACTION = 'setCreatingTransaction',
   SET_EMPLOYEES = 'setEmployees',
@@ -140,6 +142,7 @@ export type Action =
   | { type: ACTIONS.SET_MERGING_TRANSACTION; data: boolean }
   | { type: ACTIONS.SET_SEARCHING; data: boolean }
   | { type: ACTIONS.SET_ROLE; data: RoleType }
+  | { type: ACTIONS.SET_ACCOUNTS_PAYABLE_ADMIN; data: boolean }
   | { type: ACTIONS.SET_CREATING_TRANSACTION; data: boolean }
   | {
       type: ACTIONS.SET_ORDER;
@@ -263,6 +266,7 @@ export const reducer = (state: State, action: Action) => {
         loading: action.data,
       };
     }
+
     case ACTIONS.SET_CREATING_TRANSACTION: {
       return {
         ...state,
@@ -279,6 +283,12 @@ export const reducer = (state: State, action: Action) => {
       return {
         ...state,
         role: action.data,
+      };
+    }
+    case ACTIONS.SET_ACCOUNTS_PAYABLE_ADMIN: {
+      return {
+        ...state,
+        accountsPayableAdmin: action.data,
       };
     }
     case ACTIONS.SET_ASSIGNING_USER: {
