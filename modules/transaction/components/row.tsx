@@ -21,7 +21,10 @@ import { TxnLog } from './log';
 import { TxnNotes } from './notes';
 import { getSlackID, slackNotify, EventClientService } from '../../../helpers';
 import { ENDPOINT } from '../../../constants';
-import { AccountPicker } from '../../ComponentsLibrary/Pickers/index';
+import {
+  AccountPicker,
+  DepartmentPicker,
+} from '../../ComponentsLibrary/Pickers/index';
 import { AltGallery, GalleryData } from '../../AltGallery/main';
 import { Row } from '../../ComponentsLibrary/InfoTable';
 import { Tooltip } from '../../ComponentsLibrary/Tooltip';
@@ -44,7 +47,9 @@ interface props {
   updateDepartment(id: number): Promise<void>;
   toggleLoading(cb?: () => void): void;
   editingCostCenter: boolean;
+  editingDepartment: boolean;
   toggleEditingCostCenter(): void;
+  toggleEditingDepartment(): void;
 }
 
 export function TransactionRow({
@@ -58,10 +63,13 @@ export function TransactionRow({
   updateNotes,
   acceptOverride,
   updateCostCenter,
+  updateDepartment,
+  editingDepartment,
   //jobInfo,
   userID,
   editingCostCenter,
   toggleEditingCostCenter,
+  toggleEditingDepartment,
 }: props): Row {
   const FileInput = React.createRef<HTMLInputElement>();
 
@@ -86,16 +94,16 @@ export function TransactionRow({
           'Customer: ' +
           (res.getCustomer() === undefined
             ? 'No Customer '
-            : `${res
+            : `${res.getCustomer()!.getFirstname()} ${res
                 .getCustomer()!
-                .getFirstname()} ${res.getCustomer()!.getLastname()}`);
+                .getLastname()}`);
         const property =
           'Property: ' +
           (res.getProperty() === undefined
             ? 'No Property'
-            : `${res
+            : `${res.getProperty()!.getAddress()} ${res
                 .getProperty()!
-                .getAddress()} ${res.getProperty()!.getCity()}`);
+                .getCity()}`);
         returnString = [descritpion, customer, property];
       } catch (error) {
         console.log('Not a number');
@@ -217,6 +225,10 @@ export function TransactionRow({
     await updateCostCenter(id);
     toggleEditingCostCenter();
   };
+  const handleDepartmentSelect = async (id: number) => {
+    await updateDepartment(id);
+    toggleEditingDepartment();
+  };
   const amount = prettyMoney(txn.getAmount());
   return [
     {
@@ -243,9 +255,9 @@ export function TransactionRow({
           )}
         />
       ) : txn.getCostCenter() ? (
-        `${txn
+        `${txn.getCostCenter()!.getDescription()} (${txn
           .getCostCenter()!
-          .getDescription()} (${txn.getCostCenter()!.getId()})`
+          .getId()})`
       ) : (
         ''
       ),
@@ -256,11 +268,30 @@ export function TransactionRow({
       ],
     },
     {
-      value: txn.getDepartment()
-        ? `${txn
-            .getDepartment()!
-            .getDescription()} (${txn.getDepartment()!.getClassification()})`
-        : '',
+      value: editingDepartment ? (
+        <DepartmentPicker
+          selected={txn.getDepartmentId() ? txn.getDepartmentId() : 0}
+          onSelect={handleDepartmentSelect}
+          hideInactive
+          renderItem={i => (
+            <option
+              value={i.getId()}
+              key={`${i.getDescription()}-${i.getValue()}`}
+            >
+              {i.getDescription()}
+            </option>
+          )}
+        />
+      ) : txn.getDepartment() ? (
+        `${txn.getDepartment()!.getDescription()}`
+      ) : (
+        ''
+      ),
+      actions: [
+        <IconButton key="edit" size="small" onClick={toggleEditingDepartment}>
+          {editingDepartment ? <CloseIcon /> : <EditIcon />}
+        </IconButton>,
+      ],
     },
     {
       value:
@@ -349,13 +380,15 @@ export function TransactionRow({
                     : 'Mark as correct'
                 }
               >
-                <IconButton
-                  size="small"
-                  onClick={userID === 1734 ? forceAccept : auditTxn}
-                  disabled={txn.getIsAudited() && userID !== 1734}
-                >
-                  <CheckIcon />
-                </IconButton>
+                <span>
+                  <IconButton
+                    size="small"
+                    onClick={userID === 1734 ? forceAccept : auditTxn}
+                    disabled={txn.getIsAudited() && userID !== 1734}
+                  >
+                    <CheckIcon />
+                  </IconButton>
+                </span>
               </Tooltip>,
             ]
           : []),
