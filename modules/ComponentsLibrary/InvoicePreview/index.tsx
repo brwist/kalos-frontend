@@ -19,19 +19,20 @@ import {
   SQSEmail,
   SQSEmailAndDocument,
 } from '@kalos-core/kalos-rpc/compiled-protos/email_pb';
-import { Button } from '../Button';
 
 // add any prop types here
 interface props {
   loggedUserId: number;
   propertyId: number;
   invoiceId: number;
+  onLoaded?: (invoiceHTML: string | undefined) => any;
 }
 
 export const InvoicePreview: FC<props> = ({
   loggedUserId,
   propertyId,
   invoiceId,
+  onLoaded,
 }) => {
   const [state, dispatch] = useReducer(reducer, {
     isLoaded: false,
@@ -130,8 +131,9 @@ export const InvoicePreview: FC<props> = ({
 
   const load = useCallback(async () => {
     await getInvoiceBody();
+    if (onLoaded) onLoaded(state.invoiceHTML);
     dispatch({ type: ACTIONS.SET_LOADED, data: true });
-  }, [getInvoiceBody]);
+  }, [getInvoiceBody, onLoaded, state.invoiceHTML]);
 
   useEffect(() => {
     if (!state.isLoaded) load();
