@@ -1602,7 +1602,7 @@ export const FirstCallDashboard: React.FC<Props> = function FirstCallDashboard({
                 </Typography>
                 <DispatchTechs
                   userID={loggedUserId}
-                  dismissedTechs={[]}
+                  dismissedTechs={state.techs.filter(tech=>state.firstCallInUse.includes(tech.getUserId()))}
                   techs={state.formData.availableTechs}
                   loading={false}
                   isFirstCall={true}
