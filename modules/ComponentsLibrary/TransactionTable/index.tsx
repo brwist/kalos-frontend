@@ -143,6 +143,7 @@ export const TransactionTable: FC<Props> = ({
     document1: '',
     document2: '',
     notify: 0,
+    accountsPayableAdmin: false,
     mergeDocumentAlert: '',
     costCenterData: new TransactionAccountList(),
     transactionActivityLogs: [],
@@ -528,9 +529,14 @@ export const TransactionTable: FC<Props> = ({
       const role = user
         .getPermissionGroupsList()
         .find(p => p.getType() === 'role');
-
+      const accountsPayableAdmin = user
+        .getPermissionGroupsList()
+        .find(p => p.getName() === 'AccountsPayableAdmin');
       if (role) {
         dispatch({ type: ACTIONS.SET_ROLE, data: role.getName() as RoleType });
+      }
+      if (accountsPayableAdmin) {
+        dispatch({ type: ACTIONS.SET_ACCOUNTS_PAYABLE_ADMIN, data: true });
       }
     }
 
@@ -626,6 +632,24 @@ export const TransactionTable: FC<Props> = ({
   const handleSetNotify = useCallback((notify: number) => {
     console.log('we changed notify', notify);
     dispatch({ type: ACTIONS.SET_NOTIFY, data: notify });
+  }, []);
+  const handleCheckOrderNumber = useCallback(async (orderNumber: string) => {
+    const transactionReq = new Transaction();
+    transactionReq.setOrderNumber(orderNumber);
+    transactionReq.setIsActive(1);
+    try {
+      const result = await TransactionClientService.Get(transactionReq);
+      if (result) {
+        dispatch({
+          type: ACTIONS.SET_ERROR,
+          data: `        This Order Number already exists. You can still create this transaction,
+        but it may result in duplicate transactions. It is recommended that you
+        search for the existing transaction and update it.`,
+        });
+      }
+    } catch (err) {
+      dispatch({ type: ACTIONS.SET_ERROR, data: undefined });
+    }
   }, []);
 
   const handleSetFilter = useCallback(async (d: FilterData) => {
@@ -1058,18 +1082,19 @@ export const TransactionTable: FC<Props> = ({
           department => department.getId() == newTxn.getDepartmentId(),
         );
         if (foundDepartment) {
-          const messageToSend = `A new transaction has been created in Accounts Payable that requires your attention, Order Number: ${newTxn.getOrderNumber()}, Amount: ${newTxn.getAmount()}`;
+          const messageToSend = `A new transaction has been created in Accounts Payable that requires your attention, Order Number: ${newTxn.getOrderNumber()}, Amount: ${newTxn.getAmount()} Vendor: ${newTxn.getVendor()}, Notes: ${newTxn.getNotes()}`;
           console.log(messageToSend);
           const user = new User();
           user.setId(foundDepartment.getManagerId());
-          const slackUser = await getSlackID('Austin Kempa', true);
-          const data = await getSlackList(false);
-          console.log(data);
+          const userResult = await UserClientService.Get(user);
+          const slackUser = await getSlackID(
+            `${userResult.getFirstname()} ${userResult.getLastname()}`,
+          );
           if (slackUser === '0') {
             console.log('failed to send message');
             return;
           }
-          // await slackNotify(slackUser, messageToSend);
+          await slackNotify(slackUser, messageToSend);
 
           console.log('Message sent successfully.');
         }
@@ -1149,10 +1174,6 @@ export const TransactionTable: FC<Props> = ({
   }, [state.transactionToDelete]);
 
   useEffect(() => {
-    async function refreshEverything() {
-      await load();
-      await resetTransactions();
-    }
     if (!state.loaded) {
       load();
       resetTransactions();
@@ -1680,7 +1701,7 @@ export const TransactionTable: FC<Props> = ({
           onFileLoad: data =>
             dispatch({ type: ACTIONS.SET_FILE_DATA, data: data }),
           externalButtonClicked: state.creatingTransaction,
-          onNotify: handleSetNotify,
+          onNotify: state.accountsPayableAdmin ? handleSetNotify : undefined,
           externalButton: true,
           type: new Transaction(),
           columnDefinition: {
@@ -1703,6 +1724,11 @@ export const TransactionTable: FC<Props> = ({
                 columnName: 'Cost Center ID',
                 columnType: 'number',
                 options: state.costCenters,
+              },
+              {
+                columnName: 'Order #',
+                columnType: 'text',
+                onBlur: value => handleCheckOrderNumber(value),
               },
               {
                 columnName: 'Amount',

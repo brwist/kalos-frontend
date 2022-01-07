@@ -70,6 +70,7 @@ interface Props extends Styles {
         columnName: string;
         columnType: Type;
         options?: Options;
+        onBlur?: (value: any) => void;
       }[];
     };
     onNotify?: (notifyValue: number) => void;
@@ -226,7 +227,12 @@ export const InfoTable = ({
                 return {
                   label: field,
                   name: field,
-
+                  onBlur:
+                    columnType?.length === 1
+                      ? columnType![0].onBlur
+                        ? columnType![0].onBlur
+                        : undefined
+                      : undefined,
                   type:
                     columnType?.length === 1
                       ? columnType![0].columnType
