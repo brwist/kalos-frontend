@@ -1,5 +1,5 @@
 import { DispatchableTech } from '@kalos-core/kalos-rpc/Dispatch';
-import React, { FC, useEffect, useState } from 'react';
+import React, { FC, useCallback, useEffect, useState } from 'react';
 import { Draggable, Droppable } from 'react-beautiful-dnd';
 import Table from '@material-ui/core/Table';
 import TableBody from '@material-ui/core/TableBody';
@@ -31,21 +31,28 @@ interface props {
 export const DispatchTechs: FC<props> = props => {
   const {
     techs,
+    dismissedTechs,
     loading,
     isFirstCall=false,
   } = props
 
-  const sortTechs = (techs : DispatchableTech[]) => {
-    const sorted = techs.sort((a,b) => (a.getTechname() > b.getTechname()) ? 1 : ((b.getTechname() > a.getTechname()) ? -1 : 0));
+  const sortTechs = useCallback((techs : DispatchableTech[], dismissed : DispatchableTech[]) => {
+    console.log(techs);
+    console.log(dismissed);
+    let sorted = techs.sort((a,b) => (a.getTechname() > b.getTechname()) ? 1 : ((b.getTechname() > a.getTechname()) ? -1 : 0));
+    if (isFirstCall) {
+      sorted = sorted.concat(dismissed.sort((a,b) => (a.getTechname() > b.getTechname()) ? 1 : ((b.getTechname() > a.getTechname()) ? -1 : 0)));
+    }
+    console.log(sorted);
     setSortedTechnicians(sorted);
-  }
+  }, [isFirstCall])
 
   const [sortedTechnicians, setSortedTechnicians] = useState<DispatchableTech[]>([]);
 
   useEffect(() => {
     // console.log("DispatchTechs");
-    sortTechs(techs);
-  }, [props.dismissedTechs, techs, loading]);
+    sortTechs(techs, dismissedTechs);
+  }, [dismissedTechs, techs, loading, sortTechs]);
 
   return (
     <div>
@@ -93,6 +100,7 @@ export const DispatchTechs: FC<props> = props => {
                       <Draggable
                         key={`${tech.getUserId()}`}
                         draggableId={`${tech.getUserId()}`}
+                        isDragDisabled={dismissedTechs.includes(tech) ? true : false}
                         index={index}
                       >
                         {(dragProvided, snapshot) => (
@@ -108,6 +116,7 @@ export const DispatchTechs: FC<props> = props => {
                               margin:'auto',
                               ...dragProvided.draggableProps.style,
                               textAlign:'center',
+                              opacity: dismissedTechs.includes(tech) ? 0.4 : 1,
                             }}
                             hover
                             onClick={props.handleMapRecenter ? () => props.handleMapRecenter!({lat: techLatitude, lng: techLongitude}, 12) : () => {}}
