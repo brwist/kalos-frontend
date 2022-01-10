@@ -35,6 +35,7 @@ import {
 import { RoleType } from '../index';
 import { getDepartmentName } from '@kalos-core/kalos-rpc/Common';
 import { PerDiem, PerDiemRow } from '@kalos-core/kalos-rpc/PerDiem';
+import { result } from 'lodash';
 
 interface Props {
   loggedUserId: number;
@@ -86,76 +87,32 @@ export const PerDiems: FC<Props> = ({
       week === OPTION_ALL ? undefined : week,
       toggleButton,
       'date_submitted',
-      'ASC',
+      'DESC',
     );
-    const startDay = startOfWeek(subDays(new Date(), 7), { weekStartsOn: 6 });
     const results = perDiems.getResultsList();
-    const year = +format(startDay, 'yyyy');
-    const month = +format(startDay, 'M');
-    const zipCodesList = [];
     for (let i = 0; i < results.length; i++) {
-      let zipCodes = [results[i]]
-        .reduce(
-          (aggr, pd) => [...aggr, ...pd.getRowsList()],
-          [] as PerDiemRow[],
-        )
-        .map(pdr => pdr.getZipCode());
-      for (let j = 0; j < zipCodes.length; j++) {
-        zipCodesList.push(zipCodes[j]);
-      }
-    }
-
-    const govPerDiemsTemp = await PerDiemClientService.loadGovPerDiem(
-      zipCodesList,
-      year,
-      month,
-    );
-
-    function govPerDiemByZipCode(zipCode: string) {
-      const govPerDiem = govPerDiemsTemp[zipCode];
-      if (govPerDiem) return govPerDiem;
-      return {
-        meals: MEALS_RATE,
-        lodging: 0,
-      };
-    }
-    for (let i = 0; i < results.length; i++) {
-      const year = +format(startDay, 'yyyy');
-      const month = +format(startDay, 'M');
-      const zipCodesList = [];
-      for (let i = 0; i < results.length; i++) {
-        let zipCodes = [results[i]]
-          .reduce(
-            (aggr, pd) => [...aggr, ...pd.getRowsList()],
-            [] as PerDiemRow[],
-          )
-          .map(pdr => pdr.getZipCode());
-        for (let j = 0; j < zipCodes.length; j++) {
-          zipCodesList.push(zipCodes[j]);
-        }
-      }
-      const govPerDiemsTemp = await PerDiemClientService.loadGovPerDiem(
-        zipCodesList,
+      const totalMeals = results[i].getRowsList().length * MEALS_RATE;
+      const year = +format(
+        new Date(parseISO(results[i].getDateStarted())),
+        'yyyy',
+      );
+      const month = +format(
+        new Date(parseISO(results[i].getDateStarted())),
+        'M',
+      );
+      const zipCodes = results[i].getRowsList().map(pd => pd.getZipCode());
+      const govPerDiems = await PerDiemClientService.loadGovPerDiem(
+        zipCodes,
         year,
         month,
       );
-      let totalMeals = results[i]
-        .getRowsList()
-        .reduce(
-          (aggr, pdr) => aggr + govPerDiemByZipCode(pdr.getZipCode()).meals,
-          0,
-        );
-
-      let totalLodging = results[i]
-        .getRowsList()
-        .reduce(
-          (aggr, pdr) =>
-            aggr +
-            (pdr.getMealsOnly()
-              ? 0
-              : govPerDiemByZipCode(pdr.getZipCode()).lodging),
-          0,
-        );
+      let totalLodging = 0;
+      for (let j = 0; j < results[i].getRowsList().length; j++) {
+        let row = results[i].getRowsList()[j];
+        if (row.getMealsOnly() == false) {
+          totalLodging += govPerDiems[row.getZipCode()].lodging;
+        }
+      }
       results[i].setAmountProcessedLodging(totalLodging);
       results[i].setAmountProcessedMeals(totalMeals);
     }

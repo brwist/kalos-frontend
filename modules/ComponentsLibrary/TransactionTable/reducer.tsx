@@ -48,6 +48,8 @@ export type State = {
   creatingTransaction: boolean;
   mergingTransaction: boolean;
   role: RoleType | undefined;
+  accountsPayableAdmin: boolean;
+  pendingSendNotificationForExistingTransaction: Transaction | undefined;
   page: number;
   error: string | undefined;
   pendingUploadPhoto: Transaction | undefined;
@@ -59,6 +61,7 @@ export type State = {
     | undefined;
   employees: User[];
   searching: boolean;
+  notify: number;
   assignedEmployee: number | undefined;
   selectedTransactions: Transaction[];
   status: 'Accepted' | 'Rejected' | 'Accepted / Rejected';
@@ -90,6 +93,7 @@ export enum ACTIONS {
   SET_LOADING = 'setLoading',
   SET_LOADED = 'setLoaded',
   SET_ORDER = 'setOrder',
+  SET_PENDING_SEND_NOTIFICATION_FOR_EXISTING_TRANSACTION = 'setPendingSendNotificationForExistingTransaction',
   SET_MERGE_DOCUMENT_ALERT = 'setMergeDocumentAlert',
   SET_MERGE_DOCUMENT1 = 'setMergeDocument1',
   SET_MERGE_DOCUMENT2 = 'setMergeDocument2',
@@ -99,6 +103,7 @@ export enum ACTIONS {
   SET_MERGING_TRANSACTION = 'setMergingTransaction',
   SET_SEARCHING = 'setSearching',
   SET_ROLE = 'setRole',
+  SET_ACCOUNTS_PAYABLE_ADMIN = 'setAccountsPayableAdmin',
   SET_COST_CENTERS = 'setCostCenters',
   SET_CREATING_TRANSACTION = 'setCreatingTransaction',
   SET_EMPLOYEES = 'setEmployees',
@@ -113,6 +118,7 @@ export enum ACTIONS {
   SET_ASSIGNED_EMPLOYEE = 'setAssignedEmployee',
   SET_UNIVERSAL_SEARCH = 'setUniversalSearch',
   SET_FILE_DATA = 'setFileData',
+  SET_NOTIFY = 'setNotify',
   SET_IMAGE_WAIVER_TYPE_POPUP_OPEN = 'setImageWaiverTypePopupOpen',
   SET_IMAGE_WAIVER_TYPE_FORM_DATA = 'setImageWaiverTypeFormData',
   SET_TRANSACTION_TO_SAVE = 'setTransactionToSave',
@@ -129,6 +135,11 @@ export type Action =
   | { type: ACTIONS.SET_TRANSACTION_TO_EDIT; data: Transaction | undefined }
   | { type: ACTIONS.SET_LOADING; data: boolean }
   | { type: ACTIONS.SET_LOADED; data: boolean }
+  | { type: ACTIONS.SET_NOTIFY; data: number }
+  | {
+      type: ACTIONS.SET_PENDING_SEND_NOTIFICATION_FOR_EXISTING_TRANSACTION;
+      data: Transaction | undefined;
+    }
   | {
       type: ACTIONS.UPDATE_LOCAL_STATUS;
       data: { transactionId: number; statusId: number };
@@ -137,6 +148,7 @@ export type Action =
   | { type: ACTIONS.SET_MERGING_TRANSACTION; data: boolean }
   | { type: ACTIONS.SET_SEARCHING; data: boolean }
   | { type: ACTIONS.SET_ROLE; data: RoleType }
+  | { type: ACTIONS.SET_ACCOUNTS_PAYABLE_ADMIN; data: boolean }
   | { type: ACTIONS.SET_CREATING_TRANSACTION; data: boolean }
   | {
       type: ACTIONS.SET_ORDER;
@@ -260,6 +272,7 @@ export const reducer = (state: State, action: Action) => {
         loading: action.data,
       };
     }
+
     case ACTIONS.SET_CREATING_TRANSACTION: {
       return {
         ...state,
@@ -278,10 +291,28 @@ export const reducer = (state: State, action: Action) => {
         role: action.data,
       };
     }
+    case ACTIONS.SET_ACCOUNTS_PAYABLE_ADMIN: {
+      return {
+        ...state,
+        accountsPayableAdmin: action.data,
+      };
+    }
     case ACTIONS.SET_ASSIGNING_USER: {
       return {
         ...state,
         assigningUser: action.data,
+      };
+    }
+    case ACTIONS.SET_NOTIFY: {
+      return {
+        ...state,
+        notify: action.data,
+      };
+    }
+    case ACTIONS.SET_PENDING_SEND_NOTIFICATION_FOR_EXISTING_TRANSACTION: {
+      return {
+        ...state,
+        pendingSendNotificationForExistingTransaction: action.data,
       };
     }
     case ACTIONS.SET_EMPLOYEES: {

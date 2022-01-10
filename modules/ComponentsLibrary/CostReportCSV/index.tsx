@@ -91,7 +91,6 @@ export const CostReportCSV: FC<Props> = ({ serviceCallId, onClose }) => {
     perDiems: [],
     timesheets: [],
     transactions: [],
-    lodgings: {},
     users: [],
     costCenterTotals: {},
     loadingEvent: true,
@@ -289,6 +288,7 @@ export const CostReportCSV: FC<Props> = ({ serviceCallId, onClose }) => {
           perDiemReq.setWithRows(true);
           perDiemReq.setIsActive(true);
           perDiemReq.setWithoutLimit(true);
+          perDiemReq.setPayrollProcessed(true);
           const row = new PerDiemRow();
           row.setServiceCallId(serviceCallId);
           perDiemReq.setReferenceRow(row);
@@ -302,7 +302,6 @@ export const CostReportCSV: FC<Props> = ({ serviceCallId, onClose }) => {
           timesheetReq.setWithoutLimit(true);
           timesheetReq.setReferenceNumber(serviceCallId.toString());
           timesheetReq.setIsActive(1);
-          timesheetReq.setPayrollProcessed(true);
           timesheetReq.setOrderBy('time_started');
           timesheetReq.setOrderDir('ASC');
           const tripReq = new Trip();
@@ -426,8 +425,6 @@ export const CostReportCSV: FC<Props> = ({ serviceCallId, onClose }) => {
           .filter(row => row.getServiceCallId() === serviceCallId);
         arr[i].setRowsList(tempRowList);
       }
-      const lodgings = await PerDiemClientService.loadPerDiemsLodging(arr); // first # is per diem id
-      dispatch({ type: ACTIONS.SET_LODGINGS, data: lodgings });
       for (let i = 0; i < timesheets.length; i++) {
         timesheets[i].setHoursWorked(
           roundNumber(
@@ -508,10 +505,10 @@ export const CostReportCSV: FC<Props> = ({ serviceCallId, onClose }) => {
     const totalMeals =
       state.perDiems.reduce((aggr, pd) => aggr + pd.getRowsList().length, 0) *
       MEALS_RATE;
-    const totalLodging = state.perDiems
-      .reduce((aggr, pd) => [...aggr, ...pd.getRowsList()], [] as PerDiemRow[])
-      .filter(pd => !pd.getMealsOnly())
-      .reduce((aggr, pd) => aggr + state.lodgings[pd.getId()], 0);
+    const totalLodging = state.perDiems.reduce(
+      (aggr, pd) => aggr + pd.getAmountProcessedLodging(),
+      0,
+    );
     const totalTransactions = state.transactions.reduce(
       (aggr, pd) => aggr + pd.getAmount(),
       0,
@@ -627,9 +624,8 @@ export const CostReportCSV: FC<Props> = ({ serviceCallId, onClose }) => {
         let t = state.perDiems[i];
         const rowsList = t.getRowsList();
         const totalMeals = MEALS_RATE * rowsList.length;
-        const totalLodging = rowsList.reduce(
-          (aggr, pd) =>
-            aggr + (pd.getMealsOnly() ? 0 : state.lodgings[pd.getId()]),
+        const totalLodging = state.perDiems.reduce(
+          (aggr, pd) => aggr + pd.getAmountProcessedLodging(),
           0,
         );
         let tempString =
@@ -762,10 +758,10 @@ export const CostReportCSV: FC<Props> = ({ serviceCallId, onClose }) => {
   const totalMeals =
     state.perDiems.reduce((aggr, pd) => aggr + pd.getRowsList().length, 0) *
     MEALS_RATE;
-  const totalLodging = state.perDiems
-    .reduce((aggr, pd) => [...aggr, ...pd.getRowsList()], [] as PerDiemRow[])
-    .filter(pd => !pd.getMealsOnly())
-    .reduce((aggr, pd) => aggr + state.lodgings[pd.getId()], 0);
+  const totalLodging = state.perDiems.reduce(
+    (aggr, pd) => aggr + pd.getAmountProcessedLodging(),
+    0,
+  );
   const totalTransactions = state.transactions.reduce(
     (aggr, pd) => aggr + pd.getAmount(),
     0,
@@ -896,7 +892,7 @@ export const CostReportCSV: FC<Props> = ({ serviceCallId, onClose }) => {
                 ></PrintTable>,
               ],
               ['Meals', usd(totalMeals)],
-              ['Lodging', usd(totalLodging)],
+              ['Lodging Processed', usd(totalLodging)],
               ['Tasks Billable', usd(totalTasksBillable)],
               ['Trips Total', usd(state.tripsTotal)],
               [
@@ -1000,12 +996,11 @@ export const CostReportCSV: FC<Props> = ({ serviceCallId, onClose }) => {
             )
             .map(pd => {
               const rowsList = pd.getRowsList();
-              const totalMeals = MEALS_RATE * rowsList.length;
-              const totalLodging = rowsList.reduce(
-                (aggr, pd) =>
-                  aggr + (pd.getMealsOnly() ? 0 : state.lodgings[pd.getId()]),
-                0,
+              let lodgingRows = rowsList.filter(
+                row => row.getMealsOnly() == false,
               );
+              const totalMeals = MEALS_RATE * rowsList.length;
+              const totalLodging = pd.getAmountProcessedLodging();
               if (totalMeals == 0 && totalLodging == 0) {
                 return null; // Don't show it
               }
@@ -1140,8 +1135,11 @@ export const CostReportCSV: FC<Props> = ({ serviceCallId, onClose }) => {
                           pdr.getZipCode(),
                           pdr.getMealsOnly() ? 'Yes' : 'No',
                           usd(MEALS_RATE),
-                          state.lodgings[pdr.getId()]
-                            ? usd(state.lodgings[pdr.getId()])
+                          pdr.getMealsOnly() === false
+                            ? usd(
+                                pd.getAmountProcessedLodging() /
+                                  lodgingRows.length,
+                              )
                             : '-',
                           pdr.getNotes(),
                         ];
@@ -1314,7 +1312,7 @@ export const CostReportCSV: FC<Props> = ({ serviceCallId, onClose }) => {
               );
             })}
           <PrintParagraph tag="h2" key="tasksHeader">
-            Billable Tasks
+            Spiffs/Bonus/Commission
           </PrintParagraph>
           {state.tasks &&
             state.tasks.map(task => {
@@ -1821,15 +1819,11 @@ export const CostReportCSV: FC<Props> = ({ serviceCallId, onClose }) => {
                         .filter(perdiem => perdiem.getUserId() == user.getId())
                         .map(pd => {
                           const rowsList = pd.getRowsList();
-                          const totalMeals = MEALS_RATE * rowsList.length;
-                          const totalLodging = rowsList.reduce(
-                            (aggr, pd) =>
-                              aggr +
-                              (pd.getMealsOnly()
-                                ? 0
-                                : state.lodgings[pd.getId()]),
-                            0,
+                          const lodgingRows = rowsList.filter(
+                            row => row.getMealsOnly() == false,
                           );
+                          const totalMeals = MEALS_RATE * rowsList.length;
+                          const totalLodging = pd.getAmountProcessedLodging();
                           return (
                             <div key={pd.getId().toString() + 'div'}>
                               <div
@@ -1990,9 +1984,13 @@ export const CostReportCSV: FC<Props> = ({ serviceCallId, onClose }) => {
                                       },
                                       { value: usd(MEALS_RATE) },
                                       {
-                                        value: state.lodgings[pdr.getId()]
-                                          ? usd(state.lodgings[pdr.getId()])
-                                          : '-',
+                                        value:
+                                          pdr.getMealsOnly() === false
+                                            ? usd(
+                                                pd.getAmountProcessedLodging() /
+                                                  lodgingRows.length,
+                                              )
+                                            : '-',
                                       },
                                       { value: pdr.getNotes() },
                                     ];

@@ -1,4 +1,12 @@
-import React, { FC, useState, useCallback, useEffect, ReactNode } from 'react';
+import React, {
+  FC,
+  useState,
+  useCallback,
+  useEffect,
+  ReactNode,
+  useReducer,
+} from 'react';
+import { reducer, ACTIONS } from './reducer';
 import uniqueId from 'lodash/uniqueId';
 import IconButton from '@material-ui/core/IconButton';
 import LinkIcon from '@material-ui/icons/Link';
@@ -7,6 +15,10 @@ import EditIcon from '@material-ui/icons/Edit';
 import DeleteIcon from '@material-ui/icons/Delete';
 import SearchIcon from '@material-ui/icons/Search';
 import ArrowUpwardIcon from '@material-ui/icons/ArrowUpward';
+import Button from '@material-ui/core/Button';
+import ExpandLess from '@material-ui/icons/ExpandLess';
+import ExpandMore from '@material-ui/icons/ExpandMore';
+import Collapse from '@material-ui/core/Collapse/Collapse';
 import ArrowDownwardIcon from '@material-ui/icons/ArrowDownward';
 import {
   ServiceItemClient,
@@ -125,20 +137,25 @@ export const ServiceItems: FC<Props> = props => {
     asideContent,
     viewedAsCustomer = false,
   } = props;
-  const [entries, setEntries] = useState<ServiceItem[]>([]);
-  const [repairs, setRepairs] = useState<Repair[]>(repairsInitial);
-  const [materials, setMaterials] = useState<Material[]>([]);
-  const [materialsIds, setMaterialsIds] = useState<number[]>([]);
-  const [loadingMaterials, setLoadingMaterials] = useState<boolean>(false);
-  const [loaded, setLoaded] = useState<boolean>(false);
-  const [loading, setLoading] = useState<boolean>(true);
-  const [error, setError] = useState<boolean>(false);
-  const [editing, setEditing] = useState<ServiceItem>();
-  const [deletingEntry, setDeletingEntry] = useState<ServiceItem>();
-  const [saving, setSaving] = useState<boolean>(false);
-  const [linkId, setLinkId] = useState<number>();
-  const [count, setCount] = useState<number>(0);
-  const [page, setPage] = useState<number>(0);
+
+  const [state, dispatch] = useReducer(reducer, {
+    entries: [],
+    repairs: repairsInitial,
+    materials: [],
+    materialsIds: [],
+    loadingMaterials: false,
+    loaded: false,
+    loading: true,
+    saving: false,
+    error: false,
+    editing: undefined,
+    deletingEntry: undefined,
+    linkId: undefined,
+    count: 0,
+    page: 0,
+    readingsDropdowns: [],
+  });
+
   const [selected, setSelected] = useState<ServiceItem[]>(
     selectedInitial || [],
   );
@@ -146,29 +163,29 @@ export const ServiceItems: FC<Props> = props => {
   const handleMaterialChange = useCallback(
     (idx: number) => (data: Material) => {
       const temp = makeSafeFormObject(data, new Material());
-      const newMaterials = [...materials];
+      const newMaterials = [...state.materials];
       newMaterials[idx] = temp;
-      setMaterials(newMaterials);
+      dispatch({ type: ACTIONS.SET_MATERIALS, data: newMaterials });
     },
-    [materials, setMaterials],
+    [state.materials],
   );
 
   const handleAddMaterial = useCallback(() => {
     const newMaterial = new Material();
     newMaterial.setId(Date.now());
-    console.log('we are adding');
-    const newMaterials = [...materials, newMaterial];
-    setMaterials(newMaterials);
-  }, [materials, setMaterials]);
+    const newMaterials = [...state.materials, newMaterial];
+    dispatch({ type: ACTIONS.SET_MATERIALS, data: newMaterials });
+  }, [state.materials]);
 
   const handleRemoveMaterial = useCallback(
     (idx: number) => () => {
-      setMaterials(materials.filter((_, idy) => idx !== idy));
+      const newMaterials = state.materials.filter((_, idy) => idx !== idy);
+      dispatch({ type: ACTIONS.SET_MATERIALS, data: newMaterials });
     },
-    [materials, setMaterials],
+    [state.materials],
   );
 
-  const MATERIALS_SCHEMA = materials
+  const MATERIALS_SCHEMA = state.materials
     .map(
       (_, idx): Schema<ServiceItem> => [
         [
@@ -184,7 +201,7 @@ export const ServiceItems: FC<Props> = props => {
                     onClick: handleRemoveMaterial(idx),
                     compact: true,
                     size: 'xsmall',
-                    disabled: saving,
+                    disabled: state.saving,
                   },
                 ],
           },
@@ -193,11 +210,11 @@ export const ServiceItems: FC<Props> = props => {
           {
             content: (
               <PlainForm<Material>
-                key={materials[idx].getId()}
+                key={state.materials[idx].getId()}
                 schema={MATERIAL_SCHEMA}
-                data={materials[idx]}
+                data={state.materials[idx]}
                 onChange={handleMaterialChange(idx)}
-                disabled={saving}
+                disabled={state.saving}
                 readOnly={viewedAsCustomer}
               />
             ),
@@ -266,12 +283,12 @@ export const ServiceItems: FC<Props> = props => {
                 variant: 'outlined',
                 compact: true,
                 onClick: handleAddMaterial,
-                disabled: saving,
+                disabled: state.saving,
               },
             ],
       },
     ],
-    ...(loadingMaterials
+    ...(state.loadingMaterials
       ? [
           [
             {
@@ -301,30 +318,36 @@ export const ServiceItems: FC<Props> = props => {
   ];
 
   const load = useCallback(async () => {
-    setLoading(true);
+    dispatch({ type: ACTIONS.SET_LOADING, data: true });
     const entry = new ServiceItem();
     entry.setPropertyId(propertyId);
-    entry.setPageNumber(page);
+    entry.setPageNumber(state.page);
     entry.setIsActive(1);
     try {
       const response = await ServiceItemClientService.BatchGet(entry);
       const resultsList = response.getResultsList();
+      const mappedResults = resultsList.map(serviceItem => ({
+        serviceItemId: serviceItem.getId(),
+        active: 0,
+      }));
+      dispatch({ type: ACTIONS.SET_READINGS_DROPDOWNS, data: mappedResults });
+
       const count = response.getTotalCount();
-      setEntries(resultsList.sort(sort));
-      setCount(count);
-      setLoading(false);
-      setLoaded(true);
+      dispatch({ type: ACTIONS.SET_ENTRIES, data: resultsList.sort(sort) });
+      dispatch({ type: ACTIONS.SET_COUNT, data: count });
+      dispatch({ type: ACTIONS.SET_LOADING, data: false });
+      dispatch({ type: ACTIONS.SET_LOADED, data: true });
     } catch (e) {
-      setError(true);
-      setLoading(false);
+      dispatch({ type: ACTIONS.SET_ERROR, data: true });
+      dispatch({ type: ACTIONS.SET_LOADING, data: false });
     }
-  }, [propertyId, page]);
+  }, [propertyId, state.page]);
 
   useEffect(() => {
-    if (!loaded) {
+    if (!state.loaded) {
       load();
     }
-  }, [loaded, load]);
+  }, [state.loaded, load]);
 
   const handleMaterials = async (
     materials: Material[],
@@ -381,8 +404,8 @@ export const ServiceItems: FC<Props> = props => {
 
   const handleSave = useCallback(
     async (data: ServiceItem) => {
-      if (editing) {
-        setSaving(true);
+      if (state.editing) {
+        dispatch({ type: ACTIONS.SET_SAVING, data: true });
 
         //onst entry = editing;
 
@@ -390,16 +413,16 @@ export const ServiceItems: FC<Props> = props => {
         if (typeof entry.getBrand() === 'function') {
           //for some reason, if the form value hasn't changed,it throws an
           //error, this prevents the error
-          entry = editing;
+          entry = state.editing;
         }
         entry.setPropertyId(propertyId);
-        const isNew = !editing.getId();
+        const isNew = !state.editing.getId();
         if (!isNew) {
-          entry.setId(editing.getId());
+          entry.setId(state.editing.getId());
         } else {
           const sortOrder = Math.max(
-            entries[entries.length - 1].getSortOrder() + 1,
-            entries.length,
+            state.entries[state.entries.length - 1].getSortOrder() + 1,
+            state.entries.length,
           );
           entry.setSortOrder(sortOrder);
           entry.addFieldMask('SortOrder');
@@ -407,30 +430,29 @@ export const ServiceItems: FC<Props> = props => {
         const id = await ServiceItemClientService[isNew ? 'Create' : 'Update'](
           entry,
         );
-        await handleMaterials(materials, materialsIds, id.getId());
-        setSaving(false);
-        setEditing(undefined);
+        await handleMaterials(state.materials, state.materialsIds, id.getId());
+        dispatch({ type: ACTIONS.SET_SAVING, data: false });
+        dispatch({ type: ACTIONS.SET_EDITING, data: undefined });
         await load();
       }
     },
     [
-      editing,
-      setSaving,
+      state.editing,
       propertyId,
-      entries,
-      setEditing,
+      state.entries,
       load,
-      materials,
-      materialsIds,
+      state.materials,
+      state.materialsIds,
     ],
   );
 
   const handleDelete = useCallback(async () => {
-    setDeletingEntry(undefined);
-    if (deletingEntry) {
-      setLoading(true);
+    dispatch({ type: ACTIONS.SET_DELETING_ENTRY, data: undefined });
+    const deleting = state.deletingEntry;
+    if (deleting) {
+      dispatch({ type: ACTIONS.SET_LOADING, data: true });
       const reading = new Reading();
-      reading.setServiceItemId(deletingEntry.getId());
+      reading.setServiceItemId(deleting.getId());
       const response = await ReadingClientService.BatchGet(reading);
       const readingIds = response.getResultsList().map(res => res.getId());
       await Promise.all(
@@ -449,27 +471,19 @@ export const ServiceItems: FC<Props> = props => {
           return await ReadingClientService.Delete(reading);
         }),
       );
-      const newRepairs = repairs.filter(
-        ({ serviceItemId }) => serviceItemId !== deletingEntry.getId(),
+      const newRepairs = state.repairs.filter(
+        ({ serviceItemId }) => serviceItemId !== deleting.getId(),
       );
-      setRepairs(newRepairs);
+      dispatch({ type: ACTIONS.SET_REPAIRS, data: newRepairs });
       if (onRepairsChange) {
         onRepairsChange(newRepairs);
       }
       const entry = new ServiceItem();
-      entry.setId(deletingEntry.getId());
+      entry.setId(deleting.getId());
       await ServiceItemClientService.Delete(entry);
       await load();
     }
-  }, [
-    setDeletingEntry,
-    deletingEntry,
-    setLoading,
-    load,
-    repairs,
-    setRepairs,
-    onRepairsChange,
-  ]);
+  }, [state.deletingEntry, load, state.repairs, onRepairsChange]);
 
   const handleSelectedChange = useCallback(
     (entry: ServiceItem) => () => {
@@ -496,9 +510,9 @@ export const ServiceItems: FC<Props> = props => {
 
   const handleReorder = useCallback(
     (idx: number, step: number) => async () => {
-      setLoading(true);
-      const currentItem = entries[idx];
-      const nextItem = entries[idx + step];
+      dispatch({ type: ACTIONS.SET_LOADING, data: true });
+      const currentItem = state.entries[idx];
+      const nextItem = state.entries[idx + step];
       const entry = new ServiceItem();
       entry.setFieldMaskList(['SortOrder']);
       entry.setId(currentItem.getId());
@@ -509,12 +523,13 @@ export const ServiceItems: FC<Props> = props => {
       await ServiceItemClientService.Update(entry);
       await load();
     },
-    [setLoading, entries, load],
+    [state.entries, load],
   );
 
   const handleSetLinkId = useCallback(
-    (linkId?: number) => () => setLinkId(linkId),
-    [setLinkId],
+    (linkId?: number) => () =>
+      dispatch({ type: ACTIONS.SET_LINK_ID, data: linkId }),
+    [],
   );
 
   const handleAddRepair = useCallback(
@@ -527,88 +542,89 @@ export const ServiceItems: FC<Props> = props => {
         description: '',
         price: 0,
       };
-      const newRepairs = [...repairs, repair];
-      setRepairs(newRepairs);
+      const newRepairs = [...state.repairs, repair];
+      dispatch({ type: ACTIONS.SET_REPAIRS, data: newRepairs });
       if (onRepairsChange) {
         onRepairsChange(newRepairs);
       }
     },
-    [repairs, onRepairsChange],
+    [state.repairs, onRepairsChange],
   );
 
   const handleDeleteRepair = useCallback(
-    ({ id }: Repair) => () => {
-      const newRepairs = repairs.filter(item => item.id !== id);
-      setRepairs(newRepairs);
-      if (onRepairsChange) {
-        onRepairsChange(newRepairs);
-      }
-    },
-    [repairs, onRepairsChange],
+    ({ id }: Repair) =>
+      () => {
+        const newRepairs = state.repairs.filter(item => item.id !== id);
+        dispatch({ type: ACTIONS.SET_REPAIRS, data: newRepairs });
+        if (onRepairsChange) {
+          onRepairsChange(newRepairs);
+        }
+      },
+    [state.repairs, onRepairsChange],
   );
 
   const handleChangeRepair = useCallback(
     (repair: Repair) => (data: Repair) => {
-      const newRepairs = repairs.map(item =>
+      const newRepairs = state.repairs.map(item =>
         item === repair ? { ...item, ...data } : item,
       );
-      setRepairs(newRepairs);
+      dispatch({ type: ACTIONS.SET_REPAIRS, data: newRepairs });
       if (onRepairsChange) {
         onRepairsChange(newRepairs);
       }
     },
-    [setRepairs, repairs, onRepairsChange],
+    [state.repairs, onRepairsChange],
   );
 
-  const handleChangePage = useCallback(
-    (page: number) => {
-      setPage(page);
-      setLoaded(false);
-    },
-    [setPage, setLoaded],
-  );
+  const handleChangePage = useCallback((page: number) => {
+    dispatch({ type: ACTIONS.SET_PAGE, data: page });
+    dispatch({ type: ACTIONS.SET_LOADED, data: false });
+  }, []);
 
   const handleEditing = useCallback(
     (editing?: ServiceItem) => async () => {
       console.log(editing);
       if (editing === undefined) {
         console.log('we set it to undefined');
-        setEditing(undefined);
+        dispatch({ type: ACTIONS.SET_EDITING, data: undefined });
       }
 
       if (editing && typeof editing.getId === 'function') {
         console.log('we got an acutal value');
-        setEditing(editing);
+        dispatch({ type: ACTIONS.SET_EDITING, data: editing });
       } else if (editing != undefined) {
         console.log('we are creating a new one');
-        setEditing(new ServiceItem());
+        dispatch({ type: ACTIONS.SET_EDITING, data: new ServiceItem() });
       }
       if (editing && typeof editing.getId === 'function') {
         const entry = new Material();
         entry.setServiceItemId(editing.getId());
-        setLoadingMaterials(true);
+        dispatch({ type: ACTIONS.SET_LOADING_MATERIALS, data: true });
         const resultsList = (
           await MaterialClientService.BatchGet(entry)
         ).getResultsList();
-        setMaterials(resultsList);
-        setMaterialsIds(resultsList.map(id => id.getId()));
-        setLoadingMaterials(false);
+        dispatch({ type: ACTIONS.SET_MATERIALS, data: resultsList });
+        const ids = resultsList.map(id => id.getId());
+        dispatch({ type: ACTIONS.SET_MATERIALS_IDS, data: ids });
+
+        dispatch({ type: ACTIONS.SET_LOADING_MATERIALS, data: false });
       } else {
-        setMaterials([]);
-        setMaterialsIds([]);
+        dispatch({ type: ACTIONS.SET_MATERIALS, data: [] });
+        dispatch({ type: ACTIONS.SET_MATERIALS_IDS, data: [] });
       }
     },
-    [setEditing, setMaterials],
+    [],
   );
 
   const setDeleting = useCallback(
-    (deletingEntry?: ServiceItem) => () => setDeletingEntry(deletingEntry),
-    [setDeletingEntry],
+    (deletingEntry?: ServiceItem) => () =>
+      dispatch({ type: ACTIONS.SET_DELETING_ENTRY, data: deletingEntry }),
+    [],
   );
 
   const makeData = () => {
     const data: Data = [];
-    entries.forEach((entry, idx) => {
+    state.entries.forEach((entry, idx) => {
       // const { id, type: value } = entry;
       const id = entry.getId();
       const value = entry.getType();
@@ -646,7 +662,7 @@ export const ServiceItems: FC<Props> = props => {
                   <IconButton
                     style={{ marginRight: 4 }}
                     size="small"
-                    disabled={idx === entries.length - 1}
+                    disabled={idx === state.entries.length - 1}
                     onClick={handleReorder(idx, 1)}
                   >
                     <ArrowDownwardIcon />
@@ -654,54 +670,123 @@ export const ServiceItems: FC<Props> = props => {
                 </>
               )}
               <span>{value}</span>
+
+              <div key="ReadingsDropdown">
+                <Collapse
+                  key={entry.getId().toString() + 'collapse'}
+                  in={
+                    state.readingsDropdowns.find(
+                      dropdown => dropdown.serviceItemId === entry.getId(),
+                    )?.active == 1
+                      ? true
+                      : false
+                  }
+                >
+                  <div>
+                    <ServiceItemReadings
+                      {...props}
+                      serviceItemId={entry.getId()}
+                      onClose={() => {
+                        let tempDropDowns = state.readingsDropdowns;
+                        const dropdown = state.readingsDropdowns.findIndex(
+                          dropdown => dropdown.serviceItemId === entry.getId(),
+                        );
+                        if (tempDropDowns[dropdown]) {
+                          if (tempDropDowns[dropdown].active == 0)
+                            tempDropDowns[dropdown].active = 1;
+                          else tempDropDowns[dropdown].active = 0;
+                        }
+                        console.log(tempDropDowns);
+                        dispatch({
+                          type: ACTIONS.SET_READINGS_DROPDOWNS,
+                          data: tempDropDowns,
+                        });
+                      }}
+                    />
+                  </div>
+                </Collapse>
+              </div>
             </>
           ),
-          actions: [
-            ...(repair
-              ? [
-                  <IconButton
-                    key={3}
-                    style={{ marginLeft: 4 }}
-                    size="small"
-                    onClick={handleAddRepair(entry)}
-                    disabled={disableRepair}
-                  >
-                    <AddIcon />
-                  </IconButton>,
-                ]
-              : []),
-            <IconButton
-              key={0}
-              style={{ marginLeft: 4 }}
-              size="small"
-              onClick={handleSetLinkId(id)}
-            >
-              <LinkIcon />
-            </IconButton>,
-            <IconButton
-              key={1}
-              style={{ marginLeft: 4 }}
-              size="small"
-              onClick={handleEditing(entry)}
-            >
-              {viewedAsCustomer ? <SearchIcon /> : <EditIcon />}
-            </IconButton>,
-            ...(viewedAsCustomer
+          actions:
+            state.readingsDropdowns.find(
+              dropdown => dropdown.serviceItemId === entry.getId(),
+            )?.active == 1
               ? []
               : [
+                  <Button
+                    key={'dropDownbutton' + entry.getId().toString()}
+                    onClick={() => {
+                      let tempDropDowns = state.readingsDropdowns;
+                      const dropdown = state.readingsDropdowns.findIndex(
+                        dropdown => dropdown.serviceItemId === entry.getId(),
+                      );
+                      if (tempDropDowns[dropdown]) {
+                        if (tempDropDowns[dropdown].active == 0)
+                          tempDropDowns[dropdown].active = 1;
+                        else tempDropDowns[dropdown].active = 0;
+                      }
+                      console.log(tempDropDowns);
+                      dispatch({
+                        type: ACTIONS.SET_READINGS_DROPDOWNS,
+                        data: tempDropDowns,
+                      });
+                    }}
+                  >
+                    Readings
+                    {state.readingsDropdowns.find(
+                      dropdown => dropdown.serviceItemId === entry.getId(),
+                    )!.active == 1 ? (
+                      <ExpandLess></ExpandLess>
+                    ) : (
+                      <ExpandMore></ExpandMore>
+                    )}
+                  </Button>,
+                  ...(repair
+                    ? [
+                        <IconButton
+                          key={3}
+                          style={{ marginLeft: 4 }}
+                          size="small"
+                          onClick={handleAddRepair(entry)}
+                          disabled={disableRepair}
+                        >
+                          <AddIcon />
+                        </IconButton>,
+                      ]
+                    : []),
                   <IconButton
-                    key={2}
+                    key={0}
                     style={{ marginLeft: 4 }}
                     size="small"
-                    onClick={setDeleting(entry)}
+                    onClick={handleSetLinkId(id)}
                   >
-                    <DeleteIcon />
+                    <LinkIcon />
                   </IconButton>,
-                ]),
-          ],
+                  <IconButton
+                    key={1}
+                    style={{ marginLeft: 4 }}
+                    size="small"
+                    onClick={handleEditing(entry)}
+                  >
+                    {viewedAsCustomer ? <SearchIcon /> : <EditIcon />}
+                  </IconButton>,
+                  ...(viewedAsCustomer
+                    ? []
+                    : [
+                        <IconButton
+                          key={2}
+                          style={{ marginLeft: 4 }}
+                          size="small"
+                          onClick={setDeleting(entry)}
+                        >
+                          <DeleteIcon />
+                        </IconButton>,
+                      ]),
+                ],
         },
       ]);
-      repairs
+      state.repairs
         .filter(({ serviceItemId }) => serviceItemId === id)
         .forEach(repair => {
           data.push([
@@ -731,7 +816,7 @@ export const ServiceItems: FC<Props> = props => {
     });
     return data;
   };
-  const data: Data = loading || loadingProp ? makeFakeRows() : makeData();
+  const data: Data = state.loading || loadingProp ? makeFakeRows() : makeData();
   return (
     <div className={className}>
       <SectionBar
@@ -742,18 +827,18 @@ export const ServiceItems: FC<Props> = props => {
             : [
                 ...actions.map(item => ({
                   ...item,
-                  disabled: loading || loadingProp,
+                  disabled: state.loading || loadingProp,
                 })),
                 {
                   label: 'Add',
                   onClick: handleEditing({} as ServiceItem),
-                  disabled: loading || loadingProp,
+                  disabled: state.loading || loadingProp,
                 },
               ]
         }
         pagination={{
-          count,
-          page,
+          count: state.count,
+          page: state.page,
           rowsPerPage: ROWS_PER_PAGE,
           onPageChange: handleChangePage,
         }}
@@ -763,60 +848,58 @@ export const ServiceItems: FC<Props> = props => {
         {children}
         <InfoTable
           data={data}
-          loading={loading || loadingProp}
-          error={error}
+          loading={state.loading || loadingProp}
+          error={state.error}
           compact
           hoverable
         />
       </SectionBar>
-      {linkId && (
+      {state.linkId && (
         <Modal open onClose={handleSetLinkId(undefined)}>
           <ServiceItemLinks
             kind="Service Item Link"
-            title={entries.find(id => id.getId() === linkId)?.getType()}
-            serviceItemId={linkId}
+            title={state.entries
+              .find(id => id.getId() === state.linkId)
+              ?.getType()}
+            serviceItemId={state.linkId}
             onClose={handleSetLinkId(undefined)}
             viewedAsCustomer={viewedAsCustomer}
           />
         </Modal>
       )}
-      {editing && (
+      {state.editing && (
         <Modal
           open
           onClose={handleEditing(undefined)}
-          fullScreen={!viewedAsCustomer}
+          //fullScreen={!viewedAsCustomer}
         >
           <div className="ServiceItemsModal">
             <Form<ServiceItem>
               title={`${
-                editing.getId() ? (viewedAsCustomer ? 'View' : 'Edit') : 'Add'
+                state.editing.getId()
+                  ? viewedAsCustomer
+                    ? 'View'
+                    : 'Edit'
+                  : 'Add'
               } Service Item`}
               schema={SCHEMA}
-              data={editing}
+              data={state.editing}
               onSave={handleSave}
               onClose={handleEditing(undefined)}
-              disabled={saving}
+              disabled={state.saving}
               className="ServiceItemsForm"
               readOnly={viewedAsCustomer}
             />
-            {!viewedAsCustomer && editing.getId() && (
-              <div className="ServiceItemsReadings">
-                <ServiceItemReadings
-                  {...props}
-                  serviceItemId={editing.getId()}
-                />
-              </div>
-            )}
           </div>
         </Modal>
       )}
-      {deletingEntry && (
+      {state.deletingEntry && (
         <ConfirmDelete
           open
           onClose={setDeleting()}
           onConfirm={handleDelete}
           kind="Service Item"
-          name={deletingEntry.getType()}
+          name={state.deletingEntry.getType()}
         />
       )}
     </div>

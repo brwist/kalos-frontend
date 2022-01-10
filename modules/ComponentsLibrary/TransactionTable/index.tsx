@@ -47,7 +47,10 @@ import {
   EmailClientService,
   uploadPhotoToExistingTransaction,
   DevlogClientService,
+  getSlackID,
+  slackNotify,
   TransactionAccountClientService,
+  getSlackList,
 } from '../../../helpers';
 import { AltGallery } from '../../AltGallery/main';
 import { Tooltip } from '../../ComponentsLibrary/Tooltip';
@@ -57,6 +60,7 @@ import { TxnLog } from '../../transaction/components/log';
 import { TxnNotes } from '../../transaction/components/notes';
 import { prettyMoney } from '../../transaction/components/row';
 import { CompareTransactions } from '../CompareTransactions';
+import { Confirm } from '../Confirm';
 import { Data, InfoTable } from '../InfoTable';
 import { Alert } from '../Alert';
 import { Modal } from '../Modal';
@@ -81,7 +85,7 @@ import { truncateSync } from 'fs';
 import { getMimeType } from '@kalos-core/kalos-rpc/Common';
 import { pdf } from '@react-pdf/renderer';
 import { NULL_TIME_VALUE } from '../Timesheet/constants';
-
+import NotificationsActiveIcon from '@material-ui/icons/NotificationsActive';
 export interface Props {
   loggedUserId: number;
   isSelector?: boolean; // Is this a selector table (checkboxes that return in on-change)?
@@ -139,6 +143,8 @@ export const TransactionTable: FC<Props> = ({
     openMerge: false,
     document1: '',
     document2: '',
+    notify: 0,
+    accountsPayableAdmin: false,
     mergeDocumentAlert: '',
     costCenterData: new TransactionAccountList(),
     transactionActivityLogs: [],
@@ -148,6 +154,7 @@ export const TransactionTable: FC<Props> = ({
     creatingTransaction: false,
     mergingTransaction: false,
     pendingUploadPhoto: undefined,
+    pendingSendNotificationForExistingTransaction: undefined,
     role: undefined,
     orderDir: 'ASC',
     orderBy: 'vendor, timestamp',
@@ -524,9 +531,14 @@ export const TransactionTable: FC<Props> = ({
       const role = user
         .getPermissionGroupsList()
         .find(p => p.getType() === 'role');
-
+      const accountsPayableAdmin = user
+        .getPermissionGroupsList()
+        .find(p => p.getName() === 'AccountsPayableAdmin');
       if (role) {
         dispatch({ type: ACTIONS.SET_ROLE, data: role.getName() as RoleType });
+      }
+      if (accountsPayableAdmin) {
+        dispatch({ type: ACTIONS.SET_ACCOUNTS_PAYABLE_ADMIN, data: true });
       }
     }
 
@@ -619,7 +631,59 @@ export const TransactionTable: FC<Props> = ({
     },
     [],
   );
+  const handleSetNotify = useCallback((notify: number) => {
+    dispatch({ type: ACTIONS.SET_NOTIFY, data: notify });
+  }, []);
+  const handleCheckOrderNumber = useCallback(async (orderNumber: string) => {
+    const transactionReq = new Transaction();
+    transactionReq.setOrderNumber(orderNumber);
+    transactionReq.setIsActive(1);
+    try {
+      const result = await TransactionClientService.Get(transactionReq);
+      if (result) {
+        dispatch({
+          type: ACTIONS.SET_ERROR,
+          data: `This Order Number already exists. You can still create this transaction,
+        but it may result in duplicate transactions. It is recommended that you
+        search for the existing transaction and update it.`,
+        });
+      }
+    } catch (err) {
+      dispatch({ type: ACTIONS.SET_ERROR, data: undefined });
+    }
+  }, []);
+  const handleNotifyUserOfExistingTransaction = useCallback(
+    async (txn: Transaction) => {
+      const foundDepartment = state.departments.find(
+        department => department.getId() == txn.getDepartmentId(),
+      );
+      if (foundDepartment) {
+        const messageToSend = `A new transaction has been created in Accounts Payable that requires your attention, *Order Number:${txn.getOrderNumber()}*, Amount: ${txn.getAmount()} *Vendor: ${txn.getVendor()}*, *Notes: ${txn.getNotes()}*`;
+        console.log(messageToSend);
+        const user = new User();
+        user.setId(foundDepartment.getManagerId());
+        const userResult = await UserClientService.Get(user);
+        const slackUser = await getSlackID(
+          `${userResult.getFirstname()} ${userResult.getLastname()}`,
+        );
+        if (slackUser === '0') {
+          console.log('failed to send message');
+          dispatch({
+            type: ACTIONS.SET_ERROR,
+            data: 'Failed to Send Message, could not find user in Slack',
+          });
+        }
+        await slackNotify(slackUser, messageToSend);
 
+        console.log('Message sent successfully.');
+      }
+      dispatch({
+        type: ACTIONS.SET_PENDING_SEND_NOTIFICATION_FOR_EXISTING_TRANSACTION,
+        data: undefined,
+      });
+    },
+    [state.departments],
+  );
   const handleSetFilter = useCallback(async (d: FilterData) => {
     if (!d.week) {
       d.week = OPTION_ALL;
@@ -1034,10 +1098,42 @@ export const TransactionTable: FC<Props> = ({
         console.log('new date', newTimestamp);
         newTxn.setTimestamp(newTimestamp);
       }
+
       newTxn.setOrderNumber(saved['Order #']);
       newTxn.setAssignedEmployeeId(loggedUserId);
-      newTxn.setOwnerId(saved['Purchaser']);
+      if (saved['Purchaser'] == null || saved['Purchaser'] == '') {
+        newTxn.setOwnerId(loggedUserId);
+      } else {
+        newTxn.setOwnerId(saved['Purchaser']);
+      }
       newTxn.setDepartmentId(saved['Department']);
+      if (state.notify == 1 && newTxn.getDepartmentId() != 0) {
+        console.log('we should notify');
+        dispatch({ type: ACTIONS.SET_NOTIFY, data: 0 });
+        const foundDepartment = state.departments.find(
+          department => department.getId() == newTxn.getDepartmentId(),
+        );
+        if (foundDepartment) {
+          const messageToSend = `A new transaction has been created in Accounts Payable that requires your attention, Order Number: ${newTxn.getOrderNumber()}, Amount: ${newTxn.getAmount()} Vendor: ${newTxn.getVendor()}, Notes: ${newTxn.getNotes()}`;
+          console.log(messageToSend);
+          const user = new User();
+          user.setId(foundDepartment.getManagerId());
+          const userResult = await UserClientService.Get(user);
+          const slackUser = await getSlackID(
+            `${userResult.getFirstname()} ${userResult.getLastname()}`,
+          );
+          if (slackUser === '0') {
+            console.log('failed to send message');
+            dispatch({
+              type: ACTIONS.SET_ERROR,
+              data: 'Failed to Send Message, could not find user in Slack',
+            });
+          }
+          await slackNotify(slackUser, messageToSend);
+
+          console.log('Message sent successfully.');
+        }
+      }
       newTxn.setJobId(saved['Job #']);
       newTxn.setNotes(saved['Notes']);
       newTxn.setCostCenterId(saved['Cost Center ID']);
@@ -1090,7 +1186,7 @@ export const TransactionTable: FC<Props> = ({
       refresh();
       return res;
     },
-    [loggedUserId, resetTransactions, refresh],
+    [loggedUserId, resetTransactions, state.departments, state.notify, refresh],
   );
 
   const deleteTransaction = useCallback(async () => {
@@ -1113,10 +1209,6 @@ export const TransactionTable: FC<Props> = ({
   }, [state.transactionToDelete]);
 
   useEffect(() => {
-    async function refreshEverything() {
-      await load();
-      await resetTransactions();
-    }
     if (!state.loaded) {
       load();
       resetTransactions();
@@ -1461,6 +1553,7 @@ export const TransactionTable: FC<Props> = ({
                 data: undefined,
               })
             }
+            changeCreator={state.accountsPayableAdmin}
           />
         </Modal>
       )}
@@ -1644,6 +1737,7 @@ export const TransactionTable: FC<Props> = ({
           onFileLoad: data =>
             dispatch({ type: ACTIONS.SET_FILE_DATA, data: data }),
           externalButtonClicked: state.creatingTransaction,
+          onNotify: state.accountsPayableAdmin ? handleSetNotify : undefined,
           externalButton: true,
           type: new Transaction(),
           columnDefinition: {
@@ -1666,6 +1760,11 @@ export const TransactionTable: FC<Props> = ({
                 columnName: 'Cost Center ID',
                 columnType: 'number',
                 options: state.costCenters,
+              },
+              {
+                columnName: 'Order #',
+                columnType: 'text',
+                onBlur: value => handleCheckOrderNumber(value),
               },
               {
                 columnName: 'Amount',
@@ -1932,6 +2031,40 @@ export const TransactionTable: FC<Props> = ({
                                 <LineWeightIcon />
                               </IconButton>
                             </Tooltip>,
+                            ...(state.accountsPayableAdmin
+                              ? [
+                                  <Tooltip
+                                    key="notifyManager"
+                                    content={
+                                      selectorParam.txn.getDepartmentId() ==
+                                        0 ||
+                                      selectorParam.txn.getDepartmentId() ==
+                                        undefined
+                                        ? 'No Department, Cannot Notify Manager'
+                                        : 'Notify Department Manager'
+                                    }
+                                  >
+                                    <IconButton
+                                      key="notifyIcon"
+                                      size="small"
+                                      onClick={() =>
+                                        dispatch({
+                                          type: ACTIONS.SET_PENDING_SEND_NOTIFICATION_FOR_EXISTING_TRANSACTION,
+                                          data: selectorParam.txn,
+                                        })
+                                      }
+                                      disabled={
+                                        selectorParam.txn.getDepartmentId() ==
+                                          0 ||
+                                        selectorParam.txn.getDepartmentId() ==
+                                          undefined
+                                      }
+                                    >
+                                      <NotificationsActiveIcon />
+                                    </IconButton>
+                                  </Tooltip>,
+                                ]
+                              : []),
                             <Tooltip key="upload" content="Upload File">
                               <IconButton
                                 key={'uploadIcon'}
@@ -2016,6 +2149,7 @@ export const TransactionTable: FC<Props> = ({
                                   </Tooltip>,
                                 ]
                               : []),
+
                             <Tooltip key="submit" content={'Mark as accepted'}>
                               <IconButton
                                 key="submitIcon"
@@ -2060,6 +2194,7 @@ export const TransactionTable: FC<Props> = ({
                                   </IconButton>
                                 </Tooltip>
                               ),
+
                             <Tooltip key="delete" content="Delete this task">
                               <IconButton
                                 key="deleteIcon"
@@ -2197,6 +2332,28 @@ export const TransactionTable: FC<Props> = ({
         }
         loading={state.loading}
       />
+      {state.pendingSendNotificationForExistingTransaction != undefined && (
+        <Confirm
+          open={
+            state.pendingSendNotificationForExistingTransaction != undefined
+          }
+          submitLabel="Send"
+          title="Notify Manager"
+          onConfirm={() =>
+            handleNotifyUserOfExistingTransaction(
+              state.pendingSendNotificationForExistingTransaction!,
+            )
+          }
+          onClose={() =>
+            dispatch({
+              type: ACTIONS.SET_PENDING_SEND_NOTIFICATION_FOR_EXISTING_TRANSACTION,
+              data: undefined,
+            })
+          }
+        >
+          Notify Manager of Transaction?
+        </Confirm>
+      )}
       {state.openUploadPhotoTransaction ? (
         <Modal
           open={state.openUploadPhotoTransaction}

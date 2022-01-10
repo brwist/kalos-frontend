@@ -1,12 +1,5 @@
 import React, { FC, useState, useEffect, useCallback } from 'react';
-import {
-  format,
-  addDays,
-  startOfWeek,
-  getMonth,
-  getYear,
-  getDaysInMonth,
-} from 'date-fns';
+import { format, addDays, startOfWeek } from 'date-fns';
 import {
   TaskClient,
   Task,
@@ -76,28 +69,7 @@ export const Spiffs: FC<Props> = ({
   const [spiffTypes, setSpiffTypes] = useState<SpiffType[]>([]);
 
   const load = useCallback(async () => {
-    setLoading(true); /*
-    const filter: GetPendingSpiffConfig = {
-      page,
-      technicianUserID: employeeId,
-      role,
-      departmentId,
-      //processed: toggleButton === true ? true : undefined,
-    };
-
-    Object.assign(filter, {
-      startDate: '0001-01-01',
-      endDate: format(endDay, 'yyyy-MM-dd'),
-    });
-    if (week !== OPTION_ALL) {
-      Object.assign(filter, {
-        startDate: week,
-        endDate: format(addDays(new Date(week), 7), 'yyyy-MM-dd'),
-      });
-    }
-   const results = await TaskClientService.loadPendingSpiffs(filter);
-    console.log(filter);*/
-
+    setLoading(true);
     const req = new Task();
     req.setPageNumber(page);
     req.setIsActive(true);
@@ -114,6 +86,8 @@ export const Spiffs: FC<Props> = ({
       req.setFieldMaskList(['AdminActionId']);
     }
     if (role === 'Manager' && toggleButton == true) {
+      console.log('manager, toggled true');
+
       req.setAdminActionId(0);
       req.addNotEquals('AdminActionId');
     }
@@ -138,17 +112,18 @@ export const Spiffs: FC<Props> = ({
     }
 
     if (role === 'Payroll' && toggleButton == false) {
-      req.setAdminActionId(0);
+      console.log('payroll, toggled false');
+
       req.setPayrollProcessed(true);
+      req.setAdminActionId(0);
       req.setNotEqualsList(['AdminActionId', 'PayrollProcessed']);
-      //req.setFieldMaskList(['PayrollProcessed']);
       const action = new SpiffToolAdminAction();
       action.setStatus(1);
       req.setSearchAction(action);
     }
     if (role === 'Payroll' && toggleButton == true) {
-      req.setPayrollProcessed(false);
-      req.setNotEqualsList(['PayrollProcessed']);
+      console.log('payroll, toggled true');
+      req.setPayrollProcessed(true);
     }
     if (role === 'Auditor') {
       req.setNotEqualsList(['AdminActionId']);
@@ -158,6 +133,7 @@ export const Spiffs: FC<Props> = ({
     if (employeeId) {
       req.setExternalId(employeeId);
     }
+    console.log('toggleButton', toggleButton);
     req.setBillableType('Spiff');
     const results = await TaskClientService.BatchGet(req);
     const resultsList = results.getResultsList();
@@ -191,6 +167,7 @@ export const Spiffs: FC<Props> = ({
   );
   const handleToggleButton = useCallback(() => {
     setToggleButton(!toggleButton);
+    setInitiated(false);
     setPage(0);
   }, [toggleButton]);
 

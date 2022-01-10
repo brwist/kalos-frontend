@@ -739,7 +739,8 @@ export const Timesheet: FC<Props> = props => {
             )}
           </Box>
           {editing.modalShown &&
-            editing.entry.getPayrollProcessed() != true && (
+            (editing.entry.getPayrollProcessed() != true ||
+              role === 'Payroll') && (
               <EditTimesheetModal
                 entry={editing.entry}
                 timesheetOwnerId={timesheetOwnerId}

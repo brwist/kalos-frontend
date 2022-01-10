@@ -1098,7 +1098,7 @@ const NAMED_EXPORTS = {
   'node_modules/@kalos-core/kalos-rpc/compiled-protos/transaction_account_pb.js':
     ['TransactionAccount', 'TransactionAccountList'],
   'node_modules/@kalos-core/kalos-rpc/compiled-protos/transaction_activity_pb.js':
-    ['TransactionActivity', 'TransactionActivityList'],
+    ['TransactionActivity', 'TransactionActivityList','MergeTransactionIds'],
   'node_modules/@kalos-core/kalos-rpc/compiled-protos/transaction_document_pb.js':
     ['TransactionDocument', 'TransactionDocumentList'],
   'node_modules/@kalos-core/kalos-rpc/compiled-protos/transaction_status_pb.js':

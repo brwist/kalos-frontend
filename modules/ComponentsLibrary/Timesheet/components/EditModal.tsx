@@ -373,7 +373,6 @@ const EditTimesheetModal: FC<Props> = ({
               label="Delete"
               onClick={handleDelete}
               className="TimesheetEditModalDelete"
-              disabled={role === 'Payroll'}
             />
             {role === 'Payroll' && (
               <Button
