@@ -1521,6 +1521,7 @@ export const TransactionTable: FC<Props> = ({
                 data: undefined,
               })
             }
+            changeCreator={state.accountsPayableAdmin}
           />
         </Modal>
       )}
