@@ -1092,7 +1092,10 @@ export const TransactionTable: FC<Props> = ({
           );
           if (slackUser === '0') {
             console.log('failed to send message');
-            return;
+            dispatch({
+              type: ACTIONS.SET_ERROR,
+              data: 'Failed to Send Message, could not find user in Slack',
+            });
           }
           await slackNotify(slackUser, messageToSend);
 
