@@ -2411,8 +2411,13 @@ export const AdvancedSearch: FC<Props> = ({
                             </Tooltip>,
                           ]
                         : []),
-                      /*
-                      ...(deletableEmployees && isAdmin
+
+                      ...(loggedUser
+                        .getPermissionGroupsList()
+                        .findIndex(p => p.getName() == 'Manager') != -1 ||
+                      loggedUser
+                        .getPermissionGroupsList()
+                        .findIndex(p => p.getName() == 'Payroll') != -1
                         ? [
                             <Tooltip
                               key="delete"
@@ -2430,7 +2435,7 @@ export const AdvancedSearch: FC<Props> = ({
                             </Tooltip>,
                           ]
                         : []),
-                        */
+
                       ...(loggedUser
                         .getPermissionGroupsList()
                         .findIndex(p => p.getName() == 'PermissionManager') !=
@@ -2587,6 +2592,7 @@ export const AdvancedSearch: FC<Props> = ({
       editableCustomers,
       handlePendingCustomerEditingToggle,
       deletableCustomers,
+      handlePendingEmployeeDeletingToggle,
       handlePendingCustomerDeletingToggle,
       employeeImages,
       loggedUser,

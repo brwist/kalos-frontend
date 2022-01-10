@@ -57,6 +57,7 @@ interface Props extends Styles {
   styles?: CSSProperties;
   className?: string;
   skipPreLine?: boolean;
+  onNotify?: (notifyValue: boolean) => void;
   onSaveRowButton?: (results: {}) => any;
   // row button
   rowButton?: {
@@ -69,8 +70,10 @@ interface Props extends Styles {
         columnName: string;
         columnType: Type;
         options?: Options;
+        onBlur?: (value: any) => void;
       }[];
     };
+    onNotify?: (notifyValue: number) => void;
     externalButton?: boolean;
     externalButtonClicked?: boolean; // Was an external button clicked that triggers this? (While true, makes the row appear)
     onFileLoad?: (fileData: any) => any;
@@ -224,6 +227,12 @@ export const InfoTable = ({
                 return {
                   label: field,
                   name: field,
+                  onBlur:
+                    columnType?.length === 1
+                      ? columnType![0].onBlur
+                        ? columnType![0].onBlur
+                        : undefined
+                      : undefined,
                   type:
                     columnType?.length === 1
                       ? columnType![0].columnType
@@ -239,6 +248,17 @@ export const InfoTable = ({
             ),
             [
               {
+                label: 'Notify Manager?',
+                name: 'notify',
+
+                type: rowButton && rowButton.onNotify ? 'checkbox' : 'hidden',
+                onChange: (data: number) => {
+                  if (rowButton && rowButton.onNotify) {
+                    rowButton.onNotify(data);
+                  }
+                },
+              },
+              {
                 label: 'Add Image / Document',
                 name: 'image',
                 type: 'file',
@@ -249,7 +269,7 @@ export const InfoTable = ({
                 },
                 actions: [
                   {
-                    label: 'OK',
+                    label: 'Create',
                     onClick: () => {
                       dispatch({
                         type: ACTIONS.SET_IS_ADDING_ROW,

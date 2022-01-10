@@ -1,4 +1,11 @@
-import React, { FC, useState, useEffect, useCallback, useRef } from 'react';
+import React, {
+  FC,
+  useState,
+  useEffect,
+  useCallback,
+  useReducer,
+  useRef,
+} from 'react';
 import { EventClient, Event } from '@kalos-core/kalos-rpc/Event';
 import { UserClient, User } from '@kalos-core/kalos-rpc/User';
 import { JobType } from '@kalos-core/kalos-rpc/JobType';
@@ -26,6 +33,7 @@ import { InfoTable, Data } from '../InfoTable';
 import { Tabs } from '../Tabs';
 import { Option } from '../Field';
 import { Form, Schema } from '../Form';
+import { SpiffApplyComponent } from '../SpiffApplyComponent';
 import { Request } from './components/Request';
 import { Equipment } from './components/Equipment';
 import { Services } from './components/Services';
@@ -41,6 +49,9 @@ import { ActivityLog } from '@kalos-core/kalos-rpc/ActivityLog';
 import format from 'date-fns/esm/format';
 import setHours from 'date-fns/esm/setHours';
 import setMinutes from 'date-fns/esm/setMinutes';
+import { State, reducer } from './reducer';
+import { update } from 'lodash';
+import { ServiceCallLogs } from '../ServiceCallLogs';
 
 const EventClientService = new EventClient(ENDPOINT);
 const UserClientService = new UserClient(ENDPOINT);
@@ -75,280 +86,276 @@ export const ServiceCall: FC<Props> = props => {
   const {
     userID,
     propertyId,
-    serviceCallId: eventId,
+    serviceCallId: eventId = 0,
     loggedUserId,
     onClose,
     onSave,
     asProject = false,
   } = props;
+
+  const initialState: State = {
+    requestFields: [],
+    tabIdx: 0,
+    tabKey: 0,
+    pendingSave: false,
+    saveInvoice: false,
+    requestValid: false,
+    serviceCallId: props.serviceCallId ? props.serviceCallId : 0,
+    entry: new Event(),
+    property: new Property(),
+    customer: new User(),
+    propertyEvents: [],
+    loaded: false,
+    loading: true,
+    saving: false,
+    loggedUserRole: '',
+    openSpiffApply: false,
+    error: false,
+    errorMessage: '',
+    jobTypes: [],
+    jobSubtypes: [],
+    jobTypeSubtypes: [],
+    jobSubTypeOptions: [],
+    servicesRendered: [],
+    loggedUser: new User(),
+    notificationEditing: false,
+    notificationViewing: false,
+    projects: [],
+    parentId: null,
+    confirmedParentId: null,
+    projectData: new Event(),
+    openJobActivity: false,
+  };
+  const [state, updateServiceCallState] = useReducer(reducer, initialState);
   const requestRef = useRef(null);
-  const [requestFields, setRequestfields] = useState<string[]>([]);
-  const [tabIdx, setTabIdx] = useState<number>(0);
-  const [tabKey, setTabKey] = useState<number>(0);
-  const [pendingSave, setPendingSave] = useState<boolean>(false);
-  const [saveInvoice, setSaveInvoice] = useState<boolean>(false);
-  const [requestValid, setRequestValid] = useState<boolean>(false);
-  const [serviceCallId, setServiceCallId] = useState<number>(eventId || 0);
-  const [entry, setEntry] = useState<Event>(new Event());
-  const [property, setProperty] = useState<Property>(new Property());
-  const [customer, setCustomer] = useState<User>(new User());
-  const [propertyEvents, setPropertyEvents] = useState<Event[]>([]);
-  const [loaded, setLoaded] = useState<boolean>(false);
-  const [loading, setLoading] = useState<boolean>(true);
-  const [saving, setSaving] = useState<boolean>(false);
-  const [error, setError] = useState<boolean>(false);
-  const [jobTypes, setJobTypes] = useState<JobType[]>([]);
-  const [jobSubtypes, setJobSubtype] = useState<JobSubtype[]>([]);
-  const [jobTypeSubtypes, setJobTypeSubtypes] = useState<JobTypeSubtype[]>([]);
-  const [jobSubTypeOptions, setJobSubTypeOptions] = useState<Option[]>([]);
-  const [servicesRendered, setServicesRendered] = useState<ServicesRendered[]>(
-    [],
-  );
-  const [loggedUser, setLoggedUser] = useState<User>();
-  const [notificationEditing, setNotificationEditing] =
-    useState<boolean>(false);
-  const [notificationViewing, setNotificationViewing] =
-    useState<boolean>(false);
-  const [projects, setProjects] = useState<Event[]>([]);
-  const [parentId, setParentId] = useState<number | null>(null);
-  const [confirmedParentId, setConfirmedParentId] = useState<number | null>(
-    null,
-  );
-  const [projectData, setProjectData] = useState<Event>(new Event());
   const loadEntry = useCallback(
-    async (_serviceCallId = serviceCallId) => {
+    async (_serviceCallId = state.serviceCallId) => {
       if (_serviceCallId) {
         const req = new Event();
         req.setId(_serviceCallId);
         const entry = await EventClientService.Get(req);
-        setEntry(entry);
+        updateServiceCallState({ type: 'setEntry', data: entry });
       }
     },
-    [setEntry, serviceCallId],
+    [state.serviceCallId],
   );
+
+  const toggleOpenSpiffApply = () => {
+    updateServiceCallState({
+      type: 'setOpenSpiffApply',
+      data: !state.openSpiffApply,
+    });
+  };
+  const toggleOpenJobActivity = () => {
+    updateServiceCallState({
+      type: 'setOpenJobActivity',
+      data: !state.openJobActivity,
+    });
+  };
   const loadServicesRenderedData = useCallback(
-    async (_serviceCallId = serviceCallId, passLoading?: boolean) => {
+    async (_serviceCallId = state.serviceCallId) => {
       if (_serviceCallId) {
-        setLoading(true);
+        updateServiceCallState({ type: 'setLoading', data: true });
         const req = new ServicesRendered();
         req.setIsActive(1);
         req.setEventId(_serviceCallId);
         const servicesRendered = (
           await ServicesRenderedClientService.BatchGet(req)
         ).getResultsList();
-        //const servicesRendered = await ServicesRenderedClientService.loadServicesRenderedByEventID(
-        //  _serviceCallId,
-        //);
-        setServicesRendered(servicesRendered);
+        updateServiceCallState({
+          type: 'setServicesRendered',
+          data: { servicesRendered: servicesRendered, loading: true },
+        });
         console.log(servicesRendered);
         console.log('we are here getting sr data');
+        return servicesRendered;
+      } else {
+        return [];
       }
     },
-    [setServicesRendered, serviceCallId],
+    [state.serviceCallId],
   );
   const loadServicesRenderedDataForProp = useCallback(
-    async (_serviceCallId = serviceCallId, passLoading?: boolean) => {
+    async (_serviceCallId = state.serviceCallId) => {
       if (_serviceCallId) {
-        setLoading(true);
+        updateServiceCallState({ type: 'setLoading', data: true });
         const req = new ServicesRendered();
         req.setIsActive(1);
         req.setEventId(_serviceCallId);
         const servicesRendered = (
           await ServicesRenderedClientService.BatchGet(req)
         ).getResultsList();
-        //const servicesRendered = await ServicesRenderedClientService.loadServicesRenderedByEventID(
-        //  _serviceCallId,
-        //);
-        setServicesRendered(servicesRendered);
+        updateServiceCallState({
+          type: 'setServicesRendered',
+          data: { servicesRendered: servicesRendered, loading: false },
+        });
         console.log(servicesRendered);
         console.log('we are here getting sr data');
+      } else {
+        updateServiceCallState({ type: 'setLoading', data: false });
       }
-      setLoading(false);
     },
-    [setServicesRendered, serviceCallId],
+    [state.serviceCallId],
   );
 
-  const handleSetError = useCallback(
-    (value: boolean) => setError(value),
-    [setError],
-  );
+  // const handleSetError = useCallback(
+  //   // (value: boolean) => setError(value),
+  //   (value: boolean) => updateServiceCallState({type: 'setError', data: value}),
+  //   [setError],
+  // );
 
   const load = useCallback(async () => {
-    setLoading(true);
-    let newProjectData = projectData;
-    newProjectData.setPropertyId(propertyId);
-    setProjectData(newProjectData);
+    updateServiceCallState({ type: 'setLoading', data: true });
+    // let newProjectData = projectData;
+    // newProjectData.setPropertyId(propertyId);
+    // setProjectData(newProjectData);
     try {
-      let promises = [];
-
-      promises.push(
-        new Promise<void>(async resolve => {
-          const property = await PropertyClientService.loadPropertyByID(
-            propertyId,
-          );
-          setProperty(property);
-          resolve();
-        }),
-      );
-
-      promises.push(
-        new Promise<void>(async resolve => {
-          const customer = await UserClientService.loadUserById(userID);
-          setCustomer(customer);
-          resolve();
-        }),
-      );
-
-      promises.push(
-        new Promise<void>(async resolve => {
-          const propertyEvents =
-            await EventClientService.loadEventsByPropertyId(propertyId);
-          setPropertyEvents(propertyEvents);
-          resolve();
-        }),
-      );
-
-      promises.push(
-        new Promise<void>(async resolve => {
-          const jobTypes = await JobTypeClientService.loadJobTypes();
-          setJobTypes(jobTypes);
-          resolve();
-        }),
-      );
-
-      promises.push(
-        new Promise<void>(async resolve => {
-          const jobSubtypes = await JobSubtypeClientService.loadJobSubtypes();
-          setJobSubtype(jobSubtypes);
-          resolve();
-        }),
-      );
-
-      promises.push(
-        new Promise<void>(async resolve => {
-          const jobTypeSubtypes =
-            await JobTypeSubtypeClientService.loadJobTypeSubtypes();
-          setJobTypeSubtypes(jobTypeSubtypes);
-          resolve();
-        }),
-      );
-
-      promises.push(
-        new Promise<void>(async resolve => {
-          const loggedUser = await UserClientService.loadUserById(loggedUserId);
-          setLoggedUser(loggedUser);
-          resolve();
-        }),
-      );
-
-      if (serviceCallId) {
-        promises.push(
-          new Promise<void>(async resolve => {
-            const req = new Event();
-            req.setId(serviceCallId);
-            const entry = await EventClientService.Get(req);
-            console.log('entry', entry);
-            setEntry(entry);
-            resolve();
-          }),
-        );
+      let entry: Event = new Event();
+      const property = PropertyClientService.loadPropertyByID(propertyId);
+      const customer = UserClientService.loadUserById(userID);
+      const propertyEvents =
+        EventClientService.loadEventsByPropertyId(propertyId);
+      const jobTypes = JobTypeClientService.loadJobTypes();
+      const jobSubtypes = JobSubtypeClientService.loadJobSubtypes();
+      const jobTypeSubtypes = JobTypeSubtypeClientService.loadJobTypeSubtypes();
+      const loggedUser = UserClientService.loadUserById(loggedUserId);
+      const servicesRendered = loadServicesRenderedData();
+      const [
+        propertyDetails,
+        customerDetails,
+        propertyEventDetails,
+        jobTypeList,
+        jobSubTypeList,
+        jobTypeSubtypesList,
+        loggedUserDetails,
+        servicesRenderedList,
+      ] = await Promise.all([
+        property,
+        customer,
+        propertyEvents,
+        jobTypes,
+        jobSubtypes,
+        jobTypeSubtypes,
+        loggedUser,
+        servicesRendered,
+      ]);
+      if (state.serviceCallId) {
+        const req = new Event();
+        req.setId(state.serviceCallId);
+        entry = await EventClientService.Get(req);
       } else {
-        promises.push(
-          new Promise<void>(async resolve => {
-            const req = new Event();
-            req.setIsResidential(1);
-            req.setDateStarted(format(new Date(), 'yyyy-MM-dd'));
-            req.setDateEnded(format(new Date(), 'yyyy-MM-dd'));
-            req.setTimeStarted(
-              format(setMinutes(setHours(new Date(), 8), 0), 'HH:mm'),
-            );
-            req.setTimeEnded(
-              format(setMinutes(setHours(new Date(), 18), 0), 'HH:mm'),
-            );
-            const property = await PropertyClientService.loadPropertyByID(
-              propertyId,
-            );
-            req.setName(
-              `${property.getAddress()} ${property.getCity()}, ${property.getState()} ${property.getZip()}`,
-            );
-            setEntry(req);
-            resolve();
-          }),
+        const req = new Event();
+        req.setIsResidential(1);
+        req.setDateStarted(format(new Date(), 'yyyy-MM-dd'));
+        req.setDateEnded(format(new Date(), 'yyyy-MM-dd'));
+        req.setTimeStarted(
+          format(setMinutes(setHours(new Date(), 8), 0), 'HH:mm'),
         );
-      }
+        req.setTimeEnded(
+          format(setMinutes(setHours(new Date(), 18), 0), 'HH:mm'),
+        );
 
+        req.setName(
+          `${propertyDetails.getAddress()} ${propertyDetails.getCity()}, ${propertyDetails.getState()} ${propertyDetails.getZip()}`,
+        );
+        entry = req;
+      }
+      updateServiceCallState({
+        type: 'setData',
+        data: {
+          property: propertyDetails,
+          customer: customerDetails,
+          propertyEvents: propertyEventDetails,
+          jobTypes: jobTypeList,
+          jobSubtypes: jobSubTypeList,
+          jobTypeSubtypes: jobTypeSubtypesList,
+          loggedUser: loggedUserDetails,
+          entry: entry,
+          servicesRendered: servicesRenderedList,
+          loaded: true,
+          loading: false,
+        },
+      });
+      console.log('All Processes are Loaded');
+    } catch (err) {
+      updateServiceCallState({
+        type: 'setError',
+        data: {
+          error: true,
+          msg: err as string,
+        },
+      });
+      updateServiceCallState({
+        type: 'setLoadedLoading',
+        data: {
+          loaded: true,
+          loading: false,
+        },
+      });
+    }
+    /* Keeping this here as reminder that Projects needs to be Updated and added.
       promises.push(
         new Promise<void>(async resolve => {
-          await loadServicesRenderedData();
+          const projects = await loadProjects();
+          setProjects(projects);
           resolve();
         }),
       );
-
-      // promises.push(
-      //   new Promise<void>(async resolve => {
-      //     const projects = await loadProjects();
-      //     setProjects(projects);
-      //     resolve();
-      //   }),
-      // );
-
-      Promise.all(promises).then(() => {
-        console.log('all processes complete');
-        setLoaded(true);
-        setLoading(false);
-      });
-    } catch (e) {
-      handleSetError(true);
-      setLoaded(true);
-      setLoading(false);
-    }
+    */
   }, [
-    projectData,
     propertyId,
     userID,
-    serviceCallId,
+    state.serviceCallId,
     loggedUserId,
     loadServicesRenderedData,
-    handleSetError,
   ]);
 
-  const handleSetParentId = useCallback(
-    id => {
-      setParentId(id);
-    },
-    [setParentId],
-  );
+  // const handleSetParentId = useCallback(
+  //   id => {
+  //     setParentId(id);
+  //   },
+  //   [setParentId],
+  // );
 
-  const handleSetConfirmedIsChild = useCallback(
-    id => {
-      setConfirmedParentId(id);
-    },
-    [setConfirmedParentId],
-  );
-  const handleSaveInvoice = useCallback(async () => {
-    setPendingSave(true);
-    setRequestValid(true);
-    setSaveInvoice(true);
-  }, [setPendingSave, setRequestValid]);
+  // const handleSetConfirmedIsChild = useCallback(
+  //   id => {
+  //     setConfirmedParentId(id);
+  //   },
+  //   [setConfirmedParentId],
+  // );
+
   const handleSave = useCallback(async () => {
-    setPendingSave(true);
-    if (tabIdx !== 0) {
-      setTabIdx(0);
-      setTabKey(tabKey + 1);
+    if (state.tabIdx !== 0) {
+      updateServiceCallState({
+        type: 'setTabAndPendingSave',
+        data: {
+          tabIdx: 0,
+          tabKey: state.tabKey + 1,
+          pendingSave: true,
+        },
+      });
+    } else {
+      updateServiceCallState({ type: 'setPendingSave', data: true });
     }
-  }, [setPendingSave, setTabKey, setTabIdx, tabKey, tabIdx]);
+  }, [state.tabKey, state.tabIdx]);
+
   const saveServiceCall = useCallback(async () => {
-    setSaving(true);
-    setLoading(true);
-    const temp = entry;
+    updateServiceCallState({
+      type: 'setSavingLoading',
+      data: {
+        saving: true,
+        loading: true,
+      },
+    });
+    const temp = state.entry;
     let res = new Event();
     try {
-      if (serviceCallId) {
+      if (state.serviceCallId) {
         console.log('saving existing ID');
         let activityName = `${temp.getLogJobNumber()} Edited Service Call`;
-        if (saveInvoice) {
+        if (state.saveInvoice) {
           console.log('saving invoice');
-          temp.setIsGeneratedInvoice(saveInvoice);
+          temp.setIsGeneratedInvoice(state.saveInvoice);
           temp.addFieldMask('IsGeneratedInvoice');
           await EventClientService.Update(temp);
           activityName = activityName.concat(` and Invoice`);
@@ -356,9 +363,12 @@ export const ServiceCall: FC<Props> = props => {
           await EventClientService.Update(temp);
         }
         const newActivity = new ActivityLog();
-        if (property.getGeolocationLat() && property.getGeolocationLng()) {
-          newActivity.setGeolocationLat(property.getGeolocationLat());
-          newActivity.setGeolocationLng(property.getGeolocationLng());
+        if (
+          state.property.getGeolocationLat() &&
+          state.property.getGeolocationLng()
+        ) {
+          newActivity.setGeolocationLat(state.property.getGeolocationLat());
+          newActivity.setGeolocationLng(state.property.getGeolocationLng());
         } else {
           activityName = activityName.concat(` (location services disabled)`);
           newActivity.setPropertyId(propertyId);
@@ -383,9 +393,12 @@ export const ServiceCall: FC<Props> = props => {
         await EventClientService.Update(newEvent);
         const newActivity = new ActivityLog();
         let activityName = `${logNumber} Added Service Call`;
-        if (property.getGeolocationLat() && property.getGeolocationLng()) {
-          newActivity.setGeolocationLat(property.getGeolocationLat());
-          newActivity.setGeolocationLng(property.getGeolocationLng());
+        if (
+          state.property.getGeolocationLat() &&
+          state.property.getGeolocationLng()
+        ) {
+          newActivity.setGeolocationLat(state.property.getGeolocationLat());
+          newActivity.setGeolocationLng(state.property.getGeolocationLng());
         } else {
           activityName = activityName.concat(` (location services disabled)`);
         }
@@ -399,9 +412,9 @@ export const ServiceCall: FC<Props> = props => {
       console.error(err);
     }
     console.log('finished Update');
-    if (!serviceCallId) {
+    if (!state.serviceCallId) {
       console.log('no service call Id');
-      setServiceCallId(res.getId());
+      updateServiceCallState({ type: 'setServiceCallId', data: res.getId() });
       await loadEntry(res.getId());
       await loadServicesRenderedData(res.getId());
     }
@@ -411,106 +424,119 @@ export const ServiceCall: FC<Props> = props => {
     if (onClose) {
       onClose();
     } else {
-      setSaving(false);
-      setLoading(false);
+      updateServiceCallState({
+        type: 'setSavingLoading',
+        data: {
+          saving: false,
+          loading: false,
+        },
+      });
     }
   }, [
-    entry,
-    serviceCallId,
+    state.entry,
+    state.serviceCallId,
     onSave,
     onClose,
-    saveInvoice,
-    property,
+    state.saveInvoice,
+    state.property,
     propertyId,
     loggedUserId,
     loadEntry,
     loadServicesRenderedData,
   ]);
 
-  const saveProject = useCallback(
-    async (data: Event) => {
-      setSaving(true);
-      if (confirmedParentId) {
-        data.setParentId(confirmedParentId);
-      }
-      const temp = makeSafeFormObject(data, new Event());
-      await EventClientService.upsertEvent(data);
-      setSaving(false);
-      if (onSave) {
-        onSave();
-      }
-      if (onClose) {
-        onClose();
-      }
-    },
-    [onSave, onClose, confirmedParentId],
-  );
+  // const saveProject = useCallback(
+  //   async (data: Event) => {
+  //     setSaving(true);
+  //     if (confirmedParentId) {
+  //       data.setParentId(confirmedParentId);
+  //     }
+  //     const temp = makeSafeFormObject(data, new Event());
+  //     await EventClientService.upsertEvent(data);
+  //     setSaving(false);
+  //     if (onSave) {
+  //       onSave();
+  //     }
+  //     if (onClose) {
+  //       onClose();
+  //     }
+  //   },
+  //   [onSave, onClose, confirmedParentId],
+  // );
+
   useEffect(() => {
-    if (!loaded) {
-      load();
-      setLoaded(true);
-    }
+    if (eventId !== 0 && true)
+      if (!state.loaded) {
+        load();
+      }
     if (
-      entry &&
-      entry.getCustomer() &&
-      entry.getCustomer()!.getNotification() !== ''
+      state.entry &&
+      state.entry.getCustomer() &&
+      state.entry.getCustomer()!.getNotification() !== ''
     ) {
-      setNotificationViewing(true);
+      updateServiceCallState({ type: 'setNotificationViewing', data: true });
     }
-    if (pendingSave && requestValid) {
-      setPendingSave(false);
+    if (state.pendingSave && state.requestValid) {
+      updateServiceCallState({ type: 'setPendingSave', data: false });
       saveServiceCall();
     }
-    if (pendingSave && tabIdx === 0 && requestRef.current) {
+    if (state.pendingSave && state.tabIdx === 0 && requestRef.current) {
       //@ts-ignore
       requestRef.current.click();
     }
   }, [
-    entry,
-    loaded,
+    state.entry,
+    state.loaded,
     load,
-    setLoaded,
-    setNotificationViewing,
-    pendingSave,
-    requestValid,
-    setPendingSave,
+    state.pendingSave,
+    state.requestValid,
     saveServiceCall,
-    tabIdx,
+    state.tabIdx,
     requestRef,
+    eventId,
   ]);
 
   const handleSetRequestfields = useCallback(
     fields => {
-      setRequestfields([...requestFields, ...fields]);
+      updateServiceCallState({
+        type: 'setRequestFields',
+        data: [...state.requestFields, ...fields],
+      });
     },
-    [requestFields, setRequestfields],
+    [state.requestFields],
   );
 
-  const handleChangeEntry = useCallback(
-    (data: Event) => {
-      //const temp = makeSafeFormObject(data, new Event());
-      //const tempObject = Object.assign(entry, temp);
-      setEntry(data);
-      setPendingSave(false);
-    },
-    [setEntry, setPendingSave],
-  );
+  const handleChangeEntry = useCallback((data: Event) => {
+    updateServiceCallState({
+      type: 'setChangeEntry',
+      data: {
+        entry: data,
+        pendingSave: false,
+      },
+    });
+  }, []);
 
   const handleSetNotificationEditing = useCallback(
     (notificationEditing: boolean) => () =>
-      setNotificationEditing(notificationEditing),
-    [setNotificationEditing],
+      updateServiceCallState({
+        type: 'setNotificationEditing',
+        data: notificationEditing,
+      }),
+    [],
   );
 
   const handleSetNotificationViewing = useCallback(
     (notificationViewing: boolean) => () =>
-      setNotificationViewing(notificationViewing),
-    [setNotificationViewing],
+      updateServiceCallState({
+        type: 'setNotificationViewing',
+        data: notificationViewing,
+      }),
+    [],
   );
 
   const handleSaveCustomer = useCallback(
     async (data: User) => {
-      setSaving(true);
+      updateServiceCallState({ type: 'setSaving', data: true });
       const temp = makeSafeFormObject(data, new User());
       const entry = new User();
       entry.setId(userID);
@@ -522,39 +548,45 @@ export const ServiceCall: FC<Props> = props => {
         fieldMaskList.push(upperCaseProp);
       }
       entry.setFieldMaskList(fieldMaskList);
-      //await UserClientService.Update(entry);
       await loadEntry();
-      setSaving(false);
-      handleSetNotificationEditing(false)();
+      updateServiceCallState({
+        type: 'setSavingNoteEditing',
+        data: {
+          saving: false,
+          notificationEditing: false,
+        },
+      });
     },
-    [userID, loadEntry, handleSetNotificationEditing],
+    [userID, loadEntry],
   );
 
   const handleOnAddMaterials = useCallback(
     async (materialUsed, materialTotal) => {
       await EventClientService.updateMaterialUsed(
-        serviceCallId,
-        materialUsed + entry.getMaterialUsed(),
-        materialTotal + entry.getMaterialTotal(),
+        state.serviceCallId,
+        materialUsed + state.entry.getMaterialUsed(),
+        materialTotal + state.entry.getMaterialTotal(),
       );
       await loadEntry();
     },
-    [serviceCallId, entry, loadEntry],
+    [state.serviceCallId, state.entry, loadEntry],
   );
 
-  const jobTypeOptions: Option[] = jobTypes.map(id => ({
+  const jobTypeOptions: Option[] = state.jobTypes.map(id => ({
     label: id.getName(),
     value: id.getId(),
   }));
 
   const jobSubtypeOptions: Option[] = [
     { label: OPTION_BLANK, value: 0 },
-    ...jobTypeSubtypes
-      .filter(jobTypeId => jobTypeId.getJobTypeId() === entry.getJobTypeId())
+    ...state.jobTypeSubtypes
+      .filter(
+        jobTypeId => jobTypeId.getJobTypeId() === state.entry.getJobTypeId(),
+      )
       .map(jobSubtypeId => ({
         value: jobSubtypeId.getJobSubtypeId(),
         label:
-          jobSubtypes
+          state.jobSubtypes
             .find(id => id.getId() === jobSubtypeId.getJobSubtypeId())
             ?.getName() || '',
       })),
@@ -577,23 +609,23 @@ export const ServiceCall: FC<Props> = props => {
 
   const { address, city, state, zip } = property;
   */
-  const id = entry.getId();
-  const logJobNumber = entry.getLogJobNumber();
-  const contractNumber = entry.getContractNumber();
-  const firstname = customer.getFirstname();
-  const lastname = customer.getLastname();
-  const businessname = customer.getBusinessname();
-  const phone = customer.getPhone();
-  const altphone = customer.getAltphone();
-  const cellphone = customer.getCellphone();
-  const fax = customer.getFax();
-  const email = customer.getEmail();
-  const billingTerms = customer.getBillingTerms();
-  const notification = customer.getNotification();
-  const address = property.getAddress();
-  const city = property.getCity();
-  const state = property.getState();
-  const zip = property.getZip();
+  const id = state.entry.getId();
+  const logJobNumber = state.entry.getLogJobNumber();
+  const contractNumber = state.entry.getContractNumber();
+  const firstname = state.customer.getFirstname();
+  const lastname = state.customer.getLastname();
+  const businessname = state.customer.getBusinessname();
+  const phone = state.customer.getPhone();
+  const altphone = state.customer.getAltphone();
+  const cellphone = state.customer.getCellphone();
+  const fax = state.customer.getFax();
+  const email = state.customer.getEmail();
+  const billingTerms = state.customer.getBillingTerms();
+  const notification = state.customer.getNotification();
+  const address = state.property.getAddress();
+  const city = state.property.getCity();
+  const propertyState = state.property.getState();
+  const zip = state.property.getZip();
   const data: Data = [
     [
       { label: 'Customer', value: `${firstname} ${lastname}` },
@@ -613,9 +645,9 @@ export const ServiceCall: FC<Props> = props => {
     ],
     [
       { label: 'Property', value: address },
-      { label: 'City, State, Zip', value: `${city}, ${state} ${zip}` },
+      { label: 'City, State, Zip', value: `${city}, ${propertyState} ${zip}` },
     ],
-    ...(serviceCallId
+    ...(state.serviceCallId
       ? [
           [
             { label: 'Job Number', value: logJobNumber },
@@ -624,104 +656,97 @@ export const ServiceCall: FC<Props> = props => {
         ]
       : []),
   ];
-  const SCHEMA_PROJECT: Schema<EventType> = [
-    [
-      {
-        name: 'getDateStarted',
-        label: 'Start Date',
-        type: 'date',
-        required: true,
-      },
-      {
-        name: 'getDateEnded',
-        label: 'End Date',
-        type: 'date',
-        required: true,
-      },
-      {
-        name: 'getTimeStarted',
-        label: 'Time Started',
-        type: 'time',
-        required: true,
-      },
-      {
-        name: 'getTimeEnded',
-        label: 'Time Ended',
-        type: 'time',
-        required: true,
-      },
-    ],
-    [
-      {
-        name: 'getDepartmentId',
-        label: 'Department',
-        type: 'department',
-        required: true,
-      },
-      {
-        name: 'getDescription',
-        label: 'Description',
-        multiline: true,
-      },
-    ],
-    [
-      {
-        name: 'getIsAllDay',
-        label: 'Is all-day?',
-        type: 'checkbox',
-      },
-      {
-        name: 'getIsLmpc',
-        label: 'Is LMPC?',
-        type: 'checkbox',
-      },
-      {
-        name: 'getHighPriority',
-        label: 'High priority?',
-        type: 'checkbox',
-      },
-      {
-        name: 'getIsResidential',
-        label: 'Is residential?',
-        type: 'checkbox',
-      },
-    ],
-    [
-      {
-        name: 'getColor',
-        label: 'Color',
-        type: 'color',
-      },
-    ],
-    [
-      {
-        name: 'getPropertyId',
-        type: 'hidden',
-      },
-    ],
-  ];
+  // const SCHEMA_PROJECT: Schema<EventType> = [
+  //   [
+  //     {
+  //       name: 'getDateStarted',
+  //       label: 'Start Date',
+  //       type: 'date',
+  //       required: true,
+  //     },
+  //     {
+  //       name: 'getDateEnded',
+  //       label: 'End Date',
+  //       type: 'date',
+  //       required: true,
+  //     },
+  //     {
+  //       name: 'getTimeStarted',
+  //       label: 'Time Started',
+  //       type: 'time',
+  //       required: true,
+  //     },
+  //     {
+  //       name: 'getTimeEnded',
+  //       label: 'Time Ended',
+  //       type: 'time',
+  //       required: true,
+  //     },
+  //   ],
+  //   [
+  //     {
+  //       name: 'getDepartmentId',
+  //       label: 'Department',
+  //       type: 'department',
+  //       required: true,
+  //     },
+  //     {
+  //       name: 'getDescription',
+  //       label: 'Description',
+  //       multiline: true,
+  //     },
+  //   ],
+  //   [
+  //     {
+  //       name: 'getIsAllDay',
+  //       label: 'Is all-day?',
+  //       type: 'checkbox',
+  //     },
+  //     {
+  //       name: 'getIsLmpc',
+  //       label: 'Is LMPC?',
+  //       type: 'checkbox',
+  //     },
+  //     {
+  //       name: 'getHighPriority',
+  //       label: 'High priority?',
+  //       type: 'checkbox',
+  //     },
+  //     {
+  //       name: 'getIsResidential',
+  //       label: 'Is residential?',
+  //       type: 'checkbox',
+  //     },
+  //   ],
+  //   [
+  //     {
+  //       name: 'getColor',
+  //       label: 'Color',
+  //       type: 'color',
+  //     },
+  //   ],
+  //   [
+  //     {
+  //       name: 'getPropertyId',
+  //       type: 'hidden',
+  //     },
+  //   ],
+  // ];
   return (
     <>
       <SectionBar
-        key={loading.toString()}
+        key={state.loading.toString()}
         title={asProject ? 'Project Details' : 'Service Call Details'}
         actions={
-          serviceCallId
+          state.serviceCallId
             ? [
                 {
                   label: 'Spiff Apply',
-                  url: cfURL(
-                    [
-                      'tasks.addtask',
-                      'type=Spiff',
-                      `job_no=${logJobNumber}`,
-                    ].join('&'),
-                  ),
-                  target: '_blank',
+                  onClick: () => toggleOpenSpiffApply(),
                 },
                 {
                   label: 'Job Activity',
-                  url: cfURL(['service.viewlogs', `id=${id}`].join('&')),
+                  onClick: () => toggleOpenJobActivity(),
                 },
                 {
                   label: notification ? 'Notification' : 'Add Notification',
@@ -751,70 +776,71 @@ export const ServiceCall: FC<Props> = props => {
             : []
         }
       >
-        <InfoTable data={data} error={error} />
+        <InfoTable data={data} error={state.error} />
       </SectionBar>
-      {asProject ? (
-        <>
-          <Form
-            title="Project Data"
-            schema={SCHEMA_PROJECT}
-            data={projectData}
-            onClose={onClose || (() => {})}
-            onSave={(data: Event) => {
-              let newData = makeSafeFormObject(data, new Event());
-              newData.setDepartmentId(Number(newData.getDepartmentId()));
-              saveProject(newData);
-            }}
-          />
-          {parentId != confirmedParentId && parentId != null && (
-            <Confirm
-              title="Confirm Parent"
-              open={true}
-              onClose={() => handleSetParentId(null)}
-              onConfirm={() => handleSetConfirmedIsChild(parentId)}
-            >
-              Are you sure you want to set this project as the parent to the new
-              project?
-            </Confirm>
-          )}
-          {confirmedParentId && (
-            <Typography variant="h5">Parent ID: {confirmedParentId}</Typography>
-          )}
-          {loaded && projects.length > 0 ? (
-            <GanttChart
-              events={projects.map(task => {
-                const id = task.getId();
-                const description = task.getDescription();
-                const dateStart = task.getDateStarted();
-                const dateEnd = task.getDateEnded();
-                const logJobStatus = task.getLogJobNumber();
-                const color = task.getColor();
-                const [startDate, startHour] = dateStart.split(' ');
-                const [endDate, endHour] = dateEnd.split(' ');
-                return {
-                  id,
-                  startDate,
-                  endDate,
-                  startHour,
-                  endHour,
-                  notes: description,
-                  statusColor: '#' + color,
-                  onClick: () => {
-                    handleSetParentId(id);
-                  },
-                };
-              })}
-              startDate={projects[0].getDateStarted().substr(0, 10)}
-              endDate={projects[projects.length - 1]
-                .getDateEnded()
-                .substr(0, 10)}
-              loading={loading}
-            />
-          ) : (
-            <Loader />
-          )}
-        </>
-      ) : (
+      {
+        // asProject ? (
+        //   <>
+        //     <Form
+        //       title="Project Data"
+        //       schema={SCHEMA_PROJECT}
+        //       data={projectData}
+        //       onClose={onClose || (() => {})}
+        //       onSave={(data: Event) => {
+        //         let newData = makeSafeFormObject(data, new Event());
+        //         newData.setDepartmentId(Number(newData.getDepartmentId()));
+        //         saveProject(newData);
+        //       }}
+        //     />
+        //     {parentId != confirmedParentId && parentId != null && (
+        //       <Confirm
+        //         title="Confirm Parent"
+        //         open={true}
+        //         onClose={() => handleSetParentId(null)}
+        //         onConfirm={() => handleSetConfirmedIsChild(parentId)}
+        //       >
+        //         Are you sure you want to set this project as the parent to the new
+        //         project?
+        //       </Confirm>
+        //     )}
+        //     {confirmedParentId && (
+        //       <Typography variant="h5">Parent ID: {confirmedParentId}</Typography>
+        //     )}
+        //     {loaded && projects.length > 0 ? (
+        //       <GanttChart
+        //         events={projects.map(task => {
+        //           const id = task.getId();
+        //           const description = task.getDescription();
+        //           const dateStart = task.getDateStarted();
+        //           const dateEnd = task.getDateEnded();
+        //           const logJobStatus = task.getLogJobNumber();
+        //           const color = task.getColor();
+        //           const [startDate, startHour] = dateStart.split(' ');
+        //           const [endDate, endHour] = dateEnd.split(' ');
+        //           return {
+        //             id,
+        //             startDate,
+        //             endDate,
+        //             startHour,
+        //             endHour,
+        //             notes: description,
+        //             statusColor: '#' + color,
+        //             onClick: () => {
+        //               handleSetParentId(id);
+        //             },
+        //           };
+        //         })}
+        //         startDate={projects[0].getDateStarted().substr(0, 10)}
+        //         endDate={projects[projects.length - 1]
+        //           .getDateEnded()
+        //           .substr(0, 10)}
+        //         loading={loading}
+        //       />
+        //     ) : (
+        //       <Loader />
+        //     )}
+        //   </>
+        // ) :
         <>
           <SectionBar
             title="Service Call Data"
@@ -822,12 +848,21 @@ export const ServiceCall: FC<Props> = props => {
               {
                 label: 'Save Service Call Only',
                 onClick: handleSave,
-                disabled: loading || saving,
+                disabled: state.loading || state.saving,
               },
               {
                 label: 'Save and Invoice',
-                onClick: handleSaveInvoice,
-                disabled: loading || saving,
+                onClick: () => {
+                  updateServiceCallState({
+                    type: 'setSaveInvoice',
+                    data: {
+                      pendingSave: true,
+                      requestValid: true,
+                      saveInvoice: true,
+                    },
+                  });
+                },
+                disabled: state.loading || state.saving,
               },
               {
                 label: 'Cancel',
@@ -836,58 +871,65 @@ export const ServiceCall: FC<Props> = props => {
                   `property_id=${propertyId}`,
                   `user_id=${userID}`,
                 ].join('&'),
-                disabled: loading || saving,
+                disabled: state.loading || state.saving,
               },
             ]}
           />
           <Tabs
-            key={tabKey + loading.toString()}
-            defaultOpenIdx={tabIdx}
-            onChange={setTabIdx}
+            key={state.tabKey + state.loading.toString()}
+            defaultOpenIdx={state.tabIdx}
+            onChange={data => {
+              updateServiceCallState({ type: 'setTabId', data: data });
+            }}
             tabs={[
               {
                 label: 'Request',
                 content: (
                   <Request
-                    key={loading.toString()}
+                    key={state.loading.toString()}
                     //@ts-ignore
                     ref={requestRef}
-                    serviceItem={entry}
-                    propertyEvents={propertyEvents}
-                    loading={loading}
+                    serviceItem={state.entry}
+                    propertyEvents={state.propertyEvents}
+                    loading={state.loading}
                     jobTypeOptions={jobTypeOptions}
                     jobSubtypeOptions={jobSubtypeOptions}
                     onChange={handleChangeEntry}
-                    disabled={saving}
-                    onValid={setRequestValid}
+                    disabled={state.saving}
+                    onValid={data => {
+                      updateServiceCallState({
+                        type: 'setRequestValid',
+                        data: data,
+                      });
+                    }}
                     onInitSchema={handleSetRequestfields}
                   />
                 ),
               },
               {
                 label: 'Equipment',
-                content: loading ? (
+                content: state.loading ? (
                   <InfoTable data={makeFakeRows(4, 4)} loading />
                 ) : (
                   <Equipment
                     {...props}
-                    serviceItem={entry}
-                    customer={customer}
-                    property={property}
+                    event={state.entry}
+                    customer={state.customer}
+                    property={state.property}
                   />
                 ),
               },
-              ...(serviceCallId
+              ...(state.serviceCallId
                 ? [
                     {
                       label: 'Services',
-                      content: loggedUser ? (
+                      content: state.loggedUser ? (
                         <Services
-                          serviceCallId={serviceCallId}
-                          servicesRendered={servicesRendered}
-                          loggedUser={loggedUser}
+                          serviceCallId={state.serviceCallId}
+                          servicesRendered={state.servicesRendered}
+                          loggedUser={state.loggedUser}
                           loadServicesRendered={loadServicesRenderedDataForProp}
-                          loading={loading}
+                          loading={state.loading}
                           onAddMaterials={handleOnAddMaterials}
                         />
                       ) : (
@@ -898,46 +940,47 @@ export const ServiceCall: FC<Props> = props => {
                 : []),
               {
                 label: 'Invoice',
-                content: loading ? (
+                content: state.loading ? (
                   <InfoTable data={makeFakeRows(4, 5)} loading />
                 ) : (
                   <Invoice
-                    serviceItem={entry}
+                    serviceItem={state.entry}
                     onChange={handleChangeEntry}
-                    disabled={saving}
-                    servicesRendered={servicesRendered}
+                    disabled={state.saving}
+                    servicesRendered={state.servicesRendered}
                     onInitSchema={handleSetRequestfields}
                   />
                 ),
               },
-              ...(serviceCallId
+              ...(state.serviceCallId
                 ? [
                     {
                       label: 'Proposal',
-                      content: loading ? (
+                      content: state.loading ? (
                         <InfoTable data={makeFakeRows(2, 5)} loading />
                       ) : (
                         <Proposal
-                          serviceItem={entry}
-                          customer={customer}
-                          property={property}
+                          serviceItem={state.entry}
+                          customer={state.customer}
+                          property={state.property}
                         />
                       ),
                     },
                   ]
                 : []),
-              ...(serviceCallId
+              ...(state.serviceCallId
                 ? [
                     {
                       label: 'Spiffs',
-                      content: loading ? (
+                      content: state.loading ? (
                         <InfoTable data={makeFakeRows(8, 5)} loading />
                       ) : (
                         <Spiffs
-                          serviceItem={entry}
+                          role={state.loggedUserRole}
+                          serviceItem={state.entry}
                           loggedUserId={loggedUserId}
                           loggedUserName={UserClientService.getCustomerName(
-                            loggedUser!,
+                            state.loggedUser!,
                           )}
                         />
                       ),
@@ -947,10 +990,18 @@ export const ServiceCall: FC<Props> = props => {
             ]}
           />
         </>
-      )}
-      {customer && serviceCallId > 0 && (
+      }
+      {state.openJobActivity && (
         <Modal
-          open={notificationEditing || notificationViewing}
+          open={state.openJobActivity}
+          onClose={() => toggleOpenJobActivity()}
+        >
+          <ServiceCallLogs loggedUserId={loggedUserId} eventId={eventId} />
+        </Modal>
+      )}
+      {state.customer && state.serviceCallId > 0 && (
+        <Modal
+          open={state.notificationEditing || state.notificationViewing}
           onClose={() => {
             handleSetNotificationViewing(false)();
             handleSetNotificationEditing(false)();
@@ -958,23 +1009,23 @@ export const ServiceCall: FC<Props> = props => {
         >
           <Form<User>
             title={
-              notificationViewing
+              state.notificationViewing
                 ? 'Customer Notification'
                 : `${
                     notification === '' ? 'Add' : 'Edit'
                   } Customer Notification`
             }
             schema={SCHEMA_PROPERTY_NOTIFICATION}
-            data={customer}
+            data={state.customer}
             onSave={handleSaveCustomer}
             onClose={() => {
               handleSetNotificationViewing(false)();
               handleSetNotificationEditing(false)();
             }}
-            disabled={saving}
-            readOnly={notificationViewing}
+            disabled={state.saving}
+            readOnly={state.notificationViewing}
             actions={
-              notificationViewing
+              state.notificationViewing
                 ? [
                     {
                       label: 'Edit',
@@ -999,6 +1050,13 @@ export const ServiceCall: FC<Props> = props => {
             }
           />
         </Modal>
+      )}
+      {state.openSpiffApply && state.serviceCallId != 0 && (
+        <SpiffApplyComponent
+          loggedUserId={loggedUserId}
+          serviceCallId={state.serviceCallId}
+          onClose={() => toggleOpenSpiffApply()}
+        />
       )}
     </>
   );

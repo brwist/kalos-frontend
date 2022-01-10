@@ -13,6 +13,8 @@ import { Button } from '../ComponentsLibrary/Button';
 import { Modal } from '../ComponentsLibrary/Modal';
 
 import { UploadPhotoTransaction } from '../ComponentsLibrary/UploadPhotoTransaction';
+import { UploadPhotoTransactionCreditCard } from '../ComponentsLibrary/UploadPhotoTransactionCreditCard';
+
 import {
   TransactionAccountList,
   TransactionAccount,
@@ -30,18 +32,15 @@ const Transaction: FC<Props> = props => {
   const { userID } = props;
   const [loaded, setLoaded] = useState<boolean>(false);
   const [loading, setLoading] = useState<boolean>(true);
-  const [
-    uploadPhotoTransactionOpen,
-    setUploadPhotoTransactionOpen,
-  ] = useState<boolean>(false);
+  const [uploadPhotoTransactionOpen, setUploadPhotoTransactionOpen] =
+    useState<boolean>(false);
   const [user, setUser] = useState<User>();
   const [costCenters, setCostCenters] = useState<TransactionAccountList>();
   const [isManager, setIsManager] = useState<boolean>(false);
   const [allCostCenters, setAllCostCenters] = useState<boolean>(false);
 
-  const [toggleAddTransaction, setToggleAddTransaction] = useState<boolean>(
-    false,
-  );
+  const [toggleAddTransaction, setToggleAddTransaction] =
+    useState<boolean>(false);
   const [managerDepartmentIds, setManagerDepartmentIds] = useState<number[]>(
     [],
   );
@@ -135,20 +134,18 @@ const Transaction: FC<Props> = props => {
               />
             </Modal>
           )}
-          {role === 'AccountsPayable' ? (
-            <Button
-              label="Add Transaction"
-              onClick={() => handleToggleAddTransaction(true)}
-            />
-          ) : (
-            React.Fragment
-          )}
+
+          <Button
+            label="Add Transaction"
+            onClick={() => handleToggleAddTransaction(true)}
+          />
+
           {toggleAddTransaction ? (
             <Modal
               open={toggleAddTransaction}
               onClose={() => handleToggleAddTransaction(false)}
             >
-              <UploadPhotoTransaction
+              <UploadPhotoTransactionCreditCard
                 loggedUserId={userID}
                 bucket="kalos-transactions"
                 costCenters={
@@ -158,18 +155,6 @@ const Transaction: FC<Props> = props => {
               />
             </Modal>
           ) : null}
-          {
-            <SectionBar
-              actions={[
-                {
-                  label:
-                    'Upload Pick Ticket, Invoice, or Non Credit Card Receipt',
-                  onClick: () => handleSetUploadPhotoTransactionOpen(true),
-                  fixed: true,
-                },
-              ]}
-            />
-          }
           <TransactionUserView
             userID={userID}
             userName={UserClientService.getCustomerName(user)}

@@ -230,11 +230,6 @@ export const CostSummary: FC<Props> = ({
       0,
     );
     let totalMileage = 0;
-    for (let i = 0; i < allRowsList.length; i++) {
-      totalMileage = allRowsList[i]
-        .getTripsList()
-        .reduce((aggr, t) => aggr + t.getDistanceInMiles(), 0);
-    }
 
     const totals = { totalMeals, totalLodging, totalMileage, processed };
 
@@ -303,11 +298,6 @@ export const CostSummary: FC<Props> = ({
       0,
     );
     let totalMileage = 0;
-    for (let i = 0; i < allRowsList.length; i++) {
-      totalMileage = allRowsList[i]
-        .getTripsList()
-        .reduce((aggr, t) => aggr + t.getDistanceInMiles(), 0);
-    }
 
     const totals = {
       totalMeals,

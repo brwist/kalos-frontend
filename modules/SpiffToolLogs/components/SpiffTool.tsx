@@ -482,31 +482,26 @@ export const SpiffTool: FC<Props> = ({
       req.setStatusId(1);
       //req.addFieldMask('AdminActionId');
       let tempEvent;
-      try {
-        tempEvent = await EventClientService.LoadEventByServiceCallID(
-          parseInt(req.getSpiffJobNumber()),
-        );
-      } catch (err) {
-        console.error(
-          `An error occurred while loading event by server: ${err}`,
-        );
-        return;
-      }
-      if (!tempEvent) {
-        console.error(
-          `No tempEvent variable was set to set spiff address with, aborting save.`,
-        );
-        return;
-      }
-      req.setSpiffAddress(
-        tempEvent.getProperty()?.getAddress() === undefined
-          ? tempEvent.getCustomer()?.getAddress() === undefined
-            ? ''
-            : tempEvent.getCustomer()!.getAddress()
-          : tempEvent.getProperty()!.getAddress(),
-      );
+      if (req.getSpiffJobNumber() != '') {
+        try {
+          tempEvent = await EventClientService.LoadEventByServiceCallID(
+            parseInt(req.getSpiffJobNumber()),
+          );
+          req.setSpiffAddress(
+            tempEvent.getProperty()?.getAddress() === undefined
+              ? tempEvent.getCustomer()?.getAddress() === undefined
+                ? ''
+                : tempEvent.getCustomer()!.getAddress()
+              : tempEvent.getProperty()!.getAddress(),
+          );
 
-      req.setSpiffJobNumber(tempEvent.getLogJobNumber());
+          req.setSpiffJobNumber(tempEvent.getLogJobNumber());
+        } catch (err) {
+          console.error(
+            `An error occurred while loading event by server: ${err}`,
+          );
+        }
+      }
       req.setFieldMaskList([]);
       const res = await TaskClientService.Create(req);
       const id = res.getId();
@@ -685,7 +680,6 @@ export const SpiffTool: FC<Props> = ({
               name: 'getSpiffJobNumber',
               label: 'Job #',
               type: 'eventId',
-              required: true,
             },
             {
               name: 'getDatePerformed',

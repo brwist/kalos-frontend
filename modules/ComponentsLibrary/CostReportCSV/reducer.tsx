@@ -22,7 +22,6 @@ export type State = {
   perDiems: PerDiem[];
   timesheets: TimesheetLine[];
   transactions: Transaction[];
-  lodgings: { [key: number]: number };
   costCenterTotals: { [key: string]: number };
   laborTotals: { [key: string]: number };
   classCodeDropdowns: { classCodeId: number; active: number }[];
@@ -52,7 +51,6 @@ export enum ACTIONS {
   SET_PER_DIEMS = 'setPerDiems',
   SET_TIMESHEETS = 'setTimesheets',
   SET_TRANSACTIONS = 'setTransactions',
-  SET_LODGINGS = 'setLodgings',
   SET_USERS = 'setUsers',
   SET_TOTAL_HOURS_WORKED = 'setTotalHoursWorked',
   SET_LOADED_INIT = 'setLoadedInit',
@@ -85,7 +83,6 @@ export type Action =
   | { type: ACTIONS.SET_PER_DIEMS; data: PerDiem[] }
   | { type: ACTIONS.SET_TIMESHEETS; data: TimesheetLine[] }
   | { type: ACTIONS.SET_TRANSACTIONS; data: Transaction[] }
-  | { type: ACTIONS.SET_LODGINGS; data: { [key: number]: number } }
   | {
       type: ACTIONS.SET_CLASS_CODE_DROPDOWNS;
       data: { classCodeId: number; active: number }[];
@@ -187,12 +184,6 @@ export const reducer = (state: State, action: Action) => {
         tasks: action.data.taskRes,
         perDiems: action.data.perDiemRes,
         trips: action.data.tripRes,
-      };
-    }
-    case ACTIONS.SET_LODGINGS: {
-      return {
-        ...state,
-        lodgings: action.data,
       };
     }
     case ACTIONS.SET_COST_CENTER_TOTALS: {
