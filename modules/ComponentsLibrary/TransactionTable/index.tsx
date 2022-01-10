@@ -2035,7 +2035,14 @@ export const TransactionTable: FC<Props> = ({
                               ? [
                                   <Tooltip
                                     key="notifyManager"
-                                    content={'Notify Department Manager'}
+                                    content={
+                                      selectorParam.txn.getDepartmentId() ==
+                                        0 ||
+                                      selectorParam.txn.getDepartmentId() ==
+                                        undefined
+                                        ? 'No Department, Cannot Notify Manager'
+                                        : 'Notify Department Manager'
+                                    }
                                   >
                                     <IconButton
                                       key="notifyIcon"
@@ -2045,6 +2052,12 @@ export const TransactionTable: FC<Props> = ({
                                           type: ACTIONS.SET_PENDING_SEND_NOTIFICATION_FOR_EXISTING_TRANSACTION,
                                           data: selectorParam.txn,
                                         })
+                                      }
+                                      disabled={
+                                        selectorParam.txn.getDepartmentId() ==
+                                          0 ||
+                                        selectorParam.txn.getDepartmentId() ==
+                                          undefined
                                       }
                                     >
                                       <NotificationsActiveIcon />
