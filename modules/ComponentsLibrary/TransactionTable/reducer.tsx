@@ -49,6 +49,7 @@ export type State = {
   mergingTransaction: boolean;
   role: RoleType | undefined;
   accountsPayableAdmin: boolean;
+  pendingSendNotificationForExistingTransaction: Transaction | undefined;
   page: number;
   error: string | undefined;
   pendingUploadPhoto: Transaction | undefined;
@@ -92,6 +93,7 @@ export enum ACTIONS {
   SET_LOADING = 'setLoading',
   SET_LOADED = 'setLoaded',
   SET_ORDER = 'setOrder',
+  SET_PENDING_SEND_NOTIFICATION_FOR_EXISTING_TRANSACTION = 'setPendingSendNotificationForExistingTransaction',
   SET_MERGE_DOCUMENT_ALERT = 'setMergeDocumentAlert',
   SET_MERGE_DOCUMENT1 = 'setMergeDocument1',
   SET_MERGE_DOCUMENT2 = 'setMergeDocument2',
@@ -134,6 +136,10 @@ export type Action =
   | { type: ACTIONS.SET_LOADING; data: boolean }
   | { type: ACTIONS.SET_LOADED; data: boolean }
   | { type: ACTIONS.SET_NOTIFY; data: number }
+  | {
+      type: ACTIONS.SET_PENDING_SEND_NOTIFICATION_FOR_EXISTING_TRANSACTION;
+      data: Transaction | undefined;
+    }
   | {
       type: ACTIONS.UPDATE_LOCAL_STATUS;
       data: { transactionId: number; statusId: number };
@@ -301,6 +307,12 @@ export const reducer = (state: State, action: Action) => {
       return {
         ...state,
         notify: action.data,
+      };
+    }
+    case ACTIONS.SET_PENDING_SEND_NOTIFICATION_FOR_EXISTING_TRANSACTION: {
+      return {
+        ...state,
+        pendingSendNotificationForExistingTransaction: action.data,
       };
     }
     case ACTIONS.SET_EMPLOYEES: {

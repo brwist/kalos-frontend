@@ -60,6 +60,7 @@ import { TxnLog } from '../../transaction/components/log';
 import { TxnNotes } from '../../transaction/components/notes';
 import { prettyMoney } from '../../transaction/components/row';
 import { CompareTransactions } from '../CompareTransactions';
+import { Confirm } from '../Confirm';
 import { Data, InfoTable } from '../InfoTable';
 import { Alert } from '../Alert';
 import { Modal } from '../Modal';
@@ -84,7 +85,7 @@ import { truncateSync } from 'fs';
 import { getMimeType } from '@kalos-core/kalos-rpc/Common';
 import { pdf } from '@react-pdf/renderer';
 import { NULL_TIME_VALUE } from '../Timesheet/constants';
-
+import NotificationsActiveIcon from '@material-ui/icons/NotificationsActive';
 export interface Props {
   loggedUserId: number;
   isSelector?: boolean; // Is this a selector table (checkboxes that return in on-change)?
@@ -153,6 +154,7 @@ export const TransactionTable: FC<Props> = ({
     creatingTransaction: false,
     mergingTransaction: false,
     pendingUploadPhoto: undefined,
+    pendingSendNotificationForExistingTransaction: undefined,
     role: undefined,
     orderDir: 'ASC',
     orderBy: 'vendor, timestamp',
@@ -630,7 +632,6 @@ export const TransactionTable: FC<Props> = ({
     [],
   );
   const handleSetNotify = useCallback((notify: number) => {
-    console.log('we changed notify', notify);
     dispatch({ type: ACTIONS.SET_NOTIFY, data: notify });
   }, []);
   const handleCheckOrderNumber = useCallback(async (orderNumber: string) => {
@@ -642,7 +643,7 @@ export const TransactionTable: FC<Props> = ({
       if (result) {
         dispatch({
           type: ACTIONS.SET_ERROR,
-          data: `        This Order Number already exists. You can still create this transaction,
+          data: `This Order Number already exists. You can still create this transaction,
         but it may result in duplicate transactions. It is recommended that you
         search for the existing transaction and update it.`,
         });
@@ -651,7 +652,38 @@ export const TransactionTable: FC<Props> = ({
       dispatch({ type: ACTIONS.SET_ERROR, data: undefined });
     }
   }, []);
+  const handleNotifyUserOfExistingTransaction = useCallback(
+    async (txn: Transaction) => {
+      const foundDepartment = state.departments.find(
+        department => department.getId() == txn.getDepartmentId(),
+      );
+      if (foundDepartment) {
+        const messageToSend = `A new transaction has been created in Accounts Payable that requires your attention, *Order Number:${txn.getOrderNumber()}*, Amount: ${txn.getAmount()} *Vendor: ${txn.getVendor()}*, *Notes: ${txn.getNotes()}*`;
+        console.log(messageToSend);
+        const user = new User();
+        user.setId(foundDepartment.getManagerId());
+        const userResult = await UserClientService.Get(user);
+        const slackUser = await getSlackID(
+          `${userResult.getFirstname()} ${userResult.getLastname()}`,
+        );
+        if (slackUser === '0') {
+          console.log('failed to send message');
+          dispatch({
+            type: ACTIONS.SET_ERROR,
+            data: 'Failed to Send Message, could not find user in Slack',
+          });
+        }
+        await slackNotify(slackUser, messageToSend);
 
+        console.log('Message sent successfully.');
+      }
+      dispatch({
+        type: ACTIONS.SET_PENDING_SEND_NOTIFICATION_FOR_EXISTING_TRANSACTION,
+        data: undefined,
+      });
+    },
+    [state.departments],
+  );
   const handleSetFilter = useCallback(async (d: FilterData) => {
     if (!d.week) {
       d.week = OPTION_ALL;
@@ -1999,6 +2031,27 @@ export const TransactionTable: FC<Props> = ({
                                 <LineWeightIcon />
                               </IconButton>
                             </Tooltip>,
+                            ...(state.accountsPayableAdmin
+                              ? [
+                                  <Tooltip
+                                    key="notifyManager"
+                                    content={'Notify Department Manager'}
+                                  >
+                                    <IconButton
+                                      key="notifyIcon"
+                                      size="small"
+                                      onClick={() =>
+                                        dispatch({
+                                          type: ACTIONS.SET_PENDING_SEND_NOTIFICATION_FOR_EXISTING_TRANSACTION,
+                                          data: selectorParam.txn,
+                                        })
+                                      }
+                                    >
+                                      <NotificationsActiveIcon />
+                                    </IconButton>
+                                  </Tooltip>,
+                                ]
+                              : []),
                             <Tooltip key="upload" content="Upload File">
                               <IconButton
                                 key={'uploadIcon'}
@@ -2083,6 +2136,7 @@ export const TransactionTable: FC<Props> = ({
                                   </Tooltip>,
                                 ]
                               : []),
+
                             <Tooltip key="submit" content={'Mark as accepted'}>
                               <IconButton
                                 key="submitIcon"
@@ -2127,6 +2181,7 @@ export const TransactionTable: FC<Props> = ({
                                   </IconButton>
                                 </Tooltip>
                               ),
+
                             <Tooltip key="delete" content="Delete this task">
                               <IconButton
                                 key="deleteIcon"
@@ -2264,6 +2319,28 @@ export const TransactionTable: FC<Props> = ({
         }
         loading={state.loading}
       />
+      {state.pendingSendNotificationForExistingTransaction != undefined && (
+        <Confirm
+          open={
+            state.pendingSendNotificationForExistingTransaction != undefined
+          }
+          submitLabel="Send"
+          title="Notify Manager"
+          onConfirm={() =>
+            handleNotifyUserOfExistingTransaction(
+              state.pendingSendNotificationForExistingTransaction!,
+            )
+          }
+          onClose={() =>
+            dispatch({
+              type: ACTIONS.SET_PENDING_SEND_NOTIFICATION_FOR_EXISTING_TRANSACTION,
+              data: undefined,
+            })
+          }
+        >
+          Notify Manager of Transaction?
+        </Confirm>
+      )}
       {state.openUploadPhotoTransaction ? (
         <Modal
           open={state.openUploadPhotoTransaction}
