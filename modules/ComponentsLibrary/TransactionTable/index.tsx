@@ -635,21 +635,24 @@ export const TransactionTable: FC<Props> = ({
     dispatch({ type: ACTIONS.SET_NOTIFY, data: notify });
   }, []);
   const handleCheckOrderNumber = useCallback(async (orderNumber: string) => {
-    const transactionReq = new Transaction();
-    transactionReq.setOrderNumber(orderNumber);
-    transactionReq.setIsActive(1);
-    try {
-      const result = await TransactionClientService.Get(transactionReq);
-      if (result) {
-        dispatch({
-          type: ACTIONS.SET_ERROR,
-          data: `This Order Number already exists. You can still create this transaction,
+    if (orderNumber != '') {
+      const transactionReq = new Transaction();
+      transactionReq.setOrderNumber(orderNumber);
+      transactionReq.setVendorCategory("'PickTicket','Receipt','Invoice'");
+      transactionReq.setIsActive(1);
+      try {
+        const result = await TransactionClientService.Get(transactionReq);
+        if (result) {
+          dispatch({
+            type: ACTIONS.SET_ERROR,
+            data: `This Order Number already exists. You can still create this transaction,
         but it may result in duplicate transactions. It is recommended that you
         search for the existing transaction and update it.`,
-        });
+          });
+        }
+      } catch (err) {
+        dispatch({ type: ACTIONS.SET_ERROR, data: undefined });
       }
-    } catch (err) {
-      dispatch({ type: ACTIONS.SET_ERROR, data: undefined });
     }
   }, []);
   const handleNotifyUserOfExistingTransaction = useCallback(
