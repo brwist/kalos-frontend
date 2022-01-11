@@ -6,7 +6,7 @@ import { ServicesRendered } from '@kalos-core/kalos-rpc/ServicesRendered';
 import { User } from '@kalos-core/kalos-rpc/User';
 import { Event } from '@kalos-core/kalos-rpc/Event';
 import { Option } from '../Field';
-
+import { Payment } from '@kalos-core/kalos-rpc/Payment';
 export interface State {
   requestFields: string[];
   tabIdx: number;
@@ -18,6 +18,7 @@ export interface State {
   entry: Event;
   property: Property;
   customer: User;
+  paidServices: Payment[];
   propertyEvents: Event[];
   loaded: boolean;
   loading: boolean;
@@ -83,6 +84,7 @@ export type Action =
         loading: boolean;
       };
     }
+  | { type: 'setPaidServices'; data: Payment[] }
   | {
       type: 'setSaveServiceCall';
       data: {
@@ -199,6 +201,12 @@ export const reducer = (state: State, action: Action) => {
       return {
         ...state,
         saving: action.data,
+      };
+    case 'setPaidServices':
+      console.log('what we got in reducer', action.data);
+      return {
+        ...state,
+        paidServices: action.data,
       };
     case 'setLoading':
       return {

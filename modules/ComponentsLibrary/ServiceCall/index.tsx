@@ -26,6 +26,7 @@ import {
   makeSafeFormObject,
   ActivityLogClientService,
 } from '../../../helpers';
+import { PaymentClient, Payment } from '@kalos-core/kalos-rpc/Payment';
 import { ENDPOINT, OPTION_BLANK } from '../../../constants';
 import { Modal } from '../Modal';
 import { SectionBar } from '../SectionBar';
@@ -108,6 +109,7 @@ export const ServiceCall: FC<Props> = props => {
     loaded: false,
     loading: true,
     saving: false,
+    paidServices: [],
     loggedUserRole: '',
     openSpiffApply: false,
     error: false,
@@ -166,8 +168,21 @@ export const ServiceCall: FC<Props> = props => {
           type: 'setServicesRendered',
           data: { servicesRendered: servicesRendered, loading: true },
         });
-        console.log(servicesRendered);
-        console.log('we are here getting sr data');
+        const totalPaidServices = servicesRendered.filter(
+          service => service.getStatus() == 'Payment',
+        );
+        const pcs = new PaymentClient(ENDPOINT);
+        let payments = [];
+        for (let i = 0; i < totalPaidServices.length; i++) {
+          const req = new Payment();
+          req.setServicesRenderedId(totalPaidServices[i].getId());
+          const result = await pcs.Get(req);
+          payments.push(result);
+        }
+        updateServiceCallState({
+          type: 'setPaidServices',
+          data: payments,
+        });
         return servicesRendered;
       } else {
         return [];
@@ -949,6 +964,7 @@ export const ServiceCall: FC<Props> = props => {
                     disabled={state.saving}
                     servicesRendered={state.servicesRendered}
                     onInitSchema={handleSetRequestfields}
+                    paidServices={state.paidServices}
                   />
                 ),
               },
