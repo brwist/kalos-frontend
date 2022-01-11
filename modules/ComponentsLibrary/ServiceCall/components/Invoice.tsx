@@ -15,14 +15,18 @@ import { formatDateTimeDay, makeSafeFormObject } from '../../../../helpers';
 import { ENDPOINT } from '../../../../constants';
 import { Event } from '@kalos-core/kalos-rpc/Event';
 import { ServicesRendered } from '@kalos-core/kalos-rpc/ServicesRendered';
+import { SQSEmailAndDocument } from '@kalos-core/kalos-rpc/compiled-protos/email_pb';
+import { Payment, PaymentClient } from '@kalos-core/kalos-rpc/Payment';
 
 const sic = new ServiceItemClient(ENDPOINT);
+
 const { COMPLETED, INCOMPLETE } = SERVICE_STATUSES;
 
 interface Props {
   disabled: boolean;
   serviceItem: Event;
   servicesRendered: ServicesRendered[];
+  paidServices: Payment[];
   onInitSchema: (fields: string[]) => void;
   onChange: (serviceItem: Event) => void;
 }
@@ -30,23 +34,12 @@ interface Props {
 export const Invoice: FC<Props> = ({
   serviceItem,
   servicesRendered,
+  paidServices,
   onInitSchema,
   onChange,
 }) => {
-  /*
-    useEffect(() => {
-      (async () => {
-        const req = new ServiceItem();
-        req.setId(serviceItem.id);
-        console.log(req);
-        const entry = await sic.Get(req);
-        console.log('fetched: ', entry)
-      })();
-    }, []);
-  */
-
   const [initSchemaCalled, setInitSchemaCalled] = useState<boolean>(false);
-  let grandTotal = 0;
+
   const transformData = useCallback((data: Event) => {
     /*
     const {
@@ -70,10 +63,25 @@ export const Invoice: FC<Props> = ({
     data.setTotalamountrow2(total2.toString());
     data.setTotalamountrow3(total3.toString());
     data.setTotalamountrow4(total4.toString());
-    grandTotal = total1 + total2 + total3 + total4;
     return data;
   }, []);
   const [formKey, setFormKey] = useState<number>(0);
+  const [emailData, setEmailData] = useState<SQSEmailAndDocument>(
+    new SQSEmailAndDocument(),
+  );
+  /*
+- [ ] tandard invoice header (copy paste whatever)
+    - [ ] Property Address, Billing Address, JobNumber and Billing Date
+        - [ ] Services Rendered from each Row and Cost
+        - [ ] Materials breakdown and Cost
+        - [ ] Service items
+        - [ ] Discount amount
+        - [ ] Tax Due
+        - [ ] Grand Total
+    - [ ] Selected Property Service Items
+        - [ ] Readings
+        - [ ] Materials
+*/
   const data = transformData(serviceItem);
 
   const handleChange = useCallback(
@@ -81,7 +89,12 @@ export const Invoice: FC<Props> = ({
       onChange(transformData(makeSafeFormObject(data, new Event()))),
     [onChange, transformData],
   );
-
+  let totalPaid = paidServices.reduce(
+    (accumulator, currentValue) =>
+      accumulator + currentValue.getAmountCollected(),
+    0,
+  );
+  console.log(paidServices);
   const handleCopyFromServicesRendered = useCallback(() => {
     const servicesRenderedNotes: string = servicesRendered
       .filter(status => [COMPLETED, INCOMPLETE].includes(status.getStatus()))
@@ -177,23 +190,30 @@ export const Invoice: FC<Props> = ({
         },
       ],
       [
-        /*
-      {
-        content: (
-          <Field
-            label="Grand Total"
-            name={undefined}
-            value={grandTotal}
-          />
-        ),
-      },
-      */
+        {
+          content: (
+            <Field
+              label="Grand Total"
+              type="number"
+              name="getTotalAmountTotal"
+              startAdornment="$"
+              disabled={true}
+              value={
+                parseInt(data.getTotalamountrow1()) +
+                parseInt(data.getTotalamountrow2()) +
+                parseInt(data.getTotalamountrow3()) +
+                parseInt(data.getTotalamountrow4())
+              }
+            />
+          ),
+        },
+
         {
           content: (
             <Field
               label="Payments"
               name="getPayments"
-              value={0}
+              value={totalPaid}
               startAdornment="$"
             />
           ), // FIXME
@@ -203,7 +223,13 @@ export const Invoice: FC<Props> = ({
             <Field
               label="Remaining due"
               name="getRemainingDue"
-              value={(1 - +data.getDiscount() / 100) * grandTotal} // FIXME
+              value={
+                (1 - +data.getDiscount() / 100) *
+                (parseInt(data.getTotalamountrow1()) +
+                  parseInt(data.getTotalamountrow2()) +
+                  parseInt(data.getTotalamountrow3()) +
+                  parseInt(data.getTotalamountrow4()))
+              } // FIXME
               startAdornment="$"
             />
           ),
@@ -244,7 +270,7 @@ export const Invoice: FC<Props> = ({
         },
       ],
     ],
-    [data, grandTotal, handleCopyFromServicesRendered],
+    [data, handleCopyFromServicesRendered],
   );
 
   useEffect(() => {
