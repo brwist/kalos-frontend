@@ -34,6 +34,7 @@ import { InfoTable, Data } from '../InfoTable';
 import { Tabs } from '../Tabs';
 import { Option } from '../Field';
 import { Form, Schema } from '../Form';
+import { ServiceItem } from '@kalos-core/kalos-rpc/ServiceItem';
 import { SpiffApplyComponent } from '../SpiffApplyComponent';
 import { Request } from './components/Request';
 import { Equipment } from './components/Equipment';
@@ -106,6 +107,7 @@ export const ServiceCall: FC<Props> = props => {
     property: new Property(),
     customer: new User(),
     propertyEvents: [],
+    selectedServiceItems: [],
     loaded: false,
     loading: true,
     saving: false,
@@ -154,6 +156,12 @@ export const ServiceCall: FC<Props> = props => {
       data: !state.openJobActivity,
     });
   };
+  const setSelectedServiceItems = (data: ServiceItem[]) => {
+    updateServiceCallState({
+      type: 'setSelectedServiceItems',
+      data: data,
+    });
+  };
   const loadServicesRenderedData = useCallback(
     async (_serviceCallId = state.serviceCallId) => {
       if (_serviceCallId) {
@@ -190,6 +198,7 @@ export const ServiceCall: FC<Props> = props => {
     },
     [state.serviceCallId],
   );
+
   const loadServicesRenderedDataForProp = useCallback(
     async (_serviceCallId = state.serviceCallId) => {
       if (_serviceCallId) {
@@ -879,6 +888,7 @@ export const ServiceCall: FC<Props> = props => {
                 },
                 disabled: state.loading || state.saving,
               },
+              /*
               {
                 label: 'Cancel',
                 url: [
@@ -888,6 +898,7 @@ export const ServiceCall: FC<Props> = props => {
                 ].join('&'),
                 disabled: state.loading || state.saving,
               },
+              */
             ]}
           />
           <Tabs
@@ -931,6 +942,12 @@ export const ServiceCall: FC<Props> = props => {
                     event={state.entry}
                     customer={state.customer}
                     property={state.property}
+                    onSelectServiceItems={
+                      state.loggedUser.getIsEmployee()
+                        ? setSelectedServiceItems
+                        : undefined
+                    }
+                    selectedServiceItems={state.selectedServiceItems}
                   />
                 ),
               },

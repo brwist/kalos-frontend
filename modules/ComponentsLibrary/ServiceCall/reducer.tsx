@@ -7,6 +7,7 @@ import { User } from '@kalos-core/kalos-rpc/User';
 import { Event } from '@kalos-core/kalos-rpc/Event';
 import { Option } from '../Field';
 import { Payment } from '@kalos-core/kalos-rpc/Payment';
+import { ServiceItem } from '@kalos-core/kalos-rpc/ServiceItem';
 export interface State {
   requestFields: string[];
   tabIdx: number;
@@ -35,6 +36,7 @@ export interface State {
   notificationEditing: boolean;
   notificationViewing: boolean;
   projects: Event[];
+  selectedServiceItems: ServiceItem[];
   parentId: number | null;
   confirmedParentId: number | null;
   projectData: Event;
@@ -61,6 +63,7 @@ export type Action =
       };
     }
   | { type: 'setEntry'; data: Event }
+  | { type: 'setSelectedServiceItems'; data: ServiceItem[] }
   | {
       type: 'setChangeEntry';
       data: {
@@ -184,6 +187,11 @@ export const reducer = (state: State, action: Action) => {
       return {
         ...state,
         entry: action.data,
+      };
+    case 'setSelectedServiceItems':
+      return {
+        ...state,
+        selectedServiceItems: action.data,
       };
     case 'setChangeEntry':
       return {

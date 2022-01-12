@@ -92,6 +92,7 @@ interface Props {
   loggedUserId: number;
   propertyId: number;
   title?: string;
+  eventId: number;
   loading?: boolean;
   selectable?: boolean;
   onSelect?: (entries: ServiceItem[]) => void;
@@ -126,6 +127,7 @@ export const ServiceItems: FC<Props> = props => {
     title = 'Service Items',
     selectable,
     onSelect,
+    eventId,
     selected: selectedInitial,
     repair,
     disableRepair = false,
@@ -686,6 +688,7 @@ export const ServiceItems: FC<Props> = props => {
                     <ServiceItemReadings
                       {...props}
                       serviceItemId={entry.getId()}
+                      eventId={eventId}
                       onClose={() => {
                         let tempDropDowns = state.readingsDropdowns;
                         const dropdown = state.readingsDropdowns.findIndex(

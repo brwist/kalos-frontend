@@ -41,15 +41,6 @@ export const Invoice: FC<Props> = ({
   const [initSchemaCalled, setInitSchemaCalled] = useState<boolean>(false);
 
   const transformData = useCallback((data: Event) => {
-    /*
-    const {
-      totalamountrow1,
-      totalamountrow2,
-      totalamountrow3,
-      totalamountrow4,
-    } = data;
-    */
-
     const totalamountrow1 = data.getTotalamountrow1();
     const totalamountrow2 = data.getTotalamountrow2();
     const totalamountrow3 = data.getTotalamountrow3();
@@ -70,7 +61,7 @@ export const Invoice: FC<Props> = ({
     new SQSEmailAndDocument(),
   );
   /*
-- [ ] tandard invoice header (copy paste whatever)
+- [ ] standard invoice header (copy paste whatever)
     - [ ] Property Address, Billing Address, JobNumber and Billing Date
         - [ ] Services Rendered from each Row and Cost
         - [ ] Materials breakdown and Cost
@@ -89,12 +80,11 @@ export const Invoice: FC<Props> = ({
       onChange(transformData(makeSafeFormObject(data, new Event()))),
     [onChange, transformData],
   );
-  let totalPaid = paidServices.reduce(
+  const totalPaid = paidServices.reduce(
     (accumulator, currentValue) =>
       accumulator + currentValue.getAmountCollected(),
     0,
   );
-  console.log(paidServices);
   const handleCopyFromServicesRendered = useCallback(() => {
     const servicesRenderedNotes: string = servicesRendered
       .filter(status => [COMPLETED, INCOMPLETE].includes(status.getStatus()))
@@ -111,7 +101,13 @@ export const Invoice: FC<Props> = ({
     onChange(data);
     setFormKey(formKey + 1);
   }, [onChange, data, setFormKey, formKey, servicesRendered]);
-
+  const totalRemianing =
+    (1 - +data.getDiscount() / 100) *
+      (parseInt(data.getTotalamountrow1()) +
+        parseInt(data.getTotalamountrow2()) +
+        parseInt(data.getTotalamountrow3()) +
+        parseInt(data.getTotalamountrow4())) -
+    totalPaid;
   const SCHEMA: Schema<Event> = useMemo(
     () => [
       [
@@ -223,13 +219,7 @@ export const Invoice: FC<Props> = ({
             <Field
               label="Remaining due"
               name="getRemainingDue"
-              value={
-                (1 - +data.getDiscount() / 100) *
-                (parseInt(data.getTotalamountrow1()) +
-                  parseInt(data.getTotalamountrow2()) +
-                  parseInt(data.getTotalamountrow3()) +
-                  parseInt(data.getTotalamountrow4()))
-              } // FIXME
+              value={totalRemianing}
               startAdornment="$"
             />
           ),
@@ -270,7 +260,7 @@ export const Invoice: FC<Props> = ({
         },
       ],
     ],
-    [data, handleCopyFromServicesRendered],
+    [data, totalPaid, totalRemianing, handleCopyFromServicesRendered],
   );
 
   useEffect(() => {
