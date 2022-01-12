@@ -2369,7 +2369,10 @@ export const AdvancedSearch: FC<Props> = ({
                           <SearchIcon />
                         </IconButton>
                       </Tooltip>,
-                      ...(editableEmployees && (isAdmin || limitedAccess)
+                      ...(editableEmployees &&
+                      (isAdmin ||
+                        limitedAccess ||
+                        entry.getId() === loggedUser.getId())
                         ? [
                             <Tooltip
                               key="edit"
