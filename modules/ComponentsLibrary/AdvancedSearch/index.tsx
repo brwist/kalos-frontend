@@ -1021,7 +1021,12 @@ export const AdvancedSearch: FC<Props> = ({
     ],
     [departments, searchActions],
   );
-
+  const limitedAccess =
+    loggedUser
+      .getPermissionGroupsList()
+      .find(
+        permission => permission.getName() === 'LimitedEmployeeDirectoryAccess',
+      ) != undefined;
   const SCHEMA_EMPLOYEES_VIEW: Schema<User> = [
     [
       {
@@ -1085,11 +1090,13 @@ export const AdvancedSearch: FC<Props> = ({
         name: 'getFirstname',
         label: 'First Name',
         required: true,
+        disabled: !isAdmin && loggedUser.getId() != entry.getId(),
       },
       {
         name: 'getLastname',
         label: 'Last Name',
         required: true,
+        disabled: !isAdmin && loggedUser.getId() != entry.getId(),
       },
     ],
     [
@@ -1097,38 +1104,47 @@ export const AdvancedSearch: FC<Props> = ({
         name: 'getAddress',
         label: 'Street Address',
         multiline: true,
+        disabled:
+          !isAdmin &&
+          loggedUser.getId() != entry.getId() &&
+          limitedAccess == undefined,
       },
       {
         name: 'getCity',
         label: 'City',
+        disabled:
+          !isAdmin &&
+          loggedUser.getId() != entry.getId() &&
+          limitedAccess == undefined,
       },
       {
         name: 'getZip',
         label: 'Zipcode',
+        disabled:
+          !isAdmin &&
+          loggedUser.getId() != entry.getId() &&
+          limitedAccess == undefined,
       },
       {
         name: 'getState',
         label: 'State',
         options: USA_STATES_OPTIONS,
+        disabled:
+          !isAdmin &&
+          loggedUser.getId() != entry.getId() &&
+          limitedAccess == undefined,
       },
     ],
     [
       {
         name: 'getEmpTitle',
         label: 'Title',
+        disabled: !isAdmin,
       },
       // {
       //   name: 'id', // TODO
       //   label: 'Hire Date',
       // },
-      {
-        name: 'getEmployeeFunctionId',
-        label: 'Employee Role',
-        options: employeeFunctions.map(ef => ({
-          label: ef.getName(),
-          value: ef.getId(),
-        })),
-      },
       {
         name: 'getEmployeeDepartmentId',
         label: 'Employee Segment',
@@ -1137,34 +1153,50 @@ export const AdvancedSearch: FC<Props> = ({
           value: d.getId(),
         })),
         required: true,
+        disabled: !isAdmin,
       },
     ],
     [
       {
         name: 'getPhone',
         label: 'Primary Phone',
+        disabled:
+          !isAdmin &&
+          loggedUser.getId() != entry.getId() &&
+          limitedAccess == undefined,
       },
       {
         name: 'getCellphone',
         label: 'Cell Phone',
+        disabled:
+          !isAdmin &&
+          loggedUser.getId() != entry.getId() &&
+          limitedAccess == undefined,
       },
       {
         name: 'getExt',
         label: 'Ext',
+        disabled:
+          !isAdmin &&
+          loggedUser.getId() != entry.getId() &&
+          limitedAccess == undefined,
       },
       {
         name: 'getToolFund',
         label: 'Tool Fund Allowance',
+        disabled: !isAdmin,
       },
     ],
     [
       {
         name: 'getEmail',
         label: 'Email',
+        disabled: !isAdmin && loggedUser.getId() != entry.getId(),
       },
       {
         name: 'getPhoneEmail',
         label: 'Email-to-SMS',
+        disabled: !isAdmin && loggedUser.getId() != entry.getId(),
       },
       {},
       {},
@@ -1175,11 +1207,13 @@ export const AdvancedSearch: FC<Props> = ({
         name: 'getServiceCalls',
         label: 'Runs Service Calls',
         type: 'checkbox',
+        disabled: !isAdmin,
       },
       {
         name: 'getIsAdmin',
         label: 'Admin Menu Rights',
         type: 'checkbox',
+        disabled: !isAdmin,
       },
       // {
       //   name: 'isAdmin', // FIXME include_in_pdf_list
@@ -1195,103 +1229,44 @@ export const AdvancedSearch: FC<Props> = ({
         name: 'getPaidServiceCallStatus',
         label: '"Paid" Service Call Status',
         type: 'checkbox',
+        disabled: !isAdmin,
       },
       {
         name: 'getShowBilling',
         label: 'Show billing to user',
         type: 'checkbox',
+        disabled: !isAdmin,
       },
     ],
     [
-      // {
-      //   name: 'isAdmin', // FIXME can_delete_serviceItem_photo
-      //   label: 'Can delete service item photos',
-      //   type: 'checkbox',
-      // },
       {
         name: 'getIsOfficeStaff',
         label: 'Office Staff',
         type: 'checkbox',
+        disabled: !isAdmin,
       },
       {
         name: 'getIsHvacTech',
         label: 'Hvac Tech',
         type: 'checkbox',
+        disabled: !isAdmin,
       },
-      // {
-      //   name: 'isAdmin', // FIXME can_access_reports
-      //   label: 'Access Reports',
-      //   type: 'checkbox',
-      // },
       {
         name: 'getTechAssist',
         label: 'Tech Assist',
         type: 'checkbox',
+        disabled: !isAdmin,
       },
       {},
-      // {
-      //   name: 'isAdmin', // FIXME edit_directory_view
-      //   label: 'Edit Directory View',
-      //   type: 'checkbox',
-      // },
     ],
-    // [
-    //   {
-    //     name: 'isAdmin', // FIXME have_roo_btn_access
-    //     label: 'Roo Button Access',
-    //     type: 'checkbox',
-    //   },
-    //   {
-    //     name: 'isAdmin', // FIXME can_approve_requestOff
-    //     label: 'Review and Approve Requests Off',
-    //     type: 'checkbox',
-    //   },
-    //   {
-    //     name: 'isAdmin', // FIXME userStatus
-    //     label: 'Activate User',
-    //     type: 'checkbox',
-    //   },
-    // ],
-    // [
-    //   {
-    //     name: 'isAdmin', // FIXME userStatus
-    //     label: 'Deactivate User',
-    //     type: 'checkbox',
-    //   },
-    //   {
-    //     name: 'isAdmin', // FIXME email_right
-    //     label: 'Send Emails',
-    //     type: 'checkbox',
-    //   },
-    //   {
-    //     name: 'isAdmin', // FIXME timesheet_right
-    //     label: 'Approve Time',
-    //     type: 'checkbox',
-    //   },
-    // ],
-    // [
-    //   {
-    //     name: 'isAdmin', // FIXME tasks_right
-    //     label: 'Handle Tasks',
-    //     type: 'checkbox',
-    //   },
-    //   {
-    //     name: 'isAdmin', // FIXME edit_right
-    //     label: 'Manage Employees',
-    //     type: 'checkbox',
-    //   },
-    //   {
-    //     name: 'isAdmin', // FIXME delete_right
-    //     label: 'Delete Customers',
-    //     type: 'checkbox',
-    //   },
-    // ],
+
     [{ headline: true, label: 'Kalos Special Features' }],
     [
       {
         name: 'getIsColorMute',
         label: 'Color Mute [2017]',
         type: 'checkbox',
+        disabled: loggedUser.getId() != entry.getId(),
       },
       // {
       //   name: 'isAdmin', // FIXME admin_matrics
@@ -1342,6 +1317,7 @@ export const AdvancedSearch: FC<Props> = ({
         name: 'getAnnualHoursPto',
         label: 'Annual PTO Allowance',
         type: 'number',
+        disabled: !isAdmin,
       },
       /*{
         name: 'currentPtoAmount',
@@ -2393,7 +2369,7 @@ export const AdvancedSearch: FC<Props> = ({
                           <SearchIcon />
                         </IconButton>
                       </Tooltip>,
-                      ...(editableEmployees && isAdmin
+                      ...(editableEmployees && (isAdmin || limitedAccess)
                         ? [
                             <Tooltip
                               key="edit"
@@ -2596,6 +2572,7 @@ export const AdvancedSearch: FC<Props> = ({
       handlePendingCustomerDeletingToggle,
       employeeImages,
       loggedUser,
+      limitedAccess,
       handlePendingEmployeeViewingToggle,
       isAdmin,
       editableEmployees,
