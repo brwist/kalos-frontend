@@ -17,7 +17,6 @@ import { Form, Schema, Options } from '..//Form';
 import { Modal } from '../Modal';
 import {
   makeFakeRows,
-  getRPCFields,
   formatDate,
   UserClientService,
   timestamp,
@@ -252,6 +251,7 @@ type MaintenanceEntry = MaintenanceQuestion;
 
 interface Props {
   serviceItemId: number;
+  eventId: number;
   loggedUserId: number;
   onClose?: () => void;
 }
@@ -259,11 +259,11 @@ interface Props {
 export const ServiceItemReadings: FC<Props> = ({
   serviceItemId,
   loggedUserId,
+  eventId,
   onClose,
 }) => {
   const [entries, setEntries] = useState<Entry[]>([]);
   const [users, setUsers] = useState<User[]>([]);
-
   const [loaded, setLoaded] = useState<boolean>(false);
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<boolean>(false);
@@ -366,6 +366,7 @@ export const ServiceItemReadings: FC<Props> = ({
         if (!isNew) {
           entry.setId(editedEntry.getId());
         }
+        entry.setEventId(eventId);
         entry.setServiceItemId(serviceItemId);
         entry.setDate(timestamp(true));
         entry.setUserId(loggedUserId);
@@ -380,7 +381,7 @@ export const ServiceItemReadings: FC<Props> = ({
         }
       }
     },
-    [editedEntry, serviceItemId, loggedUserId, setEditing, load],
+    [editedEntry, eventId, serviceItemId, loggedUserId, setEditing, load],
   );
 
   const handleSaveMaintenance = useCallback(
