@@ -165,17 +165,13 @@ export const ServiceCall: FC<Props> = props => {
   const loadServicesRenderedData = useCallback(
     async (_serviceCallId = state.serviceCallId) => {
       if (_serviceCallId) {
-        updateServiceCallState({ type: 'setLoading', data: true });
         const req = new ServicesRendered();
         req.setIsActive(1);
         req.setEventId(_serviceCallId);
         const servicesRendered = (
           await ServicesRenderedClientService.BatchGet(req)
         ).getResultsList();
-        updateServiceCallState({
-          type: 'setServicesRendered',
-          data: { servicesRendered: servicesRendered, loading: true },
-        });
+        /*
         const totalPaidServices = servicesRendered.filter(
           service => service.getStatus() == 'Payment',
         );
@@ -184,13 +180,22 @@ export const ServiceCall: FC<Props> = props => {
         for (let i = 0; i < totalPaidServices.length; i++) {
           const req = new Payment();
           req.setServicesRenderedId(totalPaidServices[i].getId());
-          const result = await pcs.Get(req);
-          payments.push(result);
+          try {
+            const result = await pcs.Get(req);
+            payments.push(result);
+          } catch (e) {
+            console.log('failed to get payment data');
+          }
         }
+        */
         updateServiceCallState({
-          type: 'setPaidServices',
-          data: payments,
+          type: 'setServicesRendered',
+          data: {
+            servicesRendered: servicesRendered,
+            loading: true,
+          },
         });
+
         return servicesRendered;
       } else {
         return [];
@@ -209,10 +214,12 @@ export const ServiceCall: FC<Props> = props => {
         const servicesRendered = (
           await ServicesRenderedClientService.BatchGet(req)
         ).getResultsList();
+
         updateServiceCallState({
           type: 'setServicesRendered',
           data: { servicesRendered: servicesRendered, loading: false },
         });
+
         console.log(servicesRendered);
         console.log('we are here getting sr data');
       } else {
