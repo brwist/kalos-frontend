@@ -352,12 +352,17 @@ export const Services: FC<Props> = ({
             }`
           : `${loggedUser.getFirstname()} ${loggedUser.getLastname()}`,
       );
+
       req.setDatetime(timestamp());
       const fieldMaskList = ['EventId', 'Status', 'Name', 'Datetime'];
       req.setFieldMaskList(fieldMaskList);
       const res = await ServicesRenderedClientService.Create(req);
       console.log({ res });
       if (isSignature) {
+        let tempSignatureData = state.signatureForm.signature;
+        if (state.paymentForm.signature != '') {
+          tempSignatureData = state.paymentForm.signature;
+        }
         console.log('we are signing');
         const fileReq = new File();
         fileReq.setMimeType('image/png');
@@ -366,14 +371,17 @@ export const Services: FC<Props> = ({
           new Date(),
           'hhmmss',
         )}.png`;
-
-        await uploadFileToS3Bucket(
-          fileName,
-          state.signatureForm.signature,
-          fileReq.getBucket(),
-          'signature',
-        );
-
+        try {
+          const s3Res = await uploadFileToS3Bucket(
+            fileName,
+            tempSignatureData,
+            bucket,
+            'signature',
+          );
+          console.log(s3Res);
+        } catch (err) {
+          console.log('failed to upload to AWS', err);
+        }
         fileReq.setName(fileName);
         const fileRes = await FileClientService.Create(fileReq);
         res.setSignatureId(fileRes.getId());
@@ -387,11 +395,14 @@ export const Services: FC<Props> = ({
         paymentReq.setAmountCollected(state.paymentForm.amountCollected);
         paymentReq.setType(state.paymentForm.paymentType);
         const paymentClientService = new PaymentClient(ENDPOINT);
-        const paymentServicesRender = servicesRendered.find(
+        const paymentServicesRender = servicesRendered.filter(
           service => service.getStatus() == PAYMENT,
         );
+
         if (paymentServicesRender) {
-          paymentReq.setServicesRenderedId(paymentServicesRender.getId());
+          paymentReq.setServicesRenderedId(
+            paymentServicesRender[paymentServicesRender.length - 1].getId(),
+          );
           await paymentClientService.Create(paymentReq);
         } else {
           console.log('we did not find a payment');
