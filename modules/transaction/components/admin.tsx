@@ -22,6 +22,7 @@ import {
   makeFakeRows,
   makeMonthsOptions,
   sortUserByLastname,
+  TransactionActivityClientService,
 } from '../../../helpers';
 import {
   RecordPageReq,
@@ -276,13 +277,22 @@ export class TransactionAdminView extends React.Component<props, state> {
     };
   }
 
-  makeUpdateCostCenter(id: number) {
+  makeUpdateCostCenter(transaction: Transaction) {
     return async (costCenterID: number) => {
       const txn = new Transaction();
-      txn.setId(id);
+      txn.setId(txn.getId());
       txn.setCostCenterId(costCenterID);
       txn.setFieldMaskList(['CostCenterId']);
       await this.TxnClient.Update(txn);
+      const logReq = new TransactionActivity();
+      logReq.setIsActive(1);
+      logReq.setTransactionId(transaction.getId());
+      logReq.setUserId(this.props.userID);
+      logReq.setDescription(
+        `User Updated Cost Center from ${transaction.getCostCenterId()} to ${costCenterID}`,
+      );
+
+      await TransactionActivityClientService.Create(logReq);
       await this.fetchTxns();
     };
   }
@@ -322,13 +332,22 @@ export class TransactionAdminView extends React.Component<props, state> {
     };
   }
 
-  makeUpdateDepartment(id: number) {
+  makeUpdateDepartment(transaction: Transaction) {
     return async (departmentID: number) => {
       const txn = new Transaction();
-      txn.setId(id);
+      txn.setId(transaction.getId());
       txn.setDepartmentId(departmentID);
       txn.setFieldMaskList(['DepartmentId']);
       await this.TxnClient.Update(txn);
+      const logReq = new TransactionActivity();
+      logReq.setIsActive(1);
+      logReq.setTransactionId(transaction.getId());
+      logReq.setUserId(this.props.userID);
+      logReq.setDescription(
+        `User Updated Department from ${transaction.getDepartmentId()} to ${departmentID}`,
+      );
+
+      await TransactionActivityClientService.Create(logReq);
       await this.fetchTxns();
     };
   }
@@ -962,8 +981,8 @@ export class TransactionAdminView extends React.Component<props, state> {
                     refresh: this.fetchTxns,
                     addJobNumber: this.makeAddJobNumber(txn.getId()),
                     updateNotes: this.makeUpdateNotes(txn.getId()),
-                    updateCostCenter: this.makeUpdateCostCenter(txn.getId()),
-                    updateDepartment: this.makeUpdateDepartment(txn.getId()),
+                    updateCostCenter: this.makeUpdateCostCenter(txn),
+                    updateDepartment: this.makeUpdateDepartment(txn),
                     toggleLoading: this.toggleLoading,
                     editingCostCenter:
                       this.state.editingCostCenter[txn.getId()],
