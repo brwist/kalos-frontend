@@ -559,9 +559,9 @@ export const FirstCallDashboard: React.FC<Props> = function FirstCallDashboard({
       for (let i in manualOffTechs) {
         notAvailable = notAvailable.concat(manualOffTechs[i].id);
       }
-      for (let j in inUseTechs) {
-        notAvailable = notAvailable.concat(inUseTechs[j]);
-      }
+      // for (let j in inUseTechs) {
+      //   notAvailable = notAvailable.concat(inUseTechs[j]);
+      // }
       for (let k in scheduledOffTechs) {
         notAvailable = notAvailable.concat(scheduledOffTechs[k].id);
       }
@@ -1602,10 +1602,11 @@ export const FirstCallDashboard: React.FC<Props> = function FirstCallDashboard({
                 </Typography>
                 <DispatchTechs
                   userID={loggedUserId}
-                  dismissedTechs={state.techs.filter(tech=>state.firstCallInUse.includes(tech.getUserId()))}
+                  dismissedTechs={[]}
                   techs={state.formData.availableTechs}
                   loading={false}
                   isFirstCall={true}
+                  firstCallInUse={state.firstCallInUse}
                 />
                 <DismissedTechs
                   userID={loggedUserId}
@@ -1936,7 +1937,7 @@ export const FirstCallDashboard: React.FC<Props> = function FirstCallDashboard({
                           name: "tempAssigneeList",
                           label: "Select Technician(s)",
                           options: state.techs
-                            .filter(tech => state.formData.availableTechs.includes(tech) && !state.pendingAddInUse.includes(tech.getUserId()) || state.pendingRemoveInUse.includes(tech.getUserId()))
+                            .filter(tech => state.formData.availableTechs.includes(tech) && !state.firstCallInUse.includes(tech.getUserId()) && !state.pendingAddInUse.includes(tech.getUserId()) || state.pendingRemoveInUse.includes(tech.getUserId()))
                             .sort((a,b) => (a.getTechname() > b.getTechname()) ? 1 : ((b.getTechname() > a.getTechname()) ? -1 : 0))
                             .map(tech => ({
                               key: tech.getUserId() + tech.getTechname(),
