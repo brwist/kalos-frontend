@@ -26,6 +26,7 @@ interface props {
   handleMapRecenter?: (center: {lat: number, lng: number}, zoom: number) => void;
   loading: boolean;
   isFirstCall?: boolean;
+  firstCallInUse?: number[];
 }
 
 export const DispatchTechs: FC<props> = props => {
@@ -34,22 +35,24 @@ export const DispatchTechs: FC<props> = props => {
     dismissedTechs,
     loading,
     isFirstCall=false,
+    firstCallInUse=[],
   } = props
 
-  const sortTechs = useCallback((techs : DispatchableTech[], dismissed : DispatchableTech[]) => {
+  const sortTechs = useCallback((techs : DispatchableTech[]) => {
     let sorted = techs.sort((a,b) => (a.getTechname() > b.getTechname()) ? 1 : ((b.getTechname() > a.getTechname()) ? -1 : 0));
     if (isFirstCall) {
-      sorted = sorted.concat(dismissed.sort((a,b) => (a.getTechname() > b.getTechname()) ? 1 : ((b.getTechname() > a.getTechname()) ? -1 : 0)));
+      const available = sorted.filter(tech=>!firstCallInUse.includes(tech.getUserId()));
+      const assigned = sorted.filter(tech=>firstCallInUse.includes(tech.getUserId()));
+      sorted = available.concat(assigned);
     }
     setSortedTechnicians(sorted);
-  }, [isFirstCall])
+  }, [isFirstCall, firstCallInUse])
 
   const [sortedTechnicians, setSortedTechnicians] = useState<DispatchableTech[]>([]);
 
   useEffect(() => {
-    // console.log("DispatchTechs");
-    sortTechs(techs, dismissedTechs);
-  }, [dismissedTechs, techs, loading, sortTechs]);
+    sortTechs(techs);
+  }, [techs, loading, sortTechs]);
 
   return (
     <div>
@@ -97,7 +100,7 @@ export const DispatchTechs: FC<props> = props => {
                       <Draggable
                         key={`${tech.getUserId()}`}
                         draggableId={`${tech.getUserId()}`}
-                        isDragDisabled={dismissedTechs.includes(tech) ? true : false}
+                        isDragDisabled={firstCallInUse.includes(tech.getUserId()) ? true : false}
                         index={index}
                       >
                         {(dragProvided, snapshot) => (
@@ -113,7 +116,7 @@ export const DispatchTechs: FC<props> = props => {
                               margin:'auto',
                               ...dragProvided.draggableProps.style,
                               textAlign:'center',
-                              opacity: dismissedTechs.includes(tech) ? 0.4 : 1,
+                              opacity: firstCallInUse.includes(tech.getUserId()) ? 0.4 : 1,
                             }}
                             hover
                             onClick={props.handleMapRecenter ? () => props.handleMapRecenter!({lat: techLatitude, lng: techLongitude}, 12) : () => {}}
