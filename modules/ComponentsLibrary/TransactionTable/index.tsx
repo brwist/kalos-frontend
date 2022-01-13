@@ -664,7 +664,11 @@ export const TransactionTable: FC<Props> = ({
         const messageToSend = `A new transaction has been created in Accounts Payable that requires your attention, *Order Number:${txn.getOrderNumber()}*, Amount: ${txn.getAmount()} *Vendor: ${txn.getVendor()}*, *Notes: ${txn.getNotes()}*`;
         console.log(messageToSend);
         const user = new User();
-        user.setId(foundDepartment.getManagerId());
+        if (foundDepartment.getId() == 15) {
+          user.setId(103896); //Since ELE has no legit manager ID value that corresponds to a person, we are doing this for now.
+        } else {
+          user.setId(foundDepartment.getManagerId());
+        }
         const userResult = await UserClientService.Get(user);
         const slackUser = await getSlackID(
           `${userResult.getFirstname()} ${userResult.getLastname()}`,
