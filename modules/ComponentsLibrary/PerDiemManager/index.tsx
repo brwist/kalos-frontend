@@ -271,6 +271,7 @@ export const PerDiemManager: FC<Props> = ({
       year,
       month,
     );
+    setGovPerDiems(govPerDiems);
     setPerDiems(resultsList);
     setManagerPerDiemsOther(managerPerDiemsOther);
     setManagerPerDiems(managerPerDiemsList);
@@ -633,25 +634,6 @@ export const PerDiemManager: FC<Props> = ({
                 Lodging:
                 <strong> {usd(totalLodging)}</strong>
               </Typography>
-              <Typography variant="subtitle2">
-                All {isAnyManager ? 'Technicians' : 'Departments'} Total Miles
-                for Trips:
-                <strong>
-                  {' '}
-                  {allRowsList.reduce((total: any, current, index, arr) => {
-                    let tot = current
-                      .getTripsList()
-                      .reduce((acc: number, trip) => {
-                        return acc + trip.getDistanceInMiles();
-                      }, 0);
-
-                    if (index == arr.length - 1) {
-                      return (total + tot).toFixed(2);
-                    }
-                    return total + tot;
-                  }, 0)}
-                </strong>
-              </Typography>
             </>
           )}
         </CalendarHeader>
@@ -691,6 +673,7 @@ export const PerDiemManager: FC<Props> = ({
                   : govPerDiemByZipCode(pdr.getZipCode()).lodging),
               0,
             );
+
           const owner = employees!.find(
             employee => employee.getId() === entry.getUserId(),
           );
@@ -718,24 +701,6 @@ export const PerDiemManager: FC<Props> = ({
                         ? ` ${owner!.getZip()} `
                         : ' No ZipCode '}
                     </strong>
-                    {entry
-                      .getRowsList()
-                      .reduce((total: any, current, index, arr) => {
-                        let tot = current
-                          .getTripsList()
-                          .reduce((acc: number, trip) => {
-                            return acc + trip.getDistanceInMiles();
-                          }, 0);
-
-                        if (index == arr.length - 1) {
-                          return (
-                            <div>
-                              Total Miles: {(total + tot).toFixed(2)} miles
-                            </div>
-                          );
-                        }
-                        return total + tot;
-                      }, 0)}
                     {+entry.getDateSubmitted()[0] > 0 && (
                       <div>
                         Submited Date: {formatDate(entry.getDateSubmitted())}
@@ -901,21 +866,6 @@ export const PerDiemManager: FC<Props> = ({
                                   )}
                                 </div>
                               )}
-                              {entry
-                                .getTripsList()
-                                .reduce((total: any, current, index, arr) => {
-                                  if (index == arr.length - 1) {
-                                    return (
-                                      <div>
-                                        <strong>Total Miles: </strong>
-                                        {(
-                                          total + current.getDistanceInMiles()
-                                        ).toFixed(2) + ' mi'}
-                                      </div>
-                                    );
-                                  }
-                                  return total + current.getDistanceInMiles();
-                                }, 0)}
                               <div className="PerDiemRow">
                                 <strong>Notes: </strong>
                                 {entry.getNotes()}
