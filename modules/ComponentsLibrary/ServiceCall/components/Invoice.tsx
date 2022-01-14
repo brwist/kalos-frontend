@@ -24,7 +24,7 @@ const { COMPLETED, INCOMPLETE } = SERVICE_STATUSES;
 
 interface Props {
   disabled: boolean;
-  serviceItem: Event;
+  event: Event;
   servicesRendered: ServicesRendered[];
   paidServices: Payment[];
   onInitSchema: (fields: string[]) => void;
@@ -32,7 +32,7 @@ interface Props {
 }
 
 export const Invoice: FC<Props> = ({
-  serviceItem,
+  event,
   servicesRendered,
   paidServices,
   onInitSchema,
@@ -73,7 +73,7 @@ export const Invoice: FC<Props> = ({
         - [ ] Readings
         - [ ] Materials
 */
-  const data = transformData(serviceItem);
+  const data = transformData(event);
   const handleChange = useCallback(
     (data: Event) =>
       onChange(transformData(makeSafeFormObject(data, new Event()))),
