@@ -95,6 +95,8 @@ interface Props {
   loggedUser: User;
   servicesRendered: ServicesRendered[];
   loadServicesRendered: () => void;
+  onUpdatePayments?: (payments: Payment[]) => void;
+  payments?: Payment[];
   loading: boolean;
   onAddMaterials: (materialUsed: string, materialTotal: number) => void;
 }
@@ -221,7 +223,7 @@ const SCHEMA_PAYMENT: Schema<PaymentType> = [
     },
   ],
 ];
-const PAYMENT_INITIAL: PaymentAndSignatureType = {
+const PAYMENT_SIGNATURE_INITIAL: PaymentAndSignatureType = {
   signature: '',
   authorizedSignorName: '',
   authorizedSignorRole: '',
@@ -230,7 +232,12 @@ const PAYMENT_INITIAL: PaymentAndSignatureType = {
   paymentType: OPTION_BLANK,
   amountCollected: 0,
 };
-
+const PAYMENT_INITIAL: PaymentType = {
+  date: timestamp(true),
+  paymentType: OPTION_BLANK,
+  amountCollected: 0,
+  paymentCollected: 0,
+};
 const SIGNATURE_INITIAL: SignatureType = {
   signature: '',
   authorizedSignorName: '',
@@ -253,16 +260,19 @@ export const Services: FC<Props> = ({
   servicesRendered,
   loadServicesRendered,
   loading,
+  payments,
+  onUpdatePayments,
   onAddMaterials,
 }) => {
   const [state, dispatch] = useReducer(reducer, {
-    paymentForm: PAYMENT_INITIAL,
+    paymentForm: PAYMENT_SIGNATURE_INITIAL,
     viewPayment: undefined,
     viewSignature: undefined,
     signatureForm: SIGNATURE_INITIAL,
     deleting: undefined,
     saving: false,
     editing: SERVICES_RENDERED_PAYMENT_INITIAL,
+    serviceRenderedPayment: SERVICES_RENDERED_PAYMENT_INITIAL,
     changingStatus: false,
   });
   const bucket = 'testbuckethelios';
@@ -325,10 +335,25 @@ export const Services: FC<Props> = ({
       dispatch({ type: ACTIONS.SET_DELETING, data: undefined });
       const req = new ServicesRendered();
       req.setId(state.deleting.getId());
+      const paymentClientService = new PaymentClient(ENDPOINT);
+      const paymentReq = new Payment();
+      paymentReq.setServicesRenderedId(state.deleting.getId());
+      const foundPayment = await paymentClientService.Get(paymentReq);
+      if (foundPayment) {
+        paymentClientService.Delete(foundPayment);
+        if (payments && onUpdatePayments) {
+          const removePayment = payments.filter(
+            payment =>
+              payment.getServicesRenderedId() !=
+              foundPayment.getServicesRenderedId(),
+          );
+          onUpdatePayments(removePayment);
+        }
+      }
       await ServicesRenderedClientService.Delete(req);
       loadServicesRendered();
     }
-  }, [state.deleting, loadServicesRendered]);
+  }, [state.deleting, onUpdatePayments, payments, loadServicesRendered]);
   const handleChangeStatus = useCallback(
     (status: string) => async () => {
       dispatch({ type: ACTIONS.SET_CHANGING_STATUS, data: true });
@@ -356,8 +381,28 @@ export const Services: FC<Props> = ({
       req.setDatetime(timestamp());
       const fieldMaskList = ['EventId', 'Status', 'Name', 'Datetime'];
       req.setFieldMaskList(fieldMaskList);
+      let paymentInfo = PAYMENT_INITIAL;
+      if (state.paymentForm != PAYMENT_SIGNATURE_INITIAL) {
+        paymentInfo.amountCollected = state.paymentForm.amountCollected;
+        paymentInfo.paymentCollected = 1;
+        paymentInfo.date = state.paymentForm.date;
+        paymentInfo.paymentType = state.paymentForm.paymentType;
+      }
+      if (state.serviceRenderedPayment != SERVICES_RENDERED_PAYMENT_INITIAL) {
+        //we should update the SR, and include payment if needed
+        req.setServiceRendered(state.serviceRenderedPayment.servicesRendered);
+        req.setTechNotes(state.serviceRenderedPayment.technicianNotes);
+        if (state.serviceRenderedPayment.paymentType != '-- Select --') {
+          console.log('we got a payment with it');
+          paymentInfo.amountCollected =
+            state.serviceRenderedPayment.amountCollected;
+          paymentInfo.paymentCollected =
+            state.serviceRenderedPayment.paymentCollected;
+          paymentInfo.date = state.serviceRenderedPayment.dateProcessed;
+          paymentInfo.paymentType = state.serviceRenderedPayment.paymentType;
+        }
+      }
       const res = await ServicesRenderedClientService.Create(req);
-      console.log({ res });
       if (isSignature) {
         let tempSignatureData = state.signatureForm.signature;
         if (state.paymentForm.signature != '') {
@@ -388,30 +433,46 @@ export const Services: FC<Props> = ({
         res.setFieldMaskList(['SignatureId']);
         ServicesRenderedClientService.Update(res);
       }
-      if (state.paymentForm != PAYMENT_INITIAL) {
+      if (paymentInfo.paymentType != '-- Select --') {
         console.log('create payment');
         const paymentReq = new Payment();
         paymentReq.setCollected(1);
-        paymentReq.setAmountCollected(state.paymentForm.amountCollected);
-        paymentReq.setType(state.paymentForm.paymentType);
+        paymentReq.setAmountCollected(paymentInfo.amountCollected);
+        paymentReq.setType(paymentInfo.paymentType);
         const paymentClientService = new PaymentClient(ENDPOINT);
         const paymentServicesRender = servicesRendered.filter(
           service => service.getStatus() == PAYMENT,
         );
 
-        if (paymentServicesRender) {
+        if (paymentServicesRender && status == SIGNED_AS) {
           paymentReq.setServicesRenderedId(
             paymentServicesRender[paymentServicesRender.length - 1].getId(),
           );
           await paymentClientService.Create(paymentReq);
+          if (payments && onUpdatePayments) {
+            payments.push(paymentReq);
+            onUpdatePayments(payments);
+          }
         } else {
-          console.log('we did not find a payment');
+          paymentReq.setServicesRenderedId(res.getId());
+          await paymentClientService.Create(paymentReq);
+          if (payments && onUpdatePayments) {
+            payments.push(paymentReq);
+            onUpdatePayments(payments);
+          }
         }
       }
       //create png image, upload Name of signature is
       //"signature/#form.event_id#-#local.services_rendered_id#-#timeFormat(now(),'hhmmss')#.png"
       //After successful creation,Signature ID=file ID in table
-      dispatch({ type: ACTIONS.SET_PAYMENT_FORM, data: PAYMENT_INITIAL });
+      dispatch({
+        type: ACTIONS.SET_PAYMENT_FORM,
+        data: PAYMENT_SIGNATURE_INITIAL,
+      });
+      dispatch({
+        type: ACTIONS.SET_SERVICE_RENDERED_PAYMENT,
+        data: SERVICES_RENDERED_PAYMENT_INITIAL,
+      });
       dispatch({ type: ACTIONS.SET_SIGNATURE_FORM, data: SIGNATURE_INITIAL });
 
       dispatch({ type: ACTIONS.SET_CHANGING_STATUS, data: false });
@@ -422,7 +483,10 @@ export const Services: FC<Props> = ({
       loadServicesRendered,
       servicesRendered,
       state.signatureForm,
+      onUpdatePayments,
+      payments,
       state.paymentForm,
+      state.serviceRenderedPayment,
       serviceCallId,
     ],
   );
@@ -450,9 +514,28 @@ export const Services: FC<Props> = ({
         if (paymentReq.getId() == 0) {
           paymentReq.setServicesRenderedId(srReq.getId());
           paymentClientService.Create(paymentReq);
+          if (payments && onUpdatePayments) {
+            const newPayments = payments;
+            newPayments.push(paymentReq);
+            onUpdatePayments(newPayments);
+          }
         } else {
           paymentReq.setFieldMaskList(['Collected', 'AmountCollected', 'Type']);
           paymentClientService.Update(paymentReq);
+          if (payments && onUpdatePayments) {
+            const updatePaymentIndex = payments.findIndex(
+              payment => payment.getId() === paymentReq.getId(),
+            );
+            const updatePayments = payments;
+            updatePayments[updatePaymentIndex].setCollected(
+              paymentReq.getCollected(),
+            );
+            updatePayments[updatePaymentIndex].setAmountCollected(
+              paymentReq.getAmountCollected(),
+            );
+            updatePayments[updatePaymentIndex].setType(paymentReq.getType());
+            onUpdatePayments(updatePayments);
+          }
         }
         dispatch({ type: ACTIONS.SET_SAVING, data: false });
         const init: ServicesRenderedPaymentType = {
@@ -768,24 +851,22 @@ export const Services: FC<Props> = ({
         />
       )}
 
-      {/*[ON_CALL, ADMIN].includes(lastStatus) && (
+      {[ON_CALL, ADMIN].includes(lastStatus) && (
         <>
           <PlainForm
             schema={SCHEMA_ON_CALL}
-            data={serviceRenderedForm}
-            onChange={setServicesRenderedForm}
+            data={state.serviceRenderedPayment}
+            onChange={data =>
+              dispatch({
+                type: ACTIONS.SET_SERVICE_RENDERED_PAYMENT,
+                data: data,
+              })
+            }
             compact
             className="ServicesOnCallForm"
           />
-          <PlainForm
-            key={paymentFormKey}
-            schema={SCHEMA_PAYMENT_PART}
-            data={paymentFormPart}
-            onChange={handlePaymentFormChange}
-            compact
-          />
         </>
-      )*/}
+      )}
       <InfoTable
         columns={COLUMNS_SERVICES_RENDERED_HISTORY}
         data={data}

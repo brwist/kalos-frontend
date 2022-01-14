@@ -74,7 +74,6 @@ export const Invoice: FC<Props> = ({
         - [ ] Materials
 */
   const data = transformData(serviceItem);
-
   const handleChange = useCallback(
     (data: Event) =>
       onChange(transformData(makeSafeFormObject(data, new Event()))),
@@ -170,13 +169,8 @@ export const Invoice: FC<Props> = ({
         },
         {
           content: (
-            <Field
-              label="Payment"
-              name="getPayment"
-              value={0}
-              startAdornment="$"
-            />
-          ), // FIXME
+            <Field label="Payment" name="getPayment" startAdornment="$" />
+          ),
         },
         {
           label: 'Discount',
