@@ -990,7 +990,7 @@ export const ServiceCall: FC<Props> = props => {
                   <InfoTable data={makeFakeRows(4, 5)} loading />
                 ) : (
                   <Invoice
-                    serviceItem={state.entry}
+                    event={state.entry}
                     onChange={handleChangeEntry}
                     disabled={state.saving}
                     servicesRendered={state.servicesRendered}

@@ -338,17 +338,21 @@ export const Services: FC<Props> = ({
       const paymentClientService = new PaymentClient(ENDPOINT);
       const paymentReq = new Payment();
       paymentReq.setServicesRenderedId(state.deleting.getId());
-      const foundPayment = await paymentClientService.Get(paymentReq);
-      if (foundPayment) {
-        paymentClientService.Delete(foundPayment);
-        if (payments && onUpdatePayments) {
-          const removePayment = payments.filter(
-            payment =>
-              payment.getServicesRenderedId() !=
-              foundPayment.getServicesRenderedId(),
-          );
-          onUpdatePayments(removePayment);
+      try {
+        const foundPayment = await paymentClientService.Get(paymentReq);
+        if (foundPayment) {
+          paymentClientService.Delete(foundPayment);
+          if (payments && onUpdatePayments) {
+            const removePayment = payments.filter(
+              payment =>
+                payment.getServicesRenderedId() !=
+                foundPayment.getServicesRenderedId(),
+            );
+            onUpdatePayments(removePayment);
+          }
         }
+      } catch (err) {
+        console.log('no payment found');
       }
       await ServicesRenderedClientService.Delete(req);
       loadServicesRendered();
