@@ -143,7 +143,12 @@ export const ServiceCall: FC<Props> = props => {
     },
     [state.serviceCallId],
   );
-
+  const handleUpdatePayments = (payments: Payment[]) => {
+    updateServiceCallState({
+      type: 'setPaidServices',
+      data: payments,
+    });
+  };
   const toggleOpenSpiffApply = () => {
     updateServiceCallState({
       type: 'setOpenSpiffApply',
@@ -171,15 +176,12 @@ export const ServiceCall: FC<Props> = props => {
         const servicesRendered = (
           await ServicesRenderedClientService.BatchGet(req)
         ).getResultsList();
-        /*
-        const totalPaidServices = servicesRendered.filter(
-          service => service.getStatus() == 'Payment',
-        );
+
         const pcs = new PaymentClient(ENDPOINT);
         let payments = [];
-        for (let i = 0; i < totalPaidServices.length; i++) {
+        for (let i = 0; i < servicesRendered.length; i++) {
           const req = new Payment();
-          req.setServicesRenderedId(totalPaidServices[i].getId());
+          req.setServicesRenderedId(servicesRendered[i].getId());
           try {
             const result = await pcs.Get(req);
             payments.push(result);
@@ -187,7 +189,10 @@ export const ServiceCall: FC<Props> = props => {
             console.log('failed to get payment data');
           }
         }
-        */
+        updateServiceCallState({
+          type: 'setPaidServices',
+          data: payments,
+        });
         updateServiceCallState({
           type: 'setServicesRendered',
           data: {
@@ -969,6 +974,8 @@ export const ServiceCall: FC<Props> = props => {
                           loggedUser={state.loggedUser}
                           loadServicesRendered={loadServicesRenderedDataForProp}
                           loading={state.loading}
+                          payments={state.paidServices}
+                          onUpdatePayments={handleUpdatePayments}
                           onAddMaterials={handleOnAddMaterials}
                         />
                       ) : (

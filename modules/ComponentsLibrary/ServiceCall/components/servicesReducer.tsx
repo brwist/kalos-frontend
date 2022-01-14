@@ -15,6 +15,7 @@ export type State = {
   signatureForm: SignatureType;
   deleting: ServicesRendered | undefined;
   editing: ServicesRenderedPaymentType;
+  serviceRenderedPayment: ServicesRenderedPaymentType;
   saving: boolean;
   changingStatus: boolean;
 };
@@ -28,6 +29,7 @@ export enum ACTIONS {
   SET_SAVING = 'setSaving',
   SET_CHANGING_STATUS = 'setChangingStatus',
   SET_EDITING = 'setEditing',
+  SET_SERVICE_RENDERED_PAYMENT = 'setServiceRenderedPayment',
 }
 
 export type Action =
@@ -41,6 +43,10 @@ export type Action =
   | { type: ACTIONS.SET_DELETING; data: ServicesRendered | undefined }
   | { type: ACTIONS.SET_CHANGING_STATUS; data: boolean }
   | { type: ACTIONS.SET_EDITING; data: ServicesRenderedPaymentType }
+  | {
+      type: ACTIONS.SET_SERVICE_RENDERED_PAYMENT;
+      data: ServicesRenderedPaymentType;
+    }
   | { type: ACTIONS.SET_SAVING; data: boolean };
 
 export const reducer = (state: State, action: Action) => {
@@ -91,6 +97,12 @@ export const reducer = (state: State, action: Action) => {
       return {
         ...state,
         editing: action.data,
+      };
+    }
+    case ACTIONS.SET_SERVICE_RENDERED_PAYMENT: {
+      return {
+        ...state,
+        serviceRenderedPayment: action.data,
       };
     }
     default:
