@@ -25,6 +25,7 @@ import { SectionBar } from '../SectionBar';
 import { PlainForm, Schema, Option } from '../PlainForm';
 import { InfoTable, Columns, Data } from '../InfoTable';
 import { ServiceCall } from '../ServiceCall';
+import { ServiceCallNew } from '../ServiceCall/indexv2';
 import { ConfirmDelete } from '../ConfirmDelete';
 import { Modal } from '../Modal';
 import { CustomerInformation } from '../CustomerInformation';
@@ -95,6 +96,7 @@ import { ActivityLog } from '@kalos-core/kalos-rpc/ActivityLog';
 import format from 'date-fns/esm/format';
 import { ServiceRequest } from '../ServiceCall/requestIndex';
 import { QuoteLine } from '@kalos-core/kalos-rpc/QuoteLine';
+import Drawer from '@mui/material/Drawer';
 
 type Kind =
   | 'serviceCalls'
@@ -244,6 +246,8 @@ export const AdvancedSearch: FC<Props> = ({
       setPendingAddProperty(pendingAddProperty),
     [setPendingAddProperty],
   );
+  const [openDrawer, setOpenDrawer] = useState<boolean>(false);
+  const [drawerWidth, setDrawerWidth] = useState<number>(window.innerWidth*.5);
   const loadDicts = useCallback(async () => {
     setLoadingDicts(true);
     const jobTypes = await JobTypeClientService.loadJobTypes();
@@ -566,9 +570,14 @@ export const AdvancedSearch: FC<Props> = ({
     [],
   );
   const handlePendingEventEditingNewToggle = useCallback(
-    (pendingEventEditingNew?: Event) => () =>
-      setPendingEventEditingNew(pendingEventEditingNew),
-    [setPendingEventEditingNew],
+    (pendingEventEditingNew?: Event, showFull = false, openDrawer = false) => () => {
+      console.log(pendingEventEditingNew);
+      setPendingEventEditingNew(pendingEventEditingNew);
+      if (showFull) {
+        setOpenDrawer(openDrawer);
+      }
+    },
+    [setPendingEventEditingNew, setOpenDrawer],
   );
   const handlePendingEventDeletingToggle = useCallback(
     (pendingEventDeleting?: Event) => () =>
@@ -2051,14 +2060,15 @@ export const AdvancedSearch: FC<Props> = ({
                       onClick:
                         onSelectEvent || accounting
                           ? handleSelectEvent(entry)
-                          : () =>
-                              window.open(
-                                cfURL(
-                                  'service.editServiceCall',
-                                  `&id=${entry.getId()}&user_id=${property?.getUserId()}&property_id=${entry.getPropertyId()}`,
-                                ),
-                                '_blank',
-                              ),
+                          :
+                              // window.open(
+                              //   cfURL(
+                              //     'service.editServiceCall',
+                              //     `&id=${entry.getId()}&user_id=${property?.getUserId()}&property_id=${entry.getPropertyId()}`,
+                              //   ),
+                              //   '_blank',
+                              // ),
+                              handlePendingEventEditingNewToggle(entry, true, true),
                       actions: [
                         ...(onSelectEvent
                           ? []
@@ -2071,17 +2081,18 @@ export const AdvancedSearch: FC<Props> = ({
                                 <IconButton
                                   key="edit"
                                   size="small"
-                                  onClick={
-                                    () => {
-                                      window.open(
-                                        cfURL(
-                                          'service.editServiceCall',
-                                          `&id=${entry.getId()}&user_id=${property?.getUserId()}&property_id=${entry.getPropertyId()}`,
-                                        ),
-                                      );
+                                  onClick={handlePendingEventEditingNewToggle(entry, true, true)}
+                                    // () => (
+                                      // window.open(
+                                      //   cfURL(
+                                      //     'service.editServiceCall',
+                                      //     `&id=${entry.getId()}&user_id=${property?.getUserId()}&property_id=${entry.getPropertyId()}`,
+                                      //   ),
+                                      // );
+                                      // )
                                       /* TODO: complete edit service call module */
-                                    } /*handlePendingEventEditingToggle(entry)*/
-                                  }
+                                    /*handlePendingEventEditingToggle(entry)*/
+                                  
                                 >
                                   <EditIcon />
                                 </IconButton>
@@ -2605,6 +2616,7 @@ export const AdvancedSearch: FC<Props> = ({
       deletableProperties,
       handlePendingPropertyDeletingToggle,
       handleContractClick,
+      openDrawer,
     ],
   );
   const makeNewEmployee = () => {
@@ -2663,6 +2675,7 @@ export const AdvancedSearch: FC<Props> = ({
   }, [filter, departments]);
   return (
     <div>
+      <div>
       <SectionBar
         title={title}
         pagination={
@@ -2741,6 +2754,7 @@ export const AdvancedSearch: FC<Props> = ({
             : []),
         ]}
         fixedActions
+        styles={{width:openDrawer ? window.innerWidth-drawerWidth : "100%"}}
         asideContent={
           printableEmployees ? (
             <PrintPage
@@ -2781,7 +2795,29 @@ export const AdvancedSearch: FC<Props> = ({
         data={getData()}
         loading={loading || loadingDicts}
         hoverable
+        styles={{maxWidth:openDrawer ? window.innerWidth-drawerWidth : "100%", overflowX:"scroll"}}
       />
+      {openDrawer && pendingEventEditingNew && (
+        <Drawer
+          anchor="right"
+          variant="persistent"
+          open={openDrawer}
+          onClose={()=>{}}
+          PaperProps={{style:{width:"50%", borderLeft:"8px", borderStyle:"solid", borderColor:"grey", zIndex:1}}}
+          transitionDuration={{enter: 4, exit: 4}}
+          elevation={15}
+        >
+          <ServiceCallNew
+            loggedUserId={loggedUserId}
+            serviceCallId={pendingEventEditingNew.getId()}
+            userID={pendingEventEditingNew.getCustomer()?.getId() || 0}
+            propertyId={pendingEventEditingNew.getPropertyId()}
+            onClose={handlePendingEventEditingNewToggle(undefined, true, false)}
+            onSave={reload}
+          />
+        </Drawer>
+      )}
+      </div>
       {flatRateIsOpen && flatRate && (
         <Modal open onClose={() => setFlatRateIsOpen(false)}>
           <InfoTable
@@ -2824,7 +2860,7 @@ export const AdvancedSearch: FC<Props> = ({
           />
         </Modal>
       )}
-      {pendingEventEditingNew && (
+      {pendingEventEditingNew && !openDrawer && (
         <Modal
           open
           onClose={handlePendingEventEditingNewToggle(undefined)}

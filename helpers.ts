@@ -75,6 +75,7 @@ import {
   randomize,
 } from './modules/ComponentsLibrary/helpers';
 import { Contract, ContractClient } from '@kalos-core/kalos-rpc/Contract';
+import { ContractFrequencyClient } from '@kalos-core/kalos-rpc/ContractFrequency';
 import { NULL_TIME } from '@kalos-core/kalos-rpc/constants';
 import {
   TransactionActivity,
@@ -111,6 +112,7 @@ export const PDFClientService = new PDFClient(ENDPOINT);
 export const UserClientService = new UserClient(ENDPOINT);
 export const PropertyClientService = new PropertyClient(ENDPOINT);
 export const ContractClientService = new ContractClient(ENDPOINT);
+export const ContractFrequencyClientService = new ContractFrequencyClient(ENDPOINT);
 export const EventClientService = new EventClient(ENDPOINT);
 export const JobTypeClientService = new JobTypeClient(ENDPOINT);
 export const JobSubtypeClientService = new JobSubtypeClient(ENDPOINT);

@@ -1,6 +1,6 @@
 import React, { FC, useEffect } from 'react';
 import { UserClient } from '@kalos-core/kalos-rpc/User/index';
-import { ServiceCall, Props } from '../ComponentsLibrary/ServiceCall';
+import { ServiceCallNew, Props } from '../ComponentsLibrary/ServiceCall/indexv2';
 import { ENDPOINT } from '../../constants';
 import { PageWrapper, PageWrapperProps } from '../PageWrapper/main';
 
@@ -13,7 +13,7 @@ export const ServiceCallEdit: FC<Props & PageWrapperProps> = props => {
 
   return (
     <PageWrapper {...props} userID={props.loggedUserId}>
-      <ServiceCall {...props} />
+      <ServiceCallNew {...props} />
     </PageWrapper>
   );
 };

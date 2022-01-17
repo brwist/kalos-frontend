@@ -790,10 +790,10 @@ export const ServiceCall: FC<Props> = props => {
                     ? handleSetNotificationViewing(true)
                     : handleSetNotificationEditing(true),
                 },
-                {
-                  label: 'Service Call Search',
-                  url: cfURL('service.calls'),
-                },
+                // {
+                //   label: 'Service Call Search',
+                //   url: cfURL('service.calls'),
+                // },
                 {
                   label: 'Close',
                   ...(onClose
