@@ -8,6 +8,9 @@ import { Event } from '@kalos-core/kalos-rpc/Event';
 import { Option } from '../Field';
 import { Payment } from '@kalos-core/kalos-rpc/Payment';
 import { ServiceItem } from '@kalos-core/kalos-rpc/ServiceItem';
+import { EventClient, Quotable } from '@kalos-core/kalos-rpc/Event';
+import { Invoice as InvoiceType } from '@kalos-core/kalos-rpc/Invoice';
+import { Contract } from '@kalos-core/kalos-rpc/Contract';
 export interface State {
   requestFields: string[];
   tabIdx: number;
@@ -17,6 +20,7 @@ export interface State {
   requestValid: boolean;
   serviceCallId: number;
   entry: Event;
+  invoiceData: InvoiceType | undefined;
   property: Property;
   customer: User;
   paidServices: Payment[];
@@ -40,6 +44,7 @@ export interface State {
   parentId: number | null;
   confirmedParentId: number | null;
   projectData: Event;
+  contractData: Contract | undefined;
   openSpiffApply: boolean;
   openJobActivity: boolean;
 }
@@ -63,6 +68,8 @@ export type Action =
       };
     }
   | { type: 'setEntry'; data: Event }
+  | { type: 'setInvoiceData'; data: InvoiceType | undefined }
+  | { type: 'setContractData'; data: Contract | undefined }
   | { type: 'setSelectedServiceItems'; data: ServiceItem[] }
   | {
       type: 'setChangeEntry';
@@ -187,6 +194,16 @@ export const reducer = (state: State, action: Action) => {
       return {
         ...state,
         entry: action.data,
+      };
+    case 'setInvoiceData':
+      return {
+        ...state,
+        invoiceData: action.data,
+      };
+    case 'setContractData':
+      return {
+        ...state,
+        contractData: action.data,
       };
     case 'setSelectedServiceItems':
       return {

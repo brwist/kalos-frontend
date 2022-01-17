@@ -29,7 +29,7 @@ export type SelectedQuote = {
 interface Props {
   serviceCallId: number;
   servicesRenderedId: number;
-  onAdd?: () => void;
+  onUpdate?: () => void;
   onAddQuotes?: (quotes: SelectedQuote[]) => void;
 }
 
@@ -79,7 +79,7 @@ const SCHEMA_NEW_QUOTABLE: Schema<Quotable> = [
 export const QuoteSelector: FC<Props> = ({
   serviceCallId,
   servicesRenderedId,
-  onAdd,
+  onUpdate,
   onAddQuotes,
 }) => {
   const [open, setOpen] = useState<boolean>(false);
@@ -203,9 +203,12 @@ export const QuoteSelector: FC<Props> = ({
       let quoteUsed = new QuoteUsed();
       quoteUsed.setId(temp.getQuoteUsedId());
       await quoteUsedClientService.Delete(quoteUsed);
+      if (onUpdate) {
+        onUpdate();
+      }
     }
     setPendingDeleteQuotable([]);
-  }, [pendingDeleteQuotable]);
+  }, [pendingDeleteQuotable, onUpdate]);
   const handleAddToPendingDelete = useCallback(
     async (pendingRemoveQuotable: Quotable) => {
       let tempQuotable = quotable.filter(
@@ -293,6 +296,9 @@ export const QuoteSelector: FC<Props> = ({
 
         try {
           await quoteUsedClientService.Create(req);
+          if (onUpdate) {
+            onUpdate();
+          }
         } catch (err) {
           console.log('failed to add quotable item');
         }
@@ -467,7 +473,7 @@ export const QuoteSelector: FC<Props> = ({
       <SectionBar
         title="Supplies / Services"
         actions={
-          onAdd
+          onUpdate
             ? [
                 {
                   label: 'Add',
