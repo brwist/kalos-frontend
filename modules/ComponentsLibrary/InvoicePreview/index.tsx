@@ -131,7 +131,7 @@ export const InvoicePreview: FC<props> = ({
 
   const load = useCallback(async () => {
     await getInvoiceBody();
-    if (onLoaded) onLoaded(state.invoiceHTML);
+    if (onLoaded && state.invoiceHTML) onLoaded(state.invoiceHTML);
     dispatch({ type: ACTIONS.SET_LOADED, data: true });
   }, [getInvoiceBody, onLoaded, state.invoiceHTML]);
 
