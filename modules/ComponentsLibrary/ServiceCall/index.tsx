@@ -6,13 +6,15 @@ import React, {
   useReducer,
   useRef,
 } from 'react';
-import { EventClient, Event } from '@kalos-core/kalos-rpc/Event';
+import { EventClient, Event, Quotable } from '@kalos-core/kalos-rpc/Event';
 import { UserClient, User } from '@kalos-core/kalos-rpc/User';
-import { JobType } from '@kalos-core/kalos-rpc/JobType';
-import { JobSubtype } from '@kalos-core/kalos-rpc/JobSubtype';
 import { JobTypeSubtype } from '@kalos-core/kalos-rpc/JobTypeSubtype';
-import { Property, PropertyClient } from '@kalos-core/kalos-rpc/Property';
+import { Property } from '@kalos-core/kalos-rpc/Property';
+import { QuotableRead } from '@kalos-core/kalos-rpc/compiled-protos/event_pb';
 import { ServicesRendered } from '@kalos-core/kalos-rpc/ServicesRendered';
+import { Invoice as InvoiceType } from '@kalos-core/kalos-rpc/Invoice';
+import { Contract } from '@kalos-core/kalos-rpc/Contract';
+
 import {
   getRPCFields,
   makeFakeRows,
@@ -20,11 +22,16 @@ import {
   JobTypeClientService,
   JobSubtypeClientService,
   cfURL,
-  loadProjects,
   JobTypeSubtypeClientService,
   ServicesRenderedClientService,
   makeSafeFormObject,
   ActivityLogClientService,
+  InvoiceClientService,
+  ContractClientService,
+  QuoteLineClientService,
+  QuoteLinePartClientService,
+  formatDate,
+  formatDateDay,
 } from '../../../helpers';
 import { PaymentClient, Payment } from '@kalos-core/kalos-rpc/Payment';
 import { ENDPOINT, OPTION_BLANK } from '../../../constants';
@@ -42,19 +49,16 @@ import { Services } from './components/Services';
 import { Invoice } from './components/Invoice';
 import { Proposal } from './components/Proposal';
 import { Spiffs } from './components/Spiffs';
-import { Confirm } from '../Confirm';
-import { GanttChart } from '../GanttChart';
-import { Loader } from '../../Loader/main';
-import Typography from '@material-ui/core/Typography';
-import { Alert } from '../Alert';
 import { ActivityLog } from '@kalos-core/kalos-rpc/ActivityLog';
 import format from 'date-fns/esm/format';
 import setHours from 'date-fns/esm/setHours';
 import setMinutes from 'date-fns/esm/setMinutes';
 import { State, reducer } from './reducer';
-import { update } from 'lodash';
 import { ServiceCallLogs } from '../ServiceCallLogs';
-
+import { EntryType } from 'pdf-lib/cjs/core/structures/PDFCrossRefStream';
+import { QuoteLineClient } from '@kalos-core/kalos-rpc/QuoteLine';
+import { MaterialClient } from '@kalos-core/kalos-rpc/Material';
+import { parseISO, getDay } from 'date-fns';
 const EventClientService = new EventClient(ENDPOINT);
 const UserClientService = new UserClient(ENDPOINT);
 
@@ -115,6 +119,7 @@ export const ServiceCall: FC<Props> = props => {
     loggedUserRole: '',
     openSpiffApply: false,
     error: false,
+    invoiceData: undefined,
     errorMessage: '',
     jobTypes: [],
     jobSubtypes: [],
@@ -127,6 +132,7 @@ export const ServiceCall: FC<Props> = props => {
     projects: [],
     parentId: null,
     confirmedParentId: null,
+    contractData: undefined,
     projectData: new Event(),
     openJobActivity: false,
   };
@@ -149,6 +155,48 @@ export const ServiceCall: FC<Props> = props => {
       data: payments,
     });
   };
+  const handleUpdateMaterialsStringAndCost = useCallback(async () => {
+    const totalMaterials: Quotable[] = [];
+    //Day(3char),timestamp - Person Who added it - (Material Quantity)  - (Material Cost)
+    //Tue, 12/7/2021 8:08PM Jordan Spalding -(1) Trip & Diagnostic Fee - After Hours - $120
+    let totalCost = 0;
+    let fullString = '';
+    for (let i = 0; i < state.servicesRendered.length; i++) {
+      let tempString = '';
+      const materialReq = new QuotableRead();
+      materialReq.setServicesRenderedId(state.servicesRendered[i].getId());
+      materialReq.setIsActive(true);
+      const materials = (
+        await EventClientService.ReadQuotes(materialReq)
+      ).getDataList();
+      totalMaterials.concat(materials);
+      let date = state.servicesRendered[i].getTimeStarted();
+      const tech = state.servicesRendered[i].getName();
+      let tempStringFirstPart = `${date}, - ${tech}`;
+      for (let j = 0; j < materials.length; j++) {
+        let material = materials[j];
+        let tempStringSecondPart = ` - (${material.getQuantity()})- ${material.getDescription()}- $${material.getQuotedPrice()}`;
+        tempStringFirstPart += tempStringSecondPart;
+        const cost = material.getQuantity() * material.getQuotedPrice();
+        totalCost += cost;
+      }
+      tempString += tempStringFirstPart;
+      fullString = tempString;
+    }
+    const updateEvent = new Event();
+    updateEvent.setId(state.serviceCallId);
+    updateEvent.setMaterialUsed(fullString);
+    updateEvent.setMaterialTotal(totalCost);
+    updateEvent.setFieldMaskList(['MaterialUsed', 'MaterialTotal']);
+    console.log('we are updaet the material used');
+    console.log(fullString);
+    console.log(totalCost);
+    await EventClientService.Update(updateEvent);
+    updateServiceCallState({
+      type: 'setEntry',
+      data: updateEvent,
+    });
+  }, [state.servicesRendered, state.serviceCallId]);
   const toggleOpenSpiffApply = () => {
     updateServiceCallState({
       type: 'setOpenSpiffApply',
@@ -176,9 +224,36 @@ export const ServiceCall: FC<Props> = props => {
         const servicesRendered = (
           await ServicesRenderedClientService.BatchGet(req)
         ).getResultsList();
-
+        const invoiceReq = new InvoiceType();
+        invoiceReq.setEventId(_serviceCallId);
+        try {
+          const invoiceData = await InvoiceClientService.Get(invoiceReq);
+          if (invoiceData) {
+            updateServiceCallState({
+              type: 'setInvoiceData',
+              data: invoiceData,
+            });
+          }
+        } catch (err) {
+          console.log('No invoice data');
+        }
+        const contractReq = new Contract();
+        contractReq.setUserId(userID);
+        contractReq.setIsActive(1);
+        try {
+          const contractData = await ContractClientService.Get(contractReq);
+          if (contractData) {
+            updateServiceCallState({
+              type: 'setContractData',
+              data: contractData,
+            });
+          }
+        } catch (err) {
+          console.log('No contract data');
+        }
         const pcs = new PaymentClient(ENDPOINT);
         let payments = [];
+        let materials: Quotable[] = [];
         for (let i = 0; i < servicesRendered.length; i++) {
           const req = new Payment();
           req.setServicesRenderedId(servicesRendered[i].getId());
@@ -193,6 +268,7 @@ export const ServiceCall: FC<Props> = props => {
           type: 'setPaidServices',
           data: payments,
         });
+        console.log('materials', materials);
         updateServiceCallState({
           type: 'setServicesRendered',
           data: {
@@ -206,7 +282,7 @@ export const ServiceCall: FC<Props> = props => {
         return [];
       }
     },
-    [state.serviceCallId],
+    [state.serviceCallId, userID],
   );
 
   const loadServicesRenderedDataForProp = useCallback(
@@ -393,6 +469,54 @@ export const ServiceCall: FC<Props> = props => {
           console.log('saving invoice');
           temp.setIsGeneratedInvoice(state.saveInvoice);
           temp.addFieldMask('IsGeneratedInvoice');
+          if (state.invoiceData) {
+            //update invoice
+          } else {
+            //create invoice
+            const invoice = new InvoiceType();
+            invoice.setEventId(state.serviceCallId);
+            invoice.setContractId(state.entry.getContractId());
+            invoice.setPropertyId(state.entry.getPropertyId());
+            if (state.contractData) {
+              invoice.setContractId(state.contractData.getId());
+              invoice.setProperties(state.contractData.getProperties());
+              invoice.setTerms(state.contractData.getPaymentTerms());
+            }
+            invoice.setPropertyBilling(state.entry.getPropertyBilling());
+            invoice.setServicesperformedrow1(
+              state.entry.getServicesperformedrow1(),
+            );
+            invoice.setServicesperformedrow2(
+              state.entry.getServicesperformedrow2(),
+            );
+            invoice.setServicesperformedrow3(
+              state.entry.getServicesperformedrow3(),
+            );
+            invoice.setServicesperformedrow4(
+              state.entry.getServicesperformedrow4(),
+            );
+            invoice.setTotalamountrow1(state.entry.getTotalamountrow1());
+            invoice.setTotalamountrow2(state.entry.getTotalamountrow2());
+            invoice.setTotalamountrow3(state.entry.getTotalamountrow3());
+            invoice.setTotalamountrow4(state.entry.getTotalamountrow4());
+            invoice.setDiscount(state.entry.getDiscount());
+            const total1 = parseInt(state.entry.getTotalamountrow1());
+            const total2 = parseInt(state.entry.getTotalamountrow2());
+            const total3 = parseInt(state.entry.getTotalamountrow3());
+            const total4 = parseInt(state.entry.getTotalamountrow4());
+            const discountAmount = parseInt(state.entry.getDiscountcost());
+            const materialTotal = state.entry.getMaterialTotal();
+            const grandTotal =
+              total1 +
+              total2 +
+              total3 +
+              total4 +
+              materialTotal -
+              discountAmount;
+            invoice.setLogPaymentStatus(state.entry.getLogPaymentStatus());
+            invoice.setLogPaymentType(state.entry.getLogPaymentType());
+            invoice.setTotalamounttotal(grandTotal.toString());
+          }
           await EventClientService.Update(temp);
           activityName = activityName.concat(` and Invoice`);
         } else {
@@ -477,6 +601,8 @@ export const ServiceCall: FC<Props> = props => {
     state.property,
     propertyId,
     loggedUserId,
+    state.contractData,
+    state.invoiceData,
     loadEntry,
     loadServicesRenderedData,
   ]);
@@ -594,18 +720,6 @@ export const ServiceCall: FC<Props> = props => {
       });
     },
     [userID, loadEntry],
-  );
-
-  const handleOnAddMaterials = useCallback(
-    async (materialUsed, materialTotal) => {
-      await EventClientService.updateMaterialUsed(
-        state.serviceCallId,
-        materialUsed + state.entry.getMaterialUsed(),
-        materialTotal + state.entry.getMaterialTotal(),
-      );
-      await loadEntry();
-    },
-    [state.serviceCallId, state.entry, loadEntry],
   );
 
   const jobTypeOptions: Option[] = state.jobTypes.map(id => ({
@@ -976,7 +1090,7 @@ export const ServiceCall: FC<Props> = props => {
                           loading={state.loading}
                           payments={state.paidServices}
                           onUpdatePayments={handleUpdatePayments}
-                          onAddMaterials={handleOnAddMaterials}
+                          onUpdateMaterials={handleUpdateMaterialsStringAndCost}
                         />
                       ) : (
                         <InfoTable data={makeFakeRows(4, 4)} loading />

@@ -98,7 +98,7 @@ interface Props {
   onUpdatePayments?: (payments: Payment[]) => void;
   payments?: Payment[];
   loading: boolean;
-  onAddMaterials: (materialUsed: string, materialTotal: number) => void;
+  onUpdateMaterials: () => void;
 }
 
 const COLUMNS_SERVICES_RENDERED: Columns = [
@@ -262,7 +262,7 @@ export const Services: FC<Props> = ({
   loading,
   payments,
   onUpdatePayments,
-  onAddMaterials,
+  onUpdateMaterials,
 }) => {
   const [state, dispatch] = useReducer(reducer, {
     paymentForm: PAYMENT_SIGNATURE_INITIAL,
@@ -556,7 +556,7 @@ export const Services: FC<Props> = ({
       }
       loadServicesRendered();
     },
-    [state.editing, loadServicesRendered],
+    [state.editing, onUpdatePayments, payments, loadServicesRendered],
   );
   const handleSetEditing = useCallback(
     (sr?: ServicesRendered) => async () => {
@@ -900,7 +900,7 @@ export const Services: FC<Props> = ({
               serviceCallId={serviceCallId}
               servicesRenderedId={state.editing.servicesRenderedId}
               onAddQuotes={console.log}
-              onAdd={console.log}
+              onUpdate={onUpdateMaterials}
             ></QuoteSelector>
           </div>
         </Modal>
