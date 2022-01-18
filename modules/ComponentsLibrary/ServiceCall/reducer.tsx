@@ -9,7 +9,7 @@ import { Option } from '../Field';
 import { Payment } from '@kalos-core/kalos-rpc/Payment';
 import { ServiceItem } from '@kalos-core/kalos-rpc/ServiceItem';
 import { EventClient, Quotable } from '@kalos-core/kalos-rpc/Event';
-import { Invoice as InvoiceType } from '@kalos-core/kalos-rpc/Invoice';
+import { Invoice, Invoice as InvoiceType } from '@kalos-core/kalos-rpc/Invoice';
 import { Contract } from '@kalos-core/kalos-rpc/Contract';
 export interface State {
   requestFields: string[];
@@ -63,8 +63,11 @@ export type Action =
         loggedUser: User;
         entry: Event;
         servicesRendered: ServicesRendered[];
+        paidServices: Payment[];
         loaded: boolean;
         loading: boolean;
+        invoice: Invoice | undefined;
+        contract: Contract | undefined;
       };
     }
   | { type: 'setEntry'; data: Event }
@@ -184,10 +187,13 @@ export const reducer = (state: State, action: Action) => {
         jobTypeSubtypes: action.data.jobTypeSubtypes,
         loggedUser: action.data.loggedUser,
         entry: action.data.entry,
+        paidServices: action.data.paidServices,
         servicesRendered: action.data.servicesRendered,
         loaded: action.data.loaded,
         loading: action.data.loading,
         loggedUserRole: roleType,
+        invoiceData: action.data.invoice,
+        contractData: action.data.contract,
       };
     }
     case 'setEntry':
