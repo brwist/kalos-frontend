@@ -206,7 +206,7 @@ export const ServiceCall: FC<Props> = props => {
       data: !state.openJobActivity,
     });
   };
-  const setSelectedServiceItems = (data: ServiceItem[]) => {
+  const setSelectedServiceItems = (data: number[]) => {
     updateServiceCallState({
       type: 'setSelectedServiceItems',
       data: data,
@@ -458,9 +458,7 @@ export const ServiceCall: FC<Props> = props => {
     try {
       if (state.serviceCallId) {
         temp.setId(state.serviceCallId);
-        console.log('saving existing ID');
         let activityName = `${temp.getLogJobNumber()} Edited Service Call`;
-        console.log('event', temp);
         if (temp.getFieldMaskList().length > 0) {
           await EventClientService.Update(temp);
         }
@@ -495,12 +493,16 @@ export const ServiceCall: FC<Props> = props => {
           invoice.setTotalamountrow3(state.entry.getTotalamountrow3());
           invoice.setTotalamountrow4(state.entry.getTotalamountrow4());
           invoice.setUserId(state.customer.getId());
+          invoice.setServiceItem(state.entry.getInvoiceServiceItem());
           invoice.setDiscount(state.entry.getDiscount());
+          invoice.setMaterialTotal(state.entry.getMaterialTotal().toString());
+          invoice.setMaterialUsed(state.entry.getMaterialUsed());
           const total1 = parseInt(state.entry.getTotalamountrow1());
           const total2 = parseInt(state.entry.getTotalamountrow2());
           const total3 = parseInt(state.entry.getTotalamountrow3());
           const total4 = parseInt(state.entry.getTotalamountrow4());
           const discountAmount = parseInt(state.entry.getDiscountcost());
+          invoice.setServiceItem(state.entry.getInvoiceServiceItem());
           const materialTotal = state.entry.getMaterialTotal();
           const grandTotal =
             total1 + total2 + total3 + total4 + materialTotal - discountAmount;
@@ -522,6 +524,7 @@ export const ServiceCall: FC<Props> = props => {
             invoice.addFieldMask('Servicesperformedrow2');
             invoice.addFieldMask('Servicesperformedrow3');
             invoice.addFieldMask('Servicesperformedrow4');
+            invoice.addFieldMask('ServiceItem');
             invoice.addFieldMask('Totalamountrow1');
             invoice.addFieldMask('Totalamountrow2');
             invoice.addFieldMask('Totalamountrow3');
@@ -530,6 +533,8 @@ export const ServiceCall: FC<Props> = props => {
             invoice.addFieldMask('LogPaymentStatus');
             invoice.addFieldMask('LogPaymentType');
             invoice.addFieldMask('Totalamounttotal');
+            invoice.addFieldMask('MaterialTotal');
+            invoice.addFieldMask('MaterialUsed');
             InvoiceClientService.Update(invoice);
             console.log('update invoice and event', invoice);
           } else {
@@ -625,6 +630,7 @@ export const ServiceCall: FC<Props> = props => {
     state.customer,
     state.saveInvoice,
     state.invoiceData,
+    state.selectedServiceItems,
     propertyId,
     loggedUserId,
     loadEntry,

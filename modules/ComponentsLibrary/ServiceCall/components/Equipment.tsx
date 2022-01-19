@@ -16,8 +16,8 @@ interface Props {
   property: Property;
   event: Event;
   customer: User;
-  onSelectServiceItems?: (data: ServiceItem[]) => void;
-  selectedServiceItems?: ServiceItem[];
+  onSelectServiceItems?: (data: number[]) => void;
+  selectedServiceItems?: number[];
 }
 
 type Form = {
