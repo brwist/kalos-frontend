@@ -27,6 +27,7 @@ import ConfirmService from './ConfirmService/examples';
 import CostReport from './CostReport/examples';
 import CostReportForEmployee from './CostReportForEmployee/examples';
 import CostSummary from './CostSummary/examples';
+import CreateTrelloBoard from './CreateTrelloBoard/examples';
 import CustomControls from './CustomControls/examples';
 import CustomerAccountDashboard from './CustomerAccountDashboard/examples';
 import CustomerEdit from './CustomerEdit/examples';
@@ -144,6 +145,7 @@ const COMPONENTS = {
   CostReport,
   CostReportForEmployee,
   CostSummary,
+  CreateTrelloBoard,
   CustomControls,
   CustomerAccountDashboard,
   CustomerEdit,
