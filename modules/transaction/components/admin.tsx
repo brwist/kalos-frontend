@@ -139,6 +139,8 @@ export class TransactionAdminView extends React.Component<props, state> {
     this.setSort = this.setSort.bind(this);
     this.sortTxns = this.sortTxns.bind(this);
     this.toggleEditingCostCenter = this.toggleEditingCostCenter.bind(this);
+    this.makeUpdateDepartment = this.makeUpdateDepartment.bind(this);
+    this.toggleEditingDepartment = this.toggleEditingDepartment.bind(this);
   }
 
   toggleLoading = (cb?: () => void) => {
@@ -277,26 +279,6 @@ export class TransactionAdminView extends React.Component<props, state> {
     };
   }
 
-  makeUpdateCostCenter(transaction: Transaction) {
-    return async (costCenterID: number) => {
-      const txn = new Transaction();
-      txn.setId(txn.getId());
-      txn.setCostCenterId(costCenterID);
-      txn.setFieldMaskList(['CostCenterId']);
-      await this.TxnClient.Update(txn);
-      const logReq = new TransactionActivity();
-      logReq.setIsActive(1);
-      logReq.setTransactionId(transaction.getId());
-      logReq.setUserId(this.props.userID);
-      logReq.setDescription(
-        `User Updated Cost Center from ${transaction.getCostCenterId()} to ${costCenterID}`,
-      );
-
-      await TransactionActivityClientService.Create(logReq);
-      await this.fetchTxns();
-    };
-  }
-
   makeRecordTransaction(id: number) {
     return async () => {
       const txn = new Transaction();
@@ -345,6 +327,26 @@ export class TransactionAdminView extends React.Component<props, state> {
       logReq.setUserId(this.props.userID);
       logReq.setDescription(
         `User Updated Department from ${transaction.getDepartmentId()} to ${departmentID}`,
+      );
+
+      await TransactionActivityClientService.Create(logReq);
+      await this.fetchTxns();
+    };
+  }
+  makeUpdateCostCenter(transaction: Transaction) {
+    return async (costCenterID: number) => {
+      const txn = new Transaction();
+      txn.setId(transaction.getId());
+      txn.setCostCenterId(costCenterID);
+      txn.setFieldMaskList(['CostCenterId']);
+      await this.TxnClient.Update(txn);
+      console.log('we are updating cost center');
+      const logReq = new TransactionActivity();
+      logReq.setIsActive(1);
+      logReq.setTransactionId(transaction.getId());
+      logReq.setUserId(this.props.userID);
+      logReq.setDescription(
+        `User Updated Cost Center from ${transaction.getCostCenterId()} to ${costCenterID}`,
       );
 
       await TransactionActivityClientService.Create(logReq);
