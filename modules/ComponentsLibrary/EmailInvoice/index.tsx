@@ -20,12 +20,15 @@ import {
   SQSEmailAndDocument,
 } from '@kalos-core/kalos-rpc/compiled-protos/email_pb';
 import { Loader } from '../../Loader/main';
+import { PrintPage } from '../PrintPage';
+import ReactHtmlParser from 'react-html-parser';
 
 interface props {
   loggedUserId: number;
   invoiceId: number;
   propertyId: number;
   recipientEmail: string;
+  downloadName?: string;
   subject?: string;
 }
 
@@ -34,6 +37,7 @@ export const EmailInvoice: FC<props> = ({
   invoiceId,
   propertyId,
   recipientEmail,
+  downloadName = 'invoice',
   subject = 'Invoice from Kalos Florida',
 }) => {
   const [state, dispatch] = useReducer(reducer, {
@@ -44,6 +48,7 @@ export const EmailInvoice: FC<props> = ({
   });
 
   const cleanup = useCallback(() => {}, []);
+
 
   const handleError = useCallback(
     async (errorToSet: string) => {
@@ -127,12 +132,24 @@ export const EmailInvoice: FC<props> = ({
             disabled: !state.isLoaded,
           },
         ]}
+        asideContent={
+          <PrintPage
+            key={state.invoiceHTML?.toString()}
+            downloadPdfFilename={downloadName}
+            onPrint={() => {
+              console.log(state.invoiceHTML);
+            }}
+          >
+            {ReactHtmlParser(state.invoiceHTML!)}
+          </PrintPage>
+        }
       >
         <InvoicePreview
           loggedUserId={loggedUserId}
           invoiceId={invoiceId}
           propertyId={propertyId}
           onLoaded={invoiceHTML => {
+            console.log('INVOICE HTML ON LOAD: ', invoiceHTML);
             if (invoiceHTML)
               dispatch({ type: ACTIONS.SET_INVOICE_HTML, data: invoiceHTML });
             dispatch({ type: ACTIONS.SET_LOADED, data: true });
