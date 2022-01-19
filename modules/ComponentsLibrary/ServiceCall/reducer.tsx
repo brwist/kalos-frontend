@@ -40,7 +40,7 @@ export interface State {
   notificationEditing: boolean;
   notificationViewing: boolean;
   projects: Event[];
-  selectedServiceItems: ServiceItem[];
+  selectedServiceItems: number[];
   parentId: number | null;
   confirmedParentId: number | null;
   projectData: Event;
@@ -73,7 +73,7 @@ export type Action =
   | { type: 'setEntry'; data: Event }
   | { type: 'setInvoiceData'; data: InvoiceType | undefined }
   | { type: 'setContractData'; data: Contract | undefined }
-  | { type: 'setSelectedServiceItems'; data: ServiceItem[] }
+  | { type: 'setSelectedServiceItems'; data: number[] }
   | {
       type: 'setChangeEntry';
       data: {
@@ -177,6 +177,15 @@ export const reducer = (state: State, action: Action) => {
       if (role) {
         roleType = role.getName();
       }
+      let splitServiceItems: number[] = [];
+      if (action.data.entry) {
+        action.data.entry.getInvoiceServiceItem();
+        const splitData = action.data.entry.getInvoiceServiceItem().split(',');
+        for (let i = 0; i < splitData.length; i++) {
+          splitServiceItems.push(parseInt(splitData[i]));
+        }
+      }
+      console.log('we made this data', splitServiceItems);
       return {
         ...state,
         property: action.data.property,
@@ -194,6 +203,7 @@ export const reducer = (state: State, action: Action) => {
         loggedUserRole: roleType,
         invoiceData: action.data.invoice,
         contractData: action.data.contract,
+        selectedServiceItems: splitServiceItems,
       };
     }
     case 'setEntry':
