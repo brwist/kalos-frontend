@@ -239,7 +239,8 @@ export const SpiffToolLogEdit: FC<Props> = ({
       if (status === 3) {
         emailStatus = 'Revoked';
       }
-      const body = `<body>
+      const body = `
+      <body>
       <table style="width:70%;">
         <thead>
           <th style="text-align:left;">Reason: ${newAction.getReason()}</th>
@@ -251,7 +252,6 @@ export const SpiffToolLogEdit: FC<Props> = ({
             <td>Updated Spiff Status:${emailStatus}</td>
           </tr>
           </tbody>
-        </body>
       </table>
     </body>`;
       const email = new SQSEmail();

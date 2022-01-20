@@ -13,13 +13,15 @@ import { StoredQuotes } from '../../StoredQuotes';
 import { EventType } from '../';
 import { ProposalPrint } from './ProposalPrint';
 import './proposal.less';
+import { ServicesRendered } from '@kalos-core/kalos-rpc/ServicesRendered';
 import { User } from '@kalos-core/kalos-rpc/User';
 import { Property } from '@kalos-core/kalos-rpc/Property';
-import { makeSafeFormObject } from '../../../../helpers';
+import { makeSafeFormObject, formatDateDay } from '../../../../helpers';
 interface Props {
   serviceItem: EventType;
   property: Property;
   customer: User;
+  servicesRendered: ServicesRendered[];
 }
 
 type Form = {
@@ -59,8 +61,35 @@ const SCHEMA_FILE: Schema<File> = [
     },
   ],
 ];
+/*
+Email Template Currently Used
+** Customer First Name
+Hello sambo, 
 
-export const Proposal: FC<Props> = ({ serviceItem, customer, property }) => {
+You have a pending proposal from Kalos Services for: 
+
+323 West Minnehaha
+**Link to proposal , mandrill?
+Click here to review your proposal 
+
+Please select which services you would like performed, and authorize with your signature. 
+
+If the link above does not work, please copy and paste the following into your address bar:
+** Acutal Link without text
+app.kalosflorida.com/index.cfm?action=customer:service.accept_proposal&job_number=86250&user_id=4607&property_id=11054&user_name=1
+**Download Link
+If you need to download this proposal in PDF format click here
+//Alternate Link
+If the above download link does not work, copy and paste the following into your address bar:
+app.kalosflorida.com/index.cfm?action=customer:service.preview_proposal&job_number=86250&user_id=4607&property_id=11054&user_name=1
+*/
+
+export const Proposal: FC<Props> = ({
+  serviceItem,
+  customer,
+  property,
+  servicesRendered,
+}) => {
   const [editing, setEditing] = useState<StoredQuote>();
   const [file, setFile] = useState<File>({
     localCopyName: '',
@@ -68,6 +97,24 @@ export const Proposal: FC<Props> = ({ serviceItem, customer, property }) => {
       customer?.getId() || ''
     }`,
   });
+
+  const filteredServicesRendered = servicesRendered.filter(
+    sr => sr.getServiceRendered() != '' && sr.getServiceRendered() != null,
+  );
+  const concatServicesRendered =
+    filteredServicesRendered.reduce(function (
+      concatedString,
+      servicesRendered,
+    ) {
+      return (
+        concatedString +
+        `${formatDateDay(
+          servicesRendered.getTimeStarted(),
+        )}-${servicesRendered.getName()}-${servicesRendered.getServiceRendered()} \n`
+      );
+    },
+    '') + serviceItem.getNotes();
+
   const [quickAddOpen, setQuickAddOpen] = useState<boolean>(false);
   const [preview, setPreview] = useState<boolean>(false);
   const [table, setTable] = useState<StoredQuote[]>([]);
@@ -75,7 +122,7 @@ export const Proposal: FC<Props> = ({ serviceItem, customer, property }) => {
   const [form, setForm] = useState<Form>({
     displayName: customerName,
     withJobNotes: 0,
-    notes: serviceItem.getNotes(),
+    notes: concatServicesRendered,
   });
   const handleToggleQuickAdd = useCallback(
     () => setQuickAddOpen(!quickAddOpen),
@@ -126,6 +173,37 @@ export const Proposal: FC<Props> = ({ serviceItem, customer, property }) => {
     };
     console.log({ data });
   }, [table, file, form]);
+  const emailTemplate = `<body>
+
+
+  <h3>Hello ${form.displayName},</h3>
+
+  <h3>
+    You have a pending proposal from Kalos Services for:
+  </h3>
+
+  <h3>
+    ${property.getAddress()}
+  </h3>
+
+
+  <div>
+
+    Please select which services you would like performed, and authorize with your signature.
+  </div>
+  <div>
+
+    If the link above does not work, please copy and paste the following into your address bar:
+  </div>
+  <a href="app.kalosflorida.com/index.cfm?action=customer:service.accept_proposal&job_number=${serviceItem.getId()}&user_id=${customer.getId()}&property_id=${property.getId()}&user_name=1">app.kalosflorida.com/index.cfm?action=customer:service.accept_proposal&job_number=${serviceItem.getId()}&user_id=${customer.getId()}&property_id=${property.getId()}&user_name=1</a>
+  <div>
+    If the above download link does not work, copy and paste the following into your address bar:
+  </div>
+  <a href='app.kalosflorida.com/index.cfm?action=customer:service.preview_proposal&job_number=${serviceItem.getId()}&user_id=${customer.getId()}&property_id=${property.getId()}&user_name=1'>app.kalosflorida.com/index.cfm?action=customer:service.preview_proposal&job_number=${serviceItem.getId()}&user_id=${customer.getId()}&property_id=${property.getId()}&user_name=1 </a>
+
+</body>
+
+`;
   const COLUMNS: Columns = [
     { name: 'Description' },
     {

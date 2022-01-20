@@ -204,7 +204,7 @@ export const QuoteSelector: FC<Props> = ({
       quoteUsed.setId(temp.getQuoteUsedId());
       await quoteUsedClientService.Delete(quoteUsed);
       if (onUpdate) {
-        onUpdate();
+        await onUpdate();
       }
     }
     setPendingDeleteQuotable([]);
@@ -220,6 +220,7 @@ export const QuoteSelector: FC<Props> = ({
       tempPendingDelete.push(pendingRemoveQuotable);
       setPendingDeleteQuotable(tempPendingDelete);
     },
+
     [pendingDeleteQuotable, quotable],
   );
   const handleRemovePending = useCallback(
@@ -236,7 +237,7 @@ export const QuoteSelector: FC<Props> = ({
     },
     [pendingQuotable, selectedQuoteLineIds],
   );
-  const handleAddQuotes = useCallback(() => {
+  const handleAddQuotes = useCallback(async () => {
     const temp: Quotable[] = [];
     Object.keys(billable).map(id => {
       let quote = quoteParts.find(
@@ -296,12 +297,12 @@ export const QuoteSelector: FC<Props> = ({
 
         try {
           await quoteUsedClientService.Create(req);
-          if (onUpdate) {
-            onUpdate();
-          }
         } catch (err) {
           console.log('failed to add quotable item');
         }
+      }
+      if (onUpdate) {
+        await onUpdate();
       }
       setQuotable(originalQuotable.concat(...tempList));
       setPendingQuotable([]);
@@ -311,6 +312,7 @@ export const QuoteSelector: FC<Props> = ({
     pendingQuotable,
     originalQuotable,
     servicesRenderedId,
+    onUpdate,
     handleDeleteQuoteLine,
     pendingDeleteQuotable,
   ]);

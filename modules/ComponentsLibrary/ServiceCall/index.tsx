@@ -6,6 +6,12 @@ import React, {
   useReducer,
   useRef,
 } from 'react';
+import {
+  SERVICE_STATUSES,
+  SIGNATURE_PAYMENT_TYPE_LIST,
+  PAYMENT_COLLECTED_LIST,
+  PAYMENT_NOT_COLLECTED_LIST,
+} from '../../../constants';
 import { EventClient, Event, Quotable } from '@kalos-core/kalos-rpc/Event';
 import { UserClient, User } from '@kalos-core/kalos-rpc/User';
 import { JobTypeSubtype } from '@kalos-core/kalos-rpc/JobTypeSubtype';
@@ -55,10 +61,6 @@ import setHours from 'date-fns/esm/setHours';
 import setMinutes from 'date-fns/esm/setMinutes';
 import { State, reducer } from './reducer';
 import { ServiceCallLogs } from '../ServiceCallLogs';
-import { EntryType } from 'pdf-lib/cjs/core/structures/PDFCrossRefStream';
-import { QuoteLineClient } from '@kalos-core/kalos-rpc/QuoteLine';
-import { MaterialClient } from '@kalos-core/kalos-rpc/Material';
-import { parseISO, getDay } from 'date-fns';
 const EventClientService = new EventClient(ENDPOINT);
 const UserClientService = new UserClient(ENDPOINT);
 
@@ -157,43 +159,58 @@ export const ServiceCall: FC<Props> = props => {
   };
   const handleUpdateMaterialsStringAndCost = useCallback(async () => {
     const totalMaterials: Quotable[] = [];
+    console.log('we are going to update the material total');
     //Day(3char),timestamp - Person Who added it - (Material Quantity)  - (Material Cost)
     //Tue, 12/7/2021 8:08PM Jordan Spalding -(1) Trip & Diagnostic Fee - After Hours - $120
     let totalCost = 0;
     let fullString = '';
-    for (let i = 0; i < state.servicesRendered.length; i++) {
-      let tempString = '';
+    const filteredServicesRendered = state.servicesRendered.filter(
+      sr =>
+        sr.getStatus() === SERVICE_STATUSES.ON_CALL ||
+        sr.getStatus() == SERVICE_STATUSES.COMPLETED ||
+        sr.getStatus() === SERVICE_STATUSES.INCOMPLETE,
+    );
+    for (let i = 0; i < filteredServicesRendered.length; i++) {
+      let serviceRenderedMaterialString = '';
       const materialReq = new QuotableRead();
-      materialReq.setServicesRenderedId(state.servicesRendered[i].getId());
+      materialReq.setServicesRenderedId(filteredServicesRendered[i].getId());
       materialReq.setIsActive(true);
+
       const materials = (
         await EventClientService.ReadQuotes(materialReq)
       ).getDataList();
       totalMaterials.concat(materials);
-      let date = state.servicesRendered[i].getTimeStarted();
-      const tech = state.servicesRendered[i].getName();
-      let tempStringFirstPart = `${date}, - ${tech}`;
-      for (let j = 0; j < materials.length; j++) {
-        let material = materials[j];
-        let tempStringSecondPart = ` - (${material.getQuantity()})- ${material.getDescription()}- $${material.getQuotedPrice()}`;
-        tempStringFirstPart += tempStringSecondPart;
-        const cost = material.getQuantity() * material.getQuotedPrice();
-        totalCost += cost;
+      if (materials.length > 0) {
+        let date = filteredServicesRendered[i].getTimeStarted();
+        const tech = filteredServicesRendered[i].getName();
+        let tempStringFirstPart = `${date}, - ${tech}`;
+        serviceRenderedMaterialString += tempStringFirstPart;
+        for (let j = 0; j < materials.length; j++) {
+          let material = materials[j];
+          let tempStringSecondPart = ` - (${material.getQuantity()})- ${material.getDescription()}- $${material.getQuotedPrice()}`;
+
+          const cost = material.getQuantity() * material.getQuotedPrice();
+          totalCost += cost;
+          serviceRenderedMaterialString += tempStringSecondPart;
+        }
+        fullString += `${serviceRenderedMaterialString} \n `;
       }
-      tempString += tempStringFirstPart;
-      fullString = tempString;
     }
+    console.log('full string', fullString);
     const updateEvent = new Event();
     updateEvent.setId(state.serviceCallId);
     updateEvent.setMaterialUsed(fullString);
     updateEvent.setMaterialTotal(totalCost);
+    const updateStateEvent = state.entry;
+    updateStateEvent.setMaterialUsed(fullString);
+    updateStateEvent.setMaterialTotal(totalCost);
     updateEvent.setFieldMaskList(['MaterialUsed', 'MaterialTotal']);
     await EventClientService.Update(updateEvent);
     updateServiceCallState({
       type: 'setEntry',
-      data: updateEvent,
+      data: updateStateEvent,
     });
-  }, [state.servicesRendered, state.serviceCallId]);
+  }, [state.servicesRendered, state.entry, state.serviceCallId]);
   const toggleOpenSpiffApply = () => {
     updateServiceCallState({
       type: 'setOpenSpiffApply',
@@ -630,7 +647,6 @@ export const ServiceCall: FC<Props> = props => {
     state.customer,
     state.saveInvoice,
     state.invoiceData,
-    state.selectedServiceItems,
     propertyId,
     loggedUserId,
     loadEntry,
@@ -1154,6 +1170,7 @@ export const ServiceCall: FC<Props> = props => {
                       ) : (
                         <Proposal
                           serviceItem={state.entry}
+                          servicesRendered={state.servicesRendered}
                           customer={state.customer}
                           property={state.property}
                         />
