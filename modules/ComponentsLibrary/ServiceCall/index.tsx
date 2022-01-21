@@ -164,38 +164,42 @@ export const ServiceCall: FC<Props> = props => {
     //Tue, 12/7/2021 8:08PM Jordan Spalding -(1) Trip & Diagnostic Fee - After Hours - $120
     let totalCost = 0;
     let fullString = '';
-    const filteredServicesRendered = state.servicesRendered.filter(
-      sr =>
-        sr.getStatus() === SERVICE_STATUSES.ON_CALL ||
-        sr.getStatus() == SERVICE_STATUSES.COMPLETED ||
-        sr.getStatus() === SERVICE_STATUSES.INCOMPLETE,
-    );
-    for (let i = 0; i < filteredServicesRendered.length; i++) {
-      let serviceRenderedMaterialString = '';
-      const materialReq = new QuotableRead();
-      materialReq.setServicesRenderedId(filteredServicesRendered[i].getId());
-      materialReq.setIsActive(true);
 
-      const materials = (
-        await EventClientService.ReadQuotes(materialReq)
-      ).getDataList();
-      totalMaterials.concat(materials);
-      if (materials.length > 0) {
-        let date = filteredServicesRendered[i].getTimeStarted();
-        const tech = filteredServicesRendered[i].getName();
+    let serviceRenderedMaterialString = '';
+    const materialReq = new QuotableRead();
+    materialReq.setEventId(state.serviceCallId);
+    materialReq.setIsActive(true);
+
+    const materials = (
+      await EventClientService.ReadQuotes(materialReq)
+    ).getDataList();
+    totalMaterials.concat(materials);
+    if (materials.length > 0) {
+      for (let i = 0; i < state.servicesRendered.length; i++) {
+        let date = state.servicesRendered[i].getTimeStarted();
+        const tech = state.servicesRendered[i].getName();
         let tempStringFirstPart = `${date}, - ${tech}`;
-        serviceRenderedMaterialString += tempStringFirstPart;
-        for (let j = 0; j < materials.length; j++) {
-          let material = materials[j];
-          let tempStringSecondPart = ` - (${material.getQuantity()})- ${material.getDescription()}- $${material.getQuotedPrice()}`;
+        const filteredMaterials = materials.filter(
+          material =>
+            material.getServicesRenderedId() ===
+            state.servicesRendered[i].getId(),
+        );
+        if (filteredMaterials.length > 0) {
+          let serviceRenderedMaterialString = tempStringFirstPart;
+          for (let j = 0; j < filteredMaterials.length; j++) {
+            let material = filteredMaterials[j];
+            let tempStringSecondPart = ` - (${material.getQuantity()})- ${material.getDescription()}- $${material.getQuotedPrice()}`;
 
-          const cost = material.getQuantity() * material.getQuotedPrice();
-          totalCost += cost;
-          serviceRenderedMaterialString += tempStringSecondPart;
+            const cost = material.getQuantity() * material.getQuotedPrice();
+            totalCost += cost;
+            serviceRenderedMaterialString += tempStringSecondPart;
+          }
+
+          fullString += `${serviceRenderedMaterialString} \n `;
         }
-        fullString += `${serviceRenderedMaterialString} \n `;
       }
     }
+
     console.log('full string', fullString);
     const updateEvent = new Event();
     updateEvent.setId(state.serviceCallId);
@@ -310,6 +314,7 @@ export const ServiceCall: FC<Props> = props => {
     // let newProjectData = projectData;
     // newProjectData.setPropertyId(propertyId);
     // setProjectData(newProjectData);
+    const req = new QuotableRead();
     try {
       let entry: Event = new Event();
       const property = PropertyClientService.loadPropertyByID(propertyId);
