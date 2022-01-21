@@ -406,6 +406,7 @@ export const Services: FC<Props> = ({
           paymentInfo.paymentType = state.serviceRenderedPayment.paymentType;
         }
       }
+      req.setTechnicianUserId(loggedUser.getId());
       const res = await ServicesRenderedClientService.Create(req);
       if (isSignature) {
         let tempSignatureData = state.signatureForm.signature;

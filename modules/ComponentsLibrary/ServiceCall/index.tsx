@@ -34,10 +34,8 @@ import {
   ActivityLogClientService,
   InvoiceClientService,
   ContractClientService,
-  QuoteLineClientService,
-  QuoteLinePartClientService,
-  formatDate,
-  formatDateDay,
+  EmailClientService,
+  timestamp,
 } from '../../../helpers';
 import { PaymentClient, Payment } from '@kalos-core/kalos-rpc/Payment';
 import { ENDPOINT, OPTION_BLANK } from '../../../constants';
@@ -47,7 +45,7 @@ import { InfoTable, Data } from '../InfoTable';
 import { Tabs } from '../Tabs';
 import { Option } from '../Field';
 import { Form, Schema } from '../Form';
-import { ServiceItem } from '@kalos-core/kalos-rpc/ServiceItem';
+import { SQSEmail } from '@kalos-core/kalos-rpc/Email';
 import { SpiffApplyComponent } from '../SpiffApplyComponent';
 import { Request } from './components/Request';
 import { Equipment } from './components/Equipment';
@@ -59,8 +57,13 @@ import { ActivityLog } from '@kalos-core/kalos-rpc/ActivityLog';
 import format from 'date-fns/esm/format';
 import setHours from 'date-fns/esm/setHours';
 import setMinutes from 'date-fns/esm/setMinutes';
+import { Document } from '@kalos-core/kalos-rpc/Document';
 import { State, reducer } from './reducer';
 import { ServiceCallLogs } from '../ServiceCallLogs';
+import {
+  Email,
+  SQSEmailAndDocument,
+} from '@kalos-core/kalos-rpc/compiled-protos/email_pb';
 const EventClientService = new EventClient(ENDPOINT);
 const UserClientService = new UserClient(ENDPOINT);
 
@@ -165,7 +168,6 @@ export const ServiceCall: FC<Props> = props => {
     let totalCost = 0;
     let fullString = '';
 
-    let serviceRenderedMaterialString = '';
     const materialReq = new QuotableRead();
     materialReq.setEventId(state.serviceCallId);
     materialReq.setIsActive(true);
@@ -517,6 +519,7 @@ export const ServiceCall: FC<Props> = props => {
           invoice.setUserId(state.customer.getId());
           invoice.setServiceItem(state.entry.getInvoiceServiceItem());
           invoice.setDiscount(state.entry.getDiscount());
+          invoice.setStartDate(timestamp().toString());
           invoice.setMaterialTotal(state.entry.getMaterialTotal().toString());
           invoice.setMaterialUsed(state.entry.getMaterialUsed());
           const total1 = parseInt(state.entry.getTotalamountrow1());
@@ -551,6 +554,7 @@ export const ServiceCall: FC<Props> = props => {
             invoice.addFieldMask('Totalamountrow2');
             invoice.addFieldMask('Totalamountrow3');
             invoice.addFieldMask('Totalamountrow4');
+
             invoice.addFieldMask('Discount');
             invoice.addFieldMask('LogPaymentStatus');
             invoice.addFieldMask('LogPaymentType');
@@ -559,6 +563,15 @@ export const ServiceCall: FC<Props> = props => {
             invoice.addFieldMask('MaterialUsed');
             InvoiceClientService.Update(invoice);
             console.log('update invoice and event', invoice);
+            const sqsInvoiceEmail = new SQSEmailAndDocument();
+            const email = new SQSEmail();
+            const document = new Document();
+            document.setInvoiceId(invoice.getId());
+            document.setPropertyId(invoice.getPropertyId());
+            email.setTo(state.customer.getEmail());
+            sqsInvoiceEmail.setDocument(document);
+            sqsInvoiceEmail.setEmail(email);
+            await EmailClientService.SendSQSInvoiceEmail(sqsInvoiceEmail);
           } else {
             //we need to create it
             await InvoiceClientService.Create(invoice);
