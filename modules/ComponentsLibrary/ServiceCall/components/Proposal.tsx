@@ -1,4 +1,4 @@
-import React, { FC, useState, useCallback } from 'react';
+import React, { FC, useState, useCallback, useEffect } from 'react';
 import IconButton from '@material-ui/core/IconButton';
 import EditIcon from '@material-ui/icons/Edit';
 import DeleteIcon from '@material-ui/icons/Delete';
@@ -13,10 +13,15 @@ import { StoredQuotes } from '../../StoredQuotes';
 import { EventType } from '../';
 import { ProposalPrint } from './ProposalPrint';
 import './proposal.less';
+import { QuoteLine } from '@kalos-core/kalos-rpc/QuoteLine';
 import { ServicesRendered } from '@kalos-core/kalos-rpc/ServicesRendered';
 import { User } from '@kalos-core/kalos-rpc/User';
 import { Property } from '@kalos-core/kalos-rpc/Property';
-import { makeSafeFormObject, formatDateDay } from '../../../../helpers';
+import {
+  makeSafeFormObject,
+  formatDateDay,
+  QuoteLineClientService,
+} from '../../../../helpers';
 interface Props {
   serviceItem: EventType;
   property: Property;
@@ -61,28 +66,6 @@ const SCHEMA_FILE: Schema<File> = [
     },
   ],
 ];
-/*
-Email Template Currently Used
-** Customer First Name
-Hello sambo, 
-
-You have a pending proposal from Kalos Services for: 
-
-323 West Minnehaha
-**Link to proposal , mandrill?
-Click here to review your proposal 
-
-Please select which services you would like performed, and authorize with your signature. 
-
-If the link above does not work, please copy and paste the following into your address bar:
-** Acutal Link without text
-app.kalosflorida.com/index.cfm?action=customer:service.accept_proposal&job_number=86250&user_id=4607&property_id=11054&user_name=1
-**Download Link
-If you need to download this proposal in PDF format click here
-//Alternate Link
-If the above download link does not work, copy and paste the following into your address bar:
-app.kalosflorida.com/index.cfm?action=customer:service.preview_proposal&job_number=86250&user_id=4607&property_id=11054&user_name=1
-*/
 
 export const Proposal: FC<Props> = ({
   serviceItem,
@@ -118,6 +101,8 @@ export const Proposal: FC<Props> = ({
   const [quickAddOpen, setQuickAddOpen] = useState<boolean>(false);
   const [preview, setPreview] = useState<boolean>(false);
   const [table, setTable] = useState<StoredQuote[]>([]);
+  const [loaded, setLoaded] = useState<boolean>(false);
+  const [loadedQuotes, setLoadedQuotes] = useState<QuoteLine[]>([]);
   const customerName = `${customer?.getFirstname()} ${customer?.getLastname()}`;
   const [form, setForm] = useState<Form>({
     displayName: customerName,
@@ -128,6 +113,29 @@ export const Proposal: FC<Props> = ({
     () => setQuickAddOpen(!quickAddOpen),
     [quickAddOpen, setQuickAddOpen],
   );
+  const load = useCallback(async () => {
+    const req = new QuoteLine();
+    req.setIsActive(1);
+    req.setJobNumber(serviceItem.getId().toString());
+    try {
+      let storedQuotes = [];
+      const results = (
+        await QuoteLineClientService.BatchGet(req)
+      ).getResultsList();
+      setLoadedQuotes(results);
+      for (let i = 0; i < results.length; i++) {
+        const ql = results[i];
+        const storedQuote = new StoredQuote();
+        storedQuote.setId(ql.getId());
+        storedQuote.setDescription(ql.getDescription());
+        storedQuote.setPrice(parseInt(ql.getAdjustment()));
+        storedQuotes.push(storedQuote);
+      }
+      setTable(storedQuotes);
+    } catch (err) {
+      console.log('nothing found for proposal');
+    }
+  }, [serviceItem]);
   const handleAddEntry = useCallback(
     (entry?: StoredQuote) => {
       setEditing(entry);
@@ -145,6 +153,7 @@ export const Proposal: FC<Props> = ({
           ? table.map(item => (item.getId() === entry.getId() ? entry : item))
           : [...table, entry],
       );
+      console.log(table);
       setEditing(undefined);
     },
     [setTable, setEditing, table],
@@ -165,17 +174,46 @@ export const Proposal: FC<Props> = ({
     (preview: boolean) => () => setPreview(preview),
     [setPreview],
   );
-  const handleSendToCustomer = useCallback(() => {
+  const handleSendToCustomer = useCallback(async () => {
     const data = {
       items: table,
       ...file,
       ...form,
     };
-    console.log({ data });
-  }, [table, file, form]);
+    //first, let's add or update the quote line records
+    for (let i = 0; i < table.length; i++) {
+      let item = table[i];
+      let found = loadedQuotes.find(loaded => loaded.getId() === item.getId());
+      if (found) {
+        //it exists, so update
+        let quote = new QuoteLine();
+        quote.setId(found.getId());
+        quote.setDescription(item.getDescription());
+        quote.setAdjustment(item.getPrice().toString());
+        quote.setFieldMaskList(['Description', 'Adjustment']);
+        await QuoteLineClientService.Update(quote);
+      } else {
+        //not found, so create
+        let quote = new QuoteLine();
+        quote.setDescription(item.getDescription());
+        quote.setAdjustment(item.getPrice().toString());
+        quote.setIsActive(1);
+        quote.setWarranty(2);
+        quote.setJobNumber(serviceItem.getId().toString());
+        quote.setForUser(customer.getId());
+        await QuoteLineClientService.Create(quote);
+      }
+    }
+    for (let i = 0; i < loadedQuotes.length; i++) {
+      let existingQuote = loadedQuotes[i];
+      let found = table.find(item => item.getId() === existingQuote.getId());
+      if (!found) {
+        //we deleted this, so we should commit it
+        await QuoteLineClientService.Delete(existingQuote);
+      }
+    }
+  }, [table, file, form, loadedQuotes, customer, serviceItem]);
   const emailTemplate = `<body>
-
-
   <h3>Hello ${form.displayName},</h3>
 
   <h3>
@@ -192,10 +230,14 @@ export const Proposal: FC<Props> = ({
     Please select which services you would like performed, and authorize with your signature.
   </div>
   <div>
+  <a href="app.kalosflorida.com/index.cfm?action=customer:service.accept_proposal&job_number=${serviceItem.getId()}&user_id=${customer.getId()}&property_id=${property.getId()}&user_name=1">Click here to approve</a>
 
     If the link above does not work, please copy and paste the following into your address bar:
   </div>
   <a href="app.kalosflorida.com/index.cfm?action=customer:service.accept_proposal&job_number=${serviceItem.getId()}&user_id=${customer.getId()}&property_id=${property.getId()}&user_name=1">app.kalosflorida.com/index.cfm?action=customer:service.accept_proposal&job_number=${serviceItem.getId()}&user_id=${customer.getId()}&property_id=${property.getId()}&user_name=1</a>
+  <br>
+  <div>  <a href='app.kalosflorida.com/index.cfm?action=customer:service.preview_proposal&job_number=${serviceItem.getId()}&user_id=${customer.getId()}&property_id=${property.getId()}&user_name=1'>Dowload PDF here!</a>
+  </div>
   <div>
     If the above download link does not work, copy and paste the following into your address bar:
   </div>
@@ -249,6 +291,12 @@ export const Proposal: FC<Props> = ({
       },
     ],
   ];
+  useEffect(() => {
+    if (!loaded) {
+      setLoaded(true);
+      load();
+    }
+  }, [loaded, setLoaded, load]);
   const data: Data = table.map((props: StoredQuote) => {
     return [
       { value: props.getDescription() },

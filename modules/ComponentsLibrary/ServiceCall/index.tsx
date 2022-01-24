@@ -36,6 +36,7 @@ import {
   ContractClientService,
   EmailClientService,
   timestamp,
+  QuoteLinePartClientService,
 } from '../../../helpers';
 import { PaymentClient, Payment } from '@kalos-core/kalos-rpc/Payment';
 import { ENDPOINT, OPTION_BLANK } from '../../../constants';
@@ -64,6 +65,7 @@ import {
   Email,
   SQSEmailAndDocument,
 } from '@kalos-core/kalos-rpc/compiled-protos/email_pb';
+import { QuoteLinePart } from '@kalos-core/kalos-rpc/QuoteLinePart';
 const EventClientService = new EventClient(ENDPOINT);
 const UserClientService = new UserClient(ENDPOINT);
 
@@ -192,8 +194,28 @@ export const ServiceCall: FC<Props> = props => {
             let material = filteredMaterials[j];
             let tempStringSecondPart = ` - (${material.getQuantity()})- ${material.getDescription()}- $${material.getQuotedPrice()}`;
 
-            const cost = material.getQuantity() * material.getQuotedPrice();
-            totalCost += cost;
+            let cost = material.getQuantity() * material.getQuotedPrice();
+            let taxAmount = 0;
+            let markupAmount = 0;
+            const qlReq = new QuoteLinePart();
+            qlReq.setId(material.getQuoteLineId());
+            try {
+              const qlResult = await QuoteLinePartClientService.Get(qlReq);
+              const tax = qlResult.getTax();
+              const markup = qlResult.getMarkup();
+
+              if (tax) {
+                taxAmount = cost * tax - cost;
+                console.log('Got tax', tax);
+              }
+              if (markup) {
+                markupAmount = cost * markup - cost;
+                console.log('got markup', markup);
+              }
+            } catch (err) {
+              console.log('did not find quote line entry');
+            }
+            totalCost += cost + markupAmount + taxAmount;
             serviceRenderedMaterialString += tempStringSecondPart;
           }
 
@@ -250,6 +272,7 @@ export const ServiceCall: FC<Props> = props => {
         for (let i = 0; i < servicesRendered.length; i++) {
           const req = new Payment();
           req.setServicesRenderedId(servicesRendered[i].getId());
+          req.setCollected(1);
           try {
             const result = await pcs.Get(req);
             payments.push(result);
@@ -519,7 +542,7 @@ export const ServiceCall: FC<Props> = props => {
           invoice.setUserId(state.customer.getId());
           invoice.setServiceItem(state.entry.getInvoiceServiceItem());
           invoice.setDiscount(state.entry.getDiscount());
-          invoice.setStartDate(timestamp().toString());
+          invoice.setStartDate(state.entry.getDateStarted());
           invoice.setMaterialTotal(state.entry.getMaterialTotal().toString());
           invoice.setMaterialUsed(state.entry.getMaterialUsed());
           const total1 = parseInt(state.entry.getTotalamountrow1());
