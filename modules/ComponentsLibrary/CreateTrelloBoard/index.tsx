@@ -15,6 +15,7 @@ import { Board } from '@kalos-core/kalos-rpc/compiled-protos/trello_pb';
 import { DevlogClientService, TrelloClientService } from '../../../helpers';
 import { format } from 'date-fns';
 import { Button } from '../Button';
+import { Form } from '../Form';
 
 // add any prop types here
 interface props {
@@ -25,6 +26,7 @@ export const CreateTrelloBoard: FC<props> = ({ loggedUserId }) => {
   const [state, dispatch] = useReducer(reducer, {
     isLoaded: false,
     error: undefined,
+    boardToCreate: new Board(),
   });
 
   const load = useCallback(() => {
@@ -41,12 +43,21 @@ export const CreateTrelloBoard: FC<props> = ({ loggedUserId }) => {
   }, []);
 
   const handleCreateBoard = useCallback(async () => {
-    // Name: "Test Board", Description: "Testing this out", OrganizationId: "5edf43af38c7c94094cd4279"
     let req = new Board();
-    req.setName('Test Board');
-    req.setDescription('Testing this out');
+
+    /*
+      
+    */
+
+    console.log(state.boardToCreate);
+    // @ts-expect-error
+    req.setName(state.boardToCreate.setName);
+    // @ts-expect-error
+    req.setDescription(state.boardToCreate.setDescription);
+    req.setOrganizationId('5edf43af38c7c94094cd4279');
+    console.log('Would create this: ', req);
     let res = await TrelloClientService.CreateBoard(req);
-  }, []);
+  }, [state.boardToCreate]);
 
   const handleError = useCallback(
     async (errorToSet: string) => {
@@ -78,9 +89,48 @@ export const CreateTrelloBoard: FC<props> = ({ loggedUserId }) => {
     };
   }, [load, cleanup, state.isLoaded]);
 
+  console.log('STATE : ', state.boardToCreate);
   return (
     <>
-      <Button label="Create" onClick={() => handleCreateBoard()} />
+      <Form<Board>
+        data={state.boardToCreate}
+        onSave={saved => {
+          console.log('SAVED IS: ', saved);
+          dispatch({ type: ACTIONS.SET_BOARD_TO_CREATE, data: saved });
+        }}
+        onClose={() => {}}
+        onChange={changed => {
+          console.log('SAVED IS: ', changed);
+          dispatch({ type: ACTIONS.SET_BOARD_TO_CREATE, data: changed });
+        }}
+        schema={[
+          [
+            {
+              label: 'Name of Board',
+              type: 'text',
+              name: 'setName',
+              required: true,
+            },
+            {
+              label: 'Description',
+              type: 'text',
+              multiline: true,
+              name: 'setDescription',
+              required: true,
+            },
+          ],
+          [
+            {
+              actions: [
+                {
+                  label: 'Create',
+                  onClick: () => handleCreateBoard(),
+                },
+              ],
+            },
+          ],
+        ]}
+      />
     </>
   );
 };
