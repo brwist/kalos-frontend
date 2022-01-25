@@ -721,6 +721,32 @@ async function bustCache(controller = '', filename = '') {
   }
 }
 
+const releaseAll = async () => {
+  // Get the name of every module
+  // Release every module sequentially
+
+  sh.cd('modules');
+  const directories = sh.ls();
+  const validModules = directories.filter(dir => !dir.includes('.'));
+
+  for (const module of validModules) {
+    log('\x1b[33m')([`>> Releasing: ${module}`]);
+    release(module);
+    log('\x1b[32m')([`✓ Released: ${module}`]);
+
+    const mapping = MODULE_MAP[module];
+    if (mapping) {
+      if (mapping.length >= 3 && mapping[0] === 'admin') {
+        log('\x1b[33m')([
+          `>> Busting: ${module} | module map array: ${mapping}`,
+        ]);
+        bustCache(mapping[1], mapping[2]);
+        log('\x1b[32m')([`✓ Busted: ${module}`]);
+      }
+    }
+  }
+};
+
 task('index', buildIndex);
 task('bundle', rollupBuild);
 task('bust', bustCache);
@@ -730,6 +756,7 @@ task(release);
 task('cfpatch', patchCFC);
 task(upload);
 task('build-all', buildAll);
+task('release-all', releaseAll);
 
 const KALOS_ROOT = 'kalos-prod:/opt/coldfusion11/cfusion/wwwroot';
 const KALOS_ASSETS = `${KALOS_ROOT}/app/assets`;
@@ -760,7 +787,7 @@ const NAMED_EXPORTS = {
     'isValidElementType',
     'isContextConsumer',
   ],
-  'node_modules/lodash/lodash.js': ['delay', 'debounce', 'isArray','parseInt'],
+  'node_modules/lodash/lodash.js': ['delay', 'debounce', 'isArray', 'parseInt'],
   'node_modules/@kalos-core/kalos-rpc/compiled-protos/dispatch_pb.js': [
     'DispatchableTechList',
     'DispatchableTech',
@@ -843,7 +870,7 @@ const NAMED_EXPORTS = {
     'QuotableRead',
     'CostReportInfo',
     'CostReportReq',
-    'CostReportData'
+    'CostReportData',
   ],
   'node_modules/@kalos-core/kalos-rpc/compiled-protos/event_assignment_pb.js': [
     'EventAssignment',
@@ -1098,7 +1125,7 @@ const NAMED_EXPORTS = {
   'node_modules/@kalos-core/kalos-rpc/compiled-protos/transaction_account_pb.js':
     ['TransactionAccount', 'TransactionAccountList'],
   'node_modules/@kalos-core/kalos-rpc/compiled-protos/transaction_activity_pb.js':
-    ['TransactionActivity', 'TransactionActivityList','MergeTransactionIds'],
+    ['TransactionActivity', 'TransactionActivityList', 'MergeTransactionIds'],
   'node_modules/@kalos-core/kalos-rpc/compiled-protos/transaction_document_pb.js':
     ['TransactionDocument', 'TransactionDocumentList'],
   'node_modules/@kalos-core/kalos-rpc/compiled-protos/transaction_status_pb.js':
