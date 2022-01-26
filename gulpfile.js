@@ -1202,7 +1202,269 @@ const NAMED_EXPORTS = {
   ],
 };
 
-const MODULE_MAP = {
+// released: manual flag to show if a module has been released already. If false,
+// the module will not be released by the release-all command. True by default.
+// skip: whether to skip the module or not in the release-all command.
+// deprecated: does the same thing as skip for now, just adding it in for the future
+//  and to self document
+//
+// These basically do the same thing, but are different for self-documentation purposes
+const MODULE_MAP = [
+  {
+    name: 'AcceptProposal',
+    location: 'customer',
+    controller: 'service',
+    filename: 'accept_proposal',
+    released: true,
+  },
+  {
+    name: 'AccountInfo',
+    location: 'admin',
+    controller: 'account',
+    filename: 'editinformation',
+    released: true,
+  },
+  {
+    name: 'AddServiceCallGeneral',
+    location: 'admin',
+    controller: 'service',
+    filename: 'addservicecallgeneral',
+    released: false,
+  },
+  {
+    name: 'AddTimeOff',
+    skip: true,
+  },
+  {
+    name: 'AltGallery',
+    deprecated: true,
+  },
+  {
+    name: 'CallsByTech',
+    location: 'admin',
+    controller: 'service',
+    filename: 'callstech',
+    released: true,
+  },
+  {
+    name: 'CreditTransaction',
+    skip: true,
+  },
+  {
+    name: 'CustomerDetails',
+    location: 'admin',
+    controller: 'customers',
+    filename: 'details',
+    released: false,
+  },
+  {
+    name: 'CustomerDirectory',
+    skip: true,
+  },
+  {
+    name: 'CustomerTasks',
+    skip: true,
+  },
+  {
+    name: 'Dashboard',
+    location: 'admin',
+    controller: 'dashboard',
+    filename: 'index',
+  },
+  {
+    name: 'Dispatch',
+    location: 'admin',
+    controller: 'dispatch',
+    filename: 'newdash',
+  },
+  {
+    name: 'Documents',
+    location: 'admin',
+    controller: 'document',
+    filename: 'index',
+  },
+  {
+    name: 'EditProject',
+    location: 'admin',
+    controller: 'service',
+    filename: 'edit_project',
+    released: false,
+  },
+  {
+    name: 'EditTimeOff',
+    skip: true,
+  },
+  {
+    name: 'EmployeeDirectory',
+    location: 'admin',
+    controller: 'users',
+    filename: 'employee',
+  },
+  {
+    name: 'EmployeeTasks',
+    skip: true,
+  },
+  {
+    name: 'Gallery',
+    skip: true,
+  },
+  {
+    name: 'List',
+    deprecated: true,
+  },
+  {
+    name: 'Loader',
+    skip: true,
+  },
+  {
+    name: 'Login',
+    skip: true,
+  },
+  {
+    name: 'Metrics',
+    skip: true,
+  },
+  {
+    name: 'PDFMaker',
+    deprecated: true,
+  },
+  {
+    name: 'PendingBilling',
+    location: 'admin',
+    controller: 'service',
+    filename: 'callspending',
+    released: false,
+  },
+  {
+    name: 'PerDiem',
+    location: 'admin',
+    controller: 'reports',
+    filename: 'perdiem',
+  },
+  {
+    name: 'PerDiemsNeedsAuditing',
+    location: 'admin',
+    controller: 'reports',
+    filename: 'perdiem_audit',
+  },
+  {
+    name: 'PopoverGallery',
+    deprecated: true,
+  },
+  {
+    name: 'PostProposal',
+    location: 'customer',
+    controller: 'service',
+    filename: 'post_proposal',
+  },
+  {
+    name: 'Projects',
+    skip: true,
+  },
+  {
+    name: 'Prompt',
+    skip: true,
+  },
+  {
+    name: 'PropertyInformation',
+    location: 'admin',
+    controller: 'properties',
+    filename: 'details',
+    released: false,
+  },
+  {
+    name: 'PropertyTasks',
+    skip: true,
+  },
+  {
+    name: 'Proposal',
+    skip: true,
+  },
+  {
+    name: 'Reports',
+    location: 'admin',
+    controller: 'reports',
+    filename: 'index',
+    released: false,
+  },
+  {
+    name: 'SearchIndex',
+    location: 'admin',
+    controller: 'search',
+    filename: 'index',
+  },
+  {
+    name: 'ServiceCalendar',
+    location: 'admin',
+    controller: 'service',
+    filename: 'calendar',
+  },
+  {
+    name: 'ServiceCallDetail',
+    released: false,
+  },
+  {
+    name: 'ServiceCallEdit',
+    released: false,
+  },
+  {
+    name: 'ServiceCallSearch',
+    location: 'admin',
+    controller: 'service',
+    filename: 'calls',
+  },
+  {
+    name: 'SideMenu',
+    location: 'common',
+    controller: 'partials',
+    filename: 'header',
+    released: false,
+  },
+  {
+    name: 'SpiffLog',
+    location: 'admin',
+    controller: 'tasks',
+    filename: 'spiff_tool_logs',
+    released: false,
+  },
+  {
+    name: 'SpiffToolLogs',
+    location: 'admin',
+    controller: 'tasks',
+    filename: 'spiff_tool_logs',
+    released: false,
+  },
+  {
+    name: 'Timesheet',
+    location: 'admin',
+    controller: 'timesheet',
+    filename: 'timesheetview_new',
+  },
+  {
+    name: 'ToolLog',
+    skip: true,
+  },
+  {
+    name: 'Transaction',
+    location: 'admin',
+    controller: 'reports',
+    filename: 'transaction_admin',
+  },
+  {
+    name: 'TransactionAccountsPayable',
+    location: 'admin',
+    controller: 'reports',
+    filename: 'transactions',
+  },
+  {
+    name: 'TransactionUser',
+    location: 'admin',
+    controller: 'reports',
+    filename: 'transactions',
+  },
+];
+
+const MODULE_MAP_OLD = {
   AcceptProposal: ['customer', 'service', 'accept_proposal'],
   AccountInfo: ['admin', 'account', 'editinformation'],
   // AddServiceCallGeneral: ['admin', 'service', 'addservicecallgeneral'], // UNRELEASED
