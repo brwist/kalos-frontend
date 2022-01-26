@@ -27,6 +27,7 @@ interface Props {
   event: Event;
   servicesRendered: ServicesRendered[];
   paidServices: Payment[];
+
   onInitSchema: (fields: string[]) => void;
   onChange: (serviceItem: Event) => void;
 }
@@ -105,6 +106,7 @@ export const Invoice: FC<Props> = ({
       (parseInt(data.getTotalamountrow1()) +
         parseInt(data.getTotalamountrow2()) +
         parseInt(data.getTotalamountrow3()) +
+        +data.getMaterialTotal() +
         parseInt(data.getTotalamountrow4())) -
     totalPaid;
   const SCHEMA: Schema<Event> = useMemo(
@@ -192,7 +194,8 @@ export const Invoice: FC<Props> = ({
                 parseInt(data.getTotalamountrow1()) +
                 parseInt(data.getTotalamountrow2()) +
                 parseInt(data.getTotalamountrow3()) +
-                parseInt(data.getTotalamountrow4())
+                parseInt(data.getTotalamountrow4()) +
+                data.getMaterialTotal()
               }
             />
           ),

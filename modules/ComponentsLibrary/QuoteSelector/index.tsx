@@ -29,7 +29,7 @@ export type SelectedQuote = {
 interface Props {
   serviceCallId: number;
   servicesRenderedId: number;
-  onAdd?: () => void;
+  onUpdate?: () => void;
   onAddQuotes?: (quotes: SelectedQuote[]) => void;
 }
 
@@ -79,7 +79,7 @@ const SCHEMA_NEW_QUOTABLE: Schema<Quotable> = [
 export const QuoteSelector: FC<Props> = ({
   serviceCallId,
   servicesRenderedId,
-  onAdd,
+  onUpdate,
   onAddQuotes,
 }) => {
   const [open, setOpen] = useState<boolean>(false);
@@ -203,9 +203,12 @@ export const QuoteSelector: FC<Props> = ({
       let quoteUsed = new QuoteUsed();
       quoteUsed.setId(temp.getQuoteUsedId());
       await quoteUsedClientService.Delete(quoteUsed);
+      if (onUpdate) {
+        await onUpdate();
+      }
     }
     setPendingDeleteQuotable([]);
-  }, [pendingDeleteQuotable]);
+  }, [pendingDeleteQuotable, onUpdate]);
   const handleAddToPendingDelete = useCallback(
     async (pendingRemoveQuotable: Quotable) => {
       let tempQuotable = quotable.filter(
@@ -217,6 +220,7 @@ export const QuoteSelector: FC<Props> = ({
       tempPendingDelete.push(pendingRemoveQuotable);
       setPendingDeleteQuotable(tempPendingDelete);
     },
+
     [pendingDeleteQuotable, quotable],
   );
   const handleRemovePending = useCallback(
@@ -233,7 +237,7 @@ export const QuoteSelector: FC<Props> = ({
     },
     [pendingQuotable, selectedQuoteLineIds],
   );
-  const handleAddQuotes = useCallback(() => {
+  const handleAddQuotes = useCallback(async () => {
     const temp: Quotable[] = [];
     Object.keys(billable).map(id => {
       let quote = quoteParts.find(
@@ -297,6 +301,9 @@ export const QuoteSelector: FC<Props> = ({
           console.log('failed to add quotable item');
         }
       }
+      if (onUpdate) {
+        await onUpdate();
+      }
       setQuotable(originalQuotable.concat(...tempList));
       setPendingQuotable([]);
       setSelectedQuoteLineIds([]);
@@ -305,6 +312,7 @@ export const QuoteSelector: FC<Props> = ({
     pendingQuotable,
     originalQuotable,
     servicesRenderedId,
+    onUpdate,
     handleDeleteQuoteLine,
     pendingDeleteQuotable,
   ]);
@@ -467,7 +475,7 @@ export const QuoteSelector: FC<Props> = ({
       <SectionBar
         title="Supplies / Services"
         actions={
-          onAdd
+          onUpdate
             ? [
                 {
                   label: 'Add',

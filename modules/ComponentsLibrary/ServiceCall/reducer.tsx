@@ -8,6 +8,9 @@ import { Event } from '@kalos-core/kalos-rpc/Event';
 import { Option } from '../Field';
 import { Payment } from '@kalos-core/kalos-rpc/Payment';
 import { ServiceItem } from '@kalos-core/kalos-rpc/ServiceItem';
+import { EventClient, Quotable } from '@kalos-core/kalos-rpc/Event';
+import { Invoice, Invoice as InvoiceType } from '@kalos-core/kalos-rpc/Invoice';
+import { Contract } from '@kalos-core/kalos-rpc/Contract';
 export interface State {
   requestFields: string[];
   tabIdx: number;
@@ -17,6 +20,7 @@ export interface State {
   requestValid: boolean;
   serviceCallId: number;
   entry: Event;
+  invoiceData: InvoiceType | undefined;
   property: Property;
   customer: User;
   paidServices: Payment[];
@@ -36,10 +40,11 @@ export interface State {
   notificationEditing: boolean;
   notificationViewing: boolean;
   projects: Event[];
-  selectedServiceItems: ServiceItem[];
+  selectedServiceItems: number[];
   parentId: number | null;
   confirmedParentId: number | null;
   projectData: Event;
+  contractData: Contract | undefined;
   openSpiffApply: boolean;
   openJobActivity: boolean;
 }
@@ -58,12 +63,17 @@ export type Action =
         loggedUser: User;
         entry: Event;
         servicesRendered: ServicesRendered[];
+        paidServices: Payment[];
         loaded: boolean;
         loading: boolean;
+        invoice: Invoice | undefined;
+        contract: Contract | undefined;
       };
     }
   | { type: 'setEntry'; data: Event }
-  | { type: 'setSelectedServiceItems'; data: ServiceItem[] }
+  | { type: 'setInvoiceData'; data: InvoiceType | undefined }
+  | { type: 'setContractData'; data: Contract | undefined }
+  | { type: 'setSelectedServiceItems'; data: number[] }
   | {
       type: 'setChangeEntry';
       data: {
@@ -167,6 +177,15 @@ export const reducer = (state: State, action: Action) => {
       if (role) {
         roleType = role.getName();
       }
+      let splitServiceItems: number[] = [];
+      if (action.data.entry) {
+        action.data.entry.getInvoiceServiceItem();
+        const splitData = action.data.entry.getInvoiceServiceItem().split(',');
+        for (let i = 0; i < splitData.length; i++) {
+          splitServiceItems.push(parseInt(splitData[i]));
+        }
+      }
+      console.log('we made this data', splitServiceItems);
       return {
         ...state,
         property: action.data.property,
@@ -177,16 +196,30 @@ export const reducer = (state: State, action: Action) => {
         jobTypeSubtypes: action.data.jobTypeSubtypes,
         loggedUser: action.data.loggedUser,
         entry: action.data.entry,
+        paidServices: action.data.paidServices,
         servicesRendered: action.data.servicesRendered,
         loaded: action.data.loaded,
         loading: action.data.loading,
         loggedUserRole: roleType,
+        invoiceData: action.data.invoice,
+        contractData: action.data.contract,
+        selectedServiceItems: splitServiceItems,
       };
     }
     case 'setEntry':
       return {
         ...state,
         entry: action.data,
+      };
+    case 'setInvoiceData':
+      return {
+        ...state,
+        invoiceData: action.data,
+      };
+    case 'setContractData':
+      return {
+        ...state,
+        contractData: action.data,
       };
     case 'setSelectedServiceItems':
       return {

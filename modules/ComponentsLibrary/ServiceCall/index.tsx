@@ -6,13 +6,21 @@ import React, {
   useReducer,
   useRef,
 } from 'react';
-import { EventClient, Event } from '@kalos-core/kalos-rpc/Event';
+import {
+  SERVICE_STATUSES,
+  SIGNATURE_PAYMENT_TYPE_LIST,
+  PAYMENT_COLLECTED_LIST,
+  PAYMENT_NOT_COLLECTED_LIST,
+} from '../../../constants';
+import { EventClient, Event, Quotable } from '@kalos-core/kalos-rpc/Event';
 import { UserClient, User } from '@kalos-core/kalos-rpc/User';
-import { JobType } from '@kalos-core/kalos-rpc/JobType';
-import { JobSubtype } from '@kalos-core/kalos-rpc/JobSubtype';
 import { JobTypeSubtype } from '@kalos-core/kalos-rpc/JobTypeSubtype';
-import { Property, PropertyClient } from '@kalos-core/kalos-rpc/Property';
+import { Property } from '@kalos-core/kalos-rpc/Property';
+import { QuotableRead } from '@kalos-core/kalos-rpc/compiled-protos/event_pb';
 import { ServicesRendered } from '@kalos-core/kalos-rpc/ServicesRendered';
+import { Invoice as InvoiceType } from '@kalos-core/kalos-rpc/Invoice';
+import { Contract } from '@kalos-core/kalos-rpc/Contract';
+import { Loader } from '../../Loader/main';
 import {
   getRPCFields,
   makeFakeRows,
@@ -20,11 +28,15 @@ import {
   JobTypeClientService,
   JobSubtypeClientService,
   cfURL,
-  loadProjects,
   JobTypeSubtypeClientService,
   ServicesRenderedClientService,
   makeSafeFormObject,
   ActivityLogClientService,
+  InvoiceClientService,
+  ContractClientService,
+  EmailClientService,
+  timestamp,
+  QuoteLinePartClientService,
 } from '../../../helpers';
 import { PaymentClient, Payment } from '@kalos-core/kalos-rpc/Payment';
 import { ENDPOINT, OPTION_BLANK } from '../../../constants';
@@ -34,7 +46,7 @@ import { InfoTable, Data } from '../InfoTable';
 import { Tabs } from '../Tabs';
 import { Option } from '../Field';
 import { Form, Schema } from '../Form';
-import { ServiceItem } from '@kalos-core/kalos-rpc/ServiceItem';
+import { SQSEmail } from '@kalos-core/kalos-rpc/Email';
 import { SpiffApplyComponent } from '../SpiffApplyComponent';
 import { Request } from './components/Request';
 import { Equipment } from './components/Equipment';
@@ -42,19 +54,18 @@ import { Services } from './components/Services';
 import { Invoice } from './components/Invoice';
 import { Proposal } from './components/Proposal';
 import { Spiffs } from './components/Spiffs';
-import { Confirm } from '../Confirm';
-import { GanttChart } from '../GanttChart';
-import { Loader } from '../../Loader/main';
-import Typography from '@material-ui/core/Typography';
-import { Alert } from '../Alert';
 import { ActivityLog } from '@kalos-core/kalos-rpc/ActivityLog';
 import format from 'date-fns/esm/format';
 import setHours from 'date-fns/esm/setHours';
 import setMinutes from 'date-fns/esm/setMinutes';
+import { Document } from '@kalos-core/kalos-rpc/Document';
 import { State, reducer } from './reducer';
-import { update } from 'lodash';
 import { ServiceCallLogs } from '../ServiceCallLogs';
-
+import {
+  Email,
+  SQSEmailAndDocument,
+} from '@kalos-core/kalos-rpc/compiled-protos/email_pb';
+import { QuoteLinePart } from '@kalos-core/kalos-rpc/QuoteLinePart';
 const EventClientService = new EventClient(ENDPOINT);
 const UserClientService = new UserClient(ENDPOINT);
 
@@ -115,6 +126,7 @@ export const ServiceCall: FC<Props> = props => {
     loggedUserRole: '',
     openSpiffApply: false,
     error: false,
+    invoiceData: undefined,
     errorMessage: '',
     jobTypes: [],
     jobSubtypes: [],
@@ -127,6 +139,7 @@ export const ServiceCall: FC<Props> = props => {
     projects: [],
     parentId: null,
     confirmedParentId: null,
+    contractData: undefined,
     projectData: new Event(),
     openJobActivity: false,
   };
@@ -149,6 +162,83 @@ export const ServiceCall: FC<Props> = props => {
       data: payments,
     });
   };
+  const handleUpdateMaterialsStringAndCost = useCallback(async () => {
+    const totalMaterials: Quotable[] = [];
+    console.log('we are going to update the material total');
+    //Day(3char),timestamp - Person Who added it - (Material Quantity)  - (Material Cost)
+    //Tue, 12/7/2021 8:08PM Jordan Spalding -(1) Trip & Diagnostic Fee - After Hours - $120
+    let totalCost = 0;
+    let fullString = '';
+
+    const materialReq = new QuotableRead();
+    materialReq.setEventId(state.serviceCallId);
+    materialReq.setIsActive(true);
+
+    const materials = (
+      await EventClientService.ReadQuotes(materialReq)
+    ).getDataList();
+    totalMaterials.concat(materials);
+    if (materials.length > 0) {
+      for (let i = 0; i < state.servicesRendered.length; i++) {
+        let date = state.servicesRendered[i].getTimeStarted();
+        const tech = state.servicesRendered[i].getName();
+        let tempStringFirstPart = `${date}, - ${tech}`;
+        const filteredMaterials = materials.filter(
+          material =>
+            material.getServicesRenderedId() ===
+            state.servicesRendered[i].getId(),
+        );
+        if (filteredMaterials.length > 0) {
+          let serviceRenderedMaterialString = tempStringFirstPart;
+          for (let j = 0; j < filteredMaterials.length; j++) {
+            let material = filteredMaterials[j];
+            let tempStringSecondPart = ` - (${material.getQuantity()})- ${material.getDescription()}- $${material.getQuotedPrice()}`;
+
+            let cost = material.getQuantity() * material.getQuotedPrice();
+            let taxAmount = 0;
+            let markupAmount = 0;
+            const qlReq = new QuoteLinePart();
+            qlReq.setId(material.getQuoteLineId());
+            try {
+              const qlResult = await QuoteLinePartClientService.Get(qlReq);
+              const tax = qlResult.getTax();
+              const markup = qlResult.getMarkup();
+
+              if (tax) {
+                taxAmount = cost * tax - cost;
+                console.log('Got tax', tax);
+              }
+              if (markup) {
+                markupAmount = cost * markup - cost;
+                console.log('got markup', markup);
+              }
+            } catch (err) {
+              console.log('did not find quote line entry');
+            }
+            totalCost += cost + markupAmount + taxAmount;
+            serviceRenderedMaterialString += tempStringSecondPart;
+          }
+
+          fullString += `${serviceRenderedMaterialString} \n `;
+        }
+      }
+    }
+
+    console.log('full string', fullString);
+    const updateEvent = new Event();
+    updateEvent.setId(state.serviceCallId);
+    updateEvent.setMaterialUsed(fullString);
+    updateEvent.setMaterialTotal(totalCost);
+    const updateStateEvent = state.entry;
+    updateStateEvent.setMaterialUsed(fullString);
+    updateStateEvent.setMaterialTotal(totalCost);
+    updateEvent.setFieldMaskList(['MaterialUsed', 'MaterialTotal']);
+    await EventClientService.Update(updateEvent);
+    updateServiceCallState({
+      type: 'setEntry',
+      data: updateStateEvent,
+    });
+  }, [state.servicesRendered, state.entry, state.serviceCallId]);
   const toggleOpenSpiffApply = () => {
     updateServiceCallState({
       type: 'setOpenSpiffApply',
@@ -161,12 +251,13 @@ export const ServiceCall: FC<Props> = props => {
       data: !state.openJobActivity,
     });
   };
-  const setSelectedServiceItems = (data: ServiceItem[]) => {
+  const setSelectedServiceItems = (data: number[]) => {
     updateServiceCallState({
       type: 'setSelectedServiceItems',
       data: data,
     });
   };
+
   const loadServicesRenderedData = useCallback(
     async (_serviceCallId = state.serviceCallId) => {
       if (_serviceCallId) {
@@ -176,12 +267,12 @@ export const ServiceCall: FC<Props> = props => {
         const servicesRendered = (
           await ServicesRenderedClientService.BatchGet(req)
         ).getResultsList();
-
         const pcs = new PaymentClient(ENDPOINT);
         let payments = [];
         for (let i = 0; i < servicesRendered.length; i++) {
           const req = new Payment();
           req.setServicesRenderedId(servicesRendered[i].getId());
+          req.setCollected(1);
           try {
             const result = await pcs.Get(req);
             payments.push(result);
@@ -189,26 +280,20 @@ export const ServiceCall: FC<Props> = props => {
             console.log('failed to get payment data');
           }
         }
+        /*
         updateServiceCallState({
-          type: 'setPaidServices',
-          data: payments,
+          type: 'setContractData',
+          data: contractData,
         });
-        updateServiceCallState({
-          type: 'setServicesRendered',
-          data: {
-            servicesRendered: servicesRendered,
-            loading: true,
-          },
-        });
+*/
 
-        return servicesRendered;
+        return { servicesRendered: servicesRendered, payments: payments };
       } else {
-        return [];
+        return { servicesRendered: [], payments: [] };
       }
     },
     [state.serviceCallId],
   );
-
   const loadServicesRenderedDataForProp = useCallback(
     async (_serviceCallId = state.serviceCallId) => {
       if (_serviceCallId) {
@@ -224,16 +309,25 @@ export const ServiceCall: FC<Props> = props => {
           type: 'setServicesRendered',
           data: { servicesRendered: servicesRendered, loading: false },
         });
-
-        console.log(servicesRendered);
-        console.log('we are here getting sr data');
       } else {
         updateServiceCallState({ type: 'setLoading', data: false });
       }
     },
     [state.serviceCallId],
   );
-
+  const loadInvoiceData = useCallback(
+    async (_serviceCallId = state.serviceCallId) => {
+      if (_serviceCallId) {
+        const invoiceReq = new InvoiceType();
+        invoiceReq.setEventId(_serviceCallId);
+        const result = await InvoiceClientService.Get(invoiceReq);
+        return result;
+      } else {
+        return undefined;
+      }
+    },
+    [state.serviceCallId],
+  );
   // const handleSetError = useCallback(
   //   // (value: boolean) => setError(value),
   //   (value: boolean) => updateServiceCallState({type: 'setError', data: value}),
@@ -245,6 +339,7 @@ export const ServiceCall: FC<Props> = props => {
     // let newProjectData = projectData;
     // newProjectData.setPropertyId(propertyId);
     // setProjectData(newProjectData);
+    const req = new QuotableRead();
     try {
       let entry: Event = new Event();
       const property = PropertyClientService.loadPropertyByID(propertyId);
@@ -256,6 +351,7 @@ export const ServiceCall: FC<Props> = props => {
       const jobTypeSubtypes = JobTypeSubtypeClientService.loadJobTypeSubtypes();
       const loggedUser = UserClientService.loadUserById(loggedUserId);
       const servicesRendered = loadServicesRenderedData();
+      const invoice = loadInvoiceData();
       const [
         propertyDetails,
         customerDetails,
@@ -265,6 +361,7 @@ export const ServiceCall: FC<Props> = props => {
         jobTypeSubtypesList,
         loggedUserDetails,
         servicesRenderedList,
+        invoiceData,
       ] = await Promise.all([
         property,
         customer,
@@ -274,6 +371,7 @@ export const ServiceCall: FC<Props> = props => {
         jobTypeSubtypes,
         loggedUser,
         servicesRendered,
+        invoice,
       ]);
       if (state.serviceCallId) {
         const req = new Event();
@@ -296,6 +394,20 @@ export const ServiceCall: FC<Props> = props => {
         );
         entry = req;
       }
+      let contractData = undefined;
+
+      if (entry.getContractId()) {
+        const contractReq = new Contract();
+        contractReq.setUserId(userID);
+        contractReq.setIsActive(1);
+        try {
+          contractData = await ContractClientService.Get(contractReq);
+        } catch (err) {
+          console.log('No contract data');
+        }
+      } else {
+        console.log('no contract data');
+      }
       updateServiceCallState({
         type: 'setData',
         data: {
@@ -307,11 +419,15 @@ export const ServiceCall: FC<Props> = props => {
           jobTypeSubtypes: jobTypeSubtypesList,
           loggedUser: loggedUserDetails,
           entry: entry,
-          servicesRendered: servicesRenderedList,
+          servicesRendered: servicesRenderedList.servicesRendered,
+          paidServices: servicesRenderedList.payments,
           loaded: true,
+          invoice: invoiceData,
           loading: false,
+          contract: contractData,
         },
       });
+
       console.log('All Processes are Loaded');
     } catch (err) {
       updateServiceCallState({
@@ -344,6 +460,7 @@ export const ServiceCall: FC<Props> = props => {
     state.serviceCallId,
     loggedUserId,
     loadServicesRenderedData,
+    loadInvoiceData,
   ]);
 
   // const handleSetParentId = useCallback(
@@ -387,16 +504,103 @@ export const ServiceCall: FC<Props> = props => {
     let res = new Event();
     try {
       if (state.serviceCallId) {
-        console.log('saving existing ID');
+        temp.setId(state.serviceCallId);
         let activityName = `${temp.getLogJobNumber()} Edited Service Call`;
+        if (temp.getFieldMaskList().length > 0) {
+          await EventClientService.Update(temp);
+        }
         if (state.saveInvoice) {
           console.log('saving invoice');
+          const invoice = new InvoiceType();
           temp.setIsGeneratedInvoice(state.saveInvoice);
           temp.addFieldMask('IsGeneratedInvoice');
-          await EventClientService.Update(temp);
+          invoice.setEventId(state.serviceCallId);
+          invoice.setContractId(state.entry.getContractId());
+          invoice.setPropertyId(state.entry.getPropertyId());
+          if (state.contractData) {
+            invoice.setContractId(state.contractData.getId());
+            invoice.setProperties(state.contractData.getProperties());
+            invoice.setTerms(state.contractData.getPaymentTerms());
+          }
+          invoice.setPropertyBilling(state.entry.getPropertyBilling());
+          invoice.setServicesperformedrow1(
+            state.entry.getServicesperformedrow1(),
+          );
+          invoice.setServicesperformedrow2(
+            state.entry.getServicesperformedrow2(),
+          );
+          invoice.setServicesperformedrow3(
+            state.entry.getServicesperformedrow3(),
+          );
+          invoice.setServicesperformedrow4(
+            state.entry.getServicesperformedrow4(),
+          );
+          invoice.setTotalamountrow1(state.entry.getTotalamountrow1());
+          invoice.setTotalamountrow2(state.entry.getTotalamountrow2());
+          invoice.setTotalamountrow3(state.entry.getTotalamountrow3());
+          invoice.setTotalamountrow4(state.entry.getTotalamountrow4());
+          invoice.setUserId(state.customer.getId());
+          invoice.setServiceItem(state.entry.getInvoiceServiceItem());
+          invoice.setDiscount(state.entry.getDiscount());
+          invoice.setStartDate(state.entry.getDateStarted());
+          invoice.setMaterialTotal(state.entry.getMaterialTotal().toString());
+          invoice.setMaterialUsed(state.entry.getMaterialUsed());
+          const total1 = parseInt(state.entry.getTotalamountrow1());
+          const total2 = parseInt(state.entry.getTotalamountrow2());
+          const total3 = parseInt(state.entry.getTotalamountrow3());
+          const total4 = parseInt(state.entry.getTotalamountrow4());
+          const discountAmount = parseInt(state.entry.getDiscountcost());
+          invoice.setServiceItem(state.entry.getInvoiceServiceItem());
+          const materialTotal = state.entry.getMaterialTotal();
+          const grandTotal =
+            total1 + total2 + total3 + total4 + materialTotal - discountAmount;
+          invoice.setLogPaymentStatus(state.entry.getLogPaymentStatus());
+          invoice.setLogPaymentType(state.entry.getLogPaymentType());
+          invoice.setTotalamounttotal(grandTotal.toString());
+          if (state.invoiceData) {
+            invoice.setId(state.invoiceData.getId());
+            invoice.setFieldMaskList(['EventId']);
+            invoice.addFieldMask('PropertyId');
+
+            if (state.contractData) {
+              invoice.addFieldMask('ContractId');
+              invoice.addFieldMask('Properties');
+              invoice.addFieldMask('Terms');
+            }
+            invoice.addFieldMask('PropertyBilling');
+            invoice.addFieldMask('Servicesperformedrow1');
+            invoice.addFieldMask('Servicesperformedrow2');
+            invoice.addFieldMask('Servicesperformedrow3');
+            invoice.addFieldMask('Servicesperformedrow4');
+            invoice.addFieldMask('ServiceItem');
+            invoice.addFieldMask('Totalamountrow1');
+            invoice.addFieldMask('Totalamountrow2');
+            invoice.addFieldMask('Totalamountrow3');
+            invoice.addFieldMask('Totalamountrow4');
+
+            invoice.addFieldMask('Discount');
+            invoice.addFieldMask('LogPaymentStatus');
+            invoice.addFieldMask('LogPaymentType');
+            invoice.addFieldMask('Totalamounttotal');
+            invoice.addFieldMask('MaterialTotal');
+            invoice.addFieldMask('MaterialUsed');
+            InvoiceClientService.Update(invoice);
+            console.log('update invoice and event', invoice);
+            const sqsInvoiceEmail = new SQSEmailAndDocument();
+            const email = new SQSEmail();
+            const document = new Document();
+            document.setInvoiceId(invoice.getId());
+            document.setPropertyId(invoice.getPropertyId());
+            email.setTo(state.customer.getEmail());
+            sqsInvoiceEmail.setDocument(document);
+            sqsInvoiceEmail.setEmail(email);
+            await EmailClientService.SendSQSInvoiceEmail(sqsInvoiceEmail);
+          } else {
+            //we need to create it
+            await InvoiceClientService.Create(invoice);
+            console.log('create', invoice);
+          }
           activityName = activityName.concat(` and Invoice`);
-        } else {
-          await EventClientService.Update(temp);
         }
         const newActivity = new ActivityLog();
         if (
@@ -413,6 +617,7 @@ export const ServiceCall: FC<Props> = props => {
           );
           newActivity.setUserId(loggedUserId);
           newActivity.setActivityName(activityName);
+
           await ActivityLogClientService.Create(newActivity);
         }
       } else {
@@ -447,6 +652,7 @@ export const ServiceCall: FC<Props> = props => {
     } catch (err) {
       console.error(err);
     }
+
     console.log('finished Update');
     if (!state.serviceCallId) {
       console.log('no service call Id');
@@ -468,13 +674,20 @@ export const ServiceCall: FC<Props> = props => {
         },
       });
     }
+    updateServiceCallState({
+      type: 'setLoadedLoading',
+      data: { loaded: false, loading: true },
+    });
   }, [
     state.entry,
     state.serviceCallId,
     onSave,
     onClose,
-    state.saveInvoice,
     state.property,
+    state.contractData,
+    state.customer,
+    state.saveInvoice,
+    state.invoiceData,
     propertyId,
     loggedUserId,
     loadEntry,
@@ -594,18 +807,6 @@ export const ServiceCall: FC<Props> = props => {
       });
     },
     [userID, loadEntry],
-  );
-
-  const handleOnAddMaterials = useCallback(
-    async (materialUsed, materialTotal) => {
-      await EventClientService.updateMaterialUsed(
-        state.serviceCallId,
-        materialUsed + state.entry.getMaterialUsed(),
-        materialTotal + state.entry.getMaterialTotal(),
-      );
-      await loadEntry();
-    },
-    [state.serviceCallId, state.entry, loadEntry],
   );
 
   const jobTypeOptions: Option[] = state.jobTypes.map(id => ({
@@ -768,7 +969,9 @@ export const ServiceCall: FC<Props> = props => {
   //     },
   //   ],
   // ];
-  return (
+  return state.loaded === false ? (
+    <Loader />
+  ) : (
     <>
       <SectionBar
         key={state.loading.toString()}
@@ -976,7 +1179,7 @@ export const ServiceCall: FC<Props> = props => {
                           loading={state.loading}
                           payments={state.paidServices}
                           onUpdatePayments={handleUpdatePayments}
-                          onAddMaterials={handleOnAddMaterials}
+                          onUpdateMaterials={handleUpdateMaterialsStringAndCost}
                         />
                       ) : (
                         <InfoTable data={makeFakeRows(4, 4)} loading />
@@ -1008,6 +1211,7 @@ export const ServiceCall: FC<Props> = props => {
                       ) : (
                         <Proposal
                           serviceItem={state.entry}
+                          servicesRendered={state.servicesRendered}
                           customer={state.customer}
                           property={state.property}
                         />
