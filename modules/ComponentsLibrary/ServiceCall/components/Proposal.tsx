@@ -12,7 +12,11 @@ import { Modal } from '../../Modal';
 import { StoredQuotes } from '../../StoredQuotes';
 import { EventType } from '../';
 import { ProposalPrint } from './ProposalPrint';
+import compact from 'lodash/compact';
 import './proposal.less';
+import { PrintPage } from '../../PrintPage';
+import { PrintParagraph } from '../../PrintParagraph';
+import { PrintTable } from '../../PrintTable';
 import { QuoteLine } from '@kalos-core/kalos-rpc/QuoteLine';
 import { ServicesRendered } from '@kalos-core/kalos-rpc/ServicesRendered';
 import { User } from '@kalos-core/kalos-rpc/User';
@@ -21,12 +25,24 @@ import {
   makeSafeFormObject,
   formatDateDay,
   QuoteLineClientService,
+  formatDate,
+  usd,
+  FileClientService,
+  uploadFileToS3Bucket,
 } from '../../../../helpers';
+import { ENDPOINT } from '@kalos-core/kalos-rpc/constants';
+import { EmailClient } from '@kalos-core/kalos-rpc/Email';
+import { SQSEmail } from '@kalos-core/kalos-rpc/compiled-protos/email_pb';
+import { formatMs } from '@material-ui/core';
+import { File as FileType } from '@kalos-core/kalos-rpc/File';
+import { Document } from '@kalos-core/kalos-rpc/Document';
+
 interface Props {
   serviceItem: EventType;
   property: Property;
   customer: User;
   servicesRendered: ServicesRendered[];
+  reload?: () => void;
 }
 
 type Form = {
@@ -43,7 +59,9 @@ type File = {
   localCopyName: string;
   fileDescription: string;
 };
-
+//for prod
+//bucket='kalosdocs'
+const bucket = 'testbuckethelios';
 const SCHEMA_ENTRY: Schema<StoredQuote> = [
   [{ name: 'getId', type: 'hidden' }],
   [{ label: 'Description', name: 'getDescription', multiline: true }],
@@ -72,8 +90,10 @@ export const Proposal: FC<Props> = ({
   customer,
   property,
   servicesRendered,
+  reload,
 }) => {
   const [editing, setEditing] = useState<StoredQuote>();
+
   const [file, setFile] = useState<File>({
     localCopyName: '',
     fileDescription: `${serviceItem.getId()}_pending_proposal_${
@@ -104,6 +124,8 @@ export const Proposal: FC<Props> = ({
   const [loaded, setLoaded] = useState<boolean>(false);
   const [loadedQuotes, setLoadedQuotes] = useState<QuoteLine[]>([]);
   const customerName = `${customer?.getFirstname()} ${customer?.getLastname()}`;
+  const [fileData, setFileData] = useState<Uint8Array>();
+  const [generateFile, setGenerateFile] = useState<boolean>(false);
   const [form, setForm] = useState<Form>({
     displayName: customerName,
     withJobNotes: 0,
@@ -113,6 +135,17 @@ export const Proposal: FC<Props> = ({
     () => setQuickAddOpen(!quickAddOpen),
     [quickAddOpen, setQuickAddOpen],
   );
+  const handleToggleGenerateFile = useCallback(
+    () => setGenerateFile(!generateFile),
+    [setGenerateFile, generateFile],
+  );
+  const handleSetFileData = (fileData: Uint8Array) => {
+    setFileData(fileData);
+  };
+  const handleGenerateProposalAndSendToCustomer = () => {
+    handleToggleGenerateFile();
+    handleSendToCustomer();
+  };
   const load = useCallback(async () => {
     const req = new QuoteLine();
     req.setIsActive(1);
@@ -132,8 +165,10 @@ export const Proposal: FC<Props> = ({
         storedQuotes.push(storedQuote);
       }
       setTable(storedQuotes);
+      setLoaded(true);
     } catch (err) {
       console.log('nothing found for proposal');
+      setLoaded(true);
     }
   }, [serviceItem]);
   const handleAddEntry = useCallback(
@@ -164,22 +199,73 @@ export const Proposal: FC<Props> = ({
     },
     [handleSaveEntry],
   );
-  const handleSetRemember = useCallback(
-    (id: number) => (value: Value) => {
-      setTable(table);
+  const emailTemplate = `<body>
+  <h3>Hello ${form.displayName},</h3>
+
+  <h3>
+    You have a pending proposal from Kalos Services for:
+  </h3>
+
+  <h3>
+    ${property.getAddress()}
+  </h3>
+
+
+  <div>
+
+    Please select which services you would like performed, and authorize with your signature.
+  </div>
+  <div>
+  <a href="app.kalosflorida.com/index.cfm?action=customer:service.accept_proposal&job_number=${serviceItem.getId()}&user_id=${customer.getId()}&property_id=${property.getId()}&user_name=1">Click here to approve</a>
+  </div>
+  <br>
+  <div>
+  If the link above does not work, please copy and paste the following into your address bar:
+  </div>
+  <br>
+  <a href="app.kalosflorida.com/index.cfm?action=customer:service.accept_proposal&job_number=${serviceItem.getId()}&user_id=${customer.getId()}&property_id=${property.getId()}&user_name=1">app.kalosflorida.com/index.cfm?action=customer:service.accept_proposal&job_number=${serviceItem.getId()}&user_id=${customer.getId()}&property_id=${property.getId()}&user_name=1</a>
+  <br>
+  <div>  
+  <br>
+  <a href='app.kalosflorida.com/index.cfm?action=customer:service.preview_proposal&job_number=${serviceItem.getId()}&user_id=${customer.getId()}&property_id=${property.getId()}&user_name=1'>Dowload PDF here!</a>
+  </div>
+  <br>
+  <div>
+    If the above download link does not work, copy and paste the following into your address bar:
+  </div>
+  <br>
+  <a href='app.kalosflorida.com/index.cfm?action=customer:service.preview_proposal&job_number=${serviceItem.getId()}&user_id=${customer.getId()}&property_id=${property.getId()}&user_name=1'>app.kalosflorida.com/index.cfm?action=customer:service.preview_proposal&job_number=${serviceItem.getId()}&user_id=${customer.getId()}&property_id=${property.getId()}&user_name=1 </a>
+</body>
+`;
+
+  //Just a function to return a string for the status
+  //this just removes the turnary logic that was getting out of hand
+  const getStatus = useCallback(
+    (id: number) => {
+      if (loadedQuotes.length > 0) {
+        const quote = loadedQuotes.find(item => item.getId() === id);
+        if (quote) {
+          if (quote.getQuoteStatus() === 1) {
+            return 'Quote Accepted';
+          } else {
+            return 'Quote Not Accepted';
+          }
+        } else {
+          return undefined;
+        }
+      } else {
+        return undefined;
+      }
     },
-    [table, setTable],
+    [loadedQuotes],
   );
   const handleSetPreview = useCallback(
-    (preview: boolean) => () => setPreview(preview),
+    (preview: boolean) => () => {
+      setPreview(preview);
+    },
     [setPreview],
   );
   const handleSendToCustomer = useCallback(async () => {
-    const data = {
-      items: table,
-      ...file,
-      ...form,
-    };
     //first, let's add or update the quote line records
     for (let i = 0; i < table.length; i++) {
       let item = table[i];
@@ -212,44 +298,60 @@ export const Proposal: FC<Props> = ({
         await QuoteLineClientService.Delete(existingQuote);
       }
     }
-  }, [table, file, form, loadedQuotes, customer, serviceItem]);
-  const emailTemplate = `<body>
-  <h3>Hello ${form.displayName},</h3>
+    const fileCheckReq = new FileType();
+    const fullFileName = `${file.fileDescription}.pdf`;
+    fileCheckReq.setName(fullFileName);
+    let fileCheckRes = new FileType();
+    try {
+      fileCheckRes = await FileClientService.Get(fileCheckReq);
+    } catch (err) {
+      console.log('file not found, create new records');
+    }
+    if (fileData && fileCheckRes.getId() == 0) {
+      console.log('file record not found, create file and document');
+      const mime = 'application/pdf';
+      const fileReq = new FileType();
+      fileReq.setName(fullFileName);
+      fileReq.setBucket(bucket);
+      fileReq.setMimeType(mime);
+      const fileRes = await FileClientService.Create(fileReq);
+      const document = new Document();
+      document.setFileId(fileRes.getId());
+      document.setFilename(fullFileName);
+      document.setPropertyId(property.getId());
+      document.setDateCreated(document.getDateCreated());
+      document.setUserId(customer.getId());
+    }
+    const email = new SQSEmail();
+    email.setBody(emailTemplate);
+    email.setSubject(`Pending Proposal`);
+    email.setTo(customer.getEmail());
+    const emailClient = new EmailClient(ENDPOINT);
+    await emailClient.SendSQSMail(email);
+    handleToggleGenerateFile();
+    if (reload) {
+      reload();
+    }
+  }, [
+    table,
+    file,
+    fileData,
+    reload,
+    emailTemplate,
+    property,
+    loadedQuotes,
+    handleToggleGenerateFile,
+    customer,
+    serviceItem,
+  ]);
 
-  <h3>
-    You have a pending proposal from Kalos Services for:
-  </h3>
-
-  <h3>
-    ${property.getAddress()}
-  </h3>
-
-
-  <div>
-
-    Please select which services you would like performed, and authorize with your signature.
-  </div>
-  <div>
-  <a href="app.kalosflorida.com/index.cfm?action=customer:service.accept_proposal&job_number=${serviceItem.getId()}&user_id=${customer.getId()}&property_id=${property.getId()}&user_name=1">Click here to approve</a>
-
-    If the link above does not work, please copy and paste the following into your address bar:
-  </div>
-  <a href="app.kalosflorida.com/index.cfm?action=customer:service.accept_proposal&job_number=${serviceItem.getId()}&user_id=${customer.getId()}&property_id=${property.getId()}&user_name=1">app.kalosflorida.com/index.cfm?action=customer:service.accept_proposal&job_number=${serviceItem.getId()}&user_id=${customer.getId()}&property_id=${property.getId()}&user_name=1</a>
-  <br>
-  <div>  <a href='app.kalosflorida.com/index.cfm?action=customer:service.preview_proposal&job_number=${serviceItem.getId()}&user_id=${customer.getId()}&property_id=${property.getId()}&user_name=1'>Dowload PDF here!</a>
-  </div>
-  <div>
-    If the above download link does not work, copy and paste the following into your address bar:
-  </div>
-  <a href='app.kalosflorida.com/index.cfm?action=customer:service.preview_proposal&job_number=${serviceItem.getId()}&user_id=${customer.getId()}&property_id=${property.getId()}&user_name=1'>app.kalosflorida.com/index.cfm?action=customer:service.preview_proposal&job_number=${serviceItem.getId()}&user_id=${customer.getId()}&property_id=${property.getId()}&user_name=1 </a>
-
-</body>
-
-`;
   const COLUMNS: Columns = [
     { name: 'Description' },
     {
       name: 'Price',
+    },
+    {
+      name: 'Status',
       actions: [
         {
           label: 'Quick Add',
@@ -293,7 +395,6 @@ export const Proposal: FC<Props> = ({
   ];
   useEffect(() => {
     if (!loaded) {
-      setLoaded(true);
       load();
     }
   }, [loaded, setLoaded, load]);
@@ -302,19 +403,10 @@ export const Proposal: FC<Props> = ({
       { value: props.getDescription() },
       {
         value: `$ ${props.getPrice()}`,
+      },
+      {
+        value: getStatus(props.getId()),
         actions: [
-          // ? Commented this because this feature appears to be incomplete and I have no idea what "remember" was supposed to remember or do
-          // ...[
-          //   <Field
-          //     key={0}
-          //     className="ProposalCheckbox"
-          //     name={`remember-${props.getId()}`}
-          //     type="checkbox"
-          //     label="Remember This Item"
-          //     value={props.getRemember()}
-          //     onChange={handleSetRemember(props.getId())}
-          //   />,
-          // ],
           <IconButton
             key={1}
             style={{ marginLeft: 4 }}
@@ -347,11 +439,16 @@ export const Proposal: FC<Props> = ({
             displayName={form.displayName}
             logJobNumber={serviceItem.getLogJobNumber()}
             property={property}
+            downloadPDdfFileName={
+              generateFile ? file.fileDescription : 'Proposal'
+            }
             notes={form.withJobNotes ? form.notes : undefined}
             entries={table.map(props => ({
               description: props.getDescription(),
               price: props.getPrice(),
             }))}
+            onFileCreated={generateFile ? handleSetFileData : undefined}
+            uploadBucket={bucket}
           />
         }
       />
@@ -385,10 +482,14 @@ export const Proposal: FC<Props> = ({
           <SectionBar
             title="Please Review Your Proposal Carefully"
             actions={[
-              { label: 'Send To Customer', onClick: handleSendToCustomer },
+              {
+                label: 'Send To Customer',
+                onClick: handleGenerateProposalAndSendToCustomer,
+              },
               {
                 label: 'Cancel',
                 onClick: handleSetPreview(false),
+
                 variant: 'outlined',
               },
             ]}

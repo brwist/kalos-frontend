@@ -93,7 +93,7 @@ interface Props {
   loggedUserId: number;
   propertyId: number;
   title?: string;
-  eventId: number;
+  eventId?: number;
   loading?: boolean;
   selectable?: boolean;
   onSelect?: (entries: number[]) => void;
@@ -508,11 +508,13 @@ export const ServiceItems: FC<Props> = props => {
             fullString += ',';
           }
         }
-        const updateEvent = new Event();
-        updateEvent.setInvoiceServiceItem(fullString);
-        updateEvent.setId(eventId);
-        updateEvent.setFieldMaskList(['InvoiceServiceItem']);
-        await EventClientService.Update(updateEvent);
+        if (eventId) {
+          const updateEvent = new Event();
+          updateEvent.setInvoiceServiceItem(fullString);
+          updateEvent.setId(eventId);
+          updateEvent.setFieldMaskList(['InvoiceServiceItem']);
+          await EventClientService.Update(updateEvent);
+        }
       }
     },
     [setSelected, selected, eventId, onSelect],
