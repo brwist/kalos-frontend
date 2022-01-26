@@ -730,6 +730,34 @@ const releaseAll = async () => {
 
   // Separated into two "for" loops for simplicity
   for (const module of validModules) {
+    let foundModule = false;
+    for (const obj of MODULE_MAP) {
+      if (obj.name === module) {
+        foundModule = true;
+        if (obj.deprecated) {
+          warn(
+            `The module "${module}" was not released because it was marked "deprecated" in the module map.`,
+          );
+          continue;
+        }
+        if (!obj.released) {
+          warn(
+            `The module "${module}" was not released because it was marked as "not released" in the module map (release-all does not release modules which have not been manually released prior).`,
+          );
+          continue;
+        }
+        if (obj.skip) {
+          warn(
+            `The module "${module}" was not released because it was marked "skip" in the module map.`,
+          );
+          continue;
+        }
+      }
+    }
+    if (!foundModule)
+      error(
+        `Could not release the module "${module}" - no entry found in the module map.`,
+      );
     log('\x1b[33m')([`- Releasing: ${module}`]);
     //release(module);
     log('\x1b[32m')([`✓ Released: ${module}`]);
@@ -738,17 +766,48 @@ const releaseAll = async () => {
   sh.cd('../');
 
   for (const module of validModules) {
-    const mapping = MODULE_MAP[module];
-    if (mapping) {
-      if (mapping.length >= 3 && mapping[0] === 'admin') {
-        log('\x1b[33m')([
-          `- Busting: ${module} | module map array: ${mapping}`,
-        ]);
-        //bustCache(mapping[1], mapping[2], mapping[0]);
-        log('\x1b[32m')([`✓ Busted: ${module}`]);
+    let foundModule = false;
+    for (const obj of MODULE_MAP) {
+      if (obj.name === module) {
+        foundModule = true;
+        if (obj.deprecated) {
+          warn(
+            `The module "${module}" was not busted because it was marked "deprecated" in the module map.`,
+          );
+          continue;
+        }
+        if (!obj.released) {
+          warn(
+            `The module "${module}" was not busted because it was marked as "not released" in the module map (release-all does not release modules which have not been manually released prior).`,
+          );
+          continue;
+        }
+        if (obj.skip) {
+          warn(
+            `The module "${module}" was not busted because it was marked "skip" in the module map.`,
+          );
+          continue;
+        }
       }
     }
+    if (!foundModule)
+      error(
+        `Could not bust the module "${module}" - no entry found in the module map.`,
+      );
   }
+
+  // for (const module of validModules) {
+  //   const mapping = MODULE_MAP[module];
+  //   if (mapping) {
+  //     if (mapping.length >= 3 && mapping[0] === 'admin') {
+  //       log('\x1b[33m')([
+  //         `- Busting: ${module} | module map array: ${mapping}`,
+  //       ]);
+  //       //bustCache(mapping[1], mapping[2], mapping[0]);
+  //       log('\x1b[32m')([`✓ Busted: ${module}`]);
+  //     }
+  //   }
+  // }
 };
 
 task('index', buildIndex);
