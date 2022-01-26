@@ -97,6 +97,7 @@ import format from 'date-fns/esm/format';
 import { ServiceRequest } from '../ServiceCall/requestIndex';
 import { QuoteLine } from '@kalos-core/kalos-rpc/QuoteLine';
 import Drawer from '@mui/material/Drawer';
+import Box from '@mui/material/Box';
 
 type Kind =
   | 'serviceCalls'
@@ -248,6 +249,7 @@ export const AdvancedSearch: FC<Props> = ({
   );
   const [openDrawer, setOpenDrawer] = useState<boolean>(false);
   const [drawerWidth, setDrawerWidth] = useState<number>(window.innerWidth*.5);
+
   const loadDicts = useCallback(async () => {
     setLoadingDicts(true);
     const jobTypes = await JobTypeClientService.loadJobTypes();
@@ -2799,14 +2801,17 @@ export const AdvancedSearch: FC<Props> = ({
       />
       {openDrawer && pendingEventEditingNew && (
         <Drawer
+          sx={{width:{xs: "100%", md: "50%"}, backgroundColor:"red"}}
           anchor="right"
           variant="persistent"
           open={openDrawer}
           onClose={()=>{}}
-          PaperProps={{style:{width:"50%", borderLeft:"8px", borderStyle:"solid", borderColor:"grey", zIndex:1}}}
-          transitionDuration={{enter: 4, exit: 4}}
+          PaperProps={
+            {sx:{width:{xs: "100%", md: "50%"}, borderLeft:"8px", borderStyle:"solid", borderColor:"grey", zIndex:1}}}
+          // transitionDuration={{enter: 4, exit: 4}}
           elevation={15}
         >
+
           <ServiceCallNew
             loggedUserId={loggedUserId}
             serviceCallId={pendingEventEditingNew.getId()}
@@ -2814,7 +2819,7 @@ export const AdvancedSearch: FC<Props> = ({
             propertyId={pendingEventEditingNew.getPropertyId()}
             onClose={handlePendingEventEditingNewToggle(undefined, true, false)}
             onSave={reload}
-          />
+            />
         </Drawer>
       )}
       </div>

@@ -292,6 +292,11 @@ export const Request: FC<Props> = forwardRef(
             name: 'getLogVersion',
             invisible: true,
           },
+          {
+            label: 'Contract',
+            name: 'getContractNumber',
+            invisible: true,
+          },
         ],
       ],
       [

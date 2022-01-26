@@ -5,6 +5,7 @@ import React, {
   useReducer,
   useRef,
 } from 'react';
+import { Payment } from '@kalos-core/kalos-rpc/Payment';
 import { EventClient, Event } from '@kalos-core/kalos-rpc/Event';
 import { UserClient, User } from '@kalos-core/kalos-rpc/User';
 import { JobTypeSubtype } from '@kalos-core/kalos-rpc/JobTypeSubtype';
@@ -26,8 +27,9 @@ import {
   ActivityLogClientService,
   ContractClientService,
   ContractFrequencyClientService,
+  TimesheetDepartmentClientService,
 } from '../../../helpers';
-import { ENDPOINT, OPTION_BLANK } from '../../../constants';
+import { OPTION_BLANK } from '../../../constants';
 import { Modal } from '../Modal';
 import { SectionBar } from '../SectionBar';
 import { InfoTable, Data } from '../InfoTable';
@@ -36,6 +38,7 @@ import { Option } from '../Field';
 import { Form, Schema } from '../Form';
 import { SpiffApplyComponent } from '../SpiffApplyComponent';
 import { Request } from './components/Request';
+import { RequestDetails } from './components/RequestDetails';
 import { Equipment } from './components/Equipment';
 import { Services } from './components/Services';
 import { Invoice } from './components/Invoice';
@@ -47,21 +50,27 @@ import setHours from 'date-fns/esm/setHours';
 import setMinutes from 'date-fns/esm/setMinutes';
 import parseISO from 'date-fns/esm/parseISO';
 import { State, reducer } from './reducerv2';
-import { ServiceCallLogs } from '../ServiceCallLogs';
-import AccordionDetails from '@mui/material/AccordionDetails';
-import AccordionSummary from '@mui/material/AccordionSummary';
 import Typography from '@mui/material/Typography';
-import Accordion from '@mui/material/Accordion';
-import DragIndicatorTwoTone from '@material-ui/icons/DragIndicatorTwoTone';
 import ExpandMoreTwoTone from '@material-ui/icons/ExpandMoreTwoTone';
+import ExpandLessTwoTone from '@material-ui/icons/ExpandLessTwoTone';
 import Card from '@mui/material/Card';
-import CardActionArea from '@mui/material/CardActionArea';
 import CardContent from '@mui/material/CardContent';
+import Collapse from '@mui/material/Collapse';
 import Grid from '@mui/material/Grid';
 import CardHeader from '@mui/material/CardHeader';
 import { Draggable, Droppable, DragDropContext } from 'react-beautiful-dnd';
-import { ContractInfo } from '../../CustomerDetails/components/ContractInfo';
 import { ContractFrequency } from '@kalos-core/kalos-rpc/ContractFrequency';
+import Button from '@mui/material/Button';
+import IconButton from '@mui/material/IconButton';
+import HelpOutlineTwoTone from '@material-ui/icons/HelpOutlineTwoTone';
+import Edit from '@material-ui/icons/Edit';
+import Tooltip from '@mui/material/Tooltip';
+import { ServiceItem } from '@kalos-core/kalos-rpc/ServiceItem';
+import { TimesheetDepartment } from '@kalos-core/kalos-rpc/TimesheetDepartment';
+import { ButtonGroup } from '@mui/material';
+import { ServiceItems } from '../ServiceItems';
+import { ServiceCallReadings } from '../ServiceCallReadings';
+
 
 export interface Props {
   userID: number;
@@ -83,10 +92,14 @@ export const ServiceCallNew: FC<Props> = props => {
   } = props;
 
   const initialState: State = {
+    userList: [],
+    requestFields: [],
+    departmentList: [],
     serviceCallId: props.serviceCallId ? props.serviceCallId : 0,
     entry: new Event(),
     property: new Property(),
     customer: new User(),
+    paidServices: [],
     propertyEvents: [],
     contract: new Contract,
     contractFrequencyTypes: [],
@@ -103,15 +116,133 @@ export const ServiceCallNew: FC<Props> = props => {
     showContractInfo: false,
     showCustInfo: false,
     showPropertyInfo: false,
-    cardSortOrder: ["request", "serviceItems", "services", "proposals"],
+    cardSortOrder: [{name: "request", display: true}, {name: "serviceItems", display: true}, {name: "services", display: true}, {name: "invoices", display: true}, {name: "proposals", display: true}],
+    showRequest: true,
+    showServiceItems: true,
+    showServices: true,
+    showProposals: true,
+    selectedServiceItems: [],
+    pendingSave: false,
   }
 
   const [state, updateServiceCallState] = useReducer(reducer, initialState);
 
-  const loadServicesRenderedData = useCallback(
+  const requestRef = useRef(null);
+
+  const loadEntry = useCallback(
+    async (_serviceCallId = state.serviceCallId) => {
+      if (_serviceCallId) {
+        const req = new Event();
+        req.setId(_serviceCallId);
+        const entry = await EventClientService.Get(req);
+        updateServiceCallState({ type: 'setEntry', data: entry });
+      }
+    },
+    [state.serviceCallId],
+  );
+
+  const setSelectedServiceItems = (data: ServiceItem[]) => {
+    updateServiceCallState({
+      type: 'setSelectedServiceItems',
+      data: data,
+    });
+  };
+
+  const handleUpdatePayments = (payments: Payment[]) => {
+    updateServiceCallState({
+      type: 'setPaidServices',
+      data: payments,
+    });
+  };
+
+  const handleOnAddMaterials = useCallback(
+    async (materialUsed, materialTotal) => {
+      await EventClientService.updateMaterialUsed(
+        state.serviceCallId,
+        materialUsed + state.entry.getMaterialUsed(),
+        materialTotal + state.entry.getMaterialTotal(),
+      );
+      await loadEntry();
+    },
+    [state.serviceCallId, state.entry, loadEntry],
+  );
+
+  const handleSetRequestfields = useCallback(
+    fields => {
+      updateServiceCallState({
+        type: 'setRequestFields',
+        data: [...state.requestFields, ...fields],
+      });
+    },
+    [state.requestFields],
+  );
+
+  const handleChangeEntry = useCallback((data: Event) => {
+    updateServiceCallState({
+      type: 'setChangeEntry',
+      data: {
+        entry: data,
+        pendingSave: false,
+      },
+    });
+  }, []);
+
+  const jobTypeOptions: Option[] = state.jobTypes.map(id => ({
+    label: id.getName(),
+    value: id.getId(),
+  }));
+
+  const jobSubtypeOptions: Option[] = [
+    { label: OPTION_BLANK, value: 0 },
+    ...state.jobTypeSubtypes
+      .filter(
+        jobTypeId => jobTypeId.getJobTypeId() === state.entry.getJobTypeId(),
+      )
+      .map(jobSubtypeId => ({
+        value: jobSubtypeId.getJobSubtypeId(),
+        label:
+          state.jobSubtypes
+            .find(id => id.getId() === jobSubtypeId.getJobSubtypeId())
+            ?.getName() || '',
+      })),
+  ];
+
+  const handleCloseModal = () => {
+    if (state.modalType === "request") {
+      // update form for editted data
+    }
+    updateServiceCallState({type:'setModalType', data: ""});
+  }
+
+  const loadServicesRenderedDataForProp = useCallback(
     async (_serviceCallId = state.serviceCallId) => {
       if (_serviceCallId) {
         updateServiceCallState({ type: 'setLoading', data: true });
+        const req = new ServicesRendered();
+        req.setIsActive(1);
+        req.setEventId(_serviceCallId);
+        const servicesRendered = (
+          await ServicesRenderedClientService.BatchGet(req)
+        ).getResultsList();
+
+        updateServiceCallState({
+          type: 'setServicesRendered',
+          data: { servicesRendered: servicesRendered, loading: false },
+        });
+
+        console.log(servicesRendered);
+        console.log('we are here getting sr data');
+      } else {
+        updateServiceCallState({ type: 'setLoading', data: false });
+      }
+    },
+    [state.serviceCallId],
+  );
+
+  const loadServicesRenderedData = useCallback(
+    async (_serviceCallId = state.serviceCallId) => {
+      if (_serviceCallId) {
+        // updateServiceCallState({ type: 'setLoading', data: true });
         const req = new ServicesRendered();
         req.setIsActive(1);
         req.setEventId(_serviceCallId);
@@ -132,8 +263,29 @@ export const ServiceCallNew: FC<Props> = props => {
     [state.serviceCallId],
   );
 
+  const handleCardOrderUpdate = (name: string, oldIndex: number, newIndex: number, display: boolean) => {
+    const cards = state.cardSortOrder;
+    if (oldIndex !== newIndex) {
+      cards.splice(newIndex, 0, cards.splice(oldIndex, 1)[0]);
+    }
+    if (cards[newIndex].name === name) {
+      if (cards[newIndex].display !== display) {
+        cards[newIndex].display = display;
+      }
+    }
+    updateServiceCallState({type: "setCardSortOrder", data: cards});
+  }
+
   const load = useCallback(async() => {
     let entry: Event = new Event();
+    const user = new User();
+    user.setIsActive(1);
+    user.setIsEmployee(1);
+    user.setOverrideLimit(true);
+    const department = new TimesheetDepartment();
+    department.setIsActive(1);
+    const users = UserClientService.BatchGet(user);
+    const departments = TimesheetDepartmentClientService.BatchGet(department);
     const property = PropertyClientService.loadPropertyByID(propertyId);
     const customer = UserClientService.loadUserById(userID);
     const propertyEvents =
@@ -143,8 +295,10 @@ export const ServiceCallNew: FC<Props> = props => {
     const jobTypeSubtypes = JobTypeSubtypeClientService.loadJobTypeSubtypes();
     const loggedUser = UserClientService.loadUserById(loggedUserId);
     const servicesRendered = loadServicesRenderedData();
-    const frequencies = ContractFrequencyClientService.BatchGet(new ContractFrequency());
+    const frequencyTypes = await ContractFrequencyClientService.BatchGet(new ContractFrequency());
     const [
+      userList,
+      departmentList,
       propertyDetails,
       customerDetails,
       propertyEventDetails,
@@ -153,8 +307,10 @@ export const ServiceCallNew: FC<Props> = props => {
       jobTypeSubtypesList,
       loggedUserDetails,
       servicesRenderedList,
-      frequencyTypes,
+      // frequencyTypes,
     ] = await Promise.all([
+      users,
+      departments,
       property,
       customer,
       propertyEvents,
@@ -163,7 +319,7 @@ export const ServiceCallNew: FC<Props> = props => {
       jobTypeSubtypes,
       loggedUser,
       servicesRendered,
-      frequencies,
+      // frequencies,
     ]);
     if (state.serviceCallId) {
       const req = new Event();
@@ -195,6 +351,8 @@ export const ServiceCallNew: FC<Props> = props => {
     updateServiceCallState({
       type: 'setData',
       data: {
+        userList: userList.getResultsList(),
+        departmentList: departmentList.getResultsList(),
         property: propertyDetails,
         customer: customerDetails,
         propertyEvents: propertyEventDetails,
@@ -212,23 +370,29 @@ export const ServiceCallNew: FC<Props> = props => {
     });    
   }, [loadServicesRenderedData, loggedUserId, propertyId, state.serviceCallId, userID])
   
-  const handleAccordionToggle = (accordion: string) => (event : React.SyntheticEvent, expanded : boolean) => {
-    if (accordion === "custInfo") {
-      updateServiceCallState({type: "setShowCustInfo", data: expanded});
-    } else if (accordion === "contractInfo") {
-      updateServiceCallState({type: "setShowContractInfo", data: expanded});
+  const handleTooltipToggle = (tooltip: string) => {
+    if (tooltip === "custInfo") {
+      updateServiceCallState({type: "setShowCustInfo", data: !state.showCustInfo});
+    } else if (tooltip === "contractInfo") {
+      updateServiceCallState({type: "setShowContractInfo", data: !state.showContractInfo});
     }
   }
 
   useEffect(() => {
+    console.log("Rendering");
     if (eventId !== 0 && !state.loaded) {
       load();
     }
-  }, [eventId, state.loaded, load])
+    if (state.pendingSave && requestRef.current) {
+      //@ts-ignore
+      requestRef.current.click();
+    }
+  }, [eventId, state.loaded, load, state.pendingSave])
 
   return (
     <SectionBar
-      title={"Service Call Details"}
+      title={`Service Call Details - ${state.entry.getLogJobNumber()}`}
+      styles={{zIndex:4}}
       actions={[
         {
           label: 'Close',
@@ -237,83 +401,122 @@ export const ServiceCallNew: FC<Props> = props => {
       ]
       }
     >
-      <div>
-        {state.contract.getId() > 0 && (
-          <div>
-            <Typography style={{textAlign:"center", paddingTop:"10px", paddingBottom:"10px", fontSize:"20px"}}>
-              {`Job Number : ${state.entry.getLogJobNumber()}`}
-            </Typography>
-            <Accordion disableGutters expanded={state.showContractInfo} onChange={handleAccordionToggle('contractInfo')}>
-              <AccordionSummary
-                expandIcon={<ExpandMoreTwoTone />}
-                style={{backgroundColor:"lightgray"}}
-              >
-                <Typography>
-                  {`Contract # : ${state.entry.getContractNumber()}`}
+      <div style={{paddingTop:"10px"}}>
+        <Grid container style={{width:"98%"}}>
+          <Grid item xs={6} md={4} style={{margin:"auto"}}>
+            <div style={{display:"flex"}}>
+              <div style={{margin:"auto", marginRight:"0px"}}>
+                <Typography style={{fontWeight:"bolder", fontSize:"20px"}}>
+                  {`Customer`}
                 </Typography>
-              </AccordionSummary>
-              <AccordionDetails>
+                <Typography style={{fontSize:"18px"}}>
+                  {`${state.customer.getBusinessname() !== "" ? state.customer.getBusinessname() : state.customer.getFirstname() + " " + state.customer.getLastname()}`}
+                </Typography>
+              </div>
+              <Tooltip 
+                arrow 
+                style={{marginRight:"25%"}}
+                open={state.showCustInfo}
+                placement="bottom" 
+                title={
                 <InfoTable data={
                   [
                     [
-                      { label: 'Start Date', value: format(parseISO(state.contract.getDateStarted()), 'MM/dd/yyyy h:mm aa') },
-                      { label: 'End Date', value: format(parseISO(state.contract.getDateEnded()), 'MM/dd/yyyy h:mm aa') },
+                      { label: 'Primary Phone', value: state.customer.getPhone(), href: 'tel' },
+                      { label: 'Alternate Phone', value: state.customer.getAltphone(), href: 'tel' },
                     ],
                     [
-                      { label: 'Payment Type', value: state.contract.getPaymentType() },
-                      { label: 'Payment Status', value: state.contract.getPaymentStatus() },
+                      { label: 'Cell Phone', value: state.customer.getCellphone(), href: 'tel' },
+                      { label: 'Fax', value: state.customer.getFax(), href: 'tel' },
                     ],
                     [
-                      { label: 'Frequency', value: state.contractFrequencyTypes.find(type => type.getId() === state.contract.getFrequency())?.getName() },
-                      { label: 'Billing', value: state.contract.getGroupBilling() === 1 ? 'Group' : 'Site' },
+                      { label: 'Billing Terms', value: state.customer.getBillingTerms() },
+                      { label: 'Email', value: state.customer.getEmail(), href: 'mailto' },
                     ],
                     [
-                      { label: 'Payment Terms', value: state.contract.getPaymentTerms() },
+                      { label: 'Property', value: state.property.getAddress() },
+                      { label: 'City, State, Zip', value: `${state.property.getCity()}, ${state.property.getState()} ${state.property.getZip()}` },
                     ],
                   ]
-                } />
-                {/* <InfoTable data={makeFakeRows(2,3)} loading /> */}
-              </AccordionDetails>
-            </Accordion>
-          </div>
-        )}
-        <Accordion disableGutters expanded={state.showCustInfo} onChange={handleAccordionToggle('custInfo')}>
-          <AccordionSummary
-            expandIcon={<ExpandMoreTwoTone />}
-            aria-controls="custInfo-content"
-            id="custInfo"
-            style={{backgroundColor:"lightgray"}}
-          >
-            <Typography>
-              {`Customer : ${state.customer.getBusinessname() !== "" ? state.customer.getBusinessname() : state.customer.getFirstname() + " " + state.customer.getLastname()}`}
-            </Typography>
-          </AccordionSummary>
-          <AccordionDetails>
-            <InfoTable data={
-              [
-                [
-                  { label: 'Primary Phone', value: state.customer.getPhone(), href: 'tel' },
-                  { label: 'Alternate Phone', value: state.customer.getAltphone(), href: 'tel' },
-                ],
-                [
-                  { label: 'Cell Phone', value: state.customer.getCellphone(), href: 'tel' },
-                  { label: 'Fax', value: state.customer.getFax(), href: 'tel' },
-                ],
-                [
-                  { label: 'Billing Terms', value: state.customer.getBillingTerms() },
-                  { label: 'Email', value: state.customer.getEmail(), href: 'mailto' },
-                ],
-                [
-                  { label: 'Property', value: state.property.getAddress() },
-                  { label: 'City, State, Zip', value: `${state.property.getCity()}, ${state.property.getState()} ${state.property.getZip()}` },
-                ],
-              ]
-            }
-            />
-            {/* <InfoTable data={makeFakeRows(2,4)} loading /> */}
-          </AccordionDetails>
-        </Accordion>
-        <DragDropContext onDragEnd={(result)=>{console.log(result)}}>
+                }
+                />
+              }>
+                <IconButton onClick={()=>{handleTooltipToggle("custInfo")}}>
+                  <HelpOutlineTwoTone style={{fontSize:"medium"}} />
+                </IconButton>
+              </Tooltip>
+            </div>
+          </Grid>
+          <Grid item xs={6} md={4} style={{margin:"auto"}}>
+            {state.contract.getId() > 0 && (
+              <div style={{display:"flex"}}>
+                <div style={{margin:"auto", marginRight:"0px"}}>
+                  <Typography style={{fontWeight:"bolder", fontSize:"20px"}}>
+                    {`Contract #`}
+                  </Typography>
+                  <Typography style={{fontSize:"18px"}}>
+                    {`${state.entry.getContractNumber()}`}
+                  </Typography>
+                </div>
+                <Tooltip 
+                  arrow 
+                  style={{marginRight:"25%"}}
+                  placement="bottom-start" 
+                  open={state.showContractInfo}
+                  title={
+                  <InfoTable styles={{width:"100%"}} data={
+                    [
+                      [
+                        { label: 'Start Date', value: format(parseISO(state.contract.getDateStarted()), 'MM/dd/yyyy h:mm aa') },
+                        { label: 'End Date', value: format(parseISO(state.contract.getDateEnded()), 'MM/dd/yyyy h:mm aa') },
+                      ],
+                      [
+                        { label: 'Payment Type', value: state.contract.getPaymentType() },
+                        { label: 'Payment Status', value: state.contract.getPaymentStatus() },
+                      ],
+                      [
+                        { label: 'Frequency', value: state.contractFrequencyTypes.find(type => type.getId() === state.contract.getFrequency())?.getName() },
+                        { label: 'Billing', value: state.contract.getGroupBilling() === 1 ? 'Group' : 'Site' },
+                      ],
+                      [
+                        { label: 'Payment Terms', value: state.contract.getPaymentTerms() },
+                      ],
+                    ]
+                  }/>
+                }>
+                  <IconButton onClick={()=>{handleTooltipToggle("contractInfo")}}>
+                    <HelpOutlineTwoTone style={{fontSize:"medium"}} />
+                  </IconButton>
+                </Tooltip>
+              </div>
+            )}
+          </Grid>
+          <Grid item xs={12} md={4}>
+            <Grid sx={{display:{xs:"flex", md:"grid"}, paddingLeft:{xs:"2%", md:"0"}, paddingTop:{xs:"10px", md:"0"}}}>
+              <Button
+                sx={{backgroundColor:"#990a26", color:"white"}}
+                fullWidth
+                onClick={()=>{updateServiceCallState({type:'setModalType', data: "equipment"})}}
+              >
+                View Equipment
+              </Button>
+              <Button
+                sx={{backgroundColor:"#990a26", color:"white"}}
+                fullWidth
+                onClick={()=>{updateServiceCallState({type:'setModalType', data: "spiffs"})}}
+              >
+                View Spiffs
+              </Button>
+            </Grid>
+          </Grid>
+        </Grid>
+
+        <DragDropContext onDragEnd={(result)=>{
+          console.log(result);
+          if (result.destination && result.source.index !== result.destination.index) {
+            handleCardOrderUpdate(state.cardSortOrder[result.source.index].name, result.source.index, result.destination.index, state.cardSortOrder[result.source.index].display);
+          }
+        }}>
           <Droppable
             droppableId="card-droppable"
           >
@@ -326,12 +529,12 @@ export const ServiceCallNew: FC<Props> = props => {
               >
                 {state.cardSortOrder.map((card, index) => (
                   <Draggable 
-                    key={card}
-                    draggableId={`${card}-draggable`}
+                    key={card.name}
+                    draggableId={`${card.name}-draggable`}
                     index={index}
                   >
                     {(provided, snapshot) => {
-                      switch (card) {
+                      switch (card.name) {
                         case "request":
                           return (
                             <Grid
@@ -341,13 +544,27 @@ export const ServiceCallNew: FC<Props> = props => {
                               style={{paddingTop:"10px", display:"flex"}}
                               {...provided.draggableProps}
                             >
-                              <Card raised sx={{backgroundColor:"lightpink", width:"100%"}}>
-                                <CardHeader title={<Typography variant="h6" component="div" style={{textAlign:"center"}}>Request</Typography>} {...provided.dragHandleProps} />
-                                <CardActionArea>
+                              <Card raised sx={{width:"100%"}}>
+                                <CardHeader 
+                                  style={{backgroundColor:"#990a26", color:"white", height:"20px"}}
+                                  title={<Typography variant="h6" component="div" style={{textAlign:"center"}}>Request</Typography>}
+                                  action={<IconButton onClick={()=>{updateServiceCallState({type:'setModalType', data: "request"})}}><Edit style={{color:"white", margin:"auto", fontSize:"medium"}} /></IconButton>}
+                                  {...provided.dragHandleProps} 
+                                />
+                                <Collapse in={card.display}>
                                   <CardContent>
-                                    <InfoTable data={makeFakeRows(5,8)} loading />
+                                    <RequestDetails
+                                      requestInfo={state.entry}
+                                      userList={state.userList}
+                                      departmentList={state.departmentList}
+                                      propertyEvents={state.propertyEvents}
+                                    />
+                                    {/* <InfoTable data={makeFakeRows(5,8)} loading /> */}
                                   </CardContent>
-                                </CardActionArea>
+                                </Collapse>
+                                <Button style={{width:"100%", height:"30px", display:"block", margin:"auto", backgroundColor:"lightgray"}} onClick={()=>{handleCardOrderUpdate(card.name, index, index, !card.display)}}>
+                                  {card.display ? <ExpandLessTwoTone /> : <ExpandMoreTwoTone />}
+                                </Button>
                               </Card>
                               <Grid item xs={12} style={{height:"10px"}} />
                             </Grid>
@@ -361,13 +578,37 @@ export const ServiceCallNew: FC<Props> = props => {
                               style={{paddingTop:"10px", display:"flex"}}
                               {...provided.draggableProps}
                             >
-                              <Card raised sx={{backgroundColor:"lightcyan", width:"100%"}}>
-                                <CardHeader title={<Typography variant="h6" component="div" style={{textAlign:"center"}}>Service Items</Typography>} {...provided.dragHandleProps} />
-                                <CardActionArea>
+                              <Card raised sx={{width:"100%"}}>
+                                <CardHeader
+                                  style={{backgroundColor:"#990a26", color:"white", height:"20px"}}
+                                  title={<Typography variant="h6" component="div" style={{textAlign:"center"}}>Service Items</Typography>}
+                                  {...provided.dragHandleProps} 
+                                />
+                                <Collapse in={card.display}>
                                   <CardContent>
-                                    <InfoTable data={makeFakeRows(7,5)} loading />
+                                    {/* <Equipment
+                                      {...props}
+                                      event={state.entry}
+                                      customer={state.customer}
+                                      property={state.property}
+                                      onSelectServiceItems={
+                                        state.loggedUser.getIsEmployee()
+                                          ? setSelectedServiceItems
+                                          : undefined
+                                      }
+                                      selectedServiceItems={state.selectedServiceItems}
+                                    /> */}
+                                    <ServiceCallReadings
+                                      loggedUserId={loggedUserId}
+                                      propertyId={state.property.getId()}
+                                      eventId={state.entry.getId()}
+                                    />
+                                    {/* <InfoTable data={makeFakeRows(7,5)} loading /> */}
                                   </CardContent>
-                                </CardActionArea>
+                                </Collapse>
+                                <Button style={{width:"100%", height:"30px", display:"block", margin:"auto", backgroundColor:"lightgray"}} onClick={()=>{handleCardOrderUpdate(card.name, index, index, !card.display)}}>
+                                  {card.display ? <ExpandLessTwoTone /> : <ExpandMoreTwoTone />}
+                                </Button>
                               </Card>
                               <Grid item xs={12} style={{height:"10px"}} />
                             </Grid>
@@ -381,13 +622,58 @@ export const ServiceCallNew: FC<Props> = props => {
                               style={{paddingTop:"10px", display:"flex"}}
                               {...provided.draggableProps}
                             >
-                              <Card raised sx={{backgroundColor:"lightyellow", width:"100%"}}>
-                                <CardHeader title={<Typography variant="h6" component="div" style={{textAlign:"center"}}>Services</Typography>} {...provided.dragHandleProps} />
-                                <CardActionArea>
+                              <Card raised sx={{width:"100%"}}>
+                                <CardHeader
+                                  style={{backgroundColor:"#990a26", color:"white", height:"20px"}}
+                                  title={<Typography variant="h6" component="div" style={{textAlign:"center"}}>Services</Typography>}
+                                  {...provided.dragHandleProps}
+                                />
+                                <Collapse in={card.display}>
                                   <CardContent>
-                                    <InfoTable data={makeFakeRows(5,3)} loading />
+                                    <Services
+                                      serviceCallId={state.serviceCallId}
+                                      servicesRendered={state.servicesRendered}
+                                      loggedUser={state.loggedUser}
+                                      loadServicesRendered={loadServicesRenderedDataForProp}
+                                      loading={state.loading}
+                                      payments={state.paidServices}
+                                      onUpdatePayments={handleUpdatePayments}
+                                      onAddMaterials={handleOnAddMaterials}
+                                    />
+                                    {/* <InfoTable data={makeFakeRows(5,3)} loading /> */}
                                   </CardContent>
-                                </CardActionArea>
+                                </Collapse>
+                                <Button style={{width:"100%", height:"30px", display:"block", margin:"auto", backgroundColor:"lightgray"}} onClick={()=>{handleCardOrderUpdate(card.name, index, index, !card.display)}}>
+                                  {card.display ? <ExpandLessTwoTone /> : <ExpandMoreTwoTone />}
+                                </Button>
+                              </Card>
+                              <Grid item xs={12} style={{height:"10px"}} />
+                            </Grid>
+                          )
+                        case "invoices":
+                          return (
+                            <Grid
+                              item={true}
+                              xs={12}
+                              ref={provided.innerRef}
+                              style={{paddingTop:"10px", display:"flex"}}
+                              {...provided.draggableProps}
+                            >
+                              <Card raised sx={{width:"100%"}}>
+                                <CardHeader
+                                  style={{backgroundColor:"#990a26", color:"white", height:"20px"}}
+                                  title={<Typography variant="h6" component="div" style={{textAlign:"center"}}>Invoices</Typography>}
+                                  action={<IconButton><Edit style={{color:"white", margin:"auto", fontSize:"medium"}} /></IconButton>}
+                                  {...provided.dragHandleProps}
+                                />
+                                <Collapse in={card.display}>
+                                  <CardContent>
+                                    <InfoTable data={makeFakeRows(5,4)} loading />
+                                  </CardContent>
+                                </Collapse>
+                                <Button style={{width:"100%", height:"30px", display:"block", margin:"auto", backgroundColor:"lightgray"}} onClick={()=>{handleCardOrderUpdate(card.name, index, index, !card.display)}}>
+                                  {card.display ? <ExpandLessTwoTone /> : <ExpandMoreTwoTone />}
+                                </Button>
                               </Card>
                               <Grid item xs={12} style={{height:"10px"}} />
                             </Grid>
@@ -401,13 +687,25 @@ export const ServiceCallNew: FC<Props> = props => {
                               style={{paddingTop:"10px", display:"flex"}}
                               {...provided.draggableProps}
                             >
-                              <Card raised sx={{backgroundColor:"lightgreen", width:"100%"}}>
-                                <CardHeader title={<Typography variant="h6" component="div" style={{textAlign:"center"}}>Proposals</Typography>} {...provided.dragHandleProps} />
-                                <CardActionArea>
+                              <Card raised sx={{width:"100%"}}>
+                                <CardHeader
+                                  style={{backgroundColor:"#990a26", color:"white", height:"20px"}}
+                                  title={<Typography variant="h6" component="div" style={{textAlign:"center"}}>Proposals</Typography>}
+                                  {...provided.dragHandleProps}
+                                />
+                                <Collapse in={card.display}>
                                   <CardContent>
-                                    <InfoTable data={makeFakeRows(5,4)} loading />
+                                    {/* <Proposal
+                                      serviceItem={state.entry}
+                                      customer={state.customer}
+                                      property={state.property}
+                                    /> */}
+                                    {/* <InfoTable data={makeFakeRows(5,4)} loading /> */}
                                   </CardContent>
-                                </CardActionArea>
+                                </Collapse>
+                                <Button style={{width:"100%", height:"100%", display:"block", margin:"auto", backgroundColor:"lightgray"}} onClick={()=>{handleCardOrderUpdate(card.name, index, index, !card.display)}}>
+                                  {card.display ? <ExpandLessTwoTone /> : <ExpandMoreTwoTone />}
+                                </Button>
                               </Card>
                               <Grid item xs={12} style={{height:"10px"}} />
                             </Grid>
@@ -424,6 +722,45 @@ export const ServiceCallNew: FC<Props> = props => {
           </Droppable>
         </DragDropContext>
       </div>
+      <Modal
+        open={state.modalType !== ""}
+        onClose={()=>{handleCloseModal()}}
+      >
+        {state.modalType === "request" && (
+          <SectionBar
+            title="Edit Request"
+            actions={[{label: "Close", onClick:()=>{handleCloseModal()}}]}
+          >
+            <Request
+              key={state.loading.toString()}
+              // @ts-ignore
+              ref={requestRef}
+              serviceItem={state.entry}
+              propertyEvents={state.propertyEvents}
+              loading={state.loading}
+              jobTypeOptions={jobTypeOptions}
+              jobSubtypeOptions={jobSubtypeOptions}
+              onChange={handleChangeEntry}
+              disabled={state.saving}
+              onValid={data => {
+                updateServiceCallState({
+                  type: 'setRequestValid',
+                  data: data,
+                });
+              }}
+              onInitSchema={handleSetRequestfields}
+            />
+          </SectionBar>
+        )}
+        {state.modalType === "equipment" && (
+          <ServiceItems
+            loggedUserId={loggedUserId}
+            userID={userID}
+            propertyId={state.property.getId()}
+            // eventId={state.entry.getId()}
+          />
+        )}
+      </Modal>
     </SectionBar>
   )
 }
