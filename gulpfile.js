@@ -684,7 +684,7 @@ async function upload(target = '') {
   );
 }
 
-async function bustCache(controller = '', filename = '') {
+async function bustCache(controller = '', filename = '', location = '') {
   if (!sh.test('-e', 'tmp')) {
     error('Please ensure the "tmp" directory exists in the project.');
     return;
@@ -697,9 +697,8 @@ async function bustCache(controller = '', filename = '') {
     filename = process.argv[5].replace(/-/g, '');
   }
 
-  sh.exec(
-    `scp ${KALOS_ROOT}/app/admin/views/${controller}/${filename}.cfm tmp/${filename}.cfm`,
-  );
+  let remotePath = `${KALOS_ROOT}/app/${location}/views/${controller}/${filename}.cfm`;
+  sh.exec(`scp ${remotePath} tmp/${filename}.cfm`);
   const res = sh.cat(`tmp/${filename}.cfm`);
   if (res.stdout.includes('.js?version=')) {
     const versionMatch = res.stdout.match(/\.js\?version=\d{1,}/g);
@@ -729,18 +728,23 @@ const releaseAll = async () => {
   const directories = sh.ls();
   const validModules = directories.filter(dir => !dir.includes('.'));
 
+  // Separated into two "for" loops for simplicity
   for (const module of validModules) {
-    log('\x1b[33m')([`>> Releasing: ${module}`]);
-    release(module);
+    log('\x1b[33m')([`- Releasing: ${module}`]);
+    //release(module);
     log('\x1b[32m')([`✓ Released: ${module}`]);
+  }
 
+  sh.cd('../');
+
+  for (const module of validModules) {
     const mapping = MODULE_MAP[module];
     if (mapping) {
       if (mapping.length >= 3 && mapping[0] === 'admin') {
         log('\x1b[33m')([
-          `>> Busting: ${module} | module map array: ${mapping}`,
+          `- Busting: ${module} | module map array: ${mapping}`,
         ]);
-        bustCache(mapping[1], mapping[2]);
+        //bustCache(mapping[1], mapping[2], mapping[0]);
         log('\x1b[32m')([`✓ Busted: ${module}`]);
       }
     }
