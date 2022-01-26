@@ -224,7 +224,6 @@ export const ServiceCall: FC<Props> = props => {
       }
     }
 
-    console.log('full string', fullString);
     const updateEvent = new Event();
     updateEvent.setId(state.serviceCallId);
     updateEvent.setMaterialUsed(fullString);
@@ -1214,6 +1213,7 @@ export const ServiceCall: FC<Props> = props => {
                           servicesRendered={state.servicesRendered}
                           customer={state.customer}
                           property={state.property}
+                          reload={load}
                         />
                       ),
                     },

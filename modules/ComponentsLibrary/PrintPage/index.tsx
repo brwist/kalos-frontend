@@ -17,6 +17,7 @@ interface Props {
   headerProps?: HeaderProps;
   footerProps?: FooterProps;
   buttonProps?: ButtonProps;
+  uploadBucket?: string;
   onPrint?: () => void;
   onPrinted?: () => void;
   status?: Status;
@@ -31,6 +32,7 @@ export const PrintPage: FC<Props> = ({
   headerProps,
   footerProps,
   buttonProps = {},
+  uploadBucket,
   onPrint,
   onPrinted,
   children,
@@ -80,6 +82,7 @@ export const PrintPage: FC<Props> = ({
         const url = await PDFClientService.getUploadedHTMLUrl(
           html,
           `${downloadPdfFilename}.pdf`,
+          uploadBucket,
         );
         if (open) {
           window.open(url, '_blank');
@@ -88,7 +91,12 @@ export const PrintPage: FC<Props> = ({
         return url;
       }
     },
-    [buttonProps.loading, handleSetAlertOpen, downloadPdfFilename],
+    [
+      buttonProps.loading,
+      handleSetAlertOpen,
+      uploadBucket,
+      downloadPdfFilename,
+    ],
   );
   const handleFileCreated = useCallback(async () => {
     const url = await handleDownload(false)();
@@ -193,7 +201,7 @@ export const PrintPage: FC<Props> = ({
           </IconButton>
         ) : (
           <Button
-            label="Print"
+            label={'Print'}
             onClick={onPrint || handlePrint!}
             {...buttonProps}
             disabled={status === 'loading' || buttonProps.disabled}
