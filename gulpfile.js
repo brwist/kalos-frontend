@@ -720,6 +720,35 @@ async function bustCache(controller = '', filename = '', location = '') {
   }
 }
 
+const checkModuleReleasable = module => {
+  if (!module.name) {
+    error(
+      `Module could not be released - no "name" field on object in module map. Object outputted below.`,
+    );
+    log(module);
+    return false;
+  }
+  if (module.deprecated) {
+    warn(
+      `The module "${module.name}" was not released because it was marked "deprecated" in the module map.`,
+    );
+    return false;
+  }
+  if (!module.released) {
+    warn(
+      `The module "${module.name}" was not released because it was marked as "not released" in the module map (release-all does not release modules which have not been manually released prior).`,
+    );
+    return false;
+  }
+  if (module.skip) {
+    warn(
+      `The module "${module.name}" was not released because it was marked "skip" in the module map.`,
+    );
+    return false;
+  }
+  return true;
+};
+
 const releaseAll = async () => {
   // Get the name of every module
   // Release every module sequentially
@@ -734,23 +763,8 @@ const releaseAll = async () => {
     for (const obj of MODULE_MAP) {
       if (obj.name === module) {
         foundModule = true;
-        if (obj.deprecated) {
-          warn(
-            `The module "${module}" was not released because it was marked "deprecated" in the module map.`,
-          );
-          continue;
-        }
-        if (!obj.released) {
-          warn(
-            `The module "${module}" was not released because it was marked as "not released" in the module map (release-all does not release modules which have not been manually released prior).`,
-          );
-          continue;
-        }
-        if (obj.skip) {
-          warn(
-            `The module "${module}" was not released because it was marked "skip" in the module map.`,
-          );
-          continue;
+        if (checkModuleReleasable(obj)) {
+          // TODO
         }
       }
     }
@@ -770,23 +784,8 @@ const releaseAll = async () => {
     for (const obj of MODULE_MAP) {
       if (obj.name === module) {
         foundModule = true;
-        if (obj.deprecated) {
-          warn(
-            `The module "${module}" was not busted because it was marked "deprecated" in the module map.`,
-          );
-          continue;
-        }
-        if (!obj.released) {
-          warn(
-            `The module "${module}" was not busted because it was marked as "not released" in the module map (release-all does not release modules which have not been manually released prior).`,
-          );
-          continue;
-        }
-        if (obj.skip) {
-          warn(
-            `The module "${module}" was not busted because it was marked "skip" in the module map.`,
-          );
-          continue;
+        if (checkModuleReleasable(obj)) {
+          // TODO
         }
       }
     }
