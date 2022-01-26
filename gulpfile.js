@@ -1166,6 +1166,7 @@ const NAMED_EXPORTS = {
     'isContextConsumer',
   ],
   'node_modules/tslib/tslib.js': ['__awaiter', '__generator', '__extends'],
+  'node_modules/@kalos-core/kalos-rpc/node_modules/tslib/tslib.es6.js': ['__spreadArray',],
   'node_modules/@kalos-core/kalos-rpc/compiled-protos/predict_pb.js': [
     'TransactionData',
     'Prediction',
