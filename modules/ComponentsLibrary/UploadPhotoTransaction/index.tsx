@@ -17,7 +17,7 @@ import { SUBJECT_TAGS_ACCOUNTS_PAYABLE } from '@kalos-core/kalos-rpc/S3File';
 import { Confirm } from '../Confirm';
 import { format } from 'date-fns';
 import { TransactionActivity } from '@kalos-core/kalos-rpc/TransactionActivity';
-
+import { Alert as AlertComponent } from '../Alert';
 interface Props {
   loggedUserId: number;
   title?: string;
@@ -64,6 +64,8 @@ export const UploadPhotoTransaction: FC<Props> = ({
   const [saving, setSaving] = useState<boolean>(false);
   const [saved, setSaved] = useState<boolean>(false);
   const [error, setError] = useState<boolean>(false);
+  const [stringError, setStringError] = useState<string | undefined>();
+
   const [validateJobNumber, setValidateJobNumber] = useState<Entry | undefined>(
     undefined,
   );
@@ -210,6 +212,26 @@ export const UploadPhotoTransaction: FC<Props> = ({
     (validate: Entry | undefined) => setValidateJobNumber(validate),
     [setValidateJobNumber],
   );
+  const handleCheckOrderNumber = useCallback(async (orderNumber: string) => {
+    if (orderNumber != '') {
+      const transactionReq = new Transaction();
+      transactionReq.setOrderNumber(orderNumber);
+      transactionReq.setVendorCategory("'PickTicket','Receipt','Invoice'");
+      transactionReq.setIsActive(1);
+      try {
+        const result = await TransactionClientService.Get(transactionReq);
+        if (result) {
+          setStringError(
+            `This Order Number already exists. You can still create this transaction,
+        but it may result in duplicate transactions. It is recommended that you
+        search for the existing transaction and update it.`,
+          );
+        }
+      } catch (err) {
+        setStringError(undefined);
+      }
+    }
+  }, []);
   const handleValidate = useCallback(
     (entry: Entry) => {
       // @ts-expect-error
@@ -251,6 +273,7 @@ export const UploadPhotoTransaction: FC<Props> = ({
         name: 'orderNumber',
         label: 'Order #',
         required: true,
+        onBlur: handleCheckOrderNumber,
       },
       {
         name: 'invoiceNumber',
@@ -323,6 +346,15 @@ export const UploadPhotoTransaction: FC<Props> = ({
         >
           Are you sure that this transaction does not require a job number?
         </Confirm>
+      )}
+      {stringError && (
+        <AlertComponent
+          open={stringError != undefined}
+          onClose={() => setStringError(undefined)}
+          title="Error"
+        >
+          {stringError}
+        </AlertComponent>
       )}
       <Form<Entry>
         key={formKey + formData.tag}
