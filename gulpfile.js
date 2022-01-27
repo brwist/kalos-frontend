@@ -728,19 +728,19 @@ const checkModuleReleasable = module => {
     log(module);
     return false;
   }
-  if (module.deprecated) {
+  if (module.deprecated === true) {
     warn(
       `The module "${module.name}" was not released because it was marked "deprecated" in the module map.`,
     );
     return false;
   }
-  if (!module.released) {
+  if (module.released === false) {
     warn(
       `The module "${module.name}" was not released because it was marked as "not released" in the module map (release-all does not release modules which have not been manually released prior).`,
     );
     return false;
   }
-  if (module.skip) {
+  if (module.skip === true) {
     warn(
       `The module "${module.name}" was not released because it was marked "skip" in the module map.`,
     );
@@ -765,6 +765,9 @@ const releaseAll = async () => {
         foundModule = true;
         if (checkModuleReleasable(obj)) {
           // TODO
+          log('\x1b[33m')([`- Releasing: ${module}`]);
+          //release(module);
+          log('\x1b[32m')([`✓ Released: ${module}`]);
         }
       }
     }
@@ -772,9 +775,6 @@ const releaseAll = async () => {
       error(
         `Could not release the module "${module}" - no entry found in the module map.`,
       );
-    log('\x1b[33m')([`- Releasing: ${module}`]);
-    //release(module);
-    log('\x1b[32m')([`✓ Released: ${module}`]);
   }
 
   sh.cd('../');
