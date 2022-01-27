@@ -645,14 +645,17 @@ async function release(target = '') {
   }
 
   checkTests();
-  let response = '';
-  while (response.toLowerCase() !== 'y' && response.toLowerCase() !== 'n') {
-    response = await textPrompt('Would you like to release anyway (y/n)? ');
-  }
+  // let response = '';
+  // while (response.toLowerCase() !== 'y' && response.toLowerCase() !== 'n') {
+  //   response = await textPrompt('Would you like to release anyway (y/n)? ');
+  // }
 
-  if (response.toLowerCase() === 'n') return;
+  // if (response.toLowerCase() === 'n') return;
 
   info('Rolling up build. This may take a moment...');
+
+  log('Would pass the tests and would release: ', target);
+  return;
 
   await rollupBuild(target);
 
@@ -684,10 +687,11 @@ async function upload(target = '') {
   );
 }
 
+// @returns {bool} False if it failed to bust the cache, True / undefined otherwise
 async function bustCache(controller = '', filename = '', location = '') {
   if (!sh.test('-e', 'tmp')) {
     error('Please ensure the "tmp" directory exists in the project.');
-    return;
+    return false;
   }
   if (typeof controller !== 'string' || controller === '') {
     controller = process.argv[4].replace(/-/g, '');
@@ -698,7 +702,12 @@ async function bustCache(controller = '', filename = '', location = '') {
   }
 
   let remotePath = `${KALOS_ROOT}/app/${location}/views/${controller}/${filename}.cfm`;
-  sh.exec(`scp ${remotePath} tmp/${filename}.cfm`);
+
+  console.log(
+    `Would run (to bust): sh.exec(\`scp ${remotePath} tmp/${filename}.cfm\``,
+  );
+  return;
+  //sh.exec(`scp ${remotePath} tmp/${filename}.cfm`);
   const res = sh.cat(`tmp/${filename}.cfm`);
   if (res.stdout.includes('.js?version=')) {
     const versionMatch = res.stdout.match(/\.js\?version=\d{1,}/g);
@@ -718,6 +727,7 @@ async function bustCache(controller = '', filename = '', location = '') {
       );
     }
   }
+  return true;
 }
 
 const checkModuleReleasable = module => {
@@ -752,12 +762,19 @@ const checkModuleReleasable = module => {
 const releaseAll = async () => {
   // Get the name of every module
   // Release every module sequentially
+  // Bust every module sequentially
 
   sh.cd('modules');
   const directories = sh.ls();
   const validModules = directories.filter(dir => !dir.includes('.'));
 
+  console.log();
+  info('Starting to release modules...');
+  console.log();
+
   // Separated into two "for" loops for simplicity
+
+  // Releasing
   for (const module of validModules) {
     let foundModule = false;
     for (const obj of MODULE_MAP) {
@@ -765,8 +782,7 @@ const releaseAll = async () => {
         foundModule = true;
         if (checkModuleReleasable(obj)) {
           // TODO
-          log('\x1b[33m')([`- Releasing: ${module}`]);
-          //release(module);
+          release(module);
           log('\x1b[32m')([`✓ Released: ${module}`]);
         }
       }
@@ -779,13 +795,21 @@ const releaseAll = async () => {
 
   sh.cd('../');
 
+  console.log();
+  info('Starting to bust modules...');
+  console.log();
+
+  // Busting
   for (const module of validModules) {
     let foundModule = false;
     for (const obj of MODULE_MAP) {
       if (obj.name === module) {
         foundModule = true;
         if (checkModuleReleasable(obj)) {
-          // TODO
+          const res = bustCache(obj.controller, obj.filename, obj.location);
+          if (res !== false) {
+            log('\x1b[32m')([`✓ Busted: ${module}`]);
+          }
         }
       }
     }
