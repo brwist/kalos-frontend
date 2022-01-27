@@ -8,6 +8,8 @@ import CalendarTodaySharp from '@material-ui/icons/CalendarTodaySharp';
 import PersonSharp from '@material-ui/icons/PersonSharp';
 import PictureAsPdfSharpIcon from '@material-ui/icons/PictureAsPdfSharp';
 import ReceiptIcon from '@material-ui/icons/ReceiptSharp';
+import AccountBalanceIcon from '@material-ui/icons/AccountBalance';
+import AssignmentIcon from '@material-ui/icons/AssessmentOutlined';
 import EventSharp from '@material-ui/icons/EventSharp';
 import LocationOnIcon from '@material-ui/icons/LocationOnSharp';
 import AccessTimeIcon from '@material-ui/icons/AccessTime';
@@ -22,6 +24,7 @@ import ContactPhoneIcon from '@material-ui/icons/ContactPhone';
 import AddPhotoIcon from '@material-ui/icons/AddAPhoto';
 import { cfURL, CustomEventsHandler } from '../../helpers';
 import React from 'react';
+import { AssessmentOutlined } from '@material-ui/icons';
 
 export type MenuItem = {
   type?: string;
@@ -52,7 +55,8 @@ const profile = cfURL('account.editinformation');
 const txnAdmin = cfURL('reports.transaction_admin');
 const txnUser = cfURL('reports.transactions');
 const perdiem = cfURL('reports.perdiem');
-
+const payroll = cfURL('reports.payroll');
+const accountsPayable = cfURL('reports.transaction_billing');
 export const employeeItems = ({
   toggleUploadReceipt,
 }: {
@@ -105,6 +109,11 @@ export const employeeItems = ({
     icon: <ReceiptIcon />,
   },
   {
+    title: 'Accounts Payable',
+    href: accountsPayable,
+    icon: <AccountBalanceIcon />,
+  },
+  {
     type: 'divider',
   },
   {
@@ -129,6 +138,11 @@ export const adminItems: MenuItem[] = [
     title: 'Dispatch',
     href: dispatch,
     icon: <LocationOnIcon />,
+  },
+  {
+    title: 'Payroll Dashboard',
+    href: payroll,
+    icon: <AssessmentOutlined />,
   },
   {
     title: 'Kalos Documents',
