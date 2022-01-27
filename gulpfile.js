@@ -1536,7 +1536,7 @@ const MODULE_MAP = [
     name: 'TransactionAccountsPayable',
     location: 'admin',
     controller: 'reports',
-    filename: 'transactions',
+    filename: 'transactions_billing',
   },
   {
     name: 'TransactionUser',
@@ -1587,11 +1587,13 @@ const MODULE_MAP_OLD = {
   ServiceCallEdit: [], // UNRELEASED
   ServiceCallSearch: ['admin', 'service', 'calls'],
   // SideMenu: ['common', 'partials', 'header'], // UNRELEASED
+
+  // ? Unsure where SpiffLog comes from but it should not be spiff_tool_logs
   // SpiffLog: ['admin', 'tasks', 'spiff_tool_logs'], // UNRELEASED
   // SpiffToolLogs: ['admin', 'tasks', 'spiff_tool_logs'],
   Timesheet: ['admin', 'timesheet', 'timesheetview_new'],
   ToolLog: [],
   Transaction: ['admin', 'reports', 'transaction_admin'],
-  TransactionAccountsPayable: ['admin', 'reports', 'transactions'],
+  TransactionAccountsPayable: ['admin', 'reports', 'transactions_billing'],
   TransactionUser: ['admin', 'reports', 'transactions'],
 };
