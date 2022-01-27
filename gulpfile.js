@@ -18,7 +18,7 @@ const less = require('rollup-plugin-less-modules');
 
 let target = '';
 try {
-  target = titleCase(process.argv[4]).replace(/-/g, '');
+  if (process.argv[4]) target = titleCase(process.argv[4]).replace(/-/g, '');
 } catch (err) {
   console.log(err);
 }
