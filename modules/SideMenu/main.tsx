@@ -113,7 +113,10 @@ const SideMenu = ({
           if (
             userResult
               .getPermissionGroupsList()
-              .find(p => p.getName() === 'Manager')
+              .find(p => p.getName() === 'Manager') ||
+            userResult
+              .getPermissionGroupsList()
+              .find(p => p.getName() === 'Payroll')
           ) {
             dispatch({
               type: 'fetchedUser',
