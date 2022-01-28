@@ -12,6 +12,7 @@ import AccountBalanceIcon from '@material-ui/icons/AccountBalance';
 import AssignmentIcon from '@material-ui/icons/AssessmentOutlined';
 import EventSharp from '@material-ui/icons/EventSharp';
 import LocationOnIcon from '@material-ui/icons/LocationOnSharp';
+import LocationSearchingSharp from '@material-ui/icons/LocationSearchingSharp';
 import AccessTimeIcon from '@material-ui/icons/AccessTime';
 import AccountCircleIcon from '@material-ui/icons/AccountCircleSharp';
 import ExitToAppIcon from '@material-ui/icons/ExitToAppSharp';
@@ -174,7 +175,7 @@ export const dispatchItems: MenuItem[] = [
   {
     title: 'First Call',
     href: firstCall,
-    icon: <LocationOnIcon />,
+    icon: <LocationSearchingSharp />,
   },
 ];
 
