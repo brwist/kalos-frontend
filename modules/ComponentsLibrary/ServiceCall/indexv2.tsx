@@ -28,6 +28,8 @@ import {
   ContractClientService,
   ContractFrequencyClientService,
   TimesheetDepartmentClientService,
+  QuoteLinePartClientService,
+  ServiceItemClientService,
 } from '../../../helpers';
 import { OPTION_BLANK } from '../../../constants';
 import { Modal } from '../Modal';
@@ -67,9 +69,11 @@ import Edit from '@material-ui/icons/Edit';
 import Tooltip from '@mui/material/Tooltip';
 import { ServiceItem } from '@kalos-core/kalos-rpc/ServiceItem';
 import { TimesheetDepartment } from '@kalos-core/kalos-rpc/TimesheetDepartment';
-import { ButtonGroup } from '@mui/material';
+import { ButtonGroup, CircularProgress } from '@mui/material';
 import { ServiceItems } from '../ServiceItems';
 import { ServiceCallReadings } from '../ServiceCallReadings';
+import { QuoteLinePart } from '@kalos-core/kalos-rpc/QuoteLinePart';
+import { Quotable, QuotableRead } from '@kalos-core/kalos-rpc/compiled-protos/event_pb';
 
 
 export interface Props {
@@ -123,6 +127,7 @@ export const ServiceCallNew: FC<Props> = props => {
     showProposals: true,
     selectedServiceItems: [],
     pendingSave: false,
+    propertyServiceItems: [],
   }
 
   const [state, updateServiceCallState] = useReducer(reducer, initialState);
@@ -155,17 +160,93 @@ export const ServiceCallNew: FC<Props> = props => {
     });
   };
 
-  const handleOnAddMaterials = useCallback(
-    async (materialUsed, materialTotal) => {
-      await EventClientService.updateMaterialUsed(
-        state.serviceCallId,
-        materialUsed + state.entry.getMaterialUsed(),
-        materialTotal + state.entry.getMaterialTotal(),
-      );
-      await loadEntry();
-    },
-    [state.serviceCallId, state.entry, loadEntry],
-  );
+  const handleEditSserviceItems = async(refresh: boolean) => {
+    if (refresh) {
+      const serviceItemReq = new ServiceItem();
+      serviceItemReq.setIsActive(1);
+      serviceItemReq.setPropertyId(propertyId);
+      const serviceItems = await ServiceItemClientService.BatchGet(serviceItemReq);
+      updateServiceCallState({type: 'setPropertyServiceItems', data: serviceItems.getResultsList()})
+    }
+  }
+
+  const handleUpdateMaterialsStringAndCost = useCallback(async () => {
+    const totalMaterials: Quotable[] = [];
+    console.log('we are going to update the material total');
+    //Day(3char),timestamp - Person Who added it - (Material Quantity)  - (Material Cost)
+    //Tue, 12/7/2021 8:08PM Jordan Spalding -(1) Trip & Diagnostic Fee - After Hours - $120
+    let totalCost = 0;
+    let fullString = '';
+
+    const materialReq = new QuotableRead();
+    materialReq.setEventId(state.serviceCallId);
+    materialReq.setIsActive(true);
+
+    const materials = (
+      await EventClientService.ReadQuotes(materialReq)
+    ).getDataList();
+    totalMaterials.concat(materials);
+    if (materials.length > 0) {
+      for (let i = 0; i < state.servicesRendered.length; i++) {
+        let date = state.servicesRendered[i].getTimeStarted();
+        const tech = state.servicesRendered[i].getName();
+        let tempStringFirstPart = `${date}, - ${tech}`;
+        const filteredMaterials = materials.filter(
+          material =>
+            material.getServicesRenderedId() ===
+            state.servicesRendered[i].getId(),
+        );
+        if (filteredMaterials.length > 0) {
+          let serviceRenderedMaterialString = tempStringFirstPart;
+          for (let j = 0; j < filteredMaterials.length; j++) {
+            let material = filteredMaterials[j];
+            let tempStringSecondPart = ` - (${material.getQuantity()})- ${material.getDescription()}- $${material.getQuotedPrice()}`;
+
+            let cost = material.getQuantity() * material.getQuotedPrice();
+            let taxAmount = 0;
+            let markupAmount = 0;
+            const qlReq = new QuoteLinePart();
+            qlReq.setId(material.getQuoteLineId());
+            try {
+              const qlResult = await QuoteLinePartClientService.Get(qlReq);
+              const tax = qlResult.getTax();
+              const markup = qlResult.getMarkup();
+
+              if (tax) {
+                taxAmount = cost * tax - cost;
+                console.log('Got tax', tax);
+              }
+              if (markup) {
+                markupAmount = cost * markup - cost;
+                console.log('got markup', markup);
+              }
+            } catch (err) {
+              console.log('did not find quote line entry');
+            }
+            totalCost += cost + markupAmount + taxAmount;
+            serviceRenderedMaterialString += tempStringSecondPart;
+          }
+
+          fullString += `${serviceRenderedMaterialString} \n `;
+        }
+      }
+    }
+
+    console.log('full string', fullString);
+    const updateEvent = new Event();
+    updateEvent.setId(state.serviceCallId);
+    updateEvent.setMaterialUsed(fullString);
+    updateEvent.setMaterialTotal(totalCost);
+    const updateStateEvent = state.entry;
+    updateStateEvent.setMaterialUsed(fullString);
+    updateStateEvent.setMaterialTotal(totalCost);
+    updateEvent.setFieldMaskList(['MaterialUsed', 'MaterialTotal']);
+    await EventClientService.Update(updateEvent);
+    updateServiceCallState({
+      type: 'setEntry',
+      data: updateStateEvent,
+    });
+  }, [state.servicesRendered, state.entry, state.serviceCallId]);
 
   const handleSetRequestfields = useCallback(
     fields => {
@@ -284,6 +365,9 @@ export const ServiceCallNew: FC<Props> = props => {
     user.setOverrideLimit(true);
     const department = new TimesheetDepartment();
     department.setIsActive(1);
+    const serviceItemReq = new ServiceItem();
+    serviceItemReq.setIsActive(1);
+    serviceItemReq.setPropertyId(propertyId);
     const users = UserClientService.BatchGet(user);
     const departments = TimesheetDepartmentClientService.BatchGet(department);
     const property = PropertyClientService.loadPropertyByID(propertyId);
@@ -295,6 +379,7 @@ export const ServiceCallNew: FC<Props> = props => {
     const jobTypeSubtypes = JobTypeSubtypeClientService.loadJobTypeSubtypes();
     const loggedUser = UserClientService.loadUserById(loggedUserId);
     const servicesRendered = loadServicesRenderedData();
+    const serviceItems = await ServiceItemClientService.BatchGet(serviceItemReq);
     const frequencyTypes = await ContractFrequencyClientService.BatchGet(new ContractFrequency());
     const [
       userList,
@@ -366,6 +451,7 @@ export const ServiceCallNew: FC<Props> = props => {
         loading: false,
         contractInfo: contractInfo,
         frequencyTypes: frequencyTypes.getResultsList(),
+        propertyServiceItems: serviceItems.getResultsList(),
       },
     });    
   }, [loadServicesRenderedData, loggedUserId, propertyId, state.serviceCallId, userID])
@@ -401,6 +487,21 @@ export const ServiceCallNew: FC<Props> = props => {
       ]
       }
     >
+      {!state.loaded && (
+        <CircularProgress
+          size={70}
+          sx={{
+            position:'absolute',
+            left:'50%',
+            top:'50%',
+            zIndex:5,
+            marginLeft:-5,
+            width:50,
+            height:50
+          }}
+        />
+      )}
+      {state.loaded && (
       <div style={{paddingTop:"10px"}}>
         <Grid container style={{width:"98%"}}>
           <Grid item xs={6} md={4} style={{margin:"auto"}}>
@@ -494,14 +595,7 @@ export const ServiceCallNew: FC<Props> = props => {
           <Grid item xs={12} md={4}>
             <Grid sx={{display:{xs:"flex", md:"grid"}, paddingLeft:{xs:"2%", md:"0"}, paddingTop:{xs:"10px", md:"0"}}}>
               <Button
-                sx={{backgroundColor:"#990a26", color:"white"}}
-                fullWidth
-                onClick={()=>{updateServiceCallState({type:'setModalType', data: "equipment"})}}
-              >
-                View Equipment
-              </Button>
-              <Button
-                sx={{backgroundColor:"#990a26", color:"white"}}
+                sx={{backgroundColor:"#990a26", color:"white", '&:hover': {backgroundColor:'darkred'}}}
                 fullWidth
                 onClick={()=>{updateServiceCallState({type:'setModalType', data: "spiffs"})}}
               >
@@ -512,7 +606,6 @@ export const ServiceCallNew: FC<Props> = props => {
         </Grid>
 
         <DragDropContext onDragEnd={(result)=>{
-          console.log(result);
           if (result.destination && result.source.index !== result.destination.index) {
             handleCardOrderUpdate(state.cardSortOrder[result.source.index].name, result.source.index, result.destination.index, state.cardSortOrder[result.source.index].display);
           }
@@ -598,12 +691,18 @@ export const ServiceCallNew: FC<Props> = props => {
                                       }
                                       selectedServiceItems={state.selectedServiceItems}
                                     /> */}
+                                    <Button
+                                      sx={{backgroundColor:"#990a26", color:"white", '&:hover':{backgroundColor:'darkred'}, marginBottom:"15px"}}
+                                      onClick={()=>{updateServiceCallState({type:'setModalType', data: "equipment"})}}
+                                    >
+                                      View/Add Property Service Items
+                                    </Button>
                                     <ServiceCallReadings
                                       loggedUserId={loggedUserId}
                                       propertyId={state.property.getId()}
                                       eventId={state.entry.getId()}
+                                      serviceItems={state.propertyServiceItems}
                                     />
-                                    {/* <InfoTable data={makeFakeRows(7,5)} loading /> */}
                                   </CardContent>
                                 </Collapse>
                                 <Button style={{width:"100%", height:"30px", display:"block", margin:"auto", backgroundColor:"lightgray"}} onClick={()=>{handleCardOrderUpdate(card.name, index, index, !card.display)}}>
@@ -638,7 +737,7 @@ export const ServiceCallNew: FC<Props> = props => {
                                       loading={state.loading}
                                       payments={state.paidServices}
                                       onUpdatePayments={handleUpdatePayments}
-                                      onAddMaterials={handleOnAddMaterials}
+                                      onUpdateMaterials={handleUpdateMaterialsStringAndCost}
                                     />
                                     {/* <InfoTable data={makeFakeRows(5,3)} loading /> */}
                                   </CardContent>
@@ -662,13 +761,21 @@ export const ServiceCallNew: FC<Props> = props => {
                               <Card raised sx={{width:"100%"}}>
                                 <CardHeader
                                   style={{backgroundColor:"#990a26", color:"white", height:"20px"}}
-                                  title={<Typography variant="h6" component="div" style={{textAlign:"center"}}>Invoices</Typography>}
-                                  action={<IconButton><Edit style={{color:"white", margin:"auto", fontSize:"medium"}} /></IconButton>}
+                                  title={<Typography variant="h6" component="div" style={{textAlign:"center"}}>Invoice</Typography>}
+                                  action={<IconButton onClick={()=>{updateServiceCallState({type:'setModalType', data: "invoice"})}}><Edit style={{color:"white", margin:"auto", fontSize:"medium"}} /></IconButton>}
                                   {...provided.dragHandleProps}
                                 />
                                 <Collapse in={card.display}>
                                   <CardContent>
-                                    <InfoTable data={makeFakeRows(5,4)} loading />
+                                    <Invoice
+                                      disabled={false}
+                                      event={state.entry}
+                                      servicesRendered={state.servicesRendered}
+                                      paidServices={state.paidServices}
+                                      onInitSchema={()=>{}}
+                                      onChange={()=>{}}
+                                    />
+                                    {/* <InfoTable data={makeFakeRows(5,4)} loading /> */}
                                   </CardContent>
                                 </Collapse>
                                 <Button style={{width:"100%", height:"30px", display:"block", margin:"auto", backgroundColor:"lightgray"}} onClick={()=>{handleCardOrderUpdate(card.name, index, index, !card.display)}}>
@@ -695,11 +802,12 @@ export const ServiceCallNew: FC<Props> = props => {
                                 />
                                 <Collapse in={card.display}>
                                   <CardContent>
-                                    {/* <Proposal
+                                    <Proposal
                                       serviceItem={state.entry}
                                       customer={state.customer}
                                       property={state.property}
-                                    /> */}
+                                      servicesRendered={state.servicesRendered}
+                                    />
                                     {/* <InfoTable data={makeFakeRows(5,4)} loading /> */}
                                   </CardContent>
                                 </Collapse>
@@ -722,6 +830,7 @@ export const ServiceCallNew: FC<Props> = props => {
           </Droppable>
         </DragDropContext>
       </div>
+      )}
       <Modal
         open={state.modalType !== ""}
         onClose={()=>{handleCloseModal()}}
@@ -757,8 +866,30 @@ export const ServiceCallNew: FC<Props> = props => {
             loggedUserId={loggedUserId}
             userID={userID}
             propertyId={state.property.getId()}
-            // eventId={state.entry.getId()}
+            eventId={state.entry.getId()}
+            refresh={handleEditSserviceItems}
           />
+        )}
+        {state.modalType === "invoice" && (
+          <SectionBar
+            title="Invoice"
+            actions={[
+              {
+                label: 'Close',
+                onClick: ()=>{handleCloseModal()}
+              }
+            ]
+            }
+          >
+            <Invoice
+              disabled={false}
+              event={state.entry}
+              servicesRendered={state.servicesRendered}
+              paidServices={state.paidServices}
+              onInitSchema={handleSetRequestfields}
+              onChange={handleChangeEntry}
+            />
+          </SectionBar>
         )}
       </Modal>
     </SectionBar>

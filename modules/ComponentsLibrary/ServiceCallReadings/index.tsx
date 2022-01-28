@@ -26,6 +26,8 @@ import {
   timestamp,
   makeSafeFormObject,
 } from '../../../helpers';
+import Tooltip from '@mui/material/Tooltip';
+import Fade from '@mui/material/Fade';
 
 const ReadingClientService = new ReadingClient(ENDPOINT);
 const MaintenanceQuestionClientService = new MaintenanceQuestionClient(
@@ -202,12 +204,14 @@ interface Props {
   eventId: number;
   propertyId: number;
   loggedUserId: number;
+  serviceItems: ServiceItem[];
 }
 
 export const ServiceCallReadings: FC<Props> = ({
   eventId,
   loggedUserId,
   propertyId,
+  serviceItems,
 }) => {
   const [entries, setEntries] = useState<Entry[]>([]);
   const [users, setUsers] = useState<User[]>([]);
@@ -258,7 +262,7 @@ export const ServiceCallReadings: FC<Props> = ({
         label: 'Selected Service Item',
         name: 'getServiceItemId',
         required: true,
-        options: existingServiceItems.map(item => {
+        options: serviceItems.map(item => {
           return { label: item.getType(), value: item.getId() };
         }),
       },
@@ -317,6 +321,8 @@ export const ServiceCallReadings: FC<Props> = ({
     [{ label: 'Notes', name: 'getNotes', multiline: true }],
   ];
   const load = useCallback(async () => {
+    console.log(eventId);
+    console.log(propertyId);
     setLoading(true);
     const serviceItemReq = new ServiceItem();
     serviceItemReq.setIsActive(1);
@@ -467,49 +473,76 @@ export const ServiceCallReadings: FC<Props> = ({
         newMaintenanceQuestion.setReadingId(entry.getId());
         return [
           {
+            value: formatDate(entry.getDate()),
+          },
+          {
             value: [serviceItem?.getType()],
           },
           {
             value: [
-              formatDate(entry.getDate()),
-              '-',
-              maintenanceQuestions[entry.getId()] ? 'Maintenance' : 'Service',
+              // formatDate(entry.getDate()),
+              // '-',
+              maintenanceQuestions[entry.getId()] ? 'Maintenance' : 'Service'],
+          },
+          {
+            value: [
               entry.getUserId() === 0 && users != []
                 ? ''
-                : ` - ${users[
+                : `${users[
                     findUser(entry.getUserId())
                   ].getFirstname()} ${users[
                     findUser(entry.getUserId())
                   ].getLastname()}`,
-            ].join(' '),
-            onClick: setEditing(entry),
+            ],
+          },
+          {
+            value: [],
+            // onClick: setEditing(entry),
             actions: [
-              <IconButton
+              <Tooltip
                 key={0}
-                style={{ marginLeft: 4 }}
-                size="small"
-                onClick={setEditingMaintenance(
-                  maintenanceQuestions[entry.getId()] || newMaintenanceQuestion,
-                )}
+                title="Edit Maintenance"
+                TransitionComponent={Fade}
+                TransitionProps={{timeout:400}}
               >
-                <BuildIcon />
-              </IconButton>,
-              <IconButton
+                <IconButton
+                  style={{ marginLeft: 4 }}
+                  size="small"
+                  onClick={setEditingMaintenance(
+                    maintenanceQuestions[entry.getId()] || newMaintenanceQuestion,
+                  )}
+                >
+                  <BuildIcon />
+                </IconButton>
+              </Tooltip>,
+              <Tooltip
                 key={1}
-                style={{ marginLeft: 4 }}
-                size="small"
-                onClick={setEditing(entry)}
+                title="Edit Reading"
+                TransitionComponent={Fade}
+                TransitionProps={{timeout:400}}
               >
-                <EditIcon />
-              </IconButton>,
-              <IconButton
+                <IconButton
+                  style={{ marginLeft: 4 }}
+                  size="small"
+                  onClick={setEditing(entry)}
+                  >
+                  <EditIcon />
+                </IconButton>
+              </Tooltip>,
+              <Tooltip
                 key={2}
-                style={{ marginLeft: 4 }}
-                size="small"
-                onClick={setDeleting(entry)}
+                title="Delete"
+                TransitionComponent={Fade}
+                TransitionProps={{timeout:400}}
               >
-                <DeleteIcon />
-              </IconButton>,
+                <IconButton
+                  style={{ marginLeft: 4 }}
+                  size="small"
+                  onClick={setDeleting(entry)}
+                  >
+                  <DeleteIcon />
+                </IconButton>
+              </Tooltip>,
             ],
           },
         ];
@@ -551,7 +584,7 @@ export const ServiceCallReadings: FC<Props> = ({
             fixedActions
           />
           <InfoTable
-            columns={[{ name: 'Service Item' }, { name: 'Reading Info' }]}
+            columns={[{ name: 'Date' }, { name: 'Service Item' }, { name: 'Reading Info' }, { name: 'Technician'}, { name: "" }]}
             data={data}
             loading={loading}
             hoverable

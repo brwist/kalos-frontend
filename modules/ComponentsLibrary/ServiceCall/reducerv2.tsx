@@ -44,6 +44,7 @@ export interface State {
   showProposals: boolean;
   selectedServiceItems: ServiceItem[];
   pendingSave: boolean;
+  propertyServiceItems: ServiceItem[];
 }
 
 export type Action = 
@@ -92,6 +93,7 @@ export type Action =
       loading: boolean;
       contractInfo: Contract;
       frequencyTypes: ContractFrequency[];
+      propertyServiceItems: ServiceItem[];
     };
   }
   | {type: 'setRequestValid'; data: boolean}
@@ -103,6 +105,7 @@ export type Action =
   | {type: 'setShowProposals'; data: boolean}
   | {type: 'setCardSortOrder'; data: {name:string, display:boolean}[]}
   | {type: 'setSelectedServiceItems'; data: ServiceItem[]}
+  | {type: 'setPropertyServiceItems'; data: ServiceItem[]}
 
 export const reducer = (state: State, action: Action) => {
   switch (action.type) {
@@ -176,6 +179,7 @@ export const reducer = (state: State, action: Action) => {
         contract: action.data.contractInfo,
         contractFrequencyTypes: action.data.frequencyTypes,
         loggedUserRole: roleType,
+        propertyServiceItems: action.data.propertyServiceItems,
       };
     }
     case 'setRequestValid':
@@ -228,6 +232,11 @@ export const reducer = (state: State, action: Action) => {
         ...state,
         selectedServiceItems: action.data,
       };
+    case 'setPropertyServiceItems':
+      return {
+        ...state,
+        propertyServiceItems: action.data,
+      }
     default:
       return state
   }

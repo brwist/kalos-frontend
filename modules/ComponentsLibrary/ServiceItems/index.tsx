@@ -105,6 +105,7 @@ interface Props {
   actions?: ActionsProps;
   asideContent?: ReactNode;
   viewedAsCustomer?: boolean;
+  refresh?: (shouldRefresh: boolean) => void;
 }
 
 const REPAIR_SCHEMA: Schema<Repair> = [
@@ -138,6 +139,7 @@ export const ServiceItems: FC<Props> = props => {
     actions = [],
     asideContent,
     viewedAsCustomer = false,
+    refresh,
   } = props;
   const [state, dispatch] = useReducer(reducer, {
     entries: [],
@@ -435,6 +437,9 @@ export const ServiceItems: FC<Props> = props => {
         dispatch({ type: ACTIONS.SET_EDITING, data: undefined });
         await load();
       }
+      if (refresh) {
+        refresh(true);
+      }
     },
     [
       state.editing,
@@ -443,6 +448,7 @@ export const ServiceItems: FC<Props> = props => {
       load,
       state.materials,
       state.materialsIds,
+      refresh
     ],
   );
 

@@ -2801,7 +2801,6 @@ export const AdvancedSearch: FC<Props> = ({
       />
       {openDrawer && pendingEventEditingNew && (
         <Drawer
-          sx={{width:{xs: "100%", md: "50%"}, backgroundColor:"red"}}
           anchor="right"
           variant="persistent"
           open={openDrawer}

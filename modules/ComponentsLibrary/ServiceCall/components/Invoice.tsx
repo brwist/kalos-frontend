@@ -248,7 +248,7 @@ export const Invoice: FC<Props> = ({
           multiline: true,
           actions: [
             {
-              label: 'Copy from Services Rendered',
+              label: 'Copy from SR',
               variant: 'text',
               onClick: handleCopyFromServicesRendered,
             },
