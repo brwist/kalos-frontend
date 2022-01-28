@@ -7,6 +7,7 @@ import {
   PaymentType,
 } from './Services';
 import { ServicesRendered } from '@kalos-core/kalos-rpc/ServicesRendered';
+import { EventClient, Quotable } from '@kalos-core/kalos-rpc/Event';
 
 export type State = {
   paymentForm: PaymentAndSignatureType;
@@ -18,6 +19,9 @@ export type State = {
   serviceRenderedPayment: ServicesRenderedPaymentType;
   saving: boolean;
   changingStatus: boolean;
+  pendingQuotable: Quotable[];
+  pendingNewQuotable: Quotable[];
+  openMaterials: boolean;
 };
 
 export enum ACTIONS {
@@ -30,6 +34,9 @@ export enum ACTIONS {
   SET_CHANGING_STATUS = 'setChangingStatus',
   SET_EDITING = 'setEditing',
   SET_SERVICE_RENDERED_PAYMENT = 'setServiceRenderedPayment',
+  SET_PENDING_QUOTABLE = 'setPendingQuotable',
+  SET_PENDING_NEW_QUOTABLE = 'setPendingNewQuotable',
+  SET_OPEN_MATERIALS = 'setOpenMaterials',
 }
 
 export type Action =
@@ -43,6 +50,9 @@ export type Action =
   | { type: ACTIONS.SET_DELETING; data: ServicesRendered | undefined }
   | { type: ACTIONS.SET_CHANGING_STATUS; data: boolean }
   | { type: ACTIONS.SET_EDITING; data: ServicesRenderedPaymentType }
+  | { type: ACTIONS.SET_PENDING_QUOTABLE; data: Quotable[] }
+  | { type: ACTIONS.SET_OPEN_MATERIALS; data: boolean }
+  | { type: ACTIONS.SET_PENDING_NEW_QUOTABLE; data: Quotable[] }
   | {
       type: ACTIONS.SET_SERVICE_RENDERED_PAYMENT;
       data: ServicesRenderedPaymentType;
@@ -63,6 +73,12 @@ export const reducer = (state: State, action: Action) => {
         viewPayment: action.data,
       };
     }
+    case ACTIONS.SET_OPEN_MATERIALS: {
+      return {
+        ...state,
+        openMaterials: action.data,
+      };
+    }
     case ACTIONS.SET_SAVING: {
       return {
         ...state,
@@ -73,6 +89,18 @@ export const reducer = (state: State, action: Action) => {
       return {
         ...state,
         viewSignature: action.data,
+      };
+    }
+    case ACTIONS.SET_PENDING_QUOTABLE: {
+      return {
+        ...state,
+        pendingQuotable: action.data,
+      };
+    }
+    case ACTIONS.SET_PENDING_NEW_QUOTABLE: {
+      return {
+        ...state,
+        pendingNewQuotable: action.data,
       };
     }
     case ACTIONS.SET_SIGNATURE_FORM: {
