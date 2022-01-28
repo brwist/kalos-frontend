@@ -1,7 +1,10 @@
 import React, { FC, useState, useCallback, useReducer } from 'react';
 import IconButton from '@material-ui/core/IconButton';
 import DeleteIcon from '@material-ui/icons/Delete';
+import { QuoteUsed, QuoteUsedClient } from '@kalos-core/kalos-rpc/QuoteUsed';
 import EditIcon from '@material-ui/icons/Edit';
+import { QuoteLine } from '@kalos-core/kalos-rpc/QuoteLine';
+
 import {
   ServicesRenderedClient,
   ServicesRendered,
@@ -16,6 +19,7 @@ import { PlainForm, Schema } from '../../PlainForm';
 import { Form } from '../../Form';
 import { Modal } from '../../Modal';
 import { File } from '@kalos-core/kalos-rpc/File';
+import HomeRepairServiceIcon from '@mui/icons-material/HomeRepairService';
 import { format } from 'date-fns';
 import { QuoteSelector, SelectedQuote } from '../../QuoteSelector';
 import {
@@ -25,6 +29,7 @@ import {
   formatDateTimeDay,
   uploadFileToS3Bucket,
   FileClientService,
+  QuoteLineClientService,
   S3ClientService,
 } from '../../../../helpers';
 import {
@@ -268,12 +273,15 @@ export const Services: FC<Props> = ({
     paymentForm: PAYMENT_SIGNATURE_INITIAL,
     viewPayment: undefined,
     viewSignature: undefined,
+    openMaterials: false,
     signatureForm: SIGNATURE_INITIAL,
     deleting: undefined,
     saving: false,
     editing: SERVICES_RENDERED_PAYMENT_INITIAL,
     serviceRenderedPayment: SERVICES_RENDERED_PAYMENT_INITIAL,
     changingStatus: false,
+    pendingQuotable: [],
+    pendingNewQuotable: [],
   });
   const bucket = 'testbuckethelios';
 
@@ -358,6 +366,58 @@ export const Services: FC<Props> = ({
       loadServicesRendered();
     }
   }, [state.deleting, onUpdatePayments, payments, loadServicesRendered]);
+
+  const handleSavePendingQuotable = useCallback(
+    async (servicesRenderedId: number) => {
+      let tempPendingQuotable = state.pendingQuotable;
+      let tempPendingNewQuotable = state.pendingNewQuotable;
+      const quoteUsedClientService = new QuoteUsedClient(ENDPOINT);
+      if (tempPendingQuotable.length > 0 || tempPendingNewQuotable.length > 0) {
+        for (let i = 0; i < tempPendingQuotable.length; i++) {
+          let quotePart = tempPendingQuotable[i];
+          const req = new QuoteUsed();
+          req.setQuoteLineId(quotePart.getQuoteLineId());
+          req.setQuotedPrice(quotePart.getQuotedPrice());
+          req.setQuantity(quotePart.getQuantity());
+          req.setServicesRenderedId(servicesRenderedId);
+          req.setBillable(quotePart.getIsBillable() === true ? 1 : 0);
+
+          try {
+            await quoteUsedClientService.Create(req);
+          } catch (err) {
+            console.log('failed to add quotable item');
+          }
+        }
+        for (let i = 0; i < tempPendingNewQuotable.length; i++) {
+          let quotePart = tempPendingNewQuotable[i];
+          const req = new QuoteUsed();
+          const quotelineReq = new QuoteLine();
+          quotelineReq.setDescription(quotePart.getDescription());
+          quotelineReq.setAdjustment(quotePart.getQuotedPrice().toString());
+          quotelineReq.setWarranty(2);
+          const quotelineRes = await QuoteLineClientService.Create(
+            quotelineReq,
+          );
+          req.setQuoteLineId(quotelineRes.getId());
+          req.setQuotedPrice(quotePart.getQuotedPrice());
+          req.setQuantity(quotePart.getQuantity());
+          req.setLmpc(quotePart.getIsLmpc() === true ? 1 : 0);
+          req.setServicesRenderedId(servicesRenderedId);
+          req.setBillable(quotePart.getIsBillable() === true ? 1 : 0);
+
+          try {
+            await quoteUsedClientService.Create(req);
+          } catch (err) {
+            console.log('failed to add quotable item');
+          }
+        }
+        dispatch({ type: ACTIONS.SET_PENDING_NEW_QUOTABLE, data: [] });
+        dispatch({ type: ACTIONS.SET_PENDING_QUOTABLE, data: [] });
+      }
+    },
+    [state.pendingQuotable, state.pendingNewQuotable],
+  );
+
   const handleChangeStatus = useCallback(
     (status: string) => async () => {
       dispatch({ type: ACTIONS.SET_CHANGING_STATUS, data: true });
@@ -408,6 +468,16 @@ export const Services: FC<Props> = ({
       }
       req.setTechnicianUserId(loggedUser.getId());
       const res = await ServicesRenderedClientService.Create(req);
+      if (
+        res.getId() != 0 &&
+        (state.pendingNewQuotable.length > 0 ||
+          state.pendingQuotable.length > 0)
+      ) {
+        await handleSavePendingQuotable(res.getId());
+        if (onUpdateMaterials) {
+          onUpdateMaterials();
+        }
+      }
       if (isSignature) {
         let tempSignatureData = state.signatureForm.signature;
         if (state.paymentForm.signature != '') {
@@ -492,6 +562,9 @@ export const Services: FC<Props> = ({
       payments,
       state.paymentForm,
       state.serviceRenderedPayment,
+      handleSavePendingQuotable,
+      state.pendingQuotable,
+      state.pendingNewQuotable,
       serviceCallId,
     ],
   );
@@ -595,6 +668,7 @@ export const Services: FC<Props> = ({
     },
     [],
   );
+
   const handleSetViewPreview = useCallback(
     (sr: ServicesRendered, status: string) => async () => {
       if (status === PAYMENT) {
@@ -858,6 +932,17 @@ export const Services: FC<Props> = ({
 
       {[ON_CALL, ADMIN].includes(lastStatus) && (
         <>
+          <IconButton
+            style={{ transform: 'scale(1.8)' }}
+            key={'addMaterials'}
+            onClick={() =>
+              dispatch({ type: ACTIONS.SET_OPEN_MATERIALS, data: true })
+            }
+            size="medium"
+          >
+            <HomeRepairServiceIcon />
+          </IconButton>
+
           <PlainForm
             schema={SCHEMA_ON_CALL}
             data={state.serviceRenderedPayment}
@@ -870,6 +955,25 @@ export const Services: FC<Props> = ({
             compact
             className="ServicesOnCallForm"
           />
+          <Modal
+            open={state.openMaterials}
+            onClose={() =>
+              dispatch({ type: ACTIONS.SET_OPEN_MATERIALS, data: false })
+            }
+          >
+            <QuoteSelector
+              onAddQuotes={console.log}
+              onUpdate={onUpdateMaterials}
+              pendingNewQuotableProp={state.pendingNewQuotable}
+              pendingQuotableProp={state.pendingQuotable}
+              setPendingNewQuotableProp={data =>
+                dispatch({ type: ACTIONS.SET_PENDING_NEW_QUOTABLE, data: data })
+              }
+              setPendingQuotableProp={data =>
+                dispatch({ type: ACTIONS.SET_PENDING_QUOTABLE, data: data })
+              }
+            ></QuoteSelector>
+          </Modal>
         </>
       )}
       <InfoTable
@@ -898,7 +1002,6 @@ export const Services: FC<Props> = ({
               disabled={state.saving}
             ></Form>
             <QuoteSelector
-              serviceCallId={serviceCallId}
               servicesRenderedId={state.editing.servicesRenderedId}
               onAddQuotes={console.log}
               onUpdate={onUpdateMaterials}
