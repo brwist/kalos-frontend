@@ -255,7 +255,7 @@ export const Payroll: FC<Props> = ({ userID }) => {
     <div>
       <SectionBar title="Payroll" />
       {initiated ? (
-        role ? (
+        role == 'Payroll' || role == 'Manager' ? (
           <>
             <PlainForm
               data={filter}
