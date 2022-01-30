@@ -363,9 +363,18 @@ export const Services: FC<Props> = ({
         console.log('no payment found');
       }
       await ServicesRenderedClientService.Delete(req);
+      if (onUpdateMaterials) {
+        onUpdateMaterials();
+      }
       loadServicesRendered();
     }
-  }, [state.deleting, onUpdatePayments, payments, loadServicesRendered]);
+  }, [
+    state.deleting,
+    onUpdatePayments,
+    onUpdateMaterials,
+    payments,
+    loadServicesRendered,
+  ]);
 
   const handleSavePendingQuotable = useCallback(
     async (servicesRenderedId: number) => {
@@ -477,6 +486,9 @@ export const Services: FC<Props> = ({
         if (onUpdateMaterials) {
           onUpdateMaterials();
         }
+      }
+      if (onUpdateMaterials) {
+        onUpdateMaterials();
       }
       if (isSignature) {
         let tempSignatureData = state.signatureForm.signature;
