@@ -15,6 +15,7 @@ const globals = require('rollup-plugin-node-globals');
 const { terser } = require('rollup-plugin-terser');
 const jsonPlugin = require('@rollup/plugin-json');
 const less = require('rollup-plugin-less-modules');
+const { addHours } = require('date-fns');
 
 let target = '';
 try {
@@ -536,15 +537,17 @@ async function rollupBuild(t) {
   if (t && typeof t === 'string') {
     target = t;
   }
-  console.log(target);
   if (target.includes('-')) {
     target = process.argv[4].replace(/-/g, '');
   }
   const minify = process.argv[5];
-  let inputStr = `modules/${target}/main.tsx`;
+  let inputStr = `modules/${target}/main.ts`;
+  console.log(inputStr);
+
   if (!fs.existsSync(inputStr)) {
-    inputStr = `modules/${target}/main.ts`;
+    inputStr = `modules/${target}/main.tsx`;
   }
+  console.log(inputStr);
   const bundle = await rollup.rollup({
     input: inputStr,
     plugins: [
@@ -664,8 +667,6 @@ async function release(target = '') {
   info('Rolling up build. This may take a moment...');
 
   log('Would pass the tests and would release: ', target);
-  return;
-
   await rollupBuild(target);
 
   info('Build rolled up.');
@@ -715,11 +716,7 @@ async function bustCache(controller = '', filename = '', location = '') {
 
   let remotePath = `${KALOS_ROOT}/app/${location}/views/${controller}/${filename}.cfm`;
 
-  console.log(
-    `Would run (to bust): sh.exec(\`scp ${remotePath} tmp/${filename}.cfm\``,
-  );
-  return;
-  //sh.exec(`scp ${remotePath} tmp/${filename}.cfm`);
+  sh.exec(`scp ${remotePath} tmp/${filename}.cfm`);
   const res = sh.cat(`tmp/${filename}.cfm`);
   if (res.stdout.includes('.js?version=')) {
     const versionMatch = res.stdout.match(/\.js\?version=\d{1,}/g);
@@ -784,7 +781,9 @@ const releaseAll = async () => {
   console.log();
 
   // Separated into two "for" loops for simplicity
-
+  sh.pwd();
+  sh.cd('../');
+  sh.pwd();
   // Releasing
   for (const module of validModules) {
     let foundModule = false;
@@ -792,8 +791,17 @@ const releaseAll = async () => {
       if (obj.name === module) {
         foundModule = true;
         if (checkModuleReleasable(obj)) {
-          release(module);
+          await release(module);
           log('\x1b[32m')([`✓ Released: ${module}`]);
+
+          const res = await bustCache(
+            obj.controller,
+            obj.filename,
+            obj.location,
+          );
+          if (res !== false) {
+            log('\x1b[32m')([`✓ Busted: ${module}`]);
+          }
         }
       }
     }
@@ -803,31 +811,25 @@ const releaseAll = async () => {
       );
   }
 
-  sh.cd('../');
-
-  console.log();
-  info('Starting to bust modules...');
-  console.log();
-
   // Busting
-  for (const module of validModules) {
-    let foundModule = false;
-    for (const obj of MODULE_MAP) {
-      if (obj.name === module) {
-        foundModule = true;
-        if (checkModuleReleasable(obj)) {
-          const res = bustCache(obj.controller, obj.filename, obj.location);
-          if (res !== false) {
-            log('\x1b[32m')([`✓ Busted: ${module}`]);
-          }
-        }
-      }
-    }
-    if (!foundModule)
-      error(
-        `Could not bust the module "${module}" - no entry found in the module map.`,
-      );
-  }
+  // for (const module of validModules) {
+  //   let foundModule = false;
+  //   for (const obj of MODULE_MAP) {
+  //     if (obj.name === module) {
+  //       foundModule = true;
+  //       if (checkModuleReleasable(obj)) {
+  //         const res = bustCache(obj.controller, obj.filename, obj.location);
+  //         if (res !== false) {
+  //           log('\x1b[32m')([`✓ Busted: ${module}`]);
+  //         }
+  //       }
+  //     }
+  //   }
+  //   if (!foundModule)
+  //     error(
+  //       `Could not bust the module "${module}" - no entry found in the module map.`,
+  //     );
+  // }
 
   // ? The old logic before the new module map
   // for (const module of validModules) {
