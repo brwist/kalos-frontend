@@ -12,6 +12,7 @@ import AccountBalanceIcon from '@material-ui/icons/AccountBalance';
 import AssignmentIcon from '@material-ui/icons/AssessmentOutlined';
 import EventSharp from '@material-ui/icons/EventSharp';
 import LocationOnIcon from '@material-ui/icons/LocationOnSharp';
+import LocationSearchingSharp from '@material-ui/icons/LocationSearchingSharp';
 import AccessTimeIcon from '@material-ui/icons/AccessTime';
 import AccountCircleIcon from '@material-ui/icons/AccountCircleSharp';
 import ExitToAppIcon from '@material-ui/icons/ExitToAppSharp';
@@ -48,7 +49,8 @@ const calendar = cfURL('service.calendar');
 const reports = cfURL('reports');
 const documents = cfURL('document');
 const serviceCalls = cfURL('service.calls');
-const dispatch = cfURL('dispatch.newdash');
+const dispatch = cfURL('dispatch.dispatch_mode');
+const firstCall = cfURL('dispatch.firstcall')
 const productivity = cfURL('service.newmetrics');
 const serviceBilling = cfURL('service.callsPending');
 const profile = cfURL('account.editinformation');
@@ -135,11 +137,6 @@ export const adminItems: MenuItem[] = [
     icon: <MenuBookIcon />,
   },
   {
-    title: 'Dispatch',
-    href: dispatch,
-    icon: <LocationOnIcon />,
-  },
-  {
     title: 'Payroll Dashboard',
     href: payroll,
     icon: <AssessmentOutlined />,
@@ -166,6 +163,19 @@ export const managerItems: MenuItem[] = [
     title: 'Receipt Review',
     href: txnAdmin,
     icon: <ReceiptIcon />,
+  },
+];
+
+export const dispatchItems: MenuItem[] = [
+  {
+    title: 'Dispatch',
+    href: dispatch,
+    icon: <LocationOnIcon />,
+  },
+  {
+    title: 'First Call',
+    href: firstCall,
+    icon: <LocationSearchingSharp />,
   },
 ];
 
