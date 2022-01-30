@@ -295,7 +295,8 @@ function textPrompt(question) {
 
 async function getModulesList() {
   sh.cd('./modules');
-  const list = sh.ls().stdout.split('\n');
+  let list = sh.ls().stdout.split('\n');
+  list = list.filter(dir => !dir.includes('.'));
   sh.cd('..');
   return list.filter(l => l);
 }
@@ -614,29 +615,37 @@ async function googBuild() {
   });
 }
 
-async function runTests(target) {
-  if (sh.exec(`jest /modules/${target}/index.test.* -u`).code != 0) {
-    error('Please ensure all unit tests are passing before release.');
-    sh.exit(1);
-  }
-}
-
 async function buildAll() {
   const moduleList = await getModulesList();
-  for (const m of moduleList) {
-    try {
-      const cfName = MODULE_MAP[m];
-      if (cfName.length === 3) {
-        await release(m);
-        await upload(m);
-        if (cfName[0] === 'admin') {
-          await bustCache(cfName[1], cfName[2]);
+
+  for (const module of moduleList) {
+    for (const obj of MODULE_MAP) {
+      if (obj.name === module) {
+        if (checkModuleReleasable(obj)) {
+          await release(m);
+          await upload(m);
+          if (cfName[0] === 'admin') {
+            await bustCache(cfName[1], cfName[2]);
+          }
         }
       }
-    } catch (err) {
-      info(`Failed to build module: ${m}\n${err}`);
     }
   }
+
+  // for (const m of moduleList) {
+  //   try {
+  //     const cfName = MODULE_MAP[m];
+  //     if (cfName.length === 3) {
+  //       await release(m);
+  //       await upload(m);
+  //       if (cfName[0] === 'admin') {
+  //         await bustCache(cfName[1], cfName[2]);
+  //       }
+  //     }
+  //   } catch (err) {
+  //     info(`Failed to build module: ${m}\n${err}`);
+  //   }
+  // }
 }
 
 async function release(target = '') {
@@ -682,9 +691,12 @@ async function upload(target = '') {
   if (target === '' || typeof target !== 'string') {
     target = titleCase(process.argv[4].replace(/-/g, ''));
   }
-  sh.exec(
-    `scp build/modules/${target}.js ${KALOS_ASSETS}/modules/${target}.js`,
+  info(
+    `Would run as part of upload: scp build/modules/${target}.js ${KALOS_ASSETS}/modules/${target}.js`,
   );
+  // sh.exec(
+  //   `scp build/modules/${target}.js ${KALOS_ASSETS}/modules/${target}.js`,
+  // );
 }
 
 // @returns {bool} False if it failed to bust the cache, True / undefined otherwise
@@ -764,9 +776,8 @@ const releaseAll = async () => {
   // Release every module sequentially
   // Bust every module sequentially
 
+  const validModules = await getModulesList();
   sh.cd('modules');
-  const directories = sh.ls();
-  const validModules = directories.filter(dir => !dir.includes('.'));
 
   console.log();
   info('Starting to release modules...');
@@ -781,7 +792,6 @@ const releaseAll = async () => {
       if (obj.name === module) {
         foundModule = true;
         if (checkModuleReleasable(obj)) {
-          // TODO
           release(module);
           log('\x1b[32m')([`✓ Released: ${module}`]);
         }
@@ -819,6 +829,7 @@ const releaseAll = async () => {
       );
   }
 
+  // ? The old logic before the new module map
   // for (const module of validModules) {
   //   const mapping = MODULE_MAP[module];
   //   if (mapping) {
@@ -1252,7 +1263,9 @@ const NAMED_EXPORTS = {
     'isContextConsumer',
   ],
   'node_modules/tslib/tslib.js': ['__awaiter', '__generator', '__extends'],
-  'node_modules/@kalos-core/kalos-rpc/node_modules/tslib/tslib.es6.js': ['__spreadArray',],
+  'node_modules/@kalos-core/kalos-rpc/node_modules/tslib/tslib.es6.js': [
+    '__spreadArray',
+  ],
   'node_modules/@kalos-core/kalos-rpc/compiled-protos/predict_pb.js': [
     'TransactionData',
     'Prediction',
