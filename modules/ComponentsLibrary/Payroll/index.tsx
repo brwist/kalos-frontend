@@ -251,11 +251,12 @@ export const Payroll: FC<Props> = ({ userID }) => {
   if (role === 'Manager') {
     isEmployeeReport = true;
   }
+  console.log(role);
   return (
     <div>
       <SectionBar title="Payroll" />
       {initiated ? (
-        role == 'Payroll' || role == 'Manager' ? (
+        role == 'Manager' || role == 'Payroll' ? (
           <>
             <PlainForm
               data={filter}
