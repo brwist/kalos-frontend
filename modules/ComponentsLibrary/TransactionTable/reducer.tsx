@@ -28,6 +28,10 @@ export type MergeDocuments = {
   document1: string;
   document2: string;
 };
+export type DuplicateCheck = {
+  orderNumber: string;
+  vendor: string;
+};
 export type State = {
   transactionFilter: FilterType;
   transactions: SelectorParams[] | undefined;
@@ -36,6 +40,7 @@ export type State = {
   transactionToEdit: Transaction | undefined;
   transactionToDelete: Transaction | undefined;
   costCenterData: TransactionAccountList;
+  duplicateDataParameters: DuplicateCheck;
   loading: boolean;
   orderBy: string;
   openMerge: boolean;
@@ -95,6 +100,7 @@ export enum ACTIONS {
   SET_ORDER = 'setOrder',
   SET_PENDING_SEND_NOTIFICATION_FOR_EXISTING_TRANSACTION = 'setPendingSendNotificationForExistingTransaction',
   SET_MERGE_DOCUMENT_ALERT = 'setMergeDocumentAlert',
+  SET_DUPLICATE_PARAMETERS = 'setDuplicateParameters',
   SET_MERGE_DOCUMENT1 = 'setMergeDocument1',
   SET_MERGE_DOCUMENT2 = 'setMergeDocument2',
   SET_OPEN_MERGE = 'setOpenMerge',
@@ -136,6 +142,7 @@ export type Action =
   | { type: ACTIONS.SET_LOADING; data: boolean }
   | { type: ACTIONS.SET_LOADED; data: boolean }
   | { type: ACTIONS.SET_NOTIFY; data: number }
+  | { type: ACTIONS.SET_DUPLICATE_PARAMETERS; data: DuplicateCheck }
   | {
       type: ACTIONS.SET_PENDING_SEND_NOTIFICATION_FOR_EXISTING_TRANSACTION;
       data: Transaction | undefined;
@@ -240,6 +247,12 @@ export const reducer = (state: State, action: Action) => {
       return {
         ...state,
         transactions: action.data,
+      };
+    }
+    case ACTIONS.SET_DUPLICATE_PARAMETERS: {
+      return {
+        ...state,
+        duplicateDataParameters: action.data,
       };
     }
     case ACTIONS.SET_TOTAL_TRANSACTIONS: {
@@ -389,7 +402,6 @@ export const reducer = (state: State, action: Action) => {
       };
     }
     case ACTIONS.SET_COST_CENTER_DATA: {
-      console.log('setting cost center data ');
       return {
         ...state,
         costCenterData: action.data,
