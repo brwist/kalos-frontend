@@ -10,13 +10,15 @@ import {
 import { EventType, ServicesRenderedType } from '../';
 import { PlainForm, Schema } from '../../PlainForm';
 import { Field } from '../../Field';
-import { PAYMENT_TYPE_LIST, SERVICE_STATUSES } from '../../../../constants';
+import { NULL_TIME, PAYMENT_TYPE_LIST, SERVICE_STATUSES } from '../../../../constants';
 import { formatDateTimeDay, makeSafeFormObject } from '../../../../helpers';
 import { ENDPOINT } from '../../../../constants';
 import { Event } from '@kalos-core/kalos-rpc/Event';
 import { ServicesRendered } from '@kalos-core/kalos-rpc/ServicesRendered';
 import { SQSEmailAndDocument } from '@kalos-core/kalos-rpc/compiled-protos/email_pb';
 import { Payment, PaymentClient } from '@kalos-core/kalos-rpc/Payment';
+import parseISO from 'date-fns/esm/parseISO';
+import format from 'date-fns/esm/format';
 
 const sic = new ServiceItemClient(ENDPOINT);
 
@@ -101,7 +103,7 @@ export const Invoice: FC<Props> = ({
     onChange(data);
     setFormKey(formKey + 1);
   }, [onChange, data, setFormKey, formKey, servicesRendered]);
-  const totalRemianing =
+  const totalRemaining =
     (1 - +data.getDiscount() / 100) *
       (parseInt(data.getTotalamountrow1()) +
         parseInt(data.getTotalamountrow2()) +
@@ -216,15 +218,20 @@ export const Invoice: FC<Props> = ({
             <Field
               label="Remaining due"
               name="getRemainingDue"
-              value={totalRemianing}
+              value={totalRemaining}
               startAdornment="$"
             />
           ),
         },
         {
-          label: 'Billing Date',
-          name: 'getLogBillingDate',
-          type: 'date',
+          content: (
+            <Field
+              label="Billing Date"
+              name="getLogBillingDate"
+              value={data.getLogBillingDate() !== NULL_TIME ? format(parseISO(data.getLogBillingDate()), 'MM/dd/yyyy') : format(new Date(), 'MM/dd/yyyy')}
+              type="date"
+            />
+          ),
         },
       ],
       [
@@ -257,7 +264,7 @@ export const Invoice: FC<Props> = ({
         },
       ],
     ],
-    [data, totalPaid, totalRemianing, handleCopyFromServicesRendered],
+    [data, totalPaid, totalRemaining, handleCopyFromServicesRendered],
   );
 
   useEffect(() => {

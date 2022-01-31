@@ -34,6 +34,7 @@ export interface State {
   jobTypeSubtypes: JobTypeSubtype[];
   servicesRendered: ServicesRendered[];
   loggedUser: User;
+  loggedUserRole: string;
   loaded: boolean;
   loading: boolean;
   saving: boolean;

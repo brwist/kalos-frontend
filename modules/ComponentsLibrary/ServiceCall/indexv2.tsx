@@ -44,6 +44,7 @@ import { RequestDetails } from './components/RequestDetails';
 import { Equipment } from './components/Equipment';
 import { Services } from './components/Services';
 import { Invoice } from './components/Invoice';
+import { InvoiceDetails } from './components/InvoiceDetails';
 import { Proposal } from './components/Proposal';
 import { Spiffs } from './components/Spiffs';
 import { ActivityLog } from '@kalos-core/kalos-rpc/ActivityLog';
@@ -66,7 +67,7 @@ import Button from '@mui/material/Button';
 import IconButton from '@mui/material/IconButton';
 import HelpOutlineTwoTone from '@material-ui/icons/HelpOutlineTwoTone';
 import Edit from '@material-ui/icons/Edit';
-import Tooltip from '@mui/material/Tooltip';
+import Tooltip, { tooltipClasses, TooltipProps } from '@mui/material/Tooltip';
 import { ServiceItem } from '@kalos-core/kalos-rpc/ServiceItem';
 import { TimesheetDepartment } from '@kalos-core/kalos-rpc/TimesheetDepartment';
 import { ButtonGroup, CircularProgress } from '@mui/material';
@@ -74,6 +75,7 @@ import { ServiceItems } from '../ServiceItems';
 import { ServiceCallReadings } from '../ServiceCallReadings';
 import { QuoteLinePart } from '@kalos-core/kalos-rpc/QuoteLinePart';
 import { Quotable, QuotableRead } from '@kalos-core/kalos-rpc/compiled-protos/event_pb';
+import { styled } from '@mui/material/styles';
 
 
 export interface Props {
@@ -84,6 +86,22 @@ export interface Props {
   onClose?: () => void;
   onSave?: () => void;
 }
+
+const HtmlTooltip = styled(({ className, ...props } : TooltipProps) => (
+  <Tooltip {...props} classes={{ popper: className }} />
+))(({ theme }) => ({
+  [`& .${tooltipClasses.tooltip}`]: {
+    backgroundColor: '#f5f5f9',
+    color: 'rgba(0, 0, 0, 0.87)',
+    maxWidth: window.innerWidth,
+    fontSize: theme.typography.pxToRem(12),
+    border: '3px solid darkgray',
+  },
+  [`& .${tooltipClasses.arrow}`]: {
+    color: 'darkgray',
+    fontSize: 30,
+  },
+}));
 
 export const ServiceCallNew: FC<Props> = props => {
   const {
@@ -115,6 +133,7 @@ export const ServiceCallNew: FC<Props> = props => {
     jobTypeSubtypes: [],
     servicesRendered: [],
     loggedUser: new User(),
+    loggedUserRole: '',
     openModal: false,
     modalType: '',
     showContractInfo: false,
@@ -514,11 +533,11 @@ export const ServiceCallNew: FC<Props> = props => {
                   {`${state.customer.getBusinessname() !== "" ? state.customer.getBusinessname() : state.customer.getFirstname() + " " + state.customer.getLastname()}`}
                 </Typography>
               </div>
-              <Tooltip 
+              <HtmlTooltip 
                 arrow 
                 style={{marginRight:"25%"}}
                 open={state.showCustInfo}
-                placement="bottom" 
+                placement="bottom-start" 
                 title={
                 <InfoTable data={
                   [
@@ -545,7 +564,7 @@ export const ServiceCallNew: FC<Props> = props => {
                 <IconButton onClick={()=>{handleTooltipToggle("custInfo")}}>
                   <HelpOutlineTwoTone style={{fontSize:"medium"}} />
                 </IconButton>
-              </Tooltip>
+              </HtmlTooltip>
             </div>
           </Grid>
           <Grid item xs={6} md={4} style={{margin:"auto"}}>
@@ -559,10 +578,10 @@ export const ServiceCallNew: FC<Props> = props => {
                     {`${state.entry.getContractNumber()}`}
                   </Typography>
                 </div>
-                <Tooltip 
+                <HtmlTooltip 
                   arrow 
                   style={{marginRight:"25%"}}
-                  placement="bottom-start" 
+                  placement="bottom" 
                   open={state.showContractInfo}
                   title={
                   <InfoTable styles={{width:"100%"}} data={
@@ -588,7 +607,7 @@ export const ServiceCallNew: FC<Props> = props => {
                   <IconButton onClick={()=>{handleTooltipToggle("contractInfo")}}>
                     <HelpOutlineTwoTone style={{fontSize:"medium"}} />
                   </IconButton>
-                </Tooltip>
+                </HtmlTooltip>
               </div>
             )}
           </Grid>
@@ -597,7 +616,7 @@ export const ServiceCallNew: FC<Props> = props => {
               <Button
                 sx={{backgroundColor:"#990a26", color:"white", '&:hover': {backgroundColor:'darkred'}}}
                 fullWidth
-                onClick={()=>{updateServiceCallState({type:'setModalType', data: "spiffs"})}}
+                onClick={()=>{updateServiceCallState({type:'setModalType', data: "spiff"})}}
               >
                 View Spiffs
               </Button>
@@ -652,7 +671,6 @@ export const ServiceCallNew: FC<Props> = props => {
                                       departmentList={state.departmentList}
                                       propertyEvents={state.propertyEvents}
                                     />
-                                    {/* <InfoTable data={makeFakeRows(5,8)} loading /> */}
                                   </CardContent>
                                 </Collapse>
                                 <Button style={{width:"100%", height:"30px", display:"block", margin:"auto", backgroundColor:"lightgray"}} onClick={()=>{handleCardOrderUpdate(card.name, index, index, !card.display)}}>
@@ -739,7 +757,6 @@ export const ServiceCallNew: FC<Props> = props => {
                                       onUpdatePayments={handleUpdatePayments}
                                       onUpdateMaterials={handleUpdateMaterialsStringAndCost}
                                     />
-                                    {/* <InfoTable data={makeFakeRows(5,3)} loading /> */}
                                   </CardContent>
                                 </Collapse>
                                 <Button style={{width:"100%", height:"30px", display:"block", margin:"auto", backgroundColor:"lightgray"}} onClick={()=>{handleCardOrderUpdate(card.name, index, index, !card.display)}}>
@@ -767,15 +784,11 @@ export const ServiceCallNew: FC<Props> = props => {
                                 />
                                 <Collapse in={card.display}>
                                   <CardContent>
-                                    <Invoice
-                                      disabled={false}
+                                    <InvoiceDetails
                                       event={state.entry}
-                                      servicesRendered={state.servicesRendered}
                                       paidServices={state.paidServices}
-                                      onInitSchema={()=>{}}
-                                      onChange={()=>{}}
+                                      mobileView={window.screen.width < 900}
                                     />
-                                    {/* <InfoTable data={makeFakeRows(5,4)} loading /> */}
                                   </CardContent>
                                 </Collapse>
                                 <Button style={{width:"100%", height:"30px", display:"block", margin:"auto", backgroundColor:"lightgray"}} onClick={()=>{handleCardOrderUpdate(card.name, index, index, !card.display)}}>
@@ -808,7 +821,6 @@ export const ServiceCallNew: FC<Props> = props => {
                                       property={state.property}
                                       servicesRendered={state.servicesRendered}
                                     />
-                                    {/* <InfoTable data={makeFakeRows(5,4)} loading /> */}
                                   </CardContent>
                                 </Collapse>
                                 <Button style={{width:"100%", height:"100%", display:"block", margin:"auto", backgroundColor:"lightgray"}} onClick={()=>{handleCardOrderUpdate(card.name, index, index, !card.display)}}>
@@ -862,13 +874,17 @@ export const ServiceCallNew: FC<Props> = props => {
           </SectionBar>
         )}
         {state.modalType === "equipment" && (
-          <ServiceItems
-            loggedUserId={loggedUserId}
-            userID={userID}
-            propertyId={state.property.getId()}
-            eventId={state.entry.getId()}
-            refresh={handleEditSserviceItems}
-          />
+          <Grid container sx={{width:{xs: "100%"}}}>
+            <Grid item xs={12}>
+              <ServiceItems
+                loggedUserId={loggedUserId}
+                userID={userID}
+                propertyId={state.property.getId()}
+                eventId={state.entry.getId()}
+                refresh={handleEditSserviceItems}
+              />
+            </Grid>
+          </Grid>
         )}
         {state.modalType === "invoice" && (
           <SectionBar
@@ -881,14 +897,37 @@ export const ServiceCallNew: FC<Props> = props => {
             ]
             }
           >
-            <Invoice
-              disabled={false}
-              event={state.entry}
-              servicesRendered={state.servicesRendered}
-              paidServices={state.paidServices}
-              onInitSchema={handleSetRequestfields}
-              onChange={handleChangeEntry}
-            />
+              <Grid container sx={{width:{xs: "100%"}}}>
+                <Grid item xs={12}>
+                <Invoice
+                disabled={false}
+                event={state.entry}
+                servicesRendered={state.servicesRendered}
+                paidServices={state.paidServices}
+                onInitSchema={handleSetRequestfields}
+                onChange={handleChangeEntry}
+              />    
+              </Grid>
+            </Grid>
+          </SectionBar>
+        )}
+        {state.modalType === "spiff" && (
+          <SectionBar
+            actions={[{label: 'Close', onClick: ()=>{handleCloseModal()}}]}
+            uncollapsable
+          >
+            <Grid container sx={{width:{xs: "100%"}}}>
+              <Grid item xs={12}>
+                <Spiffs
+                  role={state.loggedUserRole}
+                  serviceItem={state.entry}
+                  loggedUserId={loggedUserId}
+                  loggedUserName={UserClientService.getCustomerName(
+                    state.loggedUser!,
+                  )}
+                />
+              </Grid>
+            </Grid>
           </SectionBar>
         )}
       </Modal>
