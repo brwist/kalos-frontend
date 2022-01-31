@@ -152,6 +152,7 @@ export const TransactionTable: FC<Props> = ({
     transactionToEdit: undefined,
     loading: true,
     creatingTransaction: false,
+    duplicateDataParameters: { orderNumber: '', vendor: '' },
     mergingTransaction: false,
     pendingUploadPhoto: undefined,
     pendingSendNotificationForExistingTransaction: undefined,
@@ -634,27 +635,56 @@ export const TransactionTable: FC<Props> = ({
   const handleSetNotify = useCallback((notify: number) => {
     dispatch({ type: ACTIONS.SET_NOTIFY, data: notify });
   }, []);
-  const handleCheckOrderNumber = useCallback(async (orderNumber: string) => {
-    if (orderNumber != '') {
-      const transactionReq = new Transaction();
-      transactionReq.setOrderNumber(orderNumber);
-      transactionReq.setVendorCategory("'PickTicket','Receipt','Invoice'");
-      transactionReq.setIsActive(1);
-      try {
-        const result = await TransactionClientService.Get(transactionReq);
-        if (result) {
-          dispatch({
-            type: ACTIONS.SET_ERROR,
-            data: `This Order Number already exists. You can still create this transaction,
+
+  const handleCheckOrderNumber = useCallback(
+    async (orderNumber: string, vendor: string) => {
+      if (orderNumber != '' && vendor != '') {
+        const transactionReq = new Transaction();
+        transactionReq.setOrderNumber(orderNumber);
+        transactionReq.setVendorCategory("'PickTicket','Receipt','Invoice'");
+        transactionReq.setVendor(vendor);
+        transactionReq.setIsActive(1);
+        try {
+          const result = await TransactionClientService.Get(transactionReq);
+          if (result) {
+            dispatch({
+              type: ACTIONS.SET_ERROR,
+              data: `This Order Number already exists. You can still create this transaction,
         but it may result in duplicate transactions. It is recommended that you
         search for the existing transaction and update it.`,
-          });
+            });
+          }
+        } catch (err) {
+          dispatch({ type: ACTIONS.SET_ERROR, data: undefined });
         }
-      } catch (err) {
-        dispatch({ type: ACTIONS.SET_ERROR, data: undefined });
       }
-    }
-  }, []);
+    },
+    [],
+  );
+
+  const handleSetOrderNumberToCheckDuplicate = useCallback(
+    async (orderNumber: string) => {
+      let temp = state.duplicateDataParameters;
+      dispatch({
+        type: ACTIONS.SET_DUPLICATE_PARAMETERS,
+        data: { orderNumber: orderNumber, vendor: temp.vendor },
+      });
+      handleCheckOrderNumber(orderNumber, temp.vendor);
+    },
+    [state.duplicateDataParameters, handleCheckOrderNumber],
+  );
+  const handleSetVendorToCheckDuplicate = useCallback(
+    async (vendor: string) => {
+      let temp = state.duplicateDataParameters;
+      dispatch({
+        type: ACTIONS.SET_DUPLICATE_PARAMETERS,
+        data: { vendor: vendor, orderNumber: temp.orderNumber },
+      });
+      handleCheckOrderNumber(temp.orderNumber, vendor);
+    },
+    [state.duplicateDataParameters, handleCheckOrderNumber],
+  );
+
   const handleNotifyUserOfExistingTransaction = useCallback(
     async (txn: Transaction) => {
       const foundDepartment = state.departments.find(
@@ -665,7 +695,8 @@ export const TransactionTable: FC<Props> = ({
         console.log(messageToSend);
         const user = new User();
         if (foundDepartment.getId() == 15) {
-          user.setId(103896); //Since ELE has no legit manager ID value that corresponds to a person, we are doing this for now.
+          const duane = 103896;
+          user.setId(duane); //Since ELE has no legit manager ID value that corresponds to a person, we are doing this for now.
         } else {
           user.setId(foundDepartment.getManagerId());
         }
@@ -1771,7 +1802,7 @@ export const TransactionTable: FC<Props> = ({
               {
                 columnName: 'Order #',
                 columnType: 'text',
-                onBlur: value => handleCheckOrderNumber(value),
+                onBlur: value => handleSetOrderNumberToCheckDuplicate(value),
               },
               {
                 columnName: 'Amount',
@@ -1784,6 +1815,11 @@ export const TransactionTable: FC<Props> = ({
               {
                 columnName: 'Notes',
                 columnType: 'text',
+              },
+              {
+                columnName: 'Vendor',
+                columnType: 'text',
+                onBlur: value => handleSetVendorToCheckDuplicate(value),
               },
               {
                 columnName: 'Creator',
