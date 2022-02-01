@@ -152,6 +152,17 @@ export const ServiceCall: FC<Props> = props => {
         req.setId(_serviceCallId);
         const entry = await EventClientService.Get(req);
         updateServiceCallState({ type: 'setEntry', data: entry });
+
+        if (
+          entry &&
+          entry.getCustomer() &&
+          entry.getCustomer()!.getNotification() !== ''
+        ) {
+          updateServiceCallState({
+            type: 'setNotificationViewing',
+            data: true,
+          });
+        }
       }
     },
     [state.serviceCallId],
@@ -199,6 +210,7 @@ export const ServiceCall: FC<Props> = props => {
             let markupAmount = 0;
             const qlReq = new QuoteLinePart();
             qlReq.setId(material.getQuoteLineId());
+            /*
             try {
               const qlResult = await QuoteLinePartClientService.Get(qlReq);
               const tax = qlResult.getTax();
@@ -215,6 +227,7 @@ export const ServiceCall: FC<Props> = props => {
             } catch (err) {
               console.log('did not find quote line entry');
             }
+            */
             totalCost += cost + markupAmount + taxAmount;
             serviceRenderedMaterialString += tempStringSecondPart;
           }
@@ -426,7 +439,16 @@ export const ServiceCall: FC<Props> = props => {
           contract: contractData,
         },
       });
-
+      if (
+        entry &&
+        entry.getCustomer() &&
+        entry.getCustomer()!.getNotification() !== ''
+      ) {
+        updateServiceCallState({
+          type: 'setNotificationViewing',
+          data: true,
+        });
+      }
       console.log('All Processes are Loaded');
     } catch (err) {
       updateServiceCallState({
@@ -713,17 +735,12 @@ export const ServiceCall: FC<Props> = props => {
   // );
 
   useEffect(() => {
+    console.log('in use effect');
     if (eventId !== 0 && true)
       if (!state.loaded) {
         load();
       }
-    if (
-      state.entry &&
-      state.entry.getCustomer() &&
-      state.entry.getCustomer()!.getNotification() !== ''
-    ) {
-      updateServiceCallState({ type: 'setNotificationViewing', data: true });
-    }
+
     if (state.pendingSave && state.requestValid) {
       updateServiceCallState({ type: 'setPendingSave', data: false });
       saveServiceCall();
@@ -774,11 +791,13 @@ export const ServiceCall: FC<Props> = props => {
   );
 
   const handleSetNotificationViewing = useCallback(
-    (notificationViewing: boolean) => () =>
+    (notificationViewing: boolean) => () => {
+      console.log('hello');
       updateServiceCallState({
         type: 'setNotificationViewing',
         data: notificationViewing,
-      }),
+      });
+    },
     [],
   );
 

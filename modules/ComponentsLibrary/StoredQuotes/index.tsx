@@ -11,7 +11,7 @@ import {
   StoredQuoteClient,
   StoredQuote,
 } from '@kalos-core/kalos-rpc/StoredQuote';
-import { makeFakeRows, usd } from '../../../helpers';
+import { makeFakeRows, makeSafeFormObject, usd } from '../../../helpers';
 import { ENDPOINT } from '../../../constants';
 
 const StoredQuoteClientService = new StoredQuoteClient(ENDPOINT);
@@ -90,15 +90,23 @@ export const StoredQuotes: FC<Props> = ({
   const handleSave = useCallback(
     async (quote: StoredQuote) => {
       setSaving(true);
-      const isNew = quote.getId() === 0;
+      const safeQuote = makeSafeFormObject(quote, new StoredQuote());
+      const isNew = safeQuote.getId().toString() === '';
       const req = new StoredQuote();
+      console.log('safe data', safeQuote);
       if (!isNew) {
-        req.setId(quote.getId());
+        req.setId(safeQuote.getId());
       }
-      req.setDescription(quote.getDescription());
-      req.setPrice(quote.getPrice());
+      req.setDescription(safeQuote.getDescription());
+      req.setPrice(safeQuote.getPrice());
       req.setFieldMaskList(['Description', 'Price']);
-      await StoredQuoteClientService[isNew ? 'Create' : 'Update'](req);
+      if (isNew) {
+        console.log('create quote');
+        await StoredQuoteClientService.Create(req);
+      } else {
+        console.log('update quote');
+        StoredQuoteClientService.Update(req);
+      }
       await load();
       setSaving(false);
       setEditing(undefined);

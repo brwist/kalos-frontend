@@ -29,6 +29,7 @@ import {
   usd,
   FileClientService,
   uploadFileToS3Bucket,
+  DocumentClientService,
 } from '../../../../helpers';
 import { ENDPOINT } from '@kalos-core/kalos-rpc/constants';
 import { EmailClient } from '@kalos-core/kalos-rpc/Email';
@@ -321,6 +322,7 @@ export const Proposal: FC<Props> = ({
       document.setPropertyId(property.getId());
       document.setDateCreated(document.getDateCreated());
       document.setUserId(customer.getId());
+      await DocumentClientService.Create(document);
     }
     const email = new SQSEmail();
     email.setBody(emailTemplate);

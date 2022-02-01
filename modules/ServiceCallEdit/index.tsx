@@ -12,7 +12,7 @@ u.GetToken('test', 'test').then(() => {
       serviceCallId={86246}
       userID={2573}
       propertyId={6552}
-      loggedUserId={213}
+      loggedUserId={1550}
       withHeader
     />,
     document.getElementById('root'),
