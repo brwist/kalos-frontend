@@ -61,19 +61,7 @@ export const Invoice: FC<Props> = ({
   const [emailData, setEmailData] = useState<SQSEmailAndDocument>(
     new SQSEmailAndDocument(),
   );
-  /*
-- [ ] standard invoice header (copy paste whatever)
-    - [ ] Property Address, Billing Address, JobNumber and Billing Date
-        - [ ] Services Rendered from each Row and Cost
-        - [ ] Materials breakdown and Cost
-        - [ ] Service items
-        - [ ] Discount amount
-        - [ ] Tax Due
-        - [ ] Grand Total
-    - [ ] Selected Property Service Items
-        - [ ] Readings
-        - [ ] Materials
-*/
+
   const data = transformData(event);
   const handleChange = useCallback(
     (data: Event) =>
