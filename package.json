@@ -159,6 +159,9 @@
     "build/dist",
     "index.js"
   ],
+  "browserslist": [
+    "since 2017-06"
+  ],
   "prettier": {
     "printWidth": 80,
     "semi": true,
