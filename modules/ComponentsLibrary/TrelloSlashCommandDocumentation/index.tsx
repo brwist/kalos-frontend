@@ -11,6 +11,61 @@ import { reducer, ACTIONS } from './reducer';
 import { Devlog } from '@kalos-core/kalos-rpc/Devlog';
 import { DevlogClientService } from '../../../helpers';
 import { format } from 'date-fns';
+import { SectionBar } from '../SectionBar';
+import { Loader } from '../../Loader/main';
+
+type TempArguments = {
+  name: string;
+  description: string;
+  optional: boolean;
+  isString: boolean;
+  acceptedValues?: string[];
+};
+
+type TempCommand = {
+  name: string;
+  description: string;
+  endpoint: string;
+  arguments: TempArguments[];
+};
+
+const TEMP_COMMANDS: TempCommand[] = [
+  {
+    name: 'help',
+    description:
+      'Shows a list of all available commands for the bot. Command name is optional.',
+    endpoint: 'https://dev-core.kalosflorida.com',
+    arguments: [
+      {
+        name: 'Command Name',
+        description: 'The name of the command which you need help with.',
+        optional: true,
+        isString: true,
+      },
+    ],
+  },
+  {
+    name: 'board',
+    description:
+      'Interacts with the Kalos Trello boards (Board name is not case sensitive).',
+    endpoint: 'https://dev-core.kalosflorida.com',
+    arguments: [
+      {
+        name: 'Request Type',
+        description: 'How the board will be interacted with.',
+        optional: false,
+        isString: true,
+        acceptedValues: ['get', 'create', 'update', 'delete'],
+      },
+      {
+        name: 'Board Name',
+        description: 'The name of the board to interact with.',
+        optional: false,
+        isString: true,
+      },
+    ],
+  },
+];
 
 // add any prop types here
 interface props {
@@ -23,11 +78,13 @@ export const TrelloSlashCommandDocumentation: FC<props> = ({
   const [state, dispatch] = useReducer(reducer, {
     isLoaded: false,
     error: undefined,
+    commands: undefined,
   });
 
   const loadCommands = useCallback(async () => {
     // TODO load commands here
-  }, [])
+    dispatch({ type: ACTIONS.SET_COMMANDS, data: TEMP_COMMANDS });
+  }, []);
 
   const load = useCallback(async () => {
     await loadCommands();
@@ -35,8 +92,7 @@ export const TrelloSlashCommandDocumentation: FC<props> = ({
     dispatch({ type: ACTIONS.SET_LOADED, data: true });
   }, [loadCommands]);
 
-  const cleanup = useCallback(() => {
-  }, []);
+  const cleanup = useCallback(() => {}, []);
 
   const handleError = useCallback(
     async (errorToSet: string) => {
@@ -72,7 +128,19 @@ export const TrelloSlashCommandDocumentation: FC<props> = ({
     ! Should be able to get all commands in a request to Core and that should return 
     ! a typed array of objects 
   */
-  return <>
-  
-  </>;
+
+  console.log(state.commands);
+  return (
+    <>
+      {!state.isLoaded ? (
+        <Loader />
+      ) : (
+        state.commands.map((command: TempCommand) => (
+          <SectionBar key={`command-${command.name}`} title={command.name}>
+            {command.name}
+          </SectionBar>
+        ))
+      )}
+    </>
+  );
 };
