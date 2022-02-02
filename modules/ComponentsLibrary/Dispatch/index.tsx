@@ -246,7 +246,7 @@ export const DispatchDashboard: React.FC<Props> = function DispatchDashboard({
     if (!skipRefresh) resetModal(true, false);
   }, [disableSlack, handleNotification, loggedUserId, testUserId])
 
-  const getTimeOffTechnicians = useCallback( async() => {
+  const getTimeOffEmployees = useCallback( async() => {
     const errorMessage = "- Unable to Retrieve Time Off List.";
     const off = new TimeoffRequest();
     const offRequestTimeStarted = format(setHours(setMinutes(setSeconds(new Date(), 0), 0), 0), "yyyy-MM-dd HH::mm::ss");
@@ -288,14 +288,13 @@ export const DispatchDashboard: React.FC<Props> = function DispatchDashboard({
     off.setDateTargetList(["time_finished", "time_started"]);
     off.setDepartmentIdList(state.formData.departmentIds.toString());
     try {      
-      const offTechs = await getTimeOffTechnicians();
-      const timeoffList = offTechs.timeOff;
+      const offEmployees = await getTimeOffEmployees();
       const techs = await DispatchClientService.GetDispatchableTechnicians(tech);
       const techList = techs.getResultsList().map(tech=>tech.getUserId());
-      const offTechnicians = offTechs.timeOff.filter(tech => techList.includes(tech.getUserId()));
+      const offTechs = offEmployees.timeOff.filter(tech => techList.includes(tech.getUserId()));
       let requestedOffTechs : DispatchableTech[] = [];
       let requestOffData : {tech: DispatchableTech, start: string, end: string}[] = [];
-      offTechnicians.forEach(req => {
+      offTechs.forEach(req => {
         const tech = techs.getResultsList().find(tech => tech.getUserId() === req.getUserId())!;
         requestOffData = requestOffData.concat({tech: tech, start: req.getTimeStarted(), end: req.getTimeFinished()});
         if (format(new Date(), `yyyy-MM-dd HH:mm:ss`) >= req.getTimeStarted() && format(new Date(), `yyyy-MM-dd HH:mm:ss`) <= req.getTimeFinished()) {
@@ -323,7 +322,7 @@ export const DispatchDashboard: React.FC<Props> = function DispatchDashboard({
       );
       return {available: [], dismissed: [], off: [], offData: []};
     }
-  }, [state.formData.departmentIds, state.defaultDepartmentIds, handleNotification, checkErrors, getTimeOffTechnicians, handleDismissTech, handleUndismissTech]);
+  }, [state.formData.departmentIds, state.defaultDepartmentIds, handleNotification, checkErrors, getTimeOffEmployees, handleDismissTech, handleUndismissTech]);
 
   const getCalls = useCallback( async () => {
     const call = new DispatchCall();
