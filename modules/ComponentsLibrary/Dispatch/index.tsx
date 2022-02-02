@@ -291,9 +291,11 @@ export const DispatchDashboard: React.FC<Props> = function DispatchDashboard({
       const offTechs = await getTimeOffTechnicians();
       const timeoffList = offTechs.timeOff;
       const techs = await DispatchClientService.GetDispatchableTechnicians(tech);
+      const techList = techs.getResultsList().map(tech=>tech.getUserId());
+      const offTechnicians = offTechs.timeOff.filter(tech => techList.includes(tech.getUserId()));
       let requestedOffTechs : DispatchableTech[] = [];
       let requestOffData : {tech: DispatchableTech, start: string, end: string}[] = [];
-      timeoffList.forEach(req => {
+      offTechnicians.forEach(req => {
         const tech = techs.getResultsList().find(tech => tech.getUserId() === req.getUserId())!;
         requestOffData = requestOffData.concat({tech: tech, start: req.getTimeStarted(), end: req.getTimeFinished()});
         if (format(new Date(), `yyyy-MM-dd HH:mm:ss`) >= req.getTimeStarted() && format(new Date(), `yyyy-MM-dd HH:mm:ss`) <= req.getTimeFinished()) {
