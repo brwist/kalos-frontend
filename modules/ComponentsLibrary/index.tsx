@@ -103,6 +103,7 @@ import TimeoffSummaryReport from './TimeoffSummaryReport/examples';
 import Timesheet from './Timesheet/examples';
 import Tooltip from './Tooltip/examples';
 import TransactionTable from './TransactionTable/examples';
+import TrelloSlashCommandDocumentation from './TrelloSlashCommandDocumentation/examples';
 import TripInfoTable from './TripInfoTable/examples';
 import TripSummary from './TripSummary/examples';
 import TripSummaryNew from './TripSummaryNew/examples';
@@ -220,6 +221,7 @@ const COMPONENTS = {
   Timesheet,
   Tooltip,
   TransactionTable,
+  TrelloSlashCommandDocumentation,
   TripInfoTable,
   TripSummary,
   TripSummaryNew,
