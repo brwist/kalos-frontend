@@ -316,9 +316,9 @@ export const DispatchDashboard: React.FC<Props> = function DispatchDashboard({
       return {available: availableTechs, dismissed: dismissedTechs, off: requestedOffTechs, offData: requestOffData};
     } catch (err) {
       handleNotification(errorMessage, "error", true);
-      // console.error(
-      //   `An error occurred while getting Dispatch Techs: ${err}`
-      // );
+      console.error(
+        `An error occurred while getting Dispatch Techs: ${err}`
+      );
       return {available: [], dismissed: [], off: [], offData: []};
     }
   }, [state.formData.departmentIds, state.defaultDepartmentIds, handleNotification, checkErrors, getTimeOffTechnicians, handleDismissTech, handleUndismissTech]);
