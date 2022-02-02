@@ -127,6 +127,7 @@ export const Proposal: FC<Props> = ({
   const customerName = `${customer?.getFirstname()} ${customer?.getLastname()}`;
   const [fileData, setFileData] = useState<Uint8Array>();
   const [generateFile, setGenerateFile] = useState<boolean>(false);
+  const [saving, setSaving] = useState<boolean>(false);
   const [form, setForm] = useState<Form>({
     displayName: customerName,
     withJobNotes: 0,
@@ -268,6 +269,7 @@ export const Proposal: FC<Props> = ({
   );
   const handleSendToCustomer = useCallback(async () => {
     //first, let's add or update the quote line records
+    setSaving(true);
     for (let i = 0; i < table.length; i++) {
       let item = table[i];
       let found = loadedQuotes.find(loaded => loaded.getId() === item.getId());
@@ -331,6 +333,7 @@ export const Proposal: FC<Props> = ({
     const emailClient = new EmailClient(ENDPOINT);
     await emailClient.SendSQSMail(email);
     handleToggleGenerateFile();
+    setSaving(false);
     if (reload) {
       reload();
     }
@@ -456,6 +459,7 @@ export const Proposal: FC<Props> = ({
       />
       <PlainForm schema={SCHEMA} data={form} onChange={setForm} />
       <InfoTable columns={COLUMNS} data={data} />
+
       <SectionBar
         actions={[
           {
@@ -482,14 +486,17 @@ export const Proposal: FC<Props> = ({
       {preview && (
         <Modal open onClose={handleSetPreview(false)}>
           <SectionBar
+            loading={saving == true}
             title="Please Review Your Proposal Carefully"
             actions={[
               {
-                label: 'Send To Customer',
+                label: saving ? 'Sending' : 'Send To Customer',
+                disabled: saving,
                 onClick: handleGenerateProposalAndSendToCustomer,
               },
               {
                 label: 'Cancel',
+                disabled: saving,
                 onClick: handleSetPreview(false),
 
                 variant: 'outlined',
