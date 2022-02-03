@@ -49,7 +49,7 @@ export type FilterData = {
   rejected?: boolean;
   amount?: number;
   billingRecorded: boolean;
-  processed: boolean;
+  processed?: boolean;
   universalSearch: string | undefined;
 };
 

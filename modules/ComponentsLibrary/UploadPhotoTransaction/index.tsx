@@ -216,10 +216,10 @@ export const UploadPhotoTransaction: FC<Props> = ({
   );
   const handleCheckOrderNumber = useCallback(
     async (orderNumber: string, vendor: string) => {
-      if (orderNumber != '' && vendor != '') {
+      if (orderNumber != '' /*&& vendor != ''*/) {
         const transactionReq = new Transaction();
         transactionReq.setOrderNumber(orderNumber);
-        transactionReq.setVendor(vendor);
+        //transactionReq.setVendor(vendor);
         transactionReq.setVendorCategory("'PickTicket','Receipt','Invoice'");
         transactionReq.setIsActive(1);
         try {
@@ -332,7 +332,7 @@ export const UploadPhotoTransaction: FC<Props> = ({
         name: 'vendor',
         label: 'Vendor',
         required: true,
-        onBlur: handleSetVendorToCheckDuplicate,
+        // onBlur: handleSetVendorToCheckDuplicate,
       },
       {
         name: 'costCenter',

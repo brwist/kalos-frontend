@@ -16,7 +16,7 @@ export interface FilterType {
   amount: number | undefined;
   billingRecorded: boolean;
   universalSearch: string | undefined;
-  processed: boolean;
+  processed: boolean | undefined;
 }
 
 type SelectorParams = {
@@ -69,7 +69,7 @@ export type State = {
   notify: number;
   assignedEmployee: number | undefined;
   selectedTransactions: Transaction[];
-  status: 'Accepted' | 'Rejected' | 'Accepted / Rejected';
+  status: 'Accepted' | 'Rejected' | 'Pending' | 'Processed';
   departments: TimesheetDepartment[];
   universalSearch: string | undefined;
   fileData: any | undefined;
@@ -170,7 +170,7 @@ export type Action =
   | { type: ACTIONS.SET_ERROR; data: string | undefined }
   | {
       type: ACTIONS.SET_STATUS;
-      data: 'Accepted' | 'Rejected' | 'Accepted / Rejected';
+      data: 'Accepted' | 'Rejected' | 'Pending' | 'Processed';
     }
   | { type: ACTIONS.SET_DEPARTMENTS; data: TimesheetDepartment[] }
   | { type: ACTIONS.SET_SELECTED_TRANSACTIONS; data: Transaction[] }

@@ -86,6 +86,7 @@ import { getMimeType } from '@kalos-core/kalos-rpc/Common';
 import { pdf } from '@react-pdf/renderer';
 import { NULL_TIME_VALUE } from '../Timesheet/constants';
 import NotificationsActiveIcon from '@material-ui/icons/NotificationsActive';
+import { te } from 'date-fns/locale';
 export interface Props {
   loggedUserId: number;
   isSelector?: boolean; // Is this a selector table (checkboxes that return in on-change)?
@@ -170,7 +171,7 @@ export const TransactionTable: FC<Props> = ({
     error: undefined,
     loaded: false,
     changingPage: false,
-    status: 'Accepted / Rejected',
+    status: 'Pending',
     universalSearch: undefined,
     searching: false,
     fileData: undefined,
@@ -319,12 +320,15 @@ export const TransactionTable: FC<Props> = ({
     req.setVendorCategory("'PickTicket','Receipt','Invoice'");
     if (state.transactionFilter.isAccepted) {
       req.setStatusId(3);
-    }
-    if (state.transactionFilter.isRejected) {
+      req.setIsBillingRecorded(true);
+    } else if (state.transactionFilter.isRejected) {
       req.setStatusId(4);
-    }
-    if (state.transactionFilter.processed) {
+      req.setIsBillingRecorded(true);
+    } else if (state.transactionFilter.processed) {
       req.setStatusId(5);
+      req.setIsBillingRecorded(true);
+    } else {
+      req.setIsBillingRecorded(false);
     }
     if (state.transactionFilter.jobNumber)
       req.setJobId(state.transactionFilter.jobNumber);
@@ -334,7 +338,6 @@ export const TransactionTable: FC<Props> = ({
       req.setOwnerId(state.transactionFilter.employeeId);
     if (state.transactionFilter.amount)
       req.setAmount(state.transactionFilter.amount);
-    req.setIsBillingRecorded(state.transactionFilter.billingRecorded);
     req.setFieldMaskList(['IsBillingRecorded']);
     let res: TransactionList | null = null;
     if (state.transactionFilter.universalSearch) {
@@ -637,12 +640,12 @@ export const TransactionTable: FC<Props> = ({
   }, []);
 
   const handleCheckOrderNumber = useCallback(
-    async (orderNumber: string, vendor: string) => {
-      if (orderNumber != '' && vendor != '') {
+    async (orderNumber: string /*vendor: string*/) => {
+      if (orderNumber != '' /*&& vendor != ''*/) {
         const transactionReq = new Transaction();
         transactionReq.setOrderNumber(orderNumber);
         transactionReq.setVendorCategory("'PickTicket','Receipt','Invoice'");
-        transactionReq.setVendor(vendor);
+        //transactionReq.setVendor(vendor);
         transactionReq.setIsActive(1);
         try {
           const result = await TransactionClientService.Get(transactionReq);
@@ -669,7 +672,8 @@ export const TransactionTable: FC<Props> = ({
         type: ACTIONS.SET_DUPLICATE_PARAMETERS,
         data: { orderNumber: orderNumber, vendor: temp.vendor },
       });
-      handleCheckOrderNumber(orderNumber, temp.vendor);
+      //handleCheckOrderNumber(orderNumber, temp.vendor);
+      handleCheckOrderNumber(orderNumber);
     },
     [state.duplicateDataParameters, handleCheckOrderNumber],
   );
@@ -686,7 +690,8 @@ export const TransactionTable: FC<Props> = ({
         type: ACTIONS.SET_DUPLICATE_PARAMETERS,
         data: { vendor: vendor, orderNumber: temp.orderNumber },
       });
-      handleCheckOrderNumber(temp.orderNumber, vendor);
+      //  handleCheckOrderNumber(temp.orderNumber, vendor);
+      handleCheckOrderNumber(temp.orderNumber);
     },
     [state.duplicateDataParameters, handleCheckOrderNumber],
   );
@@ -905,22 +910,44 @@ export const TransactionTable: FC<Props> = ({
     },
     [],
   );
-
+  const handleStatus = (option: string) => {
+    switch (option) {
+      case 'Pending':
+        return 0;
+      case 'Accepted':
+        return 1;
+      case 'Rejected':
+        return 2;
+      case 'Processed':
+        return 3;
+      default:
+        return 0;
+    }
+  };
   const handleSetFilterAcceptedRejected = useCallback(
-    (option: 'Accepted' | 'Rejected' | 'Accepted / Rejected') => {
+    (option: 'Accepted' | 'Rejected' | 'Pending' | 'Processed') => {
       let tempFilter = state.transactionFilter;
       dispatch({ type: ACTIONS.SET_STATUS, data: option });
       switch (option) {
         case 'Accepted':
           tempFilter.isAccepted = true;
+          tempFilter.isRejected = undefined;
+          tempFilter.processed = undefined;
           break;
         case 'Rejected':
           tempFilter.isRejected = true;
+          tempFilter.isAccepted = undefined;
+          tempFilter.processed = undefined;
           break;
-        case 'Accepted / Rejected':
+        case 'Pending':
           tempFilter.isAccepted = undefined;
           tempFilter.isRejected = undefined;
-
+          tempFilter.processed = undefined;
+          break;
+        case 'Processed':
+          tempFilter.processed = true;
+          tempFilter.isAccepted = undefined;
+          tempFilter.isRejected = undefined;
           break;
         default:
           console.error(
@@ -929,6 +956,7 @@ export const TransactionTable: FC<Props> = ({
           break;
       }
       dispatch({ type: ACTIONS.SET_TRANSACTION_FILTER, data: tempFilter });
+      dispatch({ type: ACTIONS.SET_SEARCHING, data: true });
     },
     [state.transactionFilter],
   );
@@ -1073,32 +1101,16 @@ export const TransactionTable: FC<Props> = ({
             })),
         ],
       },
-      {
-        name: 'billingRecorded',
-        label: 'Was Approved/Rejected?',
-        type: 'checkbox',
-      },
-      {
-        name: 'processed',
-        label: 'Was Processed?',
-        type: 'checkbox',
-      },
     ],
     [
       {
         content: (
           <StatusPicker
             key={state.status}
-            options={['Accepted / Rejected', 'Accepted', 'Rejected']}
-            selected={
-              state.status == 'Accepted / Rejected'
-                ? 0
-                : state.status == 'Accepted'
-                ? 1
-                : 2
-            }
+            options={['Pending', 'Accepted', 'Rejected', 'Processed']}
+            selected={handleStatus(state.status)}
             onSelect={(
-              selected: 'Accepted' | 'Rejected' | 'Accepted / Rejected',
+              selected: 'Accepted' | 'Rejected' | 'Pending' | 'Processed',
             ) => {
               handleSetFilterAcceptedRejected(selected);
             }}
@@ -1834,7 +1846,7 @@ export const TransactionTable: FC<Props> = ({
               {
                 columnName: 'Vendor',
                 columnType: 'text',
-                onBlur: value => handleSetVendorToCheckDuplicate(value),
+                //onBlur: value => handleSetVendorToCheckDuplicate(value),
               },
               {
                 columnName: 'Creator',
