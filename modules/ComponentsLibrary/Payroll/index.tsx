@@ -94,7 +94,6 @@ export const Payroll: FC<Props> = ({ userID }) => {
   const [role, setRole] = useState<RoleType>('');
   const [employees, setEmployees] = useState<User[]>([]);
   const [loadedPerDiemIds, setLoadedPerDiemIds] = useState<number[]>([]);
-  const [viewReport, setViewReport] = useState<boolean>(false);
   const weekOptions = useMemo(
     () => [
       { label: OPTION_ALL, value: OPTION_ALL },
