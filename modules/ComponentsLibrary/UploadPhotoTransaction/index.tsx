@@ -65,6 +65,8 @@ export const UploadPhotoTransaction: FC<Props> = ({
   const [saved, setSaved] = useState<boolean>(false);
   const [error, setError] = useState<boolean>(false);
   const [stringError, setStringError] = useState<string | undefined>();
+  const [orderNumberCheck, setOrdeNumberCheck] = useState<string>('');
+  const [vendorCheck, setVendorCheck] = useState<string>('');
 
   const [validateJobNumber, setValidateJobNumber] = useState<Entry | undefined>(
     undefined,
@@ -212,25 +214,48 @@ export const UploadPhotoTransaction: FC<Props> = ({
     (validate: Entry | undefined) => setValidateJobNumber(validate),
     [setValidateJobNumber],
   );
-  const handleCheckOrderNumber = useCallback(async (orderNumber: string) => {
-    if (orderNumber != '') {
-      const transactionReq = new Transaction();
-      transactionReq.setOrderNumber(orderNumber);
-      transactionReq.setVendorCategory("'PickTicket','Receipt','Invoice'");
-      transactionReq.setIsActive(1);
-      try {
-        const result = await TransactionClientService.Get(transactionReq);
-        if (result) {
-          setStringError(
-            `This Order Number already exists. You can still create this transaction,
+  const handleCheckOrderNumber = useCallback(
+    async (orderNumber: string, vendor: string) => {
+      if (orderNumber != '' && vendor != '') {
+        const transactionReq = new Transaction();
+        transactionReq.setOrderNumber(orderNumber);
+        transactionReq.setVendor(vendor);
+        transactionReq.setVendorCategory("'PickTicket','Receipt','Invoice'");
+        transactionReq.setIsActive(1);
+        try {
+          const result = await TransactionClientService.Get(transactionReq);
+          if (result) {
+            setStringError(
+              `This Order Number already exists. You can still create this transaction,
         but it may result in duplicate transactions. It is recommended that you
         search for the existing transaction and update it.`,
-          );
+            );
+          }
+        } catch (err) {
+          setStringError(undefined);
         }
-      } catch (err) {
-        setStringError(undefined);
       }
-    }
+    },
+    [],
+  );
+
+  const handleSetOrderNumberToCheckDuplicate = useCallback(
+    async (orderNumber: string) => {
+      setOrdeNumberCheck(orderNumber);
+      handleCheckOrderNumber(orderNumber, vendorCheck);
+    },
+    [vendorCheck, handleCheckOrderNumber],
+  );
+  const handleSetVendorToCheckDuplicate = useCallback(
+    async (vendor: string) => {
+      setVendorCheck(vendor);
+      handleCheckOrderNumber(orderNumberCheck, vendor);
+    },
+    [orderNumberCheck, handleCheckOrderNumber],
+  );
+  const handleResetDuplicateCheck = useCallback(async () => {
+    setVendorCheck('');
+    setOrdeNumberCheck('');
   }, []);
   const handleValidate = useCallback(
     (entry: Entry) => {
@@ -273,7 +298,7 @@ export const UploadPhotoTransaction: FC<Props> = ({
         name: 'orderNumber',
         label: 'Order #',
         required: true,
-        onBlur: handleCheckOrderNumber,
+        onBlur: handleSetOrderNumberToCheckDuplicate,
       },
       {
         name: 'invoiceNumber',
@@ -306,8 +331,8 @@ export const UploadPhotoTransaction: FC<Props> = ({
       {
         name: 'vendor',
         label: 'Vendor',
-        type: 'string',
         required: true,
+        onBlur: handleSetVendorToCheckDuplicate,
       },
       {
         name: 'costCenter',

@@ -673,6 +673,12 @@ export const TransactionTable: FC<Props> = ({
     },
     [state.duplicateDataParameters, handleCheckOrderNumber],
   );
+  const handleResetDuplicateCheck = useCallback(async () => {
+    dispatch({
+      type: ACTIONS.SET_DUPLICATE_PARAMETERS,
+      data: { orderNumber: '', vendor: '' },
+    });
+  }, []);
   const handleSetVendorToCheckDuplicate = useCallback(
     async (vendor: string) => {
       let temp = state.duplicateDataParameters;
@@ -1121,6 +1127,7 @@ export const TransactionTable: FC<Props> = ({
 
   const saveFromRowButton = useCallback(
     async (saved: any) => {
+      handleResetDuplicateCheck();
       let newTxn = new Transaction();
       newTxn.setTimestamp(saved['Date']);
       let newtimestamp = newTxn.getTimestamp();
@@ -1224,7 +1231,14 @@ export const TransactionTable: FC<Props> = ({
       refresh();
       return res;
     },
-    [loggedUserId, resetTransactions, state.departments, state.notify, refresh],
+    [
+      loggedUserId,
+      handleResetDuplicateCheck,
+      resetTransactions,
+      state.departments,
+      state.notify,
+      refresh,
+    ],
   );
 
   const deleteTransaction = useCallback(async () => {
@@ -1687,6 +1701,7 @@ export const TransactionTable: FC<Props> = ({
                 {
                   label: 'New Transaction',
                   onClick: () => {
+                    handleResetDuplicateCheck();
                     dispatch({
                       type: ACTIONS.SET_CREATING_TRANSACTION,
                       data: !state.creatingTransaction,
