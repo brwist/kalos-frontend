@@ -13,12 +13,14 @@ import { DevlogClientService } from '../../../helpers';
 import { format } from 'date-fns';
 import { SectionBar } from '../SectionBar';
 import { Loader } from '../../Loader/main';
+import Typography from '@material-ui/core/Typography';
+import { Box } from '@material-ui/core';
 
 type TempArguments = {
   name: string;
   description: string;
-  optional: boolean;
-  isString: boolean;
+  isOptional: boolean;
+  isQuoted: boolean;
   acceptedValues?: string[];
 };
 
@@ -39,8 +41,8 @@ const TEMP_COMMANDS: TempCommand[] = [
       {
         name: 'Command Name',
         description: 'The name of the command which you need help with.',
-        optional: true,
-        isString: true,
+        isOptional: true,
+        isQuoted: true,
       },
     ],
   },
@@ -53,15 +55,15 @@ const TEMP_COMMANDS: TempCommand[] = [
       {
         name: 'Request Type',
         description: 'How the board will be interacted with.',
-        optional: false,
-        isString: true,
+        isOptional: false,
+        isQuoted: false,
         acceptedValues: ['get', 'create', 'update', 'delete'],
       },
       {
         name: 'Board Name',
         description: 'The name of the board to interact with.',
-        optional: false,
-        isString: true,
+        isOptional: false,
+        isQuoted: true,
       },
     ],
   },
@@ -116,6 +118,9 @@ export const TrelloSlashCommandDocumentation: FC<props> = ({
     [loggedUserId],
   );
 
+  const convertToTypedArgument = useCallback((argument: TempArguments) => {},
+  []);
+
   useEffect(() => {
     if (!state.isLoaded) load();
 
@@ -137,7 +142,29 @@ export const TrelloSlashCommandDocumentation: FC<props> = ({
       ) : (
         state.commands.map((command: TempCommand) => (
           <SectionBar key={`command-${command.name}`} title={command.name}>
-            {command.name}
+            <Typography variant="body1">{command.description}</Typography>
+            <Box sx={{ display: 'inline' }} component="div">
+              <code
+                style={{
+                  backgroundColor: 'lightgrey',
+                  borderRadius: '3px',
+                }}
+              >
+                {`/${command.name}${command.arguments
+                  .map((arg: TempArguments) => {
+                    const valueToShow = arg.acceptedValues
+                      ? arg.acceptedValues.join('|')
+                      : arg.name;
+                    console.log(`${arg.name}: ${valueToShow}`);
+                    if (arg.isQuoted && arg.isOptional)
+                      return ` <"${valueToShow}">`;
+                    if (arg.isQuoted) return ` "${valueToShow}"`;
+                    if (arg.isOptional) return ` <${valueToShow}>`;
+                    return ` ${valueToShow}`;
+                  })
+                  .join('')}`}
+              </code>
+            </Box>
           </SectionBar>
         ))
       )}
