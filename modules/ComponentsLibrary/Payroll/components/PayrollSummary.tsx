@@ -73,7 +73,9 @@ export const PayrollSummary: FC<Props> = ({
     const salariedIds = await UserClientService.GetUserIdsInPermissionGroup(41);
     const salariedUsers = (
       await UserClientService.loadUsersByIds(salariedIds, true)
-    ).getResultsList();
+    )
+      .getResultsList()
+      .filter(user => user.getIsActive() == 1);
 
     const getFullTimesheets = createTimesheetFetchFunction(filter);
     const fullResult = (await getFullTimesheets()).getResultsList();

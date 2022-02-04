@@ -124,7 +124,7 @@ export const InfoTable = ({
     });
   }
 
-  // console.log('adding row: ', state.isAddingRow);
+  //console.log('adding row: ', state.isAddingRow);
   return (
     <div
       className={clsx('InfoTable', className)}
@@ -156,6 +156,16 @@ export const InfoTable = ({
                 dispatch({
                   type: ACTIONS.SET_IS_ADDING_ROW,
                   payload: true,
+                });
+              }
+              if (
+                rowButton?.externalButton &&
+                rowButton?.externalButtonClicked == false &&
+                state.isAddingRow
+              ) {
+                dispatch({
+                  type: ACTIONS.SET_IS_ADDING_ROW,
+                  payload: false,
                 });
               }
               if (
@@ -276,7 +286,7 @@ export const InfoTable = ({
             ],
             [
               {
-                label: "",
+                label: '',
                 actions: [
                   {
                     label: 'Create',
