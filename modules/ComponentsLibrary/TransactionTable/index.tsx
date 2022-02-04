@@ -310,6 +310,8 @@ export const TransactionTable: FC<Props> = ({
   };
   const resetTransactions = useCallback(async () => {
     let req = new Transaction();
+    dispatch({ type: ACTIONS.SET_LOADING, data: true });
+
     req.setOrderBy(state.orderBy ? state.orderBy : 'timestamp');
     req.setOrderDir(
       state.orderDir ? state.orderDir : state.orderDir == ' ' ? 'DESC' : 'DESC',
@@ -454,12 +456,12 @@ export const TransactionTable: FC<Props> = ({
     });
     const temp = transactions.map(txn => txn);
     dispatch({ type: ACTIONS.SET_TRANSACTIONS, data: temp });
+    dispatch({ type: ACTIONS.SET_LOADING, data: false });
   }, [
     loggedUserId,
     state.page,
     state.totalTransactions,
     state.transactionFilter.amount,
-    state.transactionFilter.billingRecorded,
     state.transactionFilter.departmentId,
     state.transactionFilter.employeeId,
     state.transactionFilter.isAccepted,
@@ -546,10 +548,7 @@ export const TransactionTable: FC<Props> = ({
       }
     }
 
-    dispatch({ type: ACTIONS.SET_CHANGING_PAGE, data: false });
-
     dispatch({ type: ACTIONS.SET_LOADING, data: false });
-    dispatch({ type: ACTIONS.SET_LOADED, data: true });
   }, [loggedUserId]);
 
   const makeUpdateStatus = async (
@@ -956,7 +955,6 @@ export const TransactionTable: FC<Props> = ({
           break;
       }
       dispatch({ type: ACTIONS.SET_TRANSACTION_FILTER, data: tempFilter });
-      dispatch({ type: ACTIONS.SET_SEARCHING, data: true });
     },
     [state.transactionFilter],
   );
@@ -1273,15 +1271,21 @@ export const TransactionTable: FC<Props> = ({
   }, [state.transactionToDelete]);
 
   useEffect(() => {
+    console.log('use effect homie');
     if (!state.loaded) {
+      console.log('use effect loaded');
+      dispatch({ type: ACTIONS.SET_LOADED, data: true });
       load();
       resetTransactions();
     }
     if (state.changingPage) {
-      load();
+      console.log('use effect change page');
+
       resetTransactions();
     }
     if (state.searching) {
+      console.log('use effect searching');
+
       dispatch({ type: ACTIONS.SET_PAGE, data: 0 });
       dispatch({ type: ACTIONS.SET_CHANGING_PAGE, data: true });
 
