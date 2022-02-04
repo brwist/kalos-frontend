@@ -24,6 +24,8 @@ type Styles = {
   error?: boolean;
   compact?: boolean;
   hoverable?: boolean;
+  ignoreNotify?: boolean;
+  ignoreImage?: boolean;
 };
 
 type Href = 'tel' | 'mailto';
@@ -94,6 +96,8 @@ export const InfoTable = ({
   styles,
   onSaveRowButton,
   rowButton,
+  ignoreNotify = false,
+  ignoreImage = false,
 }: Props) => {
   const [state, dispatch] = useReducer(Reducer, {
     isAddingRow: false,
@@ -250,7 +254,7 @@ export const InfoTable = ({
               {
                 label: 'Notify Manager?',
                 name: 'notify',
-
+                invisible: ignoreNotify,
                 type: rowButton && rowButton.onNotify ? 'checkbox' : 'hidden',
                 onChange: (data: number) => {
                   if (rowButton && rowButton.onNotify) {
@@ -261,12 +265,18 @@ export const InfoTable = ({
               {
                 label: 'Add Image / Document',
                 name: 'image',
+                invisible: ignoreImage,
                 type: 'file',
                 onFileLoad: (data: string) => {
                   if (rowButton) {
                     if (rowButton.onFileLoad) rowButton.onFileLoad(data);
                   }
                 },
+              },
+            ],
+            [
+              {
+                label: "",
                 actions: [
                   {
                     label: 'Create',
