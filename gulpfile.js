@@ -701,7 +701,7 @@ async function upload(target = '') {
 }
 
 // @returns {bool} False if it failed to bust the cache, True / undefined otherwise
-async function bustCache(controller = '', filename = '', location = '') {
+async function bustCache(controller = '', filename = '', location = 'admin') {
   if (!sh.test('-e', 'tmp')) {
     error('Please ensure the "tmp" directory exists in the project.');
     return false;
