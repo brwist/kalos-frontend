@@ -16,12 +16,24 @@ import { Loader } from '../../Loader/main';
 import Typography from '@material-ui/core/Typography';
 import { Box } from '@material-ui/core';
 
-type TempArguments = {
+const CODE_STYLE = {
+  backgroundColor: 'lightgrey',
+  borderRadius: '3px',
+};
+
+type Argument = {
   name: string;
   description: string;
-  isOptional: boolean;
   isQuoted: boolean;
   acceptedValues?: string[];
+};
+
+type ExtraArgument = Argument & {
+  valueName: string; // The thing to display when popped up in a description of the command. (--argName "valueName")
+};
+
+type TempArguments = Argument & {
+  isOptional: boolean;
 };
 
 type TempCommand = {
@@ -29,6 +41,7 @@ type TempCommand = {
   description: string;
   endpoint: string;
   arguments: TempArguments[];
+  extraArguments?: ExtraArgument[]; // arguments passed with "--argName value"
 };
 
 const TEMP_COMMANDS: TempCommand[] = [
@@ -64,6 +77,21 @@ const TEMP_COMMANDS: TempCommand[] = [
         description: 'The name of the board to interact with.',
         isOptional: false,
         isQuoted: true,
+      },
+    ],
+    extraArguments: [
+      {
+        name: 'boardName',
+        description: 'Change the board name.',
+        isQuoted: true,
+        valueName: 'Board Name',
+      },
+      {
+        name: 'addMemberByFullName',
+        description:
+          'Adds a member to the board (first and last name are needed).',
+        isQuoted: true,
+        valueName: 'Member Full Name',
       },
     ],
   },
@@ -141,31 +169,46 @@ export const TrelloSlashCommandDocumentation: FC<props> = ({
         <Loader />
       ) : (
         state.commands.map((command: TempCommand) => (
-          <SectionBar key={`command-${command.name}`} title={command.name}>
-            <Typography variant="body1">{command.description}</Typography>
-            <Box sx={{ display: 'inline' }} component="div">
-              <code
-                style={{
-                  backgroundColor: 'lightgrey',
-                  borderRadius: '3px',
-                }}
-              >
-                {`/${command.name}${command.arguments
-                  .map((arg: TempArguments) => {
-                    const valueToShow = arg.acceptedValues
-                      ? arg.acceptedValues.join('|')
-                      : arg.name;
-                    console.log(`${arg.name}: ${valueToShow}`);
-                    if (arg.isQuoted && arg.isOptional)
-                      return ` <"${valueToShow}">`;
-                    if (arg.isQuoted) return ` "${valueToShow}"`;
-                    if (arg.isOptional) return ` <${valueToShow}>`;
-                    return ` ${valueToShow}`;
-                  })
-                  .join('')}`}
-              </code>
-            </Box>
-          </SectionBar>
+          <div key={`command-${command.name}`} style={{ paddingBottom: '5px' }}>
+            <SectionBar title={command.name}>
+              <Typography variant="body1">{command.description}</Typography>
+              <Box sx={{ display: 'inline' }} component="div">
+                <code style={CODE_STYLE}>
+                  {`/${command.name}${command.arguments
+                    .map((arg: TempArguments) => {
+                      const valueToShow = arg.acceptedValues
+                        ? arg.acceptedValues.join('|')
+                        : arg.name;
+                      console.log(`${arg.name}: ${valueToShow}`);
+                      if (arg.isQuoted && arg.isOptional)
+                        return ` <"${valueToShow}">`;
+                      if (arg.isQuoted) return ` "${valueToShow}"`;
+                      if (arg.isOptional) return ` <${valueToShow}>`;
+                      return ` ${valueToShow}`;
+                    })
+                    .join('')}`}
+                </code>
+              </Box>
+              {command.extraArguments && (
+                <div style={{ paddingTop: '5px' }}>
+                  <SectionBar small title="Extra Arguments">
+                    {command.extraArguments!.map(extraArg => (
+                      <>
+                        <code key={`extra-${extraArg.name}`} style={CODE_STYLE}>
+                          {extraArg.isQuoted
+                            ? `--${extraArg.name} "${extraArg.valueName}"`
+                            : `--${extraArg.name} ${extraArg.valueName}`}
+                        </code>
+                        <Typography style={{ paddingLeft: '25px' }}>
+                          {extraArg.description}
+                        </Typography>
+                      </>
+                    ))}
+                  </SectionBar>
+                </div>
+              )}
+            </SectionBar>
+          </div>
         ))
       )}
     </>
