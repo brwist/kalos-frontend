@@ -1,6 +1,7 @@
 import React, { FC, useState, useCallback, useEffect, useMemo } from 'react';
 import Alert from '@material-ui/lab/Alert';
 import { SectionBar } from '../SectionBar';
+import { format, addDays, subDays, startOfWeek, parseISO } from 'date-fns';
 import { PlainForm, Schema, Option } from '../PlainForm';
 import { Loader } from '../../Loader/main';
 import { Tabs } from '../Tabs';
@@ -49,7 +50,7 @@ export type FilterData = {
   rejected?: boolean;
   amount?: number;
   billingRecorded: boolean;
-  processed: boolean;
+  processed?: boolean;
   universalSearch: string | undefined;
 };
 
@@ -65,7 +66,10 @@ export const Payroll: FC<Props> = ({ userID }) => {
   const [filter, setFilter] = useState<FilterData>({
     departmentId: 0,
     employeeId: 0,
-    week: OPTION_ALL,
+    week: format(
+      startOfWeek(subDays(new Date(), 7), { weekStartsOn: 6 }),
+      'yyyy-MM-dd',
+    ),
     billingRecorded: false,
     universalSearch: undefined,
     processed: false,
@@ -90,7 +94,6 @@ export const Payroll: FC<Props> = ({ userID }) => {
   const [role, setRole] = useState<RoleType>('');
   const [employees, setEmployees] = useState<User[]>([]);
   const [loadedPerDiemIds, setLoadedPerDiemIds] = useState<number[]>([]);
-  const [viewReport, setViewReport] = useState<boolean>(false);
   const weekOptions = useMemo(
     () => [
       { label: OPTION_ALL, value: OPTION_ALL },
@@ -251,7 +254,6 @@ export const Payroll: FC<Props> = ({ userID }) => {
   if (role === 'Manager') {
     isEmployeeReport = true;
   }
-  console.log(role);
   return (
     <div>
       <SectionBar title="Payroll" />

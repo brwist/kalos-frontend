@@ -53,19 +53,19 @@ export const Timesheet: FC<Props> = ({
   const [page, setPage] = useState<number>(0);
   const [count, setCount] = useState<number>(0);
 
-  const [
-    timesheetSummaryToggle,
-    setTimesheetSummaryToggle,
-  ] = useState<TimesheetLine>();
-  const startDay = startOfWeek(subDays(new Date(), 7), { weekStartsOn: 6 });
-  const endDay = addDays(startDay, 7);
+  const [timesheetSummaryToggle, setTimesheetSummaryToggle] =
+    useState<TimesheetLine>();
+  const startDayForFakeTimesheet = startOfWeek(subDays(new Date(), 7), {
+    weekStartsOn: 6,
+  });
   const [pendingView, setPendingView] = useState<TimesheetLine>();
-  const [
-    pendingCreateEmptyTimesheetLine,
-    setPendingCreateEmptyTimesheetLine,
-  ] = useState<TimesheetLine>();
+  const [pendingCreateEmptyTimesheetLine, setPendingCreateEmptyTimesheetLine] =
+    useState<TimesheetLine>();
   const load = useCallback(async () => {
-    const startDay = startOfWeek(subDays(new Date(), 7), { weekStartsOn: 6 });
+    let startDay = startOfWeek(subDays(new Date(), 7), { weekStartsOn: 6 });
+    if (type != 'Payroll') {
+      startDay = startOfWeek(subDays(new Date(week), 7), { weekStartsOn: 6 });
+    }
     const endDay = addDays(startDay, 7);
     setLoading(true);
     const filter = {
@@ -231,10 +231,10 @@ export const Timesheet: FC<Props> = ({
         tempTimesheet.setAdminApprovalUserId(loggedUser);
         tempTimesheet.setClassCodeId(41);
         tempTimesheet.setTimeStarted(
-          format(addDays(startDay, 1), 'yyyy-MM-dd'),
+          format(addDays(startDayForFakeTimesheet, 1), 'yyyy-MM-dd'),
         );
         tempTimesheet.setTimeFinished(
-          format(addDays(startDay, 1), 'yyyy-MM-dd'),
+          format(addDays(startDayForFakeTimesheet, 1), 'yyyy-MM-dd'),
         );
         tempTimesheet.setTechnicianUserId(
           emptyTimesheetLine.getTechnicianUserId(),
@@ -247,7 +247,7 @@ export const Timesheet: FC<Props> = ({
         load();
       }
     },
-    [loggedUser, startDay, load, departmentId],
+    [loggedUser, startDayForFakeTimesheet, load, departmentId],
   );
   return (
     <div>
