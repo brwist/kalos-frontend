@@ -62,26 +62,24 @@ export const Timesheet: FC<Props> = ({
   const [pendingCreateEmptyTimesheetLine, setPendingCreateEmptyTimesheetLine] =
     useState<TimesheetLine>();
   const load = useCallback(async () => {
+    console.log(week);
     let startDay = startOfWeek(subDays(new Date(), 7), { weekStartsOn: 6 });
-    if (type != 'Payroll') {
-      startDay = startOfWeek(subDays(new Date(week), 7), { weekStartsOn: 6 });
+    let startDayString = format(startDay, 'yyyy-MM-dd');
+    if (type != 'Payroll' && week != OPTION_ALL) {
+      startDayString = week;
     }
-    const endDay = addDays(startDay, 7);
+    const endDay = format(addDays(startDay, 7), 'yyyy-MM-dd');
     setLoading(true);
     const filter = {
       page,
       departmentId,
       employeeId,
       type: type,
-      startDate: format(startDay, 'yyyy-MM-dd'),
-      endDate: format(endDay, 'yyyy-MM-dd'),
+      startDate: startDayString,
+      endDate: endDay,
     };
-    if (week !== OPTION_ALL && type != 'Payroll') {
-      Object.assign(filter, {
-        startDate: week,
-        endDate: format(addDays(new Date(week), 7), 'yyyy-MM-dd'),
-      });
-    }
+    console.log(startDayString);
+    console.log(endDay);
     const getTimesheets = createTimesheetFetchFunction(filter, type);
     const results = await getTimesheets();
     const resultsList = results.getResultsList();
