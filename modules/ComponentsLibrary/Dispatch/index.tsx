@@ -9,6 +9,7 @@ import {
   ActivityLogClientService,
   ServicesRenderedClientService,
   TimesheetDepartmentClientService,
+  TimeoffRequestClientService,
   JobTypeClientService,
   EventAssignmentClientService,
   EventClientService,
@@ -18,6 +19,7 @@ import {
 } from '../../../helpers';
 import { DateRange } from '@kalos-core/kalos-rpc/compiled-protos/common_pb';
 import { DispatchableTech, DispatchCall } from '@kalos-core/kalos-rpc/Dispatch';
+import { TimeoffRequest } from '@kalos-core/kalos-rpc/TimeoffRequest';
 import { TimesheetDepartment } from '@kalos-core/kalos-rpc/TimesheetDepartment';
 import { JobType } from '@kalos-core/kalos-rpc/JobType';
 import { ActivityLog } from '@kalos-core/kalos-rpc/ActivityLog';
@@ -31,13 +33,14 @@ import { SectionBar } from '../SectionBar';
 import { PlainForm, Schema } from '../PlainForm';
 import { Confirm } from '../Confirm';
 import { Modal } from '../Modal';
-import { Alert } from '../Alert';
+import { Alert as ModalAlert } from '../Alert';
 import { Loader } from '../../Loader/main';
 import { DragDropContext } from 'react-beautiful-dnd';
 import addDays from 'date-fns/esm/addDays';
 import format from 'date-fns/esm/format';
 import setHours from 'date-fns/esm/setHours';
 import setMinutes from 'date-fns/esm/setMinutes';
+import setSeconds from 'date-fns/esm/setSeconds';
 import debounce from 'lodash/debounce';
 import Table from '@material-ui/core/Table';
 import TableBody from '@material-ui/core/TableBody';
@@ -58,6 +61,12 @@ import CircleProgress from '@material-ui/core/CircularProgress';
 import { ServiceRequest } from '../ServiceCall/requestIndex';
 import Typography from '@material-ui/core/Typography';
 import axios from 'axios';
+import Box from '@material-ui/core/Box';
+import Collapse from '@material-ui/core/Collapse';
+import IconButton from '@material-ui/core/IconButton';
+import Alert from '@material-ui/lab/Alert';
+import AlertTitle from '@material-ui/lab/AlertTitle';
+import CloseIcon from '@material-ui/icons/Close';
 export interface Props {
   loggedUserId: number;
   testUserId?: number;
@@ -78,6 +87,8 @@ const initialFormData: FormData = {
 const initialState: State = {
   techs: [],
   dismissedTechs: [],
+  offTechs: [],
+  offTechData: [],
   calls: [],
   departmentList: [],
   defaultDepartmentIds: [],
@@ -102,6 +113,12 @@ const initialState: State = {
   assigneeList: [],
   userHasApiKey: false,
   checkUser: false,
+  hasNotification: false,
+  notificationType: '',
+  notificationMessage: [],
+  refreshTechnicians: false,
+  refreshCalls: false,
+  initialTechLoad: true,
 };
 
 export const DispatchDashboard: React.FC<Props> = function DispatchDashboard({
@@ -120,20 +137,140 @@ export const DispatchDashboard: React.FC<Props> = function DispatchDashboard({
         modalKey: '',
         selectedTech: new DispatchableTech(),
         selectedCall: new DispatchCall(),
-        isProcessing: false
+        isProcessing: false,
+        refreshTechs: refreshTechs,
+        refreshCalls: refreshCalls
       }
     });
-    if (refreshTechs) {
-      setTechnicians();
-    }
-    if (refreshCalls) {
-      setCalls();
-    }
   }
+
+  const handleNotification = useCallback((message: string | string[], type: string, hasError = true) => {
+    let updateNotification = true;
+    let errorMessage = state.notificationMessage;
+    if (typeof message === "string") {
+      if (!errorMessage.includes(message)) {
+        if (type === state.notificationType) { // If error/warning is same as current error/warning, then stack.
+          errorMessage = errorMessage.concat(message);
+        } else if (state.notificationType === "error" && hasError === true) { // Prevent warning message from overwriting error message.
+          updateNotification = false;
+        } else {
+          errorMessage = [message];
+        }
+      } else {
+        updateNotification = false;
+      }
+    } else {
+      errorMessage = message;
+    }
+    if (updateNotification) {
+      updateDispatchState({type: 'setNotification', data: {
+        hasNotification: hasError,
+        notificationType: type,
+        notificationMessage: errorMessage,
+      }});
+    }
+  }, [state.notificationMessage, state.notificationType])
+
+  const checkErrors = useCallback((errorMessage : string) => {
+    if (state.notificationType === "error" && state.notificationMessage.includes(errorMessage)) {
+      // Reset Service Call error on successful Get
+      let newMessage : string[] | string = "";
+      let newType = "";
+      let hasError = false;
+      if (state.notificationMessage.length > 1) {
+        newMessage = state.notificationMessage;
+        newMessage.splice(newMessage.findIndex(msg => msg === errorMessage),1);
+        newType = state.notificationType;
+        hasError = true;
+      }
+      handleNotification(newMessage, newType, hasError);
+    }
+  }, [state.notificationMessage, state.notificationType, handleNotification])
+
+  const handleDismissTech =  useCallback(async (overrideId : number = 0, suppressSlack : boolean = false, skipRefresh : boolean = false) => {
+    setProcessing(true);
+    const actLog = new ActivityLog();
+    const errorMessage = "- Unable to Create Activity Log and Service Rendered for Dismissal.";
+    const techId = overrideId > 0 ? overrideId : state.selectedTech.getUserId();
+    actLog.setUserId(loggedUserId);
+    actLog.setPropertyId(19139);
+    actLog.setActivityName(`Sent user ${techId} home for the day.`);
+    actLog.setActivityDate(format(new Date(), 'yyyy-MM-dd HH:mm:ss'));
+    const service = new ServicesRendered();
+    service.setTechnicianUserId(techId);
+    service.setName('Dismissed Technician');
+    service.setStatus('Dismissed');
+    service.setEventId(124362);
+    service.setDatetime(format(new Date(), 'yyyy-MM-dd HH:mm:ss'));
+    service.setTimeStarted(format(new Date(), 'yyyy-MM-dd HH:mm:ss'));
+    try{
+      ActivityLogClientService.Create(actLog);
+      await ServicesRenderedClientService.Create(service);
+      if (!disableSlack && !suppressSlack) SlackClientService.DirectMessageUser(testUserId ? 103939 : techId, `Go Home, ${state.selectedTech.getTechname()}`, loggedUserId);
+      if (!suppressSlack) handleNotification(`${state.selectedTech.getTechname()} Successfully Dismissed`, "success", true);
+    } catch (err) {
+      handleNotification(errorMessage, "error", true);
+      console.error(
+        `An error occurred while creating the Activity Log and Service Rendered for the dismissal: ${err}`
+      );
+    }
+    if (!skipRefresh) resetModal(true, false);
+  }, [disableSlack, handleNotification, loggedUserId, state.selectedTech, testUserId]);
+
+  const handleUndismissTech = useCallback(async (tech : DispatchableTech, suppressSlack = false, skipRefresh = false) => {
+    setProcessing(true, true);
+    const actLog = new ActivityLog();
+    const errorMessage = "- Unable to Create Activity Log and Service Rendered for Undismissal.";
+    actLog.setUserId(loggedUserId);
+    actLog.setPropertyId(19139);
+    actLog.setActivityName(`Recalling user ${tech.getUserId()}`);
+    actLog.setActivityDate(format(new Date(), 'yyyy-MM-dd HH:mm:ss'));
+    const service = new ServicesRendered();
+    service.setTechnicianUserId(tech.getUserId());
+    service.setName('Technician Recalled');
+    service.setStatus('Standby');
+    service.setEventId(124362);
+    service.setDatetime(format(new Date(), 'yyyy-MM-dd HH:mm:ss'));
+    service.setTimeStarted(format(new Date(), 'yyyy-MM-dd HH:mm:ss'));
+    try{
+      ActivityLogClientService.Create(actLog);
+      await ServicesRenderedClientService.Create(service);
+      if (!disableSlack && !suppressSlack) SlackClientService.DirectMessageUser(testUserId ? 103939 : tech.getUserId(), `False Alarm, ${tech.getTechname()}!  I need you back on the schedule!`, loggedUserId);
+      if (!suppressSlack) handleNotification(`${tech.getTechname()} Successfully Undismissed!`, "success", true);
+    } catch (err) {
+      handleNotification(errorMessage, "error", true);
+      // console.error(
+      //   `An error occured while create the Activity Log and Service Rendered for the Un-Dismissal: ${err}`
+      // );
+    }
+    if (!skipRefresh) resetModal(true, false);
+  }, [disableSlack, handleNotification, loggedUserId, testUserId])
+
+  const getTimeOffEmployees = useCallback( async() => {
+    const errorMessage = "- Unable to Retrieve Time Off List.";
+    const off = new TimeoffRequest();
+    const offRequestTimeStarted = format(setHours(setMinutes(setSeconds(new Date(), 0), 0), 0), "yyyy-MM-dd HH::mm::ss");
+    const offRequestTimeFinished = format(setHours(setMinutes(setSeconds(new Date(), 59), 59), 23), "yyyy-MM-dd HH::mm::ss");
+    off.setIsActive(1);
+    off.setRequestStatus(1);
+    off.setDateRangeList([">=", offRequestTimeStarted, "<=", offRequestTimeFinished]);
+    off.setDateTargetList(["time_finished", "time_started"]);
+    off.setDepartmentIdList(state.formData.departmentIds.toString());
+    try {
+      const timeoff = await TimeoffRequestClientService.BatchGet(off);
+      const timeoffList = timeoff.getResultsList();
+      checkErrors(errorMessage);
+      return {timeOff: timeoffList};
+    } catch (err) {
+      handleNotification(errorMessage, "error", true);
+      return {timeOff: []};
+    }
+  }, [checkErrors, handleNotification, state.formData.departmentIds])
 
   const getTechnicians = useCallback( async () => {
     const tech = new DispatchableTech();
     const dr = new DateRange();
+    const errorMessage = "- Unable to Retrieve Technicians.";
     dr.setStart('2012-01-01');
     dr.setEnd(format(new Date(), 'yyyy-MM-dd'));
     tech.setDateRange(dr);
@@ -142,21 +279,54 @@ export const DispatchDashboard: React.FC<Props> = function DispatchDashboard({
     } else {
       tech.setDepartmentList(state.defaultDepartmentIds.toString());
     }
+    const off = new TimeoffRequest();
+    const offRequestTimeStarted = format(setHours(setMinutes(setSeconds(new Date(), 0), 0), 0), "yyyy-MM-dd HH::mm::ss");
+    const offRequestTimeFinished = format(setHours(setMinutes(setSeconds(new Date(), 59), 59), 23), "yyyy-MM-dd HH::mm::ss");
+    off.setIsActive(1);
+    off.setRequestStatus(1);
+    off.setDateRangeList([">=", offRequestTimeStarted, "<=", offRequestTimeFinished]);
+    off.setDateTargetList(["time_finished", "time_started"]);
+    off.setDepartmentIdList(state.formData.departmentIds.toString());
     try {      
+      const offEmployees = await getTimeOffEmployees();
       const techs = await DispatchClientService.GetDispatchableTechnicians(tech);
-      const availableTechs = techs.getResultsList().filter(tech => tech.getActivity() != 'Dismissed');
-      const dismissedTechs = techs.getResultsList().filter(tech => tech.getActivity() === 'Dismissed');
-      return {available: availableTechs, dismissed: dismissedTechs};
+      const techList = techs.getResultsList().map(tech=>tech.getUserId());
+      const offTechs = offEmployees.timeOff.filter(tech => techList.includes(tech.getUserId()));
+      let requestedOffTechs : DispatchableTech[] = [];
+      let requestOffData : {tech: DispatchableTech, start: string, end: string}[] = [];
+      offTechs.forEach(req => {
+        const tech = techs.getResultsList().find(tech => tech.getUserId() === req.getUserId())!;
+        requestOffData = requestOffData.concat({tech: tech, start: req.getTimeStarted(), end: req.getTimeFinished()});
+        if (format(new Date(), `yyyy-MM-dd HH:mm:ss`) >= req.getTimeStarted() && format(new Date(), `yyyy-MM-dd HH:mm:ss`) <= req.getTimeFinished()) {
+          requestedOffTechs = requestedOffTechs.concat(tech);
+          if (req.getTimeFinished() < format(setHours(setMinutes(setSeconds(new Date(), 0), 0), 17), `yyyy-MM-dd HH:mm:ss`)) {
+            if (tech.getActivity() !== "Standby") {
+              handleUndismissTech(tech, true, true);
+            }
+          } else {
+            if (tech.getActivity() !== "Dismissed") {
+              handleDismissTech(tech.getUserId(), true, true);
+            }
+          }
+
+        }
+      })
+      const availableTechs = techs.getResultsList().filter(tech => tech.getActivity() != 'Dismissed' && !requestedOffTechs.includes(tech));
+      const dismissedTechs = techs.getResultsList().filter(tech => tech.getActivity() === 'Dismissed' && !requestedOffTechs.includes(tech));
+      checkErrors(errorMessage);
+      return {available: availableTechs, dismissed: dismissedTechs, off: requestedOffTechs, offData: requestOffData};
     } catch (err) {
+      handleNotification(errorMessage, "error", true);
       console.error(
         `An error occurred while getting Dispatch Techs: ${err}`
       );
-      return {available: [], dismissed: []};
+      return {available: [], dismissed: [], off: [], offData: []};
     }
-  }, [state.formData.departmentIds, state.defaultDepartmentIds]);
+  }, [state.formData.departmentIds, state.defaultDepartmentIds, handleNotification, checkErrors, getTimeOffEmployees, handleDismissTech, handleUndismissTech]);
 
   const getCalls = useCallback( async () => {
     const call = new DispatchCall();
+    const errorMessage = "- Unable to Retrieve Service Calls.";
     call.setDateRangeList(['>=', state.formData.dateStart, '<=', state.formData.dateEnd]);
     call.setDateTargetList(['date_started', 'date_ended']);
     call.setJobTypeIdList(state.formData.jobTypes.toString());
@@ -175,11 +345,13 @@ export const DispatchDashboard: React.FC<Props> = function DispatchDashboard({
         // && ( state.formData.divisionMulti.length === 0 ||
         // state.formData.divisionMulti.includes(call.getSectorGroup()))
       ); 
+      checkErrors(errorMessage);
       return {calls: filteredCalls};
     } catch (err) {
-      console.error(
-        `An error occurred while getting Dispatch Calls: ${err}`
-      );
+      handleNotification(errorMessage, "error", true);
+      // console.error(
+      //   `An error occurred while getting Dispatch Calls: ${err}`
+      // );
       return {calls: []};
     }
   }, [
@@ -187,12 +359,14 @@ export const DispatchDashboard: React.FC<Props> = function DispatchDashboard({
     state.formData.dateStart, state.formData.timeStart,
     state.formData.dateEnd, state.formData.timeEnd,
     state.formData.divisionMulti,
-    state.defaultSectorIds,
+    state.defaultSectorIds, handleNotification,
+    checkErrors
   ]);
 
   const getDepartments = useCallback(async() => {
     const departmentReq = new TimesheetDepartment();
     const user = new User();
+    const errorMessage = "- Unable to Retrieve Department List.";
     user.setId(loggedUserId);
     departmentReq.setIsActive(1);
     try {
@@ -203,42 +377,50 @@ export const DispatchDashboard: React.FC<Props> = function DispatchDashboard({
       if (!displayedDepartments.length) {
         displayedDepartments = departments.getResultsList().filter(dep => dep.getId() === userData.getEmployeeDepartmentId()); 
       }
+      checkErrors(errorMessage);
       return {departments: displayedDepartments, defaultValues: displayedDepartments.map(dep => dep.getId())};
     } catch (err) {
-      console.error(
-        `An error occurred while getting Departments: ${err}`
-      );
+      handleNotification(errorMessage, "error", true);
+      // console.error(
+      //   `An error occurred while getting Departments: ${err}`
+      // );
       return {departments: [], defaultValues: []};
     }
-  }, [loggedUserId])
+  }, [loggedUserId, handleNotification, checkErrors])
 
   const getJobTypes = useCallback(async() => {
     const jobTypeReq = new JobType();
+    const errorMessage = "- Unable to Retrieve Job Types.";
     try {
       const jobTypes = await JobTypeClientService.BatchGet(jobTypeReq);
       const displayedJobTypes = jobTypes.getResultsList().filter(jobType => !state.notIncludedJobTypes.includes(jobType.getId()));
+      checkErrors(errorMessage);
       return {jobTypes: displayedJobTypes};
     } catch (err) {
-      console.error(
-        `An error occurred while getting Job Types: ${err}`
-      );
+      handleNotification(errorMessage, "error", true);
+      // console.error(
+      //   `An error occurred while getting Job Types: ${err}`
+      // );
       return {jobTypes: []};
     }
-  }, [state.notIncludedJobTypes])
+  }, [state.notIncludedJobTypes, handleNotification, checkErrors])
 
-  const getGoogleApiKey = async() => {
+  const getGoogleApiKey = useCallback(async() => {
     const newKey = new ApiKey();
+    const errorMessage = "- Unable to Connect to Google.";
     newKey.setTextId('google_maps');
     try {
       const googleKey = await ApiKeyClientService.Get(newKey);
+      checkErrors(errorMessage);
       return {googleKey: googleKey.getApiKey()};
     } catch (err) {
-      console.error(
-        `An error occurred while getting Google API Key: ${err}`
-      );
+      handleNotification(errorMessage, "error", true);
+      // console.error(
+      //   `An error occurred while getting Google API Key: ${err}`
+      // );
       return {googleKey: ''};
     }
-  }
+  }, [handleNotification, checkErrors])
 
   const getSectorGroups = (departments: TimesheetDepartment[]) => {
     const department = departments.map(dep => dep.getSectorGroup())
@@ -258,10 +440,12 @@ export const DispatchDashboard: React.FC<Props> = function DispatchDashboard({
       type: 'setTechs',
       data: {
         availableTechs: techs.available,
-        dismissedTechs: techs.dismissed
+        dismissedTechs: techs.dismissed,
+        offTechs: techs.off,
+        offTechData: techs.offData,
       }
     });
-  }, [getTechnicians]);
+  }, [getTechnicians, state.dismissedTechs.length]);
 
   const setCalls = useCallback( async() => {
     const calls = await getCalls();
@@ -274,28 +458,39 @@ export const DispatchDashboard: React.FC<Props> = function DispatchDashboard({
   }, [getCalls])
 
   useEffect(() => {
-    updateDispatchState({
-      type: 'setLoadingTech',
-      data: true
-    })
     if (state.defaultDepartmentIds.length && !state.isLoadingFilters) {
-      setTechnicians();
+      if (state.refreshTechnicians || state.initialTechLoad) {
+        updateDispatchState({
+          type: 'setLoadingTech',
+          data: {
+            isLoadingTech: true,
+            refreshTechs: false,
+            initialTechLoad: false,
+          }
+        });
+        setTechnicians();
+      }
       const interval = setInterval(() => setTechnicians(), 15000);
       return () => clearInterval(interval);
     }
-  }, [setTechnicians, state.defaultDepartmentIds, state.isLoadingFilters]);
+  }, [setTechnicians, state.defaultDepartmentIds, state.isLoadingFilters, state.refreshTechnicians, state.initialTechLoad]);
 
   useEffect(() => {
-    updateDispatchState({
-      type: 'setLoadingCall',
-      data: true
-    });
     if (state.defaultSectorIds.length && !state.isLoadingFilters) {
-      setCalls();
+      if (state.refreshCalls) {
+        updateDispatchState({
+          type: 'setLoadingCall',
+          data: {
+            isLoadingCall: true,
+            refreshCalls: false,
+          }
+        });
+        setCalls();
+      }
       const interval = setInterval(() => setCalls(), 30000);
       return () => clearInterval(interval);
     }
-  }, [setCalls, state.defaultSectorIds, state.isLoadingFilters])
+  }, [setCalls, state.defaultSectorIds, state.isLoadingFilters, state.refreshCalls])
 
   const handleChange = async (formData: FormData) => {
     setProcessing(true);
@@ -341,63 +536,11 @@ export const DispatchDashboard: React.FC<Props> = function DispatchDashboard({
     })
   }
 
-  const handleDismissTech =  async () => {
-    setProcessing(true);
-    const actLog = new ActivityLog();
-    actLog.setUserId(loggedUserId);
-    actLog.setPropertyId(19139);
-    actLog.setActivityName(`Sent user ${state.selectedTech.getUserId()} home for the day.`);
-    actLog.setActivityDate(format(new Date(), 'yyyy-MM-dd HH:mm:ss'));
-    const service = new ServicesRendered();
-    service.setTechnicianUserId(state.selectedTech.getUserId());
-    service.setName('Dismissed Technician');
-    service.setStatus('Dismissed');
-    service.setEventId(124362);
-    service.setDatetime(format(new Date(), 'yyyy-MM-dd HH:mm:ss'));
-    service.setTimeStarted(format(new Date(), 'yyyy-MM-dd HH:mm:ss'));
-    try{
-      await ActivityLogClientService.Create(actLog);
-      await ServicesRenderedClientService.Create(service);
-      if (!disableSlack) SlackClientService.DirectMessageUser(testUserId ? 103939 : state.selectedTech.getUserId(), `Go Home, ${state.selectedTech.getTechname()}`, loggedUserId);
-    } catch (err) {
-      console.error(
-        `An error occurred while creating the Activity Log and Service Rendered for the dismissal: ${err}`
-      );
-    }
-    resetModal(true, false);
-  };
-
-  const handleUndismissTech = async (tech : DispatchableTech) => {
-    setProcessing(true, true);
-    const actLog = new ActivityLog();
-    actLog.setUserId(loggedUserId);
-    actLog.setPropertyId(19139);
-    actLog.setActivityName(`Recalling user ${tech.getUserId()}`);
-    actLog.setActivityDate(format(new Date(), 'yyyy-MM-dd HH:mm:ss'));
-    const service = new ServicesRendered();
-    service.setTechnicianUserId(tech.getUserId());
-    service.setName('Technician Recalled');
-    service.setStatus('Standby');
-    service.setEventId(124362);
-    service.setDatetime(format(new Date(), 'yyyy-MM-dd HH:mm:ss'));
-    service.setTimeStarted(format(new Date(), 'yyyy-MM-dd HH:mm:ss'));
-    try{
-      await ActivityLogClientService.Create(actLog);
-      await ServicesRenderedClientService.Create(service);
-      if (!disableSlack) SlackClientService.DirectMessageUser(testUserId ? 103939 : tech.getUserId(), `False Alarm, ${tech.getTechname()}!  I need you back on the schedule!`, loggedUserId);
-    } catch (err) {
-      console.error(
-        `An error occured while create the Activity Log and Service Rendered for the Un-Dismissal: ${err}`
-      );
-    }
-    setTechnicians();
-    setProcessing(false);
-  }
-
   const handleAssignTech = async () => {
     setProcessing(true);
     const assignment = new EventAssignment();
     const event = new Event();
+    const errorMessage = "- Failed to Assign Technician.";
     assignment.setEventId(state.selectedCall.getId());
 
     event.setId(state.selectedCall.getId());
@@ -422,18 +565,22 @@ export const DispatchDashboard: React.FC<Props> = function DispatchDashboard({
       }
       await EventClientService.Update(event);
       if (!disableSlack) SlackClientService.Dispatch(state.selectedCall.getId(), testUserId ? 103939 : state.selectedTech.getUserId(), loggedUserId);
+      handleNotification(`${state.selectedTech.getTechname()} Successfully Assigned to Call ${state.selectedCall.getId()}`, "success", true);
     } catch (err) {
-      console.error(
-        `An error occurred while updating the Event Assignment and Event: ${err}`
-      );
+      handleNotification(errorMessage, "error", true);
+      // console.error(
+      //   `An error occurred while updating the Event Assignment and Event: ${err}`
+      // );
     }
     resetModal(false, true);
   }
 
   const handleUnassignTech = async (id: number) => {
     setProcessing(true);
+    let error = false;
     const assignment = new EventAssignment();
     const event = new Event();
+    const errorMessage = "- Failed to Unassign Technician.";
     assignment.setEventId(state.selectedCall.getId());
     assignment.setUserId(id);
     event.setId(state.selectedCall.getId());
@@ -444,18 +591,26 @@ export const DispatchDashboard: React.FC<Props> = function DispatchDashboard({
       assignment.setId(assignedEvent.getId());
       EventAssignmentClientService.Delete(assignment);
     } catch (err) {
-      console.error('Error updating Event Assignment', err);
+      handleNotification(errorMessage, "error", true);
+      error = true;
+      // console.error('Error updating Event Assignment', err);
     }
     try {
       await EventClientService.Update(event);
     } catch (err) {
-      console.error('Error Updating Event', err);
+      handleNotification(errorMessage, "error", true);
+      error = true
+      // console.error('Error Updating Event', err);
     }
     updateDispatchState({
       type: 'setAssigneeList',
       data: state.assigneeList.filter(assignee => assignee.id !== id)
     });
     setCalls();
+    if (!error) {
+      const tech = state.techs.filter(tech => tech.getUserId() === id)[0];
+      handleNotification(`${tech.getTechname()} Successfully Unassigned from Call ${state.selectedCall.getId()}`, "success", true);
+    }
   }
 
   const handleCallDetails = async (call : DispatchCall, edit = false) => {
@@ -474,6 +629,7 @@ export const DispatchDashboard: React.FC<Props> = function DispatchDashboard({
     } else {
       let assignees : {id: number, name: string}[] = [];
       const ids = call.getLogTechnicianAssigned().split(',').map(Number);
+      const errorMessage = "- Failed to Retrieve Assigned Technicians.";
       try {
         const userData = await UserClientService.BatchGetUsersByIds(ids);
         for (const user of userData.getResultsList()) {
@@ -491,7 +647,8 @@ export const DispatchDashboard: React.FC<Props> = function DispatchDashboard({
           }
         });
       } catch (err) {
-        console.error('Error Occurred when Getting Assigned Users', err);
+        handleNotification(errorMessage, "error", true);
+        // console.error('Error Occurred when Getting Assigned Users', err);
       }
     }
   }
@@ -542,7 +699,7 @@ export const DispatchDashboard: React.FC<Props> = function DispatchDashboard({
     try {
       if (url.searchParams.get("code")) {
         const secretKey = await ApiKeyClientService.Get(secretApiKey);
-        const token = await axios.get(`https://slack.com/api/oauth.access?client_id=${slackClientId}&client_secret=${secretKey.getApiKey()}&code=${url.searchParams.get("code")}&redirect_uri=https://app.kalosflorida.com/index.cfm?action=admin:dispatch.firstcall`)
+        const token = await axios.get(`https://slack.com/api/oauth.access?client_id=${slackClientId}&client_secret=${secretKey.getApiKey()}&code=${url.searchParams.get("code")}&redirect_uri=https://app.kalosflorida.com/index.cfm?action=admin:dispatch.dispatch_mode`)
         const apiToken = token.data.access_token;
         const slackApiKey = new ApiKey();
         slackApiKey.setApiUser(loggedUserId);
@@ -574,7 +731,7 @@ export const DispatchDashboard: React.FC<Props> = function DispatchDashboard({
         googleApiKey: results[2].googleKey,
       }
     });
-  }, [getDepartments, getJobTypes])
+  }, [getDepartments, getJobTypes, getGoogleApiKey])
 
   const handleFilterSave = () => {
     const saveFilter : FormData = {
@@ -682,7 +839,11 @@ export const DispatchDashboard: React.FC<Props> = function DispatchDashboard({
       setInitialValues();
       handleFilterLoad();
     }
-  }, [setInitialValues, state.isInitialLoad, state.userHasApiKey, state.checkUser, userCheck]);
+    if (state.notificationType === "success") {
+      const interval = setInterval(() => handleNotification("", "", false), 5000);
+      return () => clearInterval(interval);
+    }
+  }, [setInitialValues, state.isInitialLoad, state.userHasApiKey, state.checkUser, userCheck, state.notificationType, handleNotification]);
 
   return (
     <PageWrapper userID={loggedUserId}>
@@ -728,6 +889,48 @@ export const DispatchDashboard: React.FC<Props> = function DispatchDashboard({
         />
       )}
       <SectionBar title="Dispatch" styles={{backgroundColor: "#711313", color: "white", zIndex:3}} />
+      <Box sx={{width:'100%', position: 'sticky', top:'45px', zIndex:3}}>
+        <Collapse in={state.hasNotification}>
+          <Alert
+            action={
+              <IconButton
+                aria-label="close"
+                color="inherit"
+                size="small"
+                onClick={() => {handleNotification("", "", false)}}
+              >
+                <CloseIcon fontSize="inherit" />
+              </IconButton>
+            }
+            severity={
+              state.notificationType === "error" ? "error" : 
+              state.notificationType === "success" ? "success" : 
+              state.notificationType === "warning" ? "warning" : 
+              state.notificationType === "info" ? "info" : undefined}
+          >
+            <AlertTitle>
+              {
+              state.notificationType === "error" ? "ERROR!" : 
+              state.notificationType === "success" ? "SUCCESS!" : 
+              state.notificationType === "warning" ? "WARNING!" : 
+              state.notificationType === "info" ? "" : ""
+              }
+            </AlertTitle>
+            {state.notificationMessage.map((message) => 
+              message.split('     ').map((msg, index) => (
+                <Typography key={`${index}_notifications`}>
+                  {msg}
+                </Typography>
+              ))
+            )}
+            {state.notificationType === 'error' && (
+              <Typography key={`webTech_message`}>
+                {`  If This Error Continues, Please Contact Webtech.`}
+              </Typography>
+            )}
+          </Alert>
+        </Collapse>
+      </Box>
       {!state.isInitialLoad && (
         <div>
       <Grid style={{paddingTop:'15px'}}>
@@ -795,8 +998,16 @@ export const DispatchDashboard: React.FC<Props> = function DispatchDashboard({
                   userID={loggedUserId}
                   techs={state.techs}
                   dismissedTechs={state.dismissedTechs}
+                  offTechs={state.offTechData}
                   handleMapRecenter={handleMapRecenter}
                   loading={state.isLoadingTech}
+                />
+                <DismissedTechs
+                  userID={loggedUserId}
+                  dismissedTechs={state.offTechs}
+                  isFirstCall={true}
+                  alternateTitle={"Requested Off"}
+                  processingDismissed={state.isLoadingTech}
                 />
               </Grid>
               <Grid item md={6} xs={12}>
@@ -838,7 +1049,7 @@ export const DispatchDashboard: React.FC<Props> = function DispatchDashboard({
         onClose={() => resetModal(false, false)}
       >
         {state.modalKey === 'Undismiss' && (
-            <Alert
+            <ModalAlert
               open={true}
               onClose={() => resetModal(false, false)}
               title="Undismiss Tech"
@@ -852,7 +1063,7 @@ export const DispatchDashboard: React.FC<Props> = function DispatchDashboard({
                 handleUndismissTech={handleUndismissTech}
                 processingDismissed={state.isLoadingDismissed}
               />
-            </Alert>
+            </ModalAlert>
         )}
         {state.modalKey === 'Dismiss' &&
           (
@@ -945,7 +1156,7 @@ export const DispatchDashboard: React.FC<Props> = function DispatchDashboard({
           )
         }
         {state.modalKey === 'mapInfo' && state.selectedCall.getId() > 0 && (
-          <Alert
+          <ModalAlert
           open
           onClose={() => resetModal(false, false)}
           title="Dispatch Call Info"
@@ -983,10 +1194,10 @@ export const DispatchDashboard: React.FC<Props> = function DispatchDashboard({
                 </TableBody>
               </Table>
             </TableContainer>
-          </Alert>
+          </ModalAlert>
         )}
         {state.modalKey === 'callInfo' && (
-          <Alert
+          <ModalAlert
             open
             onClose={() => resetModal(false, false)}
             title="Call Info"
@@ -1099,7 +1310,7 @@ export const DispatchDashboard: React.FC<Props> = function DispatchDashboard({
                 </List>
               </Grid>
             </Grid>
-          </Alert>
+          </ModalAlert>
         )}
         {state.modalKey === 'editRequest' && (
           <ServiceRequest

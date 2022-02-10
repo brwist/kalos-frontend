@@ -22,6 +22,7 @@ import {
   makeFakeRows,
   makeMonthsOptions,
   sortUserByLastname,
+  TransactionActivityClientService,
 } from '../../../helpers';
 import {
   RecordPageReq,
@@ -54,6 +55,8 @@ interface state {
   acceptOverride: boolean;
   search: string;
   editingCostCenter: { [key: number]: boolean };
+  editingDepartment: { [key: number]: boolean };
+
   showCreateModal: boolean;
 }
 
@@ -112,6 +115,7 @@ export class TransactionAdminView extends React.Component<props, state> {
       count: 0,
       search: '',
       editingCostCenter: {},
+      editingDepartment: {},
       showCreateModal: false,
     };
     this.TxnClient = new TransactionClient(ENDPOINT);
@@ -135,6 +139,8 @@ export class TransactionAdminView extends React.Component<props, state> {
     this.setSort = this.setSort.bind(this);
     this.sortTxns = this.sortTxns.bind(this);
     this.toggleEditingCostCenter = this.toggleEditingCostCenter.bind(this);
+    this.makeUpdateDepartment = this.makeUpdateDepartment.bind(this);
+    this.toggleEditingDepartment = this.toggleEditingDepartment.bind(this);
   }
 
   toggleLoading = (cb?: () => void) => {
@@ -156,7 +162,14 @@ export class TransactionAdminView extends React.Component<props, state> {
       },
     }));
   };
-
+  toggleEditingDepartment = (id: number) => {
+    this.setState(prevState => ({
+      editingDepartment: {
+        ...prevState.editingDepartment,
+        [id]: !prevState.editingDepartment[id],
+      },
+    }));
+  };
   toggleView() {
     this.setState(prevState => ({
       departmentView: !prevState.departmentView,
@@ -266,17 +279,6 @@ export class TransactionAdminView extends React.Component<props, state> {
     };
   }
 
-  makeUpdateCostCenter(id: number) {
-    return async (costCenterID: number) => {
-      const txn = new Transaction();
-      txn.setId(id);
-      txn.setCostCenterId(costCenterID);
-      txn.setFieldMaskList(['CostCenterId']);
-      await this.TxnClient.Update(txn);
-      await this.fetchTxns();
-    };
-  }
-
   makeRecordTransaction(id: number) {
     return async () => {
       const txn = new Transaction();
@@ -312,13 +314,43 @@ export class TransactionAdminView extends React.Component<props, state> {
     };
   }
 
-  makeUpdateDepartment(id: number) {
+  makeUpdateDepartment(transaction: Transaction) {
     return async (departmentID: number) => {
       const txn = new Transaction();
-      txn.setId(id);
+      txn.setId(transaction.getId());
       txn.setDepartmentId(departmentID);
       txn.setFieldMaskList(['DepartmentId']);
       await this.TxnClient.Update(txn);
+      const logReq = new TransactionActivity();
+      logReq.setIsActive(1);
+      logReq.setTransactionId(transaction.getId());
+      logReq.setUserId(this.props.userID);
+      logReq.setDescription(
+        `User Updated Department from ${transaction.getDepartmentId()} to ${departmentID}`,
+      );
+
+      await TransactionActivityClientService.Create(logReq);
+      await this.fetchTxns();
+    };
+  }
+  makeUpdateCostCenter(transaction: Transaction) {
+    return async (costCenterID: number) => {
+      const txn = new Transaction();
+      txn.setId(transaction.getId());
+      txn.setCostCenterId(costCenterID);
+      txn.setFieldMaskList(['CostCenterId']);
+      await this.TxnClient.Update(txn);
+      console.log('we are updating cost center');
+      const logReq = new TransactionActivity();
+      logReq.setIsActive(1);
+      logReq.setTransactionId(transaction.getId());
+      logReq.setUserId(this.props.userID);
+      logReq.setDescription(
+        `User Updated Cost Center from ${transaction.getCostCenterId()} to ${costCenterID}`,
+      );
+
+      await TransactionActivityClientService.Create(logReq);
+      await this.fetchTxns();
     };
   }
 
@@ -951,14 +983,17 @@ export class TransactionAdminView extends React.Component<props, state> {
                     refresh: this.fetchTxns,
                     addJobNumber: this.makeAddJobNumber(txn.getId()),
                     updateNotes: this.makeUpdateNotes(txn.getId()),
-                    updateCostCenter: this.makeUpdateCostCenter(txn.getId()),
-                    updateDepartment: this.makeUpdateDepartment(txn.getId()),
+                    updateCostCenter: this.makeUpdateCostCenter(txn),
+                    updateDepartment: this.makeUpdateDepartment(txn),
                     toggleLoading: this.toggleLoading,
-                    editingCostCenter: this.state.editingCostCenter[
-                      txn.getId()
-                    ],
+                    editingCostCenter:
+                      this.state.editingCostCenter[txn.getId()],
+                    editingDepartment:
+                      this.state.editingDepartment[txn.getId()],
                     toggleEditingCostCenter: () =>
                       this.toggleEditingCostCenter(txn.getId()),
+                    toggleEditingDepartment: () =>
+                      this.toggleEditingDepartment(txn.getId()),
                   }),
                 )
           }

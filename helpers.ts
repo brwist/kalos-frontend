@@ -228,7 +228,7 @@ function timestamp(dateOnly = false, date?: Date) {
 async function slackNotify(id: string, text: string) {
   const KALOS_BOT = await ApiKeyClientService.getKeyByKeyName('kalos_bot');
   await fetch(
-    `https://slack.com/api/chat.postMessage?token=${KALOS_BOT}&channel=${id}&text=${text}`,
+    `https://slack.com/api/chat.postMessage?token=${KALOS_BOT.getApiKey()}&channel=${id}&text=${text}`,
     {
       method: 'POST',
     },
@@ -237,6 +237,7 @@ async function slackNotify(id: string, text: string) {
 
 async function getSlackList(skipCache = false): Promise<SlackUser[]> {
   const KALOS_BOT = await ApiKeyClientService.getKeyByKeyName('kalos_bot');
+  console.log(KALOS_BOT);
   try {
     if (!skipCache) {
       const listStr = localStorage.getItem('SLACK_USER_CACHE');
@@ -248,8 +249,9 @@ async function getSlackList(skipCache = false): Promise<SlackUser[]> {
       }
     }
     const res = await fetch(
-      `https://slack.com/api/users.list?token=${KALOS_BOT}`,
+      `https://slack.com/api/users.list?token=${KALOS_BOT.getApiKey()}`,
     );
+    console.log(res);
     const jsonRes = await res.json();
     try {
       const resString = JSON.stringify(jsonRes.members);
@@ -444,15 +446,17 @@ function formatDate(date: string) {
  * @returns format Day (ie. Tue)
  */
 function formatDay(datetime: string) {
-  return ({
-    0: 'Sun',
-    1: 'Mon',
-    2: 'Tue',
-    3: 'Wed',
-    4: 'Thu',
-    5: 'Fri',
-    6: 'Sat',
-  } as { [key: number]: string })[new Date(datetime.substr(0, 10)).getDay()];
+  return (
+    {
+      0: 'Sun',
+      1: 'Mon',
+      2: 'Tue',
+      3: 'Wed',
+      4: 'Thu',
+      5: 'Fri',
+      6: 'Sat',
+    } as { [key: number]: string }
+  )[new Date(datetime.substr(0, 10)).getDay()];
 }
 
 /**

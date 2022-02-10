@@ -81,7 +81,7 @@ export const Trips: FC<Props> = ({
       tripReq.addNotEquals('AdminActionDate');
       tripReq.setAdminActionDate(NULL_TIME_VALUE);
     }
-    if (managerFilter && week == OPTION_ALL) {
+    if (managerFilter) {
       tripReq.setAdminActionDate(NULL_TIME);
       tripReq.setDateRangeList([
         '>=',
@@ -105,7 +105,6 @@ export const Trips: FC<Props> = ({
     payrollFilter,
     toggleButton,
     managerFilter,
-    week,
   ]);
 
   useEffect(() => {

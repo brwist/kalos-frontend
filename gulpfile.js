@@ -15,10 +15,11 @@ const globals = require('rollup-plugin-node-globals');
 const { terser } = require('rollup-plugin-terser');
 const jsonPlugin = require('@rollup/plugin-json');
 const less = require('rollup-plugin-less-modules');
+const { addHours } = require('date-fns');
 
 let target = '';
 try {
-  target = titleCase(process.argv[4]).replace(/-/g, '');
+  if (process.argv[4]) target = titleCase(process.argv[4]).replace(/-/g, '');
 } catch (err) {
   console.log(err);
 }
@@ -295,7 +296,8 @@ function textPrompt(question) {
 
 async function getModulesList() {
   sh.cd('./modules');
-  const list = sh.ls().stdout.split('\n');
+  let list = sh.ls().stdout.split('\n');
+  list = list.filter(dir => !dir.includes('.'));
   sh.cd('..');
   return list.filter(l => l);
 }
@@ -535,15 +537,17 @@ async function rollupBuild(t) {
   if (t && typeof t === 'string') {
     target = t;
   }
-  console.log(target);
   if (target.includes('-')) {
     target = process.argv[4].replace(/-/g, '');
   }
   const minify = process.argv[5];
-  let inputStr = `modules/${target}/main.tsx`;
+  let inputStr = `modules/${target}/main.ts`;
+  console.log(inputStr);
+
   if (!fs.existsSync(inputStr)) {
-    inputStr = `modules/${target}/main.ts`;
+    inputStr = `modules/${target}/main.tsx`;
   }
+  console.log(inputStr);
   const bundle = await rollup.rollup({
     input: inputStr,
     plugins: [
@@ -614,29 +618,37 @@ async function googBuild() {
   });
 }
 
-async function runTests(target) {
-  if (sh.exec(`jest /modules/${target}/index.test.* -u`).code != 0) {
-    error('Please ensure all unit tests are passing before release.');
-    sh.exit(1);
-  }
-}
-
 async function buildAll() {
   const moduleList = await getModulesList();
-  for (const m of moduleList) {
-    try {
-      const cfName = MODULE_MAP[m];
-      if (cfName.length === 3) {
-        await release(m);
-        await upload(m);
-        if (cfName[0] === 'admin') {
-          await bustCache(cfName[1], cfName[2]);
+
+  for (const module of moduleList) {
+    for (const obj of MODULE_MAP) {
+      if (obj.name === module) {
+        if (checkModuleReleasable(obj)) {
+          await release(m);
+          await upload(m);
+          if (cfName[0] === 'admin') {
+            await bustCache(cfName[1], cfName[2]);
+          }
         }
       }
-    } catch (err) {
-      info(`Failed to build module: ${m}\n${err}`);
     }
   }
+
+  // for (const m of moduleList) {
+  //   try {
+  //     const cfName = MODULE_MAP[m];
+  //     if (cfName.length === 3) {
+  //       await release(m);
+  //       await upload(m);
+  //       if (cfName[0] === 'admin') {
+  //         await bustCache(cfName[1], cfName[2]);
+  //       }
+  //     }
+  //   } catch (err) {
+  //     info(`Failed to build module: ${m}\n${err}`);
+  //   }
+  // }
 }
 
 async function release(target = '') {
@@ -645,15 +657,16 @@ async function release(target = '') {
   }
 
   checkTests();
-  let response = '';
-  while (response.toLowerCase() !== 'y' && response.toLowerCase() !== 'n') {
-    response = await textPrompt('Would you like to release anyway (y/n)? ');
-  }
+  // let response = '';
+  // while (response.toLowerCase() !== 'y' && response.toLowerCase() !== 'n') {
+  //   response = await textPrompt('Would you like to release anyway (y/n)? ');
+  // }
 
-  if (response.toLowerCase() === 'n') return;
+  // if (response.toLowerCase() === 'n') return;
 
   info('Rolling up build. This may take a moment...');
 
+  log('Would pass the tests and would release: ', target);
   await rollupBuild(target);
 
   info('Build rolled up.');
@@ -679,15 +692,19 @@ async function upload(target = '') {
   if (target === '' || typeof target !== 'string') {
     target = titleCase(process.argv[4].replace(/-/g, ''));
   }
-  sh.exec(
-    `scp build/modules/${target}.js ${KALOS_ASSETS}/modules/${target}.js`,
+  info(
+    `Would run as part of upload: scp build/modules/${target}.js ${KALOS_ASSETS}/modules/${target}.js`,
   );
+  // sh.exec(
+  //   `scp build/modules/${target}.js ${KALOS_ASSETS}/modules/${target}.js`,
+  // );
 }
 
-async function bustCache(controller = '', filename = '') {
+// @returns {bool} False if it failed to bust the cache, True / undefined otherwise
+async function bustCache(controller = '', filename = '', location = 'admin') {
   if (!sh.test('-e', 'tmp')) {
     error('Please ensure the "tmp" directory exists in the project.');
-    return;
+    return false;
   }
   if (typeof controller !== 'string' || controller === '') {
     controller = process.argv[4].replace(/-/g, '');
@@ -697,9 +714,9 @@ async function bustCache(controller = '', filename = '') {
     filename = process.argv[5].replace(/-/g, '');
   }
 
-  sh.exec(
-    `scp ${KALOS_ROOT}/app/admin/views/${controller}/${filename}.cfm tmp/${filename}.cfm`,
-  );
+  let remotePath = `${KALOS_ROOT}/app/${location}/views/${controller}/${filename}.cfm`;
+
+  sh.exec(`scp ${remotePath} tmp/${filename}.cfm`);
   const res = sh.cat(`tmp/${filename}.cfm`);
   if (res.stdout.includes('.js?version=')) {
     const versionMatch = res.stdout.match(/\.js\?version=\d{1,}/g);
@@ -719,7 +736,115 @@ async function bustCache(controller = '', filename = '') {
       );
     }
   }
+  return true;
 }
+
+const checkModuleReleasable = module => {
+  if (!module.name) {
+    error(
+      `Module could not be released - no "name" field on object in module map. Object outputted below.`,
+    );
+    log(module);
+    return false;
+  }
+  if (module.deprecated === true) {
+    warn(
+      `The module "${module.name}" was not released because it was marked "deprecated" in the module map.`,
+    );
+    return false;
+  }
+  if (module.released === false) {
+    warn(
+      `The module "${module.name}" was not released because it was marked as "not released" in the module map (release-all does not release modules which have not been manually released prior).`,
+    );
+    return false;
+  }
+  if (module.skip === true) {
+    warn(
+      `The module "${module.name}" was not released because it was marked "skip" in the module map.`,
+    );
+    return false;
+  }
+  return true;
+};
+
+const releaseAll = async () => {
+  // Get the name of every module
+  // Release every module sequentially
+  // Bust every module sequentially
+
+  const validModules = await getModulesList();
+  sh.cd('modules');
+
+  console.log();
+  info('Starting to release modules...');
+  console.log();
+
+  // Separated into two "for" loops for simplicity
+  sh.pwd();
+  sh.cd('../');
+  sh.pwd();
+  // Releasing
+  for (const module of validModules) {
+    let foundModule = false;
+    for (const obj of MODULE_MAP) {
+      if (obj.name === module) {
+        foundModule = true;
+        if (checkModuleReleasable(obj)) {
+          await release(module);
+          log('\x1b[32m')([`✓ Released: ${module}`]);
+
+          const res = await bustCache(
+            obj.controller,
+            obj.filename,
+            obj.location,
+          );
+          if (res !== false) {
+            log('\x1b[32m')([`✓ Busted: ${module}`]);
+          }
+        }
+      }
+    }
+    if (!foundModule)
+      error(
+        `Could not release the module "${module}" - no entry found in the module map.`,
+      );
+  }
+
+  // Busting
+  // for (const module of validModules) {
+  //   let foundModule = false;
+  //   for (const obj of MODULE_MAP) {
+  //     if (obj.name === module) {
+  //       foundModule = true;
+  //       if (checkModuleReleasable(obj)) {
+  //         const res = bustCache(obj.controller, obj.filename, obj.location);
+  //         if (res !== false) {
+  //           log('\x1b[32m')([`✓ Busted: ${module}`]);
+  //         }
+  //       }
+  //     }
+  //   }
+  //   if (!foundModule)
+  //     error(
+  //       `Could not bust the module "${module}" - no entry found in the module map.`,
+  //     );
+  // }
+
+  // ? The old logic before the new module map
+  // for (const module of validModules) {
+  //   const mapping = MODULE_MAP[module];
+  //   if (mapping) {
+  //     if (mapping.length >= 3 && mapping[0] === 'admin') {
+  //       log('\x1b[33m')([
+  //         `- Busting: ${module} | module map array: ${mapping}`,
+  //       ]);
+  //       //bustCache(mapping[1], mapping[2], mapping[0]);
+  //       log('\x1b[32m')([`✓ Busted: ${module}`]);
+  //     }
+  //   }
+  // }
+};
 
 task('index', buildIndex);
 task('bundle', rollupBuild);
@@ -730,6 +855,7 @@ task(release);
 task('cfpatch', patchCFC);
 task(upload);
 task('build-all', buildAll);
+task('release-all', releaseAll);
 
 const KALOS_ROOT = 'kalos-prod:/opt/coldfusion11/cfusion/wwwroot';
 const KALOS_ASSETS = `${KALOS_ROOT}/app/assets`;
@@ -760,7 +886,7 @@ const NAMED_EXPORTS = {
     'isValidElementType',
     'isContextConsumer',
   ],
-  'node_modules/lodash/lodash.js': ['delay', 'debounce', 'isArray','parseInt'],
+  'node_modules/lodash/lodash.js': ['delay', 'debounce', 'isArray', 'parseInt'],
   'node_modules/@kalos-core/kalos-rpc/compiled-protos/dispatch_pb.js': [
     'DispatchableTechList',
     'DispatchableTech',
@@ -843,7 +969,7 @@ const NAMED_EXPORTS = {
     'QuotableRead',
     'CostReportInfo',
     'CostReportReq',
-    'CostReportData'
+    'CostReportData',
   ],
   'node_modules/@kalos-core/kalos-rpc/compiled-protos/event_assignment_pb.js': [
     'EventAssignment',
@@ -1098,7 +1224,7 @@ const NAMED_EXPORTS = {
   'node_modules/@kalos-core/kalos-rpc/compiled-protos/transaction_account_pb.js':
     ['TransactionAccount', 'TransactionAccountList'],
   'node_modules/@kalos-core/kalos-rpc/compiled-protos/transaction_activity_pb.js':
-    ['TransactionActivity', 'TransactionActivityList','MergeTransactionIds'],
+    ['TransactionActivity', 'TransactionActivityList', 'MergeTransactionIds'],
   'node_modules/@kalos-core/kalos-rpc/compiled-protos/transaction_document_pb.js':
     ['TransactionDocument', 'TransactionDocumentList'],
   'node_modules/@kalos-core/kalos-rpc/compiled-protos/transaction_status_pb.js':
@@ -1139,6 +1265,9 @@ const NAMED_EXPORTS = {
     'isContextConsumer',
   ],
   'node_modules/tslib/tslib.js': ['__awaiter', '__generator', '__extends'],
+  'node_modules/@kalos-core/kalos-rpc/node_modules/tslib/tslib.es6.js': [
+    '__spreadArray',
+  ],
   'node_modules/@kalos-core/kalos-rpc/compiled-protos/predict_pb.js': [
     'TransactionData',
     'Prediction',
@@ -1171,7 +1300,269 @@ const NAMED_EXPORTS = {
   ],
 };
 
-const MODULE_MAP = {
+// released: manual flag to show if a module has been released already. If false,
+// the module will not be released by the release-all command. True by default.
+// skip: whether to skip the module or not in the release-all command.
+// deprecated: does the same thing as skip for now, just adding it in for the future
+//  and to self document
+//
+// These basically do the same thing, but are different for self-documentation purposes
+const MODULE_MAP = [
+  {
+    name: 'AcceptProposal',
+    location: 'customer',
+    controller: 'service',
+    filename: 'accept_proposal',
+    released: true,
+  },
+  {
+    name: 'AccountInfo',
+    location: 'admin',
+    controller: 'account',
+    filename: 'editinformation',
+    released: true,
+  },
+  {
+    name: 'AddServiceCallGeneral',
+    location: 'admin',
+    controller: 'service',
+    filename: 'addservicecallgeneral',
+    released: false,
+  },
+  {
+    name: 'AddTimeOff',
+    skip: true,
+  },
+  {
+    name: 'AltGallery',
+    deprecated: true,
+  },
+  {
+    name: 'CallsByTech',
+    location: 'admin',
+    controller: 'service',
+    filename: 'callstech',
+    released: true,
+  },
+  {
+    name: 'CreditTransaction',
+    skip: true,
+  },
+  {
+    name: 'CustomerDetails',
+    location: 'admin',
+    controller: 'customers',
+    filename: 'details',
+    released: false,
+  },
+  {
+    name: 'CustomerDirectory',
+    skip: true,
+  },
+  {
+    name: 'CustomerTasks',
+    skip: true,
+  },
+  {
+    name: 'Dashboard',
+    location: 'admin',
+    controller: 'dashboard',
+    filename: 'index',
+  },
+  {
+    name: 'Dispatch',
+    location: 'admin',
+    controller: 'dispatch',
+    filename: 'newdash',
+  },
+  {
+    name: 'Documents',
+    location: 'admin',
+    controller: 'document',
+    filename: 'index',
+  },
+  {
+    name: 'EditProject',
+    location: 'admin',
+    controller: 'service',
+    filename: 'edit_project',
+    released: false,
+  },
+  {
+    name: 'EditTimeOff',
+    skip: true,
+  },
+  {
+    name: 'EmployeeDirectory',
+    location: 'admin',
+    controller: 'users',
+    filename: 'employee',
+  },
+  {
+    name: 'EmployeeTasks',
+    skip: true,
+  },
+  {
+    name: 'Gallery',
+    skip: true,
+  },
+  {
+    name: 'List',
+    deprecated: true,
+  },
+  {
+    name: 'Loader',
+    skip: true,
+  },
+  {
+    name: 'Login',
+    skip: true,
+  },
+  {
+    name: 'Metrics',
+    skip: true,
+  },
+  {
+    name: 'PDFMaker',
+    deprecated: true,
+  },
+  {
+    name: 'PendingBilling',
+    location: 'admin',
+    controller: 'service',
+    filename: 'callspending',
+    released: false,
+  },
+  {
+    name: 'PerDiem',
+    location: 'admin',
+    controller: 'reports',
+    filename: 'perdiem',
+  },
+  {
+    name: 'PerDiemsNeedsAuditing',
+    location: 'admin',
+    controller: 'reports',
+    filename: 'perdiem_audit',
+  },
+  {
+    name: 'PopoverGallery',
+    deprecated: true,
+  },
+  {
+    name: 'PostProposal',
+    location: 'customer',
+    controller: 'service',
+    filename: 'post_proposal',
+  },
+  {
+    name: 'Projects',
+    skip: true,
+  },
+  {
+    name: 'Prompt',
+    skip: true,
+  },
+  {
+    name: 'PropertyInformation',
+    location: 'admin',
+    controller: 'properties',
+    filename: 'details',
+    released: false,
+  },
+  {
+    name: 'PropertyTasks',
+    skip: true,
+  },
+  {
+    name: 'Proposal',
+    skip: true,
+  },
+  {
+    name: 'Reports',
+    location: 'admin',
+    controller: 'reports',
+    filename: 'index',
+    released: false,
+  },
+  {
+    name: 'SearchIndex',
+    location: 'admin',
+    controller: 'search',
+    filename: 'index',
+  },
+  {
+    name: 'ServiceCalendar',
+    location: 'admin',
+    controller: 'service',
+    filename: 'calendar',
+  },
+  {
+    name: 'ServiceCallDetail',
+    released: false,
+  },
+  {
+    name: 'ServiceCallEdit',
+    released: false,
+  },
+  {
+    name: 'ServiceCallSearch',
+    location: 'admin',
+    controller: 'service',
+    filename: 'calls',
+  },
+  {
+    name: 'SideMenu',
+    location: 'common',
+    controller: 'partials',
+    filename: 'header',
+    released: false,
+  },
+  {
+    name: 'SpiffLog',
+    location: 'admin',
+    controller: 'tasks',
+    filename: 'spiff_tool_logs',
+    released: false,
+  },
+  {
+    name: 'SpiffToolLogs',
+    location: 'admin',
+    controller: 'tasks',
+    filename: 'spiff_tool_logs',
+    released: false,
+  },
+  {
+    name: 'Timesheet',
+    location: 'admin',
+    controller: 'timesheet',
+    filename: 'timesheetview_new',
+  },
+  {
+    name: 'ToolLog',
+    skip: true,
+  },
+  {
+    name: 'Transaction',
+    location: 'admin',
+    controller: 'reports',
+    filename: 'transaction_admin',
+  },
+  {
+    name: 'TransactionAccountsPayable',
+    location: 'admin',
+    controller: 'reports',
+    filename: 'transactions_billing',
+  },
+  {
+    name: 'TransactionUser',
+    location: 'admin',
+    controller: 'reports',
+    filename: 'transactions',
+  },
+];
+
+const MODULE_MAP_OLD = {
   AcceptProposal: ['customer', 'service', 'accept_proposal'],
   AccountInfo: ['admin', 'account', 'editinformation'],
   // AddServiceCallGeneral: ['admin', 'service', 'addservicecallgeneral'], // UNRELEASED
@@ -1212,11 +1603,13 @@ const MODULE_MAP = {
   ServiceCallEdit: [], // UNRELEASED
   ServiceCallSearch: ['admin', 'service', 'calls'],
   // SideMenu: ['common', 'partials', 'header'], // UNRELEASED
+
+  // ? Unsure where SpiffLog comes from but it should not be spiff_tool_logs
   // SpiffLog: ['admin', 'tasks', 'spiff_tool_logs'], // UNRELEASED
   // SpiffToolLogs: ['admin', 'tasks', 'spiff_tool_logs'],
   Timesheet: ['admin', 'timesheet', 'timesheetview_new'],
   ToolLog: [],
   Transaction: ['admin', 'reports', 'transaction_admin'],
-  TransactionAccountsPayable: ['admin', 'reports', 'transactions'],
+  TransactionAccountsPayable: ['admin', 'reports', 'transactions_billing'],
   TransactionUser: ['admin', 'reports', 'transactions'],
 };

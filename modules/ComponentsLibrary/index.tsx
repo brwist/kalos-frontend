@@ -37,6 +37,7 @@ import EditContractInfo from './EditContractInfo/examples';
 import EditInvoiceData from './EditInvoiceData/examples';
 import EditProject from './EditProject/examples';
 import EditTransaction from './EditTransaction/examples';
+import EmailInvoice from './EmailInvoice/examples';
 import EmployeeDepartments from './EmployeeDepartments/examples';
 import ErrorBoundary from './ErrorBoundary/examples';
 import EventsReport from './EventsReport/examples';
@@ -50,6 +51,7 @@ import GanttChart from './GanttChart/examples';
 import ImagePreview from './ImagePreview/examples';
 import InfoTable from './InfoTable/examples';
 import InternalDocuments from './InternalDocuments/examples';
+import InvoicePreview from './InvoicePreview/examples';
 import Link from './Link/examples';
 import LodgingByZipCode from './LodgingByZipCode/examples';
 import ManagerTimeoffs from './ManagerTimeoffs/examples';
@@ -101,6 +103,7 @@ import TimeoffSummaryReport from './TimeoffSummaryReport/examples';
 import Timesheet from './Timesheet/examples';
 import Tooltip from './Tooltip/examples';
 import TransactionTable from './TransactionTable/examples';
+import TrelloSlashCommandDocumentation from './TrelloSlashCommandDocumentation/examples';
 import TripInfoTable from './TripInfoTable/examples';
 import TripSummary from './TripSummary/examples';
 import TripSummaryNew from './TripSummaryNew/examples';
@@ -152,6 +155,7 @@ const COMPONENTS = {
   EditInvoiceData,
   EditProject,
   EditTransaction,
+  EmailInvoice,
   EmployeeDepartments,
   ErrorBoundary,
   EventsReport,
@@ -165,6 +169,7 @@ const COMPONENTS = {
   ImagePreview,
   InfoTable,
   InternalDocuments,
+  InvoicePreview,
   Link,
   LodgingByZipCode,
   ManagerTimeoffs,
@@ -216,6 +221,7 @@ const COMPONENTS = {
   Timesheet,
   Tooltip,
   TransactionTable,
+  TrelloSlashCommandDocumentation,
   TripInfoTable,
   TripSummary,
   TripSummaryNew,

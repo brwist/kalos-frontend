@@ -1,5 +1,5 @@
 import { DispatchableTech } from '@kalos-core/kalos-rpc/Dispatch';
-import React, { FC, useEffect, useState } from 'react';
+import React, { FC, useCallback, useEffect, useState } from 'react';
 import { Draggable, Droppable } from 'react-beautiful-dnd';
 import Table from '@material-ui/core/Table';
 import TableBody from '@material-ui/core/TableBody';
@@ -9,37 +9,50 @@ import TableHead from '@material-ui/core/TableHead';
 import TableCell from '@material-ui/core/TableCell';
 import differenceInMinutes from 'date-fns/esm/differenceInMinutes';
 import parseISO from 'date-fns/esm/parseISO';
+import format from 'date-fns/esm/format';
 import DeleteOutlineIcon from '@material-ui/icons/DeleteOutline';
 import { InfoTable } from '../InfoTable';
 import { makeFakeRows } from '../../../helpers';
+import Tooltip from '@material-ui/core/Tooltip';
+import IconButton from '@material-ui/core/IconButton';
+import ErrorOutline from '@material-ui/icons/ErrorOutline';
+import addMinutes from 'date-fns/esm/addMinutes';
 
 interface props {
   userID: number;
   techs: DispatchableTech[];
   dismissedTechs: DispatchableTech[];
+  offTechs?: {tech: DispatchableTech, start: string, end: string}[];
   handleMapRecenter?: (center: {lat: number, lng: number}, zoom: number) => void;
   loading: boolean;
   isFirstCall?: boolean;
+  firstCallInUse?: number[];
 }
 
 export const DispatchTechs: FC<props> = props => {
   const {
     techs,
+    dismissedTechs,
     loading,
     isFirstCall=false,
+    firstCallInUse=[],
   } = props
 
-  const sortTechs = (techs : DispatchableTech[]) => {
-    const sorted = techs.sort((a,b) => (a.getTechname() > b.getTechname()) ? 1 : ((b.getTechname() > a.getTechname()) ? -1 : 0));
+  const sortTechs = useCallback((techs : DispatchableTech[]) => {
+    let sorted = techs.sort((a,b) => (a.getTechname() > b.getTechname()) ? 1 : ((b.getTechname() > a.getTechname()) ? -1 : 0));
+    if (isFirstCall) {
+      const available = sorted.filter(tech=>!firstCallInUse.includes(tech.getUserId()));
+      const assigned = sorted.filter(tech=>firstCallInUse.includes(tech.getUserId()));
+      sorted = available.concat(assigned);
+    }
     setSortedTechnicians(sorted);
-  }
+  }, [isFirstCall, firstCallInUse])
 
   const [sortedTechnicians, setSortedTechnicians] = useState<DispatchableTech[]>([]);
 
   useEffect(() => {
-    // console.log("DispatchTechs");
     sortTechs(techs);
-  }, [props.dismissedTechs, techs]);
+  }, [techs, loading, sortTechs]);
 
   return (
     <div>
@@ -79,10 +92,15 @@ export const DispatchTechs: FC<props> = props => {
                     const minutesWorked = Math.floor((tech.getHoursWorked() - hoursWorked * 3600) / 60);
                     const techLatitude = tech.getGeolocationLat() ? tech.getGeolocationLat() : 0;
                     const techLongitude = tech.getGeolocationLng() ? tech.getGeolocationLng() : 0;
+                    let timeoffData : {tech: DispatchableTech, start: string, end: string};
+                    if (props.offTechs && props.offTechs.length) {
+                      timeoffData = props.offTechs.find(req => req.tech.getUserId() === tech.getUserId())!;
+                    }
                     return (
                       <Draggable
                         key={`${tech.getUserId()}`}
                         draggableId={`${tech.getUserId()}`}
+                        isDragDisabled={firstCallInUse.includes(tech.getUserId()) ? true : false}
                         index={index}
                       >
                         {(dragProvided, snapshot) => (
@@ -92,17 +110,27 @@ export const DispatchTechs: FC<props> = props => {
                             key={`tech_id_${tech.getUserId}`}
                             ref={dragProvided.innerRef}
                             style={{
-                              backgroundColor: snapshot.draggingOver === 'dismissTech' || snapshot.draggingOver === 'onCallDroppable' ? '#711313' :  snapshot.draggingOver ? 'grey' : snapshot.isDragging ? 'beige' : '',
+                              backgroundColor: snapshot.draggingOver === 'dismissTech' || snapshot.draggingOver === 'onCallDroppable' ? '#711313' :  snapshot.draggingOver ? 'grey' : snapshot.isDragging ? 'beige' : timeoffData && format(addMinutes(new Date(), 30), 'yyyy-MM-dd HH:mm:ss') >= timeoffData.start ? '#ffcccb' : '',
                               width:'100%',
                               height:'auto',
                               margin:'auto',
                               ...dragProvided.draggableProps.style,
                               textAlign:'center',
+                              opacity: firstCallInUse.includes(tech.getUserId()) ? 0.4 : 1,
                             }}
                             hover
                             onClick={props.handleMapRecenter ? () => props.handleMapRecenter!({lat: techLatitude, lng: techLongitude}, 12) : () => {}}
                           >
-                            <TableCell align="center" style={{color: snapshot.draggingOver && snapshot.draggingOver !== "techDroppable" ? 'white' : 'black'}}>{tech.getTechname()}</TableCell>
+                            <TableCell align="center" style={{color: snapshot.draggingOver && snapshot.draggingOver !== "techDroppable" ? 'white' : 'black'}}>
+                              {timeoffData && (
+                                <Tooltip title={<h2 style={{}}>{`Time Off: ${format(parseISO(timeoffData.start), 'h:mm aaa')} - ${format(parseISO(timeoffData.end), 'h:mm aaa')}`}</h2>} placement={"top"}>
+                                  <IconButton>
+                                    <ErrorOutline/>
+                                  </IconButton>
+                                </Tooltip>
+                              )}
+                              {tech.getTechname()}
+                            </TableCell>
                             <TableCell align="center" style={{display:isFirstCall?'none':'', color: snapshot.draggingOver && snapshot.draggingOver !== "techDroppable" ? 'white' : 'black'}}>
                               {tech.getActivity() != 'Standby' ? (
                                 <a

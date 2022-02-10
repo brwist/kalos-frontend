@@ -469,8 +469,13 @@ export class Dashboard extends React.PureComponent<props, state> {
                           },
                         ]
                       : []),
-                    ...(currentUser.getId() === 213 ||
-                    currentUser.getId() === 3490
+                    ...(this.state.currentUser
+                      .getPermissionGroupsList()
+                      .find(
+                        p =>
+                          p.getType() === 'privilege' &&
+                          p.getName() == 'Dispatch',
+                      )
                       ? [
                           {
                             value: (

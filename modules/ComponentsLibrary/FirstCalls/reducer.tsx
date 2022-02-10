@@ -72,6 +72,7 @@ export interface State {
   calls: DispatchCall[];
   availableCalls: DispatchCall[];
   assignedCalls: DispatchCall[];
+  requestedCalls: DispatchCall[];
   jobTypeList: JobType[];
   sectorList: number[];
   departmentList: number[];
@@ -152,6 +153,7 @@ export type Action =
     calls: DispatchCall[],
     available: DispatchCall[],
     assigned: DispatchCall[],
+    requested: DispatchCall[],
   }}
   | { type: 'setCallsOnly'; data: {
     calls: DispatchCall[],
@@ -166,6 +168,7 @@ export type Action =
     jobTypes: JobType[],
     availableCalls: DispatchCall[],
     assignedCalls: DispatchCall[],
+    requestedCalls: DispatchCall[],
     key: string,
     firstCall: FirstCallType,
     newFirstCall: boolean,
@@ -265,6 +268,7 @@ export type Action =
     calls: DispatchCall[],
     available: DispatchCall[],
     assigned: DispatchCall[],
+    requested: DispatchCall[],
   }}
   | {type: 'setUserHasApiKey'; data: boolean}
 ;
@@ -310,15 +314,17 @@ export const reducer = (state: State, action: Action) => {
         }
       }
     }
-    case 'setCalls':
+    case 'setCalls': {
       return {
         ...state,
         calls: action.data.calls,
         availableCalls: action.data.available,
         assignedCalls: action.data.assigned,
+        requestedCalls: action.data.requested,
         saveCall: false,
         refreshCalls: false,
       }
+    }
     case 'setCallsOnly':
       return {
         ...state,
@@ -348,6 +354,7 @@ export const reducer = (state: State, action: Action) => {
         jobTypeList: action.data.jobTypes,
         availableCalls: action.data.availableCalls,
         assignedCalls: action.data.assignedCalls,
+        requestedCalls: action.data.requestedCalls,
         googleApiKey: action.data.key,
         savedFirstCall: action.data.firstCall,
         newFirstCall: action.data.newFirstCall,
@@ -560,6 +567,7 @@ export const reducer = (state: State, action: Action) => {
         calls: action.data.calls,
         availableCalls: action.data.available,
         assignedCalls: action.data.assigned,
+        requestedCalls: action.data.requested,
         saveCall: false,
         refreshCalls: false,
       }

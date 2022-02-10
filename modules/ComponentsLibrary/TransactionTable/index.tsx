@@ -47,7 +47,10 @@ import {
   EmailClientService,
   uploadPhotoToExistingTransaction,
   DevlogClientService,
+  getSlackID,
+  slackNotify,
   TransactionAccountClientService,
+  getSlackList,
 } from '../../../helpers';
 import { AltGallery } from '../../AltGallery/main';
 import { Tooltip } from '../../ComponentsLibrary/Tooltip';
@@ -57,6 +60,7 @@ import { TxnLog } from '../../transaction/components/log';
 import { TxnNotes } from '../../transaction/components/notes';
 import { prettyMoney } from '../../transaction/components/row';
 import { CompareTransactions } from '../CompareTransactions';
+import { Confirm } from '../Confirm';
 import { Data, InfoTable } from '../InfoTable';
 import { Alert } from '../Alert';
 import { Modal } from '../Modal';
@@ -81,7 +85,8 @@ import { truncateSync } from 'fs';
 import { getMimeType } from '@kalos-core/kalos-rpc/Common';
 import { pdf } from '@react-pdf/renderer';
 import { NULL_TIME_VALUE } from '../Timesheet/constants';
-
+import NotificationsActiveIcon from '@material-ui/icons/NotificationsActive';
+import { te } from 'date-fns/locale';
 export interface Props {
   loggedUserId: number;
   isSelector?: boolean; // Is this a selector table (checkboxes that return in on-change)?
@@ -139,6 +144,8 @@ export const TransactionTable: FC<Props> = ({
     openMerge: false,
     document1: '',
     document2: '',
+    notify: 0,
+    accountsPayableAdmin: false,
     mergeDocumentAlert: '',
     costCenterData: new TransactionAccountList(),
     transactionActivityLogs: [],
@@ -146,8 +153,10 @@ export const TransactionTable: FC<Props> = ({
     transactionToEdit: undefined,
     loading: true,
     creatingTransaction: false,
+    duplicateDataParameters: { orderNumber: '', vendor: '' },
     mergingTransaction: false,
     pendingUploadPhoto: undefined,
+    pendingSendNotificationForExistingTransaction: undefined,
     role: undefined,
     orderDir: 'ASC',
     orderBy: 'vendor, timestamp',
@@ -162,7 +171,7 @@ export const TransactionTable: FC<Props> = ({
     error: undefined,
     loaded: false,
     changingPage: false,
-    status: 'Accepted / Rejected',
+    status: 'Pending',
     universalSearch: undefined,
     searching: false,
     fileData: undefined,
@@ -301,6 +310,8 @@ export const TransactionTable: FC<Props> = ({
   };
   const resetTransactions = useCallback(async () => {
     let req = new Transaction();
+    dispatch({ type: ACTIONS.SET_LOADING, data: true });
+
     req.setOrderBy(state.orderBy ? state.orderBy : 'timestamp');
     req.setOrderDir(
       state.orderDir ? state.orderDir : state.orderDir == ' ' ? 'DESC' : 'DESC',
@@ -311,12 +322,15 @@ export const TransactionTable: FC<Props> = ({
     req.setVendorCategory("'PickTicket','Receipt','Invoice'");
     if (state.transactionFilter.isAccepted) {
       req.setStatusId(3);
-    }
-    if (state.transactionFilter.isRejected) {
+      req.setIsBillingRecorded(true);
+    } else if (state.transactionFilter.isRejected) {
       req.setStatusId(4);
-    }
-    if (state.transactionFilter.processed) {
+      req.setIsBillingRecorded(true);
+    } else if (state.transactionFilter.processed) {
       req.setStatusId(5);
+      req.setIsBillingRecorded(true);
+    } else {
+      req.setIsBillingRecorded(false);
     }
     if (state.transactionFilter.jobNumber)
       req.setJobId(state.transactionFilter.jobNumber);
@@ -326,7 +340,6 @@ export const TransactionTable: FC<Props> = ({
       req.setOwnerId(state.transactionFilter.employeeId);
     if (state.transactionFilter.amount)
       req.setAmount(state.transactionFilter.amount);
-    req.setIsBillingRecorded(state.transactionFilter.billingRecorded);
     req.setFieldMaskList(['IsBillingRecorded']);
     let res: TransactionList | null = null;
     if (state.transactionFilter.universalSearch) {
@@ -443,12 +456,12 @@ export const TransactionTable: FC<Props> = ({
     });
     const temp = transactions.map(txn => txn);
     dispatch({ type: ACTIONS.SET_TRANSACTIONS, data: temp });
+    dispatch({ type: ACTIONS.SET_LOADING, data: false });
   }, [
     loggedUserId,
     state.page,
     state.totalTransactions,
     state.transactionFilter.amount,
-    state.transactionFilter.billingRecorded,
     state.transactionFilter.departmentId,
     state.transactionFilter.employeeId,
     state.transactionFilter.isAccepted,
@@ -524,16 +537,18 @@ export const TransactionTable: FC<Props> = ({
       const role = user
         .getPermissionGroupsList()
         .find(p => p.getType() === 'role');
-
+      const accountsPayableAdmin = user
+        .getPermissionGroupsList()
+        .find(p => p.getName() === 'AccountsPayableAdmin');
       if (role) {
         dispatch({ type: ACTIONS.SET_ROLE, data: role.getName() as RoleType });
       }
+      if (accountsPayableAdmin) {
+        dispatch({ type: ACTIONS.SET_ACCOUNTS_PAYABLE_ADMIN, data: true });
+      }
     }
 
-    dispatch({ type: ACTIONS.SET_CHANGING_PAGE, data: false });
-
     dispatch({ type: ACTIONS.SET_LOADING, data: false });
-    dispatch({ type: ACTIONS.SET_LOADED, data: true });
   }, [loggedUserId]);
 
   const makeUpdateStatus = async (
@@ -619,7 +634,104 @@ export const TransactionTable: FC<Props> = ({
     },
     [],
   );
+  const handleSetNotify = useCallback((notify: number) => {
+    dispatch({ type: ACTIONS.SET_NOTIFY, data: notify });
+  }, []);
 
+  const handleCheckOrderNumber = useCallback(
+    async (orderNumber: string /*vendor: string*/) => {
+      if (orderNumber != '' /*&& vendor != ''*/) {
+        const transactionReq = new Transaction();
+        transactionReq.setOrderNumber(orderNumber);
+        transactionReq.setVendorCategory("'PickTicket','Receipt','Invoice'");
+        //transactionReq.setVendor(vendor);
+        transactionReq.setIsActive(1);
+        try {
+          const result = await TransactionClientService.Get(transactionReq);
+          if (result) {
+            dispatch({
+              type: ACTIONS.SET_ERROR,
+              data: `This Order Number already exists. You can still create this transaction,
+        but it may result in duplicate transactions. It is recommended that you
+        search for the existing transaction and update it.`,
+            });
+          }
+        } catch (err) {
+          dispatch({ type: ACTIONS.SET_ERROR, data: undefined });
+        }
+      }
+    },
+    [],
+  );
+
+  const handleSetOrderNumberToCheckDuplicate = useCallback(
+    async (orderNumber: string) => {
+      let temp = state.duplicateDataParameters;
+      dispatch({
+        type: ACTIONS.SET_DUPLICATE_PARAMETERS,
+        data: { orderNumber: orderNumber, vendor: temp.vendor },
+      });
+      //handleCheckOrderNumber(orderNumber, temp.vendor);
+      handleCheckOrderNumber(orderNumber);
+    },
+    [state.duplicateDataParameters, handleCheckOrderNumber],
+  );
+  const handleResetDuplicateCheck = useCallback(async () => {
+    dispatch({
+      type: ACTIONS.SET_DUPLICATE_PARAMETERS,
+      data: { orderNumber: '', vendor: '' },
+    });
+  }, []);
+  const handleSetVendorToCheckDuplicate = useCallback(
+    async (vendor: string) => {
+      let temp = state.duplicateDataParameters;
+      dispatch({
+        type: ACTIONS.SET_DUPLICATE_PARAMETERS,
+        data: { vendor: vendor, orderNumber: temp.orderNumber },
+      });
+      //  handleCheckOrderNumber(temp.orderNumber, vendor);
+      handleCheckOrderNumber(temp.orderNumber);
+    },
+    [state.duplicateDataParameters, handleCheckOrderNumber],
+  );
+
+  const handleNotifyUserOfExistingTransaction = useCallback(
+    async (txn: Transaction) => {
+      const foundDepartment = state.departments.find(
+        department => department.getId() == txn.getDepartmentId(),
+      );
+      if (foundDepartment) {
+        const messageToSend = `A new transaction has been created in Accounts Payable that requires your attention, *Order Number:${txn.getOrderNumber()}*, Amount: ${txn.getAmount()} *Vendor: ${txn.getVendor()}*, *Notes: ${txn.getNotes()}*`;
+        console.log(messageToSend);
+        const user = new User();
+        if (foundDepartment.getId() == 15) {
+          const duane = 103896;
+          user.setId(duane); //Since ELE has no legit manager ID value that corresponds to a person, we are doing this for now.
+        } else {
+          user.setId(foundDepartment.getManagerId());
+        }
+        const userResult = await UserClientService.Get(user);
+        const slackUser = await getSlackID(
+          `${userResult.getFirstname()} ${userResult.getLastname()}`,
+        );
+        if (slackUser === '0') {
+          console.log('failed to send message');
+          dispatch({
+            type: ACTIONS.SET_ERROR,
+            data: 'Failed to Send Message, could not find user in Slack',
+          });
+        }
+        await slackNotify(slackUser, messageToSend);
+
+        console.log('Message sent successfully.');
+      }
+      dispatch({
+        type: ACTIONS.SET_PENDING_SEND_NOTIFICATION_FOR_EXISTING_TRANSACTION,
+        data: undefined,
+      });
+    },
+    [state.departments],
+  );
   const handleSetFilter = useCallback(async (d: FilterData) => {
     if (!d.week) {
       d.week = OPTION_ALL;
@@ -797,22 +909,44 @@ export const TransactionTable: FC<Props> = ({
     },
     [],
   );
-
+  const handleStatus = (option: string) => {
+    switch (option) {
+      case 'Pending':
+        return 0;
+      case 'Accepted':
+        return 1;
+      case 'Rejected':
+        return 2;
+      case 'Processed':
+        return 3;
+      default:
+        return 0;
+    }
+  };
   const handleSetFilterAcceptedRejected = useCallback(
-    (option: 'Accepted' | 'Rejected' | 'Accepted / Rejected') => {
+    (option: 'Accepted' | 'Rejected' | 'Pending' | 'Processed') => {
       let tempFilter = state.transactionFilter;
       dispatch({ type: ACTIONS.SET_STATUS, data: option });
       switch (option) {
         case 'Accepted':
           tempFilter.isAccepted = true;
+          tempFilter.isRejected = undefined;
+          tempFilter.processed = undefined;
           break;
         case 'Rejected':
           tempFilter.isRejected = true;
+          tempFilter.isAccepted = undefined;
+          tempFilter.processed = undefined;
           break;
-        case 'Accepted / Rejected':
+        case 'Pending':
           tempFilter.isAccepted = undefined;
           tempFilter.isRejected = undefined;
-
+          tempFilter.processed = undefined;
+          break;
+        case 'Processed':
+          tempFilter.processed = true;
+          tempFilter.isAccepted = undefined;
+          tempFilter.isRejected = undefined;
           break;
         default:
           console.error(
@@ -965,32 +1099,16 @@ export const TransactionTable: FC<Props> = ({
             })),
         ],
       },
-      {
-        name: 'billingRecorded',
-        label: 'Was Approved/Rejected?',
-        type: 'checkbox',
-      },
-      {
-        name: 'processed',
-        label: 'Was Processed?',
-        type: 'checkbox',
-      },
     ],
     [
       {
         content: (
           <StatusPicker
             key={state.status}
-            options={['Accepted / Rejected', 'Accepted', 'Rejected']}
-            selected={
-              state.status == 'Accepted / Rejected'
-                ? 0
-                : state.status == 'Accepted'
-                ? 1
-                : 2
-            }
+            options={['Pending', 'Accepted', 'Rejected', 'Processed']}
+            selected={handleStatus(state.status)}
             onSelect={(
-              selected: 'Accepted' | 'Rejected' | 'Accepted / Rejected',
+              selected: 'Accepted' | 'Rejected' | 'Pending' | 'Processed',
             ) => {
               handleSetFilterAcceptedRejected(selected);
             }}
@@ -1019,6 +1137,7 @@ export const TransactionTable: FC<Props> = ({
 
   const saveFromRowButton = useCallback(
     async (saved: any) => {
+      handleResetDuplicateCheck();
       let newTxn = new Transaction();
       newTxn.setTimestamp(saved['Date']);
       let newtimestamp = newTxn.getTimestamp();
@@ -1034,6 +1153,7 @@ export const TransactionTable: FC<Props> = ({
         console.log('new date', newTimestamp);
         newTxn.setTimestamp(newTimestamp);
       }
+
       newTxn.setOrderNumber(saved['Order #']);
       newTxn.setAssignedEmployeeId(loggedUserId);
       if (saved['Purchaser'] == null || saved['Purchaser'] == '') {
@@ -1042,6 +1162,33 @@ export const TransactionTable: FC<Props> = ({
         newTxn.setOwnerId(saved['Purchaser']);
       }
       newTxn.setDepartmentId(saved['Department']);
+      if (state.notify == 1 && newTxn.getDepartmentId() != 0) {
+        console.log('we should notify');
+        dispatch({ type: ACTIONS.SET_NOTIFY, data: 0 });
+        const foundDepartment = state.departments.find(
+          department => department.getId() == newTxn.getDepartmentId(),
+        );
+        if (foundDepartment) {
+          const messageToSend = `A new transaction has been created in Accounts Payable that requires your attention, Order Number: ${newTxn.getOrderNumber()}, Amount: ${newTxn.getAmount()} Vendor: ${newTxn.getVendor()}, Notes: ${newTxn.getNotes()}`;
+          console.log(messageToSend);
+          const user = new User();
+          user.setId(foundDepartment.getManagerId());
+          const userResult = await UserClientService.Get(user);
+          const slackUser = await getSlackID(
+            `${userResult.getFirstname()} ${userResult.getLastname()}`,
+          );
+          if (slackUser === '0') {
+            console.log('failed to send message');
+            dispatch({
+              type: ACTIONS.SET_ERROR,
+              data: 'Failed to Send Message, could not find user in Slack',
+            });
+          }
+          await slackNotify(slackUser, messageToSend);
+
+          console.log('Message sent successfully.');
+        }
+      }
       newTxn.setJobId(saved['Job #']);
       newTxn.setNotes(saved['Notes']);
       newTxn.setCostCenterId(saved['Cost Center ID']);
@@ -1094,7 +1241,14 @@ export const TransactionTable: FC<Props> = ({
       refresh();
       return res;
     },
-    [loggedUserId, resetTransactions, refresh],
+    [
+      loggedUserId,
+      handleResetDuplicateCheck,
+      resetTransactions,
+      state.departments,
+      state.notify,
+      refresh,
+    ],
   );
 
   const deleteTransaction = useCallback(async () => {
@@ -1117,19 +1271,21 @@ export const TransactionTable: FC<Props> = ({
   }, [state.transactionToDelete]);
 
   useEffect(() => {
-    async function refreshEverything() {
-      await load();
-      await resetTransactions();
-    }
+    console.log('use effect homie');
     if (!state.loaded) {
+      console.log('use effect loaded');
+      dispatch({ type: ACTIONS.SET_LOADED, data: true });
       load();
       resetTransactions();
     }
     if (state.changingPage) {
-      load();
+      console.log('use effect change page');
+
       resetTransactions();
     }
     if (state.searching) {
+      console.log('use effect searching');
+
       dispatch({ type: ACTIONS.SET_PAGE, data: 0 });
       dispatch({ type: ACTIONS.SET_CHANGING_PAGE, data: true });
 
@@ -1465,6 +1621,7 @@ export const TransactionTable: FC<Props> = ({
                 data: undefined,
               })
             }
+            changeCreator={state.accountsPayableAdmin}
           />
         </Modal>
       )}
@@ -1560,6 +1717,7 @@ export const TransactionTable: FC<Props> = ({
                 {
                   label: 'New Transaction',
                   onClick: () => {
+                    handleResetDuplicateCheck();
                     dispatch({
                       type: ACTIONS.SET_CREATING_TRANSACTION,
                       data: !state.creatingTransaction,
@@ -1648,6 +1806,7 @@ export const TransactionTable: FC<Props> = ({
           onFileLoad: data =>
             dispatch({ type: ACTIONS.SET_FILE_DATA, data: data }),
           externalButtonClicked: state.creatingTransaction,
+          onNotify: state.accountsPayableAdmin ? handleSetNotify : undefined,
           externalButton: true,
           type: new Transaction(),
           columnDefinition: {
@@ -1672,6 +1831,11 @@ export const TransactionTable: FC<Props> = ({
                 options: state.costCenters,
               },
               {
+                columnName: 'Order #',
+                columnType: 'text',
+                onBlur: value => handleSetOrderNumberToCheckDuplicate(value),
+              },
+              {
                 columnName: 'Amount',
                 columnType: 'number',
               },
@@ -1682,6 +1846,11 @@ export const TransactionTable: FC<Props> = ({
               {
                 columnName: 'Notes',
                 columnType: 'text',
+              },
+              {
+                columnName: 'Vendor',
+                columnType: 'text',
+                //onBlur: value => handleSetVendorToCheckDuplicate(value),
               },
               {
                 columnName: 'Creator',
@@ -1936,6 +2105,40 @@ export const TransactionTable: FC<Props> = ({
                                 <LineWeightIcon />
                               </IconButton>
                             </Tooltip>,
+                            ...(state.accountsPayableAdmin
+                              ? [
+                                  <Tooltip
+                                    key="notifyManager"
+                                    content={
+                                      selectorParam.txn.getDepartmentId() ==
+                                        0 ||
+                                      selectorParam.txn.getDepartmentId() ==
+                                        undefined
+                                        ? 'No Department, Cannot Notify Manager'
+                                        : 'Notify Department Manager'
+                                    }
+                                  >
+                                    <IconButton
+                                      key="notifyIcon"
+                                      size="small"
+                                      onClick={() =>
+                                        dispatch({
+                                          type: ACTIONS.SET_PENDING_SEND_NOTIFICATION_FOR_EXISTING_TRANSACTION,
+                                          data: selectorParam.txn,
+                                        })
+                                      }
+                                      disabled={
+                                        selectorParam.txn.getDepartmentId() ==
+                                          0 ||
+                                        selectorParam.txn.getDepartmentId() ==
+                                          undefined
+                                      }
+                                    >
+                                      <NotificationsActiveIcon />
+                                    </IconButton>
+                                  </Tooltip>,
+                                ]
+                              : []),
                             <Tooltip key="upload" content="Upload File">
                               <IconButton
                                 key={'uploadIcon'}
@@ -2020,6 +2223,7 @@ export const TransactionTable: FC<Props> = ({
                                   </Tooltip>,
                                 ]
                               : []),
+
                             <Tooltip key="submit" content={'Mark as accepted'}>
                               <IconButton
                                 key="submitIcon"
@@ -2064,6 +2268,7 @@ export const TransactionTable: FC<Props> = ({
                                   </IconButton>
                                 </Tooltip>
                               ),
+
                             <Tooltip key="delete" content="Delete this task">
                               <IconButton
                                 key="deleteIcon"
@@ -2201,6 +2406,28 @@ export const TransactionTable: FC<Props> = ({
         }
         loading={state.loading}
       />
+      {state.pendingSendNotificationForExistingTransaction != undefined && (
+        <Confirm
+          open={
+            state.pendingSendNotificationForExistingTransaction != undefined
+          }
+          submitLabel="Send"
+          title="Notify Manager"
+          onConfirm={() =>
+            handleNotifyUserOfExistingTransaction(
+              state.pendingSendNotificationForExistingTransaction!,
+            )
+          }
+          onClose={() =>
+            dispatch({
+              type: ACTIONS.SET_PENDING_SEND_NOTIFICATION_FOR_EXISTING_TRANSACTION,
+              data: undefined,
+            })
+          }
+        >
+          Notify Manager of Transaction?
+        </Confirm>
+      )}
       {state.openUploadPhotoTransaction ? (
         <Modal
           open={state.openUploadPhotoTransaction}

@@ -10,6 +10,7 @@
     "bundle": "gulp -LL bundle",
     "make": "gulp -LL create",
     "release": "gulp -LL release",
+    "release-all": "gulp -LL release-all",
     "distribute": "gulp -LL distribute",
     "bust": "gulp -LL bust",
     "less": "lessc styles/index.less styles/main.css",
@@ -32,6 +33,7 @@
     "@babel/preset-typescript": "^7.12.7",
     "@babel/register": "^7.14.5",
     "@babel/runtime": "^7.14.6",
+    "@improbable-eng/grpc-web": "^0.15.0",
     "@improbable-eng/grpc-web-node-http-transport": "^0.14.0",
     "@react-pdf/unicode-properties": "^2.2.0",
     "@rollup/plugin-auto-install": "^2.0.0",
@@ -48,6 +50,7 @@
     "@types/gulp": "^4.0.6",
     "@types/node": "^16.3.3",
     "@types/react-beautiful-dnd": "^13.1.1",
+    "@types/react-html-parser": "^2.0.2",
     "@types/rollup-plugin-node-builtins": "^2.1.1",
     "@types/rollup-plugin-node-globals": "^1.4.0",
     "@types/rollup-plugin-peer-deps-external": "^2.2.0",
@@ -145,6 +148,7 @@
     "react-beautiful-dnd": "^13.1.0",
     "react-dom": "^15.0.0 || ^16.0.0",
     "react-google-maps": "^9.4.5",
+    "react-html-parser": "^2.0.2",
     "react-signature-pad-wrapper": "^1.2.8",
     "react-to-print": "^2.6.3",
     "recharts": "^1.8.5",
@@ -158,6 +162,13 @@
   "files": [
     "build/dist",
     "index.js"
+  ],
+  "browserslist": [
+    "last 3 and_chr versions",
+    "last 3 chrome versions",
+    "last 3 opera versions",
+    "last 3 ios_saf versions",
+    "last 3 safari versions"
   ],
   "prettier": {
     "printWidth": 80,

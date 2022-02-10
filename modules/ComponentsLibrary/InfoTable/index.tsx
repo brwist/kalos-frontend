@@ -24,6 +24,8 @@ type Styles = {
   error?: boolean;
   compact?: boolean;
   hoverable?: boolean;
+  ignoreNotify?: boolean;
+  ignoreImage?: boolean;
 };
 
 type Href = 'tel' | 'mailto';
@@ -57,6 +59,7 @@ interface Props extends Styles {
   styles?: CSSProperties;
   className?: string;
   skipPreLine?: boolean;
+  onNotify?: (notifyValue: boolean) => void;
   onSaveRowButton?: (results: {}) => any;
   // row button
   rowButton?: {
@@ -69,8 +72,10 @@ interface Props extends Styles {
         columnName: string;
         columnType: Type;
         options?: Options;
+        onBlur?: (value: any) => void;
       }[];
     };
+    onNotify?: (notifyValue: number) => void;
     externalButton?: boolean;
     externalButtonClicked?: boolean; // Was an external button clicked that triggers this? (While true, makes the row appear)
     onFileLoad?: (fileData: any) => any;
@@ -91,6 +96,8 @@ export const InfoTable = ({
   styles,
   onSaveRowButton,
   rowButton,
+  ignoreNotify = false,
+  ignoreImage = false,
 }: Props) => {
   const [state, dispatch] = useReducer(Reducer, {
     isAddingRow: false,
@@ -117,7 +124,7 @@ export const InfoTable = ({
     });
   }
 
-  // console.log('adding row: ', state.isAddingRow);
+  //console.log('adding row: ', state.isAddingRow);
   return (
     <div
       className={clsx('InfoTable', className)}
@@ -149,6 +156,16 @@ export const InfoTable = ({
                 dispatch({
                   type: ACTIONS.SET_IS_ADDING_ROW,
                   payload: true,
+                });
+              }
+              if (
+                rowButton?.externalButton &&
+                rowButton?.externalButtonClicked == false &&
+                state.isAddingRow
+              ) {
+                dispatch({
+                  type: ACTIONS.SET_IS_ADDING_ROW,
+                  payload: false,
                 });
               }
               if (
@@ -224,6 +241,12 @@ export const InfoTable = ({
                 return {
                   label: field,
                   name: field,
+                  onBlur:
+                    columnType?.length === 1
+                      ? columnType![0].onBlur
+                        ? columnType![0].onBlur
+                        : undefined
+                      : undefined,
                   type:
                     columnType?.length === 1
                       ? columnType![0].columnType
@@ -239,17 +262,34 @@ export const InfoTable = ({
             ),
             [
               {
+                label: 'Notify Manager?',
+                name: 'notify',
+                invisible: ignoreNotify,
+                type: rowButton && rowButton.onNotify ? 'checkbox' : 'hidden',
+                onChange: (data: number) => {
+                  if (rowButton && rowButton.onNotify) {
+                    rowButton.onNotify(data);
+                  }
+                },
+              },
+              {
                 label: 'Add Image / Document',
                 name: 'image',
+                invisible: ignoreImage,
                 type: 'file',
                 onFileLoad: (data: string) => {
                   if (rowButton) {
                     if (rowButton.onFileLoad) rowButton.onFileLoad(data);
                   }
                 },
+              },
+            ],
+            [
+              {
+                label: '',
                 actions: [
                   {
-                    label: 'OK',
+                    label: 'Create',
                     onClick: () => {
                       dispatch({
                         type: ACTIONS.SET_IS_ADDING_ROW,

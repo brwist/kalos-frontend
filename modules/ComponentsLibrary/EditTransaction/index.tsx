@@ -18,6 +18,7 @@ interface Props {
   onClose: () => void;
   onChange?: (changed: Transaction) => void;
   title?: string;
+  changeCreator?: boolean;
 }
 
 export const EditTransaction: FC<Props> = ({
@@ -25,18 +26,17 @@ export const EditTransaction: FC<Props> = ({
   onSave,
   onClose,
   onChange,
+  changeCreator,
   title,
 }) => {
   const [transaction] = useState<Transaction>(transactionInput);
   const [changed, setChanged] = useState<boolean>(false);
   const [loading, setLoading] = useState<boolean>(true);
 
-  const [transactionStatuses, setTransactionStatuses] = useState<
-    { label: string; value: number }[]
-  >();
-  const [transactionAccounts, setTransactionAccounts] = useState<
-    { label: string; value: number }[]
-  >();
+  const [transactionStatuses, setTransactionStatuses] =
+    useState<{ label: string; value: number }[]>();
+  const [transactionAccounts, setTransactionAccounts] =
+    useState<{ label: string; value: number }[]>();
   const tagsTranslated = [];
   for (let i = 0; i < SUBJECT_TAGS_ACCOUNTS_PAYABLE.length; i++) {
     const tempStruct = {
@@ -113,7 +113,11 @@ export const EditTransaction: FC<Props> = ({
         label: 'Creator',
         name: 'getAssignedEmployeeId',
         type: 'technician',
-        disabled: transactionInput.getAssignedEmployeeId() === 0 ? false : true,
+        disabled:
+          transactionInput.getAssignedEmployeeId() === 0 ||
+          changeCreator == true
+            ? false
+            : true,
       },
       {
         label: 'Status ID',

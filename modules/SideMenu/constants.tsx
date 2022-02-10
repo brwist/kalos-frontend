@@ -8,8 +8,11 @@ import CalendarTodaySharp from '@material-ui/icons/CalendarTodaySharp';
 import PersonSharp from '@material-ui/icons/PersonSharp';
 import PictureAsPdfSharpIcon from '@material-ui/icons/PictureAsPdfSharp';
 import ReceiptIcon from '@material-ui/icons/ReceiptSharp';
+import AccountBalanceIcon from '@material-ui/icons/AccountBalance';
+import AssignmentIcon from '@material-ui/icons/AssessmentOutlined';
 import EventSharp from '@material-ui/icons/EventSharp';
 import LocationOnIcon from '@material-ui/icons/LocationOnSharp';
+import LocationSearchingSharp from '@material-ui/icons/LocationSearchingSharp';
 import AccessTimeIcon from '@material-ui/icons/AccessTime';
 import AccountCircleIcon from '@material-ui/icons/AccountCircleSharp';
 import ExitToAppIcon from '@material-ui/icons/ExitToAppSharp';
@@ -22,6 +25,7 @@ import ContactPhoneIcon from '@material-ui/icons/ContactPhone';
 import AddPhotoIcon from '@material-ui/icons/AddAPhoto';
 import { cfURL, CustomEventsHandler } from '../../helpers';
 import React from 'react';
+import { AssessmentOutlined } from '@material-ui/icons';
 
 export type MenuItem = {
   type?: string;
@@ -45,14 +49,16 @@ const calendar = cfURL('service.calendar');
 const reports = cfURL('reports');
 const documents = cfURL('document');
 const serviceCalls = cfURL('service.calls');
-const dispatch = cfURL('dispatch.newdash');
+const dispatch = cfURL('dispatch.dispatch_mode');
+const firstCall = cfURL('dispatch.firstcall')
 const productivity = cfURL('service.newmetrics');
 const serviceBilling = cfURL('service.callsPending');
 const profile = cfURL('account.editinformation');
 const txnAdmin = cfURL('reports.transaction_admin');
 const txnUser = cfURL('reports.transactions');
 const perdiem = cfURL('reports.perdiem');
-
+const payroll = cfURL('reports.payroll');
+const accountsPayable = cfURL('reports.transaction_billing');
 export const employeeItems = ({
   toggleUploadReceipt,
 }: {
@@ -105,6 +111,11 @@ export const employeeItems = ({
     icon: <ReceiptIcon />,
   },
   {
+    title: 'Accounts Payable',
+    href: accountsPayable,
+    icon: <AccountBalanceIcon />,
+  },
+  {
     type: 'divider',
   },
   {
@@ -126,9 +137,9 @@ export const adminItems: MenuItem[] = [
     icon: <MenuBookIcon />,
   },
   {
-    title: 'Dispatch',
-    href: dispatch,
-    icon: <LocationOnIcon />,
+    title: 'Payroll Dashboard',
+    href: payroll,
+    icon: <AssessmentOutlined />,
   },
   {
     title: 'Kalos Documents',
@@ -152,6 +163,19 @@ export const managerItems: MenuItem[] = [
     title: 'Receipt Review',
     href: txnAdmin,
     icon: <ReceiptIcon />,
+  },
+];
+
+export const dispatchItems: MenuItem[] = [
+  {
+    title: 'Dispatch',
+    href: dispatch,
+    icon: <LocationOnIcon />,
+  },
+  {
+    title: 'First Call',
+    href: firstCall,
+    icon: <LocationSearchingSharp />,
   },
 ];
 

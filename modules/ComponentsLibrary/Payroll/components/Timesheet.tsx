@@ -53,35 +53,33 @@ export const Timesheet: FC<Props> = ({
   const [page, setPage] = useState<number>(0);
   const [count, setCount] = useState<number>(0);
 
-  const [
-    timesheetSummaryToggle,
-    setTimesheetSummaryToggle,
-  ] = useState<TimesheetLine>();
-  const startDay = startOfWeek(subDays(new Date(), 7), { weekStartsOn: 6 });
-  const endDay = addDays(startDay, 7);
+  const [timesheetSummaryToggle, setTimesheetSummaryToggle] =
+    useState<TimesheetLine>();
+  const startDayForFakeTimesheet = startOfWeek(subDays(new Date(), 7), {
+    weekStartsOn: 6,
+  });
   const [pendingView, setPendingView] = useState<TimesheetLine>();
-  const [
-    pendingCreateEmptyTimesheetLine,
-    setPendingCreateEmptyTimesheetLine,
-  ] = useState<TimesheetLine>();
+  const [pendingCreateEmptyTimesheetLine, setPendingCreateEmptyTimesheetLine] =
+    useState<TimesheetLine>();
   const load = useCallback(async () => {
-    const startDay = startOfWeek(subDays(new Date(), 7), { weekStartsOn: 6 });
-    const endDay = addDays(startDay, 7);
+    console.log(week);
+    let startDay = startOfWeek(subDays(new Date(), 7), { weekStartsOn: 6 });
+    let startDayString = format(startDay, 'yyyy-MM-dd');
+    if (type != 'Payroll' && week != OPTION_ALL) {
+      startDayString = week;
+    }
+    const endDay = format(addDays(startDay, 7), 'yyyy-MM-dd');
     setLoading(true);
     const filter = {
       page,
       departmentId,
       employeeId,
       type: type,
-      startDate: format(startDay, 'yyyy-MM-dd'),
-      endDate: format(endDay, 'yyyy-MM-dd'),
+      startDate: startDayString,
+      endDate: endDay,
     };
-    if (week !== OPTION_ALL && type != 'Payroll') {
-      Object.assign(filter, {
-        startDate: week,
-        endDate: format(addDays(new Date(week), 7), 'yyyy-MM-dd'),
-      });
-    }
+    console.log(startDayString);
+    console.log(endDay);
     const getTimesheets = createTimesheetFetchFunction(filter, type);
     const results = await getTimesheets();
     const resultsList = results.getResultsList();
@@ -231,10 +229,10 @@ export const Timesheet: FC<Props> = ({
         tempTimesheet.setAdminApprovalUserId(loggedUser);
         tempTimesheet.setClassCodeId(41);
         tempTimesheet.setTimeStarted(
-          format(addDays(startDay, 1), 'yyyy-MM-dd'),
+          format(addDays(startDayForFakeTimesheet, 1), 'yyyy-MM-dd'),
         );
         tempTimesheet.setTimeFinished(
-          format(addDays(startDay, 1), 'yyyy-MM-dd'),
+          format(addDays(startDayForFakeTimesheet, 1), 'yyyy-MM-dd'),
         );
         tempTimesheet.setTechnicianUserId(
           emptyTimesheetLine.getTechnicianUserId(),
@@ -247,7 +245,7 @@ export const Timesheet: FC<Props> = ({
         load();
       }
     },
-    [loggedUser, startDay, load, departmentId],
+    [loggedUser, startDayForFakeTimesheet, load, departmentId],
   );
   return (
     <div>
