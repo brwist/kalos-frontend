@@ -13,6 +13,7 @@ import compact from 'lodash/compact';
 import IconButton from '@material-ui/core/IconButton';
 import MoneyIcon from '@material-ui/icons/Money';
 import EditIcon from '@material-ui/icons/Edit';
+import SummarizeIcon from '@mui/icons-material/Summarize';
 import DeleteIcon from '@material-ui/icons/Delete';
 import SearchIcon from '@material-ui/icons/Search';
 import BuildIcon from '@material-ui/icons/Build';
@@ -21,6 +22,7 @@ import AccessTimeIcon from '@material-ui/icons/AccessTime';
 import GroupIcon from '@material-ui/icons/Group';
 import RateReviewOutlined from '@material-ui/icons/RateReviewOutlined';
 import { ActionsProps } from '../Actions';
+import { Proposal } from '../ServiceCall/components/Proposal';
 import { SectionBar } from '../SectionBar';
 import { PlainForm, Schema, Option } from '../PlainForm';
 import { InfoTable, Columns, Data } from '../InfoTable';
@@ -74,6 +76,7 @@ import {
   QuoteLinePartClientService,
   QuoteLineClientService,
   usd,
+  ServicesRenderedClientService,
 } from '../../../helpers';
 import {
   ROWS_PER_PAGE,
@@ -95,6 +98,8 @@ import { ActivityLog } from '@kalos-core/kalos-rpc/ActivityLog';
 import format from 'date-fns/esm/format';
 import { ServiceRequest } from '../ServiceCall/requestIndex';
 import { QuoteLine } from '@kalos-core/kalos-rpc/QuoteLine';
+import { ServicesRendered } from '@kalos-core/kalos-rpc/ServicesRendered';
+import { result } from 'lodash';
 
 type Kind =
   | 'serviceCalls'
@@ -214,6 +219,11 @@ export const AdvancedSearch: FC<Props> = ({
   const [pendingEventAdding, setPendingEventAdding] = useState<boolean>(false);
   const [pendingEventEditing, setPendingEventEditing] = useState<Event>();
   const [pendingEventEditingNew, setPendingEventEditingNew] = useState<Event>();
+  const [proposalEvent, setProposalEvent] = useState<Event>();
+  const [proposalEventPropData, setProposalEventPropData] = useState<
+    ServicesRendered[]
+  >([]);
+
   const [pendingEventDeleting, setPendingEventDeleting] = useState<Event>();
   const [employeeUploadedPhoto, setEmployeeUploadedPhoto] =
     useState<string>('');
@@ -569,6 +579,30 @@ export const AdvancedSearch: FC<Props> = ({
     (pendingEventEditingNew?: Event) => () =>
       setPendingEventEditingNew(pendingEventEditingNew),
     [setPendingEventEditingNew],
+  );
+  const handleSetProposalEvent = useCallback(
+    async (proposalEvent?: Event) => {
+      if (proposalEvent === undefined) {
+        setProposalEventPropData([]);
+        setProposalEvent(proposalEvent);
+      } else {
+        const srReq = new ServicesRendered();
+        srReq.setEventId(proposalEvent.getId());
+        srReq.setIsActive(1);
+        const results = await ServicesRenderedClientService.BatchGet(srReq);
+        {
+          console.log('we got results', results);
+          if (results) {
+            setProposalEventPropData(results.getResultsList());
+            setProposalEvent(proposalEvent);
+          } else {
+            setProposalEvent(proposalEvent);
+          }
+        }
+      }
+    },
+
+    [setProposalEvent],
   );
   const handlePendingEventDeletingToggle = useCallback(
     (pendingEventDeleting?: Event) => () =>
@@ -2101,6 +2135,19 @@ export const AdvancedSearch: FC<Props> = ({
                                   <RateReviewOutlined />
                                 </IconButton>
                               </Tooltip>,
+                              <Tooltip
+                                key="proposalModalButton"
+                                content="Create/Edit Proposal"
+                                placement="top"
+                              >
+                                <IconButton
+                                  key="proposal"
+                                  size="small"
+                                  onClick={() => handleSetProposalEvent(entry)}
+                                >
+                                  <SummarizeIcon />
+                                </IconButton>
+                              </Tooltip>,
                             ]),
                         ...(deletableEvents
                           ? [
@@ -2592,6 +2639,7 @@ export const AdvancedSearch: FC<Props> = ({
       editableCustomers,
       handlePendingCustomerEditingToggle,
       deletableCustomers,
+      handleSetProposalEvent,
       handlePendingEmployeeDeletingToggle,
       handlePendingCustomerDeletingToggle,
       employeeImages,
@@ -2824,6 +2872,29 @@ export const AdvancedSearch: FC<Props> = ({
           />
         </Modal>
       )}
+      {proposalEvent &&
+        proposalEvent.getCustomer() != undefined &&
+        proposalEvent.getProperty() != undefined && (
+          <Modal
+            open
+            styles={{ minWidth: '60%' }}
+            onClose={() => handleSetProposalEvent(undefined)}
+          >
+            <SectionBar
+              title="Proposal"
+              subtitle={`Proposal will be sent to ${proposalEvent
+                .getCustomer()
+                ?.getEmail()}`}
+            >
+              <Proposal
+                serviceItem={proposalEvent}
+                property={proposalEvent.getProperty()!}
+                customer={proposalEvent.getCustomer()!}
+                servicesRendered={proposalEventPropData}
+              />
+            </SectionBar>
+          </Modal>
+        )}
       {pendingEventEditingNew && (
         <Modal
           open
