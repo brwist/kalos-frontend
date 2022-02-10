@@ -86,6 +86,12 @@ export const PAYMENT_COLLECTED_LIST: Options = [
   'Pre-Paid',
   'Charity',
 ];
+export const PAYMENT_STATUS_LIST: Options = [
+  'Paid',
+  'Pending',
+  'Billed',
+  'Cancelled',
+];
 
 export const PAYMENT_NOT_COLLECTED_LIST: Options = [
   'Billing',

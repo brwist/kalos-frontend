@@ -640,6 +640,7 @@ export const ServiceCall: FC<Props> = props => {
             invoice.addFieldMask('Totalamounttotal');
             invoice.addFieldMask('MaterialTotal');
             invoice.addFieldMask('MaterialUsed');
+            invoice.addFieldMask('LogPaymentStatus');
             InvoiceClientService.Update(invoice);
             console.log('update invoice and event', invoice);
             const sqsInvoiceEmail = new SQSEmailAndDocument();
@@ -729,6 +730,7 @@ export const ServiceCall: FC<Props> = props => {
         newActivity.setPropertyId(propertyId);
         newActivity.setActivityDate(format(new Date(), 'yyyy-MM-dd HH:mm:ss'));
         newActivity.setUserId(loggedUserId);
+
         newActivity.setActivityName(activityName);
         await ActivityLogClientService.Create(newActivity);
       }
