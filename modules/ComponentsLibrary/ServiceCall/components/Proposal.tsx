@@ -61,7 +61,7 @@ type File = {
   fileDescription: string;
 };
 //for prod
-//bucket='kalosdocs'
+//const bucket='kalosdocs'
 const bucket = 'testbuckethelios';
 const SCHEMA_ENTRY: Schema<StoredQuote> = [
   [{ name: 'getId', type: 'hidden' }],
@@ -72,16 +72,10 @@ const SCHEMA_FILE: Schema<File> = [
   [{ label: 'File', headline: true }],
   [
     {
-      label: 'Name your local copy',
-      name: 'localCopyName',
-      helperText:
-        'If you do not specify a name, no local copy will be created.',
-    },
-    {
-      label: 'Enter a description',
+      label: 'File Name',
       name: 'fileDescription',
-      helperText:
-        'This will be the display name for the file. You can leave this blank.',
+      helperText: 'This will be the display name for the file.',
+      disabled: true,
     },
   ],
 ];
@@ -253,10 +247,10 @@ export const Proposal: FC<Props> = ({
             return 'Quote Not Accepted';
           }
         } else {
-          return undefined;
+          return 'Pending Submit';
         }
       } else {
-        return undefined;
+        return 'Pending Submit';
       }
     },
     [loadedQuotes],
@@ -514,7 +508,7 @@ export const Proposal: FC<Props> = ({
             columns={[{ name: 'Display Name' }]}
             data={[[{ value: form.displayName }]]}
           />
-          {form.notes !== '' && (
+          {form.notes !== '' && form.withJobNotes == 1 && (
             <InfoTable
               columns={[{ name: 'Notes' }]}
               data={[[{ value: form.notes }]]}
