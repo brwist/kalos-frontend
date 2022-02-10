@@ -10,7 +10,11 @@ import {
 import { EventType, ServicesRenderedType } from '../';
 import { PlainForm, Schema } from '../../PlainForm';
 import { Field } from '../../Field';
-import { PAYMENT_TYPE_LIST, SERVICE_STATUSES } from '../../../../constants';
+import {
+  PAYMENT_STATUS_LIST,
+  PAYMENT_TYPE_LIST,
+  SERVICE_STATUSES,
+} from '../../../../constants';
 import { formatDateTimeDay, makeSafeFormObject } from '../../../../helpers';
 import { ENDPOINT } from '../../../../constants';
 import { Event } from '@kalos-core/kalos-rpc/Event';
@@ -220,6 +224,11 @@ export const Invoice: FC<Props> = ({
           label: 'Payment Type',
           name: 'getLogPaymentType',
           options: PAYMENT_TYPE_LIST,
+        },
+        {
+          label: 'Payment Status',
+          name: 'getLogPaymentStatus',
+          options: PAYMENT_STATUS_LIST,
         },
         {
           label: 'PO',
