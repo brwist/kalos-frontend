@@ -350,7 +350,6 @@ export const ServiceCall: FC<Props> = props => {
     let res = new Event();
     try {
       if (state.serviceCallId) {
-        console.log('saving  ID we alreadt got');
         const idArray = temp.getLogTechnicianAssigned().split(',');
         let results: EventAssignment[] = [];
         try {
@@ -403,6 +402,7 @@ export const ServiceCall: FC<Props> = props => {
         } else {
           activityName = activityName.concat(` (location services disabled)`);
           newActivity.setPropertyId(propertyId);
+          newActivity.setEventId(temp.getId());
           newActivity.setActivityDate(
             format(new Date(), 'yyyy-MM-dd HH:mm:ss'),
           );
@@ -463,6 +463,7 @@ export const ServiceCall: FC<Props> = props => {
         newActivity.setPropertyId(propertyId);
         newActivity.setActivityDate(format(new Date(), 'yyyy-MM-dd HH:mm:ss'));
         newActivity.setUserId(loggedUserId);
+        newActivity.setEventId(res.getId());
         newActivity.setActivityName(activityName);
         await ActivityLogClientService.Create(newActivity);
       }
