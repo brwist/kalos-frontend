@@ -1,6 +1,7 @@
 import React, { FC, useState, useCallback, useEffect, useMemo } from 'react';
 import Alert from '@material-ui/lab/Alert';
 import { SectionBar } from '../SectionBar';
+import { format, addDays, subDays, startOfWeek, parseISO } from 'date-fns';
 import { PlainForm, Schema, Option } from '../PlainForm';
 import { Loader } from '../../Loader/main';
 import { Tabs } from '../Tabs';
@@ -49,7 +50,7 @@ export type FilterData = {
   rejected?: boolean;
   amount?: number;
   billingRecorded: boolean;
-  processed: boolean;
+  processed?: boolean;
   universalSearch: string | undefined;
 };
 
@@ -90,7 +91,6 @@ export const Payroll: FC<Props> = ({ userID }) => {
   const [role, setRole] = useState<RoleType>('');
   const [employees, setEmployees] = useState<User[]>([]);
   const [loadedPerDiemIds, setLoadedPerDiemIds] = useState<number[]>([]);
-  const [viewReport, setViewReport] = useState<boolean>(false);
   const weekOptions = useMemo(
     () => [
       { label: OPTION_ALL, value: OPTION_ALL },
@@ -148,9 +148,15 @@ export const Payroll: FC<Props> = ({ userID }) => {
       .find(p => p.getType() === 'role');
     if (role) {
       setRole(role.getName() as RoleType);
+      if (role.getName() === 'Payroll') {
+        const tempFilter = filter;
+        tempFilter.week = OPTION_ALL;
+        setFilter(tempFilter);
+      }
     }
+
     setInitiated(true);
-  }, [handleSelectNewWeek, userID]);
+  }, [handleSelectNewWeek, userID, filter]);
 
   const getDepartmentOptions = () => {
     return [
@@ -255,7 +261,7 @@ export const Payroll: FC<Props> = ({ userID }) => {
     <div>
       <SectionBar title="Payroll" />
       {initiated ? (
-        role ? (
+        role == 'Manager' || role == 'Payroll' ? (
           <>
             <PlainForm
               data={filter}

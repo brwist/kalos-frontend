@@ -147,6 +147,7 @@ const initialState : State = {
   calls: [],
   availableCalls: [],
   assignedCalls: [],
+  requestedCalls: [],
   sectorList: [],
   jobTypeList: [],
   departmentList: [],
@@ -334,7 +335,6 @@ export const FirstCallDashboard: React.FC<Props> = function FirstCallDashboard({
             calls: firstCalls,
             inUse: fcInUse,
           }});
-          console.log("here");
           updateFirstCallState({ type: 'setRefreshCalls', data: true });
         }
         updateFirstCallState({type: 'setAssigneeListAndPendingInUse', data: {
@@ -360,6 +360,7 @@ export const FirstCallDashboard: React.FC<Props> = function FirstCallDashboard({
         calls: calls.calls,
         assigned: calls.assignedCalls,
         available: calls.availableCalls,
+        requested: calls.requestedCalls,
       }});
     }
     updateFirstCallState({
@@ -558,9 +559,9 @@ export const FirstCallDashboard: React.FC<Props> = function FirstCallDashboard({
       for (let i in manualOffTechs) {
         notAvailable = notAvailable.concat(manualOffTechs[i].id);
       }
-      for (let j in inUseTechs) {
-        notAvailable = notAvailable.concat(inUseTechs[j]);
-      }
+      // for (let j in inUseTechs) {
+      //   notAvailable = notAvailable.concat(inUseTechs[j]);
+      // }
       for (let k in scheduledOffTechs) {
         notAvailable = notAvailable.concat(scheduledOffTechs[k].id);
       }
@@ -842,6 +843,7 @@ export const FirstCallDashboard: React.FC<Props> = function FirstCallDashboard({
         calls,
         available: availableCalls,
         assigned: assignedCalls,
+        requested: state.requestedCalls,
       }});
     }
   }
@@ -924,6 +926,7 @@ export const FirstCallDashboard: React.FC<Props> = function FirstCallDashboard({
     const newCall = new DispatchCall();
     const errorMessage = "- Failed to Retrieve Service Calls";  // If errors, show this message
     let filteredCallList : DispatchCall[] = [];
+    let requestedCallList : DispatchCall[] = [];
     if (state.formData.division === 1) {
       newCall.setDateStarted(`${format(addDays(new Date(), 1), 'yyyy-MM-dd')}%`);
     }
@@ -938,16 +941,19 @@ export const FirstCallDashboard: React.FC<Props> = function FirstCallDashboard({
           Number(call.getTimeStarted().substring(0,2)) <= 12
         )
       } else {
+        requestedCallList = callList.getResultsList()
+        .filter(call => call.getLogJobstatus() === `Requested`);
         filteredCallList = callList.getResultsList()
         .filter(call => {
           return (call.getDateStarted() <= format(addDays(new Date(), 1), 'yyyy-MM-dd') &&
-          call.getDateEnded() >= format(addDays(new Date(), 1), 'yyyy-MM-dd'))
-        })
+          call.getDateEnded() >= format(addDays(new Date(), 1), 'yyyy-MM-dd') &&
+          !requestedCallList.includes(call));
+        });
       }
       checkErrors(errorMessage);
-      return {filteredCallList, error: ""};
+      return {filteredCallList, requestedCallList, error: ""};
     } catch (err) {
-      return {filteredCallList: [], error: errorMessage};
+      return {filteredCallList: [], requestedCallList: [], error: errorMessage};
     }
   }, [state.formData.jobTypes, state.formData.division, checkErrors])
 
@@ -958,12 +964,14 @@ export const FirstCallDashboard: React.FC<Props> = function FirstCallDashboard({
     }
     const availableCalls : DispatchCall[] = [];
     const assignedCalls : DispatchCall[] = [];
+    let requestedCalls : DispatchCall[] = state.requestedCalls;
     let calls : DispatchCall[] = [];
     let errorMessage = "";
     if (skipGet) {
       calls = state.calls;
     } else {
-      const call = await getCalls()
+      const call = await getCalls();
+      requestedCalls = call.requestedCallList;
       calls = call.filteredCallList;
       errorMessage = call.error;
     }
@@ -988,8 +996,8 @@ export const FirstCallDashboard: React.FC<Props> = function FirstCallDashboard({
         availableCalls.push(call);
       }
     });
-    return {calls, availableCalls, assignedCalls, error: errorMessage};
-  }, [getCalls, state.calls, state.firstCallCalls])
+    return {calls, availableCalls, assignedCalls, requestedCalls: requestedCalls, error: errorMessage};
+  }, [getCalls, state.calls, state.firstCallCalls, state.requestedCalls])
 
   const getJobTypes = useCallback(async () => {
     const jobTypeReq = new JobType();
@@ -1133,6 +1141,7 @@ export const FirstCallDashboard: React.FC<Props> = function FirstCallDashboard({
       jobTypes: results[2].jobTypes,
       available: results[1].availableCalls,
       assigned: results[1].assignedCalls,
+      requested: results[1].requestedCalls,
       key: results[3].googleKey,
       firstCall: results[4].firstCall,
       isNew: results[4].newFirstCall,
@@ -1167,6 +1176,7 @@ export const FirstCallDashboard: React.FC<Props> = function FirstCallDashboard({
         jobTypes: initialData.jobTypes,
         availableCalls: initialData.available,
         assignedCalls: initialData.assigned,
+        requestedCalls: initialData.requested,
         key: initialData.key,
         firstCall: initialData.firstCall,
         newFirstCall: initialData.isNew,
@@ -1276,6 +1286,7 @@ export const FirstCallDashboard: React.FC<Props> = function FirstCallDashboard({
           calls: callList.calls,
           available: callList.availableCalls,
           assigned: callList.assignedCalls,
+          requested: callList.requestedCalls,
         }});
       })()
     }
@@ -1307,6 +1318,7 @@ export const FirstCallDashboard: React.FC<Props> = function FirstCallDashboard({
           calls: callList.calls,
           available: callList.availableCalls,
           assigned: callList.assignedCalls,
+          requested: callList.requestedCalls,
         }});
       }, 30000);
       return () => clearInterval(interval);
@@ -1594,6 +1606,7 @@ export const FirstCallDashboard: React.FC<Props> = function FirstCallDashboard({
                   techs={state.formData.availableTechs}
                   loading={false}
                   isFirstCall={true}
+                  firstCallInUse={state.firstCallInUse}
                 />
                 <DismissedTechs
                   userID={loggedUserId}
@@ -1625,11 +1638,11 @@ export const FirstCallDashboard: React.FC<Props> = function FirstCallDashboard({
               </div>
             </Grid>
             <Grid item xs={12} md={8}>
-              <div style={{margin:'auto', width:'92%'}}>
+              <div style={{margin:'auto', width:'92%', paddingBottom:"10px"}}>
                 <Typography style={{textAlign:'center', fontWeight:'bold', fontSize:'32px'}}>
                   Available Calls
                 </Typography>
-                <div style={{opacity: state.isProcessing ? 0.2 : 1}}>
+                <div style={{opacity: state.isProcessing ? 0.2 : 1, minHeight: "500px"}}>
                   <DispatchCalls
                     userID={loggedUserId}
                     calls={state.availableCalls}
@@ -1640,6 +1653,20 @@ export const FirstCallDashboard: React.FC<Props> = function FirstCallDashboard({
                     handleDblClick={handleCallDetails}
                   />
                 </div>
+              </div>
+              <div style={{borderStyle:'solid', borderBottom:'1px', width:'98%', margin:'auto', display:state.formData.division === 2 ? '' : 'none'}}></div>
+              <div style={{margin:'auto', width:'92%', paddingTop:"10px", display:state.formData.division === 2 ? '' : 'none'}}>
+                <Typography style={{textAlign:'center', fontWeight:'bold', fontSize:'28px'}}>
+                  {`Pending Quotes ${format(addDays(new Date(), 1), 'MM/dd/yyyy')} - ${format(addDays(new Date(), 7), 'MM/dd/yyyy')}`}
+                </Typography>
+                <DispatchCalls
+                  userID={loggedUserId}
+                  calls={state.requestedCalls}
+                  loading={false}
+                  handleMapRecenter={()=>{}}
+                  handleDblClick={(handleCallDetails)}
+                  isRequested={true}
+                />
               </div>
             </Grid>
           </Grid>
@@ -1910,7 +1937,7 @@ export const FirstCallDashboard: React.FC<Props> = function FirstCallDashboard({
                           name: "tempAssigneeList",
                           label: "Select Technician(s)",
                           options: state.techs
-                            .filter(tech => state.formData.availableTechs.includes(tech) && !state.pendingAddInUse.includes(tech.getUserId()) || state.pendingRemoveInUse.includes(tech.getUserId()))
+                            .filter(tech => state.formData.availableTechs.includes(tech) && !state.firstCallInUse.includes(tech.getUserId()) && !state.pendingAddInUse.includes(tech.getUserId()) || state.pendingRemoveInUse.includes(tech.getUserId()))
                             .sort((a,b) => (a.getTechname() > b.getTechname()) ? 1 : ((b.getTechname() > a.getTechname()) ? -1 : 0))
                             .map(tech => ({
                               key: tech.getUserId() + tech.getTechname(),

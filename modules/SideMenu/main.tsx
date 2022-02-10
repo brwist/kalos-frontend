@@ -18,6 +18,7 @@ import {
   employeeItems,
   adminItems,
   managerItems,
+  dispatchItems,
   commonItems,
   customerItems,
 } from './constants';
@@ -113,7 +114,10 @@ const SideMenu = ({
           if (
             userResult
               .getPermissionGroupsList()
-              .find(p => p.getName() === 'Manager')
+              .find(p => p.getName() === 'Manager') ||
+            userResult
+              .getPermissionGroupsList()
+              .find(p => p.getName() === 'Payroll')
           ) {
             dispatch({
               type: 'fetchedUser',
@@ -179,6 +183,17 @@ const SideMenu = ({
               {adminItems.map(item => (
                 <KalosMenuItem
                   key={`admin_${item?.title || 'divider'}`}
+                  item={item}
+                  userId={userID}
+                />
+              ))}
+            </>
+          )}
+          {user.getPermissionGroupsList().find(p=>p.getName() === "Dispatch") && (
+            <>
+              {dispatchItems.map(item => (
+                <KalosMenuItem
+                  key={`dispatch_${item?.title || 'divider'}`}
                   item={item}
                   userId={userID}
                 />

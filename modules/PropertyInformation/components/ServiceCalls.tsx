@@ -146,25 +146,23 @@ export class ServiceCalls extends PureComponent<Props, State> {
     }
   };
 
-  handleOrder = (
-    orderByDBField: string,
-    orderByFields: (keyof Event)[],
-  ) => () => {
-    this.setState(
-      {
-        page: 0,
-        orderByFields,
-        orderByDBField,
-        dir:
-          orderByDBField !== this.state.orderByDBField
-            ? 'ASC'
-            : this.state.dir === 'ASC'
-            ? 'DESC'
-            : 'ASC',
-      },
-      this.load,
-    );
-  };
+  handleOrder =
+    (orderByDBField: string, orderByFields: (keyof Event)[]) => () => {
+      this.setState(
+        {
+          page: 0,
+          orderByFields,
+          orderByDBField,
+          dir:
+            orderByDBField !== this.state.orderByDBField
+              ? 'ASC'
+              : this.state.dir === 'ASC'
+              ? 'DESC'
+              : 'ASC',
+        },
+        this.load,
+      );
+    };
 
   handleDelete = async () => {
     // FIXME: service call is not actually deleted for some reason
@@ -211,7 +209,7 @@ export class ServiceCalls extends PureComponent<Props, State> {
 
   setAddingCustomerEntry = (addingCustomerEntry?: Event) => () =>
     this.setState({ addingCustomerEntry });
-  
+
   toggleConfirmingAdded = () =>
     this.setState({ confirmingAdded: !this.state.confirmingAdded });
 
@@ -227,7 +225,7 @@ export class ServiceCalls extends PureComponent<Props, State> {
 
   handleRowClick = (id: number, newEdit?: boolean) => () => {
     const { userID, propertyId } = this.props;
-    this.setState({ serviceCallId: id});
+    this.setState({ serviceCallId: id });
     if (newEdit) {
       this.handleServiceCallEditToggle();
     } else {
@@ -443,15 +441,14 @@ export class ServiceCalls extends PureComponent<Props, State> {
                 entry.getName().length > 100
                   ? entry.getName().substr(0, 100) + '...'
                   : entry.getName(),
-              onClick: () => this.setState({ showText: entry.getName() }),
+              onClick: handleRowClick(entry.getId()),
             },
             {
               value:
                 entry.getDescription().length > 100
                   ? entry.getDescription().substr(0, 100) + '...'
                   : entry.getDescription(),
-              onClick: () =>
-                this.setState({ showText: entry.getDescription() }),
+              onClick: handleRowClick(entry.getId()),
             },
             {
               value: entry.getContractNumber(),
@@ -459,7 +456,7 @@ export class ServiceCalls extends PureComponent<Props, State> {
                 <IconButton
                   key={'newEdit'}
                   size="small"
-                  onClick={handleRowClick(entry.getId(), true)}
+                  onClick={handleRowClick(entry.getId())}
                 >
                   <RateReviewOutlined />
                 </IconButton>,
@@ -849,17 +846,30 @@ export class ServiceCalls extends PureComponent<Props, State> {
             propertyId={propertyId}
             userId={userID}
             openServiceCall={true}
-            onClose={() => {this.load(); this.handleServiceCallAddToggle;}}
+            onClose={() => {
+              this.load();
+              this.handleServiceCallAddToggle;
+            }}
           />
         )}
         {this.state.editingServiceCall && (
-          <Modal open onClose={() => {this.handleServiceCallEditToggle; this.load();}} fullScreen>
+          <Modal
+            open
+            onClose={() => {
+              this.handleServiceCallEditToggle;
+              this.load();
+            }}
+            fullScreen
+          >
             <ServiceRequest
               loggedUserId={userID}
               propertyId={propertyId!}
               userID={userID}
               serviceCallId={this.state.serviceCallId}
-              onClose={() => {this.load(); this.handleServiceCallEditToggle();}}
+              onClose={() => {
+                this.load();
+                this.handleServiceCallEditToggle();
+              }}
             />
           </Modal>
         )}

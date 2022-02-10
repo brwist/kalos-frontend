@@ -886,8 +886,20 @@ export const SpiffTool: FC<Props> = ({
                 ),
               ]
             : [
-                <IconButton key={0} size="small">
+                <IconButton
+                  key={0}
+                  size="small"
+                  onClick={handleSetExtendedEditing(entry)}
+                >
                   <SearchIcon />
+                </IconButton>,
+                <IconButton
+                  key={6}
+                  disabled={entry.getActionsList()[0] ? true : false}
+                  size="small"
+                  onClick={handleSetDeleting(entry)}
+                >
+                  <DeleteIcon />
                 </IconButton>,
               ];
         if (disableActions) {

@@ -5,6 +5,7 @@ import {
   JobTypeClientService,
   JobSubtypeClientService,
   JobTypeSubtypeClientService,
+  EventAssignmentClientService,
 } from '../../../helpers';
 import { JobType } from '@kalos-core/kalos-rpc/JobType';
 import { JobSubtype } from '@kalos-core/kalos-rpc/JobSubtype';
@@ -13,7 +14,7 @@ import { Request } from './components/Request';
 import { OPTION_BLANK } from '../../../constants';
 import { Option } from '../Field';
 import { SectionBar } from '../SectionBar';
-
+import { EventAssignment } from '@kalos-core/kalos-rpc/EventAssignment';
 
 export interface Props {
   userID: number;
@@ -25,61 +26,76 @@ export interface Props {
 }
 
 interface State {
-  entry : Event;
-  loading : boolean;
-  loaded : boolean;
-  saving : boolean;
-  serviceCallID : number;
-  jobTypes : JobType[];
-  jobSubtypes : JobSubtype[];
-  jobTypeSubtypes : JobTypeSubtype[];
-  propertyEvents : Event[];
-  pendingSave : boolean;
-  requestValid : boolean;
-  requestFields : string[];
+  entry: Event;
+  loading: boolean;
+  loaded: boolean;
+  saving: boolean;
+  serviceCallID: number;
+  jobTypes: JobType[];
+  jobSubtypes: JobSubtype[];
+  jobTypeSubtypes: JobTypeSubtype[];
+  propertyEvents: Event[];
+  pendingSave: boolean;
+  requestValid: boolean;
+  requestFields: string[];
 }
 
-type Action = 
-  | {type: 'setServiceCallId'; data: number}
-  | {type: 'setData'; data: {
-    entry: Event,
-    propertyEvents: Event[],
-    jobTypes: JobType[],
-    jobSubtypes: JobSubtype[],
-    jobTypeSubtypes: JobTypeSubtype[],
-    loaded: boolean,
-    loading: boolean,
-  }}
-  | {type: 'setChangeEntry'; data: {
-    entry: Event,
-    pendingSave: boolean,
-  }}
-  | {type: 'setHandleSave'; data: {
-    pendingSave: boolean,
-    requestValid: boolean,
-  }}
-  | {type: 'setLoading'; data: boolean}
-  | {type: 'setLoadedLoading'; data: {
-    loaded: boolean,
-    loading: boolean,
-  }}
-  | {type: 'setSaveServiceCall'; data: {
-    saving: boolean,
-    loading: boolean,
-    pendingSave: boolean,
-  }}
-  | {type: 'setRequestValid'; data: boolean}
-  | {type: 'setRequestFields'; data: string[]}
-  | {type: 'setPendingSave'; data: boolean};
+type Action =
+  | { type: 'setServiceCallId'; data: number }
+  | {
+      type: 'setData';
+      data: {
+        entry: Event;
+        propertyEvents: Event[];
+        jobTypes: JobType[];
+        jobSubtypes: JobSubtype[];
+        jobTypeSubtypes: JobTypeSubtype[];
+        loaded: boolean;
+        loading: boolean;
+      };
+    }
+  | {
+      type: 'setChangeEntry';
+      data: {
+        entry: Event;
+        pendingSave: boolean;
+      };
+    }
+  | {
+      type: 'setHandleSave';
+      data: {
+        pendingSave: boolean;
+        requestValid: boolean;
+      };
+    }
+  | { type: 'setLoading'; data: boolean }
+  | {
+      type: 'setLoadedLoading';
+      data: {
+        loaded: boolean;
+        loading: boolean;
+      };
+    }
+  | {
+      type: 'setSaveServiceCall';
+      data: {
+        saving: boolean;
+        loading: boolean;
+        pendingSave: boolean;
+      };
+    }
+  | { type: 'setRequestValid'; data: boolean }
+  | { type: 'setRequestFields'; data: string[] }
+  | { type: 'setPendingSave'; data: boolean };
 
 const reducer = (state: State, action: Action) => {
   switch (action.type) {
-    case 'setServiceCallId' :
+    case 'setServiceCallId':
       return {
         ...state,
         serviceCallID: action.data,
       };
-    case 'setData' : 
+    case 'setData':
       return {
         ...state,
         entry: action.data.entry,
@@ -90,80 +106,74 @@ const reducer = (state: State, action: Action) => {
         loaded: action.data.loaded,
         loading: action.data.loading,
       };
-    case 'setChangeEntry' :
+    case 'setChangeEntry':
       return {
         ...state,
         entry: action.data.entry,
         pendingSave: action.data.pendingSave,
       };
-    case 'setHandleSave' :
+    case 'setHandleSave':
       return {
         ...state,
         pendingSave: action.data.pendingSave,
         requestValid: action.data.requestValid,
       };
-    case 'setLoading' :
+    case 'setLoading':
       return {
         ...state,
         loading: action.data,
       };
-    case 'setLoadedLoading' :
+    case 'setLoadedLoading':
       return {
         ...state,
         loaded: action.data.loaded,
         loading: action.data.loading,
       };
-    case 'setSaveServiceCall' :
+    case 'setSaveServiceCall':
       return {
         ...state,
         saving: action.data.saving,
         loading: action.data.loading,
         pendingSave: action.data.pendingSave,
       };
-    case 'setRequestValid' :
+    case 'setRequestValid':
       return {
         ...state,
         requestValid: action.data,
       };
-    case 'setRequestFields' :
+    case 'setRequestFields':
       return {
         ...state,
         requestFields: action.data,
       };
-    case 'setPendingSave' :
+    case 'setPendingSave':
       return {
         ...state,
         pendingSave: action.data,
-      }
+      };
     default:
       return state;
   }
-}
+};
 
-const initialState : State = {
-  entry : new Event(),
-  loading : true,
-  loaded : false,
-  saving : false,
-  serviceCallID : 0,
-  jobTypes : [],
-  jobSubtypes : [],
-  jobTypeSubtypes : [],
-  propertyEvents : [],
-  pendingSave : false,
-  requestValid : false,
-  requestFields : [],
-}
+const initialState: State = {
+  entry: new Event(),
+  loading: true,
+  loaded: false,
+  saving: false,
+  serviceCallID: 0,
+  jobTypes: [],
+  jobSubtypes: [],
+  jobTypeSubtypes: [],
+  propertyEvents: [],
+  pendingSave: false,
+  requestValid: false,
+  requestFields: [],
+};
 
 export const ServiceRequest: FC<Props> = props => {
-  const {
-    userID,
-    propertyId,
-    serviceCallId,
-    loggedUserId,
-    onClose,
-    onSave,
-  } = props;
+  const { userID, propertyId, serviceCallId, loggedUserId, onClose, onSave } =
+    props;
 
   const [state, serviceCall] = useReducer(reducer, initialState);
   const requestRef = useRef(null);
@@ -173,87 +183,131 @@ export const ServiceRequest: FC<Props> = props => {
     value: id.getId(),
   }));
 
-  const jobSubtypeOptions: Option[] = 
-  [
+  const jobSubtypeOptions: Option[] = [
     { label: OPTION_BLANK, value: 0 },
     ...state.jobTypeSubtypes
-      .filter(jobTypeId => jobTypeId.getJobTypeId() === state.entry.getJobTypeId())
+      .filter(
+        jobTypeId => jobTypeId.getJobTypeId() === state.entry.getJobTypeId(),
+      )
       .map(jobSubtypeId => ({
         value: jobSubtypeId.getJobSubtypeId(),
-        label: 
+        label:
           state.jobSubtypes
             .find(id => id.getId() === jobSubtypeId.getJobSubtypeId())
             ?.getName() || '',
       })),
   ];
 
-  const handleChangeEntry = useCallback(
-    (data: Event) => {
-      serviceCall({type: 'setChangeEntry', data: {
+  const handleChangeEntry = useCallback((data: Event) => {
+    serviceCall({
+      type: 'setChangeEntry',
+      data: {
         entry: data,
         pendingSave: false,
-      }});
-    },
-    [],
-  );
+      },
+    });
+  }, []);
 
-  const handleSetRequestValid = useCallback( (data) => {
-    serviceCall({type: 'setRequestValid', data: data});
-  },[]);
+  const handleSetRequestValid = useCallback(data => {
+    serviceCall({ type: 'setRequestValid', data: data });
+  }, []);
 
   const handleSetRequestfields = useCallback(
     fields => {
-      serviceCall({type: 'setRequestFields', data: [...state.requestFields, ...fields]});
+      serviceCall({
+        type: 'setRequestFields',
+        data: [...state.requestFields, ...fields],
+      });
     },
     [state.requestFields],
   );
 
   const load = useCallback(async () => {
-    serviceCall({type: 'setLoading', data: true});
+    serviceCall({ type: 'setLoading', data: true });
     const req = new Event();
     req.setId(serviceCallId);
     try {
-      const propertyEvents = await EventClientService.loadEventsByPropertyId(propertyId);
+      const propertyEvents = await EventClientService.loadEventsByPropertyId(
+        propertyId,
+      );
       const jobTypes = await JobTypeClientService.loadJobTypes();
       const jobSubtypes = await JobSubtypeClientService.loadJobSubtypes();
-      const jobTypeSubtypes = await JobTypeSubtypeClientService.loadJobTypeSubtypes();
+      const jobTypeSubtypes =
+        await JobTypeSubtypeClientService.loadJobTypeSubtypes();
       const entry = await EventClientService.Get(req);
-      serviceCall({type: 'setData', data: {
-        entry: entry,
-        propertyEvents: propertyEvents,
-        jobTypes: jobTypes,
-        jobSubtypes: jobSubtypes,
-        jobTypeSubtypes: jobTypeSubtypes,
-        loaded: true,
-        loading: false,
-      }});
+      serviceCall({
+        type: 'setData',
+        data: {
+          entry: entry,
+          propertyEvents: propertyEvents,
+          jobTypes: jobTypes,
+          jobSubtypes: jobSubtypes,
+          jobTypeSubtypes: jobTypeSubtypes,
+          loaded: true,
+          loading: false,
+        },
+      });
     } catch (err) {
       console.error(err);
-      serviceCall({type: 'setLoadedLoading', data: {
-        loaded: true,
-        loading: false,
-      }});
+      serviceCall({
+        type: 'setLoadedLoading',
+        data: {
+          loaded: true,
+          loading: false,
+        },
+      });
     }
-
-  }, [
-    propertyId,
-    serviceCallId
-  ]);
+  }, [propertyId, serviceCallId]);
 
   const handleSave = useCallback(async () => {
-    serviceCall({type: `setPendingSave`, data: true});
+    serviceCall({ type: `setPendingSave`, data: true });
   }, []);
 
   const saveServiceCall = useCallback(async () => {
-    serviceCall({type: 'setSaveServiceCall', data: {
-      saving: true,
-      loading: true,
-      pendingSave: false,
-    }});
+    serviceCall({
+      type: 'setSaveServiceCall',
+      data: {
+        saving: true,
+        loading: true,
+        pendingSave: false,
+      },
+    });
     const temp = state.entry;
     console.log('saving existing ID');
     try {
       await EventClientService.Update(temp);
+      const idArray = temp.getLogTechnicianAssigned().split(',');
+      let results: EventAssignment[] = [];
+      try {
+        console.log('getting assignment data');
+        const assignmentReq = new EventAssignment();
+        assignmentReq.setEventId(temp.getId());
+        console.log(assignmentReq);
+        const assignedEvents = await EventAssignmentClientService.BatchGet(
+          assignmentReq,
+        );
+        results = assignedEvents.getResultsList();
+      } catch {
+        console.log('no one assigned, just create');
+      }
+      try {
+        console.log('create and delete');
+        for (let event in results) {
+          const assignment = new EventAssignment();
+          assignment.setId(results[event].getId());
+          await EventAssignmentClientService.Delete(assignment);
+          console.log('delete');
+        }
+        for (let id in idArray) {
+          const assignment = new EventAssignment();
+          assignment.setUserId(Number(idArray[id]));
+          assignment.setEventId(temp.getId());
+          await EventAssignmentClientService.Create(assignment);
+          console.log('create');
+        }
+      } catch (err) {
+        console.log('error updating event assignment');
+      }
       console.log('finished Update');
     } catch (err) {
       console.error(err);
@@ -264,11 +318,7 @@ export const ServiceRequest: FC<Props> = props => {
     if (onClose) {
       onClose();
     }
-  }, [
-    state.entry,
-    onSave,
-    onClose,
-  ]);
+  }, [state.entry, onSave, onClose]);
 
   useEffect(() => {
     if (!state.loaded) {
@@ -281,7 +331,14 @@ export const ServiceRequest: FC<Props> = props => {
       //@ts-ignore
       requestRef.current.click();
     }
-  }, [load, state.loaded, state.pendingSave, state.requestValid, saveServiceCall, requestRef])
+  }, [
+    load,
+    state.loaded,
+    state.pendingSave,
+    state.requestValid,
+    saveServiceCall,
+    requestRef,
+  ]);
 
   return (
     <SectionBar
@@ -294,18 +351,17 @@ export const ServiceRequest: FC<Props> = props => {
         },
         {
           label: 'Open Property',
-          url: [
-            '/index.cfm?action=admin:properties.details',
-            `property_id=${propertyId}`,
-            `user_id=${userID}`,
-          ].join('&'),
+          onClick: () => {
+            const url = `/index.cfm?action=admin:properties.details&property_id=${propertyId}&user_id=${userID}`;
+            window.open(url, `_blank`);
+          },
           disabled: state.loading || state.saving,
         },
         {
-          label: "Close",
+          label: 'Close',
           onClick: onClose,
           disabled: state.loading || state.saving,
-        }
+        },
       ]}
     >
       <Request
@@ -324,6 +380,5 @@ export const ServiceRequest: FC<Props> = props => {
         onInitSchema={handleSetRequestfields}
       />
     </SectionBar>
-  )
-
-}
+  );
+};

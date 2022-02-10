@@ -15,6 +15,8 @@ export type FormData = {
 export interface State {
   techs: DispatchableTech[];
   dismissedTechs: DispatchableTech[];
+  offTechs: DispatchableTech[];
+  offTechData: {tech: DispatchableTech, start: string, end: string}[];
   calls: DispatchCall[];
   defaultDepartmentIds: number[];
   defaultSectorIds: number[];
@@ -39,12 +41,20 @@ export interface State {
   assigneeList: {id: number, name: string}[];
   userHasApiKey: boolean;
   checkUser: boolean;
+  hasNotification: boolean;
+  notificationType: string;
+  notificationMessage: string[];
+  refreshTechnicians: boolean;
+  refreshCalls: boolean;
+  initialTechLoad: boolean;
 }
 
 export type Action =
   | { type: 'setTechs'; data: {
     availableTechs: DispatchableTech[],
-    dismissedTechs: DispatchableTech[]
+    dismissedTechs: DispatchableTech[],
+    offTechs: DispatchableTech[],
+    offTechData: {tech: DispatchableTech, start: string, end: string}[],
   }}
   | { type: 'setCalls'; data: {
     calls: DispatchCall[] 
@@ -66,6 +76,8 @@ export type Action =
     selectedCall: DispatchCall,
     isProcessing: boolean,
     assigneeList?: {id: number, name: string}[],
+    refreshTechs?: boolean,
+    refreshCalls?: boolean,
   }}
   | { type: 'setCenter'; data: {
     center: {lat: number, lng: number},
@@ -75,11 +87,27 @@ export type Action =
     loading: boolean,
     dismissProcessing: boolean,
   } }
-  | {type: 'setLoadingTech'; data: boolean}
-  | {type: 'setLoadingCall'; data: boolean}
+  | {type: 'setLoadingTech'; data: {
+    isLoadingTech: boolean,
+    refreshTechs: boolean,
+    initialTechLoad: boolean,
+  }}
+  | {type: 'setTechRefresh'; data: {
+    refreshTechs: boolean,
+    initialTechLoad: boolean,
+  }}
+  | {type: 'setLoadingCall'; data: {
+    isLoadingCall: boolean,
+    refreshCalls: boolean,
+    }}
   | {type: 'setLoadingMap'; data: boolean}
   | {type: 'setAssigneeList'; data: {id: number, name: string}[]}
   | {type: 'setUserHasApiKey'; data: boolean}
+  | { type: 'setNotification'; data: {
+    hasNotification: boolean,
+    notificationType: string,
+    notificationMessage: string[],
+  }}
   ;
 
 export const reducer = (state: State, action: Action) => {
@@ -89,6 +117,8 @@ export const reducer = (state: State, action: Action) => {
         ...state,
         techs: action.data.availableTechs,
         dismissedTechs: action.data.dismissedTechs,
+        offTechs: action.data.offTechs,
+        offTechData: action.data.offTechData,
         isLoadingTech: false,
       };
     case 'setCalls':
@@ -112,6 +142,8 @@ export const reducer = (state: State, action: Action) => {
         ...state,
         formData: action.data,
         isLoadingFilters: false,
+        refreshTechnicians: true,
+        refreshCalls: true,
       };
     case 'setDropdownValuesAndApi':
       return {
@@ -133,6 +165,8 @@ export const reducer = (state: State, action: Action) => {
         selectedCall: action.data.selectedCall,
         isProcessing: action.data.isProcessing,
         assigneeList: action.data.assigneeList ? action.data.assigneeList : [],
+        refreshTechnicians: action.data.refreshTechs ? action.data.refreshTechs : false,
+        refreshCalls: action.data.refreshCalls ? action.data.refreshCalls : false,
       }
     case 'setCenter':
       return {
@@ -149,12 +183,26 @@ export const reducer = (state: State, action: Action) => {
     case 'setLoadingTech':
       return {
         ...state,
-        isLoadingTech: action.data,
+        isLoadingTech: action.data.isLoadingTech,
+        refreshTechnicians: action.data.refreshTechs,
+        initialTechLoad: action.data.initialTechLoad,
       }
+    case 'setTechRefresh':
+      return {
+        ...state,
+        refreshTechnicians: action.data.refreshTechs,
+        initialTechLoad: action.data.initialTechLoad,
+      }
+    // case 'setInitialTechLoad':
+    //   return {
+    //     ...state,
+    //     initialTechLoad
+    //   }
     case 'setLoadingCall':
       return {
         ...state,
-        isLoadingCall: action.data,
+        isLoadingCall: action.data.isLoadingCall,
+        refreshCalls: action.data.refreshCalls,
       }
     case 'setLoadingMap':
       return {
@@ -172,6 +220,13 @@ export const reducer = (state: State, action: Action) => {
         ...state,
         userHasApiKey: action.data,
         checkUser: true,
+      }
+    case 'setNotification':
+      return {
+        ...state,
+        hasNotification: action.data.hasNotification,
+        notificationType: action.data.notificationType,
+        notificationMessage: action.data.notificationMessage,
       }
     default:
       return state;

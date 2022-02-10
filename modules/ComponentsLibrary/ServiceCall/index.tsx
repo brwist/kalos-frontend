@@ -68,6 +68,7 @@ import {
 } from '@kalos-core/kalos-rpc/compiled-protos/email_pb';
 import { EventAssignment } from '@kalos-core/kalos-rpc/EventAssignment';
 import { QuoteLinePart } from '@kalos-core/kalos-rpc/QuoteLinePart';
+
 const EventClientService = new EventClient(ENDPOINT);
 const UserClientService = new UserClient(ENDPOINT);
 
@@ -552,7 +553,7 @@ export const ServiceCall: FC<Props> = props => {
           for (let id in idArray) {
             const assignment = new EventAssignment();
             assignment.setUserId(Number(idArray[id]));
-            assignment.setEventId(temp.getId());
+            assignment.setEventId(state.serviceCallId);
             await EventAssignmentClientService.Create(assignment);
             console.log('create');
           }
@@ -679,14 +680,14 @@ export const ServiceCall: FC<Props> = props => {
         console.log('creating new one');
         temp.setPropertyId(propertyId);
         temp.setLogVersion(1);
-        res = await EventClientService.Create(temp);
+        const res = await EventClientService.Create(temp);
+        const logNumber = `${format(new Date(), 'yy')}-${res.getId()}`;
+        const newEvent = new Event();
         const idArray = temp.getLogTechnicianAssigned().split(',');
         let results: EventAssignment[] = [];
         try {
-          console.log('getting assignment data');
           const assignmentReq = new EventAssignment();
           assignmentReq.setEventId(res.getId());
-          console.log(assignmentReq);
           const assignedEvents = await EventAssignmentClientService.BatchGet(
             assignmentReq,
           );
@@ -695,25 +696,20 @@ export const ServiceCall: FC<Props> = props => {
           console.log('no one assigned, just create');
         }
         try {
-          console.log('create and delete');
           for (let event in results) {
             const assignment = new EventAssignment();
             assignment.setId(results[event].getId());
-            await EventAssignmentClientService.Delete(assignment);
-            console.log('delete');
+            EventAssignmentClientService.Delete(assignment);
           }
           for (let id in idArray) {
             const assignment = new EventAssignment();
             assignment.setUserId(Number(idArray[id]));
             assignment.setEventId(res.getId());
             await EventAssignmentClientService.Create(assignment);
-            console.log('create');
           }
         } catch (err) {
           console.log('error updating event assignment');
         }
-        const logNumber = `${format(new Date(), 'yy')}-${res.getId()}`;
-        const newEvent = new Event();
         newEvent.setId(res.getId());
         newEvent.setLogJobNumber(logNumber);
         newEvent.setIsResidential(temp.getIsResidential());
@@ -1327,7 +1323,7 @@ export const ServiceCall: FC<Props> = props => {
           />
         </>
       }
-      {state.openJobActivity && eventId != undefined && (
+      {state.openJobActivity && eventId && eventId != 0 && (
         <Modal
           open={state.openJobActivity}
           onClose={() => toggleOpenJobActivity()}
