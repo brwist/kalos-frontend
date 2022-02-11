@@ -402,7 +402,7 @@ export const ServiceCall: FC<Props> = props => {
         } else {
           activityName = activityName.concat(` (location services disabled)`);
           newActivity.setPropertyId(propertyId);
-          newActivity.setEventId(temp.getId());
+          newActivity.setEventId(state.serviceCallId);
           newActivity.setActivityDate(
             format(new Date(), 'yyyy-MM-dd HH:mm:ss'),
           );
