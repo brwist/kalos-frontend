@@ -169,6 +169,7 @@ const EditTimesheetModal: FC<Props> = ({
       if (data.getReferenceNumber()) {
         console.log(data.getReferenceNumber());
         req.setReferenceNumber(data.getReferenceNumber().toString());
+        req.setEventId(parseInt(data.getReferenceNumber()));
       }
       req.setTimeStarted(data.getTimeStarted());
       req.setTimeFinished(data.getTimeFinished());
