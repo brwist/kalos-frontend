@@ -57,6 +57,7 @@ import { Proposal } from './components/Proposal';
 import { Spiffs } from './components/Spiffs';
 import { ActivityLog } from '@kalos-core/kalos-rpc/ActivityLog';
 import format from 'date-fns/esm/format';
+import { parseISO } from 'date-fns';
 import setHours from 'date-fns/esm/setHours';
 import setMinutes from 'date-fns/esm/setMinutes';
 import { Document } from '@kalos-core/kalos-rpc/Document';
@@ -68,6 +69,7 @@ import {
 } from '@kalos-core/kalos-rpc/compiled-protos/email_pb';
 import { EventAssignment } from '@kalos-core/kalos-rpc/EventAssignment';
 import { QuoteLinePart } from '@kalos-core/kalos-rpc/QuoteLinePart';
+import { TwoMpRounded } from '@mui/icons-material';
 
 const EventClientService = new EventClient(ENDPOINT);
 const UserClientService = new UserClient(ENDPOINT);
@@ -97,7 +99,38 @@ const SCHEMA_PROPERTY_NOTIFICATION: Schema<User> = [
     },
   ],
 ];
-
+export const returnCorrectTimeField = (time: string) => {
+  console.log(time);
+  const date = parseISO(time);
+  let hoursString = '00';
+  let minutesString = '00';
+  const hours = date.getHours();
+  const minutes = date.getMinutes();
+  if (hours.toString().length == 1) {
+    hoursString = `0${hours}`;
+  } else {
+    hoursString = hours.toString();
+  }
+  if (minutes.toString().length == 1) {
+    minutesString = `0${minutes}`;
+  } else {
+    minutesString = minutes.toString();
+  }
+  return `${hoursString}:${minutesString}`;
+};
+export const setTimeValuesForEntry = (entry: Event) => {
+  const startTime = entry.getTimeStarted().split(':');
+  const endTime = entry.getTimeEnded().split(':');
+  const startTimeDate = new Date();
+  const endTimeDate = new Date();
+  startTimeDate.setHours(parseInt(startTime[0]));
+  startTimeDate.setMinutes(parseInt(startTime[1]));
+  endTimeDate.setHours(parseInt(endTime[0]));
+  endTimeDate.setMinutes(parseInt(endTime[1]));
+  entry.setTimeStarted(format(startTimeDate, 'yyyy-MM-dd hh:mm:ss'));
+  entry.setTimeEnded(format(endTimeDate, 'yyyy-MM-dd hh:mm:ss'));
+  return entry;
+};
 export const ServiceCall: FC<Props> = props => {
   const {
     userID,
@@ -154,7 +187,21 @@ export const ServiceCall: FC<Props> = props => {
         const req = new Event();
         req.setId(_serviceCallId);
         const entry = await EventClientService.Get(req);
-        updateServiceCallState({ type: 'setEntry', data: entry });
+        const startTime = entry.getTimeStarted().split(':');
+        const endTime = entry.getTimeEnded().split(':');
+        const startTimeDate = new Date();
+        const endTimeDate = new Date();
+        startTimeDate.setHours(parseInt(startTime[0]));
+        startTimeDate.setMinutes(parseInt(startTime[1]));
+        endTimeDate.setHours(parseInt(endTime[0]));
+        endTimeDate.setMinutes(parseInt(endTime[1]));
+        entry.setTimeStarted(format(startTimeDate, 'yyyy-MM-dd hh:mm:ss'));
+        entry.setTimeEnded(format(endTimeDate, 'yyyy-MM-dd hh:mm:ss'));
+
+        updateServiceCallState({
+          type: 'setEntry',
+          data: setTimeValuesForEntry(entry),
+        });
 
         if (
           entry &&
@@ -170,6 +217,7 @@ export const ServiceCall: FC<Props> = props => {
     },
     [state.serviceCallId],
   );
+
   const handleUpdatePayments = (payments: Payment[]) => {
     updateServiceCallState({
       type: 'setPaidServices',
@@ -178,7 +226,6 @@ export const ServiceCall: FC<Props> = props => {
   };
   const handleUpdateMaterialsStringAndCost = useCallback(async () => {
     const totalMaterials: Quotable[] = [];
-    console.log('we are going to update the material total');
     //Day(3char),timestamp - Person Who added it - (Material Quantity)  - (Material Cost)
     //Tue, 12/7/2021 8:08PM Jordan Spalding -(1) Trip & Diagnostic Fee - After Hours - $120
     let totalCost = 0;
@@ -433,7 +480,7 @@ export const ServiceCall: FC<Props> = props => {
           jobSubtypes: jobSubTypeList,
           jobTypeSubtypes: jobTypeSubtypesList,
           loggedUser: loggedUserDetails,
-          entry: entry,
+          entry: setTimeValuesForEntry(entry),
           servicesRendered: servicesRenderedList.servicesRendered,
           paidServices: servicesRenderedList.payments,
           loaded: true,
@@ -531,10 +578,8 @@ export const ServiceCall: FC<Props> = props => {
         const idArray = temp.getLogTechnicianAssigned().split(',');
         let results: EventAssignment[] = [];
         try {
-          console.log('getting assignment data');
           const assignmentReq = new EventAssignment();
           assignmentReq.setEventId(temp.getId());
-          console.log(assignmentReq);
           const assignedEvents = await EventAssignmentClientService.BatchGet(
             assignmentReq,
           );
@@ -543,19 +588,16 @@ export const ServiceCall: FC<Props> = props => {
           console.log('no one assigned, just create');
         }
         try {
-          console.log('create and delete');
           for (let event in results) {
             const assignment = new EventAssignment();
             assignment.setId(results[event].getId());
             await EventAssignmentClientService.Delete(assignment);
-            console.log('delete');
           }
           for (let id in idArray) {
             const assignment = new EventAssignment();
             assignment.setUserId(Number(idArray[id]));
             assignment.setEventId(state.serviceCallId);
             await EventAssignmentClientService.Create(assignment);
-            console.log('create');
           }
         } catch (err) {
           console.log('error updating event assignment');
@@ -563,6 +605,9 @@ export const ServiceCall: FC<Props> = props => {
         temp.setId(state.serviceCallId);
         let activityName = `${temp.getLogJobNumber()} Edited Service Call`;
         if (temp.getFieldMaskList().length > 0) {
+          //handle time correctly, since it is being received as yyyy-MM-dd hh:mm:ss
+          temp.setTimeStarted(returnCorrectTimeField(temp.getTimeStarted()));
+          temp.setTimeEnded(returnCorrectTimeField(temp.getTimeEnded()));
           await EventClientService.Update(temp);
         }
         if (state.saveInvoice) {
@@ -669,6 +714,7 @@ export const ServiceCall: FC<Props> = props => {
         } else {
           activityName = activityName.concat(` (location services disabled)`);
           newActivity.setPropertyId(propertyId);
+          newActivity.setEventId(state.serviceCallId);
           newActivity.setActivityDate(
             format(new Date(), 'yyyy-MM-dd HH:mm:ss'),
           );
@@ -730,7 +776,7 @@ export const ServiceCall: FC<Props> = props => {
         newActivity.setPropertyId(propertyId);
         newActivity.setActivityDate(format(new Date(), 'yyyy-MM-dd HH:mm:ss'));
         newActivity.setUserId(loggedUserId);
-
+        newActivity.setEventId(res.getId());
         newActivity.setActivityName(activityName);
         await ActivityLogClientService.Create(newActivity);
       }
@@ -836,6 +882,7 @@ export const ServiceCall: FC<Props> = props => {
   );
 
   const handleChangeEntry = useCallback((data: Event) => {
+    console.log('set Data', data.getTimeStarted());
     updateServiceCallState({
       type: 'setChangeEntry',
       data: {

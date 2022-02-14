@@ -114,6 +114,8 @@ export const Invoice: FC<Props> = ({
           type: 'number',
           startAdornment: '$',
         },
+      ],
+      [
         {
           label: 'Services Performed (2)',
           name: 'getServicesperformedrow2',
@@ -125,6 +127,7 @@ export const Invoice: FC<Props> = ({
           startAdornment: '$',
         },
       ],
+
       [
         {
           label: 'Services Performed (3)',
