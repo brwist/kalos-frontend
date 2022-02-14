@@ -17,6 +17,7 @@ import {
   JOB_STATUS_COLORS,
   OPTION_BLANK,
 } from '../../../../constants';
+import { format, parseISO } from 'date-fns';
 import { Event } from '@kalos-core/kalos-rpc/Event';
 import { JobTypeSubtype } from '@kalos-core/kalos-rpc/JobTypeSubtype';
 
@@ -57,6 +58,7 @@ export const Request: FC<Props> = forwardRef(
   ) => {
     const [initSchemaCalled, setInitSchemaCalled] = useState<boolean>(false);
     const [resetId, setResetId] = useState<number>(0);
+    console.log(serviceItem);
     const handleChange = useCallback(
       (data: Event) => {
         //const { jobTypeId, jobSubtypeId, logJobStatus } = data;
@@ -136,7 +138,7 @@ export const Request: FC<Props> = forwardRef(
           {
             label: 'Begin Time',
             name: 'getTimeStarted',
-            type: 'time',
+            type: 'mui-time',
             required: true,
           },
           {
@@ -148,7 +150,7 @@ export const Request: FC<Props> = forwardRef(
           {
             label: 'End Time',
             name: 'getTimeEnded',
-            type: 'time',
+            type: 'mui-time',
             required: true,
           },
         ],

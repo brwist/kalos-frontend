@@ -15,7 +15,8 @@ import { OPTION_BLANK } from '../../../constants';
 import { Option } from '../Field';
 import { SectionBar } from '../SectionBar';
 import { EventAssignment } from '@kalos-core/kalos-rpc/EventAssignment';
-
+import { setTimeValuesForEntry } from '.';
+import { returnCorrectTimeField } from '.';
 export interface Props {
   userID: number;
   propertyId: number;
@@ -275,7 +276,9 @@ export const ServiceRequest: FC<Props> = props => {
     const temp = state.entry;
     console.log('saving existing ID');
     try {
-      await EventClientService.Update(temp);
+      temp.setTimeStarted(returnCorrectTimeField(temp.getTimeStarted()));
+      temp.setTimeEnded(returnCorrectTimeField(temp.getTimeEnded()));
+      await EventClientService.Update(setTimeValuesForEntry(temp));
       const idArray = temp.getLogTechnicianAssigned().split(',');
       let results: EventAssignment[] = [];
       try {
