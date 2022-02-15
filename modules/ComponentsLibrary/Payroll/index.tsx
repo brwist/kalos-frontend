@@ -66,10 +66,7 @@ export const Payroll: FC<Props> = ({ userID }) => {
   const [filter, setFilter] = useState<FilterData>({
     departmentId: 0,
     employeeId: 0,
-    week: format(
-      startOfWeek(subDays(new Date(), 7), { weekStartsOn: 6 }),
-      'yyyy-MM-dd',
-    ),
+    week: OPTION_ALL,
     billingRecorded: false,
     universalSearch: undefined,
     processed: false,
@@ -151,9 +148,15 @@ export const Payroll: FC<Props> = ({ userID }) => {
       .find(p => p.getType() === 'role');
     if (role) {
       setRole(role.getName() as RoleType);
+      if (role.getName() === 'Payroll') {
+        const tempFilter = filter;
+        tempFilter.week = OPTION_ALL;
+        setFilter(tempFilter);
+      }
     }
+
     setInitiated(true);
-  }, [handleSelectNewWeek, userID]);
+  }, [handleSelectNewWeek, userID, filter]);
 
   const getDepartmentOptions = () => {
     return [

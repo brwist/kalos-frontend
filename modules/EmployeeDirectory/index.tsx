@@ -7,7 +7,7 @@ import { ENDPOINT } from '../../constants';
 const u = new UserClient(ENDPOINT);
 u.GetToken('test', 'test').then(() => {
   ReactDOM.render(
-    <EmployeeDirectory loggedUserId={6535} withHeader />,
+    <EmployeeDirectory loggedUserId={103285} withHeader />,
     document.getElementById('root'),
   );
 });
