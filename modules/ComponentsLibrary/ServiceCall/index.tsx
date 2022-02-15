@@ -398,6 +398,7 @@ export const ServiceCall: FC<Props> = props => {
 
   const load = useCallback(async () => {
     updateServiceCallState({ type: 'setLoading', data: true });
+
     // let newProjectData = projectData;
     // newProjectData.setPropertyId(propertyId);
     // setProjectData(newProjectData);
@@ -549,6 +550,14 @@ export const ServiceCall: FC<Props> = props => {
   // );
 
   const handleSave = useCallback(async () => {
+    updateServiceCallState({
+      type: 'setSaveInvoice',
+      data: {
+        pendingSave: false,
+        requestValid: false,
+        saveInvoice: false,
+      },
+    });
     if (state.tabIdx !== 0) {
       updateServiceCallState({
         type: 'setTabAndPendingSave',
@@ -610,7 +619,7 @@ export const ServiceCall: FC<Props> = props => {
           temp.setTimeEnded(returnCorrectTimeField(temp.getTimeEnded()));
           await EventClientService.Update(temp);
         }
-        if (state.saveInvoice) {
+        if (state.saveInvoice == true) {
           console.log('saving invoice');
           const invoice = new InvoiceType();
           temp.setIsGeneratedInvoice(state.saveInvoice);
@@ -880,9 +889,8 @@ export const ServiceCall: FC<Props> = props => {
     },
     [state.requestFields],
   );
-
+  /*
   const handleChangeEntry = useCallback((data: Event) => {
-    console.log('set Data', data.getTimeStarted());
     updateServiceCallState({
       type: 'setChangeEntry',
       data: {
@@ -891,6 +899,23 @@ export const ServiceCall: FC<Props> = props => {
       },
     });
   }, []);
+  */
+  const handleChangeEntry = useCallback((data: Event) => {
+    updateServiceCallState({
+      type: 'updateRequestData',
+      data: data,
+    });
+  }, []);
+
+  const handleChangeEntryInvoice = useCallback(
+    (data: Event, dataFromServicesForm: boolean) => {
+      updateServiceCallState({
+        type: 'updateInvoiceData',
+        data: { data: data, servicesForm: dataFromServicesForm },
+      });
+    },
+    [],
+  );
 
   const handleSetNotificationEditing = useCallback(
     (notificationEditing: boolean) => () =>
@@ -1323,7 +1348,12 @@ export const ServiceCall: FC<Props> = props => {
                 ) : (
                   <Invoice
                     event={state.entry}
-                    onChange={handleChangeEntry}
+                    onChangeServices={data =>
+                      handleChangeEntryInvoice(data, true)
+                    }
+                    onChangePayment={data =>
+                      handleChangeEntryInvoice(data, false)
+                    }
                     disabled={state.saving}
                     servicesRendered={state.servicesRendered}
                     onInitSchema={handleSetRequestfields}

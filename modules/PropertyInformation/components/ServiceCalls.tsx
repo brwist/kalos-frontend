@@ -456,7 +456,7 @@ export class ServiceCalls extends PureComponent<Props, State> {
                 <IconButton
                   key={'newEdit'}
                   size="small"
-                  onClick={handleRowClick(entry.getId())}
+                  onClick={handleRowClick(entry.getId(),true)}
                 >
                   <RateReviewOutlined />
                 </IconButton>,
