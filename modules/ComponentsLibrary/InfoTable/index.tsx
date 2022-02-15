@@ -79,6 +79,7 @@ interface Props extends Styles {
     externalButton?: boolean;
     externalButtonClicked?: boolean; // Was an external button clicked that triggers this? (While true, makes the row appear)
     onFileLoad?: (fileData: any) => any;
+    disable?: boolean;
   };
 }
 
@@ -119,8 +120,15 @@ export const InfoTable = ({
           col.name!.toString(),
         ) &&
         !col.invisible
-      )
-        (fields as any)[col.name as any] = ''; // Creating the field on the object for use later
+      ) {
+        rowButton?.columnDefinition.columnTypeOverrides.forEach(override => { // Default values for fields
+          if (override.columnType === 'multiselect') {
+            (fields as any)[col.name as any] = [];
+          } else {
+            (fields as any)[col.name as any] = '';
+          }
+        });
+      }
     });
   }
 
@@ -299,6 +307,7 @@ export const InfoTable = ({
                     },
                   },
                 ],
+                disabled: rowButton?.disable,
               } as any,
             ],
           ]}
