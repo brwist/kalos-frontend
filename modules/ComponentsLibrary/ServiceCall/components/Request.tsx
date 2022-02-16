@@ -132,25 +132,13 @@ export const Request: FC<Props> = forwardRef(
           {
             label: 'Date of Service',
             name: 'getDateStarted',
-            type: 'date',
-            required: true,
-          },
-          {
-            label: 'Begin Time',
-            name: 'getTimeStarted',
-            type: 'mui-time',
+            type: 'mui-datetime',
             required: true,
           },
           {
             label: 'End Date',
             name: 'getDateEnded',
-            type: 'date',
-            required: true,
-          },
-          {
-            label: 'End Time',
-            name: 'getTimeEnded',
-            type: 'mui-time',
+            type: 'mui-datetime',
             required: true,
           },
         ],

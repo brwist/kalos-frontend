@@ -100,36 +100,12 @@ const SCHEMA_PROPERTY_NOTIFICATION: Schema<User> = [
   ],
 ];
 export const returnCorrectTimeField = (time: string) => {
-  console.log(time);
-  const date = parseISO(time);
-  let hoursString = '00';
-  let minutesString = '00';
-  const hours = date.getHours();
-  const minutes = date.getMinutes();
-  if (hours.toString().length == 1) {
-    hoursString = `0${hours}`;
-  } else {
-    hoursString = hours.toString();
-  }
-  if (minutes.toString().length == 1) {
-    minutesString = `0${minutes}`;
-  } else {
-    minutesString = minutes.toString();
-  }
+  console.log('created date', time);
+  const splitString = time.split(' ');
+  const timeValue = splitString[1].split(':');
+  const hoursString = timeValue[0];
+  const minutesString = timeValue[1];
   return `${hoursString}:${minutesString}`;
-};
-export const setTimeValuesForEntry = (entry: Event) => {
-  const startTime = entry.getTimeStarted().split(':');
-  const endTime = entry.getTimeEnded().split(':');
-  const startTimeDate = new Date();
-  const endTimeDate = new Date();
-  startTimeDate.setHours(parseInt(startTime[0]));
-  startTimeDate.setMinutes(parseInt(startTime[1]));
-  endTimeDate.setHours(parseInt(endTime[0]));
-  endTimeDate.setMinutes(parseInt(endTime[1]));
-  entry.setTimeStarted(format(startTimeDate, 'yyyy-MM-dd hh:mm:ss'));
-  entry.setTimeEnded(format(endTimeDate, 'yyyy-MM-dd hh:mm:ss'));
-  return entry;
 };
 export const ServiceCall: FC<Props> = props => {
   const {
@@ -187,20 +163,10 @@ export const ServiceCall: FC<Props> = props => {
         const req = new Event();
         req.setId(_serviceCallId);
         const entry = await EventClientService.Get(req);
-        const startTime = entry.getTimeStarted().split(':');
-        const endTime = entry.getTimeEnded().split(':');
-        const startTimeDate = new Date();
-        const endTimeDate = new Date();
-        startTimeDate.setHours(parseInt(startTime[0]));
-        startTimeDate.setMinutes(parseInt(startTime[1]));
-        endTimeDate.setHours(parseInt(endTime[0]));
-        endTimeDate.setMinutes(parseInt(endTime[1]));
-        entry.setTimeStarted(format(startTimeDate, 'yyyy-MM-dd hh:mm:ss'));
-        entry.setTimeEnded(format(endTimeDate, 'yyyy-MM-dd hh:mm:ss'));
 
         updateServiceCallState({
           type: 'setEntry',
-          data: setTimeValuesForEntry(entry),
+          data: entry,
         });
 
         if (
@@ -443,14 +409,10 @@ export const ServiceCall: FC<Props> = props => {
       } else {
         const req = new Event();
         req.setIsResidential(1);
-        req.setDateStarted(format(new Date(), 'yyyy-MM-dd'));
-        req.setDateEnded(format(new Date(), 'yyyy-MM-dd'));
-        req.setTimeStarted(
-          format(setMinutes(setHours(new Date(), 8), 0), 'HH:mm'),
-        );
-        req.setTimeEnded(
-          format(setMinutes(setHours(new Date(), 18), 0), 'HH:mm'),
-        );
+        const dateInit = new Date();
+        dateInit.setSeconds(0);
+        req.setDateStarted(format(dateInit, 'yyyy-MM-dd hh:mm:ss'));
+        req.setDateEnded(format(dateInit, 'yyyy-MM-dd  hh:mm:ss'));
 
         req.setName(
           `${propertyDetails.getAddress()} ${propertyDetails.getCity()}, ${propertyDetails.getState()} ${propertyDetails.getZip()}`,
@@ -481,7 +443,7 @@ export const ServiceCall: FC<Props> = props => {
           jobSubtypes: jobSubTypeList,
           jobTypeSubtypes: jobTypeSubtypesList,
           loggedUser: loggedUserDetails,
-          entry: setTimeValuesForEntry(entry),
+          entry: entry,
           servicesRendered: servicesRenderedList.servicesRendered,
           paidServices: servicesRenderedList.payments,
           loaded: true,
@@ -612,11 +574,11 @@ export const ServiceCall: FC<Props> = props => {
           console.log('error updating event assignment');
         }
         temp.setId(state.serviceCallId);
+        console.log('we are updating: ', temp.getTimeStarted());
         let activityName = `${temp.getLogJobNumber()} Edited Service Call`;
         if (temp.getFieldMaskList().length > 0) {
           //handle time correctly, since it is being received as yyyy-MM-dd hh:mm:ss
-          temp.setTimeStarted(returnCorrectTimeField(temp.getTimeStarted()));
-          temp.setTimeEnded(returnCorrectTimeField(temp.getTimeEnded()));
+
           await EventClientService.Update(temp);
         }
         if (state.saveInvoice == true) {
@@ -712,6 +674,14 @@ export const ServiceCall: FC<Props> = props => {
             console.log('create', invoice);
           }
           activityName = activityName.concat(` and Invoice`);
+          updateServiceCallState({
+            type: 'setSaveInvoice',
+            data: {
+              pendingSave: true,
+              requestValid: true,
+              saveInvoice: false,
+            },
+          });
         }
         const newActivity = new ActivityLog();
         if (
@@ -1243,20 +1213,24 @@ export const ServiceCall: FC<Props> = props => {
                 onClick: handleSave,
                 disabled: state.loading || state.saving,
               },
-              {
-                label: 'Save and Invoice',
-                onClick: () => {
-                  updateServiceCallState({
-                    type: 'setSaveInvoice',
-                    data: {
-                      pendingSave: true,
-                      requestValid: true,
-                      saveInvoice: true,
+              ...(state.serviceCallId
+                ? [
+                    {
+                      label: 'Save and Invoice',
+                      onClick: () => {
+                        updateServiceCallState({
+                          type: 'setSaveInvoice',
+                          data: {
+                            pendingSave: true,
+                            requestValid: true,
+                            saveInvoice: true,
+                          },
+                        });
+                      },
+                      disabled: state.loading || state.saving,
                     },
-                  });
-                },
-                disabled: state.loading || state.saving,
-              },
+                  ]
+                : []),
               /*
               {
                 label: 'Cancel',
@@ -1301,25 +1275,29 @@ export const ServiceCall: FC<Props> = props => {
                   />
                 ),
               },
-              {
-                label: 'Equipment',
-                content: state.loading ? (
-                  <InfoTable data={makeFakeRows(4, 4)} loading />
-                ) : (
-                  <Equipment
-                    {...props}
-                    event={state.entry}
-                    customer={state.customer}
-                    property={state.property}
-                    onSelectServiceItems={
-                      state.loggedUser.getIsEmployee()
-                        ? setSelectedServiceItems
-                        : undefined
-                    }
-                    selectedServiceItems={state.selectedServiceItems}
-                  />
-                ),
-              },
+              ...(state.serviceCallId
+                ? [
+                    {
+                      label: 'Equipment',
+                      content: state.loading ? (
+                        <InfoTable data={makeFakeRows(4, 4)} loading />
+                      ) : (
+                        <Equipment
+                          {...props}
+                          event={state.entry}
+                          customer={state.customer}
+                          property={state.property}
+                          onSelectServiceItems={
+                            state.loggedUser.getIsEmployee()
+                              ? setSelectedServiceItems
+                              : undefined
+                          }
+                          selectedServiceItems={state.selectedServiceItems}
+                        />
+                      ),
+                    },
+                  ]
+                : []),
               ...(state.serviceCallId
                 ? [
                     {
@@ -1341,26 +1319,30 @@ export const ServiceCall: FC<Props> = props => {
                     },
                   ]
                 : []),
-              {
-                label: 'Invoice',
-                content: state.loading ? (
-                  <InfoTable data={makeFakeRows(4, 5)} loading />
-                ) : (
-                  <Invoice
-                    event={state.entry}
-                    onChangeServices={data =>
-                      handleChangeEntryInvoice(data, true)
-                    }
-                    onChangePayment={data =>
-                      handleChangeEntryInvoice(data, false)
-                    }
-                    disabled={state.saving}
-                    servicesRendered={state.servicesRendered}
-                    onInitSchema={handleSetRequestfields}
-                    paidServices={state.paidServices}
-                  />
-                ),
-              },
+              ...(state.serviceCallId
+                ? [
+                    {
+                      label: 'Invoice',
+                      content: state.loading ? (
+                        <InfoTable data={makeFakeRows(4, 5)} loading />
+                      ) : (
+                        <Invoice
+                          event={state.entry}
+                          onChangeServices={data =>
+                            handleChangeEntryInvoice(data, true)
+                          }
+                          onChangePayment={data =>
+                            handleChangeEntryInvoice(data, false)
+                          }
+                          disabled={state.saving}
+                          servicesRendered={state.servicesRendered}
+                          onInitSchema={handleSetRequestfields}
+                          paidServices={state.paidServices}
+                        />
+                      ),
+                    },
+                  ]
+                : []),
               ...(state.serviceCallId
                 ? [
                     {

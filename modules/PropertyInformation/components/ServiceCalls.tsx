@@ -121,6 +121,7 @@ export class ServiceCalls extends PureComponent<Props, State> {
       entry.setDescription(`%${serviceCallFilter.briefDescription}%`);
     }
     try {
+      console.log(entry);
       const response = await this.EventClient.BatchGet(entry);
       this.setState({
         entries: response.getResultsList().sort(this.sort),
@@ -456,7 +457,7 @@ export class ServiceCalls extends PureComponent<Props, State> {
                 <IconButton
                   key={'newEdit'}
                   size="small"
-                  onClick={handleRowClick(entry.getId(),true)}
+                  onClick={handleRowClick(entry.getId(), true)}
                 >
                   <RateReviewOutlined />
                 </IconButton>,
