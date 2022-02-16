@@ -11,6 +11,7 @@ import { ServiceItem } from '@kalos-core/kalos-rpc/ServiceItem';
 import { EventClient, Quotable } from '@kalos-core/kalos-rpc/Event';
 import { Invoice, Invoice as InvoiceType } from '@kalos-core/kalos-rpc/Invoice';
 import { Contract } from '@kalos-core/kalos-rpc/Contract';
+import { returnCorrectTimeField } from './';
 export interface State {
   requestFields: string[];
   tabIdx: number;
@@ -216,9 +217,11 @@ export const reducer = (state: State, action: Action) => {
       const data = action.data;
       const existingEntry = state.entry;
       existingEntry.setDateStarted(data.getDateStarted());
-      existingEntry.setTimeStarted(data.getTimeStarted());
+      existingEntry.setTimeStarted(
+        returnCorrectTimeField(data.getDateStarted()),
+      );
       existingEntry.setDateEnded(data.getDateEnded());
-      existingEntry.setTimeEnded(data.getTimeEnded());
+      existingEntry.setTimeEnded(returnCorrectTimeField(data.getDateEnded()));
       existingEntry.setDepartmentId(data.getDepartmentId());
       existingEntry.setIsResidential(data.getIsResidential());
       existingEntry.setJobTypeId(data.getJobTypeId());

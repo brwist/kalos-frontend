@@ -11,7 +11,7 @@ u.GetToken('test', 'test').then(() => {
     <PropertyInformation
       userID={2573}
       propertyId={6552}
-      loggedUserId={8418}
+      loggedUserId={213}
       withHeader
     />,
     document.getElementById('root'),
