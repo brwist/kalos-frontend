@@ -220,6 +220,7 @@ export const reducer = (state: State, action: Action) => {
       existingEntry.setTimeStarted(
         returnCorrectTimeField(data.getDateStarted()),
       );
+
       existingEntry.setDateEnded(data.getDateEnded());
       existingEntry.setTimeEnded(returnCorrectTimeField(data.getDateEnded()));
       existingEntry.setDepartmentId(data.getDepartmentId());
@@ -246,6 +247,7 @@ export const reducer = (state: State, action: Action) => {
     case 'updateInvoiceData': {
       const data = action.data.data;
       const existingEntry = state.entry;
+
       if (action.data.servicesForm) {
         existingEntry.setServicesperformedrow1(data.getServicesperformedrow1());
         existingEntry.setServicesperformedrow2(data.getServicesperformedrow2());
