@@ -100,7 +100,6 @@ const SCHEMA_PROPERTY_NOTIFICATION: Schema<User> = [
   ],
 ];
 export const returnCorrectTimeField = (time: string) => {
-  console.log('created date', time);
   const splitString = time.split(' ');
   const timeValue = splitString[1].split(':');
   const hoursString = timeValue[0];
@@ -574,15 +573,49 @@ export const ServiceCall: FC<Props> = props => {
           console.log('error updating event assignment');
         }
         temp.setId(state.serviceCallId);
-        console.log('we are updating: ', temp.getTimeStarted());
         let activityName = `${temp.getLogJobNumber()} Edited Service Call`;
-        if (temp.getFieldMaskList().length > 0) {
-          //handle time correctly, since it is being received as yyyy-MM-dd hh:mm:ss
+        temp.setFieldMaskList([
+          'DateEnded',
+          'DateStarted',
+          'TimeStarted',
+          'TimeEnded',
+          'DepartmentId',
+          'isResidential',
+          'JobTypeId',
+          'JobSubtypeId',
+          'LogJobStatus',
+          'LogTechnicianAssigned',
+          'AmountQuoted',
+          'DiagnosticQuoted',
+          'IsLmpc',
+          'IsCallback',
+          'Description',
+          'Services',
+          'LogNotes',
+          'LogPaymentType',
+          'HighPriority',
+          'Servicesperformedrow1',
+          'Servicesperformedrow2',
+          'Servicesperformedrow3',
+          'Servicesperformedrow4',
+          'Totalamountrow1',
+          'Totalamountrow2',
+          'Totalamountrow3',
+          'Totalamountrow4',
+          'MaterialTotal',
+          'MaterialUsed',
+          'Discount',
+          'DiscountCost',
+          'LogBillingDate',
+          'LogPaymentType',
+          'LogPaymentStatus',
+          'LogPo',
+          'PropertyBilling',
+          'Notes',
+        ]);
+        await EventClientService.Update(temp);
 
-          await EventClientService.Update(temp);
-        }
         if (state.saveInvoice == true) {
-          console.log('saving invoice');
           const invoice = new InvoiceType();
           temp.setIsGeneratedInvoice(state.saveInvoice);
           temp.addFieldMask('IsGeneratedInvoice');
@@ -658,7 +691,6 @@ export const ServiceCall: FC<Props> = props => {
             invoice.addFieldMask('MaterialUsed');
             invoice.addFieldMask('LogPaymentStatus');
             InvoiceClientService.Update(invoice);
-            console.log('update invoice and event', invoice);
             const sqsInvoiceEmail = new SQSEmailAndDocument();
             const email = new SQSEmail();
             const document = new Document();
@@ -671,7 +703,6 @@ export const ServiceCall: FC<Props> = props => {
           } else {
             //we need to create it
             await InvoiceClientService.Create(invoice);
-            console.log('create', invoice);
           }
           activityName = activityName.concat(` and Invoice`);
           updateServiceCallState({
@@ -824,7 +855,6 @@ export const ServiceCall: FC<Props> = props => {
   // );
 
   useEffect(() => {
-    console.log('in use effect');
     if (eventId !== 0 && true)
       if (!state.loaded) {
         load();
@@ -898,7 +928,6 @@ export const ServiceCall: FC<Props> = props => {
 
   const handleSetNotificationViewing = useCallback(
     (notificationViewing: boolean) => () => {
-      console.log('hello');
       updateServiceCallState({
         type: 'setNotificationViewing',
         data: notificationViewing,

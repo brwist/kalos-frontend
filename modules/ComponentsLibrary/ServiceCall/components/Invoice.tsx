@@ -333,7 +333,11 @@ export const Invoice: FC<Props> = ({
   return (
     <div>
       <div
-        style={{ display: 'inline-block', width: '49%', verticalAlign: 'top' }}
+        style={{
+          display: 'inline-block',
+          width: '49%',
+          verticalAlign: 'top',
+        }}
       >
         <PlainForm
           key={formKey}
@@ -343,7 +347,11 @@ export const Invoice: FC<Props> = ({
         />
       </div>
       <div
-        style={{ display: 'inline-block', width: '50%', verticalAlign: 'top' }}
+        style={{
+          display: 'inline-block',
+          width: '50%',
+          verticalAlign: 'top',
+        }}
       >
         <PlainForm
           compact={true}
