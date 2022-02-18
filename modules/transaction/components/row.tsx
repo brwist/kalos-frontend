@@ -370,7 +370,7 @@ export function TransactionRow({
           notes={txn.getNotes()}
           disabled={txn.getNotes() === ''}
         />,
-        ...([9928, 9646, 1734].includes(userID)
+        ...([9928, 9646, 103323, 9809, 1734].includes(userID)
           ? [
               <Tooltip
                 key="audit"

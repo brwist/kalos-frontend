@@ -748,12 +748,8 @@ export const TransactionTable: FC<Props> = ({
     filter.departmentId = d.departmentId;
     filter.employeeId = d.employeeId;
     filter.jobNumber = d.jobNumber;
-    filter.isAccepted = d.accepted ? d.accepted : undefined;
-    filter.isRejected = d.rejected ? d.rejected : undefined;
     filter.amount = d.amount;
-    filter.billingRecorded = d.billingRecorded;
     filter.universalSearch = d.universalSearch;
-    filter.processed = d.processed;
     dispatch({ type: ACTIONS.SET_TRANSACTION_FILTER, data: filter });
   }, []);
 
@@ -955,6 +951,7 @@ export const TransactionTable: FC<Props> = ({
           break;
       }
       dispatch({ type: ACTIONS.SET_TRANSACTION_FILTER, data: tempFilter });
+      dispatch({ type: ACTIONS.SET_SEARCHING, data: true });
     },
     [state.transactionFilter],
   );
@@ -1271,26 +1268,25 @@ export const TransactionTable: FC<Props> = ({
   }, [state.transactionToDelete]);
 
   useEffect(() => {
-    console.log('use effect homie');
+    let abortController = new AbortController();
     if (!state.loaded) {
-      console.log('use effect loaded');
-      dispatch({ type: ACTIONS.SET_LOADED, data: true });
       load();
       resetTransactions();
+      dispatch({ type: ACTIONS.SET_LOADED, data: true });
     }
-    if (state.changingPage) {
-      console.log('use effect change page');
+    if (state.changingPage || state.searching) {
+      if (state.searching) {
+        dispatch({ type: ACTIONS.SET_PAGE, data: 0 });
+      }
+      dispatch({ type: ACTIONS.SET_CHANGING_PAGE, data: false });
+      dispatch({ type: ACTIONS.SET_SEARCHING, data: false });
 
       resetTransactions();
     }
-    if (state.searching) {
-      console.log('use effect searching');
-
-      dispatch({ type: ACTIONS.SET_PAGE, data: 0 });
-      dispatch({ type: ACTIONS.SET_CHANGING_PAGE, data: true });
-
-      dispatch({ type: ACTIONS.SET_SEARCHING, data: false });
-    }
+    // your async action is here
+    return () => {
+      abortController.abort();
+    };
   }, [
     load,
     resetTransactions,
@@ -2105,7 +2101,9 @@ export const TransactionTable: FC<Props> = ({
                                 <LineWeightIcon />
                               </IconButton>
                             </Tooltip>,
-                            ...(state.accountsPayableAdmin
+                            ...(state.accountsPayableAdmin &&
+                            selectorParam.txn.getDepartmentId() != 0 &&
+                            selectorParam.txn.getDepartmentId() !== undefined
                               ? [
                                   <Tooltip
                                     key="notifyManager"
@@ -2126,12 +2124,6 @@ export const TransactionTable: FC<Props> = ({
                                           type: ACTIONS.SET_PENDING_SEND_NOTIFICATION_FOR_EXISTING_TRANSACTION,
                                           data: selectorParam.txn,
                                         })
-                                      }
-                                      disabled={
-                                        selectorParam.txn.getDepartmentId() ==
-                                          0 ||
-                                        selectorParam.txn.getDepartmentId() ==
-                                          undefined
                                       }
                                     >
                                       <NotificationsActiveIcon />
@@ -2318,28 +2310,28 @@ export const TransactionTable: FC<Props> = ({
                               transactionID={selectorParam.txn.getId()}
                               iconButton
                             />
-                            <Tooltip
-                              key="editAll"
-                              content="Edit this transaction"
-                            >
-                              <IconButton
-                                key="editIcon"
-                                disabled={
-                                  selectorParam.txn.getAssignedEmployeeId() !=
-                                    loggedUserId ||
-                                  selectorParam.txn.getOwnerId() != loggedUserId
-                                }
-                                size="small"
-                                onClick={() =>
-                                  dispatch({
-                                    type: ACTIONS.SET_TRANSACTION_TO_EDIT,
-                                    data: selectorParam.txn,
-                                  })
-                                }
-                              >
-                                <LineWeightIcon />
-                              </IconButton>
-                            </Tooltip>
+                            {selectorParam.txn.getAssignedEmployeeId() ==
+                              loggedUserId ||
+                              (selectorParam.txn.getOwnerId() ==
+                                loggedUserId && (
+                                <Tooltip
+                                  key="editAll"
+                                  content="Edit this transaction"
+                                >
+                                  <IconButton
+                                    key="editIcon"
+                                    size="small"
+                                    onClick={() =>
+                                      dispatch({
+                                        type: ACTIONS.SET_TRANSACTION_TO_EDIT,
+                                        data: selectorParam.txn,
+                                      })
+                                    }
+                                  >
+                                    <LineWeightIcon />
+                                  </IconButton>
+                                </Tooltip>
+                              ))}
                           </div>
                         ),
                       actionsFullWidth: true,
