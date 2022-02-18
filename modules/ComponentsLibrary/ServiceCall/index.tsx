@@ -162,7 +162,6 @@ export const ServiceCall: FC<Props> = props => {
         const req = new Event();
         req.setId(_serviceCallId);
         const entry = await EventClientService.Get(req);
-
         updateServiceCallState({
           type: 'setEntry',
           data: entry,
@@ -432,6 +431,24 @@ export const ServiceCall: FC<Props> = props => {
       } else {
         console.log('no contract data');
       }
+      //if there is a time value, we should set it on the initial set, just to avoid
+      //user confusion
+      const startTimeData = entry.getTimeStarted();
+      const endTimeData = entry.getTimeEnded();
+      const startSplit = startTimeData.split(':');
+      const endSplit = endTimeData.split(':');
+      const startDate = entry.getDateStarted();
+      const endDate = entry.getDateEnded();
+      const startTimeDate = startDate.split(' ')[0];
+      const endTimeDate = endDate.split(' ')[0];
+      const fullStartDate = `${startTimeDate} ${startSplit[0]}:${startSplit[1]}:00`;
+      const fullEndDate = `${endTimeDate} ${endSplit[0]}:${endSplit[1]}:00`;
+      console.log('actual start date', entry.getDateStarted());
+      console.log('acutal start time', entry.getTimeStarted());
+      console.log('created time', fullStartDate);
+      entry.setDateStarted(fullStartDate);
+      entry.setDateEnded(fullEndDate);
+
       updateServiceCallState({
         type: 'setData',
         data: {
