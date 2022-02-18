@@ -397,6 +397,22 @@ export class TransactionAdminView extends React.Component<props, state> {
           obj.setFieldMaskList(['IsRecorded']);
           obj.setStatusId(3);
           break;
+        case 9:
+          obj.setIsRecorded(false);
+          obj.setFieldMaskList(['IsRecorded']);
+          obj.setIsAudited(false);
+          obj.setFieldMaskList(['IsAudited']);
+          obj.setStatusId(3);
+          break;
+        case 10:
+          obj.setIsRecorded(false);
+          obj.setFieldMaskList(['IsRecorded']);
+          obj.setIsAudited(true);
+          break;
+        case 11:
+          obj.setIsRecorded(true);
+          obj.setIsAudited(true);
+          break;
         default:
           obj.setStatusId(filters.statusID);
           break;
