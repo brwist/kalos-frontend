@@ -98,7 +98,7 @@ export class TransactionAdminView extends React.Component<props, state> {
     this.state = {
       page: 0,
       // TODO: REPLACE HARDCODED VALUES WITH AN ACCEPT OVERRIDE ROLE
-      acceptOverride: ![1734, 9646, 8418].includes(props.userID),
+      acceptOverride: ![1734, 9646, 8418, 103323, 9809].includes(props.userID),
       isLoading: false,
       departmentView: !props.isSU,
       transactions: [],
@@ -396,6 +396,22 @@ export class TransactionAdminView extends React.Component<props, state> {
           obj.setIsRecorded(false);
           obj.setFieldMaskList(['IsRecorded']);
           obj.setStatusId(3);
+          break;
+        case 9:
+          obj.setIsRecorded(false);
+          obj.setFieldMaskList(['IsRecorded']);
+          obj.setIsAudited(false);
+          obj.setFieldMaskList(['IsAudited']);
+          obj.setStatusId(3);
+          break;
+        case 10:
+          obj.setIsRecorded(false);
+          obj.setFieldMaskList(['IsRecorded']);
+          obj.setIsAudited(true);
+          break;
+        case 11:
+          obj.setIsRecorded(true);
+          obj.setIsAudited(true);
           break;
         default:
           obj.setStatusId(filters.statusID);
