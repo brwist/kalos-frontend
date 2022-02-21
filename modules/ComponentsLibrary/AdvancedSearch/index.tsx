@@ -2111,6 +2111,13 @@ export const AdvancedSearch: FC<Props> = ({
                                   <RateReviewOutlined />
                                 </IconButton>
                               </Tooltip>,
+                            ]),
+                        ...(loggedUser
+                          .getPermissionGroupsList()
+                          .find(
+                            permission => permission.getName() === 'DevTesting',
+                          )
+                          ? [
                               <Tooltip
                                 key="proposalModalButton"
                                 content="Create/Edit Proposal"
@@ -2124,7 +2131,8 @@ export const AdvancedSearch: FC<Props> = ({
                                   <SummarizeIcon />
                                 </IconButton>
                               </Tooltip>,
-                            ]),
+                            ]
+                          : []),
                         ...(deletableEvents
                           ? [
                               <Tooltip
