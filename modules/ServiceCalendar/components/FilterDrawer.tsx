@@ -23,6 +23,7 @@ type State = {
   propertyUse: string[];
   techIds: string;
   timeoffDepartmentIds: string;
+  serviceCallDepartmentIds: string;
   states: string[];
 };
 
@@ -32,7 +33,8 @@ type Action =
   | { type: 'zip'; value: string }
   | { type: 'state'; value: string }
   | { type: 'jobType'; value: string }
-  | { type: 'departmentIds'; value: string }
+  | { type: 'timeoffDepartmentIds'; value: string }
+  | { type: 'serviceCallDepartmentIds'; value: string }
   | { type: 'jobSubType'; value: number }
   | { type: 'techIds'; value: string }
   | { type: 'propertyUse'; value: string }
@@ -93,10 +95,16 @@ const reducer = (state: State, action: Action): State => {
         jobType: action.value,
       };
     }
-    case 'departmentIds': {
+    case 'timeoffDepartmentIds': {
       return {
         ...state,
         timeoffDepartmentIds: action.value,
+      };
+    }
+    case 'serviceCallDepartmentIds': {
+      return {
+        ...state,
+        serviceCallDepartmentIds: action.value,
       };
     }
     case 'jobSubType': {
@@ -157,6 +165,7 @@ const FilterDrawer = ({ open, toggleDrawer }: Props) => {
     propertyUse,
     techIds,
     timeoffDepartmentIds,
+    serviceCallDepartmentIds,
     states,
   } = state;
 
@@ -190,6 +199,7 @@ const FilterDrawer = ({ open, toggleDrawer }: Props) => {
       propertyUse: [],
       techIds: '0',
       timeoffDepartmentIds: '0',
+      serviceCallDepartmentIds: '0',
       states: [],
     };
     dispatch({ type: 'resetFilters', value: temp });
@@ -308,7 +318,24 @@ const FilterDrawer = ({ open, toggleDrawer }: Props) => {
               onSelect={value => dispatch({ type: 'jobSubType', value })}
             />
           </FilterPanel>
-
+          <FilterPanel
+            title="Department Filter"
+            expanded={expanded === 'serviceCallDepartmentIds'}
+            handleChange={() => toggleExpanded('serviceCallDepartmentIds')}
+          >
+            {
+              <DepartmentMulti
+                key="department"
+                selected={serviceCallDepartmentIds}
+                onSelect={value =>
+                  dispatch({
+                    type: 'serviceCallDepartmentIds',
+                    value: String(value),
+                  })
+                }
+              />
+            }
+          </FilterPanel>
           <FilterPanel
             title="Filter TimeOff"
             expanded={expanded === 'timeoffDepartmentIds'}
@@ -319,7 +346,10 @@ const FilterDrawer = ({ open, toggleDrawer }: Props) => {
                 key="department"
                 selected={timeoffDepartmentIds}
                 onSelect={value =>
-                  dispatch({ type: 'departmentIds', value: String(value) })
+                  dispatch({
+                    type: 'timeoffDepartmentIds',
+                    value: String(value),
+                  })
                 }
               />
             }
