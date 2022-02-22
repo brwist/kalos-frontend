@@ -10,6 +10,7 @@ import NotesIcon from '@material-ui/icons/EditSharp';
 import CheckIcon from '@material-ui/icons/CheckCircleSharp';
 import CloseIcon from '@material-ui/icons/Close';
 import { Prompt } from '../../Prompt/main';
+import { Checkbox } from '@material-ui/core';
 import { PopoverComponent } from '../../ComponentsLibrary/Popover';
 import { Transaction } from '@kalos-core/kalos-rpc/Transaction';
 import { S3Client } from '@kalos-core/kalos-rpc/S3File';
@@ -21,6 +22,7 @@ import { TxnLog } from './log';
 import { TxnNotes } from './notes';
 import { getSlackID, slackNotify, EventClientService } from '../../../helpers';
 import { ENDPOINT } from '../../../constants';
+
 import {
   AccountPicker,
   DepartmentPicker,
@@ -45,11 +47,14 @@ interface props {
   updateNotes(notes: string): Promise<void>;
   updateCostCenter(id: number): Promise<void>;
   updateDepartment(id: number): Promise<void>;
+  updateStateTax(status: boolean): Promise<void>;
   toggleLoading(cb?: () => void): void;
   editingCostCenter: boolean;
   editingDepartment: boolean;
+  editingStateTax: boolean;
   toggleEditingCostCenter(): void;
   toggleEditingDepartment(): void;
+  toggleEditingStateTax(): void;
 }
 
 export function TransactionRow({
@@ -63,13 +68,16 @@ export function TransactionRow({
   updateNotes,
   acceptOverride,
   updateCostCenter,
+  updateStateTax,
   updateDepartment,
   editingDepartment,
+  editingStateTax,
   //jobInfo,
   userID,
   editingCostCenter,
   toggleEditingCostCenter,
   toggleEditingDepartment,
+  toggleEditingStateTax,
 }: props): Row {
   const FileInput = React.createRef<HTMLInputElement>();
 
@@ -229,6 +237,10 @@ export function TransactionRow({
     await updateDepartment(id);
     toggleEditingDepartment();
   };
+  const handleStateTaxSelect = async (status: boolean) => {
+    await updateStateTax(status);
+    toggleEditingStateTax();
+  };
   const amount = prettyMoney(txn.getAmount());
   return [
     {
@@ -293,6 +305,7 @@ export function TransactionRow({
         </IconButton>,
       ],
     },
+
     {
       value:
         txn.getJobId() != 0 ? (
@@ -309,6 +322,23 @@ export function TransactionRow({
     },
     {
       value: txn.getVendor(),
+    },
+    {
+      value: editingStateTax ? (
+        <Checkbox
+          checked={txn.getStateTaxApplied()}
+          onChange={event => handleStateTaxSelect(event.target.checked)}
+        />
+      ) : txn.getStateTaxApplied() != undefined ? (
+        `${txn.getStateTaxApplied() === true ? 'Applied' : 'Not Applied'}`
+      ) : (
+        ''
+      ),
+      actions: [
+        <IconButton key="edit" size="small" onClick={toggleEditingStateTax}>
+          {editingStateTax ? <CloseIcon /> : <EditIcon />}
+        </IconButton>,
+      ],
     },
     {
       value: '',
