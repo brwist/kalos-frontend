@@ -13,13 +13,13 @@ import compact from 'lodash/compact';
 import IconButton from '@material-ui/core/IconButton';
 import MoneyIcon from '@material-ui/icons/Money';
 import EditIcon from '@material-ui/icons/Edit';
-import SummarizeIcon from '@mui/icons-material/Summarize';
 import DeleteIcon from '@material-ui/icons/Delete';
 import SearchIcon from '@material-ui/icons/Search';
 import BuildIcon from '@material-ui/icons/Build';
 import PersonIcon from '@material-ui/icons/Person';
 import AccessTimeIcon from '@material-ui/icons/AccessTime';
 import GroupIcon from '@material-ui/icons/Group';
+import ReceiptIcon from '@material-ui/icons/Receipt';
 import RateReviewOutlined from '@material-ui/icons/RateReviewOutlined';
 import { ActionsProps } from '../Actions';
 import { Proposal } from '../ServiceCall/components/Proposal';
@@ -2128,7 +2128,7 @@ export const AdvancedSearch: FC<Props> = ({
                                   size="small"
                                   onClick={() => handleSetProposalEvent(entry)}
                                 >
-                                  <SummarizeIcon />
+                                  <ReceiptIcon />
                                 </IconButton>
                               </Tooltip>,
                             ]

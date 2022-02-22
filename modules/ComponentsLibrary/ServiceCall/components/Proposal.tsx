@@ -61,8 +61,7 @@ type File = {
   fileDescription: string;
 };
 //for prod
-//const bucket='kalosdocs'
-const bucket = 'testbuckethelios';
+
 const SCHEMA_ENTRY: Schema<StoredQuote> = [
   [{ name: 'getId', type: 'hidden' }],
   [{ label: 'Description', name: 'getDescription', multiline: true }],
@@ -309,15 +308,19 @@ export const Proposal: FC<Props> = ({
       const mime = 'application/pdf';
       const fileReq = new FileType();
       fileReq.setName(fullFileName);
-      fileReq.setBucket(bucket);
-      fileReq.setMimeType(mime);
-      const fileRes = await FileClientService.Create(fileReq);
       const document = new Document();
-      document.setFileId(fileRes.getId());
+
       document.setFilename(fullFileName);
       document.setPropertyId(property.getId());
       document.setDateCreated(document.getDateCreated());
       document.setUserId(customer.getId());
+      fileReq.setBucket(
+        document.getType() === 5 ? 'testbuckethelios' : 'kalosdocs-prod',
+      );
+      fileReq.setMimeType(mime);
+      const fileRes = await FileClientService.Create(fileReq);
+      document.setFileId(fileRes.getId());
+
       await DocumentClientService.Create(document);
     }
     const email = new SQSEmail();
@@ -447,7 +450,7 @@ export const Proposal: FC<Props> = ({
               price: props.getPrice(),
             }))}
             onFileCreated={generateFile ? handleSetFileData : undefined}
-            uploadBucket={bucket}
+            uploadBucket={'kalosdocs-prod'}
           />
         }
       />
