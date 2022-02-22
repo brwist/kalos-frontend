@@ -55,6 +55,8 @@ interface state {
   acceptOverride: boolean;
   search: string;
   editingCostCenter: { [key: number]: boolean };
+  editingStateTax: { [key: number]: boolean };
+
   editingDepartment: { [key: number]: boolean };
 
   showCreateModal: boolean;
@@ -116,6 +118,7 @@ export class TransactionAdminView extends React.Component<props, state> {
       search: '',
       editingCostCenter: {},
       editingDepartment: {},
+      editingStateTax: {},
       showCreateModal: false,
     };
     this.TxnClient = new TransactionClient(ENDPOINT);
@@ -167,6 +170,14 @@ export class TransactionAdminView extends React.Component<props, state> {
       editingDepartment: {
         ...prevState.editingDepartment,
         [id]: !prevState.editingDepartment[id],
+      },
+    }));
+  };
+  toggleEditingStateTax = (id: number) => {
+    this.setState(prevState => ({
+      editingStateTax: {
+        ...prevState.editingStateTax,
+        [id]: !prevState.editingStateTax[id],
       },
     }));
   };
@@ -327,6 +338,25 @@ export class TransactionAdminView extends React.Component<props, state> {
       logReq.setUserId(this.props.userID);
       logReq.setDescription(
         `User Updated Department from ${transaction.getDepartmentId()} to ${departmentID}`,
+      );
+
+      await TransactionActivityClientService.Create(logReq);
+      await this.fetchTxns();
+    };
+  }
+  makeUpdateStateTax(transaction: Transaction) {
+    return async (stateTax: boolean) => {
+      const txn = new Transaction();
+      txn.setId(transaction.getId());
+      txn.setFieldMaskList(['StateTaxApplied']);
+      txn.setStateTaxApplied(stateTax);
+      await this.TxnClient.Update(txn);
+      const logReq = new TransactionActivity();
+      logReq.setIsActive(1);
+      logReq.setTransactionId(transaction.getId());
+      logReq.setUserId(this.props.userID);
+      logReq.setDescription(
+        `User updated State Tax from ${transaction.getStateTaxApplied()} to ${stateTax}`,
       );
 
       await TransactionActivityClientService.Create(logReq);
@@ -981,6 +1011,7 @@ export class TransactionAdminView extends React.Component<props, state> {
               onClick: () => this.setSort('amount'),
             },
             { name: 'Description' },
+            { name: 'State Tax Applied?' },
             { name: 'Actions' },
           ]}
           data={
@@ -999,6 +1030,10 @@ export class TransactionAdminView extends React.Component<props, state> {
                     refresh: this.fetchTxns,
                     addJobNumber: this.makeAddJobNumber(txn.getId()),
                     updateNotes: this.makeUpdateNotes(txn.getId()),
+                    updateStateTax: this.makeUpdateStateTax(txn),
+                    editingStateTax: this.state.editingStateTax[txn.getId()],
+                    toggleEditingStateTax: () =>
+                      this.toggleEditingStateTax(txn.getId()),
                     updateCostCenter: this.makeUpdateCostCenter(txn),
                     updateDepartment: this.makeUpdateDepartment(txn),
                     toggleLoading: this.toggleLoading,
