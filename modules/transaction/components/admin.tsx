@@ -333,6 +333,27 @@ export class TransactionAdminView extends React.Component<props, state> {
       await this.fetchTxns();
     };
   }
+  makeUpdateStateTax(transaction: Transaction) {
+    return async (stateTax: boolean) => {
+      const txn = new Transaction();
+      txn.setId(transaction.getId());
+      txn.setFieldMaskList(['StateTaxApplied']);
+      // txn.setStateTaxApplied(stateTax);
+      await this.TxnClient.Update(txn);
+      const logReq = new TransactionActivity();
+      logReq.setIsActive(1);
+      logReq.setTransactionId(transaction.getId());
+      logReq.setUserId(this.props.userID);
+      /*
+      logReq.setDescription(
+        `User updated State Tax from ${transaction.getStateTaxApplied()} to ${stateTax}`,
+      );
+      */
+
+      await TransactionActivityClientService.Create(logReq);
+      await this.fetchTxns();
+    };
+  }
   makeUpdateCostCenter(transaction: Transaction) {
     return async (costCenterID: number) => {
       const txn = new Transaction();
@@ -981,6 +1002,7 @@ export class TransactionAdminView extends React.Component<props, state> {
               onClick: () => this.setSort('amount'),
             },
             { name: 'Description' },
+            // { name: 'State Tax Applied?' },
             { name: 'Actions' },
           ]}
           data={
