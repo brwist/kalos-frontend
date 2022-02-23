@@ -952,7 +952,7 @@ export const Services: FC<Props> = ({
             }
             size="medium"
           >
-            <HomeRepairServiceIcon />
+            <ZoomInSharp />
           </IconButton>
 
           <PlainForm
