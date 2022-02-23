@@ -17,6 +17,7 @@ import { PropertyDocuments } from './PropertyDocuments';
 import { ServiceItems } from '../../ComponentsLibrary/ServiceItems';
 import { PropertyEdit } from '../../ComponentsLibrary/PropertyEdit';
 import { ServiceCalls } from './ServiceCalls';
+
 import {
   ActivityLogClientService,
   makeFakeRows,
@@ -59,20 +60,25 @@ interface Props {
 }
 
 export const PropertyInfo: FC<Props> = props => {
-  const { userID, propertyId, viewedAsCustomer = false, onClose } = props;
+  const {
+    userID,
+    propertyId,
+    loggedUserId,
+    viewedAsCustomer = false,
+    onClose,
+  } = props;
   const [entry, setEntry] = useState<Property>(new Property());
   const [user, setUser] = useState<User>();
+  const [loggedUser, setLoggedUser] = useState<User>(new User());
   const [loading, setLoading] = useState<boolean>(false);
   const [editing, setEditing] = useState<boolean>(false);
   const [saving, setSaving] = useState<boolean>(false);
   const [error, setError] = useState<boolean>(false);
   const [deleting, setDeleting] = useState<boolean>(false);
-  const [notificationEditing, setNotificationEditing] = useState<boolean>(
-    false,
-  );
-  const [notificationViewing, setNotificationViewing] = useState<boolean>(
-    false,
-  );
+  const [notificationEditing, setNotificationEditing] =
+    useState<boolean>(false);
+  const [notificationViewing, setNotificationViewing] =
+    useState<boolean>(false);
   const [editMenuAnchorEl, setEditMenuAnchorEl] = useState<
     (EventTarget & HTMLElement) | null
   >(null);
@@ -141,6 +147,8 @@ export const PropertyInfo: FC<Props> = props => {
     setLoading(true);
     const user = await UserClientService.loadUserById(userID);
     setUser(user);
+    const loggedUser = await UserClientService.loadUserById(loggedUserId);
+    setLoggedUser(loggedUser);
     const req = new Property();
     req.setUserId(userID);
     req.setId(propertyId);
@@ -410,7 +418,7 @@ export const PropertyInfo: FC<Props> = props => {
           viewedAsCustomer={false}
         />
       </div>
-      <ServiceCalls {...props} />
+      <ServiceCalls {...props} user={loggedUser} />
       <Modal open={editing} onClose={handleSetEditing(false)}>
         <PropertyEdit
           userId={userID}
