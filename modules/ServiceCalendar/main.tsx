@@ -113,6 +113,7 @@ type Filters = {
   propertyUse: string[];
   techIds: string;
   timeoffDepartmentIds: string;
+  serviceCallDepartmentIds: string;
 };
 
 type State = {
@@ -226,6 +227,7 @@ const initialFilters: Filters = cachedInitialFilters
       propertyUse: [],
       techIds: '0',
       timeoffDepartmentIds: '0',
+      serviceCallDepartmentIds: '0',
       states: [],
     };
 let temp = initialFilters.jobType;
@@ -234,6 +236,9 @@ if (typeof temp === 'number') {
 }
 if (initialFilters.timeoffDepartmentIds === undefined) {
   initialFilters.timeoffDepartmentIds = '0';
+}
+if (initialFilters.serviceCallDepartmentIds === undefined) {
+  initialFilters.serviceCallDepartmentIds = '0';
 }
 if (initialFilters.states === undefined) {
   initialFilters.states = [];

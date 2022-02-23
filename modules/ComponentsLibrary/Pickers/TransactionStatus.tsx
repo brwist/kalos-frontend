@@ -74,8 +74,8 @@ export class TxnStatusPicker extends React.PureComponent<props, state> {
           ))}
           <option value={7}>Not Audited</option>
           <option value={8}>Not Recorded</option>
-          <option value={9}>Accepted, Not Audited/Recorded</option>
-          <option value={10}>Accpeted, Audited, Not Recorded</option>
+          <option value={9}>Accepted, Not Recorded, Not Audited</option>
+          <option value={10}>Accepted, Audited, Not Recorded</option>
           <option value={11}>Audited and Recorded</option>
         </NativeSelect>
       </FormControl>
