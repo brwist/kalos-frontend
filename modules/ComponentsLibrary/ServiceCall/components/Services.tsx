@@ -19,7 +19,7 @@ import { PlainForm, Schema } from '../../PlainForm';
 import { Form } from '../../Form';
 import { Modal } from '../../Modal';
 import { File } from '@kalos-core/kalos-rpc/File';
-import HomeRepairServiceIcon from '@mui/icons-material/HomeRepairService';
+//import HomeRepairServiceIcon from '@mui/icons-material/HomeRepairService';
 import { format } from 'date-fns';
 import { QuoteSelector, SelectedQuote } from '../../QuoteSelector';
 import {

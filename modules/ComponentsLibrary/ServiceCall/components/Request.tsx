@@ -17,7 +17,8 @@ import {
   JOB_STATUS_COLORS,
   OPTION_BLANK,
 } from '../../../../constants';
-import { format, parseISO } from 'date-fns';
+import { format, parseISO, addHours } from 'date-fns';
+
 import { Event } from '@kalos-core/kalos-rpc/Event';
 import { JobTypeSubtype } from '@kalos-core/kalos-rpc/JobTypeSubtype';
 
@@ -58,12 +59,24 @@ export const Request: FC<Props> = forwardRef(
   ) => {
     const [initSchemaCalled, setInitSchemaCalled] = useState<boolean>(false);
     const [resetId, setResetId] = useState<number>(0);
-    console.log(serviceItem);
+
+    if (serviceItem.getId() === 0 || serviceItem.getId() == undefined) {
+      const dateStart = new Date();
+      dateStart.setHours(8);
+      dateStart.setMinutes(0);
+      dateStart.setSeconds(0);
+      const dateEnd = addHours(dateStart, 10);
+      let dateStartString = format(dateStart, 'yyyy-MM-dd hh:mm:ss');
+      console.log(dateEnd);
+      let endDateString = format(dateEnd, 'yyyy-MM-dd hh:mm:ss');
+      endDateString = endDateString.replace('06:', '18:');
+      serviceItem.setDateStarted(dateStartString);
+      serviceItem.setDateEnded(endDateString);
+    }
     const handleChange = useCallback(
       (data: Event) => {
         //const { jobTypeId, jobSubtypeId, logJobStatus } = data;
         const tempData = makeSafeFormObject(data, new Event());
-        console.log(tempData);
 
         const jobTypeId = tempData.getJobTypeId();
         const jobSubtypeId = tempData.getJobSubtypeId();

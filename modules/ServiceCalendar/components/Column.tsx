@@ -89,6 +89,7 @@ const Column = ({
         propertyUse,
         jobType,
         jobSubType,
+        serviceCallDepartmentIds,
         states,
         techIds: techIdsFilter,
       } = filters!;
@@ -101,7 +102,11 @@ const Column = ({
         const jobTypeIdsFilterArry = compact((jobType || '0').split(','))
           .map(Number)
           .filter(e => e !== 0);
-
+        const serviceCallDepartmentIdsFilterarray = compact(
+          (serviceCallDepartmentIds || '0').split(','),
+        )
+          .map(Number)
+          .filter(e => e !== 0);
         callList[i] = callList[i].filter((call: Event) => {
           const techIdsFilterArr = compact((techIdsFilter || '0').split(','))
             .map(Number)
@@ -164,6 +169,14 @@ const Column = ({
           }
 
           if (jobSubType && jobSubType !== call?.getJobSubtypeId()) {
+            return false;
+          }
+          if (
+            serviceCallDepartmentIdsFilterarray.length > 0 &&
+            !serviceCallDepartmentIdsFilterarray.includes(
+              call?.getDepartmentId(),
+            )
+          ) {
             return false;
           }
           return true;
