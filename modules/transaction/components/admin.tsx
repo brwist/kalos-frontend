@@ -421,8 +421,8 @@ export class TransactionAdminView extends React.Component<props, state> {
         case 9:
           obj.setIsRecorded(false);
           obj.setFieldMaskList(['IsRecorded']);
-          obj.setIsAudited(false);
-          obj.setFieldMaskList(['IsAudited']);
+          obj.setNotEqualsList(['IsAudited']);
+          obj.setIsAudited(true);
           obj.setStatusId(3);
           break;
         case 10:
