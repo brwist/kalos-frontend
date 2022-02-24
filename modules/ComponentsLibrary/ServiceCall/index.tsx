@@ -57,9 +57,8 @@ import { Proposal } from './components/Proposal';
 import { Spiffs } from './components/Spiffs';
 import { ActivityLog } from '@kalos-core/kalos-rpc/ActivityLog';
 import format from 'date-fns/esm/format';
-import { parseISO } from 'date-fns';
-import setHours from 'date-fns/esm/setHours';
-import setMinutes from 'date-fns/esm/setMinutes';
+import { addHours } from 'date-fns';
+
 import { Document } from '@kalos-core/kalos-rpc/Document';
 import { State, reducer } from './reducer';
 import { ServiceCallLogs } from '../ServiceCallLogs';
@@ -69,7 +68,6 @@ import {
 } from '@kalos-core/kalos-rpc/compiled-protos/email_pb';
 import { EventAssignment } from '@kalos-core/kalos-rpc/EventAssignment';
 import { QuoteLinePart } from '@kalos-core/kalos-rpc/QuoteLinePart';
-import { TwoMpRounded } from '@mui/icons-material';
 
 const EventClientService = new EventClient(ENDPOINT);
 const UserClientService = new UserClient(ENDPOINT);
@@ -408,7 +406,6 @@ export const ServiceCall: FC<Props> = props => {
         const req = new Event();
         req.setIsResidential(1);
         const dateInit = new Date();
-        dateInit.setSeconds(0);
         req.setDateStarted(format(dateInit, 'yyyy-MM-dd hh:mm:ss'));
         req.setDateEnded(format(dateInit, 'yyyy-MM-dd  hh:mm:ss'));
 
@@ -433,22 +430,36 @@ export const ServiceCall: FC<Props> = props => {
       }
       //if there is a time value, we should set it on the initial set, just to avoid
       //user confusion
-      const startTimeData = entry.getTimeStarted();
-      const endTimeData = entry.getTimeEnded();
-      const startSplit = startTimeData.split(':');
-      const endSplit = endTimeData.split(':');
-      const startDate = entry.getDateStarted();
-      const endDate = entry.getDateEnded();
-      const startTimeDate = startDate.split(' ')[0];
-      const endTimeDate = endDate.split(' ')[0];
-      const fullStartDate = `${startTimeDate} ${startSplit[0]}:${startSplit[1]}:00`;
-      const fullEndDate = `${endTimeDate} ${endSplit[0]}:${endSplit[1]}:00`;
-      console.log('actual start date', entry.getDateStarted());
-      console.log('acutal start time', entry.getTimeStarted());
-      console.log('created time', fullStartDate);
-      entry.setDateStarted(fullStartDate);
-      entry.setDateEnded(fullEndDate);
+      if (entry.getId() != 0 && entry.getId() != undefined) {
+        const startTimeData = entry.getTimeStarted();
+        const endTimeData = entry.getTimeEnded();
+        const startSplit = startTimeData.split(':');
+        const endSplit = endTimeData.split(':');
+        const startDate = entry.getDateStarted();
+        const endDate = entry.getDateEnded();
+        const startTimeDate = startDate.split(' ')[0];
+        const endTimeDate = endDate.split(' ')[0];
+        const fullStartDate = `${startTimeDate} ${startSplit[0]}:${startSplit[1]}:00`;
+        const fullEndDate = `${endTimeDate} ${endSplit[0]}:${endSplit[1]}:00`;
+        console.log('actual start date', entry.getDateStarted());
+        console.log('acutal start time', entry.getTimeStarted());
+        console.log('created time', fullStartDate);
+        entry.setDateStarted(fullStartDate);
+        entry.setDateEnded(fullEndDate);
+      } else {
+        const dateStart = new Date();
+        dateStart.setHours(8);
+        dateStart.setMinutes(0);
+        dateStart.setSeconds(0);
+        const dateEnd = addHours(dateStart, 10);
+        let dateStartString = format(dateStart, 'yyyy-MM-dd hh:mm:ss');
+        console.log(dateEnd);
+        let endDateString = format(dateEnd, 'yyyy-MM-dd hh:mm:ss');
+        endDateString = endDateString.replace('06:', '18:');
+        entry.setDateStarted(dateStartString);
 
+        entry.setDateEnded(endDateString);
+      }
       updateServiceCallState({
         type: 'setData',
         data: {
