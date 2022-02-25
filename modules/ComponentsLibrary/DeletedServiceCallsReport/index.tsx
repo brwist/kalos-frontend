@@ -122,7 +122,10 @@ export const DeletedServiceCallsReport: FC<Props> = ({
   );
   const handleSearch = useCallback(() => setLoaded(false), []);
   const handleSetPendingEdit = useCallback(
-    (pendingEdit?: Event) => () => setPendingEdit(pendingEdit),
+    (pendingEdit?: Event) => () => {
+      console.log(pendingEdit);
+      setPendingEdit(pendingEdit);
+    },
     [setPendingEdit],
   );
   const handleOpenTasks = useCallback(

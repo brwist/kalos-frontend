@@ -181,13 +181,17 @@ export const reducer = (state: State, action: Action) => {
       }
       let splitServiceItems: number[] = [];
       if (action.data.entry) {
-        action.data.entry.getInvoiceServiceItem();
-        const splitData = action.data.entry.getInvoiceServiceItem().split(',');
-        for (let i = 0; i < splitData.length; i++) {
-          splitServiceItems.push(parseInt(splitData[i]));
+        if (action.data.entry.getInvoiceServiceItem() != '') {
+          action.data.entry.getInvoiceServiceItem();
+          const splitData = action.data.entry
+            .getInvoiceServiceItem()
+            .split(',');
+          for (let i = 0; i < splitData.length; i++) {
+            splitServiceItems.push(parseInt(splitData[i]));
+          }
         }
+        console.log('we made this data', splitServiceItems);
       }
-      console.log('we made this data', splitServiceItems);
       return {
         ...state,
         property: action.data.property,
