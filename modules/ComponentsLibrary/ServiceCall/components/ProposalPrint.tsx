@@ -43,7 +43,7 @@ export const ProposalPrint: FC<Props> = ({
     downloadPdfFilename={downloadPDdfFileName}
     downloadLabel="Download PDF Preview"
     onFileCreated={onFileCreated}
-    uploadBucket={uploadBucket}
+    uploadBucket={uploadBucket ? uploadBucket : 'testbuckethelios'}
   >
     <PrintParagraph>
       Date: {formatDate(new Date().toISOString())}

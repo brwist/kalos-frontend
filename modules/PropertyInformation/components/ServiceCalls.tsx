@@ -18,7 +18,7 @@ import { Form, Schema } from '../../ComponentsLibrary/Form';
 import { PlainForm } from '../../ComponentsLibrary/PlainForm';
 import { ServicesRendered } from '@kalos-core/kalos-rpc/ServicesRendered';
 import { Proposal } from '../../ComponentsLibrary/ServiceCall/components/Proposal';
-
+import { Button } from '../../ComponentsLibrary/Button';
 import {
   formatTime,
   formatDate,
@@ -903,11 +903,16 @@ export class ServiceCalls extends PureComponent<Props, State> {
                   .getCustomer()
                   ?.getEmail()}`}
               >
+                <Button
+                  onClick={() => this.handleSetProposalEvent(undefined)}
+                  label={'Close'}
+                ></Button>
                 <Proposal
                   serviceItem={this.state.proposalEvent}
                   property={this.state.proposalEvent.getProperty()!}
                   customer={this.state.proposalEvent.getCustomer()!}
                   servicesRendered={this.state.proposalEventPropData}
+                  reload={() => this.handleSetProposalEvent(undefined)}
                 />
               </SectionBar>
             </Modal>

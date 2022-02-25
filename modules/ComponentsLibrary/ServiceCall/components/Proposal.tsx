@@ -5,18 +5,13 @@ import DeleteIcon from '@material-ui/icons/Delete';
 import { StoredQuote } from '@kalos-core/kalos-rpc/StoredQuote';
 import { SectionBar } from '../../SectionBar';
 import { PlainForm, Schema } from '../../PlainForm';
-import { Field, Value } from '../../Field';
 import { InfoTable, Columns, Data } from '../../InfoTable';
 import { Form } from '../../Form';
 import { Modal } from '../../Modal';
 import { StoredQuotes } from '../../StoredQuotes';
 import { EventType } from '../';
 import { ProposalPrint } from './ProposalPrint';
-import compact from 'lodash/compact';
 import './proposal.less';
-import { PrintPage } from '../../PrintPage';
-import { PrintParagraph } from '../../PrintParagraph';
-import { PrintTable } from '../../PrintTable';
 import { QuoteLine } from '@kalos-core/kalos-rpc/QuoteLine';
 import { ServicesRendered } from '@kalos-core/kalos-rpc/ServicesRendered';
 import { User } from '@kalos-core/kalos-rpc/User';
@@ -25,10 +20,7 @@ import {
   makeSafeFormObject,
   formatDateDay,
   QuoteLineClientService,
-  formatDate,
-  usd,
   FileClientService,
-  uploadFileToS3Bucket,
   DocumentClientService,
 } from '../../../../helpers';
 import { ENDPOINT } from '@kalos-core/kalos-rpc/constants';
@@ -61,7 +53,8 @@ type File = {
   fileDescription: string;
 };
 //for prod
-
+//const bucket = 'kalosdocs';
+const bucket = 'testbuckethelios';
 const SCHEMA_ENTRY: Schema<StoredQuote> = [
   [{ name: 'getId', type: 'hidden' }],
   [{ label: 'Description', name: 'getDescription', multiline: true }],
@@ -295,33 +288,70 @@ export const Proposal: FC<Props> = ({
       }
     }
     const fileCheckReq = new FileType();
+    const documentCheckReq = new Document();
+
     const fullFileName = `${file.fileDescription}.pdf`;
     fileCheckReq.setName(fullFileName);
+    documentCheckReq.setFilename(fullFileName);
+
     let fileCheckRes = new FileType();
+    let documentCheckRes = new Document();
+
     try {
       fileCheckRes = await FileClientService.Get(fileCheckReq);
     } catch (err) {
       console.log('file not found, create new records');
     }
-    if (fileData && fileCheckRes.getId() == 0) {
-      console.log('file record not found, create file and document');
+    try {
+      documentCheckRes = await DocumentClientService.Get(documentCheckReq);
+    } catch (err) {
+      console.log('document not found, create new records');
+    }
+    //create file and document if neither exist
+    if (fileCheckRes.getId() == 0 && documentCheckRes.getId() === 0) {
+      console.log('file record not found, create file both');
       const mime = 'application/pdf';
       const fileReq = new FileType();
       fileReq.setName(fullFileName);
+
       const document = new Document();
 
       document.setFilename(fullFileName);
+      document.setDescription(file.fileDescription);
+      document.setType(5);
       document.setPropertyId(property.getId());
       document.setDateCreated(document.getDateCreated());
       document.setUserId(customer.getId());
-      fileReq.setBucket(
-        document.getType() === 5 ? 'testbuckethelios' : 'kalosdocs',
-      );
+
+      fileReq.setBucket(bucket);
       fileReq.setMimeType(mime);
       const fileRes = await FileClientService.Create(fileReq);
       document.setFileId(fileRes.getId());
 
       await DocumentClientService.Create(document);
+    }
+    //if file exist, but not document, create document record
+    if (documentCheckRes.getId() == 0 && fileCheckRes.getId() != 0) {
+      console.log('document record not found, only create file');
+      const mime = 'application/pdf';
+      const document = new Document();
+      document.setFilename(fullFileName);
+      document.setDescription(file.fileDescription);
+      document.setPropertyId(property.getId());
+      document.setType(5);
+      document.setDateCreated(document.getDateCreated());
+      document.setUserId(customer.getId());
+      document.setFileId(fileCheckRes.getId());
+      await DocumentClientService.Create(document);
+    }
+    //if document and file exist, just update to be safe
+    if (documentCheckRes.getId() != 0 && fileCheckRes.getId() != 0) {
+      console.log('both found, just update file ID in document');
+      const mime = 'application/pdf';
+      const document = new Document();
+      document.setFileId(fileCheckRes.getId());
+      document.setFieldMaskList(['FileId']);
+      await DocumentClientService.Update(document);
     }
     const email = new SQSEmail();
     email.setBody(emailTemplate);
@@ -337,7 +367,6 @@ export const Proposal: FC<Props> = ({
   }, [
     table,
     file,
-    fileData,
     reload,
     emailTemplate,
     property,
@@ -450,7 +479,7 @@ export const Proposal: FC<Props> = ({
               price: props.getPrice(),
             }))}
             onFileCreated={generateFile ? handleSetFileData : undefined}
-            uploadBucket={'kalosdocs'}
+            uploadBucket={bucket}
           />
         }
       />
