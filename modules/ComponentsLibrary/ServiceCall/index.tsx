@@ -104,6 +104,11 @@ export const returnCorrectTimeField = (time: string) => {
   const minutesString = timeValue[1];
   return `${hoursString}:${minutesString}`;
 };
+export const returnLegactyDate = (time: string) => {
+  const splitString = time.split(' ');
+
+  return `${splitString[0]} 00:00:00`;
+};
 export const ServiceCall: FC<Props> = props => {
   const {
     userID,
@@ -619,6 +624,7 @@ export const ServiceCall: FC<Props> = props => {
           'DiagnosticQuoted',
           'IsLmpc',
           'IsCallback',
+          'Color',
           'Description',
           'Services',
           'LogNotes',
@@ -643,6 +649,8 @@ export const ServiceCall: FC<Props> = props => {
           'PropertyBilling',
           'Notes',
         ]);
+        temp.setDateStarted(returnLegactyDate(temp.getDateStarted()));
+        temp.setDateEnded(returnLegactyDate(temp.getDateEnded()));
         await EventClientService.Update(temp);
 
         if (state.saveInvoice == true) {
@@ -767,6 +775,8 @@ export const ServiceCall: FC<Props> = props => {
         console.log('creating new one');
         temp.setPropertyId(propertyId);
         temp.setLogVersion(1);
+        temp.setDateStarted(returnLegactyDate(temp.getDateStarted()));
+        temp.setDateEnded(returnLegactyDate(temp.getDateEnded()));
         const res = await EventClientService.Create(temp);
         const logNumber = `${format(new Date(), 'yy')}-${res.getId()}`;
         const newEvent = new Event();

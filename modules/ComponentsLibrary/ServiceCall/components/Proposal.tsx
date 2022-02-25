@@ -315,7 +315,7 @@ export const Proposal: FC<Props> = ({
       document.setDateCreated(document.getDateCreated());
       document.setUserId(customer.getId());
       fileReq.setBucket(
-        document.getType() === 5 ? 'testbuckethelios' : 'kalosdocs-prod',
+        document.getType() === 5 ? 'testbuckethelios' : 'kalosdocs',
       );
       fileReq.setMimeType(mime);
       const fileRes = await FileClientService.Create(fileReq);
@@ -450,7 +450,7 @@ export const Proposal: FC<Props> = ({
               price: props.getPrice(),
             }))}
             onFileCreated={generateFile ? handleSetFileData : undefined}
-            uploadBucket={'kalosdocs-prod'}
+            uploadBucket={'kalosdocs'}
           />
         }
       />

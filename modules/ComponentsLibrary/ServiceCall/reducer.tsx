@@ -224,7 +224,7 @@ export const reducer = (state: State, action: Action) => {
       existingEntry.setTimeStarted(
         returnCorrectTimeField(data.getDateStarted()),
       );
-
+      existingEntry.setColor(data.getColor());
       existingEntry.setDateEnded(data.getDateEnded());
       existingEntry.setTimeEnded(returnCorrectTimeField(data.getDateEnded()));
       existingEntry.setDepartmentId(data.getDepartmentId());
@@ -242,6 +242,7 @@ export const reducer = (state: State, action: Action) => {
       existingEntry.setLogNotes(data.getLogNotes());
       existingEntry.setLogPaymentType(data.getLogPaymentType());
       existingEntry.setHighPriority(data.getHighPriority());
+      console.log('stuff', data);
       return {
         ...state,
         entry: existingEntry,
