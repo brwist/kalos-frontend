@@ -28,7 +28,6 @@ export class TxnStatusPicker extends React.PureComponent<props, state> {
     };
     this.Client = new TransactionStatusClient(ENDPOINT);
     this.handleSelect = this.handleSelect.bind(this);
-    this.addToList = this.addToList.bind(this);
   }
 
   handleSelect(e: React.SyntheticEvent<HTMLSelectElement>) {
@@ -42,15 +41,10 @@ export class TxnStatusPicker extends React.PureComponent<props, state> {
     }
   }
 
-  addToList(item: TransactionStatus) {
-    this.setState(prevState => ({
-      list: prevState.list.concat(item),
-    }));
-  }
-
   async fetchList() {
     const status = new TransactionStatus();
-    this.Client.List(status, this.addToList);
+    const results = await this.Client.BatchGet(status);
+    this.setState({ list: results.getResultsList() });
   }
 
   componentDidMount() {
