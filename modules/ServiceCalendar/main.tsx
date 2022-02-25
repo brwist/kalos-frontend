@@ -155,7 +155,7 @@ const reducer = (state: State, action: Action): State => {
     case 'toggleAddCustomer': {
       return {
         ...state,
-        addCustomer: !state.addCustomer,
+        addCustomer: action.value,
       };
     }
     case 'fetchingCalendarData': {
@@ -392,6 +392,10 @@ export const ServiceCalendar: FC<Props> = props => {
     }
   }, [shownDates]);
 
+  const handleToggleAddCustomer = (display: boolean) => {
+    dispatch({ type: 'toggleAddCustomer', value: display });
+  }
+
   const changeViewBy = useCallback(value => {
     dispatch({ type: 'viewBy', value });
   }, []);
@@ -433,10 +437,15 @@ export const ServiceCalendar: FC<Props> = props => {
       name: 'Service Call',
       url: 'https://app.kalosflorida.com/index.cfm?action=admin:service.addServiceCallGeneral',
     },*/
+    // {
+    //   icon: <PersonIcon />,
+    //   name: 'Add Customer',
+    //   url: 'https://app.kalosflorida.com/index.cfm?action=admin:customers.add',
+    // },
     {
       icon: <PersonIcon />,
       name: 'Add Customer',
-      url: 'https://app.kalosflorida.com/index.cfm?action=admin:customers.add',
+      action: ()=>handleToggleAddCustomer(true),
     },
     {
       icon: <SearchIcon />,
@@ -496,14 +505,14 @@ export const ServiceCalendar: FC<Props> = props => {
         </EmployeesContext.Provider>
         <AddNewButton options={addNewOptions} />
       </CalendarDataContext.Provider>
-      {/*addCustomer && (
-        <Modal open onClose={handleToggleAddCustomer(false)}>
+      {addCustomer && (
+        <Modal open onClose={()=>handleToggleAddCustomer(false)}>
           <CustomerEdit
-            onClose={handleToggleAddCustomer(false)}
-            onSave={handleCustomerSave}
+            onClose={()=>handleToggleAddCustomer(false)}
+            onSave={()=>handleToggleAddCustomer(false)}
           />
         </Modal>
-      )*/}
+      )}
       {timeoffOpen && (
         <Modal open onClose={() => setTimeoffOpen(false)} fullScreen>
           <TimeOff
