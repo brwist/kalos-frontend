@@ -152,6 +152,7 @@ export const ServiceCall: FC<Props> = props => {
     projectData: new Event(),
     openJobActivity: false,
   };
+
   const [state, updateServiceCallState] = useReducer(reducer, initialState);
   const requestRef = useRef(null);
   const loadEntry = useCallback(
@@ -188,8 +189,6 @@ export const ServiceCall: FC<Props> = props => {
   };
   const handleUpdateMaterialsStringAndCost = useCallback(async () => {
     const totalMaterials: Quotable[] = [];
-    //Day(3char),timestamp - Person Who added it - (Material Quantity)  - (Material Cost)
-    //Tue, 12/7/2021 8:08PM Jordan Spalding -(1) Trip & Diagnostic Fee - After Hours - $120
     let totalCost = 0;
     let fullString = '';
 
@@ -304,13 +303,6 @@ export const ServiceCall: FC<Props> = props => {
             console.log('failed to get payment data');
           }
         }
-        /*
-        updateServiceCallState({
-          type: 'setContractData',
-          data: contractData,
-        });
-*/
-
         return { servicesRendered: servicesRendered, payments: payments };
       } else {
         return { servicesRendered: [], payments: [] };
@@ -344,8 +336,16 @@ export const ServiceCall: FC<Props> = props => {
       if (_serviceCallId) {
         const invoiceReq = new InvoiceType();
         invoiceReq.setEventId(_serviceCallId);
-        const result = await InvoiceClientService.Get(invoiceReq);
-        return result;
+        try {
+          const result = await InvoiceClientService.Get(invoiceReq);
+          if (result) {
+            return result;
+          } else {
+            return undefined;
+          }
+        } catch {
+          console.log('Error getting invoice data');
+        }
       } else {
         return undefined;
       }
@@ -399,10 +399,12 @@ export const ServiceCall: FC<Props> = props => {
         invoice,
       ]);
       if (state.serviceCallId) {
+        console.log('we got a servicecall id');
         const req = new Event();
         req.setId(state.serviceCallId);
         entry = await EventClientService.Get(req);
       } else {
+        console.log('we did not get get a servicecall id');
         const req = new Event();
         req.setIsResidential(1);
         const dateInit = new Date();
