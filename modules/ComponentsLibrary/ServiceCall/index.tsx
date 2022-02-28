@@ -612,6 +612,7 @@ export const ServiceCall: FC<Props> = props => {
         temp.setFieldMaskList([
           'DateEnded',
           'DateStarted',
+          'Name',
           'TimeStarted',
           'TimeEnded',
           'DepartmentId',
