@@ -99,6 +99,12 @@ export const StoredQuotes: FC<Props> = ({
       }
       req.setDescription(safeQuote.getDescription());
       req.setPrice(safeQuote.getPrice());
+      let safeDescription = req.getDescription();
+
+      safeDescription = safeDescription.replace(/\\/g, '');
+      safeDescription = safeDescription.replace("'", '');
+      safeDescription = safeDescription.replace(',', '');
+      req.setDescription(safeDescription);
       req.setFieldMaskList(['Description', 'Price']);
       if (isNew) {
         console.log('create quote');

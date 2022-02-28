@@ -225,6 +225,7 @@ export const reducer = (state: State, action: Action) => {
         returnCorrectTimeField(data.getDateStarted()),
       );
       existingEntry.setColor(data.getColor());
+      existingEntry.setName(data.getName());
       existingEntry.setDateEnded(data.getDateEnded());
       existingEntry.setTimeEnded(returnCorrectTimeField(data.getDateEnded()));
       existingEntry.setDepartmentId(data.getDepartmentId());
