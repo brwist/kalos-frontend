@@ -313,8 +313,9 @@ export const Reports: FC<Props> = ({ loggedUserId }) => {
     useState<boolean>(false);
   const [timeoffSummaryReportOpen, setTimeoffSummaryReportOpen] =
     useState<boolean>(false);
-  const [jobNumberBasedReportOpen, setJobNumberBasedReportOpen] =
-    useState<JobReportForm | undefined>();
+  const [jobNumberBasedReportOpen, setJobNumberBasedReportOpen] = useState<
+    JobReportForm | undefined
+  >();
   const [jobNumberForReport] = useState<JobReportForm>({} as JobReportForm);
   const handleOpenJobStatusReportToggle = useCallback(
     (open: boolean) => (data?: FilterForm) => {

@@ -795,10 +795,13 @@ export type PromptPaymentData = {
 
 export const loadPromptPaymentData = async (month: string) => {
   //FIXME finish implementation, move to reports client
+
   const req = new PromptPaymentReportLine();
   const date = `${month.replace('%', '01')} 00:00:00`;
-  const startDate = format(addDays(new Date(date), -1), 'yyyy-MM-dd');
-  const endDate = format(addMonths(new Date(date), 1), 'yyyy-MM-dd');
+  console.log('formatted date', date);
+
+  const startDate = format(addDays(new Date(parseISO(date)), -1), 'yyyy-MM-dd');
+  const endDate = format(addMonths(new Date(parseISO(date)), 1), 'yyyy-MM-dd');
   req.setDateRangeList(['>', startDate, '<', endDate]);
   req.setDateTargetList(['log_billingDate', 'reportUntil']);
   const res = await ReportClientService.GetPromptPaymentData(req);
@@ -857,8 +860,25 @@ export const loadPromptPaymentData = async (month: string) => {
       return a[key] > b[key] ? 1 : b[key] > a[key] ? -1 : 0;
     };
   };
+  console.log('data we got', data);
+  const temp = {
+    customerId: 0,
+    customerName: 'test',
+    payableAward: 0,
+    forfeitedAward: 0,
+    pendingAward: 0,
+    averageDaysToPay: 0,
+    daysToPay: 0,
+    paidInvoices: 0,
+    allInvoices: 0,
+    payableTotal: 0,
+    paidOnTime: 0,
+    possibleAwardTotal: 0,
+    entries: [],
+  };
+  console.log('what we get', data);
 
-  return Object.values(data)
+  const results = Object.values(data)
     .concat()
     .sort(fn('customerName'))
     .map(
@@ -872,13 +892,16 @@ export const loadPromptPaymentData = async (month: string) => {
       }) => ({
         ...item,
         averageDaysToPay:
-          // @ts-ignore
-          item.paidInvoices === 0
+          item.promptPaymentData.paidInvoices === 0
             ? 0
-            : // @ts-ignore
-              Math.round(averageDaysToPay / item.paidInvoices),
+            : Math.round(
+                averageDaysToPay / item.promptPaymentData.paidInvoices,
+              ),
       }),
     );
+
+  console.log('return results', results);
+  return [{ averageDaysToPay: 0, promptPaymentData: temp }];
 };
 
 export type LoadSpiffReportByFilter = {
