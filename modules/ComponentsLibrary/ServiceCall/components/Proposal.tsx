@@ -52,8 +52,7 @@ type File = {
   localCopyName: string;
   fileDescription: string;
 };
-//for prod
-//const bucket = 'kalosdocs';
+
 const bucket = 'testbuckethelios';
 const SCHEMA_ENTRY: Schema<StoredQuote> = [
   [{ name: 'getId', type: 'hidden' }],
@@ -91,19 +90,18 @@ export const Proposal: FC<Props> = ({
   const filteredServicesRendered = servicesRendered.filter(
     sr => sr.getServiceRendered() != '' && sr.getServiceRendered() != null,
   );
-  const concatServicesRendered =
-    filteredServicesRendered.reduce(function (
-      concatedString,
-      servicesRendered,
-    ) {
-      return (
-        concatedString +
-        `${formatDateDay(
-          servicesRendered.getTimeStarted(),
-        )}-${servicesRendered.getName()}-${servicesRendered.getServiceRendered()} \n`
-      );
-    },
-    '') + serviceItem.getNotes();
+  const concatServicesRendered = filteredServicesRendered.reduce(function (
+    concatedString,
+    servicesRendered,
+  ) {
+    return (
+      concatedString +
+      `${formatDateDay(
+        servicesRendered.getTimeStarted(),
+      )}-${servicesRendered.getName()}-${servicesRendered.getServiceRendered()} \n`
+    );
+  },
+  '');
 
   const [quickAddOpen, setQuickAddOpen] = useState<boolean>(false);
   const [preview, setPreview] = useState<boolean>(false);
@@ -204,25 +202,25 @@ export const Proposal: FC<Props> = ({
     Please select which services you would like performed, and authorize with your signature.
   </div>
   <div>
-  <a href="app.kalosflorida.com/index.cfm?action=customer:service.accept_proposal&job_number=${serviceItem.getId()}&user_id=${customer.getId()}&property_id=${property.getId()}&user_name=1">Click here to approve</a>
+  <a href="https://app.kalosflorida.com/index.cfm?action=customer:service.accept_proposal&job_number=${serviceItem.getId()}&user_id=${customer.getId()}&property_id=${property.getId()}&user_name=1">Click here to approve</a>
   </div>
   <br>
   <div>
   If the link above does not work, please copy and paste the following into your address bar:
   </div>
   <br>
-  <a href="app.kalosflorida.com/index.cfm?action=customer:service.accept_proposal&job_number=${serviceItem.getId()}&user_id=${customer.getId()}&property_id=${property.getId()}&user_name=1">app.kalosflorida.com/index.cfm?action=customer:service.accept_proposal&job_number=${serviceItem.getId()}&user_id=${customer.getId()}&property_id=${property.getId()}&user_name=1</a>
+  <a href="https://app.kalosflorida.com/index.cfm?action=customer:service.accept_proposal&job_number=${serviceItem.getId()}&user_id=${customer.getId()}&property_id=${property.getId()}&user_name=1">https://app.kalosflorida.com/index.cfm?action=customer:service.accept_proposal&job_number=${serviceItem.getId()}&user_id=${customer.getId()}&property_id=${property.getId()}&user_name=1</a>
   <br>
   <div>  
   <br>
-  <a href='app.kalosflorida.com/index.cfm?action=customer:service.preview_proposal&job_number=${serviceItem.getId()}&user_id=${customer.getId()}&property_id=${property.getId()}&user_name=1'>Dowload PDF here!</a>
+  <a href='https://app.kalosflorida.com/index.cfm?action=customer:service.preview_proposal&job_number=${serviceItem.getId()}&user_id=${customer.getId()}&property_id=${property.getId()}&user_name=1'>Dowload PDF here!</a>
   </div>
   <br>
   <div>
     If the above download link does not work, copy and paste the following into your address bar:
   </div>
   <br>
-  <a href='app.kalosflorida.com/index.cfm?action=customer:service.preview_proposal&job_number=${serviceItem.getId()}&user_id=${customer.getId()}&property_id=${property.getId()}&user_name=1'>app.kalosflorida.com/index.cfm?action=customer:service.preview_proposal&job_number=${serviceItem.getId()}&user_id=${customer.getId()}&property_id=${property.getId()}&user_name=1 </a>
+  <a href='https://app.kalosflorida.com/index.cfm?action=customer:service.preview_proposal&job_number=${serviceItem.getId()}&user_id=${customer.getId()}&property_id=${property.getId()}&user_name=1'>https://app.kalosflorida.com/index.cfm?action=customer:service.preview_proposal&job_number=${serviceItem.getId()}&user_id=${customer.getId()}&property_id=${property.getId()}&user_name=1 </a>
 </body>
 `;
 

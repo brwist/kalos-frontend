@@ -22,10 +22,9 @@ import {
   loadPromptPaymentData,
   usd,
   PromptPaymentData,
-  PromptPaymentReportLineType,
   formatDate,
 } from '../../../helpers';
-
+import { PromptPaymentReportLine } from '@kalos-core/kalos-rpc/Report';
 const FORM_LAST_MONTHS = 4 * 12;
 
 interface Props {
@@ -44,7 +43,7 @@ type AwardFormData = {
 
 type OpenedInvoices = {
   customerName: string;
-  entries: PromptPaymentReportLineType[];
+  entries: PromptPaymentReportLine[];
 };
 
 const today = Date.now();
@@ -86,19 +85,23 @@ export const PromptPaymentReport: FC<Props> = ({
   month: initialMonth,
   onClose,
 }) => {
+  console.log(initialMonth);
   const [loaded, setLoaded] = useState<boolean>(false);
   const [loading, setLoading] = useState<boolean>(true);
-  const [data, setData] = useState<PromptPaymentData[]>([]);
+  const [data, setData] = useState<
+    { averageDaysToPay: number; promptPaymentData: PromptPaymentData }[]
+  >([]);
   const [form, setForm] = useState<FormData>({ month: initialMonth });
   const [openedInvoices, setOpenedInvoices] = useState<OpenedInvoices>();
-  const [
-    editingAward,
-    setEditingAward,
-  ] = useState<PromptPaymentReportLineType>();
+  const [editingAward, setEditingAward] = useState<PromptPaymentReportLine>();
   const load = useCallback(async () => {
     setLoading(true);
+    console.log('loading');
     const data = await loadPromptPaymentData(form.month);
+    console.log('loaded');
+
     setData(data);
+    console.log(data);
     setLoading(false);
   }, [setLoading, setData, form]);
   useEffect(() => {
@@ -107,6 +110,7 @@ export const PromptPaymentReport: FC<Props> = ({
       load();
     }
   }, [loaded, setLoaded, load]);
+
   const handleFormChange = useCallback(
     (data: FormData) => {
       setForm(data);
@@ -120,7 +124,7 @@ export const PromptPaymentReport: FC<Props> = ({
     [setOpenedInvoices],
   );
   const handleToggleEditingAward = useCallback(
-    (editingAward?: PromptPaymentReportLineType) => () =>
+    (editingAward?: PromptPaymentReportLine) => () =>
       setEditingAward(editingAward),
     [setEditingAward],
   );
@@ -158,7 +162,10 @@ export const PromptPaymentReport: FC<Props> = ({
         ]}
         data={[
           [
-            <PrintParagraph style={{ fontStyle: 'italic', marginTop: 4 }}>
+            <PrintParagraph
+              key={'Report'}
+              style={{ fontStyle: 'italic', marginTop: 4 }}
+            >
               To our friends at {customerName},
               <br />
               <br />
@@ -203,25 +210,15 @@ export const PromptPaymentReport: FC<Props> = ({
           { title: 'Comments', align: 'center' },
           { title: 'Award', align: 'right' },
         ]}
-        data={entries.map(
-          ({
-            jobNumber,
-            dueDate,
-            paymentDate,
-            daysToPay,
-            paymentTerms,
-            payed,
-            possibleAward,
-          }) => [
-            jobNumber,
-            formatDate(dueDate),
-            formatDate(paymentDate),
-            `${daysToPay}/${paymentTerms}`,
-            usd(payed),
-            '', // TODO
-            usd(possibleAward),
-          ],
-        )}
+        data={entries.map(entry => [
+          entry.getJobNumber(),
+          formatDate(entry.getDueDate()),
+          formatDate(entry.getPaymentDate()),
+          `${entry.getDaysToPay()}/${entry.getPaymentTerms()}`,
+          usd(entry.getPayed()),
+          '', // TODO
+          usd(entry.getPossibleAward()),
+        ])}
       />
       <PrintPageBreak height={0} />
     </div>
@@ -241,7 +238,9 @@ export const PromptPaymentReport: FC<Props> = ({
               downloadPdfFilename={`PPR-Letter-elligible-customers-${subtitleMonth}`}
               downloadLabel="Download Payable Reports"
             >
-              {data.map(renderCustomerPayableReport)}
+              {data.map(data =>
+                renderCustomerPayableReport(data.promptPaymentData),
+              )}
             </PrintPage>
             {onClose && <Button label="Close" onClick={onClose} />}
           </>
@@ -261,7 +260,7 @@ export const PromptPaymentReport: FC<Props> = ({
               { name: 'Average Days to Pay' },
               { name: 'Paid Invoices' },
             ]}
-            data={data.map(entry => {
+            data={data!.map(entry => {
               const {
                 customerName,
                 payableAward,
@@ -272,7 +271,8 @@ export const PromptPaymentReport: FC<Props> = ({
                 paidInvoices,
                 allInvoices,
                 entries,
-              } = entry;
+              } = entry.promptPaymentData;
+
               return [
                 {
                   value: customerName,
@@ -315,7 +315,7 @@ export const PromptPaymentReport: FC<Props> = ({
                       )}-${subtitleMonth}`}
                       icons
                     >
-                      {renderCustomerPayableReport(entry)}
+                      {renderCustomerPayableReport(entry.promptPaymentData)}
                     </PrintPage>,
                   ],
                 },
@@ -343,48 +343,39 @@ export const PromptPaymentReport: FC<Props> = ({
               { name: 'Award' },
             ]}
             data={openedInvoices.entries.map(entry => {
-              const {
-                billingdate,
-                dueDate,
-                paymentDate,
-                jobNumber,
-                payable,
-                payed,
-                daysToPay,
-                paymentTerms,
-                possibleAward,
-              } = entry;
               return [
                 {
-                  value: formatDate(billingdate),
+                  value: formatDate(entry.getBillingdate()),
                   onClick: handleToggleEditingAward(entry),
                 },
                 {
-                  value: formatDate(dueDate),
+                  value: formatDate(entry.getDueDate()),
                   onClick: handleToggleEditingAward(entry),
                 },
                 {
-                  value: paymentDate ? formatDate(paymentDate) : '',
+                  value: entry.getPaymentDate()
+                    ? formatDate(entry.getPaymentDate())
+                    : '',
                   onClick: handleToggleEditingAward(entry),
                 },
                 {
-                  value: jobNumber,
+                  value: entry.getJobNumber(),
                   onClick: handleToggleEditingAward(entry),
                 },
                 {
-                  value: usd(payable),
+                  value: usd(entry.getPayable()),
                   onClick: handleToggleEditingAward(entry),
                 },
                 {
-                  value: usd(payed),
+                  value: usd(entry.getPayed()),
                   onClick: handleToggleEditingAward(entry),
                 },
                 {
-                  value: `${daysToPay}/${paymentTerms}`,
+                  value: `${entry.getDaysToPay()}/${entry.getPaymentTerms()}`,
                   onClick: handleToggleEditingAward(entry),
                 },
                 {
-                  value: usd(possibleAward),
+                  value: usd(entry.getPossibleAward()),
                   onClick: handleToggleEditingAward(entry),
                   actions: [
                     <IconButton
@@ -411,7 +402,7 @@ export const PromptPaymentReport: FC<Props> = ({
         <Modal open onClose={handleToggleEditingAward()}>
           <Form
             title="Award Edit"
-            subtitle={editingAward.jobNumber}
+            subtitle={editingAward.getJobNumber()}
             schema={SCHEMA_AWARD}
             data={{
               kind: 'award',
