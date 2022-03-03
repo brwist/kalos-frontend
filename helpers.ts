@@ -860,48 +860,16 @@ export const loadPromptPaymentData = async (month: string) => {
       return a[key] > b[key] ? 1 : b[key] > a[key] ? -1 : 0;
     };
   };
-  console.log('data we got', data);
-  const temp = {
-    customerId: 0,
-    customerName: 'test',
-    payableAward: 0,
-    forfeitedAward: 0,
-    pendingAward: 0,
-    averageDaysToPay: 0,
-    daysToPay: 0,
-    paidInvoices: 0,
-    allInvoices: 0,
-    payableTotal: 0,
-    paidOnTime: 0,
-    possibleAwardTotal: 0,
-    entries: [],
-  };
-  console.log('what we get', data);
-
   const results = Object.values(data)
-    .concat()
     .sort(fn('customerName'))
-    .map(
-      //@ts-ignore
-      ({
-        averageDaysToPay,
-        ...item
-      }: {
-        averageDaysToPay: number;
-        promptPaymentData: PromptPaymentData;
-      }) => ({
-        ...item,
-        averageDaysToPay:
-          item.promptPaymentData.paidInvoices === 0
-            ? 0
-            : Math.round(
-                averageDaysToPay / item.promptPaymentData.paidInvoices,
-              ),
-      }),
-    );
-
-  console.log('return results', results);
-  return [{ averageDaysToPay: 0, promptPaymentData: temp }];
+    .map(({ averageDaysToPay, ...item }) => ({
+      ...item,
+      averageDaysToPay:
+        item.paidInvoices === 0
+          ? 0
+          : Math.round(averageDaysToPay / item.paidInvoices),
+    }));
+  return results;
 };
 
 export type LoadSpiffReportByFilter = {

@@ -88,9 +88,7 @@ export const PromptPaymentReport: FC<Props> = ({
   console.log(initialMonth);
   const [loaded, setLoaded] = useState<boolean>(false);
   const [loading, setLoading] = useState<boolean>(true);
-  const [data, setData] = useState<
-    { averageDaysToPay: number; promptPaymentData: PromptPaymentData }[]
-  >([]);
+  const [data, setData] = useState<PromptPaymentData[]>([]);
   const [form, setForm] = useState<FormData>({ month: initialMonth });
   const [openedInvoices, setOpenedInvoices] = useState<OpenedInvoices>();
   const [editingAward, setEditingAward] = useState<PromptPaymentReportLine>();
@@ -238,9 +236,7 @@ export const PromptPaymentReport: FC<Props> = ({
               downloadPdfFilename={`PPR-Letter-elligible-customers-${subtitleMonth}`}
               downloadLabel="Download Payable Reports"
             >
-              {data.map(data =>
-                renderCustomerPayableReport(data.promptPaymentData),
-              )}
+              {data.map(data => renderCustomerPayableReport(data))}
             </PrintPage>
             {onClose && <Button label="Close" onClick={onClose} />}
           </>
@@ -271,7 +267,7 @@ export const PromptPaymentReport: FC<Props> = ({
                 paidInvoices,
                 allInvoices,
                 entries,
-              } = entry.promptPaymentData;
+              } = entry;
 
               return [
                 {
@@ -315,7 +311,7 @@ export const PromptPaymentReport: FC<Props> = ({
                       )}-${subtitleMonth}`}
                       icons
                     >
-                      {renderCustomerPayableReport(entry.promptPaymentData)}
+                      {renderCustomerPayableReport(entry)}
                     </PrintPage>,
                   ],
                 },
