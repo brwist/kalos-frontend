@@ -86,7 +86,7 @@ type sortString =
   | 'owner_id'
   | 'cost_center_id'
   | 'department_id'
-  | 'job_number'
+  | 'job_id'
   | 'amount'
   | 'owner_name';
 
@@ -690,7 +690,7 @@ export class TransactionAdminView extends React.Component<props, state> {
       });
     }
 
-    if (sortBy === 'job_number') {
+    if (sortBy === 'job_id') {
       return this.state.transactions.sort((a, b) => {
         if (sortDir === 'asc') {
           return a.getJobId() - b.getJobId();
@@ -1004,7 +1004,7 @@ export class TransactionAdminView extends React.Component<props, state> {
               name: 'Department',
               onClick: () => this.setSort('department_id'),
             },
-            { name: 'Job #', onClick: () => this.setSort('job_number') },
+            { name: 'Job #', onClick: () => this.setSort('job_id') },
             {
               name: 'Amount',
               dir: 'DESC',

@@ -119,7 +119,7 @@ export const ServiceCall: FC<Props> = props => {
     onSave,
     asProject = false,
   } = props;
-
+  console.log('we are', loggedUserId);
   const initialState: State = {
     requestFields: [],
     tabIdx: 0,

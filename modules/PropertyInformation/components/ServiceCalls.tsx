@@ -29,8 +29,8 @@ import {
   trailingZero,
   CustomEventsHandler,
   EventClientService,
-  ServicesRenderedClientService,
   loadPropertiesByFilter,
+  ServicesRenderedClientService,
 } from '../../../helpers';
 import { OPTION_BLANK } from '../../../constants';
 import './serviceCalls.less';
@@ -43,7 +43,7 @@ interface Props {
   userID: number;
   propertyId?: number;
   viewedAsCustomer?: boolean;
-  user: User;
+  loggedUser: User;
 }
 
 type ServiceCallFilter = {
@@ -89,7 +89,7 @@ export class ServiceCalls extends PureComponent<Props, State> {
       addingCustomerEntry: undefined,
       addingServiceCall: false,
       editingServiceCall: false,
-      loggedUser: props.user,
+      loggedUser: props.loggedUser,
       serviceCallId: 0,
       dir: 'DESC',
       proposalEvent: undefined,
@@ -111,7 +111,7 @@ export class ServiceCalls extends PureComponent<Props, State> {
 
   load = async () => {
     this.setState({ loading: true });
-    console.log('user', this.props.user);
+    console.log('user', this.props.loggedUser);
     const { propertyId, userID, viewedAsCustomer } = this.props;
     const { dir, orderByDBField, page, serviceCallFilter } = this.state;
     const entry = new Event();
@@ -919,7 +919,7 @@ export class ServiceCalls extends PureComponent<Props, State> {
           )}
         {this.state.addingServiceCall && (
           <AddServiceCall
-            loggedUserId={userID}
+            loggedUserId={props.loggedUser.getId()}
             propertyId={propertyId}
             userId={userID}
             openServiceCall={true}
@@ -939,7 +939,7 @@ export class ServiceCalls extends PureComponent<Props, State> {
             fullScreen
           >
             <ServiceRequest
-              loggedUserId={userID}
+              loggedUserId={props.loggedUser.getId()}
               propertyId={propertyId!}
               userID={userID}
               serviceCallId={this.state.serviceCallId}

@@ -43,8 +43,8 @@ export class TxnStatusPicker extends React.PureComponent<props, state> {
 
   async fetchList() {
     const status = new TransactionStatus();
-    const results = this.Client.BatchGet(status);
-    this.setState({ list: (await results).getResultsList() });
+    const results = await this.Client.BatchGet(status);
+    this.setState({ list: results.getResultsList() });
   }
 
   componentDidMount() {
