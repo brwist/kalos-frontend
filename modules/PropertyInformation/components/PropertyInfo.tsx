@@ -418,7 +418,7 @@ export const PropertyInfo: FC<Props> = props => {
           viewedAsCustomer={false}
         />
       </div>
-      <ServiceCalls {...props} user={loggedUser} />
+      <ServiceCalls {...props} loggedUser={loggedUser} />
       <Modal open={editing} onClose={handleSetEditing(false)}>
         <PropertyEdit
           userId={userID}
