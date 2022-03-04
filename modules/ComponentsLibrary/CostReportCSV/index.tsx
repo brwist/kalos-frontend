@@ -32,6 +32,7 @@ import {
 
 import { SectionBar } from '../SectionBar';
 import { InfoTable } from '../InfoTable';
+import { User } from '@kalos-core/kalos-rpc/User';
 import { Loader } from '../../Loader/main';
 import { AltGallery, GalleryData } from '../../AltGallery/main';
 import Button from '@material-ui/core/Button';
@@ -270,7 +271,11 @@ export const CostReportCSV: FC<Props> = ({ serviceCallId, onClose }) => {
     promises.push(
       new Promise<void>(async resolve => {
         try {
-          const users = await UserClientService.loadTechnicians();
+          const userReq = new User();
+          userReq.setIsEmployee(1);
+          const users = (
+            await UserClientService.BatchGet(userReq)
+          ).getResultsList();
           dispatch({
             type: ACTIONS.SET_USERS,
             data: users,
