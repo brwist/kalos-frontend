@@ -41,17 +41,11 @@ import { Services } from './components/Services';
 import { Invoice } from './components/Invoice';
 import { Proposal } from './components/Proposal';
 import { Spiffs } from './components/Spiffs';
-import { Confirm } from '../Confirm';
-import { GanttChart } from '../GanttChart';
-import { Loader } from '../../Loader/main';
-import Typography from '@material-ui/core/Typography';
-import { Alert } from '../Alert';
 import { ActivityLog } from '@kalos-core/kalos-rpc/ActivityLog';
 import format from 'date-fns/esm/format';
 import setHours from 'date-fns/esm/setHours';
 import setMinutes from 'date-fns/esm/setMinutes';
 import { State, reducer } from './reducer';
-import { update } from 'lodash';
 import { ServiceCallLogs } from '../ServiceCallLogs';
 import { EventAssignment } from '@kalos-core/kalos-rpc/EventAssignment';
 
@@ -94,7 +88,7 @@ export const ServiceCall: FC<Props> = props => {
     onSave,
     asProject = false,
   } = props;
-
+  console.log('we are', loggedUserId);
   const initialState: State = {
     requestFields: [],
     tabIdx: 0,
