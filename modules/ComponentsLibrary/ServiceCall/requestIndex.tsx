@@ -174,7 +174,6 @@ const initialState: State = {
 export const ServiceRequest: FC<Props> = props => {
   const { userID, propertyId, serviceCallId, loggedUserId, onClose, onSave } =
     props;
-
   const [state, serviceCall] = useReducer(reducer, initialState);
   const requestRef = useRef(null);
 
