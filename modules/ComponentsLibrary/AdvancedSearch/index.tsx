@@ -1462,14 +1462,19 @@ export const AdvancedSearch: FC<Props> = ({
   const getSchema = useCallback(() => {
     const { kind } = filter;
     if (kind === 'serviceCalls')
+      //@ts-ignore
       return makeSchema(SCHEMA_EVENTS as Schema<SearchForm>);
     if (kind === 'customers')
+      //@ts-ignore
       return makeSchema(SCHEMA_USERS as Schema<SearchForm>);
     if (kind === 'employees')
+      //@ts-ignore
       return makeSchema(SCHEMA_EMPLOYEES as Schema<SearchForm>);
     if (kind === 'properties')
+      //@ts-ignore
       return makeSchema(SCHEMA_PROPERTIES as Schema<SearchForm>);
     if (kind === 'contracts')
+      //@ts-ignore
       return makeSchema(SCHEMA_CONTRACTS as Schema<SearchForm>);
     return [];
   }, [
@@ -2216,6 +2221,7 @@ export const AdvancedSearch: FC<Props> = ({
                       .toLowerCase()
                       .includes(usersFilter.cellphone.toLowerCase())
                   : true;
+                //@ts-ignore
                 const intId = usersFilter.id ? parseInt(usersFilter.id, 10) : 0;
                 const matchedId = intId > 0 ? u.getId() === intId : true;
                 const matchedDepartment =
@@ -2677,6 +2683,14 @@ export const AdvancedSearch: FC<Props> = ({
                     makeNewEmployee(),
                   ),
                 },
+              ]
+            : []),
+          ...(kinds.includes('customers')
+            ? [
+                {
+                  label: 'Add New Customer',
+                  onClick: handlePendingCustomerEditingToggle(new User())
+                }
               ]
             : []),
           // ...(printableEmployees

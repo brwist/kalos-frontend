@@ -8,25 +8,27 @@ import { Modal } from '../Modal';
 import { InfoTable, Columns, Data } from '../InfoTable';
 import { SectionBar } from '../SectionBar';
 import { Form, Schema } from '../Form';
+import { DocumentKeyList } from '@kalos-core/kalos-rpc/InternalDocument';
 import {
-  DocumentKeyType,
   makeFakeRows,
   InternalDocumentClientService,
+  makeSafeFormObject,
 } from '../../../helpers';
+import { Tooltip } from '@material-ui/core';
 
 const COLUMNS: Columns = [{ name: 'Name' }, { name: 'Tag Color' }];
 
-const SCHEMA: Schema<DocumentKeyType> = [
+const SCHEMA: Schema<DocumentKey> = [
   [
     {
-      name: 'name',
+      name: 'getName',
       label: 'Name',
       required: true,
     },
   ],
   [
     {
-      name: 'color',
+      name: 'getColor',
       label: 'Tag Color',
       required: true,
       type: 'color',
@@ -35,15 +37,15 @@ const SCHEMA: Schema<DocumentKeyType> = [
 ];
 
 const makeNewDocumentKey = () => {
-  const entry = new DocumentKey().toObject();
-  entry.color = '#FF0000';
+  const entry = new DocumentKey();
+  entry.setColor('#FF0000');
   return entry;
 };
 
 interface Props {
   onClose?: () => void;
-  fileTags?: DocumentKeyType[];
-  onFileTagsChange?: (fileTags: DocumentKeyType[]) => void;
+  fileTags?: DocumentKey[];
+  onFileTagsChange?: (fileTags: DocumentKey[]) => void;
 }
 
 export const FileTags: FC<Props> = ({
@@ -54,9 +56,9 @@ export const FileTags: FC<Props> = ({
   const [loaded, setLoaded] = useState<boolean>(false);
   const [loading, setLoading] = useState<boolean>(false);
   const [saving, setSaving] = useState<boolean>(false);
-  const [entries, setEntries] = useState<DocumentKeyType[]>(fileTags || []);
-  const [pendingDelete, setPendingDelete] = useState<DocumentKeyType>();
-  const [pendingEdit, setPendingEdit] = useState<DocumentKeyType>();
+  const [entries, setEntries] = useState<DocumentKey[]>(fileTags || []);
+  const [pendingDelete, setPendingDelete] = useState<DocumentKey>();
+  const [pendingEdit, setPendingEdit] = useState<DocumentKey>();
   const load = useCallback(async () => {
     setLoading(true);
     const entries = await InternalDocumentClientService.loadDocumentKeys();
@@ -73,19 +75,22 @@ export const FileTags: FC<Props> = ({
     }
   }, [loaded, load, setLoaded, fileTags]);
   const handlePendingDelete = useCallback(
-    (pendingDelete?: DocumentKeyType) => () => setPendingDelete(pendingDelete),
+    (pendingDelete?: DocumentKey) => () => setPendingDelete(pendingDelete),
     [setPendingDelete],
   );
   const handlePendingEdit = useCallback(
-    (pendingEdit?: DocumentKeyType) => () => setPendingEdit(pendingEdit),
+    (pendingEdit?: DocumentKey) => () => setPendingEdit(pendingEdit),
     [setPendingEdit],
   );
   const handleSave = useCallback(
-    async (data: DocumentKeyType) => {
+    async (data: DocumentKey) => {
       if (pendingEdit) {
+        const saveData = makeSafeFormObject(data, new DocumentKey())
         setSaving(true);
-        const { id } = pendingEdit;
-        await InternalDocumentClientService.saveDocumentKey(data, id);
+        const id = pendingEdit.getId();
+        if (saveData.getFieldMaskList().length > 0) {
+          await InternalDocumentClientService.saveDocumentKey(saveData, id);
+        }
         setPendingEdit(undefined);
         setLoading(true);
         setSaving(false);
@@ -106,7 +111,7 @@ export const FileTags: FC<Props> = ({
   );
   const handleDelete = useCallback(async () => {
     if (pendingDelete) {
-      const { id } = pendingDelete;
+      const id = pendingDelete.getId();
       setPendingDelete(undefined);
       setLoading(true);
       await InternalDocumentClientService.deleteDocumentKeyById(id);
@@ -119,7 +124,8 @@ export const FileTags: FC<Props> = ({
   const data: Data = loading
     ? makeFakeRows(2, 5)
     : entries.map(entry => {
-        const { name, color } = entry;
+        const name = entry.getName();
+        const color = entry.getColor();
         return [
           {
             value: name,
@@ -137,20 +143,22 @@ export const FileTags: FC<Props> = ({
             ),
             onClick: handlePendingEdit(entry),
             actions: [
-              <IconButton
-                key="edit"
-                size="small"
-                onClick={handlePendingEdit(entry)}
-              >
-                <EditIcon />
-              </IconButton>,
-              <IconButton
-                key="delete"
-                size="small"
-                onClick={handlePendingDelete(entry)}
-              >
-                <DeleteIcon />
-              </IconButton>,
+              <Tooltip key="edit" title="Edit">
+                <IconButton
+                  size="small"
+                  onClick={handlePendingEdit(entry)}
+                  >
+                  <EditIcon />
+                </IconButton>
+              </Tooltip>,
+              <Tooltip key="delete" title="Delete">
+                <IconButton
+                  size="small"
+                  onClick={handlePendingDelete(entry)}
+                  >
+                  <DeleteIcon />
+                </IconButton>
+              </Tooltip>,
             ],
           },
         ];
@@ -180,16 +188,16 @@ export const FileTags: FC<Props> = ({
         <ConfirmDelete
           open
           kind="File Tag"
-          name={pendingDelete.name}
+          name={pendingDelete.getName()}
           onClose={handlePendingDelete(undefined)}
           onConfirm={handleDelete}
         />
       )}
       {pendingEdit && (
         <Modal open onClose={handlePendingEdit(undefined)}>
-          <Form<DocumentKeyType>
+          <Form<DocumentKey>
             schema={SCHEMA}
-            title={`${pendingEdit.id ? 'Edit' : 'Add'} File Tag`}
+            title={`${pendingEdit.getId() ? 'Edit' : 'Add'} File Tag`}
             data={pendingEdit}
             onSave={handleSave}
             onClose={handlePendingEdit(undefined)}
