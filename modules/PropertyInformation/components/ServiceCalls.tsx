@@ -22,10 +22,8 @@ import {
   usd,
   timestamp,
   trailingZero,
-  loadContractsByFilter,
   CustomEventsHandler,
   EventClientService,
-  ContractsFilter,
   loadPropertiesByFilter,
 } from '../../../helpers';
 import { OPTION_BLANK } from '../../../constants';
@@ -40,6 +38,7 @@ interface Props {
   userID: number;
   propertyId?: number;
   viewedAsCustomer?: boolean;
+  loggedUserId: number;
 }
 
 type ServiceCallFilter = {
@@ -842,7 +841,7 @@ export class ServiceCalls extends PureComponent<Props, State> {
         )}
         {this.state.addingServiceCall && (
           <AddServiceCall
-            loggedUserId={userID}
+            loggedUserId={props.loggedUserId}
             propertyId={propertyId}
             userId={userID}
             openServiceCall={true}
@@ -862,7 +861,7 @@ export class ServiceCalls extends PureComponent<Props, State> {
             fullScreen
           >
             <ServiceRequest
-              loggedUserId={userID}
+              loggedUserId={props.loggedUserId}
               propertyId={propertyId!}
               userID={userID}
               serviceCallId={this.state.serviceCallId}
