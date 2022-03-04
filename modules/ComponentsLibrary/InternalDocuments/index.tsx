@@ -32,6 +32,7 @@ import {
   DocumentKey,
 } from '@kalos-core/kalos-rpc/InternalDocument';
 import './styles.less';
+import { Tooltip } from '@material-ui/core';
 
 const defaultFilter: InternalDocumentsFilter = { tag: -1 };
 
@@ -218,7 +219,7 @@ export const InternalDocuments: FC = () => {
   const getFileTagsOptions = useCallback(
     (options = []) => [
       ...options,
-      ...fileTags.map(file => (file.getId(), file.getName(), file.getColor())),
+      ...fileTags.map(file => ({label: file.getName(), value: file.getId()})),
     ],
     [fileTags],
   );
@@ -334,23 +335,29 @@ export const InternalDocuments: FC = () => {
               value: formatDate(dateModified),
               onClick: handleView(entry),
               actions: [
-                <IconButton key="view" size="small" onClick={handleView(entry)}>
-                  <OpenInNewIcon />
-                </IconButton>,
-                <IconButton
-                  key="edit"
-                  size="small"
-                  onClick={handleSetEditing(entry)}
-                >
-                  <EditIcon />
-                </IconButton>,
-                <IconButton
-                  key="remove"
-                  size="small"
-                  onClick={handleSetDeleting(entry)}
-                >
-                  <DeleteIcon />
-                </IconButton>,
+                <Tooltip key="view" title="View">
+                  <IconButton size="small" onClick={handleView(entry)}>
+                    <OpenInNewIcon />
+                  </IconButton>
+                </Tooltip>,
+                <Tooltip key="edit" title="Edit">
+                  <IconButton
+                    key="edit"
+                    size="small"
+                    onClick={handleSetEditing(entry)}
+                    >
+                    <EditIcon />
+                  </IconButton>
+                </Tooltip>,
+                <Tooltip key="delete" title="Delete">
+                  <IconButton
+                    key="remove"
+                    size="small"
+                    onClick={handleSetDeleting(entry)}
+                    >
+                    <DeleteIcon />
+                  </IconButton>
+                </Tooltip>,
               ],
             },
           ];
