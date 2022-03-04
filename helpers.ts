@@ -89,6 +89,7 @@ import { File } from '@kalos-core/kalos-rpc/File';
 import { DevlogClient } from '@kalos-core/kalos-rpc/Devlog';
 import { InvoiceClient } from '@kalos-core/kalos-rpc/Invoice';
 import { FirstCallClient } from '@kalos-core/kalos-rpc/FirstCall';
+import { MertricReportDataRequest } from '@kalos-core/kalos-rpc/compiled-protos/metrics_pb';
 
 export type SimpleFile = {
   key: string;
@@ -609,10 +610,12 @@ export const loadPerformanceMetricsByFilter = async ({
   filter: { dateStart, dateEnd },
 }: LoadMetricsByFilter) => {
   console.log({ page, dateStart, dateEnd });
-  return {
-    results: [],
-    totalCount: 0,
-  };
+  const req = new MertricReportDataRequest();
+  req.setEnddate(dateEnd);
+  req.setStartdate(dateStart);
+  req.setPagenumber(page);
+  const results = await MetricsClientService.loadMetricsReportData(req);
+  return results;
 };
 
 export const loadDeletedServiceCallsByFilter = async ({
