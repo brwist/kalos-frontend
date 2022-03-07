@@ -19,6 +19,7 @@ import BuildIcon from '@material-ui/icons/Build';
 import PersonIcon from '@material-ui/icons/Person';
 import AccessTimeIcon from '@material-ui/icons/AccessTime';
 import GroupIcon from '@material-ui/icons/Group';
+import ReceiptIcon from '@material-ui/icons/Receipt';
 import RateReviewOutlined from '@material-ui/icons/RateReviewOutlined';
 import { ActionsProps } from '../Actions';
 import { SectionBar } from '../SectionBar';
@@ -71,7 +72,6 @@ import {
   TimesheetDepartmentClientService,
   makeSafeFormObject,
   ActivityLogClientService,
-  QuoteLinePartClientService,
   QuoteLineClientService,
   usd,
 } from '../../../helpers';
@@ -95,6 +95,8 @@ import { ActivityLog } from '@kalos-core/kalos-rpc/ActivityLog';
 import format from 'date-fns/esm/format';
 import { ServiceRequest } from '../ServiceCall/requestIndex';
 import { QuoteLine } from '@kalos-core/kalos-rpc/QuoteLine';
+import { ServicesRendered } from '@kalos-core/kalos-rpc/ServicesRendered';
+import { result } from 'lodash';
 
 type Kind =
   | 'serviceCalls'
@@ -214,6 +216,7 @@ export const AdvancedSearch: FC<Props> = ({
   const [pendingEventAdding, setPendingEventAdding] = useState<boolean>(false);
   const [pendingEventEditing, setPendingEventEditing] = useState<Event>();
   const [pendingEventEditingNew, setPendingEventEditingNew] = useState<Event>();
+
   const [pendingEventDeleting, setPendingEventDeleting] = useState<Event>();
   const [employeeUploadedPhoto, setEmployeeUploadedPhoto] =
     useState<string>('');
@@ -570,6 +573,7 @@ export const AdvancedSearch: FC<Props> = ({
       setPendingEventEditingNew(pendingEventEditingNew),
     [setPendingEventEditingNew],
   );
+
   const handlePendingEventDeletingToggle = useCallback(
     (pendingEventDeleting?: Event) => () =>
       setPendingEventDeleting(pendingEventDeleting),

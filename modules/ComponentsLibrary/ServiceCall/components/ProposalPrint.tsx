@@ -17,6 +17,9 @@ interface Props {
   logJobNumber: string;
   property: Property;
   withDiagnosis?: boolean;
+  onFileCreated?: (file: Uint8Array) => void;
+  downloadPDdfFileName: string;
+  uploadBucket?: string;
 }
 
 export const ProposalPrint: FC<Props> = ({
@@ -26,6 +29,9 @@ export const ProposalPrint: FC<Props> = ({
   entries,
   property,
   withDiagnosis = false,
+  uploadBucket,
+  onFileCreated,
+  downloadPDdfFileName,
 }) => (
   <PrintPage
     headerProps={{
@@ -34,8 +40,10 @@ export const ProposalPrint: FC<Props> = ({
       bigLogo: true,
     }}
     buttonProps={{ label: 'Print Preview' }}
-    downloadPdfFilename="Proposal"
+    downloadPdfFilename={downloadPDdfFileName}
     downloadLabel="Download PDF Preview"
+    onFileCreated={onFileCreated}
+    uploadBucket={uploadBucket ? uploadBucket : 'testbuckethelios'}
   >
     <PrintParagraph>
       Date: {formatDate(new Date().toISOString())}

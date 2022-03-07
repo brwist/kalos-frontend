@@ -16,6 +16,8 @@ interface Props {
   property: Property;
   event: Event;
   customer: User;
+  onSelectServiceItems?: (data: number[]) => void;
+  selectedServiceItems?: number[];
 }
 
 type Form = {
@@ -29,14 +31,20 @@ export const Equipment: FC<Props> = ({
   customer,
   property,
   loggedUserId,
+  onSelectServiceItems,
+  selectedServiceItems,
   ...props
 }) => {
   return (
     <div>
       <ServiceItems
         userID={props.userID}
+        eventId={event.getId()}
         loggedUserId={loggedUserId}
         propertyId={props.propertyId}
+        onSelect={onSelectServiceItems}
+        selectable={onSelectServiceItems ? true : false}
+        selected={selectedServiceItems}
       ></ServiceItems>
     </div>
   );

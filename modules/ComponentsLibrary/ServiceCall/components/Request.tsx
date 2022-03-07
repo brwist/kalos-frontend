@@ -17,8 +17,8 @@ import {
   JOB_STATUS_COLORS,
   OPTION_BLANK,
 } from '../../../../constants';
+
 import { Event } from '@kalos-core/kalos-rpc/Event';
-import { JobTypeSubtype } from '@kalos-core/kalos-rpc/JobTypeSubtype';
 
 const JOB_STATUS_OPTIONS: Option[] = EVENT_STATUS_LIST.map(label => ({
   label,
@@ -57,11 +57,11 @@ export const Request: FC<Props> = forwardRef(
   ) => {
     const [initSchemaCalled, setInitSchemaCalled] = useState<boolean>(false);
     const [resetId, setResetId] = useState<number>(0);
+
     const handleChange = useCallback(
       (data: Event) => {
         //const { jobTypeId, jobSubtypeId, logJobStatus } = data;
         const tempData = makeSafeFormObject(data, new Event());
-        console.log(tempData);
 
         const jobTypeId = tempData.getJobTypeId();
         const jobSubtypeId = tempData.getJobSubtypeId();
@@ -130,25 +130,13 @@ export const Request: FC<Props> = forwardRef(
           {
             label: 'Date of Service',
             name: 'getDateStarted',
-            type: 'date',
-            required: true,
-          },
-          {
-            label: 'Begin Time',
-            name: 'getTimeStarted',
-            type: 'time',
+            type: 'mui-datetime',
             required: true,
           },
           {
             label: 'End Date',
             name: 'getDateEnded',
-            type: 'date',
-            required: true,
-          },
-          {
-            label: 'End Time',
-            name: 'getTimeEnded',
-            type: 'time',
+            type: 'mui-datetime',
             required: true,
           },
         ],

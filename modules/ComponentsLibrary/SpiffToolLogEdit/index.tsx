@@ -225,9 +225,10 @@ export const SpiffToolLogEdit: FC<Props> = ({
       setStatusDeleting(statusDeleting),
     [setStatusDeleting],
   );
-  const handleFileLoad = useCallback(file => setDocumentFile(file), [
-    setDocumentFile,
-  ]);
+  const handleFileLoad = useCallback(
+    file => setDocumentFile(file),
+    [setDocumentFile],
+  );
   const createEmail = useCallback(
     async (data: Task, newAction: SpiffToolAdminAction) => {
       let emailStatus = 'Approved';
@@ -238,7 +239,8 @@ export const SpiffToolLogEdit: FC<Props> = ({
       if (status === 3) {
         emailStatus = 'Revoked';
       }
-      const body = `<body>
+      const body = `
+      <body>
       <table style="width:70%;">
         <thead>
           <th style="text-align:left;">Reason: ${newAction.getReason()}</th>
@@ -249,7 +251,7 @@ export const SpiffToolLogEdit: FC<Props> = ({
             <td>Spiff Job Number: ${data.getSpiffJobNumber()}</td>
             <td>Updated Spiff Status:${emailStatus}</td>
           </tr>
-        </body>
+          </tbody>
       </table>
     </body>`;
       const email = new SQSEmail();
@@ -262,55 +264,54 @@ export const SpiffToolLogEdit: FC<Props> = ({
     [taskUser],
   );
   const handleDocumentUpload = useCallback(
-    (onClose, onReload) => async ({
-      filename,
-      description,
-    }: DocumentUpload) => {
-      setUploadFailed(false);
-      setUploading(true);
-      const ext = filename.split('.').pop();
-      const fileName =
-        kebabCase(
-          [
-            data.getId(),
-            data.getReferenceNumber(),
-            timestamp(true).split('-').reverse(),
-            description.trim() || filename.replace('.' + ext, ''),
-          ].join(' '),
-        ) +
-        '.' +
-        ext;
-      const status = await uploadFileToS3Bucket(
-        fileName,
-        documentFile,
-        'testbuckethelios', // FIXME is it correct bucket name for those docs?
-      );
-      if (status === 'ok') {
-        await DocumentClientService.createTaskDocument(
+    (onClose, onReload) =>
+      async ({ filename, description }: DocumentUpload) => {
+        setUploadFailed(false);
+        setUploading(true);
+        const ext = filename.split('.').pop();
+        const fileName =
+          kebabCase(
+            [
+              data.getId(),
+              data.getReferenceNumber(),
+              timestamp(true).split('-').reverse(),
+              description.trim() || filename.replace('.' + ext, ''),
+            ].join(' '),
+          ) +
+          '.' +
+          ext;
+        const status = await uploadFileToS3Bucket(
           fileName,
-          data.getId(),
-          loggedUserId,
-          description,
+          documentFile,
+          'testbuckethelios', // FIXME is it correct bucket name for those docs?
         );
-        onClose();
-        onReload();
-        setUploading(false);
-      } else {
-        setUploadFailed(true);
-        setUploading(false);
-      }
-    },
+        if (status === 'ok') {
+          await DocumentClientService.createTaskDocument(
+            fileName,
+            data.getId(),
+            loggedUserId,
+            description,
+          );
+          onClose();
+          onReload();
+          setUploading(false);
+        } else {
+          setUploadFailed(true);
+          setUploading(false);
+        }
+      },
     [documentFile, loggedUserId, data, setUploadFailed, setUploading],
   );
   const handleDocumentUpdate = useCallback(
-    (onClose, onReload, { id }) => async (form: Document) => {
-      setDocumentSaving(true);
-      const description = form.getDescription();
-      await DocumentClientService.updateDocumentDescription(id, description);
-      setDocumentSaving(false);
-      onClose();
-      onReload();
-    },
+    (onClose, onReload, { id }) =>
+      async (form: Document) => {
+        setDocumentSaving(true);
+        const description = form.getDescription();
+        await DocumentClientService.updateDocumentDescription(id, description);
+        setDocumentSaving(false);
+        onClose();
+        onReload();
+      },
     [setDocumentSaving],
   );
   const handleSave = useCallback(

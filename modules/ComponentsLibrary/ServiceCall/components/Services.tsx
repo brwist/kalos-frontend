@@ -1,7 +1,10 @@
 import React, { FC, useState, useCallback, useReducer } from 'react';
 import IconButton from '@material-ui/core/IconButton';
 import DeleteIcon from '@material-ui/icons/Delete';
+import { QuoteUsed, QuoteUsedClient } from '@kalos-core/kalos-rpc/QuoteUsed';
 import EditIcon from '@material-ui/icons/Edit';
+import { QuoteLine } from '@kalos-core/kalos-rpc/QuoteLine';
+
 import {
   ServicesRenderedClient,
   ServicesRendered,
@@ -16,6 +19,7 @@ import { PlainForm, Schema } from '../../PlainForm';
 import { Form } from '../../Form';
 import { Modal } from '../../Modal';
 import { File } from '@kalos-core/kalos-rpc/File';
+//import HomeRepairServiceIcon from '@mui/icons-material/HomeRepairService';
 import { format } from 'date-fns';
 import { QuoteSelector, SelectedQuote } from '../../QuoteSelector';
 import {
@@ -25,6 +29,7 @@ import {
   formatDateTimeDay,
   uploadFileToS3Bucket,
   FileClientService,
+  QuoteLineClientService,
   S3ClientService,
 } from '../../../../helpers';
 import {
@@ -95,8 +100,10 @@ interface Props {
   loggedUser: User;
   servicesRendered: ServicesRendered[];
   loadServicesRendered: () => void;
+  onUpdatePayments?: (payments: Payment[]) => void;
+  payments?: Payment[];
   loading: boolean;
-  onAddMaterials: (materialUsed: string, materialTotal: number) => void;
+  onUpdateMaterials: () => void;
 }
 
 const COLUMNS_SERVICES_RENDERED: Columns = [
@@ -221,7 +228,7 @@ const SCHEMA_PAYMENT: Schema<PaymentType> = [
     },
   ],
 ];
-const PAYMENT_INITIAL: PaymentAndSignatureType = {
+const PAYMENT_SIGNATURE_INITIAL: PaymentAndSignatureType = {
   signature: '',
   authorizedSignorName: '',
   authorizedSignorRole: '',
@@ -230,7 +237,12 @@ const PAYMENT_INITIAL: PaymentAndSignatureType = {
   paymentType: OPTION_BLANK,
   amountCollected: 0,
 };
-
+const PAYMENT_INITIAL: PaymentType = {
+  date: timestamp(true),
+  paymentType: OPTION_BLANK,
+  amountCollected: 0,
+  paymentCollected: 0,
+};
 const SIGNATURE_INITIAL: SignatureType = {
   signature: '',
   authorizedSignorName: '',
@@ -253,17 +265,23 @@ export const Services: FC<Props> = ({
   servicesRendered,
   loadServicesRendered,
   loading,
-  onAddMaterials,
+  payments,
+  onUpdatePayments,
+  onUpdateMaterials,
 }) => {
   const [state, dispatch] = useReducer(reducer, {
-    paymentForm: PAYMENT_INITIAL,
+    paymentForm: PAYMENT_SIGNATURE_INITIAL,
     viewPayment: undefined,
     viewSignature: undefined,
+    openMaterials: false,
     signatureForm: SIGNATURE_INITIAL,
     deleting: undefined,
     saving: false,
     editing: SERVICES_RENDERED_PAYMENT_INITIAL,
+    serviceRenderedPayment: SERVICES_RENDERED_PAYMENT_INITIAL,
     changingStatus: false,
+    pendingQuotable: [],
+    pendingNewQuotable: [],
   });
   const bucket = 'testbuckethelios';
 
@@ -325,10 +343,90 @@ export const Services: FC<Props> = ({
       dispatch({ type: ACTIONS.SET_DELETING, data: undefined });
       const req = new ServicesRendered();
       req.setId(state.deleting.getId());
+      const paymentClientService = new PaymentClient(ENDPOINT);
+      const paymentReq = new Payment();
+      paymentReq.setServicesRenderedId(state.deleting.getId());
+      try {
+        const foundPayment = await paymentClientService.Get(paymentReq);
+        if (foundPayment) {
+          paymentClientService.Delete(foundPayment);
+          if (payments && onUpdatePayments) {
+            const removePayment = payments.filter(
+              payment =>
+                payment.getServicesRenderedId() !=
+                foundPayment.getServicesRenderedId(),
+            );
+            onUpdatePayments(removePayment);
+          }
+        }
+      } catch (err) {
+        console.log('no payment found');
+      }
       await ServicesRenderedClientService.Delete(req);
+      if (onUpdateMaterials) {
+        onUpdateMaterials();
+      }
       loadServicesRendered();
     }
-  }, [state.deleting, loadServicesRendered]);
+  }, [
+    state.deleting,
+    onUpdatePayments,
+    onUpdateMaterials,
+    payments,
+    loadServicesRendered,
+  ]);
+
+  const handleSavePendingQuotable = useCallback(
+    async (servicesRenderedId: number) => {
+      let tempPendingQuotable = state.pendingQuotable;
+      let tempPendingNewQuotable = state.pendingNewQuotable;
+      const quoteUsedClientService = new QuoteUsedClient(ENDPOINT);
+      if (tempPendingQuotable.length > 0 || tempPendingNewQuotable.length > 0) {
+        for (let i = 0; i < tempPendingQuotable.length; i++) {
+          let quotePart = tempPendingQuotable[i];
+          const req = new QuoteUsed();
+          req.setQuoteLineId(quotePart.getQuoteLineId());
+          req.setQuotedPrice(quotePart.getQuotedPrice());
+          req.setQuantity(quotePart.getQuantity());
+          req.setServicesRenderedId(servicesRenderedId);
+          req.setBillable(quotePart.getIsBillable() === true ? 1 : 0);
+
+          try {
+            await quoteUsedClientService.Create(req);
+          } catch (err) {
+            console.log('failed to add quotable item');
+          }
+        }
+        for (let i = 0; i < tempPendingNewQuotable.length; i++) {
+          let quotePart = tempPendingNewQuotable[i];
+          const req = new QuoteUsed();
+          const quotelineReq = new QuoteLine();
+          quotelineReq.setDescription(quotePart.getDescription());
+          quotelineReq.setAdjustment(quotePart.getQuotedPrice().toString());
+          quotelineReq.setWarranty(2);
+          const quotelineRes = await QuoteLineClientService.Create(
+            quotelineReq,
+          );
+          req.setQuoteLineId(quotelineRes.getId());
+          req.setQuotedPrice(quotePart.getQuotedPrice());
+          req.setQuantity(quotePart.getQuantity());
+          req.setLmpc(quotePart.getIsLmpc() === true ? 1 : 0);
+          req.setServicesRenderedId(servicesRenderedId);
+          req.setBillable(quotePart.getIsBillable() === true ? 1 : 0);
+
+          try {
+            await quoteUsedClientService.Create(req);
+          } catch (err) {
+            console.log('failed to add quotable item');
+          }
+        }
+        dispatch({ type: ACTIONS.SET_PENDING_NEW_QUOTABLE, data: [] });
+        dispatch({ type: ACTIONS.SET_PENDING_QUOTABLE, data: [] });
+      }
+    },
+    [state.pendingQuotable, state.pendingNewQuotable],
+  );
+
   const handleChangeStatus = useCallback(
     (status: string) => async () => {
       dispatch({ type: ACTIONS.SET_CHANGING_STATUS, data: true });
@@ -352,12 +450,51 @@ export const Services: FC<Props> = ({
             }`
           : `${loggedUser.getFirstname()} ${loggedUser.getLastname()}`,
       );
+
       req.setDatetime(timestamp());
       const fieldMaskList = ['EventId', 'Status', 'Name', 'Datetime'];
       req.setFieldMaskList(fieldMaskList);
+      let paymentInfo = PAYMENT_INITIAL;
+      if (state.paymentForm != PAYMENT_SIGNATURE_INITIAL) {
+        paymentInfo.amountCollected = state.paymentForm.amountCollected;
+        paymentInfo.paymentCollected = 1;
+        paymentInfo.date = state.paymentForm.date;
+        paymentInfo.paymentType = state.paymentForm.paymentType;
+      }
+      if (state.serviceRenderedPayment != SERVICES_RENDERED_PAYMENT_INITIAL) {
+        //we should update the SR, and include payment if needed
+        req.setServiceRendered(state.serviceRenderedPayment.servicesRendered);
+        req.setTechNotes(state.serviceRenderedPayment.technicianNotes);
+        if (state.serviceRenderedPayment.paymentType != '-- Select --') {
+          console.log('we got a payment with it');
+          paymentInfo.amountCollected =
+            state.serviceRenderedPayment.amountCollected;
+          paymentInfo.paymentCollected =
+            state.serviceRenderedPayment.paymentCollected;
+          paymentInfo.date = state.serviceRenderedPayment.dateProcessed;
+          paymentInfo.paymentType = state.serviceRenderedPayment.paymentType;
+        }
+      }
+      req.setTechnicianUserId(loggedUser.getId());
       const res = await ServicesRenderedClientService.Create(req);
-      console.log({ res });
+      if (
+        res.getId() != 0 &&
+        (state.pendingNewQuotable.length > 0 ||
+          state.pendingQuotable.length > 0)
+      ) {
+        await handleSavePendingQuotable(res.getId());
+        if (onUpdateMaterials) {
+          onUpdateMaterials();
+        }
+      }
+      if (onUpdateMaterials) {
+        onUpdateMaterials();
+      }
       if (isSignature) {
+        let tempSignatureData = state.signatureForm.signature;
+        if (state.paymentForm.signature != '') {
+          tempSignatureData = state.paymentForm.signature;
+        }
         console.log('we are signing');
         const fileReq = new File();
         fileReq.setMimeType('image/png');
@@ -366,41 +503,63 @@ export const Services: FC<Props> = ({
           new Date(),
           'hhmmss',
         )}.png`;
-
-        await uploadFileToS3Bucket(
-          fileName,
-          state.signatureForm.signature,
-          fileReq.getBucket(),
-          'signature',
-        );
-
+        try {
+          const s3Res = await uploadFileToS3Bucket(
+            fileName,
+            tempSignatureData,
+            bucket,
+            'signature',
+          );
+          console.log(s3Res);
+        } catch (err) {
+          console.log('failed to upload to AWS', err);
+        }
         fileReq.setName(fileName);
         const fileRes = await FileClientService.Create(fileReq);
         res.setSignatureId(fileRes.getId());
         res.setFieldMaskList(['SignatureId']);
         ServicesRenderedClientService.Update(res);
       }
-      if (state.paymentForm != PAYMENT_INITIAL) {
+      if (paymentInfo.paymentType != '-- Select --') {
         console.log('create payment');
         const paymentReq = new Payment();
         paymentReq.setCollected(1);
-        paymentReq.setAmountCollected(state.paymentForm.amountCollected);
-        paymentReq.setType(state.paymentForm.paymentType);
+        paymentReq.setAmountCollected(paymentInfo.amountCollected);
+        paymentReq.setType(paymentInfo.paymentType);
         const paymentClientService = new PaymentClient(ENDPOINT);
-        const paymentServicesRender = servicesRendered.find(
+        const paymentServicesRender = servicesRendered.filter(
           service => service.getStatus() == PAYMENT,
         );
-        if (paymentServicesRender) {
-          paymentReq.setServicesRenderedId(paymentServicesRender.getId());
+
+        if (paymentServicesRender && status == SIGNED_AS) {
+          paymentReq.setServicesRenderedId(
+            paymentServicesRender[paymentServicesRender.length - 1].getId(),
+          );
           await paymentClientService.Create(paymentReq);
+          if (payments && onUpdatePayments) {
+            payments.push(paymentReq);
+            onUpdatePayments(payments);
+          }
         } else {
-          console.log('we did not find a payment');
+          paymentReq.setServicesRenderedId(res.getId());
+          await paymentClientService.Create(paymentReq);
+          if (payments && onUpdatePayments) {
+            payments.push(paymentReq);
+            onUpdatePayments(payments);
+          }
         }
       }
       //create png image, upload Name of signature is
       //"signature/#form.event_id#-#local.services_rendered_id#-#timeFormat(now(),'hhmmss')#.png"
       //After successful creation,Signature ID=file ID in table
-      dispatch({ type: ACTIONS.SET_PAYMENT_FORM, data: PAYMENT_INITIAL });
+      dispatch({
+        type: ACTIONS.SET_PAYMENT_FORM,
+        data: PAYMENT_SIGNATURE_INITIAL,
+      });
+      dispatch({
+        type: ACTIONS.SET_SERVICE_RENDERED_PAYMENT,
+        data: SERVICES_RENDERED_PAYMENT_INITIAL,
+      });
       dispatch({ type: ACTIONS.SET_SIGNATURE_FORM, data: SIGNATURE_INITIAL });
 
       dispatch({ type: ACTIONS.SET_CHANGING_STATUS, data: false });
@@ -411,7 +570,13 @@ export const Services: FC<Props> = ({
       loadServicesRendered,
       servicesRendered,
       state.signatureForm,
+      onUpdatePayments,
+      payments,
       state.paymentForm,
+      state.serviceRenderedPayment,
+      handleSavePendingQuotable,
+      state.pendingQuotable,
+      state.pendingNewQuotable,
       serviceCallId,
     ],
   );
@@ -439,9 +604,28 @@ export const Services: FC<Props> = ({
         if (paymentReq.getId() == 0) {
           paymentReq.setServicesRenderedId(srReq.getId());
           paymentClientService.Create(paymentReq);
+          if (payments && onUpdatePayments) {
+            const newPayments = payments;
+            newPayments.push(paymentReq);
+            onUpdatePayments(newPayments);
+          }
         } else {
           paymentReq.setFieldMaskList(['Collected', 'AmountCollected', 'Type']);
           paymentClientService.Update(paymentReq);
+          if (payments && onUpdatePayments) {
+            const updatePaymentIndex = payments.findIndex(
+              payment => payment.getId() === paymentReq.getId(),
+            );
+            const updatePayments = payments;
+            updatePayments[updatePaymentIndex].setCollected(
+              paymentReq.getCollected(),
+            );
+            updatePayments[updatePaymentIndex].setAmountCollected(
+              paymentReq.getAmountCollected(),
+            );
+            updatePayments[updatePaymentIndex].setType(paymentReq.getType());
+            onUpdatePayments(updatePayments);
+          }
         }
         dispatch({ type: ACTIONS.SET_SAVING, data: false });
         const init: ServicesRenderedPaymentType = {
@@ -458,7 +642,7 @@ export const Services: FC<Props> = ({
       }
       loadServicesRendered();
     },
-    [state.editing, loadServicesRendered],
+    [state.editing, onUpdatePayments, payments, loadServicesRendered],
   );
   const handleSetEditing = useCallback(
     (sr?: ServicesRendered) => async () => {
@@ -496,6 +680,7 @@ export const Services: FC<Props> = ({
     },
     [],
   );
+
   const handleSetViewPreview = useCallback(
     (sr: ServicesRendered, status: string) => async () => {
       if (status === PAYMENT) {
@@ -757,24 +942,52 @@ export const Services: FC<Props> = ({
         />
       )}
 
-      {/*[ON_CALL, ADMIN].includes(lastStatus) && (
+      {[ON_CALL, ADMIN].includes(lastStatus) && (
         <>
+          <IconButton
+            style={{ transform: 'scale(1.8)' }}
+            key={'addMaterials'}
+            onClick={() =>
+              dispatch({ type: ACTIONS.SET_OPEN_MATERIALS, data: true })
+            }
+            size="medium"
+          >
+            <ZoomInSharp />
+          </IconButton>
+
           <PlainForm
             schema={SCHEMA_ON_CALL}
-            data={serviceRenderedForm}
-            onChange={setServicesRenderedForm}
+            data={state.serviceRenderedPayment}
+            onChange={data =>
+              dispatch({
+                type: ACTIONS.SET_SERVICE_RENDERED_PAYMENT,
+                data: data,
+              })
+            }
             compact
             className="ServicesOnCallForm"
           />
-          <PlainForm
-            key={paymentFormKey}
-            schema={SCHEMA_PAYMENT_PART}
-            data={paymentFormPart}
-            onChange={handlePaymentFormChange}
-            compact
-          />
+          <Modal
+            open={state.openMaterials}
+            onClose={() =>
+              dispatch({ type: ACTIONS.SET_OPEN_MATERIALS, data: false })
+            }
+          >
+            <QuoteSelector
+              onAddQuotes={console.log}
+              onUpdate={onUpdateMaterials}
+              pendingNewQuotableProp={state.pendingNewQuotable}
+              pendingQuotableProp={state.pendingQuotable}
+              setPendingNewQuotableProp={data =>
+                dispatch({ type: ACTIONS.SET_PENDING_NEW_QUOTABLE, data: data })
+              }
+              setPendingQuotableProp={data =>
+                dispatch({ type: ACTIONS.SET_PENDING_QUOTABLE, data: data })
+              }
+            ></QuoteSelector>
+          </Modal>
         </>
-      )*/}
+      )}
       <InfoTable
         columns={COLUMNS_SERVICES_RENDERED_HISTORY}
         data={data}
@@ -801,10 +1014,9 @@ export const Services: FC<Props> = ({
               disabled={state.saving}
             ></Form>
             <QuoteSelector
-              serviceCallId={serviceCallId}
               servicesRenderedId={state.editing.servicesRenderedId}
               onAddQuotes={console.log}
-              onAdd={console.log}
+              onUpdate={onUpdateMaterials}
             ></QuoteSelector>
           </div>
         </Modal>

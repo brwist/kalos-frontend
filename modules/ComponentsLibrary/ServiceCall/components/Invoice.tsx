@@ -10,53 +10,46 @@ import {
 import { EventType, ServicesRenderedType } from '../';
 import { PlainForm, Schema } from '../../PlainForm';
 import { Field } from '../../Field';
-import { PAYMENT_TYPE_LIST, SERVICE_STATUSES } from '../../../../constants';
+import {
+  PAYMENT_STATUS_LIST,
+  PAYMENT_TYPE_LIST,
+  SERVICE_STATUSES,
+} from '../../../../constants';
 import { formatDateTimeDay, makeSafeFormObject } from '../../../../helpers';
 import { ENDPOINT } from '../../../../constants';
 import { Event } from '@kalos-core/kalos-rpc/Event';
 import { ServicesRendered } from '@kalos-core/kalos-rpc/ServicesRendered';
+import { SQSEmailAndDocument } from '@kalos-core/kalos-rpc/compiled-protos/email_pb';
+import { Payment, PaymentClient } from '@kalos-core/kalos-rpc/Payment';
+import { type } from 'os';
+import { disconnect } from 'process';
 
 const sic = new ServiceItemClient(ENDPOINT);
+
 const { COMPLETED, INCOMPLETE } = SERVICE_STATUSES;
 
 interface Props {
   disabled: boolean;
-  serviceItem: Event;
+  event: Event;
   servicesRendered: ServicesRendered[];
+  paidServices: Payment[];
+
   onInitSchema: (fields: string[]) => void;
-  onChange: (serviceItem: Event) => void;
+  onChangeServices: (serviceItem: Event) => void;
+  onChangePayment: (serviceItem: Event) => void;
 }
 
 export const Invoice: FC<Props> = ({
-  serviceItem,
+  event,
   servicesRendered,
+  paidServices,
   onInitSchema,
-  onChange,
+  onChangeServices,
+  onChangePayment,
 }) => {
-  /*
-    useEffect(() => {
-      (async () => {
-        const req = new ServiceItem();
-        req.setId(serviceItem.id);
-        console.log(req);
-        const entry = await sic.Get(req);
-        console.log('fetched: ', entry)
-      })();
-    }, []);
-  */
-
   const [initSchemaCalled, setInitSchemaCalled] = useState<boolean>(false);
-  let grandTotal = 0;
-  const transformData = useCallback((data: Event) => {
-    /*
-    const {
-      totalamountrow1,
-      totalamountrow2,
-      totalamountrow3,
-      totalamountrow4,
-    } = data;
-    */
 
+  const transformData = useCallback((data: Event) => {
     const totalamountrow1 = data.getTotalamountrow1();
     const totalamountrow2 = data.getTotalamountrow2();
     const totalamountrow3 = data.getTotalamountrow3();
@@ -70,18 +63,32 @@ export const Invoice: FC<Props> = ({
     data.setTotalamountrow2(total2.toString());
     data.setTotalamountrow3(total3.toString());
     data.setTotalamountrow4(total4.toString());
-    grandTotal = total1 + total2 + total3 + total4;
     return data;
   }, []);
   const [formKey, setFormKey] = useState<number>(0);
-  const data = transformData(serviceItem);
 
-  const handleChange = useCallback(
+  const data = transformData(event);
+  const handleChangeServices = useCallback(
     (data: Event) =>
-      onChange(transformData(makeSafeFormObject(data, new Event()))),
-    [onChange, transformData],
+      onChangeServices(transformData(makeSafeFormObject(data, new Event()))),
+    [onChangeServices, transformData],
   );
-
+  const handleChangePayment = useCallback(
+    (data: Event) => onChangePayment(makeSafeFormObject(data, new Event())),
+    [onChangePayment],
+  );
+  const totalPaid = paidServices.reduce(
+    (accumulator, currentValue) =>
+      accumulator + currentValue.getAmountCollected(),
+    0,
+  );
+  const discountAmount =
+    (parseInt(data.getTotalamountrow1()) +
+      parseInt(data.getTotalamountrow2()) +
+      parseInt(data.getTotalamountrow3()) +
+      parseInt(data.getTotalamountrow4()) +
+      data.getMaterialTotal()) *
+    (parseInt(data.getDiscount()) / 100);
   const handleCopyFromServicesRendered = useCallback(() => {
     const servicesRenderedNotes: string = servicesRendered
       .filter(status => [COMPLETED, INCOMPLETE].includes(status.getStatus()))
@@ -95,10 +102,16 @@ export const Invoice: FC<Props> = ({
       )
       .join('\n');
     data.setNotes(servicesRenderedNotes);
-    onChange(data);
+    onChangeServices(data);
     setFormKey(formKey + 1);
-  }, [onChange, data, setFormKey, formKey, servicesRendered]);
-
+  }, [onChangeServices, data, setFormKey, formKey, servicesRendered]);
+  const totalRemaining =
+    parseInt(data.getTotalamountrow1()) +
+    parseInt(data.getTotalamountrow2()) +
+    parseInt(data.getTotalamountrow3()) +
+    +data.getMaterialTotal() +
+    parseInt(data.getTotalamountrow4()) -
+    (totalPaid + discountAmount);
   const SCHEMA: Schema<Event> = useMemo(
     () => [
       [
@@ -106,16 +119,22 @@ export const Invoice: FC<Props> = ({
           label: 'Services Performed (1)',
           name: 'getServicesperformedrow1',
         },
+      ],
+      [
         {
           label: 'Total Amount (1)',
           name: 'getTotalamountrow1',
           type: 'number',
           startAdornment: '$',
         },
+      ],
+      [
         {
           label: 'Services Performed (2)',
           name: 'getServicesperformedrow2',
         },
+      ],
+      [
         {
           label: 'Total Amount (2)',
           name: 'getTotalamountrow2',
@@ -123,21 +142,28 @@ export const Invoice: FC<Props> = ({
           startAdornment: '$',
         },
       ],
+
       [
         {
           label: 'Services Performed (3)',
           name: 'getServicesperformedrow3',
         },
+      ],
+      [
         {
           label: 'Total Amount (3)',
           name: 'getTotalamountrow3',
           type: 'number',
           startAdornment: '$',
         },
+      ],
+      [
         {
           label: 'Services Performed (4)',
           name: 'getServicesperformedrow4',
         },
+      ],
+      [
         {
           label: 'Total Amount (4)',
           name: 'getTotalamountrow4',
@@ -152,6 +178,8 @@ export const Invoice: FC<Props> = ({
           readOnly: true,
           multiline: true,
         },
+      ],
+      [
         {
           label: 'Material Total',
           name: 'getMaterialTotal',
@@ -159,55 +187,88 @@ export const Invoice: FC<Props> = ({
           type: 'number',
           startAdornment: '$',
         },
+      ],
+      [
         {
           content: (
-            <Field
-              label="Payment"
-              name="getPayment"
-              value={0}
-              startAdornment="$"
-            />
-          ), // FIXME
+            <Field label="Payment" name="getPayment" startAdornment="$" />
+          ),
         },
+        {},
+      ],
+      [
         {
           label: 'Discount',
           name: 'getDiscount',
           type: 'number',
           endAdornment: '%',
         },
+        {
+          content: (
+            <Field
+              label="Discount Amount"
+              type="number"
+              name="getDiscountCost"
+              startAdornment="$"
+              disabled={true}
+              value={discountAmount}
+            />
+          ),
+        },
       ],
       [
-        /*
-      {
-        content: (
-          <Field
-            label="Grand Total"
-            name={undefined}
-            value={grandTotal}
-          />
-        ),
-      },
-      */
+        {
+          content: (
+            <Field
+              label="Grand Total"
+              type="number"
+              name="getTotalAmountTotal"
+              startAdornment="$"
+              disabled={true}
+              value={
+                parseInt(data.getTotalamountrow1()) +
+                parseInt(data.getTotalamountrow2()) +
+                parseInt(data.getTotalamountrow3()) +
+                parseInt(data.getTotalamountrow4()) +
+                data.getMaterialTotal() -
+                discountAmount
+              }
+            />
+          ),
+        },
+      ],
+      [
         {
           content: (
             <Field
               label="Payments"
               name="getPayments"
-              value={0}
+              value={totalPaid}
               startAdornment="$"
             />
-          ), // FIXME
+          ),
         },
+      ],
+      [
         {
           content: (
             <Field
               label="Remaining due"
               name="getRemainingDue"
-              value={(1 - +data.getDiscount() / 100) * grandTotal} // FIXME
+              value={totalRemaining}
               startAdornment="$"
             />
           ),
         },
+        {},
+      ],
+    ],
+    [data, totalPaid, discountAmount, totalRemaining],
+  );
+  const SCHEMA_PART_2: Schema<Event> = useMemo(
+    () => [
+      [{}],
+      [
         {
           label: 'Billing Date',
           name: 'getLogBillingDate',
@@ -220,15 +281,29 @@ export const Invoice: FC<Props> = ({
           name: 'getLogPaymentType',
           options: PAYMENT_TYPE_LIST,
         },
+      ],
+      [
+        {
+          label: 'Payment Status',
+          name: 'getLogPaymentStatus',
+          options: PAYMENT_STATUS_LIST,
+        },
+      ],
+      [
         {
           label: 'PO',
           name: 'getLogPo',
         },
+      ],
+
+      [
         {
           label: 'Use Property-level Billing?',
           name: 'getPropertyBilling',
           type: 'checkbox',
         },
+      ],
+      [
         {
           label: 'Invoice Notes',
           name: 'getNotes',
@@ -244,9 +319,8 @@ export const Invoice: FC<Props> = ({
         },
       ],
     ],
-    [data, grandTotal, handleCopyFromServicesRendered],
+    [handleCopyFromServicesRendered],
   );
-
   useEffect(() => {
     if (!initSchemaCalled) {
       setInitSchemaCalled(true);
@@ -256,13 +330,37 @@ export const Invoice: FC<Props> = ({
       onInitSchema(fields as string[]);
     }
   }, [initSchemaCalled, setInitSchemaCalled, onInitSchema, SCHEMA]);
-
   return (
-    <PlainForm
-      key={formKey}
-      schema={SCHEMA}
-      data={data}
-      onChange={handleChange}
-    />
+    <div>
+      <div
+        style={{
+          display: 'inline-block',
+          width: '49%',
+          verticalAlign: 'top',
+        }}
+      >
+        <PlainForm
+          key={formKey}
+          schema={SCHEMA}
+          data={data}
+          onChange={handleChangeServices}
+        />
+      </div>
+      <div
+        style={{
+          display: 'inline-block',
+          width: '50%',
+          verticalAlign: 'top',
+        }}
+      >
+        <PlainForm
+          compact={true}
+          key={formKey}
+          schema={SCHEMA_PART_2}
+          data={data}
+          onChange={handleChangePayment}
+        />
+      </div>
+    </div>
   );
 };

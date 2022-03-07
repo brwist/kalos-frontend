@@ -552,7 +552,7 @@ export const Field: <T>(
             onChange={value =>
               handleChange({
                 target: {
-                  value: format(value || new Date(), 'yyyy-MM-dd HH:mm'),
+                  value: format(value || new Date(), 'yyyy-MM-dd HH:mm:ss'),
                 },
               })
             }

@@ -15,7 +15,7 @@ import { OPTION_BLANK } from '../../../constants';
 import { Option } from '../Field';
 import { SectionBar } from '../SectionBar';
 import { EventAssignment } from '@kalos-core/kalos-rpc/EventAssignment';
-
+import { returnCorrectTimeField } from '.';
 export interface Props {
   userID: number;
   propertyId: number;
@@ -234,6 +234,22 @@ export const ServiceRequest: FC<Props> = props => {
       const jobTypeSubtypes =
         await JobTypeSubtypeClientService.loadJobTypeSubtypes();
       const entry = await EventClientService.Get(req);
+      const startTimeData = entry.getTimeStarted();
+      const endTimeData = entry.getTimeEnded();
+      const startSplit = startTimeData.split(':');
+      const endSplit = endTimeData.split(':');
+      const startDate = entry.getDateStarted();
+      const endDate = entry.getDateEnded();
+      const startTimeDate = startDate.split(' ')[0];
+      const endTimeDate = endDate.split(' ')[0];
+      const fullStartDate = `${startTimeDate} ${startSplit[0]}:${startSplit[1]}:00`;
+      const fullEndDate = `${endTimeDate} ${endSplit[0]}:${endSplit[1]}:00`;
+      console.log('actual start date', entry.getDateStarted());
+      console.log('acutal start time', entry.getTimeStarted());
+      console.log('created time', fullStartDate);
+      entry.setDateStarted(fullStartDate);
+      entry.setDateEnded(fullEndDate);
+
       serviceCall({
         type: 'setData',
         data: {
@@ -274,6 +290,11 @@ export const ServiceRequest: FC<Props> = props => {
     const temp = state.entry;
     console.log('saving existing ID');
     try {
+      temp.setTimeStarted(returnCorrectTimeField(temp.getDateStarted()));
+      temp.setTimeEnded(returnCorrectTimeField(temp.getDateEnded()));
+      temp.addFieldMask('TimeStarted');
+      temp.addFieldMask('TimeEnded');
+      console.log('updating time to ', temp.getTimeStarted());
       await EventClientService.Update(temp);
       const idArray = temp.getLogTechnicianAssigned().split(',');
       let results: EventAssignment[] = [];
