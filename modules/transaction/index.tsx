@@ -3,6 +3,6 @@ import * as ReactDOM from 'react-dom';
 import Transaction from './main';
 
 ReactDOM.render(
-  <Transaction userID={213} isAdmin withHeader />,
+  <Transaction userID={103323} isAdmin withHeader />,
   document.getElementById('txn-root'),
 );

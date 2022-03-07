@@ -137,6 +137,8 @@ export class TransactionAdminView extends React.Component<props, state> {
     this.copyPage = this.copyPage.bind(this);
     this.makeAddJobNumber = this.makeAddJobNumber.bind(this);
     this.makeUpdateNotes = this.makeUpdateNotes.bind(this);
+    this.markAsDuplicate = this.markAsDuplicate.bind(this);
+
     this.makeUpdateCostCenter = this.makeUpdateCostCenter.bind(this);
     this.toggleLoading = this.toggleLoading.bind(this);
     this.setSort = this.setSort.bind(this);
@@ -290,6 +292,21 @@ export class TransactionAdminView extends React.Component<props, state> {
     };
   }
 
+  markAsDuplicate(id: number) {
+    return async (notes: string) => {
+      const txn = new Transaction();
+      txn.setId(id);
+      txn.setIsActive(0);
+      txn.setFieldMaskList(['IsActive']);
+      await this.TxnClient.Update(txn);
+      await this.makeLog(
+        `Transaction marked as duplicate. Reason:${notes}`,
+        id,
+      );
+
+      await this.fetchTxns();
+    };
+  }
   makeRecordTransaction(id: number) {
     return async () => {
       const txn = new Transaction();
@@ -890,6 +907,9 @@ export class TransactionAdminView extends React.Component<props, state> {
           >
             <TxnStatusPicker
               disabled={this.state.isLoading}
+              hideAuditWorkflowFilters={
+                this.state.acceptOverride == true ? false : true
+              }
               selected={this.state.filters.statusID || 0}
               onSelect={statusID => this.setFilter('statusID', statusID)}
               label="Filter by Status"
@@ -1030,6 +1050,7 @@ export class TransactionAdminView extends React.Component<props, state> {
                     refresh: this.fetchTxns,
                     addJobNumber: this.makeAddJobNumber(txn.getId()),
                     updateNotes: this.makeUpdateNotes(txn.getId()),
+                    markAsDuplicate: this.markAsDuplicate(txn.getId()),
                     updateStateTax: this.makeUpdateStateTax(txn),
                     editingStateTax: this.state.editingStateTax[txn.getId()],
                     toggleEditingStateTax: () =>
