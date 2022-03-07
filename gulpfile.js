@@ -1171,6 +1171,7 @@ const NAMED_EXPORTS = {
     'AvgTicket',
     'Revenue',
     'Callbacks',
+    'MertricReportDataRequest'
   ],
   'node_modules/@kalos-core/kalos-rpc/compiled-protos/task_assignment_pb.js': [
     'TaskAssignment',

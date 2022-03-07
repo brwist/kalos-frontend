@@ -32,6 +32,7 @@ import { Row } from '../../ComponentsLibrary/InfoTable';
 import { Tooltip } from '../../ComponentsLibrary/Tooltip';
 import { parseISO } from 'date-fns';
 import { EventClient } from '@kalos-core/kalos-rpc/Event';
+import { FlagOutlined } from '@material-ui/icons';
 
 interface props {
   txn: Transaction;
@@ -45,6 +46,7 @@ interface props {
   refresh(): Promise<void>;
   addJobNumber(jn: string): Promise<void>;
   updateNotes(notes: string): Promise<void>;
+  markAsDuplicate(notes: string): Promise<void>;
   updateCostCenter(id: number): Promise<void>;
   updateDepartment(id: number): Promise<void>;
   updateStateTax(status: boolean): Promise<void>;
@@ -66,6 +68,7 @@ export function TransactionRow({
   audit,
   addJobNumber,
   updateNotes,
+  markAsDuplicate,
   acceptOverride,
   updateCostCenter,
   updateStateTax,
@@ -323,25 +326,6 @@ export function TransactionRow({
     {
       value: txn.getVendor(),
     },
-    /*
-    {
-      value: editingStateTax ? (
-        <Checkbox
-          checked={txn.getStateTaxApplied()}
-          onChange={event => handleStateTaxSelect(event.target.checked)}
-        />
-      ) : txn.getStateTaxApplied() != undefined ? (
-        `${txn.getStateTaxApplied() === true ? 'Applied' : 'Not Applied'}`
-      ) : (
-        ''
-      ),
-      actions: [
-        <IconButton key="edit" size="small" onClick={toggleEditingStateTax}>
-          {editingStateTax ? <CloseIcon /> : <EditIcon />}
-        </IconButton>,
-      ],
-    },
-    */
     {
       value: editingStateTax ? (
         <Checkbox
@@ -403,6 +387,19 @@ export function TransactionRow({
           defaultValue={txn.getNotes()}
           multiline
         />,
+        ...([9928, 9646, 103323, 9809, 1734].includes(userID)
+          ? [
+              <Prompt
+                key="markDuplicate"
+                confirmFn={markAsDuplicate}
+                text="Mark as Duplicate"
+                prompt="Enter Reason for Marking as Duplicate "
+                Icon={FlagOutlined}
+                defaultValue={''}
+                multiline
+              />,
+            ]
+          : []),
         <AltGallery
           key="receiptPhotos"
           title="Transaction Photos"
