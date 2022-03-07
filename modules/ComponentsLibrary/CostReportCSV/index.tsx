@@ -273,6 +273,7 @@ export const CostReportCSV: FC<Props> = ({ serviceCallId, onClose }) => {
         try {
           const userReq = new User();
           userReq.setIsEmployee(1);
+          userReq.setOverrideLimit(true);
           const users = (
             await UserClientService.BatchGet(userReq)
           ).getResultsList();
