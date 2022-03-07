@@ -6,7 +6,12 @@ import { ServicesRendered } from '@kalos-core/kalos-rpc/ServicesRendered';
 import { User } from '@kalos-core/kalos-rpc/User';
 import { Event } from '@kalos-core/kalos-rpc/Event';
 import { Option } from '../Field';
-
+import { Payment } from '@kalos-core/kalos-rpc/Payment';
+import { ServiceItem } from '@kalos-core/kalos-rpc/ServiceItem';
+import { EventClient, Quotable } from '@kalos-core/kalos-rpc/Event';
+import { Invoice, Invoice as InvoiceType } from '@kalos-core/kalos-rpc/Invoice';
+import { Contract } from '@kalos-core/kalos-rpc/Contract';
+import { returnCorrectTimeField } from './';
 export interface State {
   requestFields: string[];
   tabIdx: number;
@@ -16,8 +21,10 @@ export interface State {
   requestValid: boolean;
   serviceCallId: number;
   entry: Event;
+  invoiceData: InvoiceType | undefined;
   property: Property;
   customer: User;
+  paidServices: Payment[];
   propertyEvents: Event[];
   loaded: boolean;
   loading: boolean;
@@ -34,9 +41,11 @@ export interface State {
   notificationEditing: boolean;
   notificationViewing: boolean;
   projects: Event[];
+  selectedServiceItems: number[];
   parentId: number | null;
   confirmedParentId: number | null;
   projectData: Event;
+  contractData: Contract | undefined;
   openSpiffApply: boolean;
   openJobActivity: boolean;
 }
@@ -55,11 +64,16 @@ export type Action =
         loggedUser: User;
         entry: Event;
         servicesRendered: ServicesRendered[];
+        paidServices: Payment[];
         loaded: boolean;
         loading: boolean;
+        invoice: Invoice | undefined;
+        contract: Contract | undefined;
       };
     }
   | { type: 'setEntry'; data: Event }
+  | { type: 'setContractData'; data: Contract | undefined }
+  | { type: 'setSelectedServiceItems'; data: number[] }
   | {
       type: 'setChangeEntry';
       data: {
@@ -83,6 +97,7 @@ export type Action =
         loading: boolean;
       };
     }
+  | { type: 'setPaidServices'; data: Payment[] }
   | {
       type: 'setSaveServiceCall';
       data: {
@@ -142,6 +157,8 @@ export type Action =
   | { type: 'setOpenSpiffApply'; data: boolean }
   | { type: 'setNotificationEditing'; data: boolean }
   | { type: 'setNotificationViewing'; data: boolean }
+  | { type: 'updateRequestData'; data: Event }
+  | { type: 'updateInvoiceData'; data: { data: Event; servicesForm: boolean } }
   | {
       type: 'setOpenJobActivity';
       data: boolean;
@@ -162,6 +179,19 @@ export const reducer = (state: State, action: Action) => {
       if (role) {
         roleType = role.getName();
       }
+      let splitServiceItems: number[] = [];
+      if (action.data.entry) {
+        if (action.data.entry.getInvoiceServiceItem() != '') {
+          action.data.entry.getInvoiceServiceItem();
+          const splitData = action.data.entry
+            .getInvoiceServiceItem()
+            .split(',');
+          for (let i = 0; i < splitData.length; i++) {
+            splitServiceItems.push(parseInt(splitData[i]));
+          }
+        }
+        console.log('we made this data', splitServiceItems);
+      }
       return {
         ...state,
         property: action.data.property,
@@ -172,16 +202,94 @@ export const reducer = (state: State, action: Action) => {
         jobTypeSubtypes: action.data.jobTypeSubtypes,
         loggedUser: action.data.loggedUser,
         entry: action.data.entry,
+        paidServices: action.data.paidServices,
         servicesRendered: action.data.servicesRendered,
         loaded: action.data.loaded,
         loading: action.data.loading,
         loggedUserRole: roleType,
+        invoiceData: action.data.invoice,
+        contractData: action.data.contract,
+        selectedServiceItems: splitServiceItems,
       };
     }
     case 'setEntry':
       return {
         ...state,
         entry: action.data,
+      };
+    case 'updateRequestData': {
+      const data = action.data;
+      const existingEntry = state.entry;
+      existingEntry.setDateStarted(data.getDateStarted());
+      existingEntry.setTimeStarted(
+        returnCorrectTimeField(data.getDateStarted()),
+      );
+      existingEntry.setColor(data.getColor());
+      existingEntry.setName(data.getName());
+      existingEntry.setDateEnded(data.getDateEnded());
+      existingEntry.setTimeEnded(returnCorrectTimeField(data.getDateEnded()));
+      existingEntry.setDepartmentId(data.getDepartmentId());
+      existingEntry.setIsResidential(data.getIsResidential());
+      existingEntry.setJobTypeId(data.getJobTypeId());
+      existingEntry.setJobSubtypeId(data.getJobSubtypeId());
+      existingEntry.setLogJobStatus(data.getLogJobStatus());
+      existingEntry.setLogTechnicianAssigned(data.getLogTechnicianAssigned());
+      existingEntry.setAmountQuoted(data.getAmountQuoted());
+      existingEntry.setDiagnosticQuoted(data.getDiagnosticQuoted());
+      existingEntry.setIsLmpc(data.getIsLmpc());
+      existingEntry.setIsCallback(data.getIsCallback());
+      existingEntry.setDescription(data.getDescription());
+      existingEntry.setServices(data.getServices());
+      existingEntry.setLogNotes(data.getLogNotes());
+      existingEntry.setLogPaymentType(data.getLogPaymentType());
+      existingEntry.setHighPriority(data.getHighPriority());
+      console.log('stuff', data);
+      return {
+        ...state,
+        entry: existingEntry,
+        pendingSave: false,
+      };
+    }
+    case 'updateInvoiceData': {
+      const data = action.data.data;
+      const existingEntry = state.entry;
+
+      if (action.data.servicesForm) {
+        existingEntry.setServicesperformedrow1(data.getServicesperformedrow1());
+        existingEntry.setServicesperformedrow2(data.getServicesperformedrow2());
+        existingEntry.setServicesperformedrow3(data.getServicesperformedrow3());
+        existingEntry.setServicesperformedrow4(data.getServicesperformedrow4());
+        existingEntry.setTotalamountrow1(data.getTotalamountrow1());
+        existingEntry.setTotalamountrow2(data.getTotalamountrow2());
+        existingEntry.setTotalamountrow3(data.getTotalamountrow3());
+        existingEntry.setTotalamountrow4(data.getTotalamountrow4());
+        existingEntry.setMaterialTotal(data.getMaterialTotal());
+        existingEntry.setMaterialUsed(data.getMaterialUsed());
+        existingEntry.setDiscount(data.getDiscount());
+        existingEntry.setDiscountcost(data.getDiscountcost().toString());
+      } else {
+        existingEntry.setLogBillingDate(data.getLogBillingDate());
+        existingEntry.setLogPaymentType(data.getLogPaymentType());
+        existingEntry.setLogPaymentStatus(data.getLogPaymentStatus());
+        existingEntry.setLogPo(data.getLogPo());
+        existingEntry.setPropertyBilling(data.getPropertyBilling());
+        existingEntry.setNotes(data.getNotes());
+      }
+      return {
+        ...state,
+        entry: existingEntry,
+        pendingSave: false,
+      };
+    }
+    case 'setContractData':
+      return {
+        ...state,
+        contractData: action.data,
+      };
+    case 'setSelectedServiceItems':
+      return {
+        ...state,
+        selectedServiceItems: action.data,
       };
     case 'setChangeEntry':
       return {
@@ -199,6 +307,12 @@ export const reducer = (state: State, action: Action) => {
       return {
         ...state,
         saving: action.data,
+      };
+    case 'setPaidServices':
+      console.log('what we got in reducer', action.data);
+      return {
+        ...state,
+        paidServices: action.data,
       };
     case 'setLoading':
       return {

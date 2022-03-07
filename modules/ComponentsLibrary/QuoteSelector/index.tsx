@@ -21,16 +21,24 @@ import { QuotableRead } from '@kalos-core/kalos-rpc/compiled-protos/event_pb';
 import { QuoteUsed, QuoteUsedClient } from '@kalos-core/kalos-rpc/QuoteUsed';
 import { ENDPOINT } from '@kalos-core/kalos-rpc/constants';
 import { QuoteLine } from '@kalos-core/kalos-rpc/QuoteLine';
+import { ActionsProps } from '../Actions';
 export type SelectedQuote = {
   quotePart: Quotable;
   billable: boolean;
   quantity: number;
 };
 interface Props {
-  serviceCallId: number;
-  servicesRenderedId: number;
-  onAdd?: () => void;
+  servicesRenderedId?: number;
+  onUpdate?: () => void;
   onAddQuotes?: (quotes: SelectedQuote[]) => void;
+  savePendingQuotes?: (
+    servicesRenderedId: number,
+    selectedQuotes: Quotable[],
+  ) => void;
+  pendingQuotableProp?: Quotable[];
+  pendingNewQuotableProp?: Quotable[];
+  setPendingQuotableProp?: (quotes: Quotable[]) => void;
+  setPendingNewQuotableProp?: (quotes: Quotable[]) => void;
 }
 
 const COLUMNS: Columns = [
@@ -77,10 +85,13 @@ const SCHEMA_NEW_QUOTABLE: Schema<Quotable> = [
 ];
 
 export const QuoteSelector: FC<Props> = ({
-  serviceCallId,
   servicesRenderedId,
-  onAdd,
+  onUpdate,
   onAddQuotes,
+  pendingNewQuotableProp,
+  pendingQuotableProp,
+  setPendingNewQuotableProp,
+  setPendingQuotableProp,
 }) => {
   const [open, setOpen] = useState<boolean>(false);
   const [loaded, setLoaded] = useState<boolean>(false);
@@ -90,8 +101,12 @@ export const QuoteSelector: FC<Props> = ({
   const [quotable, setQuotable] = useState<Quotable[]>([]);
   const [originalQuotable, setOriginalQuotable] = useState<Quotable[]>([]);
   const [quoteParts, setQuoteParts] = useState<Quotable[]>([]);
-  const [pendingQuotable, setPendingQuotable] = useState<Quotable[]>([]);
-  const [pendingNewQuotable, setPendingNewQuotable] = useState<Quotable[]>([]);
+  const [pendingQuotable, setPendingQuotable] = useState<Quotable[]>(
+    pendingQuotableProp ? pendingQuotableProp : [],
+  );
+  const [pendingNewQuotable, setPendingNewQuotable] = useState<Quotable[]>(
+    pendingNewQuotableProp ? pendingNewQuotableProp : [],
+  );
   const [pendingDeleteQuotable, setPendingDeleteQuotable] = useState<
     Quotable[]
   >([]);
@@ -107,48 +122,84 @@ export const QuoteSelector: FC<Props> = ({
   }>({});
   const load = useCallback(async () => {
     setLoading(true);
-    const flatRateReq = new QuoteLine();
-    flatRateReq.setIsFlatrate('1');
-    flatRateReq.setIsActive(1);
-    flatRateReq.setWithoutLimit(true);
-    const req = new QuotableRead();
-    req.setServicesRenderedId(servicesRenderedId);
-    req.setIsActive(true);
-    req.setFieldMaskList(['IsActive']);
+    if (pendingNewQuotable)
+      if (servicesRenderedId) {
+        const flatRateReq = new QuoteLine();
+        flatRateReq.setIsFlatrate('1');
+        flatRateReq.setIsActive(1);
+        flatRateReq.setWithoutLimit(true);
+        const req = new QuotableRead();
 
-    const [flatRate, quotable] = await Promise.all([
-      QuoteLineClientService.BatchGet(flatRateReq), //this should be the flat rate items
-      EventClientService.ReadQuotes(req), //this should be the all materials/services associated with the service call
-    ]);
-    const flatRateQuotable = flatRate.getResultsList().map(item => {
-      let quote = new Quotable();
-      quote.setIsActive(true);
-      quote.setIsBillable(true);
-      quote.setIsFlatrate(true);
-      quote.setQuantity(1);
-      quote.setQuotedPrice(parseInt(item.getAdjustment()));
-      quote.setId(item.getId());
-      quote.setQuoteLineId(item.getId());
-      quote.setDescription(item.getDescription());
+        req.setServicesRenderedId(servicesRenderedId);
+        req.setIsActive(true);
+        req.setFieldMaskList(['IsActive']);
 
-      return quote;
-    });
-    let tempFlatRate = flatRateQuotable;
-    let tempQuotable = quotable.getDataList();
-    for (let i = 0; i < tempQuotable.length; i++) {
-      tempFlatRate = tempFlatRate.filter(
-        flatRate =>
-          flatRate.getQuoteLineId() != tempQuotable[i].getQuoteLineId(),
-      );
-    }
-    setQuoteParts(tempFlatRate);
-    setQuotable(quotable.getDataList());
-    setOriginalQuotable(quotable.getDataList());
+        const [flatRate, quotable] = await Promise.all([
+          QuoteLineClientService.BatchGet(flatRateReq), //this should be the flat rate items
+          EventClientService.ReadQuotes(req), //this should be the all materials/services associated with the service call
+        ]);
+        const flatRateQuotable = flatRate.getResultsList().map(item => {
+          let quote = new Quotable();
+          quote.setIsActive(true);
+          quote.setIsBillable(true);
+          quote.setIsFlatrate(true);
+          quote.setQuantity(1);
+          quote.setQuotedPrice(parseInt(item.getAdjustment()));
+          quote.setId(item.getId());
+          quote.setQuoteLineId(item.getId());
+          quote.setDescription(item.getDescription());
+
+          return quote;
+        });
+        let tempFlatRate = flatRateQuotable;
+        let tempQuotable = quotable.getDataList();
+        for (let i = 0; i < tempQuotable.length; i++) {
+          tempFlatRate = tempFlatRate.filter(
+            flatRate =>
+              flatRate.getQuoteLineId() != tempQuotable[i].getQuoteLineId(),
+          );
+        }
+        setQuoteParts(tempFlatRate);
+        setQuotable(quotable.getDataList());
+        setOriginalQuotable(quotable.getDataList());
+      } else {
+        const flatRateReq = new QuoteLine();
+        flatRateReq.setIsFlatrate('1');
+        flatRateReq.setIsActive(1);
+        flatRateReq.setWithoutLimit(true);
+
+        const [flatRate] = await Promise.all([
+          QuoteLineClientService.BatchGet(flatRateReq), //this should be the flat rate items
+        ]);
+        const flatRateQuotable = flatRate.getResultsList().map(item => {
+          let quote = new Quotable();
+          quote.setIsActive(true);
+          quote.setIsBillable(true);
+          quote.setIsFlatrate(true);
+          quote.setQuantity(1);
+          quote.setQuotedPrice(parseInt(item.getAdjustment()));
+          quote.setId(item.getId());
+          quote.setQuoteLineId(item.getId());
+          quote.setDescription(item.getDescription());
+
+          return quote;
+        });
+
+        setQuoteParts(flatRateQuotable);
+      }
     setLoaded(true);
     setLoading(false);
-  }, [setLoaded, setLoading, servicesRenderedId, setQuoteParts, setQuotable]);
+  }, [
+    setLoaded,
+    setLoading,
+    pendingNewQuotable,
+    servicesRenderedId,
+    setQuoteParts,
+    setQuotable,
+  ]);
   useEffect(() => {
     if (!loaded) {
+      console.log('we are loadin');
       load();
     }
   }, [loaded, load]);
@@ -203,9 +254,12 @@ export const QuoteSelector: FC<Props> = ({
       let quoteUsed = new QuoteUsed();
       quoteUsed.setId(temp.getQuoteUsedId());
       await quoteUsedClientService.Delete(quoteUsed);
+      if (onUpdate) {
+        await onUpdate();
+      }
     }
     setPendingDeleteQuotable([]);
-  }, [pendingDeleteQuotable]);
+  }, [pendingDeleteQuotable, onUpdate]);
   const handleAddToPendingDelete = useCallback(
     async (pendingRemoveQuotable: Quotable) => {
       let tempQuotable = quotable.filter(
@@ -217,6 +271,7 @@ export const QuoteSelector: FC<Props> = ({
       tempPendingDelete.push(pendingRemoveQuotable);
       setPendingDeleteQuotable(tempPendingDelete);
     },
+
     [pendingDeleteQuotable, quotable],
   );
   const handleRemovePending = useCallback(
@@ -230,10 +285,30 @@ export const QuoteSelector: FC<Props> = ({
           quote.getQuoteLineId() != pendingRemoveQuotable.getQuoteLineId(),
       );
       setPendingQuotable(newPendingList);
+      if (setPendingQuotableProp) {
+        setPendingQuotableProp(newPendingList);
+      }
     },
-    [pendingQuotable, selectedQuoteLineIds],
+    [pendingQuotable, setPendingQuotableProp, selectedQuoteLineIds],
   );
-  const handleAddQuotes = useCallback(() => {
+  const handleRemoveNewPending = useCallback(
+    async (pendingRemoveQuotable: Quotable) => {
+      const tempSelected = selectedQuoteLineIds.filter(
+        quote => quote != pendingRemoveQuotable.getQuoteLineId(),
+      );
+      setSelectedQuoteLineIds(tempSelected);
+      const newPendingList = pendingNewQuotable.filter(
+        quote =>
+          quote.getQuoteLineId() != pendingRemoveQuotable.getQuoteLineId(),
+      );
+      setPendingNewQuotable(newPendingList);
+      if (setPendingNewQuotableProp) {
+        setPendingNewQuotableProp(newPendingList);
+      }
+    },
+    [pendingNewQuotable, setPendingNewQuotableProp, selectedQuoteLineIds],
+  );
+  const handleAddQuotes = useCallback(async () => {
     const temp: Quotable[] = [];
     Object.keys(billable).map(id => {
       let quote = quoteParts.find(
@@ -246,8 +321,10 @@ export const QuoteSelector: FC<Props> = ({
         temp.push(quote);
       }
     });
-    console.log('adding quotes', temp);
     setPendingQuotable(temp);
+    if (setPendingQuotableProp) {
+      setPendingQuotableProp(temp);
+    }
 
     if (onAddQuotes) {
       onAddQuotes([
@@ -270,20 +347,25 @@ export const QuoteSelector: FC<Props> = ({
     onAddQuotes,
     selectedQuoteLineIds,
     pendingNewQuotable,
+    setPendingQuotableProp,
   ]);
   const handleToggleNewQuotable = useCallback(
     () => setNewQuotable(!newQuotable),
     [newQuotable],
   );
   const handleSavePendingQuotable = useCallback(async () => {
-    let tempList = pendingQuotable;
+    let tempPendingQuotable = pendingQuotable;
+    let tempPendingNewQuotable = pendingNewQuotable;
     const quoteUsedClientService = new QuoteUsedClient(ENDPOINT);
     if (pendingDeleteQuotable.length > 0) {
       handleDeleteQuoteLine();
     }
-    if (tempList.length > 0) {
-      for (let i = 0; i < tempList.length; i++) {
-        let quotePart = tempList[i];
+    if (
+      (tempPendingQuotable.length > 0 || tempPendingNewQuotable.length > 0) &&
+      servicesRenderedId
+    ) {
+      for (let i = 0; i < tempPendingQuotable.length; i++) {
+        let quotePart = tempPendingQuotable[i];
         const req = new QuoteUsed();
         req.setQuoteLineId(quotePart.getQuoteLineId());
         req.setQuotedPrice(quotePart.getQuotedPrice());
@@ -297,17 +379,102 @@ export const QuoteSelector: FC<Props> = ({
           console.log('failed to add quotable item');
         }
       }
-      setQuotable(originalQuotable.concat(...tempList));
+      for (let i = 0; i < tempPendingNewQuotable.length; i++) {
+        let quotePart = tempPendingNewQuotable[i];
+        const req = new QuoteUsed();
+        const quotelineReq = new QuoteLine();
+        quotelineReq.setDescription(quotePart.getDescription());
+        quotelineReq.setAdjustment(quotePart.getQuotedPrice().toString());
+        quotelineReq.setWarranty(2);
+        const quotelineRes = await QuoteLineClientService.Create(quotelineReq);
+        req.setQuoteLineId(quotelineRes.getId());
+        req.setQuotedPrice(quotePart.getQuotedPrice());
+        req.setQuantity(quotePart.getQuantity());
+        req.setLmpc(quotePart.getIsLmpc() === true ? 1 : 0);
+        req.setServicesRenderedId(servicesRenderedId);
+        req.setBillable(quotePart.getIsBillable() === true ? 1 : 0);
+
+        try {
+          await quoteUsedClientService.Create(req);
+        } catch (err) {
+          console.log('failed to add quotable item');
+        }
+      }
+      if (onUpdate) {
+        await onUpdate();
+      }
+      let finalQuotable = originalQuotable;
+      if (tempPendingQuotable.length > 0) {
+        finalQuotable = finalQuotable.concat(...tempPendingQuotable);
+      }
+      if (tempPendingNewQuotable.length > 0) {
+        finalQuotable = finalQuotable.concat(...tempPendingNewQuotable);
+      }
+      setQuotable(finalQuotable);
       setPendingQuotable([]);
+      setPendingNewQuotable([]);
+      if (setPendingQuotableProp) {
+        setPendingQuotableProp([]);
+      }
+      if (setPendingNewQuotableProp) {
+        setPendingNewQuotableProp([]);
+      }
       setSelectedQuoteLineIds([]);
     }
   }, [
     pendingQuotable,
     originalQuotable,
     servicesRenderedId,
+    pendingNewQuotable,
+    setPendingNewQuotableProp,
+    setPendingQuotableProp,
+    onUpdate,
     handleDeleteQuoteLine,
     pendingDeleteQuotable,
   ]);
+  const handleSavePendingQuotablePendingServicesRenderedId = useCallback(
+    async (servicesRenderedId: number) => {
+      let tempList = pendingQuotable;
+      const quoteUsedClientService = new QuoteUsedClient(ENDPOINT);
+      if (pendingDeleteQuotable.length > 0) {
+        handleDeleteQuoteLine();
+      }
+      if (tempList.length > 0 && servicesRenderedId) {
+        for (let i = 0; i < tempList.length; i++) {
+          let quotePart = tempList[i];
+          const req = new QuoteUsed();
+          req.setQuoteLineId(quotePart.getQuoteLineId());
+          req.setQuotedPrice(quotePart.getQuotedPrice());
+          req.setQuantity(quotePart.getQuantity());
+          req.setServicesRenderedId(servicesRenderedId);
+          req.setBillable(quotePart.getIsBillable() === true ? 1 : 0);
+
+          try {
+            await quoteUsedClientService.Create(req);
+          } catch (err) {
+            console.log('failed to add quotable item');
+          }
+        }
+        if (onUpdate) {
+          await onUpdate();
+        }
+        setQuotable(originalQuotable.concat(...tempList));
+        setPendingQuotable([]);
+        if (setPendingQuotableProp) {
+          setPendingQuotableProp([]);
+        }
+        setSelectedQuoteLineIds([]);
+      }
+    },
+    [
+      pendingQuotable,
+      originalQuotable,
+      onUpdate,
+      setPendingQuotableProp,
+      handleDeleteQuoteLine,
+      pendingDeleteQuotable,
+    ],
+  );
   const handleSaveNewQuotable = useCallback(
     (data: Quotable) => {
       const safeData = makeSafeFormObject(data, new Quotable());
@@ -320,6 +487,9 @@ export const QuoteSelector: FC<Props> = ({
       });
       const newPendingNewQuotable = [...pendingNewQuotable, quotePart];
       setPendingNewQuotable(newPendingNewQuotable);
+      if (setPendingNewQuotableProp) {
+        setPendingNewQuotableProp(newPendingNewQuotable);
+      }
       if (onAddQuotes) {
         onAddQuotes([
           ...Object.keys(billable).map(id => ({
@@ -337,8 +507,41 @@ export const QuoteSelector: FC<Props> = ({
       setNewQuotable(false);
       setOpen(false);
     },
-    [pendingNewQuotable, onAddQuotes, billable, quoteParts],
+    [
+      pendingNewQuotable,
+      onAddQuotes,
+      setPendingNewQuotableProp,
+      billable,
+      quoteParts,
+    ],
   );
+  let actions: ActionsProps = [];
+  if (onUpdate) {
+    actions = [
+      ...actions,
+      {
+        label: 'Add',
+        onClick: handleToggleOpen,
+        disabled: loading,
+      },
+    ];
+  }
+  if (servicesRenderedId && onUpdate) {
+    actions = [
+      ...actions,
+      {
+        label: 'Save',
+
+        onClick: servicesRenderedId ? handleSavePendingQuotable : undefined,
+        disabled:
+          loading ||
+          (pendingQuotable.length == 0 &&
+            pendingDeleteQuotable.length == 0 &&
+            pendingNewQuotable.length == 0),
+      },
+    ];
+  }
+
   const data: Data = loading
     ? makeFakeRows(6, 20)
     : quoteParts
@@ -439,6 +642,21 @@ export const QuoteSelector: FC<Props> = ({
               </strong>
             ),
           },
+          {
+            value: (
+              <div>
+                <Tooltip key="delete" content="Delete">
+                  <IconButton
+                    key="deleteIcon"
+                    size="small"
+                    onClick={() => handleRemoveNewPending(quote)}
+                  >
+                    <DeleteIcon />
+                  </IconButton>
+                </Tooltip>
+              </div>
+            ),
+          },
         ]),
         ...quotable.map(quote => [
           { value: quote.getDescription() },
@@ -464,30 +682,9 @@ export const QuoteSelector: FC<Props> = ({
       ];
   return (
     <div>
-      <SectionBar
-        title="Supplies / Services"
-        actions={
-          onAdd
-            ? [
-                {
-                  label: 'Add',
-                  onClick: handleToggleOpen,
-                  disabled: loading,
-                },
-                {
-                  label: 'Save',
-                  onClick: handleSavePendingQuotable,
-                  disabled:
-                    loading ||
-                    (pendingQuotable.length == 0 &&
-                      pendingDeleteQuotable.length == 0),
-                },
-              ]
-            : undefined
-        }
-        fixedActions
-      />
+      <SectionBar title="Supplies / Services" actions={actions} fixedActions />
       <InfoTable
+        styles={{ minWidth: '600px' }}
         columns={COLUMNS_QUOTABLE}
         data={dataQuotable}
         loading={loading}

@@ -12,15 +12,7 @@ import {
   loadPerformanceMetricsByFilter,
 } from '../../../helpers';
 import { ROWS_PER_PAGE } from '../../../constants';
-
-type PerformanceMetricsType = {
-  technician: string;
-  incomePerHour: number;
-  percentageBillable: number;
-  serviceCallbackRate?: number;
-  installCallbackRate: string;
-  driveTime: number;
-};
+import { MetricReportData } from '@kalos-core/kalos-rpc/compiled-protos/metrics_pb';
 
 interface Props {
   onClose?: () => void;
@@ -46,10 +38,6 @@ const EXPORT_COLUMNS = [
     value: 'serviceCallbackRate',
   },
   {
-    label: 'Install Callback rate',
-    value: 'installCallbackRate',
-  },
-  {
     label: 'Drive Time',
     value: 'driveTime',
   },
@@ -64,10 +52,8 @@ export const PerformanceMetrics: FC<Props> = ({
 }) => {
   const [loaded, setLoaded] = useState<boolean>(false);
   const [loading, setLoading] = useState<boolean>(false);
-  const [entries, setEntries] = useState<PerformanceMetricsType[]>([]);
-  const [printEntries, setPrintEntries] = useState<PerformanceMetricsType[]>(
-    [],
-  );
+  const [entries, setEntries] = useState<MetricReportData[]>([]);
+  const [printEntries, setPrintEntries] = useState<MetricReportData[]>([]);
   const [page, setPage] = useState<number>(0);
   const [count, setCount] = useState<number>(0);
   const [printStatus, setPrintStatus] = useState<Status>('idle');
@@ -81,10 +67,12 @@ export const PerformanceMetrics: FC<Props> = ({
   );
   const load = useCallback(async () => {
     setLoading(true);
-    const { results, totalCount } = await loadPerformanceMetricsByFilter({
+    const resultList = await loadPerformanceMetricsByFilter({
       page,
       filter: getFilter(),
     });
+    const results = resultList.getResultsList();
+    const totalCount = resultList.getTotalCount();
     setEntries(results);
     setCount(totalCount);
     setLoading(false);
@@ -105,46 +93,44 @@ export const PerformanceMetrics: FC<Props> = ({
   );
   const loadPrintEntries = useCallback(async () => {
     if (printEntries.length === count) return;
-    const { results } = await loadPerformanceMetricsByFilter({
+    const results = await loadPerformanceMetricsByFilter({
       page: -1,
       filter: getFilter(),
     });
-    setPrintEntries(results);
+    setPrintEntries(results.getResultsList());
   }, [setPrintEntries, getFilter, printEntries, count]);
   const handleExport = useCallback(async () => {
     setExportStatus('loading');
     await loadPrintEntries();
     setExportStatus('loaded');
   }, [loadPrintEntries, setExportStatus]);
-  const handleExported = useCallback(() => setExportStatus('idle'), [
-    setExportStatus,
-  ]);
+  const handleExported = useCallback(
+    () => setExportStatus('idle'),
+    [setExportStatus],
+  );
   const handlePrint = useCallback(async () => {
     setPrintStatus('loading');
     await loadPrintEntries();
     setPrintStatus('loaded');
   }, [loadPrintEntries, setPrintStatus]);
-  const handlePrinted = useCallback(() => setPrintStatus('idle'), [
-    setPrintStatus,
-  ]);
-  const getData = (entries: PerformanceMetricsType[]): Data =>
+  const handlePrinted = useCallback(
+    () => setPrintStatus('idle'),
+    [setPrintStatus],
+  );
+  const getData = (entries: MetricReportData[]): Data =>
     loading
       ? makeFakeRows(3, 5)
       : entries.map(entry => {
-          const {
-            technician,
-            incomePerHour,
-            percentageBillable,
-            serviceCallbackRate,
-            installCallbackRate,
-            driveTime,
-          } = entry;
+          const technician = entry.getTechname();
+          const incomePerHour = entry.getIncomeperhour();
+          const percentageBillable = entry.getPercentagebillable();
+          const serviceCallbackRate = entry.getServicecallbackrate();
+          const driveTime = entry.getDrivetime();
           return [
             { value: technician },
             { value: incomePerHour },
             { value: percentageBillable },
             { value: serviceCallbackRate },
-            { value: installCallbackRate },
             { value: driveTime },
           ];
         });

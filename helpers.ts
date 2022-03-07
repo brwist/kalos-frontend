@@ -89,6 +89,7 @@ import { File } from '@kalos-core/kalos-rpc/File';
 import { DevlogClient } from '@kalos-core/kalos-rpc/Devlog';
 import { InvoiceClient } from '@kalos-core/kalos-rpc/Invoice';
 import { FirstCallClient } from '@kalos-core/kalos-rpc/FirstCall';
+import { MertricReportDataRequest } from '@kalos-core/kalos-rpc/compiled-protos/metrics_pb';
 
 export type SimpleFile = {
   key: string;
@@ -609,10 +610,12 @@ export const loadPerformanceMetricsByFilter = async ({
   filter: { dateStart, dateEnd },
 }: LoadMetricsByFilter) => {
   console.log({ page, dateStart, dateEnd });
-  return {
-    results: [],
-    totalCount: 0,
-  };
+  const req = new MertricReportDataRequest();
+  req.setEnddate(dateEnd);
+  req.setStartdate(dateStart);
+  req.setPagenumber(page);
+  const results = await MetricsClientService.loadMetricsReportData(req);
+  return results;
 };
 
 export const loadDeletedServiceCallsByFilter = async ({
@@ -795,10 +798,13 @@ export type PromptPaymentData = {
 
 export const loadPromptPaymentData = async (month: string) => {
   //FIXME finish implementation, move to reports client
+
   const req = new PromptPaymentReportLine();
   const date = `${month.replace('%', '01')} 00:00:00`;
-  const startDate = format(addDays(new Date(date), -1), 'yyyy-MM-dd');
-  const endDate = format(addMonths(new Date(date), 1), 'yyyy-MM-dd');
+  console.log('formatted date', date);
+
+  const startDate = format(addDays(new Date(parseISO(date)), -1), 'yyyy-MM-dd');
+  const endDate = format(addMonths(new Date(parseISO(date)), 1), 'yyyy-MM-dd');
   req.setDateRangeList(['>', startDate, '<', endDate]);
   req.setDateTargetList(['log_billingDate', 'reportUntil']);
   const res = await ReportClientService.GetPromptPaymentData(req);
@@ -857,28 +863,16 @@ export const loadPromptPaymentData = async (month: string) => {
       return a[key] > b[key] ? 1 : b[key] > a[key] ? -1 : 0;
     };
   };
-
-  return Object.values(data)
-    .concat()
+  const results = Object.values(data)
     .sort(fn('customerName'))
-    .map(
-      //@ts-ignore
-      ({
-        averageDaysToPay,
-        ...item
-      }: {
-        averageDaysToPay: number;
-        promptPaymentData: PromptPaymentData;
-      }) => ({
-        ...item,
-        averageDaysToPay:
-          // @ts-ignore
-          item.paidInvoices === 0
-            ? 0
-            : // @ts-ignore
-              Math.round(averageDaysToPay / item.paidInvoices),
-      }),
-    );
+    .map(({ averageDaysToPay, ...item }) => ({
+      ...item,
+      averageDaysToPay:
+        item.paidInvoices === 0
+          ? 0
+          : Math.round(averageDaysToPay / item.paidInvoices),
+    }));
+  return results;
 };
 
 export type LoadSpiffReportByFilter = {

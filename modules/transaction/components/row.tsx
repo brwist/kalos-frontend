@@ -323,6 +323,25 @@ export function TransactionRow({
     {
       value: txn.getVendor(),
     },
+    /*
+    {
+      value: editingStateTax ? (
+        <Checkbox
+          checked={txn.getStateTaxApplied()}
+          onChange={event => handleStateTaxSelect(event.target.checked)}
+        />
+      ) : txn.getStateTaxApplied() != undefined ? (
+        `${txn.getStateTaxApplied() === true ? 'Applied' : 'Not Applied'}`
+      ) : (
+        ''
+      ),
+      actions: [
+        <IconButton key="edit" size="small" onClick={toggleEditingStateTax}>
+          {editingStateTax ? <CloseIcon /> : <EditIcon />}
+        </IconButton>,
+      ],
+    },
+    */
     {
       value: editingStateTax ? (
         <Checkbox

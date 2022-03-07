@@ -325,6 +325,8 @@ export const EventsReport: FC<Props> = ({
                 >
                   <EditIcon />
                 </IconButton>,
+                /* {
+                  
                 <IconButton
                   key="tasks"
                   size="small"
@@ -332,6 +334,8 @@ export const EventsReport: FC<Props> = ({
                 >
                   <AssignmentIcon />
                 </IconButton>,
+            
+               */
               ],
             },
           ];

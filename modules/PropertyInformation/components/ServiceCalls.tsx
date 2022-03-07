@@ -11,9 +11,14 @@ import { InfoTable, Data, Columns } from '../../ComponentsLibrary/InfoTable';
 import { SectionBar } from '../../ComponentsLibrary/SectionBar';
 import { ConfirmDelete } from '../../ComponentsLibrary/ConfirmDelete';
 import { Link } from '../../ComponentsLibrary/Link';
+import { Tooltip } from '../../ComponentsLibrary/Tooltip';
+import ReceiptIcon from '@material-ui/icons/Receipt';
 import { Modal } from '../../ComponentsLibrary/Modal';
 import { Form, Schema } from '../../ComponentsLibrary/Form';
 import { PlainForm } from '../../ComponentsLibrary/PlainForm';
+import { ServicesRendered } from '@kalos-core/kalos-rpc/ServicesRendered';
+import { Proposal } from '../../ComponentsLibrary/ServiceCall/components/Proposal';
+import { Button } from '../../ComponentsLibrary/Button';
 import {
   formatTime,
   formatDate,
@@ -25,10 +30,10 @@ import {
   CustomEventsHandler,
   EventClientService,
   loadPropertiesByFilter,
+  ServicesRenderedClientService,
 } from '../../../helpers';
 import { OPTION_BLANK } from '../../../constants';
 import './serviceCalls.less';
-import { Contract } from '@kalos-core/kalos-rpc/Contract';
 import { AddServiceCall } from '../../AddServiceCallGeneral/components/AddServiceCall';
 import { ServiceRequest } from '../../ComponentsLibrary/ServiceCall/requestIndex';
 import RateReviewOutlined from '@material-ui/icons/RateReviewOutlined';
@@ -38,7 +43,7 @@ interface Props {
   userID: number;
   propertyId?: number;
   viewedAsCustomer?: boolean;
-  loggedUserId: number;
+  loggedUser: User;
 }
 
 type ServiceCallFilter = {
@@ -55,6 +60,7 @@ interface State {
   addingServiceCall?: boolean;
   editingServiceCall: boolean;
   serviceCallId: number;
+  loggedUser: User;
   orderByFields: (keyof Event)[];
   orderByDBField: string;
   dir: OrderDir;
@@ -65,6 +71,8 @@ interface State {
   confirmingAdded: boolean;
   showText?: string;
   serviceCallFilter: ServiceCallFilter;
+  proposalEvent: Event | undefined;
+  proposalEventPropData: ServicesRendered[];
 }
 
 export class ServiceCalls extends PureComponent<Props, State> {
@@ -81,8 +89,11 @@ export class ServiceCalls extends PureComponent<Props, State> {
       addingCustomerEntry: undefined,
       addingServiceCall: false,
       editingServiceCall: false,
+      loggedUser: props.loggedUser,
       serviceCallId: 0,
       dir: 'DESC',
+      proposalEvent: undefined,
+      proposalEventPropData: [],
       orderByFields: ['getDateStarted'],
       orderByDBField: 'date_started',
       count: 0,
@@ -100,6 +111,7 @@ export class ServiceCalls extends PureComponent<Props, State> {
 
   load = async () => {
     this.setState({ loading: true });
+    console.log('user', this.props.loggedUser);
     const { propertyId, userID, viewedAsCustomer } = this.props;
     const { dir, orderByDBField, page, serviceCallFilter } = this.state;
     const entry = new Event();
@@ -120,6 +132,7 @@ export class ServiceCalls extends PureComponent<Props, State> {
       entry.setDescription(`%${serviceCallFilter.briefDescription}%`);
     }
     try {
+      console.log(entry);
       const response = await this.EventClient.BatchGet(entry);
       this.setState({
         entries: response.getResultsList().sort(this.sort),
@@ -175,7 +188,25 @@ export class ServiceCalls extends PureComponent<Props, State> {
       await this.load();
     }
   };
-
+  handleSetProposalEvent = async (proposalEvent?: Event) => {
+    if (proposalEvent === undefined) {
+      this.setState({ proposalEventPropData: [] });
+      this.setState({ proposalEvent: proposalEvent });
+    } else {
+      const srReq = new ServicesRendered();
+      srReq.setEventId(proposalEvent.getId());
+      srReq.setIsActive(1);
+      const results = await ServicesRenderedClientService.BatchGet(srReq);
+      {
+        if (results) {
+          this.setState({ proposalEventPropData: results.getResultsList() });
+          this.setState({ proposalEvent: proposalEvent });
+        } else {
+          this.setState({ proposalEvent: proposalEvent });
+        }
+      }
+    }
+  };
   async componentDidMount() {
     await this.load();
     CustomEventsHandler.listen(
@@ -459,6 +490,25 @@ export class ServiceCalls extends PureComponent<Props, State> {
                 >
                   <RateReviewOutlined />
                 </IconButton>,
+                ...(state.loggedUser
+                  .getPermissionGroupsList()
+                  .find(permission => permission.getName() === 'DevTesting')
+                  ? [
+                      <Tooltip
+                        key="proposalModalButton"
+                        content="Create/Edit Proposal"
+                        placement="top"
+                      >
+                        <IconButton
+                          key="proposal"
+                          size="small"
+                          onClick={() => this.handleSetProposalEvent(entry)}
+                        >
+                          <ReceiptIcon />
+                        </IconButton>
+                      </Tooltip>,
+                    ]
+                  : []),
                 <IconButton
                   key={2}
                   style={{ marginLeft: 4 }}
@@ -839,9 +889,37 @@ export class ServiceCalls extends PureComponent<Props, State> {
             </div>
           </Modal>
         )}
+        {this.state.proposalEvent &&
+          this.state.proposalEvent.getCustomer() != undefined &&
+          this.state.proposalEvent.getProperty() != undefined && (
+            <Modal
+              open
+              styles={{ minWidth: '60%' }}
+              onClose={() => this.handleSetProposalEvent(undefined)}
+            >
+              <SectionBar
+                title="Proposal"
+                subtitle={`Proposal will be sent to ${this.state.proposalEvent
+                  .getCustomer()
+                  ?.getEmail()}`}
+              >
+                <Button
+                  onClick={() => this.handleSetProposalEvent(undefined)}
+                  label={'Close'}
+                ></Button>
+                <Proposal
+                  serviceItem={this.state.proposalEvent}
+                  property={this.state.proposalEvent.getProperty()!}
+                  customer={this.state.proposalEvent.getCustomer()!}
+                  servicesRendered={this.state.proposalEventPropData}
+                  reload={() => this.handleSetProposalEvent(undefined)}
+                />
+              </SectionBar>
+            </Modal>
+          )}
         {this.state.addingServiceCall && (
           <AddServiceCall
-            loggedUserId={props.loggedUserId}
+            loggedUserId={props.loggedUser.getId()}
             propertyId={propertyId}
             userId={userID}
             openServiceCall={true}
@@ -861,7 +939,7 @@ export class ServiceCalls extends PureComponent<Props, State> {
             fullScreen
           >
             <ServiceRequest
-              loggedUserId={props.loggedUserId}
+              loggedUserId={props.loggedUser.getId()}
               propertyId={propertyId!}
               userID={userID}
               serviceCallId={this.state.serviceCallId}

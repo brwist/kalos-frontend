@@ -43,11 +43,12 @@ import {
   makeFakeRows,
   getRPCFields,
   makeSafeFormObject,
+  EventClientService,
 } from '../../../helpers';
 import { ServiceItemLinks } from '../ServiceItemLinks';
 import { ServiceItemReadings } from '../ServiceItemReadings';
 import './styles.less';
-
+import { Event } from '@kalos-core/kalos-rpc/Event';
 const ServiceItemClientService = new ServiceItemClient(ENDPOINT);
 const ReadingClientService = new ReadingClient(ENDPOINT);
 const MaintenanceQuestionClientService = new MaintenanceQuestionClient(
@@ -92,10 +93,11 @@ interface Props {
   loggedUserId: number;
   propertyId: number;
   title?: string;
+  eventId?: number;
   loading?: boolean;
   selectable?: boolean;
-  onSelect?: (entries: ServiceItem[]) => void;
-  selected?: ServiceItem[];
+  onSelect?: (entries: number[]) => void;
+  selected?: number[];
   repair?: boolean;
   disableRepair?: boolean;
   repairs?: Repair[];
@@ -126,7 +128,7 @@ export const ServiceItems: FC<Props> = props => {
     title = 'Service Items',
     selectable,
     onSelect,
-    selected: selectedInitial,
+    eventId,
     repair,
     disableRepair = false,
     repairs: repairsInitial = [],
@@ -137,7 +139,6 @@ export const ServiceItems: FC<Props> = props => {
     asideContent,
     viewedAsCustomer = false,
   } = props;
-
   const [state, dispatch] = useReducer(reducer, {
     entries: [],
     repairs: repairsInitial,
@@ -156,9 +157,8 @@ export const ServiceItems: FC<Props> = props => {
     readingsDropdowns: [],
   });
 
-  const [selected, setSelected] = useState<ServiceItem[]>(
-    selectedInitial || [],
-  );
+  const [selected, setSelected] = useState<number[]>(props.selected || []);
+  console.log('selected Ids', selected);
 
   const handleMaterialChange = useCallback(
     (idx: number) => (data: Material) => {
@@ -486,26 +486,38 @@ export const ServiceItems: FC<Props> = props => {
   }, [state.deletingEntry, load, state.repairs, onRepairsChange]);
 
   const handleSelectedChange = useCallback(
-    (entry: ServiceItem) => () => {
-      const newSelected: ServiceItem[] = [
+    (entry: ServiceItem) => async () => {
+      const newSelected: number[] = [
         ...selected.filter(item => {
-          let safe = makeSafeFormObject(item, new ServiceItem());
-          return safe.getId() !== entry.getId();
+          return item !== entry.getId();
         }),
       ];
       const isSelected = selected.find(item => {
-        let safe = makeSafeFormObject(item, new ServiceItem());
-        return safe.getId() === entry.getId();
+        return item === entry.getId();
       });
       if (!isSelected) {
-        newSelected.push(entry);
+        newSelected.push(entry.getId());
       }
       setSelected(newSelected);
       if (onSelect) {
         onSelect(newSelected);
+        let fullString = '';
+        for (let i = 0; i < newSelected.length; i++) {
+          fullString += `${newSelected[i]}`;
+          if (i < newSelected.length - 1) {
+            fullString += ',';
+          }
+        }
+        if (eventId) {
+          const updateEvent = new Event();
+          updateEvent.setInvoiceServiceItem(fullString);
+          updateEvent.setId(eventId);
+          updateEvent.setFieldMaskList(['InvoiceServiceItem']);
+          await EventClientService.Update(updateEvent);
+        }
       }
     },
-    [setSelected, selected, onSelect],
+    [setSelected, selected, eventId, onSelect],
   );
 
   const handleReorder = useCallback(
@@ -638,10 +650,10 @@ export const ServiceItems: FC<Props> = props => {
                   type="checkbox"
                   value={
                     !!selected.find(item => {
-                      if (!item.getId) {
+                      if (!item) {
                         return (item as any)['array']['id'] === id; // Fall back in case old local storage is present
                       } else {
-                        return item.getId() === id;
+                        return item === id;
                       }
                     })
                   }
@@ -686,6 +698,7 @@ export const ServiceItems: FC<Props> = props => {
                     <ServiceItemReadings
                       {...props}
                       serviceItemId={entry.getId()}
+                      eventId={eventId}
                       onClose={() => {
                         let tempDropDowns = state.readingsDropdowns;
                         const dropdown = state.readingsDropdowns.findIndex(
