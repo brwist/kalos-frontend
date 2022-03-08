@@ -97,6 +97,7 @@ import { ServiceRequest } from '../ServiceCall/requestIndex';
 import { QuoteLine } from '@kalos-core/kalos-rpc/QuoteLine';
 import { ServicesRendered } from '@kalos-core/kalos-rpc/ServicesRendered';
 import { result } from 'lodash';
+import { FlatRateSheet } from '../FlatRate';
 
 type Kind =
   | 'serviceCalls'
@@ -2781,19 +2782,10 @@ export const AdvancedSearch: FC<Props> = ({
         hoverable
       />
       {flatRateIsOpen && flatRate && (
-        <Modal open onClose={() => setFlatRateIsOpen(false)}>
-          <InfoTable
-            columns={[{ name: 'Description' }, { name: 'Cost' }]}
-            data={flatRate.map(value => {
-              return [
-                {
-                  value: value.getDescription(),
-                },
-                {
-                  value: usd(parseInt(value.getAdjustment())),
-                },
-              ];
-            })}
+        <Modal open fullScreen onClose={() => setFlatRateIsOpen(false)}>
+          <FlatRateSheet
+            loggedUserId={loggedUserId}
+            onClose={()=>setFlatRateIsOpen(false)}
           />
         </Modal>
       )}
