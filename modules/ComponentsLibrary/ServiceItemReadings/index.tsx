@@ -487,28 +487,27 @@ export const ServiceItemReadings: FC<Props> = ({
           },
         ];
       });
-  const actions: ActionsProps = [];
+  let actions: ActionsProps = [];
   if (onClose) {
-    [
-      ...actions,
+    actions = actions.concat([
       {
         label: 'Close',
         onClick: onClose,
       },
-    ];
+    ]);
   }
   if (eventId) {
-    [
-      ...actions,
+    actions = actions.concat([
       {
         label: 'Add',
         onClick: setEditing(new Reading()),
       },
-    ];
+    ]);
   }
+
   return (
     <>
-      <SectionBar title="Readings" actions={actions} fixedActions />
+      <SectionBar title="Readings" actions={actions} />
       <InfoTable data={data} loading={loading} hoverable />
       {editedEntry && (
         <div className="ServiceItemsReadings">

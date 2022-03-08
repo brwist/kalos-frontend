@@ -1145,10 +1145,6 @@ export const AdvancedSearch: FC<Props> = ({
         label: 'Title',
         disabled: !isAdmin,
       },
-      // {
-      //   name: 'id', // TODO
-      //   label: 'Hire Date',
-      // },
       {
         name: 'getEmployeeDepartmentId',
         label: 'Employee Segment',
@@ -1741,6 +1737,19 @@ export const AdvancedSearch: FC<Props> = ({
             orderDir: usersSort.orderDir === 'ASC' ? 'DESC' : 'ASC',
           }),
         },
+        {
+          name: 'Badge Number',
+          ...(usersSort.orderByField === 'getId'
+            ? {
+                dir: usersSort.orderDir,
+              }
+            : {}),
+          onClick: handleUsersSortChange({
+            orderByField: 'getId',
+            orderBy: 'id',
+            orderDir: usersSort.orderDir === 'ASC' ? 'DESC' : 'ASC',
+          }),
+        },
       ];
     if (kind === 'properties')
       return [
@@ -2175,7 +2184,7 @@ export const AdvancedSearch: FC<Props> = ({
             });
       if (kind === 'employees')
         return loading
-          ? makeFakeRows(5, 3)
+          ? makeFakeRows(6, 3)
           : users
               .filter(u => {
                 const usersFilter = filter as UsersFilter;
@@ -2221,6 +2230,7 @@ export const AdvancedSearch: FC<Props> = ({
                       .toLowerCase()
                       .includes(usersFilter.cellphone.toLowerCase())
                   : true;
+
                 //@ts-ignore
                 const intId = usersFilter.id ? parseInt(usersFilter.id, 10) : 0;
                 const matchedId = intId > 0 ? u.getId() === intId : true;
@@ -2286,6 +2296,17 @@ export const AdvancedSearch: FC<Props> = ({
                   {
                     value: cellphone,
                     onClick: handlePendingEmployeeViewingToggle(entry),
+                  },
+                  {
+                    value: entry.getId(),
+                    onClick: handlePendingEmployeeViewingToggle(entry),
+                  },
+                  {
+                    value: '',
+                    onClick: handlePendingEmployeeViewingToggle(entry),
+                  },
+                  {
+                    value: '',
                     actions: [
                       ...(isAdmin
                         ? [
@@ -2689,8 +2710,8 @@ export const AdvancedSearch: FC<Props> = ({
             ? [
                 {
                   label: 'Add New Customer',
-                  onClick: handlePendingCustomerEditingToggle(new User())
-                }
+                  onClick: handlePendingCustomerEditingToggle(new User()),
+                },
               ]
             : []),
           // ...(printableEmployees

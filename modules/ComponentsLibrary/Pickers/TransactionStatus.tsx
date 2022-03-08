@@ -76,17 +76,17 @@ export class TxnStatusPicker extends React.PureComponent<props, state> {
           <option value={7}>Not Audited</option>
           <option value={8}>Not Recorded</option>
 
-          {this.props.hideAuditWorkflowFilters === true ? (
+          {this.props.hideAuditWorkflowFilters === false ? (
             <option hidden={this.props.hideAuditWorkflowFilters} value={9}>
               Accepted, Not Recorded, Not Audited
             </option>
           ) : undefined}
-          {this.props.hideAuditWorkflowFilters === true ? (
+          {this.props.hideAuditWorkflowFilters === false ? (
             <option hidden={this.props.hideAuditWorkflowFilters} value={10}>
               Accepted, Audited, Not Recorded
             </option>
           ) : undefined}
-          {this.props.hideAuditWorkflowFilters === true ? (
+          {this.props.hideAuditWorkflowFilters === false ? (
             <option hidden={this.props.hideAuditWorkflowFilters} value={11}>
               Audited and Recorded
             </option>

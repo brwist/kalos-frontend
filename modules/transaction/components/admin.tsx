@@ -908,7 +908,7 @@ export class TransactionAdminView extends React.Component<props, state> {
             <TxnStatusPicker
               disabled={this.state.isLoading}
               hideAuditWorkflowFilters={
-                this.state.acceptOverride == true ? false : true
+                this.state.acceptOverride == false ? false : true
               }
               selected={this.state.filters.statusID || 0}
               onSelect={statusID => this.setFilter('statusID', statusID)}
