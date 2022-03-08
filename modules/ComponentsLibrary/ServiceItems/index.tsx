@@ -41,7 +41,6 @@ import { PlainForm } from '../PlainForm';
 import { ConfirmDelete } from '../ConfirmDelete';
 import {
   makeFakeRows,
-  getRPCFields,
   makeSafeFormObject,
   EventClientService,
 } from '../../../helpers';
@@ -49,6 +48,7 @@ import { ServiceItemLinks } from '../ServiceItemLinks';
 import { ServiceItemReadings } from '../ServiceItemReadings';
 import './styles.less';
 import { Event } from '@kalos-core/kalos-rpc/Event';
+import { filter, result } from 'lodash';
 const ServiceItemClientService = new ServiceItemClient(ENDPOINT);
 const ReadingClientService = new ReadingClient(ENDPOINT);
 const MaintenanceQuestionClientService = new MaintenanceQuestionClient(
@@ -407,8 +407,6 @@ export const ServiceItems: FC<Props> = props => {
       if (state.editing) {
         dispatch({ type: ACTIONS.SET_SAVING, data: true });
 
-        //onst entry = editing;
-
         let entry = makeSafeFormObject(data, new ServiceItem());
         if (typeof entry.getBrand() === 'function') {
           //for some reason, if the form value hasn't changed,it throws an
@@ -416,10 +414,8 @@ export const ServiceItems: FC<Props> = props => {
           entry = state.editing;
         }
         entry.setPropertyId(propertyId);
-        const isNew = !state.editing.getId();
-        if (!isNew) {
-          entry.setId(state.editing.getId());
-        } else {
+        const isNew = entry.getId() === 0;
+        if (isNew && state.entries.length > 0) {
           const sortOrder = Math.max(
             state.entries[state.entries.length - 1].getSortOrder() + 1,
             state.entries.length,
@@ -427,10 +423,17 @@ export const ServiceItems: FC<Props> = props => {
           entry.setSortOrder(sortOrder);
           entry.addFieldMask('SortOrder');
         }
-        const id = await ServiceItemClientService[isNew ? 'Create' : 'Update'](
-          entry,
+        let result = new ServiceItem();
+        if (isNew) {
+          result = await ServiceItemClientService.Create(entry);
+        } else {
+          result = await ServiceItemClientService.Update(entry);
+        }
+        await handleMaterials(
+          state.materials,
+          state.materialsIds,
+          result.getId(),
         );
-        await handleMaterials(state.materials, state.materialsIds, id.getId());
         dispatch({ type: ACTIONS.SET_SAVING, data: false });
         dispatch({ type: ACTIONS.SET_EDITING, data: undefined });
         await load();
@@ -479,11 +482,35 @@ export const ServiceItems: FC<Props> = props => {
         onRepairsChange(newRepairs);
       }
       const entry = new ServiceItem();
+      //we should update the selected id as well
+      const newSelected = selected.filter(item => item != deleting.getId());
+      let fullString = '';
+      for (let i = 0; i < newSelected.length; i++) {
+        fullString += `${newSelected[i]}`;
+        if (i < newSelected.length - 1) {
+          fullString += ',';
+        }
+      }
+      if (eventId) {
+        console.log('full string', fullString);
+        const updateEvent = new Event();
+        updateEvent.setInvoiceServiceItem(fullString);
+        updateEvent.setId(eventId);
+        updateEvent.setFieldMaskList(['InvoiceServiceItem']);
+        await EventClientService.Update(updateEvent);
+      }
       entry.setId(deleting.getId());
       await ServiceItemClientService.Delete(entry);
       await load();
     }
-  }, [state.deletingEntry, load, state.repairs, onRepairsChange]);
+  }, [
+    state.deletingEntry,
+    eventId,
+    selected,
+    load,
+    state.repairs,
+    onRepairsChange,
+  ]);
 
   const handleSelectedChange = useCallback(
     (entry: ServiceItem) => async () => {
@@ -492,6 +519,7 @@ export const ServiceItems: FC<Props> = props => {
           return item !== entry.getId();
         }),
       ];
+
       const isSelected = selected.find(item => {
         return item === entry.getId();
       });
@@ -709,7 +737,6 @@ export const ServiceItems: FC<Props> = props => {
                             tempDropDowns[dropdown].active = 1;
                           else tempDropDowns[dropdown].active = 0;
                         }
-                        console.log(tempDropDowns);
                         dispatch({
                           type: ACTIONS.SET_READINGS_DROPDOWNS,
                           data: tempDropDowns,
