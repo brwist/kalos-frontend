@@ -23,6 +23,7 @@ import {
   makeMonthsOptions,
   sortUserByLastname,
   TransactionActivityClientService,
+  UserClientService,
 } from '../../../helpers';
 import {
   RecordPageReq,
@@ -50,6 +51,7 @@ interface state {
   isLoading: boolean;
   transactions: Transaction[];
   filters: IFilter;
+  accountingAdmin: boolean;
   departmentView: boolean;
   count: number;
   acceptOverride: boolean;
@@ -88,7 +90,8 @@ type sortString =
   | 'department_id'
   | 'job_id'
   | 'amount'
-  | 'owner_name';
+  | 'owner_name'
+  | 'state_tax_applied';
 
 export class TransactionAdminView extends React.Component<props, state> {
   TxnClient: TransactionClient;
@@ -101,6 +104,7 @@ export class TransactionAdminView extends React.Component<props, state> {
       page: 0,
       // TODO: REPLACE HARDCODED VALUES WITH AN ACCEPT OVERRIDE ROLE
       acceptOverride: ![1734, 9646, 8418, 103323, 9809].includes(props.userID),
+      accountingAdmin: false,
       isLoading: false,
       departmentView: !props.isSU,
       transactions: [],
@@ -526,6 +530,18 @@ export class TransactionAdminView extends React.Component<props, state> {
     console.log(res);
   }
 
+  async fetchUser() {
+    let reqObj = new User();
+    reqObj.setId(this.props.userID);
+    const result = await UserClientService.Get(reqObj);
+    const permission = result
+      .getPermissionGroupsList()
+      .find(item => item.getName() === 'AccountingAdmin')
+      ? true
+      : false;
+    console.log('permission found?', permission);
+    this.setState({ accountingAdmin: permission });
+  }
   setSort(sortBy: sortString) {
     this.setState(prevState => {
       let newDir: 'desc' | 'asc' = 'desc';
@@ -669,6 +685,7 @@ export class TransactionAdminView extends React.Component<props, state> {
   }
 
   async componentDidMount() {
+    await this.fetchUser();
     await this.fetchTxns();
   }
 
@@ -759,6 +776,18 @@ export class TransactionAdminView extends React.Component<props, state> {
           return a.getVendor().localeCompare(b.getVendor());
         } else {
           return b.getVendor().localeCompare(a.getVendor());
+        }
+      });
+    }
+    if (sortBy === 'state_tax_applied') {
+      return this.state.transactions.sort((a, b) => {
+        const stateTaxA = a.getStateTaxApplied() == false ? 0 : 1;
+        const stateTaxB = b.getStateTaxApplied() == false ? 0 : 1;
+
+        if (sortDir === 'asc') {
+          return stateTaxA - stateTaxB;
+        } else {
+          return stateTaxB - stateTaxA;
         }
       });
     }
@@ -1030,8 +1059,16 @@ export class TransactionAdminView extends React.Component<props, state> {
               dir: 'DESC',
               onClick: () => this.setSort('amount'),
             },
-            { name: 'Description' },
-            { name: 'State Tax Applied?' },
+            {
+              name: 'Description',
+              dir: 'DESC',
+              onClick: () => this.setSort('description'),
+            },
+            {
+              name: 'State Tax Applied?',
+              dir: 'DESC',
+              onClick: () => this.setSort('state_tax_applied'),
+            },
             { name: 'Actions' },
           ]}
           data={
@@ -1048,6 +1085,7 @@ export class TransactionAdminView extends React.Component<props, state> {
                     accept: this.makeUpdateStatus(txn.getId(), 3, 'accepted'),
                     reject: this.makeUpdateStatus(txn.getId(), 4, 'rejected'),
                     refresh: this.fetchTxns,
+                    accountingAdmin: this.state.accountingAdmin,
                     addJobNumber: this.makeAddJobNumber(txn.getId()),
                     updateNotes: this.makeUpdateNotes(txn.getId()),
                     markAsDuplicate: this.markAsDuplicate(txn.getId()),

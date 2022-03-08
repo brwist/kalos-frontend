@@ -39,6 +39,7 @@ interface props {
   departmentView: boolean;
   acceptOverride: boolean;
   userID: number;
+  accountingAdmin: boolean;
   enter(): Promise<void>;
   audit(): Promise<void>;
   accept(): Promise<void>;
@@ -75,6 +76,7 @@ export function TransactionRow({
   updateDepartment,
   editingDepartment,
   editingStateTax,
+  accountingAdmin,
   //jobInfo,
   userID,
   editingCostCenter,
@@ -136,7 +138,10 @@ export function TransactionRow({
         alert('File could not be uploaded');
         console.log(err);
       }
-
+      if (accountingAdmin) {
+        await accept();
+        await audit();
+      }
       await refresh();
       alert('Upload complete!');
     };
