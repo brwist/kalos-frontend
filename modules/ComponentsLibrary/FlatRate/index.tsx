@@ -20,6 +20,7 @@ import { Typography } from '@material-ui/core';
 
 export interface Props {
   loggedUserId: number;
+  onClose?: () => void;
 }
 
 interface FormData {
@@ -202,6 +203,7 @@ const initialState: State = {
 
 export const FlatRateSheet: React.FC<Props> = function FlatRateSheet({
   loggedUserId,
+  onClose,
 }) {
   const [state, dispatch] = useReducer(reducer, initialState);
 
@@ -457,7 +459,17 @@ export const FlatRateSheet: React.FC<Props> = function FlatRateSheet({
     <PageWrapper userID={loggedUserId}>
     <SectionBar
       title="Flat Rates"
-      actions={[
+      actions={onClose ? [
+        {
+          label: state.createNew ? 'Cancel Add' : 'Add New Flat Rate',
+          onClick: () => handleToggleAdd(),
+          style: {display: state.canEditFlatRates ? "" : "none"}
+        },
+        {
+          label: 'Close',
+          onClick: onClose,
+        }
+      ] : [
         {
           label: state.createNew ? 'Cancel Add' : 'Add New Flat Rate',
           onClick: () => handleToggleAdd(),
