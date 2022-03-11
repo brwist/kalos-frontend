@@ -126,34 +126,11 @@ export const InternalDocuments: FC = () => {
         S3ClientService.openFile(entry.getFilename(), bucket);
         console.log('bucket found, open file');
       } else {
-        const fileReq = new FileObject();
-        fileReq.setBucket('kalos-internal-documents');
-        fileReq.setKey(entry.getFilename());
-        try {
-          const result = await S3ClientService.Get(fileReq);
-          if (result) {
-            console.log('we found the file in internal documents');
-            S3ClientService.openFile(
-              entry.getFilename(),
-              'kalos-internal-documents',
-            );
-          } else {
-            console.log(
-              'we did not find it in internal documents, default to internal-doc',
-            );
-            S3ClientService.openFile(
-              entry.getFilename(),
-              INTERNAL_DOCUMENTS_BUCKET,
-            );
-          }
-        } catch (err) {
-          console.log('error, default to internal-doc');
-
-          S3ClientService.openFile(
-            entry.getFilename(),
-            INTERNAL_DOCUMENTS_BUCKET,
-          );
-        }
+        console.log('defaulting bucket');
+        S3ClientService.openFile(
+          entry.getFilename(),
+          INTERNAL_DOCUMENTS_BUCKET,
+        );
       }
     },
     [],
