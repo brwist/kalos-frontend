@@ -10,68 +10,32 @@ import { PrintHeaderSubtitleItem } from '../PrintHeader';
 import { PlainForm, Schema } from '../PlainForm';
 import { Button } from '../Button';
 import { Alert } from '../Alert';
+import ChevronLeftIcon from '@material-ui/icons/ChevronLeft';
+import ChevronRightIcon from '@material-ui/icons/ChevronRight';
 import {
   makeFakeRows,
   formatDate,
   TimesheetLineClientService,
+  ReportClientService,
 } from '../../../helpers';
 import { format, differenceInHours, parseISO } from 'date-fns';
 import { ExportJSON } from '../ExportJSON';
 import { ROWS_PER_PAGE } from '../../../constants';
 import { TimesheetLine } from '@kalos-core/kalos-rpc/TimesheetLine';
 import { differenceInMinutes } from 'date-fns/esm';
+import { TransactionReportLine } from '@kalos-core/kalos-rpc/Report';
+import { result } from 'lodash';
 
 interface Props {
   loggedUserId: number;
   onClose?: () => void;
-  dateStarted: string;
-  dateEnded: string;
+  year: string;
 }
 
 type FilterForm = {
-  businessname?: string;
-  lastname?: string;
-  dateStarted: string;
-  dateEnded: string;
-  isActive?: boolean;
+  year: string;
 };
-/*
-set @y_year = 2022;
-select 
-transaction.id, 
-transaction.artificial_id as 'artificial id',
-event.log_jobNumber as 'job number',
-if(properties.property_isResidential, "Residential", "Commercial") as 'zoning',
-job_type.name as 'job type',
-job_subtype.name as 'sub type',
-job_subtype.class_code as 'class code',
-timesheet_department.description as 'department',
-transaction_account.description as 'category',
-transaction.vendor as 'vendor',
-concat(userz.user_lastname, ', ', user_firstname) as 'holder_name',
-transaction.timestamp as 'transaction timestamp',
-concat(left(right(transaction.artificial_id, (length(transaction.artificial_id) - 10)), 4), '-',
-		left(right(transaction.artificial_id, (length(transaction.artificial_id) - 14)), 2), '-',
-		left(right(transaction.artificial_id, (length(transaction.artificial_id) - 16)), 2), ' 00:00:00') 
-        as 'posted_timestamp',
-      
-transaction.amount as 'amount',
-trim(replace(transaction.notes, '\n', ' ')) as 'notes'
-from transaction
-join event on event.id = transaction.job_id
-join properties on properties.property_id = event.property_id
-join job_type on event.job_type_id = job_type.id
-join job_subtype on event.job_subtype_id = job_subtype.id
-join timesheet_department on transaction.department_id = timesheet_department.id
-join transaction_account on transaction.cost_center_id = transaction_account.id
-join userz on transaction.owner_id = userz.user_id
-where transaction.is_active
-and transaction.artificial_id is not null
-and transaction.status_id > 2
-and year(transaction.timestamp) = @y_year
-order by transaction.timestamp desc
-;
-*/
+
 const COLUMNS = [
   'Hours Worked',
   'Employee',
@@ -87,92 +51,95 @@ const COLUMNS = [
 ];
 const EXPORT_COLUMNS = [
   {
-    label: 'Hours Worked',
-    value: 'hoursWorked',
+    label: 'ID',
+    value: 'transactionId',
   },
   {
-    label: 'Employee Name',
-    value: 'employee',
-  },
-  {
-    label: 'Id',
-    value: 'employeeId',
-  },
-  {
-    label: 'Time Started',
-    value: 'timeStarted',
-  },
-  {
-    label: 'Time Finished',
-    value: 'timeFinished',
-  },
-  {
-    label: 'Approver ID',
-    value: 'adminApprovalUserId',
-  },
-  {
-    label: 'Class Code ID',
-    value: 'classCodeId',
-  },
-  {
-    label: 'Class Code Description',
-    value: 'classCodeDescription',
+    label: 'Artificial ID',
+    value: 'artificialId',
   },
   {
     label: 'Job Number',
-    value: 'referenceNumber',
+    value: 'jobNumber',
   },
   {
-    label: 'Description',
-    value: 'description',
+    label: 'Zoning',
+    value: 'zoning',
+  },
+  {
+    label: 'Job Type',
+    value: 'jobType',
+  },
+  {
+    label: 'Sub Type',
+    value: 'subType',
+  },
+  {
+    label: 'Class Code',
+    value: 'classCode',
+  },
+  {
+    label: 'Department',
+    value: 'department',
+  },
+  {
+    label: 'Category',
+    value: 'category',
+  },
+  {
+    label: 'Vendor',
+    value: 'vendor',
+  },
+  {
+    label: 'Holder Name',
+    value: 'holderName',
+  },
+  {
+    label: 'Timestamp',
+    value: 'transactionTimestamp',
+  },
+  {
+    label: 'Post Timestamp',
+    value: 'postedTimestamp',
+  },
+  {
+    label: 'Amount',
+    value: 'amount',
   },
   {
     label: 'Notes',
     value: 'notes',
   },
   {
-    label: 'Billable',
-    value: 'billable',
+    label: 'Year',
+    value: 'year',
   },
 ];
 export const TransactionValidationReport: FC<Props> = ({
   loggedUserId,
-  dateStarted,
-  dateEnded,
+  year,
   onClose,
 }) => {
   const [loaded, setLoaded] = useState<boolean>(false);
   const [loading, setLoading] = useState<boolean>(false);
-  const [entries, setEntries] = useState<TimesheetLine[]>([]);
-  const [printEntries, setPrintEntries] = useState<TimesheetLine[]>([]);
+  const [entries, setEntries] = useState<TransactionReportLine[]>([]);
+  const [printEntries, setPrintEntries] = useState<TransactionReportLine[]>([]);
   const [page, setPage] = useState<number>(0);
   const [error, setError] = useState<string>('');
   const [count, setCount] = useState<number>(0);
   const [exportStatus, setExportStatus] = useState<Status>('idle');
   const [form, setForm] = useState<FilterForm>({
-    dateStarted,
-    dateEnded,
-    isActive: false,
+    year,
   });
   const [printStatus, setPrintStatus] = useState<Status>('idle');
   const load = useCallback(async () => {
     setLoading(true);
     console.log({ form });
-    const timesheetReq = new TimesheetLine();
-    timesheetReq.setIsActive(1);
-    timesheetReq.setPageNumber(page);
-    timesheetReq.setDateTargetList(['time_started', 'time_started']);
-    timesheetReq.setDateRangeList([
-      '>=',
-      form.dateStarted,
-      '<',
-      form.dateEnded,
-    ]);
-    timesheetReq.setNotEqualsList(['AdminApprovalUserId']);
-    timesheetReq.setAdminApprovalUserId(0);
-    const results = await TimesheetLineClientService.BatchGet(timesheetReq);
-    setEntries(results.getResultsList());
+    const req = new TransactionReportLine();
+    req.setYear(form.year);
+    const results = await ReportClientService.GetTransactionDumpData(req);
     console.log({ results });
+    setEntries(results.getDataList());
     setCount(results.getTotalCount());
     setLoading(false);
   }, [setLoading, page, form]);
@@ -197,20 +164,13 @@ export const TransactionValidationReport: FC<Props> = ({
   );
   const loadPrintEntries = useCallback(async () => {
     if (printEntries.length === count) return;
-    const timesheetReq = new TimesheetLine();
-    timesheetReq.setIsActive(1);
-    timesheetReq.setWithoutLimit(true);
-    timesheetReq.setDateTargetList(['time_started', 'time_started']);
-    timesheetReq.setDateRangeList([
-      '>=',
-      form.dateStarted,
-      '<',
-      form.dateEnded,
-    ]);
-    timesheetReq.setNotEqualsList(['AdminApprovalUserId']);
-    timesheetReq.setAdminApprovalUserId(0);
-    const results = await TimesheetLineClientService.BatchGet(timesheetReq);
-    setPrintEntries(results.getResultsList());
+    const req = new TransactionReportLine();
+    req.setYear(form.year);
+    const results = await ReportClientService.GetTransactionDumpData(req);
+    console.log({ results });
+    setEntries(results.getDataList());
+    setCount(results.getTotalCount());
+    setPrintEntries(results.getDataList());
   }, [setPrintEntries, form, printEntries, count]);
   const handlePrint = useCallback(async () => {
     setPrintStatus('loading');
@@ -225,19 +185,29 @@ export const TransactionValidationReport: FC<Props> = ({
     setPage(0);
     setLoaded(false);
   }, []);
-
+  const handleYearChange = useCallback(
+    (step: number) => () => {
+      setForm({ year: year + step });
+      setLoaded(false);
+    },
+    [setForm, year],
+  );
   const SCHEMA: Schema<FilterForm> = [
     [
       {
-        name: 'dateStarted',
-        label: 'Start Date',
-        type: 'date',
-      },
-      {
-        name: 'dateEnded',
-        label: 'End Date',
-        type: 'date',
-        actions: [{ label: 'Search', onClick: handleSearch }],
+        name: 'year',
+        label: 'Year',
+        readOnly: true,
+        startAdornment: (
+          <IconButton size="small" onClick={handleYearChange(-1)}>
+            <ChevronLeftIcon />
+          </IconButton>
+        ),
+        endAdornment: (
+          <IconButton size="small" onClick={handleYearChange(1)}>
+            <ChevronRightIcon />
+          </IconButton>
+        ),
       },
     ],
   ];
@@ -250,63 +220,18 @@ export const TransactionValidationReport: FC<Props> = ({
     () => setExportStatus('idle'),
     [setExportStatus],
   );
-  const handleProcess = useCallback(async () => {
-    const timesheetReq = new TimesheetLine();
-    timesheetReq.setIsActive(1);
-    timesheetReq.setWithoutLimit(true);
-    timesheetReq.setDateTargetList(['time_started', 'time_started']);
-    timesheetReq.setDateRangeList([
-      '>=',
-      form.dateStarted,
-      '<',
-      form.dateEnded,
-    ]);
-    timesheetReq.setNotEqualsList(['AdminApprovalUserId']);
-    timesheetReq.setAdminApprovalUserId(0);
-    setLoading(true);
 
-    const results = await TimesheetLineClientService.BatchGet(timesheetReq);
-    const ids = results
-      .getResultsList()
-      .filter(item => item.getPayrollProcessed() == false)
-      .map(item => item.getId());
-
-    await TimesheetLineClientService.Process(ids, loggedUserId);
-  }, [form.dateStarted, form.dateEnded, loggedUserId]);
-
-  const confirmProcess = async () => {
-    const ok = confirm(`Are you sure you want ALL timesheets as Processed?`);
-    if (ok) {
-      setLoading(true);
-      try {
-        await handleProcess();
-      } catch (err) {
-        setError('Unable to process timesheets, please contact webtech');
-      }
-      reload();
-    }
-  };
-
-  const getData = (entries: TimesheetLine[]): Data =>
+  const getData = (entries: TransactionReportLine[]): Data =>
     loading
       ? makeFakeRows(5, 5)
       : entries.map(entry => {
-          const hours = (
-            differenceInMinutes(
-              new Date(parseISO(entry.getTimeFinished())),
-              new Date(parseISO(entry.getTimeStarted())),
-            ) / 60
-          ).toFixed(2);
-          const employee = entry.getTechnicianUserName();
-          const timeStarted = entry.getTimeStarted();
-          const timeFinished = entry.getTimeFinished();
-          const approver = entry.getAdminApprovalUserName();
-          const description = entry.getBriefDescription();
-          const classCodeDescription = entry.getClassCode()?.getDescription();
-          const jobNumber = entry.getReferenceNumber();
-          const notes = entry.getNotes();
-          const billable = entry.getClassCode()?.getBillable();
-          const processed = entry.getPayrollProcessed();
+          const id = entry.getTransactionId();
+          const artificialId = entry.getArtificialId();
+          const jobNumber = entry.getJobNumber();
+          const zoning = entry.getZoning();
+          const jobType = entry.getJobType();
+          const subType = entry.getSubType();
+          const classCode = entry.getc;
 
           return [
             {
@@ -346,19 +271,12 @@ export const TransactionValidationReport: FC<Props> = ({
         });
   const allPrintData = entries.length === count;
   const printHeaderSubtitle = (
-    <>
-      {dateStarted && (
-        <PrintHeaderSubtitleItem label="Start date" value={dateStarted} />
-      )}
-      {dateEnded && (
-        <PrintHeaderSubtitleItem label="End date" value={dateEnded} />
-      )}
-    </>
+    <>{year && <PrintHeaderSubtitleItem label="Year" value={year} />}</>
   );
   return (
     <div>
       <SectionBar
-        title="Timesheet Validation Report"
+        title="Transaction Export Report"
         pagination={{
           page,
           count,
@@ -368,30 +286,8 @@ export const TransactionValidationReport: FC<Props> = ({
         asideContent={
           <>
             <Alert open={error != ''} onClose={() => setError('')}></Alert>
-            <Button
-              label="Process All Timesheets"
-              onClick={confirmProcess}
-            ></Button>
             <ExportJSON
-              json={printEntries.map(entry => ({
-                hoursWorked: (
-                  differenceInMinutes(
-                    new Date(parseISO(entry.getTimeFinished())),
-                    new Date(parseISO(entry.getTimeStarted())),
-                  ) / 60
-                ).toFixed(2),
-                employee: entry.getTechnicianUserName(),
-                employeeId: entry.getTechnicianUserId(),
-                timeStarted: entry.getTimeStarted(),
-                timeFinished: entry.getTimeFinished(),
-                adminApprovalUserId: entry.getAdminApprovalUserId(),
-                classCodeId: entry.getClassCodeId(),
-                classCodeDescription: entry.getClassCode()?.getDescription(),
-                referenceNumber: entry.getReferenceNumber(),
-                description: entry.getBriefDescription(),
-                notes: entry.getNotes(),
-                billable: entry.getClassCode()?.getBillable() === true ? 1 : 0,
-              }))}
+              json={printEntries.map(entry => ({}))}
               fields={EXPORT_COLUMNS}
               filename={`Timesheet_Validation_Report${format(
                 new Date(),
