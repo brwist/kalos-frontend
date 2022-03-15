@@ -289,10 +289,6 @@ export const TransactionValidationReport: FC<Props> = ({
             },
           ];
         });
-  const allPrintData = entries.length === count;
-  const printHeaderSubtitle = (
-    <>{year && <PrintHeaderSubtitleItem label="Year" value={year} />}</>
-  );
   return (
     <div>
       <SectionBar
@@ -307,13 +303,45 @@ export const TransactionValidationReport: FC<Props> = ({
           <>
             <Alert open={error != ''} onClose={() => setError('')}></Alert>
             <ExportJSON
-              json={printEntries.map(entry => ({}))}
+              json={printEntries.map(entry => ({
+                transactionId: entry.getTransactionId(),
+
+                artificialId: entry.getArtificialId(),
+
+                jobNumber: entry.getJobNumber(),
+
+                zoning: entry.getZoning(),
+
+                jobType: entry.getJobType(),
+
+                subType: entry.getSubType(),
+
+                classCode: entry.getClassCode(),
+
+                department: entry.getDepartment(),
+
+                category: entry.getCategory(),
+
+                vendor: entry.getVendor(),
+
+                holderName: entry.getHolderName(),
+
+                transactionTimestamp: entry.getTransactionTimestamp(),
+
+                postedTimestamp: entry.getPostedTimestamp(),
+
+                amount: entry.getAmount(),
+
+                notes: entry.getNotes(),
+
+                year: entry.getYear(),
+              }))}
               fields={EXPORT_COLUMNS}
               filename={`Transaction_Validation_Report${format(
                 new Date(),
                 'yyyy-MM-dd hh:mm:ss',
               )}`}
-              onExport={allPrintData ? undefined : handleExport}
+              onExport={handleExport}
               onExported={handleExported}
               status={exportStatus}
             />
