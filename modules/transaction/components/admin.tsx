@@ -52,6 +52,7 @@ interface state {
   transactions: Transaction[];
   filters: IFilter;
   accountingAdmin: boolean;
+  showWorkflowFilters: boolean;
   departmentView: boolean;
   count: number;
   acceptOverride: boolean;
@@ -106,6 +107,7 @@ export class TransactionAdminView extends React.Component<props, state> {
       acceptOverride: ![1734, 9646, 8418, 103323, 9809].includes(props.userID),
       accountingAdmin: false,
       isLoading: false,
+      showWorkflowFilters: false,
       departmentView: !props.isSU,
       transactions: [],
       filters: {
@@ -534,13 +536,24 @@ export class TransactionAdminView extends React.Component<props, state> {
     let reqObj = new User();
     reqObj.setId(this.props.userID);
     const result = await UserClientService.Get(reqObj);
-    const permission = result
+    const permissionAccountingAdmin = result
       .getPermissionGroupsList()
       .find(item => item.getName() === 'AccountingAdmin')
       ? true
       : false;
-    console.log('permission found?', permission);
-    this.setState({ accountingAdmin: permission });
+    const permissionOverride = result
+      .getPermissionGroupsList()
+      .find(item => item.getName() === 'AccountingAcceptOverride')
+      ? true
+      : false;
+    const permissionWorkflowFilter = result
+      .getPermissionGroupsList()
+      .find(item => item.getName() === 'AccountingWorkflowFilters')
+      ? true
+      : false;
+    this.setState({ accountingAdmin: permissionAccountingAdmin });
+    this.setState({ acceptOverride: permissionOverride });
+    this.setState({ showWorkflowFilters: permissionWorkflowFilter });
   }
   setSort(sortBy: sortString) {
     this.setState(prevState => {
@@ -937,7 +950,7 @@ export class TransactionAdminView extends React.Component<props, state> {
             <TxnStatusPicker
               disabled={this.state.isLoading}
               hideAuditWorkflowFilters={
-                this.state.acceptOverride == false ? false : true
+                this.state.showWorkflowFilters == true ? false : true
               }
               selected={this.state.filters.statusID || 0}
               onSelect={statusID => this.setFilter('statusID', statusID)}
