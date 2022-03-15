@@ -4,8 +4,7 @@ import EditIcon from '@material-ui/icons/Edit';
 import AssignmentIcon from '@material-ui/icons/Assignment';
 import { SectionBar } from '../SectionBar';
 import { InfoTable, Data } from '../InfoTable';
-import { PrintPage, Status } from '../PrintPage';
-import { PrintTable } from '../PrintTable';
+import { Status } from '../PrintPage';
 import { PrintHeaderSubtitleItem } from '../PrintHeader';
 import { PlainForm, Schema } from '../PlainForm';
 import { Button } from '../Button';
@@ -15,7 +14,7 @@ import {
   formatDate,
   TimesheetLineClientService,
 } from '../../../helpers';
-import { format, differenceInHours, parseISO } from 'date-fns';
+import { format, differenceInHours, parseISO, addDays } from 'date-fns';
 import { ExportJSON } from '../ExportJSON';
 import { ROWS_PER_PAGE } from '../../../constants';
 import { TimesheetLine } from '@kalos-core/kalos-rpc/TimesheetLine';
@@ -29,11 +28,8 @@ interface Props {
 }
 
 type FilterForm = {
-  businessname?: string;
-  lastname?: string;
   dateStarted: string;
   dateEnded: string;
-  isActive?: boolean;
 };
 
 const COLUMNS = [
@@ -55,8 +51,12 @@ const EXPORT_COLUMNS = [
     value: 'hoursWorked',
   },
   {
-    label: 'Employee Name',
-    value: 'employee',
+    label: 'Employee First Name',
+    value: 'employeeFirstName',
+  },
+  {
+    label: 'Employee Last Name',
+    value: 'employeeLastName',
   },
   {
     label: 'Id',
@@ -116,9 +116,7 @@ export const TimesheetValidationReport: FC<Props> = ({
   const [form, setForm] = useState<FilterForm>({
     dateStarted,
     dateEnded,
-    isActive: false,
   });
-  const [printStatus, setPrintStatus] = useState<Status>('idle');
   const load = useCallback(async () => {
     setLoading(true);
     console.log({ form });
@@ -126,17 +124,12 @@ export const TimesheetValidationReport: FC<Props> = ({
     timesheetReq.setIsActive(1);
     timesheetReq.setPageNumber(page);
     timesheetReq.setDateTargetList(['time_started', 'time_started']);
-    timesheetReq.setDateRangeList([
-      '>=',
-      form.dateStarted,
-      '<',
-      form.dateEnded,
-    ]);
+    const tempDate = format(addDays(parseISO(form.dateEnded), 1), 'yyyy-MM-dd');
+    timesheetReq.setDateRangeList(['>=', form.dateStarted, '<', tempDate]);
     timesheetReq.setNotEqualsList(['AdminApprovalUserId']);
     timesheetReq.setAdminApprovalUserId(0);
     const results = await TimesheetLineClientService.BatchGet(timesheetReq);
     setEntries(results.getResultsList());
-    console.log({ results });
     setCount(results.getTotalCount());
     setLoading(false);
   }, [setLoading, page, form]);
@@ -160,31 +153,17 @@ export const TimesheetValidationReport: FC<Props> = ({
     [setPage, reload],
   );
   const loadPrintEntries = useCallback(async () => {
-    if (printEntries.length === count) return;
     const timesheetReq = new TimesheetLine();
     timesheetReq.setIsActive(1);
     timesheetReq.setWithoutLimit(true);
     timesheetReq.setDateTargetList(['time_started', 'time_started']);
-    timesheetReq.setDateRangeList([
-      '>=',
-      form.dateStarted,
-      '<',
-      form.dateEnded,
-    ]);
+    const tempDate = format(addDays(parseISO(form.dateEnded), 1), 'yyyy-MM-dd');
+    timesheetReq.setDateRangeList(['>=', form.dateStarted, '<', tempDate]);
     timesheetReq.setNotEqualsList(['AdminApprovalUserId']);
     timesheetReq.setAdminApprovalUserId(0);
     const results = await TimesheetLineClientService.BatchGet(timesheetReq);
     setPrintEntries(results.getResultsList());
-  }, [setPrintEntries, form, printEntries, count]);
-  const handlePrint = useCallback(async () => {
-    setPrintStatus('loading');
-    await loadPrintEntries();
-    setPrintStatus('loaded');
-  }, [loadPrintEntries, setPrintStatus]);
-  const handlePrinted = useCallback(
-    () => setPrintStatus('idle'),
-    [setPrintStatus],
-  );
+  }, [setPrintEntries, form]);
   const handleSearch = useCallback(() => {
     setPage(0);
     setLoaded(false);
@@ -206,6 +185,7 @@ export const TimesheetValidationReport: FC<Props> = ({
     ],
   ];
   const handleExport = useCallback(async () => {
+    console.log('export');
     setExportStatus('loading');
     await loadPrintEntries();
     setExportStatus('loaded');
@@ -219,12 +199,9 @@ export const TimesheetValidationReport: FC<Props> = ({
     timesheetReq.setIsActive(1);
     timesheetReq.setWithoutLimit(true);
     timesheetReq.setDateTargetList(['time_started', 'time_started']);
-    timesheetReq.setDateRangeList([
-      '>=',
-      form.dateStarted,
-      '<',
-      form.dateEnded,
-    ]);
+    const tempDate = format(addDays(parseISO(form.dateEnded), 1), 'yyyy-MM-dd');
+
+    timesheetReq.setDateRangeList(['>=', form.dateStarted, '<', tempDate]);
     timesheetReq.setNotEqualsList(['AdminApprovalUserId']);
     timesheetReq.setAdminApprovalUserId(0);
     setLoading(true);
@@ -308,17 +285,6 @@ export const TimesheetValidationReport: FC<Props> = ({
             },
           ];
         });
-  const allPrintData = entries.length === count;
-  const printHeaderSubtitle = (
-    <>
-      {dateStarted && (
-        <PrintHeaderSubtitleItem label="Start date" value={dateStarted} />
-      )}
-      {dateEnded && (
-        <PrintHeaderSubtitleItem label="End date" value={dateEnded} />
-      )}
-    </>
-  );
   return (
     <div>
       <SectionBar
@@ -344,7 +310,8 @@ export const TimesheetValidationReport: FC<Props> = ({
                     new Date(parseISO(entry.getTimeStarted())),
                   ) / 60
                 ).toFixed(2),
-                employee: entry.getTechnicianUserName(),
+                employeeFirstName: entry.getTechnicianUserName().split(' ')[0],
+                employeeLastName: entry.getTechnicianUserName().split(' ')[1],
                 employeeId: entry.getTechnicianUserId(),
                 timeStarted: entry.getTimeStarted(),
                 timeFinished: entry.getTimeFinished(),
@@ -361,27 +328,10 @@ export const TimesheetValidationReport: FC<Props> = ({
                 new Date(),
                 'yyyy-MM-dd hh:mm:ss',
               )}`}
-              onExport={allPrintData ? undefined : handleExport}
+              onExport={handleExport}
               onExported={handleExported}
               status={exportStatus}
             />
-
-            <PrintPage
-              headerProps={{
-                title: 'Timesheet Validation Report',
-                subtitle: printHeaderSubtitle,
-              }}
-              onPrint={allPrintData ? undefined : handlePrint}
-              onPrinted={handlePrinted}
-              status={printStatus}
-            >
-              <PrintTable
-                columns={COLUMNS}
-                data={getData(allPrintData ? entries : printEntries).map(row =>
-                  row.map(({ value }) => value),
-                )}
-              />
-            </PrintPage>
             {onClose && <Button label="Close" onClick={onClose} />}
           </>
         }

@@ -7,8 +7,7 @@ export default () => (
     <ExampleTitle>default with onClose</ExampleTitle>
     <TransactionValidationReport
       loggedUserId={101253}
-      dateStarted="2018-05-25"
-      dateEnded="2018-05-25"
+      year={'2021'}
       onClose={() => console.log('CLOSE')}
     />
   </>

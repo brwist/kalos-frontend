@@ -1015,6 +1015,9 @@ const NAMED_EXPORTS = {
     'SpiffReportLine',
     'PromptPaymentReport',
     'PromptPaymentReportLine',
+    'TransactionDumpReport',
+    'TransactionReportLine'
+    
   ],
   'node_modules/@kalos-core/kalos-rpc/compiled-protos/internal_document_pb.js':
     [
@@ -1171,6 +1174,7 @@ const NAMED_EXPORTS = {
     'AvgTicket',
     'Revenue',
     'Callbacks',
+    'MertricReportDataRequest'
   ],
   'node_modules/@kalos-core/kalos-rpc/compiled-protos/task_assignment_pb.js': [
     'TaskAssignment',

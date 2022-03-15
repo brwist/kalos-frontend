@@ -1,7 +1,5 @@
 import React, { FC, useState, useCallback, useEffect } from 'react';
 import IconButton from '@material-ui/core/IconButton';
-import EditIcon from '@material-ui/icons/Edit';
-import AssignmentIcon from '@material-ui/icons/Assignment';
 import { SectionBar } from '../SectionBar';
 import { InfoTable, Data } from '../InfoTable';
 import { PrintPage, Status } from '../PrintPage';
@@ -15,39 +13,38 @@ import ChevronRightIcon from '@material-ui/icons/ChevronRight';
 import {
   makeFakeRows,
   formatDate,
-  TimesheetLineClientService,
   ReportClientService,
 } from '../../../helpers';
-import { format, differenceInHours, parseISO } from 'date-fns';
+import { format } from 'date-fns';
 import { ExportJSON } from '../ExportJSON';
 import { ROWS_PER_PAGE } from '../../../constants';
-import { TimesheetLine } from '@kalos-core/kalos-rpc/TimesheetLine';
-import { differenceInMinutes } from 'date-fns/esm';
 import { TransactionReportLine } from '@kalos-core/kalos-rpc/Report';
-import { result } from 'lodash';
 
 interface Props {
   loggedUserId: number;
   onClose?: () => void;
-  year: string;
+  year: number;
 }
 
 type FilterForm = {
-  year: string;
+  year: number;
 };
 
 const COLUMNS = [
-  'Hours Worked',
-  'Employee',
-  'Time Started',
-  'Time Finished',
-  'Approver',
-  'Class Code',
   'Job Number',
-  'Description',
+  'Zoning',
+  'Job Type',
+  'Sub Type',
+  'Class Code',
+  'Department',
+  'Category',
+  'Vendor',
+  'Holder Name',
+  'Timestamp',
+  'Post Timestamp',
+  'Amount',
   'Notes',
-  'Billable',
-  'Processed',
+  'Year',
 ];
 const EXPORT_COLUMNS = [
   {
@@ -128,6 +125,7 @@ export const TransactionValidationReport: FC<Props> = ({
   const [error, setError] = useState<string>('');
   const [count, setCount] = useState<number>(0);
   const [exportStatus, setExportStatus] = useState<Status>('idle');
+  const [formKey, setFormKey] = useState<number>(0);
   const [form, setForm] = useState<FilterForm>({
     year,
   });
@@ -136,11 +134,13 @@ export const TransactionValidationReport: FC<Props> = ({
     setLoading(true);
     console.log({ form });
     const req = new TransactionReportLine();
-    req.setYear(form.year);
+    req.setYear(form.year.toString());
+    req.setPageNumber(page);
     const results = await ReportClientService.GetTransactionDumpData(req);
     console.log({ results });
     setEntries(results.getDataList());
     setCount(results.getTotalCount());
+
     setLoading(false);
   }, [setLoading, page, form]);
   useEffect(() => {
@@ -165,7 +165,8 @@ export const TransactionValidationReport: FC<Props> = ({
   const loadPrintEntries = useCallback(async () => {
     if (printEntries.length === count) return;
     const req = new TransactionReportLine();
-    req.setYear(form.year);
+    req.setYear(form.year.toString());
+    req.setWithoutLimit(true);
     const results = await ReportClientService.GetTransactionDumpData(req);
     console.log({ results });
     setEntries(results.getDataList());
@@ -187,10 +188,11 @@ export const TransactionValidationReport: FC<Props> = ({
   }, []);
   const handleYearChange = useCallback(
     (step: number) => () => {
-      setForm({ year: year + step });
+      setForm({ year: form.year + step });
+      setFormKey(formKey + 1);
       setLoaded(false);
     },
-    [setForm, year],
+    [setForm, formKey, setFormKey, form],
   );
   const SCHEMA: Schema<FilterForm> = [
     [
@@ -231,41 +233,59 @@ export const TransactionValidationReport: FC<Props> = ({
           const zoning = entry.getZoning();
           const jobType = entry.getJobType();
           const subType = entry.getSubType();
-          const classCode = entry.getc;
+          const classCode = entry.getClassCode();
+          const department = entry.getDepartment();
+          const category = entry.getCategory();
+          const vendor = entry.getVendor();
+          const holderName = entry.getHolderName();
+          const timestamp = entry.getTransactionTimestamp();
+          const postedTimestamp = entry.getPostedTimestamp();
+          const amount = entry.getAmount();
+          const notes = entry.getNotes();
+          const year = entry.getYear();
 
           return [
-            {
-              value: hours,
-            },
-            {
-              value: employee,
-            },
-            {
-              value: formatDate(timeStarted),
-            },
-            {
-              value: formatDate(timeFinished),
-            },
-            {
-              value: approver,
-            },
-            {
-              value: classCodeDescription,
-            },
             {
               value: jobNumber,
             },
             {
-              value: description,
+              value: zoning,
+            },
+            {
+              value: jobType,
+            },
+            {
+              value: subType,
+            },
+            {
+              value: classCode,
+            },
+            {
+              value: department,
+            },
+            {
+              value: category,
+            },
+            {
+              value: vendor,
+            },
+            {
+              value: holderName,
+            },
+            {
+              value: formatDate(timestamp),
+            },
+            {
+              value: formatDate(postedTimestamp),
+            },
+            {
+              value: amount,
             },
             {
               value: notes,
             },
             {
-              value: billable === true ? 'Yes' : 'No',
-            },
-            {
-              value: processed === true ? 'Yes' : 'No',
+              value: year,
             },
           ];
         });
@@ -289,7 +309,7 @@ export const TransactionValidationReport: FC<Props> = ({
             <ExportJSON
               json={printEntries.map(entry => ({}))}
               fields={EXPORT_COLUMNS}
-              filename={`Timesheet_Validation_Report${format(
+              filename={`Transaction_Validation_Report${format(
                 new Date(),
                 'yyyy-MM-dd hh:mm:ss',
               )}`}
@@ -297,29 +317,12 @@ export const TransactionValidationReport: FC<Props> = ({
               onExported={handleExported}
               status={exportStatus}
             />
-
-            <PrintPage
-              headerProps={{
-                title: 'Timesheet Validation Report',
-                subtitle: printHeaderSubtitle,
-              }}
-              onPrint={allPrintData ? undefined : handlePrint}
-              onPrinted={handlePrinted}
-              status={printStatus}
-            >
-              <PrintTable
-                columns={COLUMNS}
-                data={getData(allPrintData ? entries : printEntries).map(row =>
-                  row.map(({ value }) => value),
-                )}
-              />
-            </PrintPage>
             {onClose && <Button label="Close" onClick={onClose} />}
           </>
         }
       />
 
-      <PlainForm schema={SCHEMA} data={form} onChange={setForm} />
+      <PlainForm key={formKey} schema={SCHEMA} data={form} onChange={setForm} />
       <InfoTable
         columns={COLUMNS.map(name => ({ name }))}
         data={getData(entries)}
