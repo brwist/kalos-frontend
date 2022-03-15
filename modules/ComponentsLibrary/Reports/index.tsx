@@ -8,7 +8,10 @@ import { ActivityLogReport } from '../ActivityLogReport';
 import { PerformanceMetrics } from '../PerformanceMetrics';
 import { TimesheetValidationReport } from '../TimesheetValidationReport';
 import { DeletedServiceCallsReport } from '../DeletedServiceCallsReport';
-
+import IconButton from '@material-ui/core/IconButton';
+import { TransactionValidationReport } from '../TransactionValidationReport';
+import ChevronLeftIcon from '@material-ui/icons/ChevronLeft';
+import ChevronRightIcon from '@material-ui/icons/ChevronRight';
 import { CallbackReport } from '../CallbackReport';
 import { ServiceCallMetrics } from '../ServiceCallMetrics';
 import { SpiffReport } from '../SpiffReport';
@@ -50,6 +53,9 @@ type JobReportForm = {
   jobNumber: number;
 };
 
+type TransactionReport = {
+  year: number;
+};
 export interface Props {
   loggedUserId: number;
 }
@@ -251,6 +257,10 @@ export const Reports: FC<Props> = ({ loggedUserId }) => {
     useState<FilterForm>({});
   const [timesheetValidationReport, setTimesheetValidationReport] =
     useState<FilterForm>({});
+  const [transactionValidationReport, setTransactionValidationReport] =
+    useState<TransactionReport>({ year: new Date().getFullYear() });
+  const [formKeyTransaction, setFormKeyTransaction] = useState<number>(0);
+
   const [performanceMetricsDatesError, setPerformanceMetricsDatesError] =
     useState<boolean>(false);
   const [performanceMetricsReportOpen, setPerformanceMetricsReportOpen] =
@@ -279,6 +289,8 @@ export const Reports: FC<Props> = ({ loggedUserId }) => {
   const [spiffReportKey, setSpiffReportKey] = useState<number>(0);
   const [spiffReportOpen, setSpiffReportOpen] = useState<boolean>(false);
   const [timesheetValidationReportOpen, setTimesheetValidationReportOpen] =
+    useState<boolean>(false);
+  const [transactionValidationReportOpen, setTransactionValidationReportOpen] =
     useState<boolean>(false);
   const [timesheetValidationError, setTimesheetValidationError] =
     useState<boolean>(false);
@@ -392,6 +404,7 @@ export const Reports: FC<Props> = ({ loggedUserId }) => {
     },
     [setPerformanceMetricsReport, setPerformanceMetricsDatesError],
   );
+
   const handleOpenTimesheetValidationReportToggle = useCallback(
     (open: boolean) => (data?: FilterForm) => {
       setTimesheetValidationError(false);
@@ -410,6 +423,13 @@ export const Reports: FC<Props> = ({ loggedUserId }) => {
       setTimesheetValidationReportOpen(open);
     },
     [setTimesheetValidationReport, setTimesheetValidationReportOpen],
+  );
+  const handleOpenTransactionValidationReportToggle = useCallback(
+    (open: boolean) => (data: TransactionReport) => {
+      setTransactionValidationReport(data);
+      setTransactionValidationReportOpen(open);
+    },
+    [setTransactionValidationReport, setTransactionValidationReportOpen],
   );
   const handleOpenDeletedServiceCallsReportToggle = useCallback(
     (open: boolean) => (data?: FilterForm) => {
@@ -477,6 +497,10 @@ export const Reports: FC<Props> = ({ loggedUserId }) => {
     (open: boolean) => () => setTimesheetValidationReportOpen(open),
     [setTimesheetValidationReportOpen],
   );
+  const handleOpenTransactionValidationToggle = useCallback(
+    (open: boolean) => () => setTransactionValidationReportOpen(open),
+    [setTransactionValidationReportOpen],
+  );
   const handleOpenServiceCallZipCodeReportToggle = useCallback(
     (open: boolean) => () => setServiceCallZipCodeReportOpen(open),
     [setServiceCallZipCodeReportOpen],
@@ -508,7 +532,38 @@ export const Reports: FC<Props> = ({ loggedUserId }) => {
       setTrainingMetricsDatesError,
     ],
   );
-
+  const handleYearChange = useCallback(
+    (step: number) => () => {
+      setTransactionValidationReport({
+        year: transactionValidationReport.year + step,
+      });
+      setFormKeyTransaction(formKeyTransaction + 1);
+    },
+    [
+      setTransactionValidationReport,
+      formKeyTransaction,
+      setFormKeyTransaction,
+      transactionValidationReport,
+    ],
+  );
+  const SCHEMA_YEAR: Schema<TransactionReport> = [
+    [
+      {
+        name: 'year',
+        label: 'Year',
+        startAdornment: (
+          <IconButton size="small" onClick={handleYearChange(-1)}>
+            <ChevronLeftIcon />
+          </IconButton>
+        ),
+        endAdornment: (
+          <IconButton size="small" onClick={handleYearChange(1)}>
+            <ChevronRightIcon />
+          </IconButton>
+        ),
+      },
+    ],
+  ];
   const handleOpenBillingAuditReportToggle = useCallback(
     (open: boolean) => (data?: FilterForm) => {
       if (data && data.month) {
@@ -674,6 +729,17 @@ export const Reports: FC<Props> = ({ loggedUserId }) => {
         onClose={null}
         error={timesheetValidationError ? DATES_ERROR : undefined}
       />
+      <div key="transactionreportDiv">
+        <Form
+          key={formKeyTransaction}
+          title="Transaction Validation Report"
+          schema={SCHEMA_YEAR}
+          data={transactionValidationReport}
+          onSave={handleOpenTransactionValidationReportToggle(true)}
+          submitLabel="Report"
+          onClose={null}
+        />
+      </div>
       <SectionBar
         title="Service Call Zip Code"
         actions={[
@@ -865,6 +931,23 @@ export const Reports: FC<Props> = ({ loggedUserId }) => {
             dateStarted={timesheetValidationReport.startDate!}
             dateEnded={timesheetValidationReport.endDate!}
           />
+        </Modal>
+      )}
+      {transactionValidationReportOpen && (
+        <Modal
+          key={'transactionValidationReportModal'}
+          open
+          onClose={handleOpenTransactionValidationToggle(false)}
+          fullScreen
+        >
+          <div key={'TransactionvalidationDiv'}>
+            <TransactionValidationReport
+              key={'transactionValidationModule'}
+              loggedUserId={loggedUserId}
+              onClose={handleOpenTransactionValidationToggle(false)}
+              year={transactionValidationReport.year}
+            />
+          </div>
         </Modal>
       )}
       {serviceCallZipCodeReportOpen && (
