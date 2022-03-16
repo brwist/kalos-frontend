@@ -71,7 +71,10 @@ export const PerDiems: FC<Props> = ({
   const [toggleButton, setToggleButton] = useState<boolean>(false);
   const [openManagerPerDiem, setOpenManagerPerDiem] = useState<boolean>(false);
   const [pendingPayroll, setPendingPayroll] = useState<PerDiem>();
-  const [pendingPayrollReject, setPendingPayrollReject] = useState<PerDiem>();
+  const [pendingPayrollSendBackToManager, setPendingPayrollSendBackToManager] =
+    useState<PerDiem>();
+  const [pendingPayrollUnprocess, setPendingPayrollUnprocess] =
+    useState<PerDiem>();
   const managerFilter = role === 'Manager';
   const auditorFilter = role == 'Auditor';
   const payrollFilter = role == 'Payroll';
@@ -152,11 +155,17 @@ export const PerDiems: FC<Props> = ({
     (perDiem?: PerDiem) => () => setPendingPayroll(perDiem),
     [setPendingPayroll],
   );
-  const handlePendingPayrollToggleReject = useCallback(
+  const handlePendingPayrollToggleUnprocess = useCallback(
     (perDiem?: PerDiem) => () => {
-      setPendingPayrollReject(perDiem);
+      setPendingPayrollUnprocess(perDiem);
     },
-    [setPendingPayrollReject],
+    [setPendingPayrollUnprocess],
+  );
+  const handlePendingPayrollToggleSendBackToManager = useCallback(
+    (perDiem?: PerDiem) => () => {
+      setPendingPayrollSendBackToManager(perDiem);
+    },
+    [setPendingPayrollSendBackToManager],
   );
   const handleToggleButton = useCallback(() => {
     setToggleButton(!toggleButton);
@@ -230,37 +239,52 @@ export const PerDiems: FC<Props> = ({
       load();
     }
   }, [load, pendingPayroll]);
-  const handlePayrollRejected = useCallback(async () => {
-    if (pendingPayrollReject) {
-      const id = pendingPayrollReject.getId();
-      const slackID = await getSlackID(pendingPayrollReject.getOwnerName());
-      if (slackID != '0') {
-        slackNotify(
-          slackID,
-          `Your PerDiem for ${formatWeek(
-            pendingPayrollReject.getDateStarted(),
-          )} was rejected by Payroll for the following reason:` +
-            rejectionMessage,
-        );
-      } else {
-        console.log('We could not find the user, but we will still reject');
-      }
+  const handlePayrollUnprocess = useCallback(async () => {
+    if (pendingPayrollSendBackToManager) {
+      const id = pendingPayrollSendBackToManager.getId();
       setLoading(true);
-      setPendingPayrollReject(undefined);
+      setPendingPayrollSendBackToManager(undefined);
       const req = new PerDiem();
       req.setPayrollProcessed(false);
       req.setId(id);
-      req.setDateApproved(NULL_TIME);
-      req.setApprovedById(0);
+      req.setAmountProcessedLodging(0);
+      req.setAmountProcessedMeals(0);
+      req.setDateProcessed(NULL_TIME);
       req.setFieldMaskList([
-        'DateApproved',
-        'ApprovedById',
+        'AmountProcessedLodging',
+        'AmountProcessedMeals',
         'PayrollProcessed',
+        `DateProcessed`,
       ]);
       await PerDiemClientService.Update(req);
     }
     load();
-  }, [load, pendingPayrollReject, rejectionMessage]);
+  }, [load, pendingPayrollSendBackToManager]);
+  const handlePayrollSendBackToManager = useCallback(async () => {
+    if (pendingPayrollUnprocess) {
+      const id = pendingPayrollUnprocess.getId();
+      setLoading(true);
+      setPendingPayrollUnprocess(undefined);
+      const req = new PerDiem();
+      req.setPayrollProcessed(false);
+      req.setId(id);
+      req.setDateApproved(NULL_TIME);
+      req.setDateProcessed(NULL_TIME);
+      req.setAmountProcessedLodging(0);
+      req.setAmountProcessedMeals(0);
+      req.setApprovedById(0);
+      req.setFieldMaskList([
+        'DateApproved',
+        'ApprovedById',
+        'AmountProcessedLodging',
+        'AmountProcessedMeals',
+        'PayrollProcessed',
+        'DateProcessed',
+      ]);
+      await PerDiemClientService.Update(req);
+    }
+    load();
+  }, [load, pendingPayrollUnprocess]);
   return (
     <div>
       <SectionBar
@@ -272,16 +296,21 @@ export const PerDiems: FC<Props> = ({
           onPageChange: setPage,
         }}
       />
-      {role === 'Payroll' && (
-        <Button
-          label={
-            toggleButton === false
-              ? 'Show Processed Records'
-              : 'Show Unprocessed Records'
-          }
-          onClick={() => handleToggleButton()}
-        ></Button>
-      )}
+      {role === 'Payroll' ||
+        (role == 'Manager' && (
+          <Button
+            label={
+              role === 'Manager'
+                ? toggleButton === false
+                  ? 'Show Approved Records'
+                  : 'Show Unapproved Records'
+                : toggleButton === false
+                ? 'Show Processed Records'
+                : 'Show Unprocessed Records'
+            }
+            onClick={() => handleToggleButton()}
+          ></Button>
+        ))}
       {role === 'Manager' && (
         <Button
           label={'Manage PerDiems'}
@@ -350,6 +379,7 @@ export const PerDiems: FC<Props> = ({
                             <IconButton
                               size="small"
                               onClick={handlePendingApproveToggle(el)}
+                              disabled={el.getApprovedById() != 0}
                             >
                               <CheckCircleOutlineIcon />
                             </IconButton>
@@ -362,6 +392,7 @@ export const PerDiems: FC<Props> = ({
                             <IconButton
                               size="small"
                               onClick={handlePendingDenyToggle(el)}
+                              disabled={el.getApprovedById() != 0}
                             >
                               <NotInterestedIcon />
                             </IconButton>
@@ -405,15 +436,11 @@ export const PerDiems: FC<Props> = ({
                         </Tooltip>
                       ) : null,
                       role === 'Payroll' ? (
-                        <Tooltip
-                          key="payroll reject "
-                          content="Reject"
-                          placement="bottom"
-                        >
+                        <Tooltip key=" " content="Reject" placement="bottom">
                           <span>
                             <IconButton
                               size="small"
-                              onClick={handlePendingPayrollToggleReject(el)}
+                              onClick={handlePendingPayrollToggleUnprocess(el)}
                               disabled={
                                 el.getPayrollProcessed() ||
                                 el.getDateApproved() === NULL_TIME
@@ -520,26 +547,26 @@ export const PerDiems: FC<Props> = ({
           Are you sure you want to process payroll for this Per Diem?
         </Confirm>
       )}
-      {pendingPayrollReject && (
+      {pendingPayrollUnprocess && (
         <Confirm
           title="Confirm Rejection"
           open
-          onClose={handlePendingPayrollToggleReject()}
-          onConfirm={handlePayrollRejected}
+          onClose={handlePendingPayrollToggleUnprocess()}
+          onConfirm={handlePayrollUnprocess}
         >
-          Are you sure you want to reject this Per Diem?
+          Are you sure you want to Un-process this Per Diem?
+        </Confirm>
+      )}
+      {pendingPayrollSendBackToManager && (
+        <Confirm
+          title="Confirm Rejection"
+          open
+          onClose={handlePendingPayrollToggleSendBackToManager()}
+          onConfirm={handlePayrollSendBackToManager}
+        >
+          Are you sure you want to send this Per Diem back to the
+          Manager/Coordinator?
           <br></br>
-          <label>
-            <strong>Reason:</strong>
-          </label>
-          <input
-            type="text"
-            value={rejectionMessage}
-            autoFocus
-            size={35}
-            placeholder="Enter a rejection reason"
-            onChange={e => setRejectionMessage(e.target.value)}
-          />
         </Confirm>
       )}
     </div>
