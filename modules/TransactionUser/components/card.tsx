@@ -622,7 +622,6 @@ export class TxnCard extends React.PureComponent<props, state> {
                   dateStr={t.getTimestamp()}
                   name={t.getOwnerName()}
                   title="Missing"
-                  icon={<CloseIcon />}
                   amount={t.getAmount()}
                   onCreate={this.onPDFGenerate}
                   jobNumber={`${t.getJobId()}`}

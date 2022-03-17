@@ -20,15 +20,21 @@ import { UserClient, User } from '@kalos-core/kalos-rpc/User';
 import { EmailClient, EmailConfig } from '@kalos-core/kalos-rpc/Email';
 import { TxnLog } from './log';
 import { TxnNotes } from './notes';
-import { getSlackID, slackNotify, EventClientService } from '../../../helpers';
+import {
+  getSlackID,
+  timestamp,
+  EventClientService,
+  TransactionDocumentClientService,
+} from '../../../helpers';
 import { ENDPOINT } from '../../../constants';
-
+import { PDFMaker } from '../../ComponentsLibrary/PDFMaker';
 import {
   AccountPicker,
   DepartmentPicker,
 } from '../../ComponentsLibrary/Pickers/index';
 import { AltGallery, GalleryData } from '../../AltGallery/main';
 import { Row } from '../../ComponentsLibrary/InfoTable';
+
 import { Tooltip } from '../../ComponentsLibrary/Tooltip';
 import { parseISO } from 'date-fns';
 import { EventClient } from '@kalos-core/kalos-rpc/Event';
@@ -148,6 +154,20 @@ export function TransactionRow({
     if (FileInput.current && FileInput.current.files) {
       fr.readAsArrayBuffer(FileInput.current.files[0]);
     }
+  };
+
+  const generateMissing = async (fileData: Uint8Array, txn: Transaction) => {
+    await TransactionDocumentClientService.upload(
+      txn.getId(),
+      `${timestamp()}-generated.pdf`,
+      fileData,
+    );
+
+    if (accountingAdmin) {
+      await accept();
+      await audit();
+    }
+    alert('A PDF has been generated and uploaded for you.');
   };
 
   const openFileInput = () => {
@@ -414,6 +434,19 @@ export function TransactionRow({
           iconButton
         />,
         <TxnLog key="txnLog" iconButton txnID={txn.getId()} />,
+        <PDFMaker
+          key={'missing' + txn.getId()}
+          dateStr={txn.getTimestamp()}
+          name={txn.getOwnerName()}
+          title="Missing"
+          icon={<CloseIcon />}
+          iconLabel={'Upload Missing PDF'}
+          amount={txn.getAmount()}
+          onCreate={output => generateMissing(output, txn)}
+          jobNumber={`${txn.getJobId()}`}
+          vendor={txn.getVendor()}
+          pdfType="Missing Receipt Manager"
+        />,
         <TxnNotes
           key="viewNotes"
           iconButton
