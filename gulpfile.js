@@ -700,6 +700,21 @@ async function upload(target = '') {
   // );
 }
 
+async function postInstallCopy() {
+  const destination = '../../../@kalos-core/kalos-rpc/';
+  return new Promise(resolve => {
+    sh.cd('node_modules/@kalos-core/kalos-rpc');
+    const res = sh.ls();
+    const wd = sh.pwd();
+    console.log(wd);
+    for (const r of res) {
+      console.log('-r', `./${r}/`, destination);
+      sh.cp('-r', `./${r}`, destination);
+    }
+    resolve(true);
+  });
+}
+
 // @returns {bool} False if it failed to bust the cache, True / undefined otherwise
 async function bustCache(controller = '', filename = '', location = 'admin') {
   if (!sh.test('-e', 'tmp')) {
@@ -856,6 +871,7 @@ task('cfpatch', patchCFC);
 task(upload);
 task('build-all', buildAll);
 task('release-all', releaseAll);
+task('copy', postInstallCopy);
 
 const KALOS_ROOT = 'kalos-prod:/opt/coldfusion11/cfusion/wwwroot';
 const KALOS_ASSETS = `${KALOS_ROOT}/app/assets`;
@@ -912,7 +928,7 @@ const NAMED_EXPORTS = {
     'Email',
     'EmailClient',
     'SQSEmail',
-    'SQSEmailAndDocument'
+    'SQSEmailAndDocument',
   ],
   'node_modules/@kalos-core/kalos-rpc/compiled-protos/file_pb.js': [
     'File',
@@ -1171,7 +1187,7 @@ const NAMED_EXPORTS = {
     'AvgTicket',
     'Revenue',
     'Callbacks',
-    'MertricReportDataRequest'
+    'MertricReportDataRequest',
   ],
   'node_modules/@kalos-core/kalos-rpc/compiled-protos/task_assignment_pb.js': [
     'TaskAssignment',
