@@ -545,7 +545,15 @@ export const SpiffTool: FC<Props> = ({
         setSearchFormKey(searchFormKey + 1);
       }
     },
-    [searchForm, setSearchFormKey, searchFormKey, MONTHS_OPTIONS, WEEK_OPTIONS],
+    [
+      searchForm,
+      setSearchFormKey,
+      loggedUserId,
+      userRole,
+      searchFormKey,
+      MONTHS_OPTIONS,
+      WEEK_OPTIONS,
+    ],
   );
   const handleMakeSearch = useCallback(() => setLoaded(false), [setLoaded]);
   const handleResetSearch = useCallback(() => {
@@ -653,6 +661,19 @@ export const SpiffTool: FC<Props> = ({
     userRole,
     loadLoggedInUser,
   ]);
+  const actions = [
+    {
+      label: type === 'Spiff' ? 'Spiff Apply' : 'Tool Apply',
+      onClick: handleToggleAdd,
+    },
+  ];
+  if (onClose != undefined) {
+    actions.push({
+      label: 'Close',
+      onClick: onClose,
+    });
+  }
+
   const SCHEMA: Schema<Task> =
     type === 'Spiff'
       ? [
@@ -1059,7 +1080,7 @@ export const SpiffTool: FC<Props> = ({
         name: 'description',
         label: `Search ${type === 'Spiff' ? 'Spiffs' : 'Tool Purchases'}`,
       },
-      ...(isAdmin
+      ...(userRole == 'Manager'
         ? [
             {
               name: 'technician' as const,
@@ -1113,16 +1134,7 @@ export const SpiffTool: FC<Props> = ({
       )}
       <SectionBar
         title={type === 'Spiff' ? 'Spiff Report' : 'Tool Purchases'}
-        actions={[
-          {
-            label: 'Close',
-            onClick: onClose ? onClose : undefined,
-          },
-          {
-            label: type === 'Spiff' ? 'Spiff Apply' : 'Tool Apply',
-            onClick: handleToggleAdd,
-          },
-        ]}
+        actions={actions}
         fixedActions
         pagination={{
           count,

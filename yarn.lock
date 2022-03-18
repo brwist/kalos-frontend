@@ -1659,9 +1659,9 @@
     "@jridgewell/sourcemap-codec" "^1.4.10"
 
 "@kalos-core/kalos-rpc@^3.5.69":
-  version "3.5.76"
-  resolved "https://registry.yarnpkg.com/@kalos-core/kalos-rpc/-/kalos-rpc-3.5.76.tgz#089c3d031380ccd98ab9fc270d8c057fbf2057d3"
-  integrity sha512-OiLjdSPrIVrlWprksITH27d4RM7LYm7DDndB+hC60ODje3H3gjSYuPuf7Y53up9GHyx5O+e/lIC3SQpFp0Pxpw==
+  version "3.5.77"
+  resolved "https://registry.yarnpkg.com/@kalos-core/kalos-rpc/-/kalos-rpc-3.5.77.tgz#4e68f4b12d6ddf0a233c4be4fb3d0acadebf0697"
+  integrity sha512-Q9g1LPAvjI+n4DIrtwtsLECYtqC2SReJv3mvrezE7mDrWBvFjH1C0XxkegXeNtOE9flbvkv77EZGT5Xvljy7vA==
   dependencies:
     "@improbable-eng/grpc-web" "^0.9.6"
     "@rollup/plugin-commonjs" "^21.0.1"

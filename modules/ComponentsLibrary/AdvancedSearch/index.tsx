@@ -2350,10 +2350,9 @@ export const AdvancedSearch: FC<Props> = ({
                                   // TODO replace with ComponentsLibrary
                                   window.open(
                                     [
-                                      '/index.cfm?action=admin:tasks.spiff_tool_logs',
-                                      `type=spiff`,
-                                      `rt=all`,
-                                      `reportUserId=${id}`,
+                                      '/index.cfm?action=admin:tasks.spiff_tool_log_new',
+                                      `type=Spiff`,
+                                      `user_id=${id}`,
                                     ].join('&'),
                                   );
                                   /*document.location.href = [
@@ -2806,7 +2805,7 @@ export const AdvancedSearch: FC<Props> = ({
         <Modal open fullScreen onClose={() => setFlatRateIsOpen(false)}>
           <FlatRateSheet
             loggedUserId={loggedUserId}
-            onClose={()=>setFlatRateIsOpen(false)}
+            onClose={() => setFlatRateIsOpen(false)}
           />
         </Modal>
       )}
