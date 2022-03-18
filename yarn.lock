@@ -1659,9 +1659,9 @@
     "@jridgewell/sourcemap-codec" "^1.4.10"
 
 "@kalos-core/kalos-rpc@^3.5.69":
-  version "3.5.76"
-  resolved "https://registry.yarnpkg.com/@kalos-core/kalos-rpc/-/kalos-rpc-3.5.76.tgz#089c3d031380ccd98ab9fc270d8c057fbf2057d3"
-  integrity sha512-OiLjdSPrIVrlWprksITH27d4RM7LYm7DDndB+hC60ODje3H3gjSYuPuf7Y53up9GHyx5O+e/lIC3SQpFp0Pxpw==
+  version "3.5.77"
+  resolved "https://registry.yarnpkg.com/@kalos-core/kalos-rpc/-/kalos-rpc-3.5.77.tgz#4e68f4b12d6ddf0a233c4be4fb3d0acadebf0697"
+  integrity sha512-Q9g1LPAvjI+n4DIrtwtsLECYtqC2SReJv3mvrezE7mDrWBvFjH1C0XxkegXeNtOE9flbvkv77EZGT5Xvljy7vA==
   dependencies:
     "@improbable-eng/grpc-web" "^0.9.6"
     "@rollup/plugin-commonjs" "^21.0.1"
@@ -3668,12 +3668,12 @@ caniuse-api@^3.0.0:
     lodash.memoize "^4.1.2"
     lodash.uniq "^4.5.0"
 
-caniuse-lite@^1.0.0, caniuse-lite@^1.0.30001280:
+caniuse-lite@^1.0.0:
   version "1.0.30001305"
   resolved "https://registry.npmjs.org/caniuse-lite/-/caniuse-lite-1.0.30001305.tgz"
   integrity sha512-p7d9YQMji8haf0f+5rbcv9WlQ+N5jMPfRAnUmZRlNxsNeBO3Yr7RYG6M2uTY1h9tCVdlkJg6YNNc4kiAiBLdWA==
 
-caniuse-lite@^1.0.30001283, caniuse-lite@^1.0.30001286, caniuse-lite@^1.0.30001312:
+caniuse-lite@^1.0.30001283:
   version "1.0.30001312"
   resolved "https://registry.yarnpkg.com/caniuse-lite/-/caniuse-lite-1.0.30001312.tgz#e11eba4b87e24d22697dae05455d5aea28550d5f"
   integrity sha512-Wiz1Psk2MEK0pX3rUzWaunLTZzqS2JYZFzNKqAiJGiuxIjRPLgV6+VDPOg6lQOUxmDwhTlh198JsTTi8Hzw6aQ==

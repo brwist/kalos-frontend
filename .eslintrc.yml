@@ -31,3 +31,4 @@ rules:
   no-async-promise-executor: off
   react/prop-types: off
   react/display-name: off
+  react/jsx-key: off
