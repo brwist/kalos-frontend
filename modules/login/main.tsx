@@ -1,9 +1,9 @@
 import React, { RefObject, KeyboardEvent } from 'react';
-import { UserClient, User } from '@kalos-core/kalos-rpc/User';
+import { UserClient, User } from '../../@kalos-core/kalos-rpc/User';
 import {
   ActivityLog,
   ActivityLogClient,
-} from '@kalos-core/kalos-rpc/ActivityLog';
+} from '../../@kalos-core/kalos-rpc/ActivityLog';
 import TextField from '@material-ui/core/TextField';
 import Button from '@material-ui/core/Button';
 import Grid from '@material-ui/core/Grid';
