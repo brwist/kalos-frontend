@@ -115,11 +115,9 @@ as stated and was unintentionally and irretrievably lost. I
 understand that the business credit card is only for legitimate
 expenses incurred to accomplish the business of Kalos Services Inc.`;
 
-const receiptAffadavitLegalManager = `By signing this document I attest that the transaction owner made this purchase and this
+const receiptAffadavitLegalManager = `By signing this document I attest that this
 transaction is a legitimate business transaction for Kalos business
-as stated and was unintentionally and irretrievably lost. I
-understand that the business credit card is only for legitimate
-expenses incurred to accomplish the business of Kalos Services Inc.`;
+as stated and was unintentionally and irretrievably lost.`;
 
 const retrievableAffadavitLegal = `By signing this document I attest that I made this purchase and this
 transaction is a legitimate business Transaction for Kalos business
