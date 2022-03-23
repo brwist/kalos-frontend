@@ -30,7 +30,6 @@ import { User } from '@kalos-core/kalos-rpc/User';
 import { SpiffType, TaskEventData } from '@kalos-core/kalos-rpc/Task';
 
 import {
-  getRPCFields,
   timestamp,
   formatDate,
   makeFakeRows,
@@ -46,9 +45,8 @@ import {
 } from '../../../helpers';
 import { ENDPOINT, ROWS_PER_PAGE, OPTION_ALL } from '../../../constants';
 import './spiffTool.less';
-import { Event } from '@kalos-core/kalos-rpc/Event';
 import { Payroll, RoleType } from '../../ComponentsLibrary/Payroll';
-import { PropLinkServiceClient } from '@kalos-core/kalos-rpc/compiled-protos/prop_link_pb_service';
+
 import { PermissionGroup } from '@kalos-core/kalos-rpc/compiled-protos/user_pb';
 
 const TaskClientService = new TaskClient(ENDPOINT);

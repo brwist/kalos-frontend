@@ -1751,6 +1751,9 @@ export const AdvancedSearch: FC<Props> = ({
             orderDir: usersSort.orderDir === 'ASC' ? 'DESC' : 'ASC',
           }),
         },
+        {
+          name: '',
+        },
       ];
     if (kind === 'properties')
       return [
@@ -2300,10 +2303,6 @@ export const AdvancedSearch: FC<Props> = ({
                   },
                   {
                     value: entry.getId(),
-                    onClick: handlePendingEmployeeViewingToggle(entry),
-                  },
-                  {
-                    value: '',
                     onClick: handlePendingEmployeeViewingToggle(entry),
                   },
                   {

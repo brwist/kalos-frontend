@@ -1,11 +1,11 @@
 import React from 'react';
 import ReactDOM from 'react-dom';
-import { PendingInvoiceTransaction } from './main';
+import { PendingInvoiceTransactionComponent } from './main';
 import { PageWrapper } from '../PageWrapper/main';
 
 ReactDOM.render(
   <PageWrapper userID={101253} withHeader>
-    <PendingInvoiceTransaction />
+    <PendingInvoiceTransactionComponent />
   </PageWrapper>,
   document.getElementById('root'),
 );
