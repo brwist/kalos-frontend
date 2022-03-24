@@ -134,12 +134,12 @@ const Transaction: FC<Props> = props => {
               />
             </Modal>
           )}
-
+          {/*commenting out for now, since this subverts the workflow
           <Button
             label="Add Transaction"
             onClick={() => handleToggleAddTransaction(true)}
           />
-
+              */}
           {toggleAddTransaction ? (
             <Modal
               open={toggleAddTransaction}
