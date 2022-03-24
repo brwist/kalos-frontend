@@ -552,7 +552,7 @@ export class TransactionAdminView extends React.Component<props, state> {
       ? true
       : false;
     this.setState({ accountingAdmin: permissionAccountingAdmin });
-    this.setState({ acceptOverride: permissionOverride });
+    this.setState({ acceptOverride: !permissionOverride });
     this.setState({ showWorkflowFilters: permissionWorkflowFilter });
   }
   setSort(sortBy: sortString) {
