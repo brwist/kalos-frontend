@@ -6,9 +6,7 @@ import { PendingInvoiceTransaction } from '../../@kalos-core/kalos-rpc/compiled-
 
 import { parse } from 'papaparse';
 import { parseISO, format, parse as dateParse } from 'date-fns';
-import { Data } from '@react-google-maps/api';
-import { replace } from 'lodash';
-import { ENDPOINT } from '@kalos-core/kalos-rpc/constants';
+import { Select, MenuItem } from '@material-ui/core/';
 type FormData = {
   filename: string;
 };
@@ -16,7 +14,13 @@ type Field = {
   label: string;
   value: number;
 };
-
+type Assignment = {
+  dropDownValue: number;
+  columnIndex: number;
+};
+type Selected = {
+  value: number;
+};
 const initialState: State = {
   formData: { filename: '' },
   columns: [],
@@ -29,7 +33,7 @@ const initialState: State = {
   ],
   loading: false,
   recordCount: 0,
-  columnDropDownAssignment: {},
+  columnDropDownAssignment: [],
   error: '',
   data: [],
 };
@@ -39,7 +43,7 @@ export type State = {
   columns: Columns;
   dropDownFieldList: Field[];
   //key is column,  so when we pass a dropdown, we assign a new column to it
-  columnDropDownAssignment: { [key: string]: string };
+  columnDropDownAssignment: Assignment[];
   recordCount: number;
   loading: boolean;
   error: string;
@@ -64,8 +68,9 @@ export type Action =
   | { type: ACTIONS.SET_DROP_DOWN_FIELD_LIST; data: Field[] }
   | {
       type: ACTIONS.SET_COLUMN_DROPDOWN_ASSIGNMENT;
-      data: { [key: string]: string };
+      data: Assignment[];
     }
+  | { type: ACTIONS.SET_LOADING; data: boolean }
   | { type: ACTIONS.SET_LOADING; data: boolean }
   | { type: ACTIONS.SET_ERROR; data: string }
   | { type: ACTIONS.SET_DATA; data: string[][] };
@@ -131,7 +136,7 @@ export const PendingInvoiceTransactionComponent: FC = () => {
   const handleFileLoad = useCallback(async (file: string, filename: string) => {
     dispatch({ type: ACTIONS.SET_ERROR, data: '' });
     dispatch({ type: ACTIONS.SET_LOADING, data: true });
-    dispatch({ type: ACTIONS.SET_COLUMN_DROPDOWN_ASSIGNMENT, data: {} });
+    dispatch({ type: ACTIONS.SET_COLUMN_DROPDOWN_ASSIGNMENT, data: [] });
 
     try {
       const fileContent = atob(file.split(';base64,')[1]);
@@ -156,13 +161,19 @@ export const PendingInvoiceTransactionComponent: FC = () => {
       if (convertedData.length > 0) {
         const header = convertedData[0];
         const columnList: Columns = [];
+        const mappedList = [];
         for (let i = 0; i < header.length; i++) {
           const column = { name: header[i] };
-
+          console.log({ dropDownValue: 0, columnIndex: i });
+          mappedList.push({ dropDownValue: 0, columnIndex: i });
           columnList.push(column);
-
-          dispatch({ type: ACTIONS.SET_COLUMNS, data: columnList });
         }
+        dispatch({ type: ACTIONS.SET_COLUMNS, data: columnList });
+        console.log('mappedList', mappedList);
+        dispatch({
+          type: ACTIONS.SET_COLUMN_DROPDOWN_ASSIGNMENT,
+          data: mappedList,
+        });
       }
     } catch (err) {
       // @ts-ignore
@@ -176,20 +187,26 @@ export const PendingInvoiceTransactionComponent: FC = () => {
   };
   const findFieldValue = useCallback(
     (columnName: string, headerList: string[]) => {
-      let matchString = '';
-      headerList.map(el => {
-        if (state.columnDropDownAssignment[el] === columnName) {
-          matchString = el;
-        }
-      });
-      return matchString;
+      return '';
     },
-    [state.columnDropDownAssignment],
+    [],
   );
   const replaceAll = (string: string, search: string, replace: string) => {
     return string.split(search).join(replace);
   };
+  const generateDropDown = () => {
+    const elementMap: JSX.Element[] = [];
 
+    state.dropDownFieldList.map((el, idx) => {
+      const element = (
+        <MenuItem key={idx.toString() + el.label} value={el.value}>
+          {el.label}
+        </MenuItem>
+      );
+      elementMap.push(element);
+    });
+    return elementMap;
+  };
   const handleSaveNewRecords = useCallback(async () => {
     let data = state.data;
 
@@ -267,7 +284,7 @@ export const PendingInvoiceTransactionComponent: FC = () => {
         req.getNotes() != '' ||
         req.getTimestamp() != ''
       ) {
-        client.Create(req);
+        //client.Create(req);
       } else {
         dispatch({
           type: ACTIONS.SET_ERROR,
@@ -288,30 +305,47 @@ export const PendingInvoiceTransactionComponent: FC = () => {
     ],
   ] as Schema<FormData>;
 
-  const handleToggleColumnToField = (
-    columnIndex: number,
-    dropDownIndex: number,
-  ) => {
-    const dropDown = state.dropDownFieldList[dropDownIndex].label;
-    const column = state.columns[columnIndex].name!.toString();
-    const assignment = state.columnDropDownAssignment;
-    assignment[column] = dropDown;
-    dispatch({
-      type: ACTIONS.SET_COLUMN_DROPDOWN_ASSIGNMENT,
-      data: assignment,
-    });
-    dispatch({
-      type: ACTIONS.SET_ERROR,
-      data: '',
-    });
-  };
+  const handleToggleColumnToField = useCallback(
+    (columnIndex: number, dropDownIndex: number) => {
+      console.log('starting function');
+      const currentAssignment = state.columnDropDownAssignment;
+      const findExistingAssignment = currentAssignment.findIndex(
+        el => el.dropDownValue == dropDownIndex,
+      );
+      if (findExistingAssignment > 0) {
+        console.log('already assigned, removing from existing');
+        currentAssignment[findExistingAssignment].dropDownValue = 0;
+      }
+      const currentItemIndex = currentAssignment.findIndex(
+        el => el.columnIndex == columnIndex,
+      );
+      const currentItem = currentAssignment[currentItemIndex];
+      currentItem.dropDownValue = dropDownIndex;
+      currentAssignment[currentItemIndex] = currentItem;
+      console.log(currentAssignment);
 
-  const SCHEMA_DROPDOWNS: Schema<Field> = [
+      dispatch({
+        type: ACTIONS.SET_COLUMN_DROPDOWN_ASSIGNMENT,
+        data: currentAssignment,
+      });
+      dispatch({
+        type: ACTIONS.SET_ERROR,
+        data: '',
+      });
+    },
+    [state.columnDropDownAssignment],
+  );
+
+  const SCHEMA_DROPDOWNS: Schema<Assignment> = [
     [
       {
-        name: 'value',
+        name: 'dropDownValue',
         label: 'Select Field',
         options: state.dropDownFieldList,
+      },
+      {
+        name: 'columnIndex',
+        type: 'hidden',
       },
     ],
   ];
@@ -328,6 +362,7 @@ export const PendingInvoiceTransactionComponent: FC = () => {
           },
         ]}
         fixedActions
+        loading={state.loading}
       />
       <PlainForm<FormData>
         schema={SCHEMA}
@@ -335,8 +370,11 @@ export const PendingInvoiceTransactionComponent: FC = () => {
         onChange={data => dispatch({ type: ACTIONS.SET_FORM_DATA, data: data })}
         error={state.error}
       />
-      {state.columns.length > 0 ? (
+      {state.columns.length > 0 &&
+      state.columnDropDownAssignment.length > 0 &&
+      state.dropDownFieldList.length > 0 ? (
         <InfoTable
+          key={'TableAssignemnt'}
           columns={[{ name: 'File Header' }, { name: 'Field Select' }]}
           data={state.columns.map((column, idx) => {
             return [
@@ -345,22 +383,41 @@ export const PendingInvoiceTransactionComponent: FC = () => {
               },
               {
                 value: (
-                  <PlainForm
+                  <div
+                    key={`${idx}${column.name}${
+                      state.columnDropDownAssignment.find(
+                        el => el.columnIndex == idx,
+                      )?.columnIndex
+                    }`}
+                  >
+                    <Select
+                      key={idx}
+                      value={
+                        state.columnDropDownAssignment.find(
+                          el => el.columnIndex == idx,
+                        )!.dropDownValue
+                      }
+                      onChange={data =>
+                        handleToggleColumnToField(
+                          data.target.value as number,
+                          idx,
+                        )
+                      }
+                    >
+                      {generateDropDown()}
+                    </Select>
+                    {/*/        <PlainForm
                     key={`${idx}${column.name}`}
                     schema={SCHEMA_DROPDOWNS}
                     data={
-                      state.dropDownFieldList.find(
-                        el =>
-                          el.label ==
-                          state.columnDropDownAssignment[
-                            column.name!.toString()
-                          ],
-                      ) || state.dropDownFieldList[0]
+                      state.columnDropDownAssignment.find(
+                        el => el.columnIndex == idx,
+                      )!
                     }
-                    onChange={data =>
-                      handleToggleColumnToField(idx, data.value)
-                    }
-                  />
+                    
+                  
+                  />*/}
+                  </div>
                 ),
               },
             ];
