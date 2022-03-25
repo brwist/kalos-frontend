@@ -14,6 +14,8 @@ var jspb = require('google-protobuf');
 var goog = jspb;
 var global = Function('return this')();
 
+var common_pb = require('./common_pb.js');
+goog.object.extend(proto, common_pb);
 goog.exportSymbol('proto.Vendor', null, global);
 goog.exportSymbol('proto.VendorList', null, global);
 /**

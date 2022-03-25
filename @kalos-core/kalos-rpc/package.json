@@ -1,6 +1,6 @@
 {
   "name": "@kalos-core/kalos-rpc",
-  "version": "3.5.80",
+  "version": "3.5.82",
   "description": "Kalos RPC frontend client",
   "scripts": {
     "release": "cd .. && yarn protos && cd client && git pull && yarn docgen && printf 'Logging in to NPM...\n' && npm login && yarn publish --access restricted && git push",
@@ -47,6 +47,7 @@
     "PerDiem",
     "PhoneCallLog",
     "Predict",
+    "PendingInvoiceTransaction",
     "PromptPaymentOverride",
     "PromptPaymentRebate",
     "Property",

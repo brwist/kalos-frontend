@@ -90,6 +90,7 @@ import { DevlogClient } from '@kalos-core/kalos-rpc/Devlog';
 import { InvoiceClient } from '@kalos-core/kalos-rpc/Invoice';
 import { FirstCallClient } from '@kalos-core/kalos-rpc/FirstCall';
 import { MertricReportDataRequest } from '@kalos-core/kalos-rpc/compiled-protos/metrics_pb';
+import { PendingInvoiceTransactionClient } from '@kalos-core/kalos-rpc/PendingInvoiceTransaction';
 
 export type SimpleFile = {
   key: string;
@@ -109,6 +110,8 @@ export const DocumentClientService = new DocumentClient(ENDPOINT);
 export const ReportClientService = new ReportClient(ENDPOINT);
 export const TaskClientService = new TaskClient(ENDPOINT);
 export const PDFClientService = new PDFClient(ENDPOINT);
+export const PendingInvoiceTransactionClientService =
+  new PendingInvoiceTransactionClient(ENDPOINT);
 export const UserClientService = new UserClient(ENDPOINT);
 export const PropertyClientService = new PropertyClient(ENDPOINT);
 export const ContractClientService = new ContractClient(ENDPOINT);

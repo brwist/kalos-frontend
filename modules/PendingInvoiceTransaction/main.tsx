@@ -3,10 +3,12 @@ import { SectionBar } from '../ComponentsLibrary/SectionBar';
 import { PlainForm, Schema } from '../ComponentsLibrary/PlainForm';
 import { InfoTable, Columns } from '../ComponentsLibrary/InfoTable';
 import { PendingInvoiceTransaction } from '../../@kalos-core/kalos-rpc/compiled-protos/pending_invoice_transaction_pb';
-
 import { parse } from 'papaparse';
+import { PendingInvoiceTransactionClientService } from '../../helpers';
 import { parseISO, format, parse as dateParse } from 'date-fns';
 import { Select, MenuItem } from '@material-ui/core/';
+import { Loader } from '../Loader/main';
+import { Tabs } from '../ComponentsLibrary/Tabs';
 type FormData = {
   filename: string;
 };
@@ -18,9 +20,7 @@ type Assignment = {
   dropDownValue: number;
   columnIndex: number;
 };
-type Selected = {
-  value: number;
-};
+
 const initialState: State = {
   formData: { filename: '' },
   columns: [],
@@ -70,7 +70,6 @@ export type Action =
       type: ACTIONS.SET_COLUMN_DROPDOWN_ASSIGNMENT;
       data: Assignment[];
     }
-  | { type: ACTIONS.SET_LOADING; data: boolean }
   | { type: ACTIONS.SET_LOADING; data: boolean }
   | { type: ACTIONS.SET_ERROR; data: string }
   | { type: ACTIONS.SET_DATA; data: string[][] };
@@ -156,7 +155,6 @@ export const PendingInvoiceTransactionComponent: FC = () => {
             data: results.data.filter(el => el.length > 1).length,
           });
         },
-        error: console.log,
       });
       if (convertedData.length > 0) {
         const header = convertedData[0];
@@ -164,12 +162,10 @@ export const PendingInvoiceTransactionComponent: FC = () => {
         const mappedList = [];
         for (let i = 0; i < header.length; i++) {
           const column = { name: header[i] };
-          console.log({ dropDownValue: 0, columnIndex: i });
           mappedList.push({ dropDownValue: 0, columnIndex: i });
           columnList.push(column);
         }
         dispatch({ type: ACTIONS.SET_COLUMNS, data: columnList });
-        console.log('mappedList', mappedList);
         dispatch({
           type: ACTIONS.SET_COLUMN_DROPDOWN_ASSIGNMENT,
           data: mappedList,
@@ -181,16 +177,7 @@ export const PendingInvoiceTransactionComponent: FC = () => {
     }
     dispatch({ type: ACTIONS.SET_LOADING, data: false });
   }, []);
-  const getColumnIndex = (columnName: string, headerList: string[]) => {
-    const index = headerList.findIndex(el => el == columnName);
-    return index;
-  };
-  const findFieldValue = useCallback(
-    (columnName: string, headerList: string[]) => {
-      return '';
-    },
-    [],
-  );
+
   const replaceAll = (string: string, search: string, replace: string) => {
     return string.split(search).join(replace);
   };
@@ -209,49 +196,64 @@ export const PendingInvoiceTransactionComponent: FC = () => {
   };
   const handleSaveNewRecords = useCallback(async () => {
     let data = state.data;
-
-    console.log(data);
     const header = data[0];
-    const notes = findFieldValue('Notes', header);
-    const invoiceNumber = findFieldValue('Invoice Number', header);
-    const amount = findFieldValue('Amount', header);
-    const date = findFieldValue('Date', header);
-    console.log(notes);
+    dispatch({
+      type: ACTIONS.SET_LOADING,
+      data: true,
+    });
+    const notesField = state.columnDropDownAssignment.find(
+      el => el.dropDownValue == 4,
+    );
+    const invoiceNumberField = state.columnDropDownAssignment.find(
+      el => el.dropDownValue == 1,
+    );
+    const amountField = state.columnDropDownAssignment.find(
+      el => el.dropDownValue == 2,
+    );
+    const dateField = state.columnDropDownAssignment.find(
+      el => el.dropDownValue == 3,
+    );
     for (let i = 1; i < data.length; i++) {
       const req = new PendingInvoiceTransaction();
-      if (notes != '') {
-        const index = getColumnIndex(notes, header);
-        req.setNotes(data[i][index]);
-        console.log('got notes', data[i][index]);
+      if (notesField) {
+        req.setNotes(data[i][notesField.columnIndex]);
       }
-      if (invoiceNumber != '') {
-        const index = getColumnIndex(invoiceNumber, header);
-        req.setInvoiceNumber(data[i][index]);
+      if (invoiceNumberField) {
+        req.setInvoiceNumber(data[i][invoiceNumberField.columnIndex]);
       }
-      if (date != '') {
-        const index = getColumnIndex(date, header);
-        let dateValue = data[i][index];
+      if (dateField) {
+        let dateValue = data[i][dateField.columnIndex];
         try {
-          console.log(dateValue);
-          let finalDateValue = format(
-            dateParse(dateValue, 'm/d/yyyy', new Date()),
-            'yyyy-MM-dd hh:mm:ss',
-          );
+          let dateParse = dateValue.split('/');
+          const month = dateParse[0];
+          const day = dateParse[1];
+          let year = dateParse[2];
+          const date = new Date();
+          date.setMonth(parseInt(month));
+          date.setDate(parseInt(day));
+          if (year.length <= 2) {
+            year = '20' + year;
+          }
+          date.setFullYear(parseInt(year));
+          const finalDateValue = format(date, 'yyyy-MM-dd hh:mm:ss');
           req.setTimestamp(finalDateValue);
         } catch (err) {
-          console.log('could not transcribe date,', err);
           dispatch({
             type: ACTIONS.SET_ERROR,
             data: 'Something went wrong when trying to validate the date, please select another field or contact Webtech',
           });
+          dispatch({
+            type: ACTIONS.SET_LOADING,
+            data: false,
+          });
+          return;
         }
       }
-      if (amount != '') {
-        const index = getColumnIndex(amount, header);
+      if (amountField) {
         let transcribeAmount = 0;
-        const amountValue = data[i][index];
+        const amountValue = data[i][amountField.columnIndex];
         const testForLetters = /[a-z]/i.test(amountValue);
-        const testForBadCharacters = /[-/:-?{-~!"^_`[\]]/.test(amountValue);
+        const testForBadCharacters = /[/:-?{-~!"^_`[\]]/.test(amountValue);
         if (testForLetters == false && testForBadCharacters == false) {
           try {
             let amountString = amountValue;
@@ -261,14 +263,21 @@ export const PendingInvoiceTransactionComponent: FC = () => {
             amountString = replaceAll(amountString, ',', '');
             try {
               transcribeAmount = parseFloat(amountString);
-              console.log('amount fixed', transcribeAmount);
             } catch (err) {
               console.log('could not transcribe the amount,', err);
             }
             req.setAmount(transcribeAmount.toFixed(2));
           } catch (err) {
-            console.log(data[i]);
             console.log('could not transcribe amount:', amountValue);
+            dispatch({
+              type: ACTIONS.SET_ERROR,
+              data: 'Could not transcribe the amount data.',
+            });
+            dispatch({
+              type: ACTIONS.SET_LOADING,
+              data: false,
+            });
+            return;
           }
         } else {
           dispatch({
@@ -284,15 +293,20 @@ export const PendingInvoiceTransactionComponent: FC = () => {
         req.getNotes() != '' ||
         req.getTimestamp() != ''
       ) {
-        //client.Create(req);
+        await PendingInvoiceTransactionClientService.Create(req);
       } else {
+        dispatch({
+          type: ACTIONS.SET_LOADING,
+          data: false,
+        });
         dispatch({
           type: ACTIONS.SET_ERROR,
           data: 'We detected no fields were selected',
         });
       }
     }
-  }, [state.data, findFieldValue]);
+    dispatch({ type: ACTIONS.SET_LOADING, data: false });
+  }, [state.data, state.columnDropDownAssignment]);
   const SCHEMA: Schema<FormData> = [
     [
       {
@@ -307,13 +321,11 @@ export const PendingInvoiceTransactionComponent: FC = () => {
 
   const handleToggleColumnToField = useCallback(
     (columnIndex: number, dropDownIndex: number) => {
-      console.log('starting function');
       const currentAssignment = state.columnDropDownAssignment;
       const findExistingAssignment = currentAssignment.findIndex(
         el => el.dropDownValue == dropDownIndex,
       );
-      if (findExistingAssignment > 0) {
-        console.log('already assigned, removing from existing');
+      if (findExistingAssignment != -1 && dropDownIndex != 0) {
         currentAssignment[findExistingAssignment].dropDownValue = 0;
       }
       const currentItemIndex = currentAssignment.findIndex(
@@ -336,19 +348,6 @@ export const PendingInvoiceTransactionComponent: FC = () => {
     [state.columnDropDownAssignment],
   );
 
-  const SCHEMA_DROPDOWNS: Schema<Assignment> = [
-    [
-      {
-        name: 'dropDownValue',
-        label: 'Select Field',
-        options: state.dropDownFieldList,
-      },
-      {
-        name: 'columnIndex',
-        type: 'hidden',
-      },
-    ],
-  ];
   return (
     <div>
       <SectionBar
@@ -399,24 +398,13 @@ export const PendingInvoiceTransactionComponent: FC = () => {
                       }
                       onChange={data =>
                         handleToggleColumnToField(
-                          data.target.value as number,
                           idx,
+                          data.target.value as number,
                         )
                       }
                     >
                       {generateDropDown()}
                     </Select>
-                    {/*/        <PlainForm
-                    key={`${idx}${column.name}`}
-                    schema={SCHEMA_DROPDOWNS}
-                    data={
-                      state.columnDropDownAssignment.find(
-                        el => el.columnIndex == idx,
-                      )!
-                    }
-                    
-                  
-                  />*/}
                   </div>
                 ),
               },
@@ -424,6 +412,7 @@ export const PendingInvoiceTransactionComponent: FC = () => {
           })}
         />
       ) : undefined}
+      {state.loading ? <Loader /> : undefined}
     </div>
   );
 };
