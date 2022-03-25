@@ -2,6 +2,7 @@
 // file: vendor.proto
 
 import * as jspb from "google-protobuf";
+import * as common_pb from "./common_pb";
 
 export class Vendor extends jspb.Message {
   getId(): number;
