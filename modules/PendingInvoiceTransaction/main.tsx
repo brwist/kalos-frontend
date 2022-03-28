@@ -1,16 +1,23 @@
-import React, { FC, useCallback, useState, useReducer } from 'react';
+import React, { FC, useCallback, useState, useReducer, useEffect } from 'react';
 import { SectionBar } from '../ComponentsLibrary/SectionBar';
 import { PlainForm, Schema } from '../ComponentsLibrary/PlainForm';
 import { InfoTable, Columns } from '../ComponentsLibrary/InfoTable';
 import { PendingInvoiceTransaction } from '../../@kalos-core/kalos-rpc/compiled-protos/pending_invoice_transaction_pb';
 import { parse } from 'papaparse';
-import { PendingInvoiceTransactionClientService } from '../../helpers';
+import {
+  PendingInvoiceTransactionClientService,
+  VendorClientService,
+} from '../../helpers';
 import { parseISO, format, parse as dateParse } from 'date-fns';
+import { Vendor, VendorClient } from '../../@kalos-core/kalos-rpc/Vendor';
 import { Select, MenuItem } from '@material-ui/core/';
 import { Loader } from '../Loader/main';
 import { Tabs } from '../ComponentsLibrary/Tabs';
+import { type } from 'os';
+import { count } from 'console';
 type FormData = {
   filename: string;
+  selectedVendorId: number;
 };
 type Field = {
   label: string;
@@ -21,8 +28,18 @@ type Assignment = {
   columnIndex: number;
 };
 
+type InvoiceTransaction = {
+  amount: number;
+  invoiceNumber: string;
+  date: string;
+  notes: string;
+  vendorId: number;
+  departmentId: number;
+  selected: boolean;
+  id: number;
+};
 const initialState: State = {
-  formData: { filename: '' },
+  formData: { filename: '', selectedVendorId: 0 },
   columns: [],
   dropDownFieldList: [
     { label: 'None', value: 0 },
@@ -34,6 +51,12 @@ const initialState: State = {
   loading: false,
   recordCount: 0,
   columnDropDownAssignment: [],
+  vendors: [],
+  saving: false,
+  pendingInvoices: [],
+  loaded: false,
+  pendingInvoicePage: 0,
+  pendingInvoicesCount: 0,
   error: '',
   data: [],
 };
@@ -42,11 +65,16 @@ export type State = {
   formData: FormData;
   columns: Columns;
   dropDownFieldList: Field[];
-  //key is column,  so when we pass a dropdown, we assign a new column to it
   columnDropDownAssignment: Assignment[];
+  pendingInvoices: PendingInvoiceTransaction[];
+  pendingInvoicesCount: number;
+  loaded: boolean;
+  saving: boolean;
+  vendors: Vendor[];
   recordCount: number;
   loading: boolean;
   error: string;
+  pendingInvoicePage: number;
   data: string[][];
 };
 
@@ -56,21 +84,33 @@ export enum ACTIONS {
   SET_DROP_DOWN_FIELD_LIST = 'setDropDownFieldList',
   SET_COLUMN_DROPDOWN_ASSIGNMENT = 'setColumnDropdownAssigment',
   SET_LOADING = 'setLoading',
+  SET_SAVING = 'setSaving',
+  SET_VENDORS = 'setVendors',
+  SET_PENDING_INVOICES = 'setPendingInvoices',
+  SET_PENDING_INVOICES_COUNT = 'setPendingInvoicesCount',
+  SET_LOADED = 'setLoaded',
   SET_RECORD_COUNT = 'setRecordCount',
   SET_ERROR = 'setError',
   SET_DATA = 'setData',
+  SET_PENDING_INVOICE_PAGE = 'setPendingInvoicePage',
 }
 
 export type Action =
   | { type: ACTIONS.SET_FORM_DATA; data: FormData }
   | { type: ACTIONS.SET_COLUMNS; data: Columns }
   | { type: ACTIONS.SET_RECORD_COUNT; data: number }
+  | { type: ACTIONS.SET_PENDING_INVOICE_PAGE; data: number }
   | { type: ACTIONS.SET_DROP_DOWN_FIELD_LIST; data: Field[] }
+  | { type: ACTIONS.SET_VENDORS; data: Vendor[] }
   | {
       type: ACTIONS.SET_COLUMN_DROPDOWN_ASSIGNMENT;
       data: Assignment[];
     }
   | { type: ACTIONS.SET_LOADING; data: boolean }
+  | { type: ACTIONS.SET_SAVING; data: boolean }
+  | { type: ACTIONS.SET_PENDING_INVOICES; data: PendingInvoiceTransaction[] }
+  | { type: ACTIONS.SET_PENDING_INVOICES_COUNT; data: number }
+  | { type: ACTIONS.SET_LOADED; data: boolean }
   | { type: ACTIONS.SET_ERROR; data: string }
   | { type: ACTIONS.SET_DATA; data: string[][] };
 
@@ -94,6 +134,12 @@ export const reducer = (state: State, action: Action) => {
         dropDownFieldList: action.data,
       };
     }
+    case ACTIONS.SET_VENDORS: {
+      return {
+        ...state,
+        vendors: action.data,
+      };
+    }
     case ACTIONS.SET_COLUMN_DROPDOWN_ASSIGNMENT: {
       return {
         ...state,
@@ -104,6 +150,36 @@ export const reducer = (state: State, action: Action) => {
       return {
         ...state,
         loading: action.data,
+      };
+    }
+    case ACTIONS.SET_SAVING: {
+      return {
+        ...state,
+        saving: action.data,
+      };
+    }
+    case ACTIONS.SET_PENDING_INVOICE_PAGE: {
+      return {
+        ...state,
+        pendingInvoicePage: action.data,
+      };
+    }
+    case ACTIONS.SET_PENDING_INVOICES: {
+      return {
+        ...state,
+        pendingInvoices: action.data,
+      };
+    }
+    case ACTIONS.SET_PENDING_INVOICES_COUNT: {
+      return {
+        ...state,
+        pendingInvoicesCount: action.data,
+      };
+    }
+    case ACTIONS.SET_LOADED: {
+      return {
+        ...state,
+        loaded: action.data,
       };
     }
     case ACTIONS.SET_ERROR: {
@@ -181,6 +257,33 @@ export const PendingInvoiceTransactionComponent: FC = () => {
   const replaceAll = (string: string, search: string, replace: string) => {
     return string.split(search).join(replace);
   };
+  const load = useCallback(async () => {
+    const req = new PendingInvoiceTransaction();
+    req.setIsCommitted(0);
+    req.setIsActive(1);
+    req.setPageNumber(state.pendingInvoicePage);
+    const results = await PendingInvoiceTransactionClientService.BatchGet(req);
+    dispatch({
+      type: ACTIONS.SET_PENDING_INVOICES,
+      data: results.getResultsList(),
+    });
+    dispatch({
+      type: ACTIONS.SET_PENDING_INVOICES_COUNT,
+      data: results.getTotalCount(),
+    });
+    const vendorReq = new Vendor();
+    vendorReq.setIsActive(1);
+    const vendors = await VendorClientService.BatchGet(vendorReq);
+    dispatch({ type: ACTIONS.SET_VENDORS, data: vendors.getResultsList() });
+  }, [state.pendingInvoicePage]);
+
+  useEffect(() => {
+    if (!state.loaded) {
+      dispatch({ type: ACTIONS.SET_LOADED, data: true });
+      load();
+    }
+  }, [state.loaded, load]);
+
   const generateDropDown = () => {
     const elementMap: JSX.Element[] = [];
 
@@ -196,9 +299,8 @@ export const PendingInvoiceTransactionComponent: FC = () => {
   };
   const handleSaveNewRecords = useCallback(async () => {
     let data = state.data;
-    const header = data[0];
     dispatch({
-      type: ACTIONS.SET_LOADING,
+      type: ACTIONS.SET_SAVING,
       data: true,
     });
     const notesField = state.columnDropDownAssignment.find(
@@ -246,6 +348,10 @@ export const PendingInvoiceTransactionComponent: FC = () => {
             type: ACTIONS.SET_LOADING,
             data: false,
           });
+          dispatch({
+            type: ACTIONS.SET_SAVING,
+            data: false,
+          });
           return;
         }
       }
@@ -277,6 +383,10 @@ export const PendingInvoiceTransactionComponent: FC = () => {
               type: ACTIONS.SET_LOADING,
               data: false,
             });
+            dispatch({
+              type: ACTIONS.SET_SAVING,
+              data: false,
+            });
             return;
           }
         } else {
@@ -293,20 +403,31 @@ export const PendingInvoiceTransactionComponent: FC = () => {
         req.getNotes() != '' ||
         req.getTimestamp() != ''
       ) {
+        req.setVendorId(state.formData.selectedVendorId);
         await PendingInvoiceTransactionClientService.Create(req);
       } else {
         dispatch({
-          type: ACTIONS.SET_LOADING,
+          type: ACTIONS.SET_SAVING,
           data: false,
         });
+        dispatch({ type: ACTIONS.SET_LOADING, data: false });
+
         dispatch({
           type: ACTIONS.SET_ERROR,
           data: 'We detected no fields were selected',
         });
       }
     }
+    dispatch({
+      type: ACTIONS.SET_SAVING,
+      data: false,
+    });
     dispatch({ type: ACTIONS.SET_LOADING, data: false });
-  }, [state.data, state.columnDropDownAssignment]);
+  }, [
+    state.data,
+    state.columnDropDownAssignment,
+    state.formData.selectedVendorId,
+  ]);
   const SCHEMA: Schema<FormData> = [
     [
       {
@@ -316,8 +437,55 @@ export const PendingInvoiceTransactionComponent: FC = () => {
         required: true,
         onFileLoad: handleFileLoad,
       },
+      {
+        name: 'selectedVendorId',
+        label: 'Select Vendor',
+        required: true,
+        options: state.vendors.map(el => ({
+          label: el.getVendorName(),
+          value: el.getId(),
+        })),
+      },
     ],
   ] as Schema<FormData>;
+
+  const INVOICE_TRANSACTION: Schema<InvoiceTransaction> = [
+    [
+      {
+        name: 'invoiceNumber',
+      },
+      {
+        name: 'amount',
+        type: 'number',
+      },
+      {
+        name: 'date',
+        type: 'date',
+      },
+      {
+        name: 'notes',
+      },
+      {
+        name: 'vendorId',
+        options: state.vendors.map(el => ({
+          label: el.getVendorName(),
+          value: el.getId(),
+        })),
+      },
+      {
+        name: 'departmentId',
+        type: 'department',
+      },
+      {
+        name: 'selected',
+        type: 'checkbox',
+      },
+      {
+        name: 'id',
+        type: 'hidden',
+      },
+    ],
+  ] as Schema<InvoiceTransaction>;
 
   const handleToggleColumnToField = useCallback(
     (columnIndex: number, dropDownIndex: number) => {
@@ -352,67 +520,172 @@ export const PendingInvoiceTransactionComponent: FC = () => {
     <div>
       <SectionBar
         title="Pending Invoice Transactions"
-        subtitle={`Record Count:${state.recordCount}`}
-        actions={[
-          {
-            label: 'Save new records',
-            onClick: handleSaveNewRecords,
-            disabled: !state.formData.filename || !!state.error,
-          },
-        ]}
-        fixedActions
+        fixedActions={true}
+        uncollapsable={true}
         loading={state.loading}
-      />
-      <PlainForm<FormData>
-        schema={SCHEMA}
-        data={state.formData}
-        onChange={data => dispatch({ type: ACTIONS.SET_FORM_DATA, data: data })}
-        error={state.error}
-      />
-      {state.columns.length > 0 &&
-      state.columnDropDownAssignment.length > 0 &&
-      state.dropDownFieldList.length > 0 ? (
-        <InfoTable
-          key={'TableAssignemnt'}
-          columns={[{ name: 'File Header' }, { name: 'Field Select' }]}
-          data={state.columns.map((column, idx) => {
-            return [
-              {
-                value: column.name,
-              },
-              {
-                value: (
-                  <div
-                    key={`${idx}${column.name}${
-                      state.columnDropDownAssignment.find(
-                        el => el.columnIndex == idx,
-                      )?.columnIndex
-                    }`}
-                  >
-                    <Select
-                      key={idx}
-                      value={
-                        state.columnDropDownAssignment.find(
-                          el => el.columnIndex == idx,
-                        )!.dropDownValue
-                      }
-                      onChange={data =>
-                        handleToggleColumnToField(
-                          idx,
-                          data.target.value as number,
-                        )
-                      }
-                    >
-                      {generateDropDown()}
-                    </Select>
-                  </div>
-                ),
-              },
-            ];
-          })}
-        />
-      ) : undefined}
-      {state.loading ? <Loader /> : undefined}
+      >
+        <Tabs
+          onChange={idx => {
+            idx == 1
+              ? dispatch({
+                  type: ACTIONS.SET_LOADED,
+                  data: false,
+                })
+              : undefined;
+          }}
+          tabs={[
+            {
+              label: 'Invoice Upload',
+              content: (
+                <div>
+                  <SectionBar
+                    title="Upload Records"
+                    subtitle={`Record Count:${state.recordCount}`}
+                    actions={[
+                      {
+                        label: state.saving
+                          ? 'Saving New Records'
+                          : 'Save new records',
+                        onClick: handleSaveNewRecords,
+                        disabled:
+                          !state.formData.filename ||
+                          !!state.error ||
+                          state.formData.selectedVendorId == 0 ||
+                          state.saving,
+                      },
+                    ]}
+                    fixedActions
+                    loading={state.loading || state.saving}
+                  />
+                  <PlainForm<FormData>
+                    schema={SCHEMA}
+                    data={state.formData}
+                    onChange={data =>
+                      dispatch({ type: ACTIONS.SET_FORM_DATA, data: data })
+                    }
+                    error={state.error}
+                  />
+                  {state.columns.length > 0 &&
+                  state.columnDropDownAssignment.length > 0 &&
+                  state.dropDownFieldList.length > 0 ? (
+                    <InfoTable
+                      key={'TableAssignemnt'}
+                      columns={[
+                        { name: 'File Header' },
+                        { name: 'Field Select' },
+                      ]}
+                      data={state.columns.map((column, idx) => {
+                        return [
+                          {
+                            value: column.name,
+                          },
+                          {
+                            value: (
+                              <div
+                                key={`${idx}${column.name}${
+                                  state.columnDropDownAssignment.find(
+                                    el => el.columnIndex == idx,
+                                  )?.columnIndex
+                                }`}
+                              >
+                                <Select
+                                  key={idx}
+                                  value={
+                                    state.columnDropDownAssignment.find(
+                                      el => el.columnIndex == idx,
+                                    )!.dropDownValue
+                                  }
+                                  onChange={data =>
+                                    handleToggleColumnToField(
+                                      idx,
+                                      data.target.value as number,
+                                    )
+                                  }
+                                >
+                                  {generateDropDown()}
+                                </Select>
+                              </div>
+                            ),
+                          },
+                        ];
+                      })}
+                    />
+                  ) : undefined}
+                  {state.saving ? <Loader></Loader> : undefined}
+                </div>
+              ),
+            },
+            {
+              label: 'Transaction Creation',
+              content: (
+                <div>
+                  <SectionBar
+                    pagination={{
+                      page: state.pendingInvoicePage,
+                      onPageChange: data => {
+                        dispatch({
+                          type: ACTIONS.SET_PENDING_INVOICE_PAGE,
+                          data: data,
+                        });
+
+                        dispatch({
+                          type: ACTIONS.SET_LOADED,
+                          data: false,
+                        });
+                      },
+                      rowsPerPage: 25,
+                      count: state.pendingInvoicesCount,
+                    }}
+                    title="Commit Transactions"
+                    subtitle={`Record Count:${state.pendingInvoicesCount}`}
+                    actions={[
+                      {
+                        label: 'Commit Selected Records',
+                        // onClick: handleSaveNewRecords,
+                        disabled: !state.formData.filename || !!state.error,
+                      },
+                    ]}
+                    fixedActions
+                    loading={!state.loaded}
+                  />
+                  <InfoTable
+                    columns={[
+                      { name: 'Invoice Number' },
+                      { name: 'Amount' },
+                      { name: 'Date' },
+                      { name: 'Notes' },
+                      { name: 'Vendor' },
+                      { name: 'Department' },
+                      { name: 'Selected' },
+                    ]}
+                  />
+                  {state.pendingInvoices.map((el, idx) => {
+                    return (
+                      <PlainForm<InvoiceTransaction>
+                        key={`${el.getInvoiceNumber()}${idx}`}
+                        schema={INVOICE_TRANSACTION}
+                        onChange={console.log}
+                        data={{
+                          notes: el.getNotes(),
+                          invoiceNumber: el.getInvoiceNumber(),
+                          id: el.getId(),
+                          vendorId: el.getVendorId(),
+                          departmentId: 0,
+                          amount: parseFloat(el.getAmount()),
+                          date: el.getTimestamp(),
+                          selected: false,
+                        }}
+                      />
+                    );
+                  })}
+                </div>
+              ),
+            },
+          ]}
+        >
+          {state.loading ? <Loader /> : undefined}
+        </Tabs>
+      </SectionBar>
     </div>
   );
 };
