@@ -14,6 +14,7 @@ import { PropertyClient, Property } from '@kalos-core/kalos-rpc/Property';
 import { EventClient, Event } from '@kalos-core/kalos-rpc/Event';
 import { JobTypeClient } from '@kalos-core/kalos-rpc/JobType';
 import { TimeoffRequestClient } from '@kalos-core/kalos-rpc/TimeoffRequest';
+import { VendorClient } from '@kalos-core/kalos-rpc/Vendor';
 import {
   Transaction,
   TransactionClient,
@@ -30,6 +31,7 @@ import {
   PromptPaymentReportLine,
   SpiffReportLine,
 } from '@kalos-core/kalos-rpc/Report';
+
 import { EmployeeFunctionClient } from '@kalos-core/kalos-rpc/EmployeeFunction';
 import { JobSubtypeClient } from '@kalos-core/kalos-rpc/JobSubtype';
 import { JobTypeSubtypeClient } from '@kalos-core/kalos-rpc/JobTypeSubtype';
@@ -164,6 +166,7 @@ export const SlackClientService = new SlackClient(ENDPOINT);
 export const DevlogClientService = new DevlogClient(ENDPOINT);
 export const InvoiceClientService = new InvoiceClient(ENDPOINT);
 export const FirstCallClientService = new FirstCallClient(ENDPOINT);
+export const VendorClientService = new VendorClient(ENDPOINT);
 
 export const getCFAppUrl = (action: string) => `${BASE_URL}?action=${action}`;
 
