@@ -6,11 +6,15 @@ import { Modal } from '../Modal';
 import { EventsReport } from '../EventsReport';
 import { ActivityLogReport } from '../ActivityLogReport';
 import { PerformanceMetrics } from '../PerformanceMetrics';
+import { TimesheetValidationReport } from '../TimesheetValidationReport';
 import { DeletedServiceCallsReport } from '../DeletedServiceCallsReport';
+import IconButton from '@material-ui/core/IconButton';
+import { TransactionValidationReport } from '../TransactionValidationReport';
+import ChevronLeftIcon from '@material-ui/icons/ChevronLeft';
+import ChevronRightIcon from '@material-ui/icons/ChevronRight';
 import { CallbackReport } from '../CallbackReport';
 import { ServiceCallMetrics } from '../ServiceCallMetrics';
 import { SpiffReport } from '../SpiffReport';
-import { CharityReport } from '../CharityReport';
 import { WarrantyReport } from '../WarrantyReport';
 import { PromptPaymentReport } from '../PromptPaymentReport';
 import { TimeoffSummaryReport } from '../TimeoffSummaryReport';
@@ -49,6 +53,9 @@ type JobReportForm = {
   jobNumber: number;
 };
 
+type TransactionReport = {
+  year: number;
+};
 export interface Props {
   loggedUserId: number;
 }
@@ -207,17 +214,6 @@ const SCHEMA_TRAINING_METRICS_REPORT: Schema<FilterForm> = [
   ],
 ];
 
-const SCHEMA_CHARITY_REPORT: Schema<FilterForm> = [
-  [
-    {
-      name: 'month',
-      label: 'Month',
-      options: LAST_12_MONTHS_0,
-      required: true,
-    },
-  ],
-];
-
 const SCHEMA_LAST_12_MONTHS_REPORT: Schema<FilterForm> = [
   [
     {
@@ -259,6 +255,12 @@ export const Reports: FC<Props> = ({ loggedUserId }) => {
     useState<boolean>(false);
   const [performanceMetricsReport, setPerformanceMetricsReport] =
     useState<FilterForm>({});
+  const [timesheetValidationReport, setTimesheetValidationReport] =
+    useState<FilterForm>({});
+  const [transactionValidationReport, setTransactionValidationReport] =
+    useState<TransactionReport>({ year: new Date().getFullYear() });
+  const [formKeyTransaction, setFormKeyTransaction] = useState<number>(0);
+
   const [performanceMetricsDatesError, setPerformanceMetricsDatesError] =
     useState<boolean>(false);
   const [performanceMetricsReportOpen, setPerformanceMetricsReportOpen] =
@@ -286,8 +288,13 @@ export const Reports: FC<Props> = ({ loggedUserId }) => {
   });
   const [spiffReportKey, setSpiffReportKey] = useState<number>(0);
   const [spiffReportOpen, setSpiffReportOpen] = useState<boolean>(false);
-  const [finalizeApprovedSpiffsOpen, setFinalizeApprovedSpiffsOpen] =
+  const [timesheetValidationReportOpen, setTimesheetValidationReportOpen] =
     useState<boolean>(false);
+  const [transactionValidationReportOpen, setTransactionValidationReportOpen] =
+    useState<boolean>(false);
+  const [timesheetValidationError, setTimesheetValidationError] =
+    useState<boolean>(false);
+
   const [serviceCallZipCodeReportOpen, setServiceCallZipCodeReportOpen] =
     useState<boolean>(false);
   const [warrantyReportOpen, setWarrantyReportOpen] = useState<boolean>(false);
@@ -297,10 +304,6 @@ export const Reports: FC<Props> = ({ loggedUserId }) => {
     useState<boolean>(false);
   const [trainingMetricsReportOpen, setTrainingMetricsReportOpen] =
     useState<boolean>(false);
-  const [charityReport, setCharityReport] = useState<FilterForm>({
-    month: LAST_12_MONTHS_0[0].value,
-  });
-  const [charityReportOpen, setCharityReportOpen] = useState<boolean>(false);
   const [billingAuditReport, setBillingAuditReport] = useState<FilterForm>({
     month: LAST_12_MONTHS_1[0].value,
   });
@@ -401,6 +404,33 @@ export const Reports: FC<Props> = ({ loggedUserId }) => {
     },
     [setPerformanceMetricsReport, setPerformanceMetricsDatesError],
   );
+
+  const handleOpenTimesheetValidationReportToggle = useCallback(
+    (open: boolean) => (data?: FilterForm) => {
+      setTimesheetValidationError(false);
+      if (
+        data &&
+        data.endDate &&
+        data.startDate &&
+        data.endDate < data.startDate
+      ) {
+        setTimesheetValidationError(true);
+        return;
+      }
+      if (data && data.startDate) {
+        setTimesheetValidationReport(data);
+      }
+      setTimesheetValidationReportOpen(open);
+    },
+    [setTimesheetValidationReport, setTimesheetValidationReportOpen],
+  );
+  const handleOpenTransactionValidationReportToggle = useCallback(
+    (open: boolean) => (data: TransactionReport) => {
+      setTransactionValidationReport(data);
+      setTransactionValidationReportOpen(open);
+    },
+    [setTransactionValidationReport, setTransactionValidationReportOpen],
+  );
   const handleOpenDeletedServiceCallsReportToggle = useCallback(
     (open: boolean) => (data?: FilterForm) => {
       console.log({ data });
@@ -463,9 +493,13 @@ export const Reports: FC<Props> = ({ loggedUserId }) => {
     },
     [setSpiffReport, setSpiffReportOpen],
   );
-  const handleOpenFinalizeApprovedSpiffsToggle = useCallback(
-    (open: boolean) => () => setFinalizeApprovedSpiffsOpen(open),
-    [setFinalizeApprovedSpiffsOpen],
+  const handleOpenTimesheetValidationToggle = useCallback(
+    (open: boolean) => () => setTimesheetValidationReportOpen(open),
+    [setTimesheetValidationReportOpen],
+  );
+  const handleOpenTransactionValidationToggle = useCallback(
+    (open: boolean) => () => setTransactionValidationReportOpen(open),
+    [setTransactionValidationReportOpen],
   );
   const handleOpenServiceCallZipCodeReportToggle = useCallback(
     (open: boolean) => () => setServiceCallZipCodeReportOpen(open),
@@ -498,15 +532,38 @@ export const Reports: FC<Props> = ({ loggedUserId }) => {
       setTrainingMetricsDatesError,
     ],
   );
-  const handleOpenCharityReportToggle = useCallback(
-    (open: boolean) => (data?: FilterForm) => {
-      if (data && data.month) {
-        setCharityReport(data);
-      }
-      setCharityReportOpen(open);
+  const handleYearChange = useCallback(
+    (step: number) => () => {
+      setTransactionValidationReport({
+        year: transactionValidationReport.year + step,
+      });
+      setFormKeyTransaction(formKeyTransaction + 1);
     },
-    [setCharityReport, setCharityReportOpen],
+    [
+      setTransactionValidationReport,
+      formKeyTransaction,
+      setFormKeyTransaction,
+      transactionValidationReport,
+    ],
   );
+  const SCHEMA_YEAR: Schema<TransactionReport> = [
+    [
+      {
+        name: 'year',
+        label: 'Year',
+        startAdornment: (
+          <IconButton size="small" onClick={handleYearChange(-1)}>
+            <ChevronLeftIcon />
+          </IconButton>
+        ),
+        endAdornment: (
+          <IconButton size="small" onClick={handleYearChange(1)}>
+            <ChevronRightIcon />
+          </IconButton>
+        ),
+      },
+    ],
+  ];
   const handleOpenBillingAuditReportToggle = useCallback(
     (open: boolean) => (data?: FilterForm) => {
       if (data && data.month) {
@@ -663,17 +720,26 @@ export const Reports: FC<Props> = ({ loggedUserId }) => {
         submitLabel="Report"
         onClose={null}
       />
-      <SectionBar
-        title="Finalize Approved Spiffs"
-        subtitle="Mark all pending Spiffs that are approved as closed out and ready to pay."
-        actions={[
-          {
-            label: 'Finalize',
-            onClick: handleOpenFinalizeApprovedSpiffsToggle(true),
-          },
-        ]}
-        fixedActions
+      <Form
+        title="Timesheet Validation Report"
+        schema={SCHEMA_DATES_REPORT}
+        data={timesheetValidationReport}
+        onSave={handleOpenTimesheetValidationReportToggle(true)}
+        submitLabel="Report"
+        onClose={null}
+        error={timesheetValidationError ? DATES_ERROR : undefined}
       />
+      <div key="transactionreportDiv">
+        <Form
+          key={formKeyTransaction}
+          title="Transaction Validation Report"
+          schema={SCHEMA_YEAR}
+          data={transactionValidationReport}
+          onSave={handleOpenTransactionValidationReportToggle(true)}
+          submitLabel="Report"
+          onClose={null}
+        />
+      </div>
       <SectionBar
         title="Service Call Zip Code"
         actions={[
@@ -702,14 +768,6 @@ export const Reports: FC<Props> = ({ loggedUserId }) => {
         submitLabel="Report"
         onClose={null}
         error={trainingMetricsDatesError ? DATES_ERROR : undefined}
-      />
-      <Form
-        title="Charity Report"
-        schema={SCHEMA_CHARITY_REPORT}
-        data={charityReport}
-        onSave={handleOpenCharityReportToggle(true)}
-        submitLabel="Report"
-        onClose={null}
       />
       <Form
         title="Billing Audit"
@@ -861,23 +919,35 @@ export const Reports: FC<Props> = ({ loggedUserId }) => {
           />
         </Modal>
       )}
-      {finalizeApprovedSpiffsOpen && (
+      {timesheetValidationReportOpen && (
         <Modal
           open
-          onClose={handleOpenFinalizeApprovedSpiffsToggle(false)}
+          onClose={handleOpenTimesheetValidationToggle(false)}
           fullScreen
         >
-          <SectionBar
-            title="Finalize Approved Spiffs"
-            actions={[
-              {
-                label: 'Close',
-                onClick: () => handleOpenFinalizeApprovedSpiffsToggle(false)(),
-              },
-            ]}
-            fixedActions
+          <TimesheetValidationReport
+            loggedUserId={loggedUserId}
+            onClose={handleOpenTimesheetValidationToggle(false)}
+            dateStarted={timesheetValidationReport.startDate!}
+            dateEnded={timesheetValidationReport.endDate!}
           />
-          {UNDER_CONSTRUCTION}
+        </Modal>
+      )}
+      {transactionValidationReportOpen && (
+        <Modal
+          key={'transactionValidationReportModal'}
+          open
+          onClose={handleOpenTransactionValidationToggle(false)}
+          fullScreen
+        >
+          <div key={'TransactionvalidationDiv'}>
+            <TransactionValidationReport
+              key={'transactionValidationModule'}
+              loggedUserId={loggedUserId}
+              onClose={handleOpenTransactionValidationToggle(false)}
+              year={transactionValidationReport.year}
+            />
+          </div>
         </Modal>
       )}
       {serviceCallZipCodeReportOpen && (
@@ -922,14 +992,6 @@ export const Reports: FC<Props> = ({ loggedUserId }) => {
             fixedActions
           />
           {UNDER_CONSTRUCTION}
-        </Modal>
-      )}
-      {charityReportOpen && (
-        <Modal open onClose={handleOpenCharityReportToggle(false)} fullScreen>
-          <CharityReport
-            month={charityReport.month!}
-            onClose={handleOpenCharityReportToggle(false)}
-          />
         </Modal>
       )}
       {billingAuditReportOpen && (
