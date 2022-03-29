@@ -19,6 +19,9 @@ export class PendingInvoiceTransaction extends jspb.Message {
   getVendorId(): number;
   setVendorId(value: number): void;
 
+  getDepartmentId(): number;
+  setDepartmentId(value: number): void;
+
   getIsCommitted(): number;
   setIsCommitted(value: number): void;
 
@@ -42,6 +45,9 @@ export class PendingInvoiceTransaction extends jspb.Message {
   getOrderDir(): string;
   setOrderDir(value: string): void;
 
+  getWithoutLimit(): boolean;
+  setWithoutLimit(value: boolean): void;
+
   serializeBinary(): Uint8Array;
   toObject(includeInstance?: boolean): PendingInvoiceTransaction.AsObject;
   static toObject(includeInstance: boolean, msg: PendingInvoiceTransaction): PendingInvoiceTransaction.AsObject;
@@ -59,6 +65,7 @@ export namespace PendingInvoiceTransaction {
     timestamp: string,
     amount: string,
     vendorId: number,
+    departmentId: number,
     isCommitted: number,
     isActive: number,
     notes: string,
@@ -66,6 +73,7 @@ export namespace PendingInvoiceTransaction {
     pageNumber: number,
     orderBy: string,
     orderDir: string,
+    withoutLimit: boolean,
   }
 }
 
