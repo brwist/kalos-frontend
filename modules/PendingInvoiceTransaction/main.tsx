@@ -13,8 +13,8 @@ import { Vendor, VendorClient } from '../../@kalos-core/kalos-rpc/Vendor';
 import { Select, MenuItem } from '@material-ui/core/';
 import { Loader } from '../Loader/main';
 import { Tabs } from '../ComponentsLibrary/Tabs';
-import { type } from 'os';
-import { count } from 'console';
+import { Checkbox } from '@material-ui/core';
+import { debounce } from 'lodash/';
 type FormData = {
   filename: string;
   selectedVendorId: number;
@@ -35,7 +35,7 @@ type InvoiceTransaction = {
   notes: string;
   vendorId: number;
   departmentId: number;
-  selected: boolean;
+  selected: number;
   id: number;
 };
 const initialState: State = {
@@ -53,8 +53,10 @@ const initialState: State = {
   columnDropDownAssignment: [],
   vendors: [],
   saving: false,
+  currentPageEntries: [],
+  currentToggle: 0,
   pendingInvoices: [],
-  loaded: false,
+  loaded: true,
   pendingInvoicePage: 0,
   pendingInvoicesCount: 0,
   error: '',
@@ -69,6 +71,8 @@ export type State = {
   pendingInvoices: PendingInvoiceTransaction[];
   pendingInvoicesCount: number;
   loaded: boolean;
+  currentToggle: number;
+  currentPageEntries: InvoiceTransaction[];
   saving: boolean;
   vendors: Vendor[];
   recordCount: number;
@@ -84,6 +88,9 @@ export enum ACTIONS {
   SET_DROP_DOWN_FIELD_LIST = 'setDropDownFieldList',
   SET_COLUMN_DROPDOWN_ASSIGNMENT = 'setColumnDropdownAssigment',
   SET_LOADING = 'setLoading',
+  SET_CURRENT_TOGGLE = 'setCurrentToggle',
+  SET_CURRENT_PAGE_ENTRIES = 'setCurrentPageEntries',
+  UPDATE_SINGLE_ENTRY = 'updateSingleEntry',
   SET_SAVING = 'setSaving',
   SET_VENDORS = 'setVendors',
   SET_PENDING_INVOICES = 'setPendingInvoices',
@@ -108,6 +115,9 @@ export type Action =
     }
   | { type: ACTIONS.SET_LOADING; data: boolean }
   | { type: ACTIONS.SET_SAVING; data: boolean }
+  | { type: ACTIONS.UPDATE_SINGLE_ENTRY; data: InvoiceTransaction }
+  | { type: ACTIONS.SET_CURRENT_TOGGLE; data: number }
+  | { type: ACTIONS.SET_CURRENT_PAGE_ENTRIES; data: InvoiceTransaction[] }
   | { type: ACTIONS.SET_PENDING_INVOICES; data: PendingInvoiceTransaction[] }
   | { type: ACTIONS.SET_PENDING_INVOICES_COUNT; data: number }
   | { type: ACTIONS.SET_LOADED; data: boolean }
@@ -122,10 +132,51 @@ export const reducer = (state: State, action: Action) => {
         formData: action.data,
       };
     }
+    case ACTIONS.UPDATE_SINGLE_ENTRY: {
+      const entries = state.currentPageEntries;
+      const entryIndex = entries.findIndex(el => el.id == action.data.id);
+      if (entryIndex != -1) {
+        entries[entryIndex] = action.data;
+        const req = new PendingInvoiceTransaction();
+        req.setAmount(action.data.amount.toString());
+        req.setId(action.data.id);
+        req.setInvoiceNumber(action.data.invoiceNumber);
+        req.setVendorId(action.data.vendorId);
+        req.setNotes(action.data.notes);
+        req.setDepartmentId(action.data.departmentId);
+        req.setTimestamp(action.data.date);
+        req.setFieldMaskList([
+          'Amount',
+          'InvoiceNumber',
+          'VendorId',
+          'DepartmentId',
+          'Notes',
+          'Timestamp',
+        ]);
+        PendingInvoiceTransactionClientService.Update(req);
+      }
+      return {
+        ...state,
+        currentPageEntries: entries,
+      };
+    }
     case ACTIONS.SET_COLUMNS: {
       return {
         ...state,
         columns: action.data,
+      };
+    }
+    case ACTIONS.SET_CURRENT_TOGGLE: {
+      return {
+        ...state,
+        currentToggle: action.data,
+      };
+    }
+    case ACTIONS.SET_CURRENT_PAGE_ENTRIES: {
+      console.log('we got', action.data);
+      return {
+        ...state,
+        currentPageEntries: action.data,
       };
     }
     case ACTIONS.SET_DROP_DOWN_FIELD_LIST: {
@@ -162,6 +213,7 @@ export const reducer = (state: State, action: Action) => {
       return {
         ...state,
         pendingInvoicePage: action.data,
+        currentToggle: 0,
       };
     }
     case ACTIONS.SET_PENDING_INVOICES: {
@@ -267,19 +319,36 @@ export const PendingInvoiceTransactionComponent: FC = () => {
       type: ACTIONS.SET_PENDING_INVOICES,
       data: results.getResultsList(),
     });
+    const mappedEntries = results.getResultsList().map(el => ({
+      notes: el.getNotes(),
+      invoiceNumber: el.getInvoiceNumber(),
+      id: el.getId(),
+      vendorId: el.getVendorId(),
+      departmentId: el.getDepartmentId(),
+      amount: parseFloat(el.getAmount()),
+      date: el.getTimestamp(),
+      selected: state.currentToggle,
+    }));
     dispatch({
       type: ACTIONS.SET_PENDING_INVOICES_COUNT,
       data: results.getTotalCount(),
+    });
+    dispatch({
+      type: ACTIONS.SET_CURRENT_PAGE_ENTRIES,
+      data: mappedEntries,
     });
     const vendorReq = new Vendor();
     vendorReq.setIsActive(1);
     const vendors = await VendorClientService.BatchGet(vendorReq);
     dispatch({ type: ACTIONS.SET_VENDORS, data: vendors.getResultsList() });
-  }, [state.pendingInvoicePage]);
+    dispatch({ type: ACTIONS.SET_LOADING, data: false });
+    dispatch({ type: ACTIONS.SET_LOADED, data: true });
+  }, [state.pendingInvoicePage, state.currentToggle]);
 
   useEffect(() => {
     if (!state.loaded) {
-      dispatch({ type: ACTIONS.SET_LOADED, data: true });
+      dispatch({ type: ACTIONS.SET_LOADING, data: true });
+      dispatch({ type: ACTIONS.SET_LOADED, data: false });
       load();
     }
   }, [state.loaded, load]);
@@ -296,6 +365,34 @@ export const PendingInvoiceTransactionComponent: FC = () => {
       elementMap.push(element);
     });
     return elementMap;
+  };
+  const handleToggleSelectAll = () => {
+    let toggleValue = state.currentToggle == 0 ? 1 : 0;
+    let entries = state.currentPageEntries;
+    for (let i = 0; i < entries.length; i++) {
+      entries[i].selected = toggleValue;
+    }
+    dispatch({ type: ACTIONS.SET_CURRENT_TOGGLE, data: toggleValue });
+    dispatch({ type: ACTIONS.SET_CURRENT_PAGE_ENTRIES, data: entries });
+  };
+  const deleteSelected = async () => {
+    let entries = state.currentPageEntries.filter(el => el.selected == 1);
+
+    for (let i = 0; i < entries.length; i++) {
+      const req = new PendingInvoiceTransaction();
+      req.setId(entries[i].id);
+      await PendingInvoiceTransactionClientService.Delete(req);
+    }
+
+    dispatch({ type: ACTIONS.SET_LOADED, data: false });
+  };
+  const handleDeleteSelected = async () => {
+    const ok = confirm('Are you sure you want delete the selected records?.');
+    if (ok) {
+      dispatch({ type: ACTIONS.SET_LOADING, data: true });
+      await deleteSelected();
+      dispatch({ type: ACTIONS.SET_LOADED, data: false });
+    }
   };
   const handleSaveNewRecords = useCallback(async () => {
     let data = state.data;
@@ -428,6 +525,7 @@ export const PendingInvoiceTransactionComponent: FC = () => {
     state.columnDropDownAssignment,
     state.formData.selectedVendorId,
   ]);
+
   const SCHEMA: Schema<FormData> = [
     [
       {
@@ -467,6 +565,7 @@ export const PendingInvoiceTransactionComponent: FC = () => {
       },
       {
         name: 'vendorId',
+
         options: state.vendors.map(el => ({
           label: el.getVendorName(),
           value: el.getId(),
@@ -479,6 +578,8 @@ export const PendingInvoiceTransactionComponent: FC = () => {
       {
         name: 'selected',
         type: 'checkbox',
+        label: 'Select',
+        defaultValue: state.currentToggle,
       },
       {
         name: 'id',
@@ -617,7 +718,9 @@ export const PendingInvoiceTransactionComponent: FC = () => {
             },
             {
               label: 'Transaction Creation',
-              content: (
+              content: state.loading ? (
+                <Loader />
+              ) : (
                 <div>
                   <SectionBar
                     pagination={{
@@ -633,16 +736,31 @@ export const PendingInvoiceTransactionComponent: FC = () => {
                           data: false,
                         });
                       },
-                      rowsPerPage: 25,
+                      rowsPerPage: 50,
                       count: state.pendingInvoicesCount,
                     }}
                     title="Commit Transactions"
                     subtitle={`Record Count:${state.pendingInvoicesCount}`}
                     actions={[
                       {
+                        label: state.currentToggle
+                          ? 'Deselect All'
+                          : 'Select All',
+                        onClick: () => handleToggleSelectAll(),
+                      },
+                      {
                         label: 'Commit Selected Records',
                         // onClick: handleSaveNewRecords,
-                        disabled: !state.formData.filename || !!state.error,
+                        disabled:
+                          state.currentPageEntries.filter(el => el.selected)
+                            .length == 0 || !!state.error,
+                      },
+                      {
+                        label: 'Delete Selected Records',
+                        onClick: handleDeleteSelected,
+                        disabled:
+                          state.currentPageEntries.filter(el => el.selected)
+                            .length == 0 || !!state.error,
                       },
                     ]}
                     fixedActions
@@ -659,32 +777,33 @@ export const PendingInvoiceTransactionComponent: FC = () => {
                       { name: 'Selected' },
                     ]}
                   />
-                  {state.pendingInvoices.map((el, idx) => {
+                  {state.currentPageEntries.map((el, idx) => {
+                    const id = el.id;
                     return (
-                      <PlainForm<InvoiceTransaction>
-                        key={`${el.getInvoiceNumber()}${idx}`}
-                        schema={INVOICE_TRANSACTION}
-                        onChange={console.log}
-                        data={{
-                          notes: el.getNotes(),
-                          invoiceNumber: el.getInvoiceNumber(),
-                          id: el.getId(),
-                          vendorId: el.getVendorId(),
-                          departmentId: 0,
-                          amount: parseFloat(el.getAmount()),
-                          date: el.getTimestamp(),
-                          selected: false,
-                        }}
-                      />
+                      <div key={`${el.invoiceNumber}${el.selected}${idx}`}>
+                        <PlainForm
+                          key={`${el.invoiceNumber}${idx}`}
+                          schema={INVOICE_TRANSACTION}
+                          onChange={debounce(
+                            data =>
+                              dispatch({
+                                type: ACTIONS.UPDATE_SINGLE_ENTRY,
+                                data: data,
+                              }),
+                            500,
+                          )}
+                          data={
+                            state.currentPageEntries.find(el => el.id == id)!
+                          }
+                        ></PlainForm>
+                      </div>
                     );
                   })}
                 </div>
               ),
             },
           ]}
-        >
-          {state.loading ? <Loader /> : undefined}
-        </Tabs>
+        ></Tabs>
       </SectionBar>
     </div>
   );
