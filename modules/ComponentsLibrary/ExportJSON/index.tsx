@@ -1,6 +1,6 @@
 import React, { FC, useCallback, useEffect } from 'react';
 import CircularProgress from '@material-ui/core/CircularProgress';
-import { parse } from 'json2csv';
+import parse from 'json2csv';
 import { Button, Props as ButtonProps } from '../Button';
 import { downloadCSV } from '../../../helpers';
 
@@ -31,7 +31,7 @@ export const ExportJSON: FC<Props> = ({
   status,
 }) => {
   const handleExport = useCallback(() => {
-    const csv = parse(json, { fields });
+    const csv = parse.parse(json, { fields });
     downloadCSV(filename, csv);
   }, [json, fields, filename]);
   useEffect(() => {
