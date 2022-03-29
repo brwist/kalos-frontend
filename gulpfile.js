@@ -1261,6 +1261,10 @@ const NAMED_EXPORTS = {
     'PermissionGroupUser',
     'PermissionGroup',
   ],
+  'node_modules/@kalos-core/kalos-rpc/compiled-protos/pending_invoice_transaction_pb.js': [
+  'PendingInvoiceTransactionList',
+  'PendingInvoiceTransaction',
+  ],
   'node_modules/@kalos-core/kalos-rpc/compiled-protos/vendor_order_pb.js': [
     'VendorOrder',
     'VendorOrderList',
