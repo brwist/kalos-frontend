@@ -501,13 +501,17 @@ export const TransactionTable: FC<Props> = ({
     }
     if (accountRes) {
       dispatch({ type: ACTIONS.SET_COST_CENTER_DATA, data: accountRes });
-
-      dispatch({
-        type: ACTIONS.SET_COST_CENTERS,
-        data: accountRes.getResultsList().map(account => ({
+      let mappedResults = [{ value: 0, label: 'None' }];
+      accountRes.getResultsList().map(account =>
+        mappedResults.push({
           label: `${account.getId()}-${account.getDescription()}`,
           value: account.getId(),
-        })),
+        }),
+      );
+      mappedResults.push();
+      dispatch({
+        type: ACTIONS.SET_COST_CENTERS,
+        data: mappedResults,
       });
     }
 
