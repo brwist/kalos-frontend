@@ -121,7 +121,8 @@ export const InfoTable = ({
         ) &&
         !col.invisible
       ) {
-        rowButton?.columnDefinition.columnTypeOverrides.forEach(override => { // Default values for fields
+        rowButton?.columnDefinition.columnTypeOverrides.forEach(override => {
+          // Default values for fields
           if (override.columnType === 'multiselect') {
             (fields as any)[col.name as any] = [];
           } else {
@@ -290,11 +291,6 @@ export const InfoTable = ({
                     if (rowButton.onFileLoad) rowButton.onFileLoad(data);
                   }
                 },
-              },
-            ],
-            [
-              {
-                label: '',
                 actions: [
                   {
                     label: 'Create',
