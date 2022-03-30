@@ -7,17 +7,19 @@ import { parse } from 'papaparse';
 import {
   PendingInvoiceTransactionClientService,
   VendorClientService,
+  TransactionClientService,
 } from '../../helpers';
+import { Transaction } from '../../@kalos-core/kalos-rpc/Transaction';
 import { parseISO, format, parse as dateParse } from 'date-fns';
 import { Vendor, VendorClient } from '../../@kalos-core/kalos-rpc/Vendor';
 import { Select, MenuItem } from '@material-ui/core/';
 import { Loader } from '../Loader/main';
 import { Tabs } from '../ComponentsLibrary/Tabs';
-import { Checkbox } from '@material-ui/core';
 import { debounce } from 'lodash/';
 type FormData = {
   filename: string;
   selectedVendorId: number;
+  departmentId: number;
 };
 type Field = {
   label: string;
@@ -27,19 +29,22 @@ type Assignment = {
   dropDownValue: number;
   columnIndex: number;
 };
-
+export interface Props {
+  loggedUserId: number;
+}
 type InvoiceTransaction = {
   amount: number;
   invoiceNumber: string;
   date: string;
   notes: string;
   vendorId: number;
+
   departmentId: number;
   selected: number;
   id: number;
 };
 const initialState: State = {
-  formData: { filename: '', selectedVendorId: 0 },
+  formData: { filename: '', selectedVendorId: 0, departmentId: 0 },
   columns: [],
   dropDownFieldList: [
     { label: 'None', value: 0 },
@@ -53,6 +58,7 @@ const initialState: State = {
   columnDropDownAssignment: [],
   vendors: [],
   saving: false,
+  loadedInit: false,
   currentPageEntries: [],
   currentToggle: 0,
   pendingInvoices: [],
@@ -75,6 +81,7 @@ export type State = {
   currentPageEntries: InvoiceTransaction[];
   saving: boolean;
   vendors: Vendor[];
+  loadedInit: boolean;
   recordCount: number;
   loading: boolean;
   error: string;
@@ -96,6 +103,8 @@ export enum ACTIONS {
   SET_PENDING_INVOICES = 'setPendingInvoices',
   SET_PENDING_INVOICES_COUNT = 'setPendingInvoicesCount',
   SET_LOADED = 'setLoaded',
+  SET_LOADED_INIT = 'setLoadedInit',
+
   SET_RECORD_COUNT = 'setRecordCount',
   SET_ERROR = 'setError',
   SET_DATA = 'setData',
@@ -121,6 +130,7 @@ export type Action =
   | { type: ACTIONS.SET_PENDING_INVOICES; data: PendingInvoiceTransaction[] }
   | { type: ACTIONS.SET_PENDING_INVOICES_COUNT; data: number }
   | { type: ACTIONS.SET_LOADED; data: boolean }
+  | { type: ACTIONS.SET_LOADED_INIT; data: boolean }
   | { type: ACTIONS.SET_ERROR; data: string }
   | { type: ACTIONS.SET_DATA; data: string[][] };
 
@@ -164,6 +174,12 @@ export const reducer = (state: State, action: Action) => {
       return {
         ...state,
         columns: action.data,
+      };
+    }
+    case ACTIONS.SET_LOADED_INIT: {
+      return {
+        ...state,
+        loadedInit: action.data,
       };
     }
     case ACTIONS.SET_CURRENT_TOGGLE: {
@@ -257,7 +273,9 @@ export const reducer = (state: State, action: Action) => {
   }
 };
 
-export const PendingInvoiceTransactionComponent: FC = () => {
+export const PendingInvoiceTransactionComponent: FC<Props> = ({
+  loggedUserId,
+}) => {
   const [state, dispatch] = useReducer(reducer, initialState);
 
   const handleFileLoad = useCallback(async (file: string, filename: string) => {
@@ -309,9 +327,16 @@ export const PendingInvoiceTransactionComponent: FC = () => {
   const replaceAll = (string: string, search: string, replace: string) => {
     return string.split(search).join(replace);
   };
+  const loadInit = useCallback(async () => {
+    const vendorReq = new Vendor();
+    vendorReq.setIsActive(1);
+    const vendors = await VendorClientService.BatchGet(vendorReq);
+    dispatch({ type: ACTIONS.SET_VENDORS, data: vendors.getResultsList() });
+  }, []);
   const load = useCallback(async () => {
     const req = new PendingInvoiceTransaction();
     req.setIsCommitted(0);
+    req.setFieldMaskList(['IsCommitted']);
     req.setIsActive(1);
     req.setPageNumber(state.pendingInvoicePage);
     const results = await PendingInvoiceTransactionClientService.BatchGet(req);
@@ -337,10 +362,7 @@ export const PendingInvoiceTransactionComponent: FC = () => {
       type: ACTIONS.SET_CURRENT_PAGE_ENTRIES,
       data: mappedEntries,
     });
-    const vendorReq = new Vendor();
-    vendorReq.setIsActive(1);
-    const vendors = await VendorClientService.BatchGet(vendorReq);
-    dispatch({ type: ACTIONS.SET_VENDORS, data: vendors.getResultsList() });
+
     dispatch({ type: ACTIONS.SET_LOADING, data: false });
     dispatch({ type: ACTIONS.SET_LOADED, data: true });
   }, [state.pendingInvoicePage, state.currentToggle]);
@@ -348,10 +370,13 @@ export const PendingInvoiceTransactionComponent: FC = () => {
   useEffect(() => {
     if (!state.loaded) {
       dispatch({ type: ACTIONS.SET_LOADING, data: true });
-      dispatch({ type: ACTIONS.SET_LOADED, data: false });
       load();
     }
-  }, [state.loaded, load]);
+    if (!state.loadedInit) {
+      dispatch({ type: ACTIONS.SET_LOADED_INIT, data: true });
+      loadInit();
+    }
+  }, [state.loaded, loadInit, state.loadedInit, load]);
 
   const generateDropDown = () => {
     const elementMap: JSX.Element[] = [];
@@ -394,6 +419,56 @@ export const PendingInvoiceTransactionComponent: FC = () => {
       dispatch({ type: ACTIONS.SET_LOADED, data: false });
     }
   };
+
+  const createSelected = async () => {
+    let entries = state.currentPageEntries.filter(el => el.selected == 1);
+
+    for (let i = 0; i < entries.length; i++) {
+      //first, update the pending invoice record to be is committed
+      const req = new PendingInvoiceTransaction();
+      req.setId(entries[i].id);
+
+      req.setIsCommitted(1);
+      req.setFieldMaskList(['IsCommitted']);
+      await PendingInvoiceTransactionClientService.Update(req);
+      //second, create the transaction record
+      const entry = entries[i];
+      const txn = new Transaction();
+      txn.setAmount(entry.amount);
+      txn.setVendorCategory('Invoice');
+      txn.setDepartmentId(entry.departmentId);
+      txn.setTimestamp(entry.date);
+      txn.setNotes(entry.notes);
+      txn.setOwnerId(loggedUserId);
+      txn.setInvoiceNumber(entry.invoiceNumber);
+      txn.setOrderNumber(entry.invoiceNumber);
+      txn.setStatusId(2);
+      if (entry.vendorId != 0) {
+        txn.setVendorId(entry.vendorId);
+        txn.setVendor(
+          state.vendors
+            .find(el => el.getId() === entry.vendorId)!
+            .getVendorName(),
+        );
+      }
+
+      await TransactionClientService.Create(txn);
+    }
+
+    dispatch({ type: ACTIONS.SET_LOADED, data: false });
+  };
+
+  const handleCreateSelected = async () => {
+    const ok = confirm(
+      'Are you sure you want to commit the selected records to Accounts Payable?.',
+    );
+    if (ok) {
+      dispatch({ type: ACTIONS.SET_LOADING, data: true });
+      await createSelected();
+      dispatch({ type: ACTIONS.SET_LOADED, data: false });
+    }
+  };
+
   const handleSaveNewRecords = useCallback(async () => {
     let data = state.data;
     dispatch({
@@ -501,6 +576,7 @@ export const PendingInvoiceTransactionComponent: FC = () => {
         req.getTimestamp() != ''
       ) {
         req.setVendorId(state.formData.selectedVendorId);
+        req.setDepartmentId(state.formData.departmentId);
         await PendingInvoiceTransactionClientService.Create(req);
       } else {
         dispatch({
@@ -524,6 +600,7 @@ export const PendingInvoiceTransactionComponent: FC = () => {
     state.data,
     state.columnDropDownAssignment,
     state.formData.selectedVendorId,
+    state.formData.departmentId,
   ]);
 
   const SCHEMA: Schema<FormData> = [
@@ -543,6 +620,11 @@ export const PendingInvoiceTransactionComponent: FC = () => {
           label: el.getVendorName(),
           value: el.getId(),
         })),
+      },
+      {
+        name: 'departmentId',
+        type: 'department',
+        label: 'Select Default Department (*optional*)',
       },
     ],
   ] as Schema<FormData>;
@@ -750,7 +832,7 @@ export const PendingInvoiceTransactionComponent: FC = () => {
                       },
                       {
                         label: 'Commit Selected Records',
-                        // onClick: handleSaveNewRecords,
+                        onClick: handleCreateSelected,
                         disabled:
                           state.currentPageEntries.filter(el => el.selected)
                             .length == 0 || !!state.error,
