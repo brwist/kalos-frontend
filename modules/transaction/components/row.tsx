@@ -358,7 +358,7 @@ export function TransactionRow({
           onChange={event => handleStateTaxSelect(event.target.checked)}
         />
       ) : txn.getStateTaxApplied() != undefined ? (
-        `${txn.getStateTaxApplied() === true ? 'Applied' : 'Not Applied'}`
+        `${txn.getStateTaxApplied() === true ? 'Yes' : 'No'}`
       ) : (
         ''
       ),

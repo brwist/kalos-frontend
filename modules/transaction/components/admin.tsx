@@ -1078,7 +1078,7 @@ export class TransactionAdminView extends React.Component<props, state> {
               onClick: () => this.setSort('description'),
             },
             {
-              name: 'State Tax Applied?',
+              name: 'State Tax?',
               dir: 'DESC',
               onClick: () => this.setSort('state_tax_applied'),
             },
