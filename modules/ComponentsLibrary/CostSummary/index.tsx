@@ -513,7 +513,6 @@ export const CostSummary: FC<Props> = ({
         }
       }
     }
-    //setSpiffsWeekly(tempSpiffs);
   };
   const toggleProcessPerDiems = async (perDiems: PerDiem[]) => {
     const tempPerDiem = {
@@ -680,10 +679,8 @@ export const CostSummary: FC<Props> = ({
           }
         }),
       );
-      setLoaded(true);
       try {
         await Promise.all(promises);
-        // const res = await loadPayroll({PAYROLL PROTOBUFFER})
         console.log('all promises executed without error, setting loaded');
         setLoaded(true);
       } catch (err) {
