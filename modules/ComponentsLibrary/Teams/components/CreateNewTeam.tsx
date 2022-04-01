@@ -1,6 +1,6 @@
 import React, { FC, useCallback, useEffect, useState } from 'react';
 import { Form, Schema } from '../../Form';
-import { Team } from '@kalos-core/kalos-rpc/Team';
+import { Team } from '../../../../@kalos-core/kalos-rpc/Team';
 import { Alert } from '../../Alert';
 import { makeSafeFormObject, TeamClientService } from '../../../../helpers';
 

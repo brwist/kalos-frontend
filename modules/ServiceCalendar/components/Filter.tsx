@@ -7,7 +7,7 @@ import { TextField, DatePicker } from '../../ComponentsLibrary/CustomControls';
 import { WeekPicker } from '../../ComponentsLibrary/WeekPicker';
 import { Button } from '../../ComponentsLibrary/Button';
 import FilterDrawer from './FilterDrawer';
-import './filter.less';
+import './Filter.module.less';
 
 type Props = {
   defaultView?: string;

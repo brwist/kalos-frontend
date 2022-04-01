@@ -5,7 +5,7 @@
 
 */
 
-import { Invoice } from '@kalos-core/kalos-rpc/Invoice';
+import { Invoice } from '../../../@kalos-core/kalos-rpc/Invoice';
 import React, { useReducer, useEffect, useCallback, FC } from 'react';
 import { InvoiceClientService, makeSafeFormObject } from '../../../helpers';
 import { Form, Schema } from '../Form';

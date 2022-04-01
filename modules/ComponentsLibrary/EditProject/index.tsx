@@ -4,7 +4,7 @@ import {
   CHECKIN,
   CHECKOUT,
   TaskEvent,
-} from '@kalos-core/kalos-rpc/TaskEvent';
+} from '../../../@kalos-core/kalos-rpc/TaskEvent';
 import { SvgIconProps } from '@material-ui/core/SvgIcon';
 import HighestIcon from '@material-ui/icons/Block';
 import HighIcon from '@material-ui/icons/ChangeHistory';
@@ -15,7 +15,7 @@ import {
   Task,
   TaskPriority,
   TaskStatus,
-} from '@kalos-core/kalos-rpc/Task';
+} from '../../../@kalos-core/kalos-rpc/Task';
 import { SectionBar } from '../SectionBar';
 import { Modal } from '../Modal';
 import { Form, Schema } from '../Form';
@@ -38,16 +38,17 @@ import {
   ActivityLogClientService,
 } from '../../../helpers';
 import { PROJECT_TASK_STATUS_COLORS, OPTION_ALL } from '../../../constants';
-import './styles.less';
+import './EditProject.module.less';
+
 import { format } from 'date-fns';
 import { CostReport } from '../CostReport';
 import { Loader } from '../../Loader/main';
 import { CheckInProjectTask } from '../CheckInProjectTask';
-import { getPropertyAddress } from '@kalos-core/kalos-rpc/Property';
-import { ActivityLog } from '@kalos-core/kalos-rpc/ActivityLog';
-import { User } from '@kalos-core/kalos-rpc/User';
-import { Event } from '@kalos-core/kalos-rpc/Event';
-import { TimesheetDepartment } from '@kalos-core/kalos-rpc/TimesheetDepartment';
+import { getPropertyAddress } from '../../../@kalos-core/kalos-rpc/Property';
+import { ActivityLog } from '../../../@kalos-core/kalos-rpc/ActivityLog';
+import { User } from '../../../@kalos-core/kalos-rpc/User';
+import { Event } from '../../../@kalos-core/kalos-rpc/Event';
+import { TimesheetDepartment } from '../../../@kalos-core/kalos-rpc/TimesheetDepartment';
 
 export interface Props {
   serviceCallId: number;

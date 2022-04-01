@@ -23,13 +23,16 @@ import ArrowDownwardIcon from '@material-ui/icons/ArrowDownward';
 import {
   ServiceItemClient,
   ServiceItem,
-} from '@kalos-core/kalos-rpc/ServiceItem';
-import { ReadingClient, Reading } from '@kalos-core/kalos-rpc/Reading';
+} from '../../../@kalos-core/kalos-rpc/ServiceItem';
+import { ReadingClient, Reading } from '../../../@kalos-core/kalos-rpc/Reading';
 import {
   MaintenanceQuestionClient,
   MaintenanceQuestion,
-} from '@kalos-core/kalos-rpc/MaintenanceQuestion';
-import { MaterialClient, Material } from '@kalos-core/kalos-rpc/Material';
+} from '../../../@kalos-core/kalos-rpc/MaintenanceQuestion';
+import {
+  MaterialClient,
+  Material,
+} from '../../../@kalos-core/kalos-rpc/Material';
 import { ENDPOINT, ROWS_PER_PAGE } from '../../../constants';
 import { InfoTable, Data } from '../InfoTable';
 import { SectionBar } from '../SectionBar';
@@ -46,9 +49,11 @@ import {
 } from '../../../helpers';
 import { ServiceItemLinks } from '../ServiceItemLinks';
 import { ServiceItemReadings } from '../ServiceItemReadings';
-import './styles.less';
-import { Event } from '@kalos-core/kalos-rpc/Event';
+
+import { Event } from '../../../@kalos-core/kalos-rpc/Event';
 import { filter, result } from 'lodash';
+import './ServiceItems.module.less';
+
 const ServiceItemClientService = new ServiceItemClient(ENDPOINT);
 const ReadingClientService = new ReadingClient(ENDPOINT);
 const MaintenanceQuestionClientService = new MaintenanceQuestionClient(

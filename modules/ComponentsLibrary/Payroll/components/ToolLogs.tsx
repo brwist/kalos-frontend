@@ -12,7 +12,7 @@ import {
   TaskClient,
   Task,
   GetPendingSpiffConfig,
-} from '@kalos-core/kalos-rpc/Task';
+} from '../../../../@kalos-core/kalos-rpc/Task';
 import { ROWS_PER_PAGE, OPTION_ALL, ENDPOINT } from '../../../../constants';
 const TaskClientService = new TaskClient(ENDPOINT);
 interface Props {

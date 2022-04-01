@@ -1,12 +1,12 @@
 import React, { FC, useState, useEffect, useCallback, ReactNode } from 'react';
-import { User } from '@kalos-core/kalos-rpc/User';
-import { Group } from '@kalos-core/kalos-rpc/Group';
-import { UserGroupLink } from '@kalos-core/kalos-rpc/UserGroupLink';
-import { getPropertyAddress } from '@kalos-core/kalos-rpc/Property';
+import { User } from '../../../@kalos-core/kalos-rpc/User';
+import { Group } from '../../../@kalos-core/kalos-rpc/Group';
+import { UserGroupLink } from '../../../@kalos-core/kalos-rpc/UserGroupLink';
+import { getPropertyAddress } from '../../../@kalos-core/kalos-rpc/Property';
 import {
   PendingBillingClient,
   PendingBilling,
-} from '@kalos-core/kalos-rpc/PendingBilling';
+} from '../../../@kalos-core/kalos-rpc/PendingBilling';
 import { ENDPOINT } from '../../../constants';
 import { InfoTable, Data } from '../InfoTable';
 import { Modal } from '../Modal';
@@ -24,7 +24,7 @@ import {
   GroupClientService,
   makeSafeFormObject,
 } from '../../../helpers';
-import './styles.less';
+import './CustomerInformation.module.less';
 
 const PendingBillingClientService = new PendingBillingClient(ENDPOINT);
 interface Notification {

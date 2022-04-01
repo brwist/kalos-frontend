@@ -1,18 +1,18 @@
 import React from 'react';
-import { MetricsClient } from '@kalos-core/kalos-rpc/Metrics';
+import { MetricsClient } from '../../@kalos-core/kalos-rpc/Metrics';
 import {
   Transaction,
   TransactionClient,
-} from '@kalos-core/kalos-rpc/Transaction';
-import { EventClient, Event } from '@kalos-core/kalos-rpc/Event';
-import { TaskClient } from '@kalos-core/kalos-rpc/Task';
-import { TimeoffRequestClient } from '@kalos-core/kalos-rpc/TimeoffRequest';
+} from '../../@kalos-core/kalos-rpc/Transaction';
+import { EventClient, Event } from '../../@kalos-core/kalos-rpc/Event';
+import { TaskClient } from '../../@kalos-core/kalos-rpc/Task';
+import { TimeoffRequestClient } from '../../@kalos-core/kalos-rpc/TimeoffRequest';
 import Grid from '@material-ui/core/Grid';
 import Paper from '@material-ui/core/Paper';
-import { Spiff } from '@kalos-core/kalos-rpc/compiled-protos/task_pb';
+import { Spiff } from '../../@kalos-core/kalos-rpc/compiled-protos/task_pb';
 import { Assignments } from './components/AssignmentsTable';
 import { Spiffs } from './components/SpiffsTable';
-import { User, UserClient } from '@kalos-core/kalos-rpc/User';
+import { User, UserClient } from '../../@kalos-core/kalos-rpc/User';
 import { SearchIndex } from '../SearchIndex/main';
 import { ENDPOINT } from '../../constants';
 import { usd, makeFakeRows, UserClientService } from '../../helpers';
@@ -22,7 +22,7 @@ import { SectionBar } from '../ComponentsLibrary/SectionBar';
 import { Tooltip } from '../ComponentsLibrary/Tooltip';
 import { PageWrapper, PageWrapperProps } from '../PageWrapper/main';
 import { ManagerTimeoffs } from '../ComponentsLibrary/ManagerTimeoffs';
-import './styles.less';
+import "./Dashboard.module.less"
 import { SpiffTool } from '../SpiffToolLogs/components/SpiffTool';
 import { PersonalReport } from './components/PersonalReport';
 interface props extends PageWrapperProps {

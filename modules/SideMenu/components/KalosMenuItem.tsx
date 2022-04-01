@@ -4,7 +4,7 @@ import ListItemText from '@material-ui/core/ListItemText';
 import ListItem from '@material-ui/core/ListItem';
 import Divider from '@material-ui/core/Divider';
 import { MenuItem } from '../constants';
-import './kalosMenuItem.less';
+import './KalosMenuItem.module.less';
 
 type Props = {
   item: MenuItem;

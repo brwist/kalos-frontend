@@ -11,7 +11,7 @@ import { Loader } from '../../Loader/main';
 import Button from '@material-ui/core/Button';
 import Typography from '@material-ui/core/Typography';
 import Popover from '@material-ui/core/Popover';
-import './styles.less';
+import './Popover.module.less';
 
 interface Props {
   classname?: string;

@@ -1,5 +1,5 @@
-import { SpiffType, TaskEventData } from '@kalos-core/kalos-rpc/Task';
-import { Event } from '@kalos-core/kalos-rpc/Event';
+import { SpiffType, TaskEventData } from '../../../@kalos-core/kalos-rpc/Task';
+import { Event } from '../../../@kalos-core/kalos-rpc/Event';
 export type State = {
   isLoaded: boolean;
   error: string | undefined;

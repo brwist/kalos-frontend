@@ -1,17 +1,17 @@
-import { Transaction } from '@kalos-core/kalos-rpc/Transaction';
+import { Transaction } from '../../../@kalos-core/kalos-rpc/Transaction';
 import React, { FC, useCallback, useState, useEffect } from 'react';
 import { NULL_TIME, ENDPOINT } from '../../../constants';
 import { makeSafeFormObject, TransactionClientService } from '../../../helpers';
 import { Form, Schema } from '../Form';
-import { SUBJECT_TAGS_ACCOUNTS_PAYABLE } from '@kalos-core/kalos-rpc/S3File';
+import { SUBJECT_TAGS_ACCOUNTS_PAYABLE } from '../../../@kalos-core/kalos-rpc/S3File';
 import {
   TransactionStatusClient,
   TransactionStatus,
-} from '@kalos-core/kalos-rpc/TransactionStatus';
+} from '../../../@kalos-core/kalos-rpc/TransactionStatus';
 import {
   TransactionAccountClient,
   TransactionAccount,
-} from '@kalos-core/kalos-rpc/TransactionAccount';
+} from '../../../@kalos-core/kalos-rpc/TransactionAccount';
 interface Props {
   transactionInput: Transaction;
   onSave: (saved: Transaction) => void;

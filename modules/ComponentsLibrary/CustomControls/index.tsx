@@ -10,7 +10,7 @@ import {
   FilledTextFieldProps,
   StandardTextFieldProps,
 } from '@material-ui/core/TextField';
-import './styles.less';
+import './CustomControls.module.less';
 
 interface DPProps extends DatePickerProps {
   white?: boolean;

@@ -1,10 +1,9 @@
 import React, { FC, useCallback, useState } from 'react';
 import { ServiceItems, Repair } from '../../ServiceItems';
-import { Property } from '@kalos-core/kalos-rpc/Property';
-import { User } from '@kalos-core/kalos-rpc/User';
-import { Event } from '@kalos-core/kalos-rpc/Event';
-import './equipment.less';
-
+import { Property } from '../../../../@kalos-core/kalos-rpc/Property';
+import { User } from '../../../../@kalos-core/kalos-rpc/User';
+import { Event } from '../../../../@kalos-core/kalos-rpc/Event';
+import './Equipment.module.less';
 interface Props {
   userID: number;
   loggedUserId: number;

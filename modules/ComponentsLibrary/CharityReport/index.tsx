@@ -7,7 +7,7 @@ import { PrintTable } from '../PrintTable';
 import { InfoTable } from '../InfoTable';
 import { Loader } from '../../Loader/main';
 import { loadCharityReport, usd, getCurrDate } from '../../../helpers';
-import './styles.less';
+import './CharityReport.module.less';
 
 interface Props {
   month: string;

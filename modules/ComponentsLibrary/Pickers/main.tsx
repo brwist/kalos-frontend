@@ -4,7 +4,7 @@ import InputLabel from '@material-ui/core/InputLabel';
 import FormHelperText from '@material-ui/core/FormHelperText';
 import FormControl from '@material-ui/core/FormControl';
 import NativeSelect from '@material-ui/core/NativeSelect';
-import { BaseClient } from '@kalos-core/kalos-rpc/BaseClient';
+import { BaseClient } from '../../../@kalos-core/kalos-rpc/BaseClient';
 
 interface props<T, C> {
   selected: number;

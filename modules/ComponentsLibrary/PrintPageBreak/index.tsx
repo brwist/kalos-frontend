@@ -1,6 +1,5 @@
 import React, { FC } from 'react';
-import './styles.css';
-
+import "./PrintPageBreak.module.css";
 interface Props {
   height: number;
 }

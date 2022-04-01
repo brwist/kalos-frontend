@@ -10,7 +10,7 @@ import endOfWeek from 'date-fns/endOfWeek';
 import startOfWeek from 'date-fns/startOfWeek';
 import isWithinInterval from 'date-fns/isWithinInterval';
 import { DatePicker } from '../CustomControls';
-import './styles.less';
+import "./WeekPicker.module.less";
 
 type Props = {
   label: string;

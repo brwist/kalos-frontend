@@ -2,11 +2,12 @@ import React, { FC, useState, useCallback } from 'react';
 import Alert from '@material-ui/lab/Alert';
 
 import { Form, Schema } from '../Form';
-import { Transaction } from '@kalos-core/kalos-rpc/Transaction';
+import { Transaction } from '../../../@kalos-core/kalos-rpc/Transaction';
 import { getFileExt, uploadPhotoToExistingTransaction } from '../../../helpers';
-import './styles.less';
+
 import { WaiverTypes } from '../../../constants';
 import { RoleType } from '../Payroll';
+import "./UploadPhotoToExistingTransaction.module.less";
 
 interface Props {
   loggedUserId: number;

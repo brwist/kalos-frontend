@@ -2,7 +2,7 @@
     ! This module is a temporary test to show off how to construct proper unit tests. 
 */
 
-import { User } from '@kalos-core/kalos-rpc/User';
+import { User } from '../../../@kalos-core/kalos-rpc/User';
 import React, { FC, useCallback, useEffect, useState } from 'react';
 import { UserClientService } from '../../../helpers';
 import { Loader } from '../../Loader/main';

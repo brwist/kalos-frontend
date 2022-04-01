@@ -13,7 +13,7 @@ import TablePagination from '@material-ui/core/TablePagination';
 import Pagination from '@material-ui/lab/Pagination';
 import { Field, Value } from '../Field';
 import { Actions, ActionsProps } from '../Actions';
-import './styles.less';
+import './SectionBar.module.less';
 
 export type PaginationType = {
   count: number;

@@ -1,5 +1,5 @@
 import React from 'react';
-import { Event, EventClient } from '@kalos-core/kalos-rpc/Event';
+import { Event, EventClient } from '../../@kalos-core/kalos-rpc/Event';
 import Table from '@material-ui/core/Table';
 import Paper from '@material-ui/core/Paper';
 import TableHead from '@material-ui/core/TableHead';

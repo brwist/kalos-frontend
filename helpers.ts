@@ -6,58 +6,56 @@ import {
   URLObject,
   SUBJECT_TAGS,
   SUBJECT_TAGS_TRANSACTIONS,
-} from '@kalos-core/kalos-rpc/S3File/index';
-import { FileClient } from '@kalos-core/kalos-rpc/File';
-import { ApiKeyClient, ApiKey } from '@kalos-core/kalos-rpc/ApiKey';
-import { UserClient, User } from '@kalos-core/kalos-rpc/User';
-import { PropertyClient, Property } from '@kalos-core/kalos-rpc/Property';
-import { EventClient, Event } from '@kalos-core/kalos-rpc/Event';
-import { JobTypeClient } from '@kalos-core/kalos-rpc/JobType';
-import { TimeoffRequestClient } from '@kalos-core/kalos-rpc/TimeoffRequest';
-import { VendorClient } from '@kalos-core/kalos-rpc/Vendor';
+} from './@kalos-core/kalos-rpc/S3File/index';
+import { FileClient } from './@kalos-core/kalos-rpc/File';
+import { ApiKeyClient, ApiKey } from './@kalos-core/kalos-rpc/ApiKey';
+import { UserClient, User } from './@kalos-core/kalos-rpc/User';
+import { PropertyClient, Property } from './@kalos-core/kalos-rpc/Property';
+import { EventClient, Event } from './@kalos-core/kalos-rpc/Event';
+import { JobTypeClient } from './@kalos-core/kalos-rpc/JobType';
+import { TimeoffRequestClient } from './@kalos-core/kalos-rpc/TimeoffRequest';
 import {
   Transaction,
   TransactionClient,
-} from '@kalos-core/kalos-rpc/Transaction';
-import { TaskEvent, TaskEventClient } from '@kalos-core/kalos-rpc/TaskEvent';
-import { TaskClient } from '@kalos-core/kalos-rpc/Task';
-import { TaskAssignmentClient } from '@kalos-core/kalos-rpc/TaskAssignment';
+} from './@kalos-core/kalos-rpc/Transaction';
+import { TaskEvent, TaskEventClient } from './@kalos-core/kalos-rpc/TaskEvent';
+import { TaskClient } from './@kalos-core/kalos-rpc/Task';
+import { TaskAssignmentClient } from './@kalos-core/kalos-rpc/TaskAssignment';
 import {
   ActivityLog,
   ActivityLogClient,
-} from '@kalos-core/kalos-rpc/ActivityLog';
+} from './@kalos-core/kalos-rpc/ActivityLog';
 import {
   ReportClient,
   PromptPaymentReportLine,
   SpiffReportLine,
-} from '@kalos-core/kalos-rpc/Report';
-
-import { EmployeeFunctionClient } from '@kalos-core/kalos-rpc/EmployeeFunction';
-import { JobSubtypeClient } from '@kalos-core/kalos-rpc/JobSubtype';
-import { JobTypeSubtypeClient } from '@kalos-core/kalos-rpc/JobTypeSubtype';
-import { ServicesRenderedClient } from '@kalos-core/kalos-rpc/ServicesRendered';
-import { StoredQuoteClient } from '@kalos-core/kalos-rpc/StoredQuote';
-import { QuotePartClient } from '@kalos-core/kalos-rpc/QuotePart';
-import { QuoteLinePartClient } from '@kalos-core/kalos-rpc/QuoteLinePart';
-import { QuoteLineClient } from '@kalos-core/kalos-rpc/QuoteLine';
-import { PerDiemClient } from '@kalos-core/kalos-rpc/PerDiem';
-import { MapClient } from '@kalos-core/kalos-rpc/Maps';
-import { Trip } from '@kalos-core/kalos-rpc/compiled-protos/perdiem_pb';
-import { TimesheetDepartmentClient } from '@kalos-core/kalos-rpc/TimesheetDepartment';
-import { TimesheetLineClient } from '@kalos-core/kalos-rpc/TimesheetLine';
-import { MetricsClient } from '@kalos-core/kalos-rpc/Metrics';
-import { SpiffToolAdminActionClient } from '@kalos-core/kalos-rpc/SpiffToolAdminAction';
-import { GroupClient } from '@kalos-core/kalos-rpc/Group';
-import { UserGroupLinkClient } from '@kalos-core/kalos-rpc/UserGroupLink';
+} from './@kalos-core/kalos-rpc/Report';
+import { EmployeeFunctionClient } from './@kalos-core/kalos-rpc/EmployeeFunction';
+import { JobSubtypeClient } from './@kalos-core/kalos-rpc/JobSubtype';
+import { JobTypeSubtypeClient } from './@kalos-core/kalos-rpc/JobTypeSubtype';
+import { ServicesRenderedClient } from './@kalos-core/kalos-rpc/ServicesRendered';
+import { StoredQuoteClient } from './@kalos-core/kalos-rpc/StoredQuote';
+import { QuotePartClient } from './@kalos-core/kalos-rpc/QuotePart';
+import { QuoteLinePartClient } from './@kalos-core/kalos-rpc/QuoteLinePart';
+import { QuoteLineClient } from './@kalos-core/kalos-rpc/QuoteLine';
+import { PerDiemClient } from './@kalos-core/kalos-rpc/PerDiem';
+import { MapClient } from './@kalos-core/kalos-rpc/Maps';
+import { Trip } from './@kalos-core/kalos-rpc/compiled-protos/perdiem_pb';
+import { TimesheetDepartmentClient } from './@kalos-core/kalos-rpc/TimesheetDepartment';
+import { TimesheetLineClient } from './@kalos-core/kalos-rpc/TimesheetLine';
+import { MetricsClient } from './@kalos-core/kalos-rpc/Metrics';
+import { SpiffToolAdminActionClient } from './@kalos-core/kalos-rpc/SpiffToolAdminAction';
+import { GroupClient } from './@kalos-core/kalos-rpc/Group';
+import { UserGroupLinkClient } from './@kalos-core/kalos-rpc/UserGroupLink';
 import {
   TransactionDocument,
   TransactionDocumentClient,
-} from '@kalos-core/kalos-rpc/TransactionDocument';
-import { InternalDocumentClient } from '@kalos-core/kalos-rpc/InternalDocument';
-import { PDFClient } from '@kalos-core/kalos-rpc/PDF';
-import { DocumentClient } from '@kalos-core/kalos-rpc/Document';
-import { TeamClient } from '@kalos-core/kalos-rpc/Team';
-import { DispatchClient } from '@kalos-core/kalos-rpc/Dispatch';
+} from './@kalos-core/kalos-rpc/TransactionDocument';
+import { InternalDocumentClient } from './@kalos-core/kalos-rpc/InternalDocument';
+import { PDFClient } from './@kalos-core/kalos-rpc/PDF';
+import { DocumentClient } from './@kalos-core/kalos-rpc/Document';
+import { TeamClient } from './@kalos-core/kalos-rpc/Team';
+import { DispatchClient } from './@kalos-core/kalos-rpc/Dispatch';
 import {
   ENDPOINT,
   MONTHS,
@@ -76,23 +74,22 @@ import {
   getRandomNumber,
   randomize,
 } from './modules/ComponentsLibrary/helpers';
-import { Contract, ContractClient } from '@kalos-core/kalos-rpc/Contract';
-import { NULL_TIME } from '@kalos-core/kalos-rpc/constants';
+import { Contract, ContractClient } from './@kalos-core/kalos-rpc/Contract';
+import { NULL_TIME } from './@kalos-core/kalos-rpc/constants';
 import {
   TransactionActivity,
   TransactionActivityClient,
-} from '@kalos-core/kalos-rpc/TransactionActivity';
-import { EmailClient } from '@kalos-core/kalos-rpc/Email';
-import { PropLinkClient } from '@kalos-core/kalos-rpc/PropLink';
-import { TransactionAccountClient } from '@kalos-core/kalos-rpc/TransactionAccount';
-import { EventAssignmentClient } from '@kalos-core/kalos-rpc/EventAssignment';
-import { SlackClient } from '@kalos-core/kalos-rpc/Slack';
-import { File } from '@kalos-core/kalos-rpc/File';
-import { DevlogClient } from '@kalos-core/kalos-rpc/Devlog';
-import { InvoiceClient } from '@kalos-core/kalos-rpc/Invoice';
-import { FirstCallClient } from '@kalos-core/kalos-rpc/FirstCall';
-import { MertricReportDataRequest } from '@kalos-core/kalos-rpc/compiled-protos/metrics_pb';
-import { PendingInvoiceTransactionClient } from '@kalos-core/kalos-rpc/PendingInvoiceTransaction';
+} from './@kalos-core/kalos-rpc/TransactionActivity';
+import { EmailClient } from './@kalos-core/kalos-rpc/Email';
+import { PropLinkClient } from './@kalos-core/kalos-rpc/PropLink';
+import { TransactionAccountClient } from './@kalos-core/kalos-rpc/TransactionAccount';
+import { EventAssignmentClient } from './@kalos-core/kalos-rpc/EventAssignment';
+import { SlackClient } from './@kalos-core/kalos-rpc/Slack';
+import { File } from './@kalos-core/kalos-rpc/File';
+import { DevlogClient } from './@kalos-core/kalos-rpc/Devlog';
+import { InvoiceClient } from './@kalos-core/kalos-rpc/Invoice';
+import { FirstCallClient } from './@kalos-core/kalos-rpc/FirstCall';
+import { MertricReportDataRequest } from './@kalos-core/kalos-rpc/compiled-protos/metrics_pb';
 
 export type SimpleFile = {
   key: string;

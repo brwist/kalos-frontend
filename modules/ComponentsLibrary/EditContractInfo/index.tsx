@@ -5,7 +5,7 @@
 
 */
 
-import { Contract } from '@kalos-core/kalos-rpc/Contract';
+import { Contract } from '../../../@kalos-core/kalos-rpc/Contract';
 import React, { useReducer, useEffect, useCallback, FC } from 'react';
 import {
   ContractClientService,
@@ -26,15 +26,15 @@ import { Form, Schema } from '../Form';
 import { SectionBar } from '../SectionBar';
 import { reducer, ACTIONS, FREQUENCIES, BILLING_OPTIONS } from './reducer';
 import { PropertyDropdown } from '../PropertyDropdown/index';
-import { Property } from '@kalos-core/kalos-rpc/Property';
+import { Property } from '../../../@kalos-core/kalos-rpc/Property';
 import { Confirm } from '../Confirm';
 import { EditInvoiceData } from '../EditInvoiceData';
-import { Devlog } from '@kalos-core/kalos-rpc/Devlog';
+import { Devlog } from '../../../@kalos-core/kalos-rpc/Devlog';
 import { format } from 'date-fns';
-import { Invoice } from '@kalos-core/kalos-rpc/Invoice';
+import { Invoice } from '../../../@kalos-core/kalos-rpc/Invoice';
 import { Loader } from '../../Loader/main';
 import { Alert } from '../Alert';
-import { Event } from '@kalos-core/kalos-rpc/Event';
+import { Event } from '../../../@kalos-core/kalos-rpc/Event';
 import { Request } from '../ServiceCall/components/Request';
 import { OPTION_BLANK } from '../../../constants';
 import {

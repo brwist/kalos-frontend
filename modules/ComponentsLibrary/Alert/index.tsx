@@ -2,7 +2,7 @@ import React, { FC } from 'react';
 import Typography from '@material-ui/core/Typography';
 import { Modal } from '../Modal';
 import { SectionBar } from '../SectionBar';
-import './styles.less';
+import './Alert.module.less';
 
 interface Props {
   title?: string;
@@ -10,7 +10,7 @@ interface Props {
   onClose: () => void;
   label?: string;
   maxWidth?: number;
-  disabled?: boolean
+  disabled?: boolean;
 }
 
 export const Alert: FC<Props> = ({

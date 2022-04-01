@@ -1,6 +1,6 @@
-import { ServiceItem } from '@kalos-core/kalos-rpc/ServiceItem';
+import { ServiceItem } from '../../../@kalos-core/kalos-rpc/ServiceItem';
 import { Repair } from './index';
-import { Material } from '@kalos-core/kalos-rpc/Material';
+import { Material } from '../../../@kalos-core/kalos-rpc/Material';
 export type State = {
   entries: ServiceItem[];
   materials: Material[];

@@ -1,9 +1,9 @@
 // this files ts-ignore lines have been checked
 import React from 'react';
 import ReactPDF from '@react-pdf/renderer';
-import { QuoteLine } from '@kalos-core/kalos-rpc/QuoteLine';
-import { User } from '@kalos-core/kalos-rpc/User';
-import { Property } from '@kalos-core/kalos-rpc/Property';
+import { QuoteLine } from '../../../@kalos-core/kalos-rpc/QuoteLine';
+import { User } from '../../../@kalos-core/kalos-rpc/User';
+import { Property } from '../../../@kalos-core/kalos-rpc/Property';
 //@ts-ignore
 import logo from '../../EmployeeDirectory/kalos-logo-2019.png';
 import { timestamp } from '../../../helpers';

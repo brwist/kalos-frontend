@@ -4,7 +4,6 @@ import { loadEventById, EventType } from '../../../helpers';
 import { PrefabKalosInfo } from './PrefabKalosInfo';
 import { PrefabPropertyInfo } from './PrefabPropertyInfo';
 import { PrefabPayables } from './PrefabPayables';
-import './styles.scss';
 
 interface Props {
   serviceCallId: number;

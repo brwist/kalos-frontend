@@ -1,5 +1,5 @@
 import React, { FC, useEffect, useReducer, useCallback, useRef } from 'react';
-import { Event } from '@kalos-core/kalos-rpc/Event';
+import { Event } from '../../../@kalos-core/kalos-rpc/Event';
 import {
   EventClientService,
   JobTypeClientService,
@@ -7,14 +7,14 @@ import {
   JobTypeSubtypeClientService,
   EventAssignmentClientService,
 } from '../../../helpers';
-import { JobType } from '@kalos-core/kalos-rpc/JobType';
-import { JobSubtype } from '@kalos-core/kalos-rpc/JobSubtype';
-import { JobTypeSubtype } from '@kalos-core/kalos-rpc/JobTypeSubtype';
+import { JobType } from '../../../@kalos-core/kalos-rpc/JobType';
+import { JobSubtype } from '../../../@kalos-core/kalos-rpc/JobSubtype';
+import { JobTypeSubtype } from '../../../@kalos-core/kalos-rpc/JobTypeSubtype';
 import { Request } from './components/Request';
 import { OPTION_BLANK } from '../../../constants';
 import { Option } from '../Field';
 import { SectionBar } from '../SectionBar';
-import { EventAssignment } from '@kalos-core/kalos-rpc/EventAssignment';
+import { EventAssignment } from '../../../@kalos-core/kalos-rpc/EventAssignment';
 import { returnCorrectTimeField } from '.';
 export interface Props {
   userID: number;

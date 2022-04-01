@@ -33,14 +33,17 @@ import {
   TimesheetDepartmentClientService,
 } from '../../../helpers';
 import { OPTION_BLANK, ENDPOINT } from '../../../constants';
-import { EmailClient, EmailConfig } from '@kalos-core/kalos-rpc/Email';
-import { User } from '@kalos-core/kalos-rpc/User';
-import { PTO, TimeoffRequest } from '@kalos-core/kalos-rpc/TimeoffRequest';
+import { EmailClient, EmailConfig } from '../../../@kalos-core/kalos-rpc/Email';
+import { User } from '../../../@kalos-core/kalos-rpc/User';
+import {
+  PTO,
+  TimeoffRequest,
+} from '../../../@kalos-core/kalos-rpc/TimeoffRequest';
 import { datePickerDefaultProps } from '@material-ui/pickers/constants/prop-types';
-import { ActivityLog } from '@kalos-core/kalos-rpc/ActivityLog';
+import { ActivityLog } from '../../../@kalos-core/kalos-rpc/ActivityLog';
 import { InfoTable } from '../InfoTable';
-import { TimesheetDepartment } from '@kalos-core/kalos-rpc/TimesheetDepartment';
-import { TimeoffRequestType } from '@kalos-core/kalos-rpc/compiled-protos/timeoff_request_pb';
+import { TimesheetDepartment } from '../../../@kalos-core/kalos-rpc/TimesheetDepartment';
+import { TimeoffRequestType } from '../../../@kalos-core/kalos-rpc/compiled-protos/timeoff_request_pb';
 export interface Props {
   loggedUserId: number;
   userId?: number;

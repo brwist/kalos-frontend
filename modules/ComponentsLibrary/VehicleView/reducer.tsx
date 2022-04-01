@@ -1,6 +1,6 @@
-import { Vehicle } from '@kalos-core/kalos-rpc/compiled-protos/user_pb';
-import { TimesheetDepartment } from '@kalos-core/kalos-rpc/TimesheetDepartment';
-import { User } from '@kalos-core/kalos-rpc/User';
+import { Vehicle } from '../../../@kalos-core/kalos-rpc/compiled-protos/user_pb';
+import { TimesheetDepartment } from '../../../@kalos-core/kalos-rpc/TimesheetDepartment';
+import { User } from '../../../@kalos-core/kalos-rpc/User';
 export type State = {
   loading: boolean;
   orderBy: string;

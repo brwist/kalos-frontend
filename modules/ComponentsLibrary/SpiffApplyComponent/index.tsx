@@ -8,7 +8,7 @@
 
 import React, { useReducer, useEffect, useCallback, FC } from 'react';
 import { reducer, ACTIONS } from './reducer';
-import { Devlog } from '@kalos-core/kalos-rpc/Devlog';
+import { Devlog } from '../../../@kalos-core/kalos-rpc/Devlog';
 import {
   DevlogClientService,
   escapeText,
@@ -18,9 +18,13 @@ import {
   makeSafeFormObject,
 } from '../../../helpers';
 import { Form, Schema } from '../../ComponentsLibrary/Form';
-import { Event } from '@kalos-core/kalos-rpc/Event';
+import { Event } from '../../../@kalos-core/kalos-rpc/Event';
 import { format } from 'date-fns';
-import { SpiffType, TaskEventData, Task } from '@kalos-core/kalos-rpc/Task';
+import {
+  SpiffType,
+  TaskEventData,
+  Task,
+} from '../../../@kalos-core/kalos-rpc/Task';
 import { Modal } from '../Modal';
 import { Option } from '../../ComponentsLibrary/Field';
 

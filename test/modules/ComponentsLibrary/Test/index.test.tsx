@@ -7,7 +7,7 @@ export {};
 /* eslint-disable react/jsx-key */
 // ! Disabled key errors in ESLint because they incorrectly label the elements within certain expectations as needing keys when they don't and will not work with keys
 
-import User = require('@kalos-core/kalos-rpc/User');
+import User = require('../../../@kalos-core/kalos-rpc/User');
 
 import TestModule = require('../../../../modules/ComponentsLibrary/Test/index');
 

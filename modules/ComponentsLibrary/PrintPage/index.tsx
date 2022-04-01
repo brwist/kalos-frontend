@@ -9,7 +9,7 @@ import { PrintFooter, Props as FooterProps } from '../PrintFooter';
 import { Button, Props as ButtonProps } from '../Button';
 import { setInlineStyles, PDFClientService } from '../../../helpers';
 import { Alert } from '../Alert';
-import './styles.css';
+import './PrintPage.module.css';
 
 export type Status = 'idle' | 'loading' | 'loaded';
 

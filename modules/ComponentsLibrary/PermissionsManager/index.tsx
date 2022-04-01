@@ -1,8 +1,8 @@
-import { User } from '@kalos-core/kalos-rpc/User';
+import { User } from '../../../@kalos-core/kalos-rpc/User';
 import {
   PermissionGroup,
   PermissionGroupUser,
-} from '@kalos-core/kalos-rpc/compiled-protos/user_pb';
+} from '../../../@kalos-core/kalos-rpc/compiled-protos/user_pb';
 import React, { FC, useState, useEffect, useCallback, useReducer } from 'react';
 import { UserClientService } from '../../../helpers';
 import { reducer } from './reducer';

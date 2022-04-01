@@ -16,7 +16,7 @@ import IconButton from '@material-ui/core/IconButton';
 import { format, addDays, getDay, differenceInDays, parseISO } from 'date-fns';
 import { PROJECT_TASK_PRIORITY_ICONS } from '../EditProject';
 import { formatDate, formatTime } from '../../../helpers';
-import './styles.less';
+import './GanttChart.module.less';
 
 export type CalendarEvent = {
   id: number;
@@ -94,10 +94,10 @@ export const GanttChart: FC<Props> = ({
     },
     [setUncollapsed, uncollapsed, elRefs, setHeights, heights],
   );
-  const handleToggleCollapsed = useCallback(() => setCollapsed(!collapsed), [
-    setCollapsed,
-    collapsed,
-  ]);
+  const handleToggleCollapsed = useCallback(
+    () => setCollapsed(!collapsed),
+    [setCollapsed, collapsed],
+  );
 
   return (
     <div className={clsx('GanttChart', { loading })}>

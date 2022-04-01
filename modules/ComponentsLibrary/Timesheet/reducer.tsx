@@ -1,10 +1,10 @@
 import * as jspb from 'google-protobuf';
-import { User } from '@kalos-core/kalos-rpc/User/index';
+import { User } from '../../../@kalos-core/kalos-rpc/User/index';
 import {
   TimesheetLine,
   Timesheet,
-} from '@kalos-core/kalos-rpc/TimesheetLine/index';
-import { ServicesRendered } from '@kalos-core/kalos-rpc/ServicesRendered/index';
+} from '../../../@kalos-core/kalos-rpc/TimesheetLine/index';
+import { ServicesRendered } from '../../../@kalos-core/kalos-rpc/ServicesRendered/index';
 import {
   addDays,
   differenceInMinutes,
@@ -14,7 +14,7 @@ import {
 } from 'date-fns';
 import { TimeoffRequestTypes } from '../../../helpers';
 import { NULL_TIME_VALUE } from './constants';
-import { TimeoffRequest } from '@kalos-core/kalos-rpc/TimeoffRequest';
+import { TimeoffRequest } from '../../../@kalos-core/kalos-rpc/TimeoffRequest';
 
 export type Payroll = {
   total: number | null;

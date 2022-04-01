@@ -1,6 +1,7 @@
 import React, { FC, CSSProperties } from 'react';
+import "./PrintParagraph.module.css";
+
 import clsx from 'clsx';
-import './styles.css';
 
 type Tag = 'div' | 'h1' | 'h2' | 'h3' | 'h4' | 'h5';
 

@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { CheckInProjectTask } from '.';
 import { EventClientService } from '../../../helpers';
-import { Event } from '@kalos-core/kalos-rpc/Event/index';
+import { Event } from '../../../@kalos-core/kalos-rpc/Event/index';
 import { ExampleTitle } from '../helpers';
 
 export default () => {

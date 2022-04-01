@@ -5,7 +5,7 @@ import {
   Task,
   SpiffType,
   GetPendingSpiffConfig,
-} from '@kalos-core/kalos-rpc/Task';
+} from '../../../../@kalos-core/kalos-rpc/Task';
 import { parseISO, subDays } from 'date-fns/esm';
 
 import IconButton from '@material-ui/core/IconButton';
@@ -17,9 +17,9 @@ import { SpiffTool } from '../../../SpiffToolLogs/components/SpiffTool';
 import { Form, Schema } from '../../../ComponentsLibrary/Form';
 import { Option } from '../../../ComponentsLibrary/Field';
 import { Button } from '../../Button';
-import { SpiffToolAdminAction } from '@kalos-core/kalos-rpc/SpiffToolAdminAction';
+import { SpiffToolAdminAction } from '../../../../@kalos-core/kalos-rpc/SpiffToolAdminAction';
 
-import { User } from '@kalos-core/kalos-rpc/User';
+import { User } from '../../../../@kalos-core/kalos-rpc/User';
 import {
   makeFakeRows,
   formatWeek,

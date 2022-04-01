@@ -3,17 +3,17 @@ export {};
 /* eslint-disable react/jsx-key */
 // ! Disabled key errors in ESLint because they incorrectly label the elements within certain expectations as needing keys when they don't and will not work with keys
 
-import User = require('@kalos-core/kalos-rpc/User');
+import User = require('../../../@kalos-core/kalos-rpc/User');
 
-import EventModule = require('@kalos-core/kalos-rpc/Event');
-import PropertyModule = require('@kalos-core/kalos-rpc/Property');
+import EventModule = require('../../../@kalos-core/kalos-rpc/Event');
+import PropertyModule = require('../../../@kalos-core/kalos-rpc/Property');
 
 import ProjectDetailModule = require('../../../../modules/ComponentsLibrary/ProjectDetail/index');
 
 import LoaderModule = require('../../../../modules/Loader/main');
 
-import UserProto = require('@kalos-core/kalos-rpc/compiled-protos/user_pb');
-import TimesheetDepartmentProto = require('@kalos-core/kalos-rpc/TimesheetDepartment');
+import UserProto = require('../../../@kalos-core/kalos-rpc/compiled-protos/user_pb');
+import TimesheetDepartmentProto = require('../../../@kalos-core/kalos-rpc/TimesheetDepartment');
 
 import React = require('react');
 import Enzyme = require('enzyme');

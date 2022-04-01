@@ -3,8 +3,8 @@
 import React, { FC, useCallback, useState, useEffect } from 'react';
 import Menu from '@material-ui/core/Menu';
 import MenuItem from '@material-ui/core/MenuItem';
-import { Property } from '@kalos-core/kalos-rpc/Property';
-import { User } from '@kalos-core/kalos-rpc/User';
+import { Property } from '../../../@kalos-core/kalos-rpc/Property';
+import { User } from '../../../@kalos-core/kalos-rpc/User';
 import { InfoTable, Data } from '../../ComponentsLibrary/InfoTable';
 import { Modal } from '../../ComponentsLibrary/Modal';
 import { Form, Schema } from '../../ComponentsLibrary/Form';
@@ -17,7 +17,7 @@ import { PropertyDocuments } from './PropertyDocuments';
 import { ServiceItems } from '../../ComponentsLibrary/ServiceItems';
 import { PropertyEdit } from '../../ComponentsLibrary/PropertyEdit';
 import { ServiceCalls } from './ServiceCalls';
-
+import './PropertyInfo.module.less';
 import {
   ActivityLogClientService,
   makeFakeRows,
@@ -25,8 +25,7 @@ import {
   PropertyClientService,
   UserClientService,
 } from '../../../helpers';
-import './propertyInfo.less';
-import { ActivityLog } from '@kalos-core/kalos-rpc/ActivityLog';
+import { ActivityLog } from '../../../@kalos-core/kalos-rpc/ActivityLog';
 import format from 'date-fns/esm/format';
 import { templateSettings } from 'lodash';
 

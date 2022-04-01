@@ -2,7 +2,7 @@ import React from 'react';
 import InputLabel from '@material-ui/core/InputLabel';
 import FormControl from '@material-ui/core/FormControl';
 import NativeSelect from '@material-ui/core/NativeSelect';
-import { JobType, JobTypeClient } from '@kalos-core/kalos-rpc/JobType';
+import { JobType, JobTypeClient } from '../../../@kalos-core/kalos-rpc/JobType';
 import Divider from '@material-ui/core/Divider';
 import { ENDPOINT } from '../../../constants';
 

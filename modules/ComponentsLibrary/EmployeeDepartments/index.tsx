@@ -1,5 +1,5 @@
 import React, { FC, useState, useCallback, useEffect } from 'react';
-import { EmployeeFunction } from '@kalos-core/kalos-rpc/EmployeeFunction';
+import { EmployeeFunction } from '../../../@kalos-core/kalos-rpc/EmployeeFunction';
 import IconButton from '@material-ui/core/IconButton';
 import EditIcon from '@material-ui/icons/Edit';
 import DeleteIcon from '@material-ui/icons/Delete';
@@ -14,7 +14,7 @@ import {
   UserClientService,
   EmployeeFunctionClientService,
 } from '../../../helpers';
-import { User } from '@kalos-core/kalos-rpc/User';
+import { User } from '../../../@kalos-core/kalos-rpc/User';
 
 interface Props {
   loggedUserId: number;

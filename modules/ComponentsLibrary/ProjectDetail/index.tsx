@@ -1,9 +1,9 @@
 import React, { FC, useState, useEffect, useCallback, useRef } from 'react';
-import { Event } from '@kalos-core/kalos-rpc/Event';
-import { User } from '@kalos-core/kalos-rpc/User';
-import { JobTypeSubtype } from '@kalos-core/kalos-rpc/JobTypeSubtype';
-import { Property } from '@kalos-core/kalos-rpc/Property';
-import { ServicesRendered } from '@kalos-core/kalos-rpc/ServicesRendered';
+import { Event } from '../../../@kalos-core/kalos-rpc/Event';
+import { User } from '../../../@kalos-core/kalos-rpc/User';
+import { JobTypeSubtype } from '../../../@kalos-core/kalos-rpc/JobTypeSubtype';
+import { Property } from '../../../@kalos-core/kalos-rpc/Property';
+import { ServicesRendered } from '../../../@kalos-core/kalos-rpc/ServicesRendered';
 import {
   getRPCFields,
   makeFakeRows,
@@ -27,7 +27,7 @@ import { Loader } from '../../Loader/main';
 import Typography from '@material-ui/core/Typography';
 import { BillingTab } from './components/Billing';
 import { LogsTab } from './components/Logs';
-import { TimesheetDepartment } from '@kalos-core/kalos-rpc/TimesheetDepartment';
+import { TimesheetDepartment } from '../../../@kalos-core/kalos-rpc/TimesheetDepartment';
 import { RoleType } from '../Payroll';
 
 export type EventType = Event;

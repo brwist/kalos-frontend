@@ -1,4 +1,4 @@
-import { Property } from '@kalos-core/kalos-rpc/Property';
+import { Property } from '../../../@kalos-core/kalos-rpc/Property';
 
 export type State = {
   isLoaded: boolean;

@@ -1,25 +1,16 @@
-import React, {
-  FC,
-  useState,
-  useEffect,
-  useCallback,
-  useReducer,
-  useRef,
-} from 'react';
+import React, { FC, useEffect, useCallback, useReducer, useRef } from 'react';
 import {
-  SERVICE_STATUSES,
-  SIGNATURE_PAYMENT_TYPE_LIST,
-  PAYMENT_COLLECTED_LIST,
-  PAYMENT_NOT_COLLECTED_LIST,
-} from '../../../constants';
-import { EventClient, Event, Quotable } from '@kalos-core/kalos-rpc/Event';
-import { UserClient, User } from '@kalos-core/kalos-rpc/User';
-import { JobTypeSubtype } from '@kalos-core/kalos-rpc/JobTypeSubtype';
-import { Property } from '@kalos-core/kalos-rpc/Property';
-import { QuotableRead } from '@kalos-core/kalos-rpc/compiled-protos/event_pb';
-import { ServicesRendered } from '@kalos-core/kalos-rpc/ServicesRendered';
-import { Invoice as InvoiceType } from '@kalos-core/kalos-rpc/Invoice';
-import { Contract } from '@kalos-core/kalos-rpc/Contract';
+  EventClient,
+  Event,
+  Quotable,
+} from '../../../@kalos-core/kalos-rpc/Event';
+import { UserClient, User } from '../../../@kalos-core/kalos-rpc/User';
+import { JobTypeSubtype } from '../../../@kalos-core/kalos-rpc/JobTypeSubtype';
+import { Property } from '../../../@kalos-core/kalos-rpc/Property';
+import { QuotableRead } from '../../../@kalos-core/kalos-rpc/compiled-protos/event_pb';
+import { ServicesRendered } from '../../../@kalos-core/kalos-rpc/ServicesRendered';
+import { Invoice as InvoiceType } from '../../../@kalos-core/kalos-rpc/Invoice';
+import { Contract } from '../../../@kalos-core/kalos-rpc/Contract';
 import { Loader } from '../../Loader/main';
 import {
   getRPCFields,
@@ -39,7 +30,7 @@ import {
   timestamp,
   QuoteLinePartClientService,
 } from '../../../helpers';
-import { PaymentClient, Payment } from '@kalos-core/kalos-rpc/Payment';
+import { PaymentClient, Payment } from '../../../@kalos-core/kalos-rpc/Payment';
 import { ENDPOINT, OPTION_BLANK } from '../../../constants';
 import { Modal } from '../Modal';
 import { SectionBar } from '../SectionBar';
@@ -47,7 +38,7 @@ import { InfoTable, Data } from '../InfoTable';
 import { Tabs } from '../Tabs';
 import { Option } from '../Field';
 import { Form, Schema } from '../Form';
-import { SQSEmail } from '@kalos-core/kalos-rpc/Email';
+import { SQSEmail } from '../../../@kalos-core/kalos-rpc/Email';
 import { SpiffApplyComponent } from '../SpiffApplyComponent';
 import { Request } from './components/Request';
 import { Equipment } from './components/Equipment';
@@ -55,19 +46,19 @@ import { Services } from './components/Services';
 import { Invoice } from './components/Invoice';
 import { Proposal } from './components/Proposal';
 import { Spiffs } from './components/Spiffs';
-import { ActivityLog } from '@kalos-core/kalos-rpc/ActivityLog';
+import { ActivityLog } from '../../../@kalos-core/kalos-rpc/ActivityLog';
 import format from 'date-fns/esm/format';
 import { addHours } from 'date-fns';
 
-import { Document } from '@kalos-core/kalos-rpc/Document';
+import { Document } from '../../../@kalos-core/kalos-rpc/Document';
 import { State, reducer } from './reducer';
 import { ServiceCallLogs } from '../ServiceCallLogs';
 import {
   Email,
   SQSEmailAndDocument,
-} from '@kalos-core/kalos-rpc/compiled-protos/email_pb';
-import { EventAssignment } from '@kalos-core/kalos-rpc/EventAssignment';
-import { QuoteLinePart } from '@kalos-core/kalos-rpc/QuoteLinePart';
+} from '../../../@kalos-core/kalos-rpc/compiled-protos/email_pb';
+import { EventAssignment } from '../../../@kalos-core/kalos-rpc/EventAssignment';
+import { QuoteLinePart } from '../../../@kalos-core/kalos-rpc/QuoteLinePart';
 
 const EventClientService = new EventClient(ENDPOINT);
 const UserClientService = new UserClient(ENDPOINT);

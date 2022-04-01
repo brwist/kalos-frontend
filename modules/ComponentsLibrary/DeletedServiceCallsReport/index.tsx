@@ -9,7 +9,7 @@ import { PrintTable } from '../PrintTable';
 import { PrintHeaderSubtitleItem } from '../PrintHeader';
 import { PlainForm, Schema } from '../PlainForm';
 import { Button } from '../Button';
-import { getPropertyAddress } from '@kalos-core/kalos-rpc/Property';
+import { getPropertyAddress } from '../../../@kalos-core/kalos-rpc/Property';
 import { ServiceCall } from '../ServiceCall';
 import { Modal } from '../Modal';
 import {
@@ -19,7 +19,7 @@ import {
   loadEventsByFilterDeleted,
 } from '../../../helpers';
 import { ROWS_PER_PAGE } from '../../../constants';
-import { Event } from '@kalos-core/kalos-rpc/Event';
+import { Event } from '../../../@kalos-core/kalos-rpc/Event';
 import { Tasks } from '../Tasks';
 
 interface Props {

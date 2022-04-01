@@ -4,7 +4,6 @@ import FormControlLabel from '@material-ui/core/FormControlLabel';
 import Checkbox from '@material-ui/core/Checkbox';
 import { Button } from '../Button';
 import { ConfirmServiceProvider, useConfirm } from './';
-import './examples.less';
 
 const ButtonWithConfirm = () => {
   const [catchOnCancel, toggleCatchOnCancel] = useState(false);
