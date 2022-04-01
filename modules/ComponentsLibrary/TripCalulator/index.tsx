@@ -64,8 +64,8 @@ export const TripCalulator: FC<props> = ({ loggedUserId, onClose, role }) => {
     // This is important for long-term performance of our components
   }, []);
   const getOTB = (distance: number) => {
-    if (distance >= 61 && distance <= 90) {
-      return '(A) 61-90 miles, $34.80 ';
+    if (distance >= 60 && distance <= 90) {
+      return '(A) 60-90 miles, $34.80 ';
     }
     if (distance >= 91 && distance <= 120) {
       return '(B) 91-120 miles ,$69.60  ';

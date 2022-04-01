@@ -1,11 +1,14 @@
 import React from 'react';
 import ReactDOM from 'react-dom';
-import { PendingInvoiceTransactionComponent } from './main';
-import { PageWrapper } from '../PageWrapper/main';
+import { PendingInvoiceTransaction } from './main';
+import { UserClient } from '../../@kalos-core/kalos-rpc/User';
+import { ENDPOINT } from '../../constants';
 
-ReactDOM.render(
-  <PageWrapper userID={103285} withHeader>
-    <PendingInvoiceTransactionComponent loggedUserId={103285} />
-  </PageWrapper>,
-  document.getElementById('root'),
-);
+const u = new UserClient(ENDPOINT);
+
+u.GetToken('test', 'test').then(() => {
+  ReactDOM.render(
+    <PendingInvoiceTransaction userID={1550} />,
+    document.getElementById('root'),
+  );
+});
