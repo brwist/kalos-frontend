@@ -3,7 +3,10 @@ import IconButton from '@material-ui/core/IconButton';
 import EditIcon from '@material-ui/icons/Edit';
 import InfoIcon from '@material-ui/icons/Info';
 import DeleteIcon from '@material-ui/icons/Delete';
-import { Property, getPropertyAddress } from '@kalos-core/kalos-rpc/Property';
+import {
+  Property,
+  getPropertyAddress,
+} from '../../../@kalos-core/kalos-rpc/Property';
 import {
   USA_STATES_OPTIONS,
   RESIDENTIAL_OPTIONS,
@@ -25,9 +28,9 @@ import {
   makeSafeFormObject,
   ActivityLogClientService,
 } from '../../../helpers';
-import './properties.less';
-import { ActivityLog } from '@kalos-core/kalos-rpc/ActivityLog';
+import { ActivityLog } from '../../../@kalos-core/kalos-rpc/ActivityLog';
 import format from 'date-fns/esm/format';
+import './Properties.module.less';
 
 const PROP_LEVEL = 'Used for property-level billing only';
 
@@ -122,18 +125,25 @@ export const Properties: FC<Props> = props => {
             editing.getId() === 0 ? undefined : editing.getId(),
           );
           const actLog = new ActivityLog();
-          let actName = ` Property : ${property.getAddress()}`
+          let actName = ` Property : ${property.getAddress()}`;
           actLog.setPropertyId(property.getId());
           if (geo) {
             actLog.setGeolocationLat(geo.geolocationLat);
             actLog.setGeolocationLng(geo.geolocationLng);
-          } else if (editing.getGeolocationLat() && editing.getGeolocationLng()){
+          } else if (
+            editing.getGeolocationLat() &&
+            editing.getGeolocationLng()
+          ) {
             actLog.setGeolocationLat(editing.getGeolocationLat());
             actLog.setGeolocationLng(editing.getGeolocationLng());
           } else {
             actName = actName.concat(` (location services disabled)`);
           }
-          actLog.setActivityName(editing.getId() ? `Edited`.concat(actName) : `Added`.concat(actName));
+          actLog.setActivityName(
+            editing.getId()
+              ? `Edited`.concat(actName)
+              : `Added`.concat(actName),
+          );
           actLog.setActivityDate(format(new Date(), 'yyyy-MM-dd HH:mm:ss'));
           actLog.setUserId(userID);
           await ActivityLogClientService.Create(actLog);

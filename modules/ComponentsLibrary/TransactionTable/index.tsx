@@ -1,14 +1,14 @@
-import { EmailConfig } from '@kalos-core/kalos-rpc/Email';
+import { EmailConfig } from '../../../@kalos-core/kalos-rpc/Email';
 import {
   Transaction,
   TransactionList,
-} from '@kalos-core/kalos-rpc/Transaction';
+} from '../../../@kalos-core/kalos-rpc/Transaction';
 import {
   TransactionActivity,
   TransactionActivityClient,
-} from '@kalos-core/kalos-rpc/TransactionActivity';
+} from '../../../@kalos-core/kalos-rpc/TransactionActivity';
 import CheckCircleOutlineIcon from '@material-ui/icons/CheckCircleOutline';
-import { User } from '@kalos-core/kalos-rpc/User';
+import { User } from '../../../@kalos-core/kalos-rpc/User';
 import IconButton from '@material-ui/core/IconButton';
 import AssignmentIndIcon from '@material-ui/icons/AssignmentInd';
 import CheckIcon from '@material-ui/icons/CheckCircleSharp';
@@ -24,8 +24,8 @@ import { format, parseISO } from 'date-fns';
 import {
   TransactionAccount,
   TransactionAccountList,
-} from '@kalos-core/kalos-rpc/TransactionAccount';
-import { Event } from '@kalos-core/kalos-rpc/Event';
+} from '../../../@kalos-core/kalos-rpc/TransactionAccount';
+import { Event } from '../../../@kalos-core/kalos-rpc/Event';
 import { PopoverComponent } from '../Popover';
 import React, { FC, useCallback, useEffect, useReducer } from 'react';
 import {
@@ -71,18 +71,18 @@ import LineWeightIcon from '@material-ui/icons/LineWeight';
 import DeleteIcon from '@material-ui/icons/Delete';
 import { UploadPhotoTransaction } from '../UploadPhotoTransaction';
 import { EditTransaction } from '../EditTransaction';
-import { TimesheetDepartment } from '@kalos-core/kalos-rpc/TimesheetDepartment';
+import { TimesheetDepartment } from '../../../@kalos-core/kalos-rpc/TimesheetDepartment';
 import { StatusPicker } from './components/StatusPicker';
 import { ErrorBoundary } from '../ErrorBoundary';
 import { ConfirmDelete } from '../ConfirmDelete';
 import { UploadPhotoToExistingTransaction } from '../UploadPhotoToExistingTransaction';
 import { Form } from '../Form';
 import { ACTIONS } from './reducer';
-import { Devlog } from '@kalos-core/kalos-rpc/Devlog';
-import { TxnDepartment } from '@kalos-core/kalos-rpc/compiled-protos/transaction_pb';
+import { Devlog } from '../../../@kalos-core/kalos-rpc/Devlog';
+import { TxnDepartment } from '../../../@kalos-core/kalos-rpc/compiled-protos/transaction_pb';
 import { stringify } from 'querystring';
 import { truncateSync } from 'fs';
-import { getMimeType } from '@kalos-core/kalos-rpc/Common';
+import { getMimeType } from '../../../@kalos-core/kalos-rpc/Common';
 import { pdf } from '@react-pdf/renderer';
 import { NULL_TIME_VALUE } from '../Timesheet/constants';
 import NotificationsActiveIcon from '@material-ui/icons/NotificationsActive';

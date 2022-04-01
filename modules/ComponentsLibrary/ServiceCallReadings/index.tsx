@@ -3,12 +3,12 @@ import IconButton from '@material-ui/core/IconButton';
 import EditIcon from '@material-ui/icons/Edit';
 import DeleteIcon from '@material-ui/icons/Delete';
 import BuildIcon from '@material-ui/icons/Build';
-import { ReadingClient, Reading } from '@kalos-core/kalos-rpc/Reading';
+import { ReadingClient, Reading } from '../../../@kalos-core/kalos-rpc/Reading';
 import {
   MaintenanceQuestionClient,
   MaintenanceQuestion,
-} from '@kalos-core/kalos-rpc/MaintenanceQuestion';
-import { User } from '@kalos-core/kalos-rpc/User';
+} from '../../../@kalos-core/kalos-rpc/MaintenanceQuestion';
+import { User } from '../../../@kalos-core/kalos-rpc/User';
 import { ENDPOINT, API_FAILED_GENERAL_ERROR_MSG } from '../../../constants';
 import { SectionBar } from '../SectionBar';
 import { InfoTable, Data } from '../InfoTable';
@@ -17,7 +17,7 @@ import { Form, Schema, Options } from '../Form';
 import {
   ServiceItem,
   ServiceItemClient,
-} from '@kalos-core/kalos-rpc/ServiceItem';
+} from '../../../@kalos-core/kalos-rpc/ServiceItem';
 import {
   makeFakeRows,
   getRPCFields,

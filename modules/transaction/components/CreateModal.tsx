@@ -2,7 +2,7 @@ import React, { useState, useCallback, FC } from 'react';
 import {
   Transaction,
   TransactionClient,
-} from '@kalos-core/kalos-rpc/Transaction';
+} from '../../@kalos-core/kalos-rpc/Transaction';
 import { Modal } from '../../ComponentsLibrary/Modal';
 import { AccountPicker } from '../../ComponentsLibrary/Pickers';
 import { Form, Schema } from '../../ComponentsLibrary/Form';

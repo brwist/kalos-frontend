@@ -2,8 +2,8 @@ import * as React from 'react';
 import {
   Transaction,
   TransactionClient,
-} from '@kalos-core/kalos-rpc/Transaction';
-import { TransactionRow, prettyMoney } from './row';
+} from '../../../@kalos-core/kalos-rpc/Transaction';
+import { TransactionRow, prettyMoney } from './TransactionRow';
 import {
   AccountPicker,
   DepartmentPicker,
@@ -13,10 +13,13 @@ import { TxnStatusPicker } from '../../ComponentsLibrary/Pickers/TransactionStat
 import {
   TransactionActivityClient,
   TransactionActivity,
-} from '@kalos-core/kalos-rpc/TransactionActivity';
-import { PropertyClient, Property } from '@kalos-core/kalos-rpc/Property';
-import { User } from '@kalos-core/kalos-rpc/User';
-import { EventClient, Event } from '@kalos-core/kalos-rpc/Event';
+} from '../../../@kalos-core/kalos-rpc/TransactionActivity';
+import {
+  PropertyClient,
+  Property,
+} from '../../../@kalos-core/kalos-rpc/Property';
+import { User } from '../../../@kalos-core/kalos-rpc/User';
+import { EventClient, Event } from '../../../@kalos-core/kalos-rpc/Event';
 import { ENDPOINT } from '../../../constants';
 import {
   makeFakeRows,
@@ -28,7 +31,7 @@ import {
 import {
   RecordPageReq,
   TransactionList,
-} from '@kalos-core/kalos-rpc/compiled-protos/transaction_pb';
+} from '../../../@kalos-core/kalos-rpc/compiled-protos/transaction_pb';
 import { Prompt } from '../../Prompt/main';
 import { SectionBar } from '../../ComponentsLibrary/SectionBar';
 import { InfoTable } from '../../ComponentsLibrary/InfoTable';

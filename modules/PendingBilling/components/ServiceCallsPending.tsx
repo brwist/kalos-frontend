@@ -8,9 +8,9 @@ import { ConfirmDelete } from '../../ComponentsLibrary/ConfirmDelete';
 import { PlainForm, Schema } from '../../ComponentsLibrary/PlainForm';
 import { InfoTable, Data, Columns } from '../../ComponentsLibrary/InfoTable';
 import { ServiceCall } from '../../ComponentsLibrary/ServiceCall';
-import { getPropertyAddress } from '@kalos-core/kalos-rpc/Property';
-import { Event, EventClient } from '@kalos-core/kalos-rpc/Event';
-import { ENDPOINT } from '@kalos-core/kalos-rpc/constants';
+import { getPropertyAddress } from '../../../@kalos-core/kalos-rpc/Property';
+import { Event, EventClient } from '../../../@kalos-core/kalos-rpc/Event';
+import { ENDPOINT } from '../../../@kalos-core/kalos-rpc/constants';
 import { AddServiceCall } from '../../AddServiceCallGeneral/components/AddServiceCall';
 import {
   getCFAppUrl,
@@ -24,7 +24,7 @@ import {
   EventClientService,
 } from '../../../helpers';
 import { NULL_TIME, ROWS_PER_PAGE } from '../../../constants';
-import './serviceCallsPending.less';
+import './ServiceCallsPending.module.less';
 
 export interface Props {
   loggedUserId: number;

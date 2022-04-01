@@ -1,7 +1,7 @@
 import React, { FC, useEffect, useState } from 'react';
 import clsx from 'clsx';
-import { ServicesRendered } from '@kalos-core/kalos-rpc/ServicesRendered';
-import { TimesheetLine } from '@kalos-core/kalos-rpc/TimesheetLine';
+import { ServicesRendered } from '../../../../@kalos-core/kalos-rpc/ServicesRendered';
+import { TimesheetLine } from '../../../../@kalos-core/kalos-rpc/TimesheetLine';
 import { format, differenceInMinutes, parseISO } from 'date-fns';
 import Card from '@material-ui/core/Card';
 import CardActionArea from '@material-ui/core/CardActionArea';
@@ -13,12 +13,10 @@ import { useEditTimesheet } from '../hooks';
 import {
   roundNumber,
   getCFAppUrl,
-  EventClientService,
   TimesheetLineClientService,
 } from '../../../../helpers';
-import './timesheetCard.less';
-import { Event } from '@kalos-core/kalos-rpc/Event';
 import { NULL_TIME_VALUE } from '../constants';
+import './TimesheetCard.module.less';
 
 type ColorIndicatorProps = {
   status: string;

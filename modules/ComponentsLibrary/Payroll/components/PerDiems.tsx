@@ -17,7 +17,7 @@ import { Tooltip } from '../../Tooltip';
 import { Confirm } from '../../Confirm';
 import { Button } from '../../Button';
 import { PerDiemManager } from '../../PerDiemManager';
-import { TimesheetDepartment } from '@kalos-core/kalos-rpc/TimesheetDepartment';
+import { TimesheetDepartment } from '../../../../@kalos-core/kalos-rpc/TimesheetDepartment';
 import {
   makeFakeRows,
   formatDate,
@@ -34,8 +34,8 @@ import {
   MEALS_RATE,
 } from '../../../../constants';
 import { RoleType } from '../index';
-import { getDepartmentName } from '@kalos-core/kalos-rpc/Common';
-import { PerDiem, PerDiemRow } from '@kalos-core/kalos-rpc/PerDiem';
+import { getDepartmentName } from '../../../../@kalos-core/kalos-rpc/Common';
+import { PerDiem, PerDiemRow } from '../../../../@kalos-core/kalos-rpc/PerDiem';
 import { result } from 'lodash';
 
 interface Props {

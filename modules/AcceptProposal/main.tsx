@@ -3,26 +3,33 @@ import Checkbox from '@material-ui/core/Checkbox';
 import Alert from '@material-ui/lab/Alert';
 import ReactPDF from '@react-pdf/renderer';
 import { Button } from '../ComponentsLibrary/Button';
-import { QuoteLine, QuoteLineClient } from '@kalos-core/kalos-rpc/QuoteLine';
+import {
+  QuoteLine,
+  QuoteLineClient,
+} from '../../@kalos-core/kalos-rpc/QuoteLine';
 import { ENDPOINT } from '../../constants';
 import { b64toBlob, timestamp } from '../../helpers';
 import {
   Property,
   PropertyClient,
   getPropertyAddress,
-} from '@kalos-core/kalos-rpc/Property';
-import { User } from '@kalos-core/kalos-rpc/User';
+} from '../../@kalos-core/kalos-rpc/Property';
+import { User } from '../../@kalos-core/kalos-rpc/User';
 import { ApprovedProposal } from './components/ApprovedProposal';
-import { S3Client, FileObject, URLObject } from '@kalos-core/kalos-rpc/S3File';
-import { Document, DocumentClient } from '@kalos-core/kalos-rpc/Document';
+import {
+  S3Client,
+  FileObject,
+  URLObject,
+} from '../../@kalos-core/kalos-rpc/S3File';
+import { Document, DocumentClient } from '../../@kalos-core/kalos-rpc/Document';
 import {
   QuoteDocument,
   QuoteDocumentClient,
-} from '@kalos-core/kalos-rpc/QuoteDocument';
+} from '../../@kalos-core/kalos-rpc/QuoteDocument';
 import {
   ActivityLog,
   ActivityLogClient,
-} from '@kalos-core/kalos-rpc/ActivityLog';
+} from '../../@kalos-core/kalos-rpc/ActivityLog';
 import { SectionBar } from '../ComponentsLibrary/SectionBar';
 import { InfoTable } from '../ComponentsLibrary/InfoTable';
 import { Confirm } from '../ComponentsLibrary/Confirm';

@@ -1,4 +1,4 @@
-import { Trip } from '@kalos-core/kalos-rpc/compiled-protos/perdiem_pb';
+import { Trip } from '../../../@kalos-core/kalos-rpc/compiled-protos/perdiem_pb';
 import React, { FC, useCallback, useState, useEffect } from 'react';
 import { InfoTable } from '../InfoTable';
 import {
@@ -20,7 +20,7 @@ import { Modal } from '../Modal';
 import {
   PerDiem,
   TripList,
-} from '@kalos-core/kalos-rpc/compiled-protos/perdiem_pb';
+} from '../../../@kalos-core/kalos-rpc/compiled-protos/perdiem_pb';
 import {
   PerDiemClientService,
   UserClientService,
@@ -40,7 +40,7 @@ import { PlainForm } from '../PlainForm';
 import CheckCircleOutlineIcon from '@material-ui/icons/CheckCircleOutline';
 import MessageIcon from '@material-ui/icons/Message';
 import { TripInfo, TripViewModal } from '../TripViewModal';
-import { TimesheetDepartment } from '@kalos-core/kalos-rpc/TimesheetDepartment';
+import { TimesheetDepartment } from '../../../@kalos-core/kalos-rpc/TimesheetDepartment';
 import { Button } from '../Button';
 import { NULL_TIME } from '../../../constants';
 import { PlaceAutocompleteAddressForm } from '../PlaceAutocompleteAddressForm';

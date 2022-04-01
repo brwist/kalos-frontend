@@ -6,8 +6,8 @@ import {
   UsersFilter,
   UsersSort,
   LoadUsersByFilter,
-} from '@kalos-core/kalos-rpc/User';
-import { getPropertyAddress } from '@kalos-core/kalos-rpc/Property';
+} from '../../../@kalos-core/kalos-rpc/User';
+import { getPropertyAddress } from '../../../@kalos-core/kalos-rpc/Property';
 import cloneDeep from 'lodash/cloneDeep';
 import compact from 'lodash/compact';
 import IconButton from '@material-ui/core/IconButton';
@@ -81,23 +81,22 @@ import {
   EVENT_STATUS_LIST,
   USA_STATES_OPTIONS,
 } from '../../../constants';
-import { Event } from '@kalos-core/kalos-rpc/Event';
-import { Property } from '@kalos-core/kalos-rpc/Property';
-import { Contract } from '@kalos-core/kalos-rpc/Contract';
-import { JobType } from '@kalos-core/kalos-rpc/JobType';
-import { JobSubtype } from '@kalos-core/kalos-rpc/JobSubtype';
-import { TimesheetDepartment } from '@kalos-core/kalos-rpc/TimesheetDepartment';
-import { EmployeeFunction } from '@kalos-core/kalos-rpc/EmployeeFunction';
-
-import './styles.less';
+import { Event } from '../../../@kalos-core/kalos-rpc/Event';
+import { Property } from '../../../@kalos-core/kalos-rpc/Property';
+import { Contract } from '../../../@kalos-core/kalos-rpc/Contract';
+import { JobType } from '../../../@kalos-core/kalos-rpc/JobType';
+import { JobSubtype } from '../../../@kalos-core/kalos-rpc/JobSubtype';
+import { TimesheetDepartment } from '../../../@kalos-core/kalos-rpc/TimesheetDepartment';
+import { EmployeeFunction } from '../../../@kalos-core/kalos-rpc/EmployeeFunction';
 import { log } from 'console';
-import { ActivityLog } from '@kalos-core/kalos-rpc/ActivityLog';
+import { ActivityLog } from '../../../@kalos-core/kalos-rpc/ActivityLog';
 import format from 'date-fns/esm/format';
 import { ServiceRequest } from '../ServiceCall/requestIndex';
-import { QuoteLine } from '@kalos-core/kalos-rpc/QuoteLine';
-import { ServicesRendered } from '@kalos-core/kalos-rpc/ServicesRendered';
+import { QuoteLine } from '../../../@kalos-core/kalos-rpc/QuoteLine';
+import { ServicesRendered } from '../../../@kalos-core/kalos-rpc/ServicesRendered';
 import { result } from 'lodash';
 import { FlatRateSheet } from '../FlatRate';
+import './AdvancedSearch.module.less';
 
 type Kind =
   | 'serviceCalls'

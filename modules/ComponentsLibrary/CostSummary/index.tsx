@@ -3,17 +3,17 @@ import {
   TimesheetLine,
   TimesheetLineClient,
   TimesheetLineList,
-} from '@kalos-core/kalos-rpc/TimesheetLine';
+} from '../../../@kalos-core/kalos-rpc/TimesheetLine';
 import { Button } from '../Button';
 import CheckIcon from '@material-ui/icons/Check';
 import IconButton from '@material-ui/core/IconButton';
-import { PerDiem } from '@kalos-core/kalos-rpc/PerDiem';
+import { PerDiem } from '../../../@kalos-core/kalos-rpc/PerDiem';
 import { InfoTable } from '../InfoTable';
 import { Loader } from '../../Loader/main';
 import { SectionBar } from '../SectionBar';
 import { ENDPOINT, MEALS_RATE } from '../../../constants';
-import { SpiffToolAdminAction } from '@kalos-core/kalos-rpc/SpiffToolAdminAction';
-import { TaskClient, Task } from '@kalos-core/kalos-rpc/Task';
+import { SpiffToolAdminAction } from '../../../@kalos-core/kalos-rpc/SpiffToolAdminAction';
+import { TaskClient, Task } from '../../../@kalos-core/kalos-rpc/Task';
 import {
   differenceInMinutes,
   parseISO,
@@ -26,7 +26,7 @@ import {
 import {
   PerDiemRow,
   Trip,
-} from '@kalos-core/kalos-rpc/compiled-protos/perdiem_pb';
+} from '../../../@kalos-core/kalos-rpc/compiled-protos/perdiem_pb';
 import {
   roundNumber,
   formatDate,
@@ -40,7 +40,7 @@ import {
 } from '../../../helpers';
 import { reducer } from './reducer';
 import { NULL_TIME_VALUE } from '../Timesheet/constants';
-import { NULL_TIME } from '@kalos-core/kalos-rpc/constants';
+import { NULL_TIME } from '../../../@kalos-core/kalos-rpc/constants';
 interface Props {
   userId: number;
   loggedUserId: number;

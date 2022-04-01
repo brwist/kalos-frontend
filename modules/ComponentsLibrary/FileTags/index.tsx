@@ -1,5 +1,5 @@
 import React, { FC, useState, useEffect, useCallback } from 'react';
-import { DocumentKey } from '@kalos-core/kalos-rpc/compiled-protos/internal_document_pb';
+import { DocumentKey } from '../../../@kalos-core/kalos-rpc/compiled-protos/internal_document_pb';
 import IconButton from '@material-ui/core/IconButton';
 import EditIcon from '@material-ui/icons/Edit';
 import DeleteIcon from '@material-ui/icons/Delete';
@@ -8,7 +8,7 @@ import { Modal } from '../Modal';
 import { InfoTable, Columns, Data } from '../InfoTable';
 import { SectionBar } from '../SectionBar';
 import { Form, Schema } from '../Form';
-import { DocumentKeyList } from '@kalos-core/kalos-rpc/InternalDocument';
+import { DocumentKeyList } from '../../../@kalos-core/kalos-rpc/InternalDocument';
 import {
   makeFakeRows,
   InternalDocumentClientService,
@@ -85,7 +85,7 @@ export const FileTags: FC<Props> = ({
   const handleSave = useCallback(
     async (data: DocumentKey) => {
       if (pendingEdit) {
-        const saveData = makeSafeFormObject(data, new DocumentKey())
+        const saveData = makeSafeFormObject(data, new DocumentKey());
         setSaving(true);
         const id = pendingEdit.getId();
         if (saveData.getFieldMaskList().length > 0) {
@@ -144,18 +144,12 @@ export const FileTags: FC<Props> = ({
             onClick: handlePendingEdit(entry),
             actions: [
               <Tooltip key="edit" title="Edit">
-                <IconButton
-                  size="small"
-                  onClick={handlePendingEdit(entry)}
-                  >
+                <IconButton size="small" onClick={handlePendingEdit(entry)}>
                   <EditIcon />
                 </IconButton>
               </Tooltip>,
               <Tooltip key="delete" title="Delete">
-                <IconButton
-                  size="small"
-                  onClick={handlePendingDelete(entry)}
-                  >
+                <IconButton size="small" onClick={handlePendingDelete(entry)}>
                   <DeleteIcon />
                 </IconButton>
               </Tooltip>,

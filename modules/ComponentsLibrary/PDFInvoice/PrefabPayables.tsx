@@ -1,6 +1,5 @@
 import React, { FC } from 'react';
 import { EventType, usd } from '../../../helpers';
-import './styles.scss';
 
 interface Props {
   event: EventType;

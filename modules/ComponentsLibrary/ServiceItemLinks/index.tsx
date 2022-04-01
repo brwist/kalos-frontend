@@ -3,7 +3,10 @@ import IconButton from '@material-ui/core/IconButton';
 import SearchIcon from '@material-ui/icons/Search';
 import EditIcon from '@material-ui/icons/Edit';
 import DeleteIcon from '@material-ui/icons/Delete';
-import { PropLinkClient, PropLink } from '@kalos-core/kalos-rpc/PropLink';
+import {
+  PropLinkClient,
+  PropLink,
+} from '../../../@kalos-core/kalos-rpc/PropLink';
 import { ENDPOINT } from '../../../constants';
 import { SectionBar } from '../SectionBar';
 import { InfoTable, Data } from '../InfoTable';

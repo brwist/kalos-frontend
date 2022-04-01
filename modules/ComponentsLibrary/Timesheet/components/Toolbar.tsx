@@ -10,11 +10,12 @@ import { Button } from '../../Button';
 import { Payroll } from '../reducer';
 import { roundNumber } from '../../../../helpers';
 import { useConfirm } from '../../ConfirmService';
-import './toolbar.less';
 import { Payroll as PayrollComponent } from '../../Payroll';
 import { Modal } from '../../Modal';
 import { SectionBar } from '../../SectionBar';
 import { TripCalulator } from '../../TripCalulator';
+import './Toolbar.modules.less';
+
 type Props = {
   selectedDate: Date;
   handleDateChange: (value: Date) => void;

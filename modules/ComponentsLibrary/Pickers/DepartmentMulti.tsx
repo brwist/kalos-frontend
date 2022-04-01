@@ -6,7 +6,7 @@ import { Field } from '../Field';
 import {
   TimesheetDepartment,
   TimesheetDepartmentClient,
-} from '@kalos-core/kalos-rpc/TimesheetDepartment';
+} from '../../../@kalos-core/kalos-rpc/TimesheetDepartment';
 interface props {
   selected: string;
   disabled?: boolean;

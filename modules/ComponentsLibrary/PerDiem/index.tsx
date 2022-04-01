@@ -6,9 +6,9 @@ import sortBy from 'lodash/sortBy';
 import {
   TimesheetDepartment,
   TimesheetDepartmentClient,
-} from '@kalos-core/kalos-rpc/TimesheetDepartment';
+} from '../../../@kalos-core/kalos-rpc/TimesheetDepartment';
 import { startOfWeek, format, addDays, parseISO } from 'date-fns';
-import { PerDiem, PerDiemRow } from '@kalos-core/kalos-rpc/PerDiem';
+import { PerDiem, PerDiemRow } from '../../../@kalos-core/kalos-rpc/PerDiem';
 import { Button } from '../Button';
 import { CalendarHeader } from '../CalendarHeader';
 import { Calendar } from '../Calendar';
@@ -22,7 +22,7 @@ import { ConfirmDelete } from '../ConfirmDelete';
 import { SectionBar } from '../SectionBar';
 import { LodgingByZipCode } from '../LodgingByZipCode';
 import { Loader } from '../../Loader/main';
-import { Trip } from '@kalos-core/kalos-rpc/compiled-protos/perdiem_pb';
+import { Trip } from '../../../@kalos-core/kalos-rpc/compiled-protos/perdiem_pb';
 import {
   formatDate,
   usd,
@@ -33,12 +33,13 @@ import {
   makeSafeFormObject,
   TimesheetLineClientService,
 } from '../../../helpers';
-import { User } from '@kalos-core/kalos-rpc/User';
+import { User } from '../../../@kalos-core/kalos-rpc/User';
 import { JOB_STATUS_COLORS, MEALS_RATE, OPTION_ALL } from '../../../constants';
-import './styles.less';
-import { NULL_TIME, ENDPOINT } from '@kalos-core/kalos-rpc/constants';
+
+import { NULL_TIME, ENDPOINT } from '../../../@kalos-core/kalos-rpc/constants';
 import { RoleType } from '../Payroll';
-import { TimesheetLineClient } from '@kalos-core/kalos-rpc/TimesheetLine';
+import { TimesheetLineClient } from '../../../@kalos-core/kalos-rpc/TimesheetLine';
+import './PerDiem.module.less';
 
 export interface Props {
   loggedUserId: number;

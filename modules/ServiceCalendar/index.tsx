@@ -1,7 +1,7 @@
 import React from 'react';
 import ReactDOM from 'react-dom';
 import { ServiceCalendar } from './main';
-import { UserClient } from '@kalos-core/kalos-rpc/User';
+import { UserClient } from '../../@kalos-core/kalos-rpc/User';
 import { endOfDay } from 'date-fns';
 import { ENDPOINT } from '../../constants';
 

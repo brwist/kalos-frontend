@@ -4,8 +4,8 @@
 
 */
 
-import { Devlog } from '@kalos-core/kalos-rpc/Devlog';
-import { Property } from '@kalos-core/kalos-rpc/Property';
+import { Devlog } from '../../../@kalos-core/kalos-rpc/Devlog';
+import { Property } from '../../../@kalos-core/kalos-rpc/Property';
 import format from 'date-fns/format';
 import React, { useReducer, useEffect, useCallback, FC } from 'react';
 import { DevlogClientService, PropertyClientService } from '../../../helpers';

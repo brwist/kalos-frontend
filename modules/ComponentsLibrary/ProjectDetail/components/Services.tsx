@@ -1,7 +1,6 @@
 import React, { FC, useCallback, useEffect, useState } from 'react';
 import { EventClientService, UserType } from '../../../../helpers';
 import { EventType, ServicesRenderedType } from '../';
-import './services.less';
 import { CheckInProjectTask } from '../../CheckInProjectTask';
 import { Loader } from '../../../Loader/main';
 

@@ -10,8 +10,8 @@ import ChevronRightTwoTone from '@material-ui/icons/ChevronRightTwoTone';
 import CloseTwoTone from '@material-ui/icons/CloseTwoTone';
 import ImageSearchTwoTone from '@material-ui/icons/ImageSearchTwoTone';
 import CircularProgress from '@material-ui/core/CircularProgress';
-import { S3Client } from '@kalos-core/kalos-rpc/S3File';
-import { getMimeType } from '@kalos-core/kalos-rpc/Common';
+import { S3Client } from '../../@kalos-core/kalos-rpc/S3File';
+import { getMimeType } from '../../@kalos-core/kalos-rpc/Common';
 import { ENDPOINT } from '../../constants';
 
 interface props {

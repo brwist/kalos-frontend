@@ -1,4 +1,4 @@
-import { TimesheetLine } from '@kalos-core/kalos-rpc/TimesheetLine';
+import { TimesheetLine } from '../../../../@kalos-core/kalos-rpc/TimesheetLine';
 import Typography from '@material-ui/core/Typography';
 import { Variant } from '@material-ui/core/styles/createTypography';
 import { format } from 'date-fns';
@@ -16,9 +16,9 @@ import {
 import { Loader } from '../../../Loader/main';
 import { InfoTable } from '../../InfoTable';
 import { SectionBar } from '../../SectionBar';
-import { Event } from '@kalos-core/kalos-rpc/Event';
-import { Transaction } from '@kalos-core/kalos-rpc/Transaction';
-import { PerDiem } from '@kalos-core/kalos-rpc/PerDiem';
+import { Event } from '../../../../@kalos-core/kalos-rpc/Event';
+import { Transaction } from '../../../../@kalos-core/kalos-rpc/Transaction';
+import { PerDiem } from '../../../../@kalos-core/kalos-rpc/PerDiem';
 
 export interface Props {
   serviceCallId: number;

@@ -17,7 +17,7 @@ import {
   SpiffReportLineType,
   TaskClientService,
 } from '../../../helpers';
-import './styles.less';
+import "./SpiffReport.module.less";
 
 interface Props {
   date: string;
@@ -114,14 +114,14 @@ export const SpiffReport: FC<Props> = ({ date, type, users, onClose }) => {
               { title: 'Amount', align: 'right' },
             ]}
             data={[
-              ...entries[
-                user
-              ].items.map(({ ext, address, jobNumber, amount }) => [
-                `${ext} - ${address}`,
-                jobNumber,
-                '',
-                usd(amount),
-              ]),
+              ...entries[user].items.map(
+                ({ ext, address, jobNumber, amount }) => [
+                  `${ext} - ${address}`,
+                  jobNumber,
+                  '',
+                  usd(amount),
+                ],
+              ),
               [
                 <strong>Spiff Bonus Total:</strong>,
                 '',

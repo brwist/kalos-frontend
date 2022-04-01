@@ -17,7 +17,7 @@ import { Columns, Data, InfoTable } from '../InfoTable';
 import { SectionBar } from '../SectionBar';
 import { PlainForm, Schema } from '../PlainForm';
 import { Modal } from '../Modal';
-import { Transaction } from '@kalos-core/kalos-rpc/Transaction';
+import { Transaction } from '../../../@kalos-core/kalos-rpc/Transaction';
 import { EditTransaction } from '../EditTransaction';
 
 export interface SelectedChoice {
@@ -72,16 +72,16 @@ export const MergeTable: FC<Props> = ({
   const [data, setData] = useState<Data>();
   const [selectAllPromptOpen, setSelectAllPromptOpen] =
     useState<boolean>(false);
-  const [transactionToView, setTransactionToView] =
-    useState<Transaction | undefined>(); // For the viewMergedTransaction part
-  const [fieldToEdit, setFieldToEdit] =
-    useState<
-      | {
-          rowIndex: number;
-          choice: string;
-        }
-      | undefined
-    >(undefined);
+  const [transactionToView, setTransactionToView] = useState<
+    Transaction | undefined
+  >(); // For the viewMergedTransaction part
+  const [fieldToEdit, setFieldToEdit] = useState<
+    | {
+        rowIndex: number;
+        choice: string;
+      }
+    | undefined
+  >(undefined);
 
   let field: Field = {
     fieldData: fieldToEdit != undefined ? fieldToEdit?.choice : '',

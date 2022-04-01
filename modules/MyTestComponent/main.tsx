@@ -1,7 +1,7 @@
 import React from 'react';
 import ThemeProvider from '@material-ui/styles/ThemeProvider';
 import customTheme from '../Theme/main';
-import { User } from '@kalos-core/kalos-rpc/User';
+import { User } from '../../@kalos-core/kalos-rpc/User';
 import { UserClientService } from '../../helpers';
 
 // add any prop types here

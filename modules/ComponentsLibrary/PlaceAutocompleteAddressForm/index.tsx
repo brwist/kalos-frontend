@@ -6,9 +6,9 @@ import { Form, Schema } from '../Form';
 import { AddressPair } from './Address';
 import { Alert } from '../Alert';
 import Typography from '@material-ui/core/Typography';
-import './styles.less';
+
 import { Loader } from '../../Loader/main';
-import { PerDiem } from '@kalos-core/kalos-rpc/compiled-protos/perdiem_pb';
+import { PerDiem } from '../../../@kalos-core/kalos-rpc/compiled-protos/perdiem_pb';
 interface Props {
   onClose: () => void;
   onSave: (addressPair: AddressPair.AddressPair) => void;

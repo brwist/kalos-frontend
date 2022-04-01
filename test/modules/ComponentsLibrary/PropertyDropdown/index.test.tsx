@@ -7,7 +7,7 @@
 export {};
 
 import PropertyDropdown = require('../../../../modules/ComponentsLibrary/PropertyDropdown/index');
-import PropertyProto = require('@kalos-core/kalos-rpc/Property');
+import PropertyProto = require('../../../@kalos-core/kalos-rpc/Property');
 import React = require('react');
 import Enzyme = require('enzyme');
 import Stubs = require('../../../test-setup/stubs'); // ? Sets the auth token up in a one-liner

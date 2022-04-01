@@ -28,7 +28,7 @@ import {
   PAYMENT_STATUS_OPTIONS,
 } from '../../../../modules/CustomerDetails/components/ContractInfo';
 
-import DevlogModule = require('@kalos-core/kalos-rpc/Devlog');
+import DevlogModule = require('../../../@kalos-core/kalos-rpc/Devlog');
 import EditInvoiceDataModule = require('../../../../modules/ComponentsLibrary/EditInvoiceData/index');
 
 let saves = false;

@@ -10,7 +10,7 @@ import { Modal } from '../Modal';
 import { FileTags } from '../FileTags';
 import { Form } from '../Form';
 import { ConfirmDelete } from '../ConfirmDelete';
-import { FileObject } from '@kalos-core/kalos-rpc/S3File';
+import { FileObject } from '../../../@kalos-core/kalos-rpc/S3File';
 import {
   makeFakeRows,
   formatDate,
@@ -31,10 +31,10 @@ import {
   InternalDocumentsFilter,
   InternalDocumentsSort,
   DocumentKey,
-} from '@kalos-core/kalos-rpc/InternalDocument';
-import './styles.less';
+} from '../../../@kalos-core/kalos-rpc/InternalDocument';
+import './InternalDocuments.module.less';
 import { Tooltip } from '@material-ui/core';
-import { File } from '@kalos-core/kalos-rpc/File';
+import { File } from '../../../@kalos-core/kalos-rpc/File';
 const defaultFilter: InternalDocumentsFilter = { tag: -1 };
 
 export const InternalDocuments: FC = () => {

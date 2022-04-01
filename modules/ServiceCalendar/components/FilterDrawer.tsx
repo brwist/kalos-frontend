@@ -7,13 +7,12 @@ import FilterPanel from './FilterPanel';
 import SearchableList from './SearchableList';
 import { JobTypePicker } from '../../ComponentsLibrary/Pickers/JobType';
 import { JobTypePickerMulti } from '../../ComponentsLibrary/Pickers/JobTypeMulti';
-
 import { JobSubtypePicker } from '../../ComponentsLibrary/Pickers/JobSubtype';
 import { useWindowSize } from '../../ComponentsLibrary/hooks';
 import { Field } from '../../ComponentsLibrary/Field';
 import { useCalendarData } from '../hooks';
-import './filterDrawer.less';
 import { DepartmentMulti } from '../../ComponentsLibrary/Pickers/DepartmentMulti';
+import './FilterDrawer.module.less';
 
 type State = {
   customers: string[];

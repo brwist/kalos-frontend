@@ -1,5 +1,4 @@
 import React, { Component, ErrorInfo, ReactNode } from 'react';
-import '../../PageWrapper/styles.less';
 
 interface Props {
   children: ReactNode;

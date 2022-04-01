@@ -1,15 +1,21 @@
 import React, { FC, useState, useCallback, useReducer } from 'react';
 import IconButton from '@material-ui/core/IconButton';
 import DeleteIcon from '@material-ui/icons/Delete';
-import { QuoteUsed, QuoteUsedClient } from '@kalos-core/kalos-rpc/QuoteUsed';
+import {
+  QuoteUsed,
+  QuoteUsedClient,
+} from '../../../../@kalos-core/kalos-rpc/QuoteUsed';
 import EditIcon from '@material-ui/icons/Edit';
-import { QuoteLine } from '@kalos-core/kalos-rpc/QuoteLine';
+import { QuoteLine } from '../../../../@kalos-core/kalos-rpc/QuoteLine';
 
 import {
   ServicesRenderedClient,
   ServicesRendered,
-} from '@kalos-core/kalos-rpc/ServicesRendered';
-import { Payment, PaymentClient } from '@kalos-core/kalos-rpc/Payment';
+} from '../../../../@kalos-core/kalos-rpc/ServicesRendered';
+import {
+  Payment,
+  PaymentClient,
+} from '../../../../@kalos-core/kalos-rpc/Payment';
 import { ZoomIn } from '@material-ui/icons';
 import { reducer, ACTIONS } from './servicesReducer';
 import { SectionBar } from '../../SectionBar';
@@ -18,7 +24,7 @@ import { InfoTable, Data, Columns } from '../../InfoTable';
 import { PlainForm, Schema } from '../../PlainForm';
 import { Form } from '../../Form';
 import { Modal } from '../../Modal';
-import { File } from '@kalos-core/kalos-rpc/File';
+import { File } from '../../../../@kalos-core/kalos-rpc/File';
 //import HomeRepairServiceIcon from '@mui/icons-material/HomeRepairService';
 import { format } from 'date-fns';
 import { QuoteSelector, SelectedQuote } from '../../QuoteSelector';
@@ -40,9 +46,9 @@ import {
   PAYMENT_NOT_COLLECTED_LIST,
   OPTION_BLANK,
 } from '../../../../constants';
-import './services.less';
-import { User } from '@kalos-core/kalos-rpc/User';
+import { User } from '../../../../@kalos-core/kalos-rpc/User';
 import ZoomInSharp from '@material-ui/icons/ZoomInSharp';
+import './Services.module.less';
 const ServicesRenderedClientService = new ServicesRenderedClient(ENDPOINT);
 
 const {
