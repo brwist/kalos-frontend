@@ -703,6 +703,8 @@ async function upload(target = '') {
 async function postInstallCopy() {
   const destination = '../../../@kalos-core/kalos-rpc/';
   return new Promise(resolve => {
+    sh.rm('-rf','@kalos-core/kalos-rpc')
+    sh.mkdir('@kalos-core/kalos-rpc')
     sh.cd('node_modules/@kalos-core/kalos-rpc');
     const res = sh.ls();
     const wd = sh.pwd();
@@ -711,6 +713,8 @@ async function postInstallCopy() {
       console.log('-r', `./${r}/`, destination);
       sh.cp('-r', `./${r}`, destination);
     }
+    sh.cd('../../../')
+    sh.exec('yarn remove @kalos-core/kalos-rpc')
     resolve(true);
   });
 }

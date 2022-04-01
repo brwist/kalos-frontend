@@ -17,7 +17,7 @@ import {
 import { format, differenceInHours, parseISO, addDays } from 'date-fns';
 import { ExportJSON } from '../ExportJSON';
 import { ROWS_PER_PAGE } from '../../../constants';
-import { TimesheetLine } from '@kalos-core/kalos-rpc/TimesheetLine';
+import { TimesheetLine } from '../../../@kalos-core/kalos-rpc/TimesheetLine';
 import { differenceInMinutes } from 'date-fns/esm';
 
 interface Props {

@@ -33,6 +33,12 @@ export class TransactionAccount extends jspb.Message {
   getPageNumber(): number;
   setPageNumber(value: number): void;
 
+  getOrderBy(): string;
+  setOrderBy(value: string): void;
+
+  getOrderDir(): string;
+  setOrderDir(value: string): void;
+
   serializeBinary(): Uint8Array;
   toObject(includeInstance?: boolean): TransactionAccount.AsObject;
   static toObject(includeInstance: boolean, msg: TransactionAccount): TransactionAccount.AsObject;
@@ -54,6 +60,8 @@ export namespace TransactionAccount {
     popularity: number,
     fieldMaskList: Array<string>,
     pageNumber: number,
+    orderBy: string,
+    orderDir: string,
   }
 }
 
