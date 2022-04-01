@@ -21,8 +21,8 @@ import { format } from 'date-fns';
 import { ExportJSON } from '../ExportJSON';
 import { Transaction } from '../../../@kalos-core/kalos-rpc/Transaction';
 import { ROWS_PER_PAGE } from '../../../constants';
-import { TransactionReportLine } from '@kalos-core/kalos-rpc/Report';
-import { RecordPageReq } from '@kalos-core/kalos-rpc/compiled-protos/transaction_pb';
+import { TransactionReportLine } from '../../../@kalos-core/kalos-rpc/Report';
+import { RecordPageReq } from '../../../@kalos-core/kalos-rpc/compiled-protos/transaction_pb';
 
 interface Props {
   loggedUserId: number;

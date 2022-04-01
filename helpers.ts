@@ -31,6 +31,7 @@ import {
   SpiffReportLine,
 } from './@kalos-core/kalos-rpc/Report';
 import { EmployeeFunctionClient } from './@kalos-core/kalos-rpc/EmployeeFunction';
+
 import { JobSubtypeClient } from './@kalos-core/kalos-rpc/JobSubtype';
 import { JobTypeSubtypeClient } from './@kalos-core/kalos-rpc/JobTypeSubtype';
 import { ServicesRenderedClient } from './@kalos-core/kalos-rpc/ServicesRendered';
@@ -51,6 +52,9 @@ import {
   TransactionDocument,
   TransactionDocumentClient,
 } from './@kalos-core/kalos-rpc/TransactionDocument';
+import { PendingInvoiceTransactionClient } from './@kalos-core/kalos-rpc/PendingInvoiceTransaction';
+import { VendorClient } from './@kalos-core/kalos-rpc/Vendor';
+
 import { InternalDocumentClient } from './@kalos-core/kalos-rpc/InternalDocument';
 import { PDFClient } from './@kalos-core/kalos-rpc/PDF';
 import { DocumentClient } from './@kalos-core/kalos-rpc/Document';
