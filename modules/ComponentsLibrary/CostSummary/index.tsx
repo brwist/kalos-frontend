@@ -70,6 +70,7 @@ export const CostSummary: FC<Props> = ({
   }>({});
   const [trips, setTrips] = useState<Trip[]>();
   const [loaded, setLoaded] = useState<boolean>(false);
+  const [loading, setLoading] = useState<boolean>(true);
   const today = new Date();
   const startDay = startOfWeek(subDays(today, 7), { weekStartsOn: 6 });
   const endDay = addDays(startDay, 7);
@@ -578,129 +579,143 @@ export const CostSummary: FC<Props> = ({
       }
     }
   };
-  useEffect(() => {
-    const load = async () => {
-      let promises = [];
+  const load = useCallback(async () => {
+    let promises = [];
+    promises.push(
+      new Promise<void>(async (resolve, reject) => {
+        try {
+          setLoaded(true);
 
-      promises.push(
-        new Promise<void>(async (resolve, reject) => {
-          try {
-            const processedHours = await getProcessedHoursTotals();
-            setTotalHoursProcessed(processedHours);
-            resolve();
-          } catch (err) {
-            console.log('error setting total hours', err);
-            reject(err);
-          }
-        }),
-      );
-      promises.push(
-        new Promise<void>(async (resolve, reject) => {
-          try {
-            const spiffToolTotals = await getSpiffToolTotals('Spiff');
-            setTotalSpiffsWeekly(spiffToolTotals);
-            resolve();
-          } catch (err) {
-            console.log('error fetching total spiffs', err);
-            reject(err);
-          }
-        }),
-      );
-      promises.push(
-        new Promise<void>(async (resolve, reject) => {
-          try {
-            resolve();
-            const spiffToolTotalsProcessed = await getSpiffToolTotalsProcessed(
-              'Spiff',
-            );
-            console.log(spiffToolTotalsProcessed);
-            dispatch({
-              type: 'updateTotalSpiffsProcessed',
-              value: spiffToolTotalsProcessed,
-            });
-          } catch (err) {
-            console.log('error fetching total spiffs processed', err);
-            reject(err);
-          }
-        }),
-      );
-      promises.push(
-        new Promise<void>(async (resolve, reject) => {
-          try {
-            resolve();
-            const perDiemTotals = await getPerDiemTotals();
-            //setTotalPerDiem(perDiemTotals);
-            dispatch({ type: 'updatePerDiemTotal', data: perDiemTotals });
-          } catch (err) {
-            reject(err);
-          }
-        }),
-      );
-      promises.push(
-        new Promise<void>(async (resolve, reject) => {
-          try {
-            resolve();
-            const perDiemTotals = await getPerDiemTotalsProcessed();
-            dispatch({
-              type: 'updateTotalPerDiemProcessed',
-              data: perDiemTotals,
-            });
-            //setTotalPerDiemProcessed(perDiemTotals);
-          } catch (err) {
-            reject(err);
-          }
-        }),
-      );
-      promises.push(
-        new Promise<void>(async (resolve, reject) => {
-          try {
-            const tripsData = await getTrips();
-            //setTripsTotal(tripsData);
-            dispatch({ type: 'updateTripsTotal', data: tripsData });
-            resolve();
-          } catch (err) {
-            console.log('error getting trips', err);
-            reject(err);
-          }
-        }),
-      );
-      promises.push(
-        new Promise<void>(async (resolve, reject) => {
-          try {
-            const tripsDataProcessed = await getTripsProcessed();
-            dispatch({
-              type: 'updateTotalTripsProcessed',
-              data: tripsDataProcessed,
-            });
-            resolve();
-          } catch (err) {
-            console.log('error getting trips', err);
-            reject(err);
-          }
-        }),
-      );
-      try {
-        await Promise.all(promises);
-        console.log('all promises executed without error, setting loaded');
-        setLoaded(true);
-      } catch (err) {
-        console.log('a promise failed');
-        setLoaded(true);
-      }
-    };
-    if (!loaded) load();
+          const processedHours = await getProcessedHoursTotals();
+          setTotalHoursProcessed(processedHours);
+          resolve();
+        } catch (err) {
+          console.log('error setting total hours', err);
+          reject(err);
+        }
+      }),
+    );
+    promises.push(
+      new Promise<void>(async (resolve, reject) => {
+        try {
+          setLoaded(true);
+
+          const spiffToolTotals = await getSpiffToolTotals('Spiff');
+          setTotalSpiffsWeekly(spiffToolTotals);
+          resolve();
+        } catch (err) {
+          console.log('error fetching total spiffs', err);
+          reject(err);
+        }
+      }),
+    );
+    promises.push(
+      new Promise<void>(async (resolve, reject) => {
+        try {
+          setLoaded(true);
+
+          resolve();
+          const spiffToolTotalsProcessed = await getSpiffToolTotalsProcessed(
+            'Spiff',
+          );
+          console.log(spiffToolTotalsProcessed);
+          dispatch({
+            type: 'updateTotalSpiffsProcessed',
+            value: spiffToolTotalsProcessed,
+          });
+        } catch (err) {
+          console.log('error fetching total spiffs processed', err);
+          reject(err);
+        }
+      }),
+    );
+    promises.push(
+      new Promise<void>(async (resolve, reject) => {
+        try {
+          setLoaded(true);
+
+          resolve();
+          const perDiemTotals = await getPerDiemTotals();
+          dispatch({ type: 'updatePerDiemTotal', data: perDiemTotals });
+        } catch (err) {
+          reject(err);
+        }
+      }),
+    );
+    promises.push(
+      new Promise<void>(async (resolve, reject) => {
+        try {
+          setLoaded(true);
+
+          resolve();
+          const perDiemTotals = await getPerDiemTotalsProcessed();
+          dispatch({
+            type: 'updateTotalPerDiemProcessed',
+            data: perDiemTotals,
+          });
+        } catch (err) {
+          reject(err);
+        }
+      }),
+    );
+    promises.push(
+      new Promise<void>(async (resolve, reject) => {
+        try {
+          setLoaded(true);
+
+          const tripsData = await getTrips();
+          //setTripsTotal(tripsData);
+          dispatch({ type: 'updateTripsTotal', data: tripsData });
+          resolve();
+        } catch (err) {
+          console.log('error getting trips', err);
+          reject(err);
+        }
+      }),
+    );
+    promises.push(
+      new Promise<void>(async (resolve, reject) => {
+        try {
+          setLoaded(true);
+          const tripsDataProcessed = await getTripsProcessed();
+          dispatch({
+            type: 'updateTotalTripsProcessed',
+            data: tripsDataProcessed,
+          });
+          resolve();
+        } catch (err) {
+          console.log('error getting trips', err);
+          reject(err);
+        }
+      }),
+    );
+    try {
+      await Promise.all(promises);
+      setLoading(false);
+      console.log('all promises executed without error, setting loaded');
+      return;
+    } catch (err) {
+      setLoading(false);
+      console.log('a promise failed');
+      return;
+    }
   }, [
-    getProcessedHoursTotals,
-    // getTimeoffTotals,
-    loaded,
     getPerDiemTotals,
-    getSpiffToolTotals,
-    getTrips,
-    getSpiffToolTotalsProcessed,
-    getTripsProcessed,
     getPerDiemTotalsProcessed,
+    getTrips,
+    getTripsProcessed,
+    getProcessedHoursTotals,
+    getSpiffToolTotals,
+    getSpiffToolTotalsProcessed,
   ]);
-  return loaded ? (
+
+  useEffect(() => {
+    if (!loaded) {
+      setLoaded(true);
+      load();
+    }
+  }, [loaded, load]);
+  return !loading ? (
     <div>
       <strong>{username}</strong>
       {onClose ? <Button label="Close" onClick={() => onClose()}></Button> : []}
