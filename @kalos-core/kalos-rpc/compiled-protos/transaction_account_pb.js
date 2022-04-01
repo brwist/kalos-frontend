@@ -64,7 +64,7 @@ if (goog.DEBUG && !COMPILED) {
  * @private {!Array<number>}
  * @const
  */
-proto.TransactionAccount.repeatedFields_ = [7];
+proto.TransactionAccount.repeatedFields_ = [8];
 
 
 
@@ -103,9 +103,11 @@ proto.TransactionAccount.toObject = function(includeInstance, msg) {
     description: jspb.Message.getFieldWithDefault(msg, 4, ""),
     needsPo: jspb.Message.getFieldWithDefault(msg, 5, 0),
     isActive: jspb.Message.getFieldWithDefault(msg, 6, 0),
-    popularity: jspb.Message.getFieldWithDefault(msg, 9, 0),
-    fieldMaskList: (f = jspb.Message.getRepeatedField(msg, 7)) == null ? undefined : f,
-    pageNumber: jspb.Message.getFieldWithDefault(msg, 8, 0)
+    popularity: jspb.Message.getFieldWithDefault(msg, 7, 0),
+    fieldMaskList: (f = jspb.Message.getRepeatedField(msg, 8)) == null ? undefined : f,
+    pageNumber: jspb.Message.getFieldWithDefault(msg, 9, 0),
+    orderBy: jspb.Message.getFieldWithDefault(msg, 10, ""),
+    orderDir: jspb.Message.getFieldWithDefault(msg, 11, "")
   };
 
   if (includeInstance) {
@@ -166,17 +168,25 @@ proto.TransactionAccount.deserializeBinaryFromReader = function(msg, reader) {
       var value = /** @type {number} */ (reader.readInt32());
       msg.setIsActive(value);
       break;
-    case 9:
+    case 7:
       var value = /** @type {number} */ (reader.readInt32());
       msg.setPopularity(value);
       break;
-    case 7:
+    case 8:
       var value = /** @type {string} */ (reader.readString());
       msg.addFieldMask(value);
       break;
-    case 8:
+    case 9:
       var value = /** @type {number} */ (reader.readInt32());
       msg.setPageNumber(value);
+      break;
+    case 10:
+      var value = /** @type {string} */ (reader.readString());
+      msg.setOrderBy(value);
+      break;
+    case 11:
+      var value = /** @type {string} */ (reader.readString());
+      msg.setOrderDir(value);
       break;
     default:
       reader.skipField();
@@ -252,21 +262,35 @@ proto.TransactionAccount.serializeBinaryToWriter = function(message, writer) {
   f = message.getPopularity();
   if (f !== 0) {
     writer.writeInt32(
-      9,
+      7,
       f
     );
   }
   f = message.getFieldMaskList();
   if (f.length > 0) {
     writer.writeRepeatedString(
-      7,
+      8,
       f
     );
   }
   f = message.getPageNumber();
   if (f !== 0) {
     writer.writeInt32(
-      8,
+      9,
+      f
+    );
+  }
+  f = message.getOrderBy();
+  if (f.length > 0) {
+    writer.writeString(
+      10,
+      f
+    );
+  }
+  f = message.getOrderDir();
+  if (f.length > 0) {
+    writer.writeString(
+      11,
       f
     );
   }
@@ -382,11 +406,11 @@ proto.TransactionAccount.prototype.setIsActive = function(value) {
 
 
 /**
- * optional int32 popularity = 9;
+ * optional int32 popularity = 7;
  * @return {number}
  */
 proto.TransactionAccount.prototype.getPopularity = function() {
-  return /** @type {number} */ (jspb.Message.getFieldWithDefault(this, 9, 0));
+  return /** @type {number} */ (jspb.Message.getFieldWithDefault(this, 7, 0));
 };
 
 
@@ -395,16 +419,16 @@ proto.TransactionAccount.prototype.getPopularity = function() {
  * @return {!proto.TransactionAccount} returns this
  */
 proto.TransactionAccount.prototype.setPopularity = function(value) {
-  return jspb.Message.setProto3IntField(this, 9, value);
+  return jspb.Message.setProto3IntField(this, 7, value);
 };
 
 
 /**
- * repeated string field_mask = 7;
+ * repeated string field_mask = 8;
  * @return {!Array<string>}
  */
 proto.TransactionAccount.prototype.getFieldMaskList = function() {
-  return /** @type {!Array<string>} */ (jspb.Message.getRepeatedField(this, 7));
+  return /** @type {!Array<string>} */ (jspb.Message.getRepeatedField(this, 8));
 };
 
 
@@ -413,7 +437,7 @@ proto.TransactionAccount.prototype.getFieldMaskList = function() {
  * @return {!proto.TransactionAccount} returns this
  */
 proto.TransactionAccount.prototype.setFieldMaskList = function(value) {
-  return jspb.Message.setField(this, 7, value || []);
+  return jspb.Message.setField(this, 8, value || []);
 };
 
 
@@ -423,7 +447,7 @@ proto.TransactionAccount.prototype.setFieldMaskList = function(value) {
  * @return {!proto.TransactionAccount} returns this
  */
 proto.TransactionAccount.prototype.addFieldMask = function(value, opt_index) {
-  return jspb.Message.addToRepeatedField(this, 7, value, opt_index);
+  return jspb.Message.addToRepeatedField(this, 8, value, opt_index);
 };
 
 
@@ -437,11 +461,11 @@ proto.TransactionAccount.prototype.clearFieldMaskList = function() {
 
 
 /**
- * optional int32 page_number = 8;
+ * optional int32 page_number = 9;
  * @return {number}
  */
 proto.TransactionAccount.prototype.getPageNumber = function() {
-  return /** @type {number} */ (jspb.Message.getFieldWithDefault(this, 8, 0));
+  return /** @type {number} */ (jspb.Message.getFieldWithDefault(this, 9, 0));
 };
 
 
@@ -450,7 +474,43 @@ proto.TransactionAccount.prototype.getPageNumber = function() {
  * @return {!proto.TransactionAccount} returns this
  */
 proto.TransactionAccount.prototype.setPageNumber = function(value) {
-  return jspb.Message.setProto3IntField(this, 8, value);
+  return jspb.Message.setProto3IntField(this, 9, value);
+};
+
+
+/**
+ * optional string order_by = 10;
+ * @return {string}
+ */
+proto.TransactionAccount.prototype.getOrderBy = function() {
+  return /** @type {string} */ (jspb.Message.getFieldWithDefault(this, 10, ""));
+};
+
+
+/**
+ * @param {string} value
+ * @return {!proto.TransactionAccount} returns this
+ */
+proto.TransactionAccount.prototype.setOrderBy = function(value) {
+  return jspb.Message.setProto3StringField(this, 10, value);
+};
+
+
+/**
+ * optional string order_dir = 11;
+ * @return {string}
+ */
+proto.TransactionAccount.prototype.getOrderDir = function() {
+  return /** @type {string} */ (jspb.Message.getFieldWithDefault(this, 11, ""));
+};
+
+
+/**
+ * @param {string} value
+ * @return {!proto.TransactionAccount} returns this
+ */
+proto.TransactionAccount.prototype.setOrderDir = function(value) {
+  return jspb.Message.setProto3StringField(this, 11, value);
 };
 
 

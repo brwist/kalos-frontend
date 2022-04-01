@@ -1,5 +1,5 @@
 import React, { FC, useState, useEffect, useCallback, useMemo } from 'react';
-import { TaskClient, Task } from '@kalos-core/kalos-rpc/Task';
+import { TaskClient, Task } from '../../../@kalos-core/kalos-rpc/Task';
 import SearchIcon from '@material-ui/icons/Search';
 import IconButton from '@material-ui/core/IconButton';
 import DeleteIcon from '@material-ui/icons/Delete';
@@ -10,6 +10,7 @@ import AccountBalanceWalletIcon from '@material-ui/icons/AccountBalanceWallet';
 import CheckIcon from '@material-ui/icons/CheckCircleOutline';
 import RateReviewIcon from '@material-ui/icons/RateReview';
 import { SectionBar } from '../../ComponentsLibrary/SectionBar';
+import Alert from '@material-ui/lab/Alert';
 import { Tooltip } from '../../ComponentsLibrary/Tooltip';
 import { Modal } from '../../ComponentsLibrary/Modal';
 import { Form, Schema } from '../../ComponentsLibrary/Form';
@@ -25,9 +26,9 @@ import {
   getStatusFormInit,
 } from '../../ComponentsLibrary/SpiffToolLogEdit';
 import { ServiceCall } from '../../ComponentsLibrary/ServiceCall';
-import { SpiffToolAdminAction } from '@kalos-core/kalos-rpc/SpiffToolAdminAction';
-import { User } from '@kalos-core/kalos-rpc/User';
-import { SpiffType, TaskEventData } from '@kalos-core/kalos-rpc/Task';
+import { SpiffToolAdminAction } from '../../../@kalos-core/kalos-rpc/SpiffToolAdminAction';
+import { User } from '../../../@kalos-core/kalos-rpc/User';
+import { SpiffType, TaskEventData } from '../../../@kalos-core/kalos-rpc/Task';
 
 import {
   timestamp,
@@ -47,7 +48,7 @@ import { ENDPOINT, ROWS_PER_PAGE, OPTION_ALL } from '../../../constants';
 import './spiffTool.less';
 import { Payroll, RoleType } from '../../ComponentsLibrary/Payroll';
 
-import { PermissionGroup } from '@kalos-core/kalos-rpc/compiled-protos/user_pb';
+import { PermissionGroup } from '../../../@kalos-core/kalos-rpc/compiled-protos/user_pb';
 
 const TaskClientService = new TaskClient(ENDPOINT);
 
@@ -126,6 +127,8 @@ export const SpiffTool: FC<Props> = ({
   const [loaded, setLoaded] = useState<boolean>(false);
   const [saving, setSaving] = useState<boolean>(false);
   const [loading, setLoading] = useState<boolean>(true);
+  const [showAlert, setShowAlert] = useState<boolean>(false);
+
   const [editing, setEditing] = useState<Task>();
   const [extendedEditing, setExtendedEditing] = useState<Task>();
   const [deleting, setDeleting] = useState<Task>();
@@ -637,14 +640,19 @@ export const SpiffTool: FC<Props> = ({
     () => setUnlinkedSpiffJobNumber(''),
     [setUnlinkedSpiffJobNumber],
   );
-  const isAdmin = userRole != undefined;
+  const isAdmin = userRole == 'Manager' || userRole == 'Payroll';
   useEffect(() => {
+    if (loggedUserId != ownerId && !isAdmin) {
+      setLoaded(true);
+      setShowAlert(true);
+      return;
+    }
     if (!loaded) {
       setLoaded(true);
       loadLoggedInUser();
       load();
     }
-    if ((isAdmin || userRole === 'Manager') && !loadedTechnicians) {
+    if (isAdmin && !loadedTechnicians) {
       setLoadedTechnicians(true);
       loadUserTechnicians();
     }
@@ -652,6 +660,8 @@ export const SpiffTool: FC<Props> = ({
     loaded,
     setLoaded,
     isAdmin,
+    loggedUserId,
+    ownerId,
     loadedTechnicians,
     setLoadedTechnicians,
     loadUserTechnicians,
@@ -1110,7 +1120,7 @@ export const SpiffTool: FC<Props> = ({
       },
     ],
   ];
-  return (
+  return !showAlert ? (
     <div>
       {payrollOpen && (
         <Modal
@@ -1141,6 +1151,7 @@ export const SpiffTool: FC<Props> = ({
           onPageChange: handleChangePage,
         }}
       />
+
       <PlainForm<SearchType>
         key={searchFormKey}
         data={searchForm}
@@ -1254,5 +1265,9 @@ export const SpiffTool: FC<Props> = ({
         </Modal>
       )}
     </div>
+  ) : (
+    <Alert severity="error">
+      You don&apos;t have permission to view this Log
+    </Alert>
   );
 };
