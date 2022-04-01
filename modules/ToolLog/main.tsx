@@ -4,6 +4,7 @@ import { PageWrapper, PageWrapperProps } from '../PageWrapper/main';
 
 interface Props extends PageWrapperProps {
   loggedUserId: number;
+  userId: number;
 }
 
 export const ToolLog: FC<Props> = props => (
@@ -11,10 +12,7 @@ export const ToolLog: FC<Props> = props => (
     <SpiffTool
       type="Tool"
       loggedUserId={props.loggedUserId}
-      ownerId={props.loggedUserId}
-      needsManagerAction={false}
-      needsPayrollAction={false}
-      needsAuditAction={false}
+      ownerId={props.userId}
     />
   </PageWrapper>
 );
