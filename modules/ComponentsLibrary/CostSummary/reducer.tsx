@@ -1,4 +1,4 @@
-import { TaskClient, Task } from '@kalos-core/kalos-rpc/Task';
+import { TaskClient, Task } from '../../../@kalos-core/kalos-rpc/Task';
 import { StarRateTwoTone } from '@material-ui/icons';
 
 export type PerDiemSum = {

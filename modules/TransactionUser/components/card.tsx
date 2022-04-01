@@ -3,18 +3,17 @@ import * as React from 'react';
 import debounce from 'lodash/debounce';
 import Paper from '@material-ui/core/Paper';
 import Alert from '@material-ui/lab/Alert';
-import { Transaction } from '@kalos-core/kalos-rpc/Transaction';
-import { TransactionDocument } from '@kalos-core/kalos-rpc/TransactionDocument';
-import { TransactionActivity } from '@kalos-core/kalos-rpc/TransactionActivity';
+import { Transaction } from '../../../@kalos-core/kalos-rpc/Transaction';
+import { TransactionDocument } from '../../../@kalos-core/kalos-rpc/TransactionDocument';
+import { TransactionActivity } from '../../../@kalos-core/kalos-rpc/TransactionActivity';
 import { AccountPicker } from '../../ComponentsLibrary/Pickers';
 import {
   TransactionAccount,
   TransactionAccountClient,
   TransactionAccountList,
-} from '@kalos-core/kalos-rpc/TransactionAccount';
+} from '../../../@kalos-core/kalos-rpc/TransactionAccount';
 import { GalleryData, AltGallery } from '../../AltGallery/main';
-import { Event } from '@kalos-core/kalos-rpc/Event';
-import CloseIcon from '@material-ui/icons/CloseSharp';
+import { Event } from '../../../@kalos-core/kalos-rpc/Event';
 import { PDFMaker } from '../../ComponentsLibrary/PDFMaker';
 import ReIcon from '@material-ui/icons/RefreshSharp';
 import {
@@ -28,21 +27,20 @@ import {
   TaskClientService,
   TransactionClientService,
 } from '../../../helpers';
-import { File } from '@kalos-core/kalos-rpc/File';
+import { File } from '../../../@kalos-core/kalos-rpc/File';
 import { ENDPOINT } from '../../../constants';
-import { EmailConfig } from '@kalos-core/kalos-rpc/Email';
+import { EmailConfig } from '../../../@kalos-core/kalos-rpc/Email';
 import { Field } from '../../ComponentsLibrary/Field';
 import { SectionBar } from '../../ComponentsLibrary/SectionBar';
 import { Button } from '../../ComponentsLibrary/Button';
 import { NoteField } from './NoteField';
 import { FileGallery } from '../../ComponentsLibrary/FileGallery';
 import { Modal } from '../../ComponentsLibrary/Modal';
-import './card.css';
 import { parseISO } from 'date-fns';
 import { EditTransaction } from '../../ComponentsLibrary/EditTransaction';
 import format from 'date-fns/format';
 import { delay } from 'lodash';
-
+import './Card.module.css';
 interface props {
   txn: Transaction;
   userDepartmentID: number;

@@ -2,11 +2,10 @@ import React, { FC, useCallback, useState } from 'react';
 import debounce from 'lodash/debounce';
 import { ServiceItems, Repair } from '../../ServiceItems';
 import { ProposalPrint } from './ProposalPrint';
-import './equipment.less';
-import { Property } from '@kalos-core/kalos-rpc/Property';
-import { User } from '@kalos-core/kalos-rpc/User';
-import { Event } from '@kalos-core/kalos-rpc/Event';
-import { ServiceItem } from '@kalos-core/kalos-rpc/ServiceItem';
+import { Property } from '../../../../@kalos-core/kalos-rpc/Property';
+import { User } from '../../../../@kalos-core/kalos-rpc/User';
+import { Event } from '../../../../@kalos-core/kalos-rpc/Event';
+import { ServiceItem } from '../../../../@kalos-core/kalos-rpc/ServiceItem';
 interface Props {
   userID: number;
   loggedUserId: number;

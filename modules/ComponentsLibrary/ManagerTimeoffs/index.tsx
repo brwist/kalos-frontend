@@ -16,11 +16,12 @@ import {
 import {
   TimeoffRequestClient,
   TimeoffRequest,
-} from '@kalos-core/kalos-rpc/TimeoffRequest';
+} from '../../../@kalos-core/kalos-rpc/TimeoffRequest';
 import { ROWS_PER_PAGE, ENDPOINT } from '../../../constants';
-import './styles.less';
-import { NULL_TIME } from '@kalos-core/kalos-rpc/constants';
+
+import { NULL_TIME } from '../../../@kalos-core/kalos-rpc/constants';
 import { LocalConvenienceStoreOutlined } from '@material-ui/icons';
+import './ManagerTimeoffs.module.less';
 
 interface Props {
   loggedUserId: number;
@@ -77,7 +78,8 @@ export const ManagerTimeoffs: FC<Props> = ({ loggedUserId }) => {
         ).getId();
         tempDepartmentList.push(department);
         setDepartment(tempDepartmentList);
-        const types = await TimeoffRequestClientService.getTimeoffRequestTypes();
+        const types =
+          await TimeoffRequestClientService.getTimeoffRequestTypes();
         setTypes(
           types.reduce(
             (aggr, item) => ({

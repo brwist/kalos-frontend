@@ -1,6 +1,6 @@
 import React, { FC, useEffect, useCallback, useState } from 'react';
-import { User } from '@kalos-core/kalos-rpc/User';
-import { UserGroupLink } from '@kalos-core/kalos-rpc/UserGroupLink';
+import { User } from '../../../@kalos-core/kalos-rpc/User';
+import { UserGroupLink } from '../../../@kalos-core/kalos-rpc/UserGroupLink';
 import { SectionBar } from '../SectionBar';
 import { Form, Schema } from '../Form';
 import { Field, Value } from '../Field';
@@ -13,8 +13,8 @@ import {
   makeSafeFormObject,
 } from '../../../helpers';
 import { USA_STATES_OPTIONS, BILLING_TERMS_OPTIONS } from '../../../constants';
-import './styles.less';
-import { Group } from '@kalos-core/kalos-rpc/Group';
+import { Group } from '../../../@kalos-core/kalos-rpc/Group';
+import './CustomerEdit.module.less';
 
 interface Props {
   onSave?: (data: User) => void;
@@ -55,9 +55,8 @@ export const CustomerEdit: FC<Props> = ({
         setCustomer(customer);
       }
       if (!_groupLinks) {
-        const groupLinks = await UserGroupLinkClientService.loadUserGroupLinksByUserId(
-          userId,
-        );
+        const groupLinks =
+          await UserGroupLinkClientService.loadUserGroupLinksByUserId(userId);
         setGroupLinks(groupLinks);
         setGroupLinksInitial(groupLinks);
       }

@@ -10,15 +10,15 @@ import Enzyme = require('enzyme');
 import Chai = require('chai');
 
 import Stubs = require('../../../test-setup/stubs'); // ? Sets the auth token up in a one-liner
-import TransactionModule = require('@kalos-core/kalos-rpc/Transaction');
+import TransactionModule = require('../../../@kalos-core/kalos-rpc/Transaction');
 import LoaderModule = require('../../../../modules/Loader/main');
 import EditTransactionModule = require('../../../../modules/ComponentsLibrary/EditTransaction');
-import UserModule = require('@kalos-core/kalos-rpc/User');
-import TransactionActivityModule = require('@kalos-core/kalos-rpc/TransactionActivity');
-import TimesheetDepartmentModule = require('@kalos-core/kalos-rpc/TimesheetDepartment');
-import TransactionAccountModule = require('@kalos-core/kalos-rpc/TransactionAccount');
-import DevlogModule = require('@kalos-core/kalos-rpc/Devlog');
-import UserPB = require('@kalos-core/kalos-rpc/compiled-protos/user_pb');
+import UserModule = require('../../../@kalos-core/kalos-rpc/User');
+import TransactionActivityModule = require('../../../@kalos-core/kalos-rpc/TransactionActivity');
+import TimesheetDepartmentModule = require('../../../@kalos-core/kalos-rpc/TimesheetDepartment');
+import TransactionAccountModule = require('../../../@kalos-core/kalos-rpc/TransactionAccount');
+import DevlogModule = require('../../../@kalos-core/kalos-rpc/Devlog');
+import UserPB = require('../../../@kalos-core/kalos-rpc/compiled-protos/user_pb');
 
 import TestConstants = require('../../../test-constants/test-response-data');
 import Constants = require('../../../test-constants/constants');

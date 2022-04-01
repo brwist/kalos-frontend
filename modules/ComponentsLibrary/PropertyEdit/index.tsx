@@ -1,5 +1,5 @@
 import React, { FC, useState, useCallback, useEffect } from 'react';
-import { Property } from '@kalos-core/kalos-rpc/Property';
+import { Property } from '../../../@kalos-core/kalos-rpc/Property';
 import { Form, Schema } from '../Form';
 import {
   PropertyClientService,
@@ -12,7 +12,7 @@ import {
   PROP_LEVEL,
   USA_STATES_OPTIONS,
 } from '../../../constants';
-import { ActivityLog } from '@kalos-core/kalos-rpc/ActivityLog';
+import { ActivityLog } from '../../../@kalos-core/kalos-rpc/ActivityLog';
 import format from 'date-fns/esm/format';
 
 interface Props {
@@ -79,12 +79,16 @@ export const PropertyEdit: FC<Props> = ({
           temp,
           userId,
           propertyId,
-          );
+        );
         const actLog = new ActivityLog();
         actLog.setUserId(userId);
         actLog.setPropertyId(entry.getId());
         actLog.setActivityDate(format(new Date(), 'yyyy-MM-dd HH:mm:ss'));
-        actLog.setActivityName(`${propertyId != 0 ? 'Edited' : 'Added'} Property : ${entry.getAddress()}`);
+        actLog.setActivityName(
+          `${
+            propertyId != 0 ? 'Edited' : 'Added'
+          } Property : ${entry.getAddress()}`,
+        );
         if (entry.getGeolocationLat() && entry.getGeolocationLng()) {
           actLog.setGeolocationLat(entry.getGeolocationLat());
           actLog.setGeolocationLng(entry.getGeolocationLng());
@@ -96,7 +100,7 @@ export const PropertyEdit: FC<Props> = ({
           onSave(entry);
         }
       } catch (err) {
-        console.error(err); 
+        console.error(err);
       }
       setSaving(false);
     },

@@ -2,7 +2,7 @@ import React, { FC, useState, useCallback, useEffect } from 'react';
 import IconButton from '@material-ui/core/IconButton';
 import EditIcon from '@material-ui/icons/Edit';
 import DeleteIcon from '@material-ui/icons/Delete';
-import { StoredQuote } from '@kalos-core/kalos-rpc/StoredQuote';
+import { StoredQuote } from '../../../../@kalos-core/kalos-rpc/StoredQuote';
 import { SectionBar } from '../../SectionBar';
 import { PlainForm, Schema } from '../../PlainForm';
 import { InfoTable, Columns, Data } from '../../InfoTable';
@@ -11,11 +11,10 @@ import { Modal } from '../../Modal';
 import { StoredQuotes } from '../../StoredQuotes';
 import { EventType } from '../';
 import { ProposalPrint } from './ProposalPrint';
-import './proposal.less';
-import { QuoteLine } from '@kalos-core/kalos-rpc/QuoteLine';
-import { ServicesRendered } from '@kalos-core/kalos-rpc/ServicesRendered';
-import { User } from '@kalos-core/kalos-rpc/User';
-import { Property } from '@kalos-core/kalos-rpc/Property';
+import { QuoteLine } from '../../../../@kalos-core/kalos-rpc/QuoteLine';
+import { ServicesRendered } from '../../../../@kalos-core/kalos-rpc/ServicesRendered';
+import { User } from '../../../../@kalos-core/kalos-rpc/User';
+import { Property } from '../../../../@kalos-core/kalos-rpc/Property';
 import {
   makeSafeFormObject,
   formatDateDay,
@@ -23,12 +22,13 @@ import {
   FileClientService,
   DocumentClientService,
 } from '../../../../helpers';
-import { ENDPOINT } from '@kalos-core/kalos-rpc/constants';
-import { EmailClient } from '@kalos-core/kalos-rpc/Email';
-import { SQSEmail } from '@kalos-core/kalos-rpc/compiled-protos/email_pb';
+import { ENDPOINT } from '../../../../@kalos-core/kalos-rpc/constants';
+import { EmailClient } from '../../../../@kalos-core/kalos-rpc/Email';
+import { SQSEmail } from '../../../../@kalos-core/kalos-rpc/compiled-protos/email_pb';
 import { formatMs } from '@material-ui/core';
-import { File as FileType } from '@kalos-core/kalos-rpc/File';
-import { Document } from '@kalos-core/kalos-rpc/Document';
+import { File as FileType } from '../../../../@kalos-core/kalos-rpc/File';
+import { Document } from '../../../../@kalos-core/kalos-rpc/Document';
+import "./Proposal.module.less";
 
 interface Props {
   serviceItem: EventType;

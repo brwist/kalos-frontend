@@ -1,8 +1,8 @@
 import React, { FC, useState, useCallback } from 'react';
 import Alert from '@material-ui/lab/Alert';
 import { Form, Schema } from '../Form';
-import { Transaction } from '@kalos-core/kalos-rpc/Transaction';
-import { TransactionAccountList } from '@kalos-core/kalos-rpc/TransactionAccount';
+import { Transaction } from '../../../@kalos-core/kalos-rpc/Transaction';
+import { TransactionAccountList } from '../../../@kalos-core/kalos-rpc/TransactionAccount';
 import {
   getFileExt,
   SUBJECT_TAGS_TRANSACTIONS,
@@ -11,12 +11,12 @@ import {
   TransactionClientService,
   uploadPhotoToExistingTransaction,
 } from '../../../helpers';
-import './styles.less';
+
 import { RoleType } from '../Payroll';
-import { SUBJECT_TAGS_ACCOUNTS_PAYABLE } from '@kalos-core/kalos-rpc/S3File';
+import { SUBJECT_TAGS_ACCOUNTS_PAYABLE } from '../../../@kalos-core/kalos-rpc/S3File';
 import { Confirm } from '../Confirm';
 import { format } from 'date-fns';
-import { TransactionActivity } from '@kalos-core/kalos-rpc/TransactionActivity';
+import { TransactionActivity } from '../../../@kalos-core/kalos-rpc/TransactionActivity';
 import { Alert as AlertComponent } from '../Alert';
 interface Props {
   loggedUserId: number;

@@ -14,7 +14,7 @@ import React, {
 } from 'react';
 import clsx from 'clsx';
 import { SvgIconProps } from '@material-ui/core/SvgIcon';
-import { User } from '@kalos-core/kalos-rpc/User';
+import { User } from '../../../@kalos-core/kalos-rpc/User';
 import CheckIcon from '@material-ui/icons/Check';
 import BlockIcon from '@material-ui/icons/Block';
 import CircularProgress from '@material-ui/core/CircularProgress';
@@ -54,8 +54,8 @@ import {
 } from '../../../helpers';
 import { ClassCodePicker, DepartmentPicker } from '../Pickers';
 import { AdvancedSearch } from '../AdvancedSearch';
-import { Event } from '@kalos-core/kalos-rpc/Event';
-import './styles.less';
+import { Event } from '../../../@kalos-core/kalos-rpc/Event';
+import './Field.module.less';
 import { RadioGroup } from '@material-ui/core';
 
 type SelectOption = {

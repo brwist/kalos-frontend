@@ -14,7 +14,8 @@ import Typography from '@material-ui/core/Typography';
 import { Actions, ActionsProps } from '../Actions';
 import { Link } from '../Link';
 import { OrderDir } from '../../../helpers';
-import './styles.less';
+import './InfoTable.module.less';
+
 import { Props as ButtonProps } from '../Button';
 import { ACTIONS, Reducer } from './reducer';
 import { PlainForm } from '../PlainForm';

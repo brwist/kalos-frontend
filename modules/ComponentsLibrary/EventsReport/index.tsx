@@ -12,7 +12,7 @@ import { PrintTable } from '../PrintTable';
 import { PrintHeaderSubtitleItem } from '../PrintHeader';
 import { ExportJSON } from '../ExportJSON';
 import { Button } from '../Button';
-import { getPropertyAddress } from '@kalos-core/kalos-rpc/Property';
+import { getPropertyAddress } from '../../../@kalos-core/kalos-rpc/Property';
 import {
   makeFakeRows,
   loadEventsByFilter,
@@ -24,7 +24,7 @@ import {
   getCurrDate,
 } from '../../../helpers';
 import { ROWS_PER_PAGE } from '../../../constants';
-import { Event } from '@kalos-core/kalos-rpc/Event';
+import { Event } from '../../../@kalos-core/kalos-rpc/Event';
 import { Tasks } from '../Tasks';
 
 type Props = {

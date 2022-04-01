@@ -1,5 +1,5 @@
 import React, { FC, ReactNode } from 'react';
-import './styles.css';
+import './PrintList.module.css';
 
 export interface Props {
   items: ReactNode[];

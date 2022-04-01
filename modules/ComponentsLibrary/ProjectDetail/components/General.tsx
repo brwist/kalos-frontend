@@ -1,8 +1,8 @@
-import { getDepartmentName } from '@kalos-core/kalos-rpc/Common';
-import { TimesheetDepartment } from '@kalos-core/kalos-rpc/TimesheetDepartment';
+import { getDepartmentName } from '../../../../@kalos-core/kalos-rpc/Common';
+import { TimesheetDepartment } from '../../../../@kalos-core/kalos-rpc/TimesheetDepartment';
 import { format } from 'date-fns';
 import React, { FC, forwardRef } from 'react';
-import { Event } from '@kalos-core/kalos-rpc/Event';
+import { Event } from '../../../../@kalos-core/kalos-rpc/Event';
 import { Data, InfoTable } from '../../InfoTable';
 
 interface Props {

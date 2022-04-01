@@ -6,7 +6,7 @@ import { Tooltip } from '../Tooltip';
 import { PROJECT_TASK_PRIORITY_ICONS } from '../EditProject';
 import { formatDate, formatTime } from '../../../helpers';
 import { WEEK_DAYS } from '../../../constants';
-import './styles.less';
+import './CalendarEvents.module.less';
 
 export type CalendarEvent = {
   id: number;

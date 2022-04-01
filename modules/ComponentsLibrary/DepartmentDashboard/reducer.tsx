@@ -9,8 +9,8 @@ import {
   TimesheetDepartmentClientService,
 } from '../../../helpers';
 import { OPTION_ALL } from '../../../constants';
-import { User } from '@kalos-core/kalos-rpc/User';
-import { TimesheetDepartment } from '@kalos-core/kalos-rpc/TimesheetDepartment';
+import { User } from '../../../@kalos-core/kalos-rpc/User';
+import { TimesheetDepartment } from '../../../@kalos-core/kalos-rpc/TimesheetDepartment';
 
 export type FilterData = {
   departmentId: number;

@@ -12,8 +12,8 @@ import { Modal } from '../ComponentsLibrary/Modal';
 import { ServiceCall } from '../ComponentsLibrary/ServiceCall';
 import { Form, Schema } from '../ComponentsLibrary/Form';
 import { PageWrapper, PageWrapperProps } from '../PageWrapper/main';
-import { getPropertyAddress } from '@kalos-core/kalos-rpc/Property';
-import { Event as EventType } from '@kalos-core/kalos-rpc/Event';
+import { getPropertyAddress } from '../../@kalos-core/kalos-rpc/Property';
+import { Event as EventType } from '../../@kalos-core/kalos-rpc/Event';
 
 interface Props extends PageWrapperProps {
   userId: number;

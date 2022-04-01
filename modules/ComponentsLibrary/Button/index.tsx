@@ -2,7 +2,7 @@ import React, { FC, CSSProperties } from 'react';
 import clsx from 'clsx';
 import CircularProgress from '@material-ui/core/CircularProgress';
 import ButtonUI from '@material-ui/core/Button';
-import './styles.less';
+import './Button.module.less';
 
 type Style = {
   compact?: boolean;

@@ -5,14 +5,14 @@ import { Button } from '../../Button';
 import {
   TimesheetLine,
   TimesheetLineClient,
-} from '@kalos-core/kalos-rpc/TimesheetLine';
+} from '../../../../@kalos-core/kalos-rpc/TimesheetLine';
 import { Modal } from '../../Modal';
 import { Form, Schema } from '../../Form';
 import { useConfirm } from '../../ConfirmService';
 import { ENDPOINT } from '../../../../constants';
-import './editModal.less';
 import { NULL_TIME_VALUE } from '../constants';
 import { makeSafeFormObject } from '../../../../helpers';
+import './EditModal.module.less';
 
 const tslClient = new TimesheetLineClient(ENDPOINT);
 

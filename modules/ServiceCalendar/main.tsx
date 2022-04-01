@@ -17,9 +17,9 @@ import {
   eachDayOfInterval,
   addDays,
 } from 'date-fns';
-import { User, UserClient } from '@kalos-core/kalos-rpc/User';
-import { Event, EventClient } from '@kalos-core/kalos-rpc/Event/index';
-import { TimeoffRequest } from '@kalos-core/kalos-rpc/compiled-protos/timeoff_request_pb';
+import { User, UserClient } from '../../@kalos-core/kalos-rpc/User';
+import { Event, EventClient } from '../../@kalos-core/kalos-rpc/Event/index';
+import { TimeoffRequest } from '../../@kalos-core/kalos-rpc/compiled-protos/timeoff_request_pb';
 import Box from '@material-ui/core/Box';
 import Container from '@material-ui/core/Container';
 import * as jspb from 'google-protobuf';
@@ -41,7 +41,7 @@ import {
   TimeoffRequestClientService,
   TimeoffRequestTypes,
 } from '../../helpers';
-import './styles.less';
+
 import { CodeSharp } from '@material-ui/icons';
 
 type Props = PageWrapperProps & {
@@ -394,7 +394,7 @@ export const ServiceCalendar: FC<Props> = props => {
 
   const handleToggleAddCustomer = (display: boolean) => {
     dispatch({ type: 'toggleAddCustomer', value: display });
-  }
+  };
 
   const changeViewBy = useCallback(value => {
     dispatch({ type: 'viewBy', value });
@@ -445,7 +445,7 @@ export const ServiceCalendar: FC<Props> = props => {
     {
       icon: <PersonIcon />,
       name: 'Add Customer',
-      action: ()=>handleToggleAddCustomer(true),
+      action: () => handleToggleAddCustomer(true),
     },
     {
       icon: <SearchIcon />,
@@ -506,10 +506,10 @@ export const ServiceCalendar: FC<Props> = props => {
         <AddNewButton options={addNewOptions} />
       </CalendarDataContext.Provider>
       {addCustomer && (
-        <Modal open onClose={()=>handleToggleAddCustomer(false)}>
+        <Modal open onClose={() => handleToggleAddCustomer(false)}>
           <CustomerEdit
-            onClose={()=>handleToggleAddCustomer(false)}
-            onSave={()=>handleToggleAddCustomer(false)}
+            onClose={() => handleToggleAddCustomer(false)}
+            onSave={() => handleToggleAddCustomer(false)}
           />
         </Modal>
       )}

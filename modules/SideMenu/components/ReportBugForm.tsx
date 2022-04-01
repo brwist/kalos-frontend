@@ -11,7 +11,7 @@ import DialogContent from '@material-ui/core/DialogContent';
 import DialogActions from '@material-ui/core/DialogActions';
 import Typography from '@material-ui/core/Typography';
 import TextField from '@material-ui/core/TextField';
-import { User } from '@kalos-core/kalos-rpc/User';
+import { User } from '../../../@kalos-core/kalos-rpc/User';
 import { Button } from '../../ComponentsLibrary/Button';
 import {
   newBugReport,
@@ -20,7 +20,7 @@ import {
 } from '../../../helpers';
 import RichTextEditor from './RichTextEditor';
 import ImageUploader from './ImageUploader';
-import './reportBugForm.less';
+import './ReportBugForm.module.less';
 
 type Props = {
   user: User;

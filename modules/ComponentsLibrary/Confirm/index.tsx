@@ -2,8 +2,7 @@ import React, { FC } from 'react';
 import Typography from '@material-ui/core/Typography';
 import { Modal } from '../Modal';
 import { SectionBar } from '../SectionBar';
-import './styles.less';
-
+import './Confirm.module.less';
 export interface Props {
   title?: string;
   open: boolean;

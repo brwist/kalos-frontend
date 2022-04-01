@@ -34,9 +34,10 @@ import {
   NOTIFICATIONS_STATUS_TYPE_LIST,
   SPIFF_KIND_TYPE_LIST,
 } from '../../../constants';
-import './styles.less';
+
 import { EditProject } from '../EditProject';
 import { CostReport } from '../CostReport';
+import './Reports.module.less';
 
 export type FilterForm = {
   status?: string;

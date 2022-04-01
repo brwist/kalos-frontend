@@ -14,7 +14,7 @@ import { TimeoffCard } from '../../../ServiceCalendar/components/CallCard';
 import { TimesheetLineCard, ServicesRenderedCard } from './TimesheetCard';
 import { SkeletonCard } from '../../SkeletonCard';
 import { roundNumber, TimeoffRequestTypes } from '../../../../helpers';
-import './column.less';
+import './Column.module.less';
 
 type Props = {
   date: string;

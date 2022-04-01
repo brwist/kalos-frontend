@@ -3,13 +3,13 @@ import {
   TimesheetLine,
   TimesheetLineClient,
   TimesheetLineList,
-} from '@kalos-core/kalos-rpc/TimesheetLine';
-import { PerDiem } from '@kalos-core/kalos-rpc/PerDiem';
+} from '../../../@kalos-core/kalos-rpc/TimesheetLine';
+import { PerDiem } from '../../../@kalos-core/kalos-rpc/PerDiem';
 import { InfoTable } from '../InfoTable';
 import { Loader } from '../../Loader/main';
 import { SectionBar } from '../SectionBar';
 import { ENDPOINT, NULL_TIME, MEALS_RATE } from '../../../constants';
-import { TaskClient, Task } from '@kalos-core/kalos-rpc/Task';
+import { TaskClient, Task } from '../../../@kalos-core/kalos-rpc/Task';
 import {
   differenceInMinutes,
   parseISO,
@@ -22,7 +22,7 @@ import {
   Trip,
   PerDiemList,
   PerDiemRow,
-} from '@kalos-core/kalos-rpc/compiled-protos/perdiem_pb';
+} from '../../../@kalos-core/kalos-rpc/compiled-protos/perdiem_pb';
 import {
   roundNumber,
   formatDate,

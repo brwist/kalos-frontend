@@ -7,7 +7,7 @@ import Hidden from '@material-ui/core/Hidden';
 import IconButton from '@material-ui/core/IconButton';
 import MenuSharp from '@material-ui/icons/MenuSharp';
 import { forceHTTPS, UserClientService } from '../../helpers';
-import { User, UserClient } from '@kalos-core/kalos-rpc/User';
+import { User, UserClient } from '../../@kalos-core/kalos-rpc/User';
 import { ENDPOINT } from '../../constants';
 import customTheme from '../Theme/main';
 import KalosMenuItem from './components/KalosMenuItem';
@@ -189,7 +189,9 @@ const SideMenu = ({
               ))}
             </>
           )}
-          {user.getPermissionGroupsList().find(p=>p.getName() === "Dispatch") && (
+          {user
+            .getPermissionGroupsList()
+            .find(p => p.getName() === 'Dispatch') && (
             <>
               {dispatchItems.map(item => (
                 <KalosMenuItem

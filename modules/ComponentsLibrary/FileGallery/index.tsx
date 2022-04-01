@@ -11,8 +11,8 @@ import {
   S3ClientService,
   getMimeType,
 } from '../../../helpers';
-import './styles.less';
-import { File } from '@kalos-core/kalos-rpc/File';
+import './FileGallery.module.less';
+import { File } from '../../../@kalos-core/kalos-rpc/File';
 
 interface Props {
   loggedUserId: number;

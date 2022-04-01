@@ -9,15 +9,15 @@
 import React, { useReducer, useEffect, useCallback, FC } from 'react';
 import { reducer, ACTIONS } from './reducer';
 import { PlaceAutocompleteAddressForm } from '../PlaceAutocompleteAddressForm';
-import { Devlog } from '@kalos-core/kalos-rpc/Devlog';
+import { Devlog } from '../../../@kalos-core/kalos-rpc/Devlog';
 import {
   DevlogClientService,
   EventClientService,
   MapClientService,
   UserClientService,
 } from '../../../helpers';
-import { User } from '@kalos-core/kalos-rpc/User';
-import { Event } from '@kalos-core/kalos-rpc/Event';
+import { User } from '../../../@kalos-core/kalos-rpc/User';
+import { Event } from '../../../@kalos-core/kalos-rpc/Event';
 import { format } from 'date-fns';
 import { Form, Schema } from '../Form';
 import { Alert } from '../Alert';

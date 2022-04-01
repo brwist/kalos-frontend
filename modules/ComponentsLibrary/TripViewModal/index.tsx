@@ -1,5 +1,5 @@
-import { Trip } from '@kalos-core/kalos-rpc/compiled-protos/perdiem_pb';
-import { User } from '@kalos-core/kalos-rpc/compiled-protos/user_pb';
+import { Trip } from '../../../@kalos-core/kalos-rpc/compiled-protos/perdiem_pb';
+import { User } from '../../../@kalos-core/kalos-rpc/compiled-protos/user_pb';
 import React, { FC, useState, useCallback } from 'react';
 import { PerDiemClientService, UserClientService } from '../../../helpers';
 import { Button } from '../Button';

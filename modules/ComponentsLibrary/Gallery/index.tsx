@@ -3,8 +3,8 @@ import CloudDownloadIcon from '@material-ui/icons/CloudDownload';
 import DeleteIcon from '@material-ui/icons/Delete';
 import IconButton from '@material-ui/core/IconButton';
 import ImageSearchTwoTone from '@material-ui/icons/ImageSearchTwoTone';
-import { S3Client } from '@kalos-core/kalos-rpc/S3File';
-import { TransactionDocumentClient } from '@kalos-core/kalos-rpc/TransactionDocument';
+import { S3Client } from '../../../@kalos-core/kalos-rpc/S3File';
+import { TransactionDocumentClient } from '../../../@kalos-core/kalos-rpc/TransactionDocument';
 import { Button as ButtonLib } from '../Button';
 import { Tooltip } from '../Tooltip';
 import { Modal } from '../Modal';
@@ -14,8 +14,7 @@ import { RotatedImage, Deg } from '../RotatedImage';
 import { Loader } from '../../Loader/main';
 import { ENDPOINT } from '../../../constants';
 import { getMimeType } from '../../../helpers';
-import './styles.less';
-
+import './Gallery.module.less';
 export interface GalleryData {
   key: string;
   bucket: string;

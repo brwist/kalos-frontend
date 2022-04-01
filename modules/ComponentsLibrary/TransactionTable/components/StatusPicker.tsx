@@ -4,7 +4,7 @@ import React, { FC, useState, useEffect, useCallback } from 'react';
 import InputLabel from '@material-ui/core/InputLabel';
 import FormControl from '@material-ui/core/FormControl';
 import NativeSelect from '@material-ui/core/NativeSelect';
-import { TransactionStatus } from '@kalos-core/kalos-rpc/TransactionStatus';
+import { TransactionStatus } from '../../../../@kalos-core/kalos-rpc/TransactionStatus';
 
 interface Props {
   options: string[];

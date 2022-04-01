@@ -3,8 +3,8 @@ import { TripInfo, TripViewModal } from './index';
 import { AddressPair } from '../PlaceAutocompleteAddressForm/Address';
 import { Schema } from '../Form';
 import { ExampleTitle } from '../helpers';
-import { PerDiemRow } from '@kalos-core/kalos-rpc/PerDiem';
-import { Trip } from '@kalos-core/kalos-rpc/compiled-protos/perdiem_pb';
+import { PerDiemRow } from '../../../@kalos-core/kalos-rpc/PerDiem';
+import { Trip } from '../../../@kalos-core/kalos-rpc/compiled-protos/perdiem_pb';
 
 let Trip1: any = new Trip();
 Trip1.setOriginAddress('Origin goes here');
