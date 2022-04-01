@@ -3,7 +3,7 @@ import Card from '@material-ui/core/Card';
 import CardHeader from '@material-ui/core/CardHeader';
 import Skeleton from '@material-ui/lab/Skeleton';
 import CardContent from '@material-ui/core/CardContent';
-import './styles.less';
+import "./SkeletonCard.module.less";
 
 interface Props {
   skipAvatar?: boolean;

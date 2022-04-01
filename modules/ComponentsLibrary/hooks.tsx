@@ -1,5 +1,5 @@
 import { useState, useEffect, useLayoutEffect } from 'react';
-import { UserList } from '@kalos-core/kalos-rpc/User';
+import { UserList } from '../../../@kalos-core/kalos-rpc/User';
 type State = {
   data: any[];
   totalCount: number;

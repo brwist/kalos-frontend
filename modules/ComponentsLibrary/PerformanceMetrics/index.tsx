@@ -12,7 +12,7 @@ import {
   loadPerformanceMetricsByFilter,
 } from '../../../helpers';
 import { ROWS_PER_PAGE } from '../../../constants';
-import { MetricReportData } from '@kalos-core/kalos-rpc/compiled-protos/metrics_pb';
+import { MetricReportData } from '../../../@kalos-core/kalos-rpc/compiled-protos/metrics_pb';
 
 interface Props {
   onClose?: () => void;

@@ -1,6 +1,6 @@
-import { User } from '@kalos-core/kalos-rpc/User';
+import { User } from '../../../@kalos-core/kalos-rpc/User';
 import { UserClientService } from '../../../helpers';
-import { PermissionGroup } from '@kalos-core/kalos-rpc/compiled-protos/user_pb';
+import { PermissionGroup } from '../../../@kalos-core/kalos-rpc/compiled-protos/user_pb';
 import { isArray } from 'lodash';
 export type FormData = {
   permissionIds: number[];

@@ -23,7 +23,7 @@ import { InfoTable, Data as InfoTableData } from '../InfoTable';
 import { PlainForm, Schema, Option } from '../PlainForm';
 import { Modal } from '../Modal';
 import { makeFakeRows } from '../../../helpers';
-import './styles.less';
+import './Chart.module.less';
 
 const PRINT_WIDTH = 1200;
 const CHART_ASPECT_RATIO = 16 / 9;

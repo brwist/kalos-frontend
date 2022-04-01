@@ -1,11 +1,11 @@
 // this files ts-ignore lines have been checked
 import * as React from 'react';
-import { UserClient, User } from '@kalos-core/kalos-rpc/User';
+import { UserClient, User } from '../../@kalos-core/kalos-rpc/User';
 import { TransactionAdminView } from './components/admin';
 import { Loader } from '../Loader/main';
 import { ENDPOINT, PERMISSION_DEPARTMENT } from '../../constants';
 import { PageWrapper, PageWrapperProps } from '../PageWrapper/main';
-import { PermissionGroup } from '@kalos-core/kalos-rpc/compiled-protos/user_pb';
+import { PermissionGroup } from '../../@kalos-core/kalos-rpc/compiled-protos/user_pb';
 
 interface props extends PageWrapperProps {
   userID: number;

@@ -2,13 +2,16 @@ import React from 'react';
 import InputLabel from '@material-ui/core/InputLabel';
 import FormControl from '@material-ui/core/FormControl';
 import NativeSelect from '@material-ui/core/NativeSelect';
-import { JobSubtype, JobSubtypeClient } from '@kalos-core/kalos-rpc/JobSubtype';
+import {
+  JobSubtype,
+  JobSubtypeClient,
+} from '../../../@kalos-core/kalos-rpc/JobSubtype';
 import {
   JobTypeSubtype,
   JobTypeSubtypeClient,
-} from '@kalos-core/kalos-rpc/JobTypeSubtype';
+} from '../../../@kalos-core/kalos-rpc/JobTypeSubtype';
 import Divider from '@material-ui/core/Divider';
-import { JobType } from '@kalos-core/kalos-rpc/JobType';
+import { JobType } from '../../../@kalos-core/kalos-rpc/JobType';
 import { ENDPOINT } from '../../../constants';
 
 interface props {

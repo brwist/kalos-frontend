@@ -8,17 +8,17 @@
 
 import React, { useReducer, useEffect, useCallback, FC } from 'react';
 import { reducer, ACTIONS } from './reducer';
-import { Devlog } from '@kalos-core/kalos-rpc/Devlog';
+import { Devlog } from '../../../@kalos-core/kalos-rpc/Devlog';
 import { DevlogClientService, EmailClientService } from '../../../helpers';
 import { format } from 'date-fns';
 import { InvoicePreview } from '../InvoicePreview';
 import { SectionBar } from '../SectionBar';
 import { Confirm } from '../Confirm';
-import { Document } from '@kalos-core/kalos-rpc/Document';
+import { Document } from '../../../@kalos-core/kalos-rpc/Document';
 import {
   SQSEmail,
   SQSEmailAndDocument,
-} from '@kalos-core/kalos-rpc/compiled-protos/email_pb';
+} from '../../../@kalos-core/kalos-rpc/compiled-protos/email_pb';
 import { Loader } from '../../Loader/main';
 import { PrintPage } from '../PrintPage';
 import ReactHtmlParser from 'react-html-parser';
@@ -48,7 +48,6 @@ export const EmailInvoice: FC<props> = ({
   });
 
   const cleanup = useCallback(() => {}, []);
-
 
   const handleError = useCallback(
     async (errorToSet: string) => {

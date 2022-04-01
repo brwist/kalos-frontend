@@ -1,4 +1,4 @@
-import { UserClient } from '@kalos-core/kalos-rpc/User';
+import { UserClient } from '../../@kalos-core/kalos-rpc/User';
 import React from 'react';
 import ReactDOM from 'react-dom';
 import { ENDPOINT } from '../../constants';

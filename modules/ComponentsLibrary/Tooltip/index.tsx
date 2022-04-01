@@ -1,7 +1,7 @@
 import React, { FC, ReactElement } from 'react';
 import TooltipUI, { TooltipProps } from '@material-ui/core/Tooltip';
 import Fade from '@material-ui/core/Fade';
-import './styles.less';
+import "./Tooltip.module.less";
 
 type Style = {
   controlled?: boolean;

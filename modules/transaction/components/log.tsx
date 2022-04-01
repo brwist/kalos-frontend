@@ -2,7 +2,7 @@ import React from 'react';
 import {
   TransactionActivity,
   TransactionActivityClient,
-} from '@kalos-core/kalos-rpc/TransactionActivity';
+} from '../../../@kalos-core/kalos-rpc/TransactionActivity';
 import Table from '@material-ui/core/Table';
 import TableBody from '@material-ui/core/TableBody';
 import TableCell from '@material-ui/core/TableCell';
@@ -14,7 +14,7 @@ import Button from '@material-ui/core/Button';
 import CloseIcon from '@material-ui/icons/CloseSharp';
 import IconButton from '@material-ui/core/IconButton';
 import ListIcon from '@material-ui/icons/ListSharp';
-import { UserClient, User } from '@kalos-core/kalos-rpc/User';
+import { UserClient, User } from '../../../@kalos-core/kalos-rpc/User';
 import { ENDPOINT } from '../../../constants';
 import { Tooltip } from '../../ComponentsLibrary/Tooltip';
 import { Confirm } from '../../ComponentsLibrary/Confirm';

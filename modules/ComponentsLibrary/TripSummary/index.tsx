@@ -5,7 +5,7 @@ import {
   PerDiem,
   Trip,
   TripList,
-} from '@kalos-core/kalos-rpc/compiled-protos/perdiem_pb';
+} from '../../../@kalos-core/kalos-rpc/compiled-protos/perdiem_pb';
 import IconButton from '@material-ui/core/IconButton';
 import DeleteIcon from '@material-ui/icons/Delete';
 import NotInterestedIcon from '@material-ui/icons/NotInterested';
@@ -33,7 +33,7 @@ import CheckCircleOutlineIcon from '@material-ui/icons/CheckCircleOutline';
 import MessageIcon from '@material-ui/icons/Message';
 import Visibility from '@material-ui/icons/Visibility';
 import { TripInfo, TripViewModal } from '../TripViewModal';
-import { TimesheetDepartment } from '@kalos-core/kalos-rpc/TimesheetDepartment';
+import { TimesheetDepartment } from '../../../@kalos-core/kalos-rpc/TimesheetDepartment';
 import { SlackMessageButton } from '../SlackMessageButton';
 import { Button } from '../Button';
 import { NULL_TIME } from '../../../constants';

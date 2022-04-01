@@ -1,10 +1,14 @@
 import React, { PureComponent } from 'react';
-import { DocumentClient, Document } from '@kalos-core/kalos-rpc/Document';
-import { S3Client, FileObject } from '@kalos-core/kalos-rpc/S3File';
+import {
+  DocumentClient,
+  Document,
+} from '../../../@kalos-core/kalos-rpc/Document';
+import { S3Client, FileObject } from '../../../@kalos-core/kalos-rpc/S3File';
 import { ConfirmDelete } from '../../ComponentsLibrary/ConfirmDelete';
 import { ENDPOINT } from '../../../constants';
 import { makeFakeRows, getCFAppUrl } from '../../../helpers';
 import { Documents } from '../../ComponentsLibrary/Documents';
+import './ContractInfo.module.less';
 
 type Entry = Document.AsObject;
 

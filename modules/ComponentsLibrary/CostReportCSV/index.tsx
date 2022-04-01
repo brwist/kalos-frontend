@@ -1,5 +1,5 @@
-import { NULL_TIME } from '@kalos-core/kalos-rpc/constants';
-import { TimesheetLine } from '@kalos-core/kalos-rpc/TimesheetLine';
+import { NULL_TIME } from '../../../@kalos-core/kalos-rpc/constants';
+import { TimesheetLine } from '../../../@kalos-core/kalos-rpc/TimesheetLine';
 import React, { FC, useCallback, useEffect, useState, useReducer } from 'react';
 import {
   IRS_SUGGESTED_MILE_FACTOR,
@@ -15,30 +15,33 @@ import {
   TransactionAccountClientService,
   UserClientService,
 } from '../../../helpers';
-import { ClassCode, ClassCodeClient } from '@kalos-core/kalos-rpc/ClassCode';
+import {
+  ClassCode,
+  ClassCodeClient,
+} from '../../../@kalos-core/kalos-rpc/ClassCode';
 import { reducer, ACTIONS, WeekClassCodeBreakdownSubtotal } from './reducer';
 import { PrintList } from '../PrintList';
 import { PrintPage, Status } from '../PrintPage';
 import { PrintParagraph } from '../PrintParagraph';
 import { PrintTable } from '../PrintTable';
-import { getPropertyAddress } from '@kalos-core/kalos-rpc/Property';
-import { PerDiem, PerDiemRow } from '@kalos-core/kalos-rpc/PerDiem';
-import { Transaction } from '@kalos-core/kalos-rpc/Transaction';
-import { Event } from '@kalos-core/kalos-rpc/Event';
+import { getPropertyAddress } from '../../../@kalos-core/kalos-rpc/Property';
+import { PerDiem, PerDiemRow } from '../../../@kalos-core/kalos-rpc/PerDiem';
+import { Transaction } from '../../../@kalos-core/kalos-rpc/Transaction';
+import { Event } from '../../../@kalos-core/kalos-rpc/Event';
 import {
   CostReportData,
   CostReportReq,
-} from '@kalos-core/kalos-rpc/compiled-protos/event_pb';
+} from '../../../@kalos-core/kalos-rpc/compiled-protos/event_pb';
 
 import { SectionBar } from '../SectionBar';
 import { InfoTable } from '../InfoTable';
-import { User } from '@kalos-core/kalos-rpc/User';
+import { User } from '../../../@kalos-core/kalos-rpc/User';
 import { Loader } from '../../Loader/main';
 import { AltGallery, GalleryData } from '../../AltGallery/main';
 import Button from '@material-ui/core/Button';
 import { Button as KalosButton } from '../Button';
-import { Trip } from '@kalos-core/kalos-rpc/compiled-protos/perdiem_pb';
-import { Task } from '@kalos-core/kalos-rpc/Task';
+import { Trip } from '../../../@kalos-core/kalos-rpc/compiled-protos/perdiem_pb';
+import { Task } from '../../../@kalos-core/kalos-rpc/Task';
 import {
   differenceInMinutes,
   parseISO,
@@ -53,9 +56,9 @@ import { Tabs } from '../Tabs';
 import ExpandLess from '@material-ui/icons/ExpandLess';
 import ExpandMore from '@material-ui/icons/ExpandMore';
 import Collapse from '@material-ui/core/Collapse/Collapse';
-import { TransactionAccount } from '@kalos-core/kalos-rpc/TransactionAccount';
+import { TransactionAccount } from '../../../@kalos-core/kalos-rpc/TransactionAccount';
 import { PrintHeader } from '../PrintHeader';
-import { OrderDir } from '@kalos-core/kalos-rpc/Common';
+import { OrderDir } from '../../../@kalos-core/kalos-rpc/Common';
 export interface Props {
   serviceCallId: number;
   loggedUserId: number;

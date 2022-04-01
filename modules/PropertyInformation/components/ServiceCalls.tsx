@@ -3,9 +3,12 @@ import { format, addHours } from 'date-fns';
 import IconButton from '@material-ui/core/IconButton';
 import DeleteIcon from '@material-ui/icons/Delete';
 import SearchIcon from '@material-ui/icons/Search';
-import { EventClient, Event } from '@kalos-core/kalos-rpc/Event';
-import { User } from '@kalos-core/kalos-rpc/User';
-import { getPropertyAddress, Property } from '@kalos-core/kalos-rpc/Property';
+import { EventClient, Event } from '../../../@kalos-core/kalos-rpc/Event';
+import { User } from '../../../@kalos-core/kalos-rpc/User';
+import {
+  getPropertyAddress,
+  Property,
+} from '../../../@kalos-core/kalos-rpc/Property';
 import { ENDPOINT, ROWS_PER_PAGE } from '../../../constants';
 import { InfoTable, Data, Columns } from '../../ComponentsLibrary/InfoTable';
 import { SectionBar } from '../../ComponentsLibrary/SectionBar';
@@ -16,7 +19,7 @@ import ReceiptIcon from '@material-ui/icons/Receipt';
 import { Modal } from '../../ComponentsLibrary/Modal';
 import { Form, Schema } from '../../ComponentsLibrary/Form';
 import { PlainForm } from '../../ComponentsLibrary/PlainForm';
-import { ServicesRendered } from '@kalos-core/kalos-rpc/ServicesRendered';
+import { ServicesRendered } from '../../../@kalos-core/kalos-rpc/ServicesRendered';
 import { Proposal } from '../../ComponentsLibrary/ServiceCall/components/Proposal';
 import { Button } from '../../ComponentsLibrary/Button';
 import {
@@ -33,10 +36,10 @@ import {
   ServicesRenderedClientService,
 } from '../../../helpers';
 import { OPTION_BLANK } from '../../../constants';
-import './serviceCalls.less';
 import { AddServiceCall } from '../../AddServiceCallGeneral/components/AddServiceCall';
 import { ServiceRequest } from '../../ComponentsLibrary/ServiceCall/requestIndex';
 import RateReviewOutlined from '@material-ui/icons/RateReviewOutlined';
+import './ServiceCalls.module.less';
 
 interface Props {
   className?: string;

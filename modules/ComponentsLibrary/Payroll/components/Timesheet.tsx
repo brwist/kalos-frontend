@@ -19,8 +19,8 @@ import { ROWS_PER_PAGE, OPTION_ALL } from '../../../../constants';
 import {
   TimesheetLine,
   TimesheetLineClient,
-} from '@kalos-core/kalos-rpc/TimesheetLine';
-import { User } from '@kalos-core/kalos-rpc/User';
+} from '../../../../@kalos-core/kalos-rpc/TimesheetLine';
+import { User } from '../../../../@kalos-core/kalos-rpc/User';
 import { ENDPOINT, NULL_TIME } from '../../../../constants';
 import { RoleType } from '../index';
 import { TimesheetSummary } from './TimesheetSummary';

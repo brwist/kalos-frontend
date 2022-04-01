@@ -16,13 +16,13 @@ import { MergeTable, SelectedChoice } from '../MergeTable';
 import { Alert } from '../Alert';
 import Typography from '@material-ui/core/Typography';
 import { Loader } from '../../Loader/main';
-import { ActivityLog } from '@kalos-core/kalos-rpc/ActivityLog';
+import { ActivityLog } from '../../../@kalos-core/kalos-rpc/ActivityLog';
 import { format } from 'date-fns';
 import { TransactionTable } from '../TransactionTable';
-import { Transaction } from '@kalos-core/kalos-rpc/compiled-protos/transaction_pb';
-import { TransactionDocument } from '@kalos-core/kalos-rpc/TransactionDocument';
-import { File } from '@kalos-core/kalos-rpc/File';
-import { MergeTransactionIds } from '@kalos-core/kalos-rpc/compiled-protos/transaction_activity_pb';
+import { Transaction } from '../../../@kalos-core/kalos-rpc/compiled-protos/transaction_pb';
+import { TransactionDocument } from '../../../@kalos-core/kalos-rpc/TransactionDocument';
+import { File } from '../../../@kalos-core/kalos-rpc/File';
+import { MergeTransactionIds } from '../../../@kalos-core/kalos-rpc/compiled-protos/transaction_activity_pb';
 
 /*
   Compares transactions with each other and has the ability to create a "diff view" sort of table which shows conflicts in the 

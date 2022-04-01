@@ -5,7 +5,7 @@ import EditIcon from '@material-ui/icons/Edit';
 import { InfoTable, Data, Columns } from './';
 import { ExampleTitle } from '../helpers';
 import { makeFakeRows } from '../../../helpers';
-import { Transaction } from '@kalos-core/kalos-rpc/Transaction';
+import { Transaction } from '../../../@kalos-core/kalos-rpc/Transaction';
 
 const onClick = () => console.log('Row clicked');
 const actions = [

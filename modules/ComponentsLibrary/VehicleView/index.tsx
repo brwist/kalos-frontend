@@ -1,6 +1,6 @@
 import React from 'react';
 import { PageWrapper } from '../../PageWrapper/main';
-import { Vehicle } from '@kalos-core/kalos-rpc/compiled-protos/user_pb';
+import { Vehicle } from '../../../@kalos-core/kalos-rpc/compiled-protos/user_pb';
 import {
   UserClientService,
   makeSafeFormObject,
@@ -13,13 +13,13 @@ import { InfoTable, Columns } from '../InfoTable';
 import { SectionBar } from '../SectionBar';
 import { useCallback, useReducer } from 'react';
 import { Modal } from '../Modal';
-import { TimesheetDepartment } from '@kalos-core/kalos-rpc/TimesheetDepartment';
+import { TimesheetDepartment } from '../../../@kalos-core/kalos-rpc/TimesheetDepartment';
 import IconButton from '@material-ui/core/IconButton';
 import PersonAdd from '@material-ui/icons/PersonAdd';
 import { ROWS_PER_PAGE } from '../../../constants';
 import { Confirm } from '../Confirm';
 import Delete from '@material-ui/icons/Delete';
-import { Int32 } from '@kalos-core/kalos-rpc/compiled-protos/common_pb';
+import { Int32 } from '../../../@kalos-core/kalos-rpc/compiled-protos/common_pb';
 // add any prop types here
 interface props {
   userID: number;

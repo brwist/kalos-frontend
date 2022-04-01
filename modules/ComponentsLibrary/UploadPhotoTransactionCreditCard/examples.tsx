@@ -1,4 +1,4 @@
-import { TransactionAccountList } from '@kalos-core/kalos-rpc/TransactionAccount';
+import { TransactionAccountList } from '../../../@kalos-core/kalos-rpc/TransactionAccount';
 import React from 'react';
 import { UploadPhotoTransactionCreditCard } from '.';
 import { ExampleTitle } from '../helpers';

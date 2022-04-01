@@ -1,5 +1,5 @@
 import React, { FC, useState, useEffect, useCallback, useMemo } from 'react';
-import { TaskClient, Task } from '@kalos-core/kalos-rpc/Task';
+import { TaskClient, Task } from '../../../@kalos-core/kalos-rpc/Task';
 import SearchIcon from '@material-ui/icons/Search';
 import IconButton from '@material-ui/core/IconButton';
 import DeleteIcon from '@material-ui/icons/Delete';
@@ -25,9 +25,9 @@ import {
   getStatusFormInit,
 } from '../../ComponentsLibrary/SpiffToolLogEdit';
 import { ServiceCall } from '../../ComponentsLibrary/ServiceCall';
-import { SpiffToolAdminAction } from '@kalos-core/kalos-rpc/SpiffToolAdminAction';
-import { User } from '@kalos-core/kalos-rpc/User';
-import { SpiffType, TaskEventData } from '@kalos-core/kalos-rpc/Task';
+import { SpiffToolAdminAction } from '../../../@kalos-core/kalos-rpc/SpiffToolAdminAction';
+import { User } from '../../../@kalos-core/kalos-rpc/User';
+import { SpiffType, TaskEventData } from '../../../@kalos-core/kalos-rpc/Task';
 
 import {
   timestamp,
@@ -44,10 +44,11 @@ import {
   makeSafeFormObject,
 } from '../../../helpers';
 import { ENDPOINT, ROWS_PER_PAGE, OPTION_ALL } from '../../../constants';
-import './spiffTool.less';
+import { Event } from '../../../@kalos-core/kalos-rpc/Event';
 import { Payroll, RoleType } from '../../ComponentsLibrary/Payroll';
-
-import { PermissionGroup } from '@kalos-core/kalos-rpc/compiled-protos/user_pb';
+import { PropLinkServiceClient } from '../../../@kalos-core/kalos-rpc/compiled-protos/prop_link_pb_service';
+import { PermissionGroup } from '../../../@kalos-core/kalos-rpc/compiled-protos/user_pb';
+import './SpiffTool.module.less';
 
 const TaskClientService = new TaskClient(ENDPOINT);
 

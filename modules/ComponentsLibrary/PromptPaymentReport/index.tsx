@@ -24,7 +24,7 @@ import {
   PromptPaymentData,
   formatDate,
 } from '../../../helpers';
-import { PromptPaymentReportLine } from '@kalos-core/kalos-rpc/Report';
+import { PromptPaymentReportLine } from '../../../@kalos-core/kalos-rpc/Report';
 const FORM_LAST_MONTHS = 4 * 12;
 
 interface Props {

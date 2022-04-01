@@ -1,4 +1,4 @@
-import { Invoice } from '@kalos-core/kalos-rpc/Invoice';
+import { Invoice } from '../../../@kalos-core/kalos-rpc/Invoice';
 
 export type State = {
   isLoaded: boolean;

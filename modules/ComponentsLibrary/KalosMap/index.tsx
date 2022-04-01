@@ -1,9 +1,9 @@
 import React, { PureComponent, useCallback } from 'react';
-import { MapClient, MatrixRequest } from '@kalos-core/kalos-rpc/Maps';
+import { MapClient, MatrixRequest } from '../../../@kalos-core/kalos-rpc/Maps';
 import {
   DistanceMatrixResponse,
   Place,
-} from '@kalos-core/kalos-rpc/compiled-protos/kalosmaps_pb';
+} from '../../../@kalos-core/kalos-rpc/compiled-protos/kalosmaps_pb';
 import { ENDPOINT } from '../../../constants';
 
 interface KalosMapProps {

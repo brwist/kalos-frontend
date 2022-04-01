@@ -5,7 +5,7 @@ import NativeSelect from '@material-ui/core/NativeSelect';
 import {
   TransactionStatus,
   TransactionStatusClient,
-} from '@kalos-core/kalos-rpc/TransactionStatus';
+} from '../../../@kalos-core/kalos-rpc/TransactionStatus';
 import { ENDPOINT } from '../../../constants';
 
 interface props {
