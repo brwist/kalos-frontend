@@ -1403,6 +1403,7 @@ const MODULE_MAP = [
     controller: 'dispatch',
     filename: 'newdash',
   },
+
   {
     name: 'Documents',
     location: 'admin',
@@ -1473,6 +1474,7 @@ const MODULE_MAP = [
     controller: 'reports',
     filename: 'perdiem_audit',
   },
+
   {
     name: 'PopoverGallery',
     deprecated: true,
@@ -1587,6 +1589,13 @@ const MODULE_MAP = [
     location: 'admin',
     controller: 'reports',
     filename: 'transactions',
+  },
+  {
+    name: 'PendingInvoiceTransaction',
+    location: 'admin',
+    controller: 'reports',
+    filename: 'pending_invoice_transaction',
+    released:false
   },
 ];
 
