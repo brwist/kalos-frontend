@@ -14,7 +14,7 @@ import { Payroll as PayrollComponent } from '../../Payroll';
 import { Modal } from '../../Modal';
 import { SectionBar } from '../../SectionBar';
 import { TripCalulator } from '../../TripCalulator';
-import './Toolbar.modules.less';
+import './Toolbar.module.less';
 
 type Props = {
   selectedDate: Date;
