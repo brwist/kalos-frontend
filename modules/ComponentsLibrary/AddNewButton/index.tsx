@@ -4,7 +4,7 @@ import SpeedDialIcon from '@material-ui/lab/SpeedDialIcon';
 import SpeedDialAction from '@material-ui/lab/SpeedDialAction';
 import Backdrop from '@material-ui/core/Backdrop';
 import SearchIcon from '@material-ui/icons/Search';
-import 'AddNewButton.module.less';
+import './AddNewButton.module.less';
 
 type Option = {
   icon: JSX.Element;
