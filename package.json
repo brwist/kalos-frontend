@@ -65,7 +65,7 @@
     "gulp": "^4.0.2",
     "ignore-styles": "^5.0.1",
     "jsdom": "^16.6.0",
-    "less": "^3.10.3",
+    "less": "^4.1.2",
     "mochawesome": "^6.2.2",
     "mock-local-storage": "^1.1.17",
     "nyc": "^15.1.0",
