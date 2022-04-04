@@ -4,7 +4,7 @@ import ExpandMoreIcon from '@material-ui/icons/ExpandMore';
 import Typography from '@material-ui/core/Typography';
 import AccordianDetails from '@material-ui/core/AccordionDetails';
 import Accordian from '@material-ui/core/Accordion';
-import './FilterPanel.modules.less';
+import './FilterPanel.module.less';
 
 type Props = {
   title: string;
