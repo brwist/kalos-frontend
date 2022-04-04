@@ -135,11 +135,6 @@ const Transaction: FC<Props> = props => {
             </Modal>
           )}
 
-          <Button
-            label="Add Transaction"
-            onClick={() => handleToggleAddTransaction(true)}
-          />
-
           {toggleAddTransaction ? (
             <Modal
               open={toggleAddTransaction}
