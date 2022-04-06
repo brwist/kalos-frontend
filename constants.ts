@@ -1,6 +1,6 @@
 import { Options } from './modules/ComponentsLibrary/Field';
 
-export const MEALS_RATE = 35;
+export const MEALS_RATE = 59;
 
 export const MAX_PAGES = 20;
 export const WaiverTypes = [
@@ -280,7 +280,7 @@ export const PERMISSION_ROLE = 'role';
 export const PERMISSION_DEPARTMENT = 'department';
 export const PERMISSION_NAME_MANAGER = 'Manager';
 
-export const IRS_SUGGESTED_MILE_FACTOR = 0.56; // $0.56 a mile
+export const IRS_SUGGESTED_MILE_FACTOR = 0.585; // $0.56 a mile
 
 export default {
   IRS_SUGGESTED_MILE_FACTOR,

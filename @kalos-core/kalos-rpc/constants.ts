@@ -1,6 +1,6 @@
 export const HOST = 'https://core.kalosflorida.com:8443';
 export const ENDPOINT = 'https://dev-core.kalosflorida.com';
-export const MEALS_RATE = 35;
+export const MEALS_RATE = 59;
 export const EMOJIS = {
   smile: {
     upsideDown: '\u{1F643}',

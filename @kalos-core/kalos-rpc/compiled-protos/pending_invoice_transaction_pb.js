@@ -64,7 +64,7 @@ if (goog.DEBUG && !COMPILED) {
  * @private {!Array<number>}
  * @const
  */
-proto.PendingInvoiceTransaction.repeatedFields_ = [10];
+proto.PendingInvoiceTransaction.repeatedFields_ = [11];
 
 
 
@@ -103,14 +103,15 @@ proto.PendingInvoiceTransaction.toObject = function(includeInstance, msg) {
     amount: jspb.Message.getFieldWithDefault(msg, 4, ""),
     vendorId: jspb.Message.getFieldWithDefault(msg, 5, 0),
     departmentId: jspb.Message.getFieldWithDefault(msg, 6, 0),
-    isCommitted: jspb.Message.getFieldWithDefault(msg, 7, 0),
-    isActive: jspb.Message.getFieldWithDefault(msg, 8, 0),
-    notes: jspb.Message.getFieldWithDefault(msg, 9, ""),
-    fieldMaskList: (f = jspb.Message.getRepeatedField(msg, 10)) == null ? undefined : f,
-    pageNumber: jspb.Message.getFieldWithDefault(msg, 11, 0),
-    orderBy: jspb.Message.getFieldWithDefault(msg, 12, ""),
-    orderDir: jspb.Message.getFieldWithDefault(msg, 13, ""),
-    withoutLimit: jspb.Message.getBooleanFieldWithDefault(msg, 14, false)
+    eventId: jspb.Message.getFieldWithDefault(msg, 7, 0),
+    isCommitted: jspb.Message.getFieldWithDefault(msg, 8, 0),
+    isActive: jspb.Message.getFieldWithDefault(msg, 9, 0),
+    notes: jspb.Message.getFieldWithDefault(msg, 10, ""),
+    fieldMaskList: (f = jspb.Message.getRepeatedField(msg, 11)) == null ? undefined : f,
+    pageNumber: jspb.Message.getFieldWithDefault(msg, 12, 0),
+    orderBy: jspb.Message.getFieldWithDefault(msg, 13, ""),
+    orderDir: jspb.Message.getFieldWithDefault(msg, 14, ""),
+    withoutLimit: jspb.Message.getBooleanFieldWithDefault(msg, 15, false)
   };
 
   if (includeInstance) {
@@ -173,33 +174,37 @@ proto.PendingInvoiceTransaction.deserializeBinaryFromReader = function(msg, read
       break;
     case 7:
       var value = /** @type {number} */ (reader.readInt32());
-      msg.setIsCommitted(value);
+      msg.setEventId(value);
       break;
     case 8:
       var value = /** @type {number} */ (reader.readInt32());
-      msg.setIsActive(value);
+      msg.setIsCommitted(value);
       break;
     case 9:
-      var value = /** @type {string} */ (reader.readString());
-      msg.setNotes(value);
+      var value = /** @type {number} */ (reader.readInt32());
+      msg.setIsActive(value);
       break;
     case 10:
       var value = /** @type {string} */ (reader.readString());
-      msg.addFieldMask(value);
+      msg.setNotes(value);
       break;
     case 11:
+      var value = /** @type {string} */ (reader.readString());
+      msg.addFieldMask(value);
+      break;
+    case 12:
       var value = /** @type {number} */ (reader.readInt32());
       msg.setPageNumber(value);
       break;
-    case 12:
+    case 13:
       var value = /** @type {string} */ (reader.readString());
       msg.setOrderBy(value);
       break;
-    case 13:
+    case 14:
       var value = /** @type {string} */ (reader.readString());
       msg.setOrderDir(value);
       break;
-    case 14:
+    case 15:
       var value = /** @type {boolean} */ (reader.readBool());
       msg.setWithoutLimit(value);
       break;
@@ -274,59 +279,66 @@ proto.PendingInvoiceTransaction.serializeBinaryToWriter = function(message, writ
       f
     );
   }
-  f = message.getIsCommitted();
+  f = message.getEventId();
   if (f !== 0) {
     writer.writeInt32(
       7,
       f
     );
   }
-  f = message.getIsActive();
+  f = message.getIsCommitted();
   if (f !== 0) {
     writer.writeInt32(
       8,
       f
     );
   }
+  f = message.getIsActive();
+  if (f !== 0) {
+    writer.writeInt32(
+      9,
+      f
+    );
+  }
   f = message.getNotes();
   if (f.length > 0) {
     writer.writeString(
-      9,
+      10,
       f
     );
   }
   f = message.getFieldMaskList();
   if (f.length > 0) {
     writer.writeRepeatedString(
-      10,
+      11,
       f
     );
   }
   f = message.getPageNumber();
   if (f !== 0) {
     writer.writeInt32(
-      11,
+      12,
       f
     );
   }
   f = message.getOrderBy();
   if (f.length > 0) {
     writer.writeString(
-      12,
+      13,
       f
     );
   }
   f = message.getOrderDir();
   if (f.length > 0) {
     writer.writeString(
-      13,
+      14,
       f
     );
   }
   f = message.getWithoutLimit();
   if (f) {
     writer.writeBool(
-      14,
+      15,
       f
     );
   }
@@ -442,10 +454,10 @@ proto.PendingInvoiceTransaction.prototype.setDepartmentId = function(value) {
 
 
 /**
- * optional int32 is_committed = 7;
+ * optional int32 event_id = 7;
  * @return {number}
  */
-proto.PendingInvoiceTransaction.prototype.getIsCommitted = function() {
+proto.PendingInvoiceTransaction.prototype.getEventId = function() {
   return /** @type {number} */ (jspb.Message.getFieldWithDefault(this, 7, 0));
 };
 
@@ -454,16 +466,16 @@ proto.PendingInvoiceTransaction.prototype.getIsCommitted = function() {
  * @param {number} value
  * @return {!proto.PendingInvoiceTransaction} returns this
  */
-proto.PendingInvoiceTransaction.prototype.setIsCommitted = function(value) {
+proto.PendingInvoiceTransaction.prototype.setEventId = function(value) {
   return jspb.Message.setProto3IntField(this, 7, value);
 };
 
 
 /**
- * optional int32 is_active = 8;
+ * optional int32 is_committed = 8;
  * @return {number}
  */
-proto.PendingInvoiceTransaction.prototype.getIsActive = function() {
+proto.PendingInvoiceTransaction.prototype.getIsCommitted = function() {
   return /** @type {number} */ (jspb.Message.getFieldWithDefault(this, 8, 0));
 };
 
@@ -472,17 +484,35 @@ proto.PendingInvoiceTransaction.prototype.getIsActive = function() {
  * @param {number} value
  * @return {!proto.PendingInvoiceTransaction} returns this
  */
-proto.PendingInvoiceTransaction.prototype.setIsActive = function(value) {
+proto.PendingInvoiceTransaction.prototype.setIsCommitted = function(value) {
   return jspb.Message.setProto3IntField(this, 8, value);
 };
 
 
 /**
- * optional string notes = 9;
+ * optional int32 is_active = 9;
+ * @return {number}
+ */
+proto.PendingInvoiceTransaction.prototype.getIsActive = function() {
+  return /** @type {number} */ (jspb.Message.getFieldWithDefault(this, 9, 0));
+};
+
+
+/**
+ * @param {number} value
+ * @return {!proto.PendingInvoiceTransaction} returns this
+ */
+proto.PendingInvoiceTransaction.prototype.setIsActive = function(value) {
+  return jspb.Message.setProto3IntField(this, 9, value);
+};
+
+
+/**
+ * optional string notes = 10;
  * @return {string}
  */
 proto.PendingInvoiceTransaction.prototype.getNotes = function() {
-  return /** @type {string} */ (jspb.Message.getFieldWithDefault(this, 9, ""));
+  return /** @type {string} */ (jspb.Message.getFieldWithDefault(this, 10, ""));
 };
 
 
@@ -491,16 +521,16 @@ proto.PendingInvoiceTransaction.prototype.getNotes = function() {
  * @return {!proto.PendingInvoiceTransaction} returns this
  */
 proto.PendingInvoiceTransaction.prototype.setNotes = function(value) {
-  return jspb.Message.setProto3StringField(this, 9, value);
+  return jspb.Message.setProto3StringField(this, 10, value);
 };
 
 
 /**
- * repeated string field_mask = 10;
+ * repeated string field_mask = 11;
  * @return {!Array<string>}
  */
 proto.PendingInvoiceTransaction.prototype.getFieldMaskList = function() {
-  return /** @type {!Array<string>} */ (jspb.Message.getRepeatedField(this, 10));
+  return /** @type {!Array<string>} */ (jspb.Message.getRepeatedField(this, 11));
 };
 
 
@@ -509,7 +539,7 @@ proto.PendingInvoiceTransaction.prototype.getFieldMaskList = function() {
  * @return {!proto.PendingInvoiceTransaction} returns this
  */
 proto.PendingInvoiceTransaction.prototype.setFieldMaskList = function(value) {
-  return jspb.Message.setField(this, 10, value || []);
+  return jspb.Message.setField(this, 11, value || []);
 };
 
 
@@ -519,7 +549,7 @@ proto.PendingInvoiceTransaction.prototype.setFieldMaskList = function(value) {
  * @return {!proto.PendingInvoiceTransaction} returns this
  */
 proto.PendingInvoiceTransaction.prototype.addFieldMask = function(value, opt_index) {
-  return jspb.Message.addToRepeatedField(this, 10, value, opt_index);
+  return jspb.Message.addToRepeatedField(this, 11, value, opt_index);
 };
 
 
@@ -533,11 +563,11 @@ proto.PendingInvoiceTransaction.prototype.clearFieldMaskList = function() {
 
 
 /**
- * optional int32 page_number = 11;
+ * optional int32 page_number = 12;
  * @return {number}
  */
 proto.PendingInvoiceTransaction.prototype.getPageNumber = function() {
-  return /** @type {number} */ (jspb.Message.getFieldWithDefault(this, 11, 0));
+  return /** @type {number} */ (jspb.Message.getFieldWithDefault(this, 12, 0));
 };
 
 
@@ -546,33 +576,15 @@ proto.PendingInvoiceTransaction.prototype.getPageNumber = function() {
  * @return {!proto.PendingInvoiceTransaction} returns this
  */
 proto.PendingInvoiceTransaction.prototype.setPageNumber = function(value) {
-  return jspb.Message.setProto3IntField(this, 11, value);
+  return jspb.Message.setProto3IntField(this, 12, value);
 };
 
 
 /**
- * optional string order_by = 12;
+ * optional string order_by = 13;
  * @return {string}
  */
 proto.PendingInvoiceTransaction.prototype.getOrderBy = function() {
-  return /** @type {string} */ (jspb.Message.getFieldWithDefault(this, 12, ""));
-};
-
-
-/**
- * @param {string} value
- * @return {!proto.PendingInvoiceTransaction} returns this
- */
-proto.PendingInvoiceTransaction.prototype.setOrderBy = function(value) {
-  return jspb.Message.setProto3StringField(this, 12, value);
-};
-
-
-/**
- * optional string order_dir = 13;
- * @return {string}
- */
-proto.PendingInvoiceTransaction.prototype.getOrderDir = function() {
   return /** @type {string} */ (jspb.Message.getFieldWithDefault(this, 13, ""));
 };
 
@@ -581,17 +593,35 @@ proto.PendingInvoiceTransaction.prototype.getOrderDir = function() {
  * @param {string} value
  * @return {!proto.PendingInvoiceTransaction} returns this
  */
-proto.PendingInvoiceTransaction.prototype.setOrderDir = function(value) {
+proto.PendingInvoiceTransaction.prototype.setOrderBy = function(value) {
   return jspb.Message.setProto3StringField(this, 13, value);
 };
 
 
 /**
- * optional bool without_limit = 14;
+ * optional string order_dir = 14;
+ * @return {string}
+ */
+proto.PendingInvoiceTransaction.prototype.getOrderDir = function() {
+  return /** @type {string} */ (jspb.Message.getFieldWithDefault(this, 14, ""));
+};
+
+
+/**
+ * @param {string} value
+ * @return {!proto.PendingInvoiceTransaction} returns this
+ */
+proto.PendingInvoiceTransaction.prototype.setOrderDir = function(value) {
+  return jspb.Message.setProto3StringField(this, 14, value);
+};
+
+
+/**
+ * optional bool without_limit = 15;
  * @return {boolean}
  */
 proto.PendingInvoiceTransaction.prototype.getWithoutLimit = function() {
-  return /** @type {boolean} */ (jspb.Message.getBooleanFieldWithDefault(this, 14, false));
+  return /** @type {boolean} */ (jspb.Message.getBooleanFieldWithDefault(this, 15, false));
 };
 
 
@@ -600,7 +630,7 @@ proto.PendingInvoiceTransaction.prototype.getWithoutLimit = function() {
  * @return {!proto.PendingInvoiceTransaction} returns this
  */
 proto.PendingInvoiceTransaction.prototype.setWithoutLimit = function(value) {
-  return jspb.Message.setProto3BooleanField(this, 14, value);
+  return jspb.Message.setProto3BooleanField(this, 15, value);
 };
 
 

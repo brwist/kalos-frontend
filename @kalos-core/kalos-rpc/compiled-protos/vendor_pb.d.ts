@@ -33,6 +33,9 @@ export class Vendor extends jspb.Message {
   getPageNumber(): number;
   setPageNumber(value: number): void;
 
+  getWithoutLimit(): boolean;
+  setWithoutLimit(value: boolean): void;
+
   getOrderBy(): string;
   setOrderBy(value: string): void;
 
@@ -60,6 +63,7 @@ export namespace Vendor {
     isActive: number,
     fieldMaskList: Array<string>,
     pageNumber: number,
+    withoutLimit: boolean,
     orderBy: string,
     orderDir: string,
   }

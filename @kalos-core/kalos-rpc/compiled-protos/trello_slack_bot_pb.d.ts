@@ -5,15 +5,55 @@ import * as jspb from "google-protobuf";
 import * as google_api_annotations_pb from "./google/api/annotations_pb";
 import * as common_pb from "./common_pb";
 import * as google_protobuf_any_pb from "google-protobuf/google/protobuf/any_pb";
+import * as google_api_httpbody_pb from "./google/api/httpbody_pb";
 
 export class Request extends jspb.Message {
   getMessage(): string;
   setMessage(value: string): void;
 
-  clearDetailsList(): void;
-  getDetailsList(): Array<google_protobuf_any_pb.Any>;
-  setDetailsList(value: Array<google_protobuf_any_pb.Any>): void;
-  addDetails(value?: google_protobuf_any_pb.Any, index?: number): google_protobuf_any_pb.Any;
+  hasDetails(): boolean;
+  clearDetails(): void;
+  getDetails(): google_api_httpbody_pb.HttpBody | undefined;
+  setDetails(value?: google_api_httpbody_pb.HttpBody): void;
+
+  getToken(): string;
+  setToken(value: string): void;
+
+  getTeamId(): string;
+  setTeamId(value: string): void;
+
+  getTeamDomain(): string;
+  setTeamDomain(value: string): void;
+
+  getEnterpriseId(): string;
+  setEnterpriseId(value: string): void;
+
+  getChannelId(): string;
+  setChannelId(value: string): void;
+
+  getChannelName(): string;
+  setChannelName(value: string): void;
+
+  getUserId(): string;
+  setUserId(value: string): void;
+
+  getUserName(): string;
+  setUserName(value: string): void;
+
+  getCommand(): string;
+  setCommand(value: string): void;
+
+  getText(): string;
+  setText(value: string): void;
+
+  getResponseUrl(): string;
+  setResponseUrl(value: string): void;
+
+  getTriggerId(): string;
+  setTriggerId(value: string): void;
+
+  getApiAppId(): string;
+  setApiAppId(value: string): void;
 
   serializeBinary(): Uint8Array;
   toObject(includeInstance?: boolean): Request.AsObject;
@@ -28,7 +68,20 @@ export class Request extends jspb.Message {
 export namespace Request {
   export type AsObject = {
     message: string,
-    detailsList: Array<google_protobuf_any_pb.Any.AsObject>,
+    details?: google_api_httpbody_pb.HttpBody.AsObject,
+    token: string,
+    teamId: string,
+    teamDomain: string,
+    enterpriseId: string,
+    channelId: string,
+    channelName: string,
+    userId: string,
+    userName: string,
+    command: string,
+    text: string,
+    responseUrl: string,
+    triggerId: string,
+    apiAppId: string,
   }
 }
 
