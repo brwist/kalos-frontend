@@ -106,8 +106,9 @@ proto.Vendor.toObject = function(includeInstance, msg) {
     isActive: jspb.Message.getFieldWithDefault(msg, 7, 0),
     fieldMaskList: (f = jspb.Message.getRepeatedField(msg, 8)) == null ? undefined : f,
     pageNumber: jspb.Message.getFieldWithDefault(msg, 9, 0),
-    orderBy: jspb.Message.getFieldWithDefault(msg, 10, ""),
-    orderDir: jspb.Message.getFieldWithDefault(msg, 11, "")
+    withoutLimit: jspb.Message.getBooleanFieldWithDefault(msg, 10, false),
+    orderBy: jspb.Message.getFieldWithDefault(msg, 11, ""),
+    orderDir: jspb.Message.getFieldWithDefault(msg, 12, "")
   };
 
   if (includeInstance) {
@@ -181,10 +182,14 @@ proto.Vendor.deserializeBinaryFromReader = function(msg, reader) {
       msg.setPageNumber(value);
       break;
     case 10:
+      var value = /** @type {boolean} */ (reader.readBool());
+      msg.setWithoutLimit(value);
+      break;
+    case 11:
       var value = /** @type {string} */ (reader.readString());
       msg.setOrderBy(value);
       break;
-    case 11:
+    case 12:
       var value = /** @type {string} */ (reader.readString());
       msg.setOrderDir(value);
       break;
@@ -280,17 +285,24 @@ proto.Vendor.serializeBinaryToWriter = function(message, writer) {
       f
     );
   }
+  f = message.getWithoutLimit();
+  if (f) {
+    writer.writeBool(
+      10,
+      f
+    );
+  }
   f = message.getOrderBy();
   if (f.length > 0) {
     writer.writeString(
-      10,
+      11,
       f
     );
   }
   f = message.getOrderDir();
   if (f.length > 0) {
     writer.writeString(
-      11,
+      12,
       f
     );
   }
@@ -479,28 +491,28 @@ proto.Vendor.prototype.setPageNumber = function(value) {
 
 
 /**
- * optional string order_by = 10;
+ * optional bool without_limit = 10;
+ * @return {boolean}
+ */
+proto.Vendor.prototype.getWithoutLimit = function() {
+  return /** @type {boolean} */ (jspb.Message.getBooleanFieldWithDefault(this, 10, false));
+};
+
+
+/**
+ * @param {boolean} value
+ * @return {!proto.Vendor} returns this
+ */
+proto.Vendor.prototype.setWithoutLimit = function(value) {
+  return jspb.Message.setProto3BooleanField(this, 10, value);
+};
+
+
+/**
+ * optional string order_by = 11;
  * @return {string}
  */
 proto.Vendor.prototype.getOrderBy = function() {
-  return /** @type {string} */ (jspb.Message.getFieldWithDefault(this, 10, ""));
-};
-
-
-/**
- * @param {string} value
- * @return {!proto.Vendor} returns this
- */
-proto.Vendor.prototype.setOrderBy = function(value) {
-  return jspb.Message.setProto3StringField(this, 10, value);
-};
-
-
-/**
- * optional string order_dir = 11;
- * @return {string}
- */
-proto.Vendor.prototype.getOrderDir = function() {
   return /** @type {string} */ (jspb.Message.getFieldWithDefault(this, 11, ""));
 };
 
@@ -509,8 +521,26 @@ proto.Vendor.prototype.getOrderDir = function() {
  * @param {string} value
  * @return {!proto.Vendor} returns this
  */
-proto.Vendor.prototype.setOrderDir = function(value) {
+proto.Vendor.prototype.setOrderBy = function(value) {
   return jspb.Message.setProto3StringField(this, 11, value);
+};
+
+
+/**
+ * optional string order_dir = 12;
+ * @return {string}
+ */
+proto.Vendor.prototype.getOrderDir = function() {
+  return /** @type {string} */ (jspb.Message.getFieldWithDefault(this, 12, ""));
+};
+
+
+/**
+ * @param {string} value
+ * @return {!proto.Vendor} returns this
+ */
+proto.Vendor.prototype.setOrderDir = function(value) {
+  return jspb.Message.setProto3StringField(this, 12, value);
 };
 
 

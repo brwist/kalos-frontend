@@ -22,6 +22,9 @@ export class PendingInvoiceTransaction extends jspb.Message {
   getDepartmentId(): number;
   setDepartmentId(value: number): void;
 
+  getEventId(): number;
+  setEventId(value: number): void;
+
   getIsCommitted(): number;
   setIsCommitted(value: number): void;
 
@@ -66,6 +69,7 @@ export namespace PendingInvoiceTransaction {
     amount: string,
     vendorId: number,
     departmentId: number,
+    eventId: number,
     isCommitted: number,
     isActive: number,
     notes: string,

@@ -761,7 +761,13 @@ export const Timesheet: FC<Props> = props => {
       </ConfirmServiceProvider>
       {receiptsIssue.shown && (
         <ReceiptsIssueDialog
-          isAdmin={user.getTimesheetAdministration() || isManager}
+          isAdmin={
+            user
+              .getPermissionGroupsList()
+              .find(pr => pr.getName() === 'Manager')
+              ? true
+              : false
+          }
           receiptsIssueStr={receiptsIssue.receiptsIssueStr}
           handleTimeout={handleTimeout}
         />
