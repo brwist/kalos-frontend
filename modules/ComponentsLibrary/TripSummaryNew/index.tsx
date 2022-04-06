@@ -940,20 +940,11 @@ export const TripSummaryNew: FC<Props> = ({
                   },
                   {
                     value:
-                      currentTrip.getHomeTravel() === false
-                        ? currentTrip.getDistanceInMiles().toFixed(1) +
-                          ' / ' +
-                          perDiemTripMilesToUsd(
-                            Number(currentTrip.getDistanceInMiles()),
-                          )
-                        : currentTrip.getHomeTravel() == true &&
-                          currentTrip.getDistanceInMiles() > 30
-                        ? (currentTrip.getDistanceInMiles() - 30).toFixed(1) +
-                          ' / ' +
-                          perDiemTripMilesToUsd(
-                            Number(currentTrip.getDistanceInMiles() - 30),
-                          )
-                        : ' Home Travel Adjustment Equated to 0.00/$0.00',
+                      currentTrip.getDistanceInMiles().toFixed(1) +
+                      ' / ' +
+                      perDiemTripMilesToUsd(
+                        Number(currentTrip.getDistanceInMiles()),
+                      ),
                   },
                   {
                     value: currentTrip.getApproved() ? 'Yes' : 'No',

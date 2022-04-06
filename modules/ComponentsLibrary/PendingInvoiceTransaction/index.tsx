@@ -42,6 +42,7 @@ type InvoiceTransaction = {
   departmentId: number;
   selected: number;
   id: number;
+  jobNumber: number;
   duplicateFlag: boolean;
 };
 const initialState: State = {
@@ -157,6 +158,7 @@ export const reducer = (state: State, action: Action) => {
         req.setVendorId(action.data.vendorId);
         req.setNotes(action.data.notes);
         req.setDepartmentId(action.data.departmentId);
+        req.setEventId(action.data.jobNumber);
         req.setTimestamp(action.data.date);
         req.setFieldMaskList([
           'Amount',
@@ -299,7 +301,7 @@ export const PendingInvoiceTransactionComponent: FC<Props> = ({
       dispatch({ type: ACTIONS.SET_ERROR, data: '' });
       dispatch({ type: ACTIONS.SET_COLUMN_DROPDOWN_ASSIGNMENT, data: [] });
       const columnList: Columns = [];
-      const mappedList = [];
+      let mappedList: Assignment[] = [];
       let recordCount = 0;
       let data: string[][] = [];
       try {
@@ -317,6 +319,7 @@ export const PendingInvoiceTransactionComponent: FC<Props> = ({
         });
         if (convertedData.length > 0) {
           const header = convertedData[0];
+          mappedList = [{ columnIndex: 0, dropDownValue: 1 }];
 
           for (let i = 0; i < header.length; i++) {
             const column = { name: header[i] };
@@ -393,6 +396,7 @@ export const PendingInvoiceTransactionComponent: FC<Props> = ({
         date: el.getTimestamp(),
         selected: state.currentToggle,
         duplicateFlag: false,
+        jobNumber: 0,
       };
       mappedEntries.push(mappedResult);
     }
@@ -482,7 +486,9 @@ export const PendingInvoiceTransactionComponent: FC<Props> = ({
       txn.setDepartmentId(entry.departmentId);
       txn.setTimestamp(entry.date);
       txn.setNotes(entry.notes);
+      txn.setJobId(entry.jobNumber);
       txn.setOwnerId(loggedUserId);
+      txn.setJobId(entry.jobNumber);
       txn.setInvoiceNumber(entry.invoiceNumber);
       txn.setOrderNumber(entry.invoiceNumber);
       txn.setStatusId(2);
@@ -536,9 +542,7 @@ export const PendingInvoiceTransactionComponent: FC<Props> = ({
       type: ACTIONS.SET_LOADING,
       data: true,
     });
-    const notesField = state.columnDropDownAssignment.find(
-      el => el.dropDownValue == 4,
-    );
+
     const invoiceNumberField = state.columnDropDownAssignment.find(
       el => el.dropDownValue == 1,
     );
@@ -547,6 +551,9 @@ export const PendingInvoiceTransactionComponent: FC<Props> = ({
     );
     const dateField = state.columnDropDownAssignment.find(
       el => el.dropDownValue == 3,
+    );
+    const notesField = state.columnDropDownAssignment.find(
+      el => el.dropDownValue == 4,
     );
     for (let i = 1; i < data.length; i++) {
       const req = new PendingInvoiceTransaction();
@@ -583,6 +590,9 @@ export const PendingInvoiceTransactionComponent: FC<Props> = ({
           });
           return;
         }
+      }
+      if (!dateField) {
+        req.setTimestamp(format(new Date(), 'yyyy-MM-dd hh:mm:ss'));
       }
       if (amountField) {
         let transcribeAmount = 0;
@@ -721,6 +731,10 @@ export const PendingInvoiceTransactionComponent: FC<Props> = ({
       {
         name: 'departmentId',
         type: 'department',
+      },
+      {
+        name: 'jobNumber',
+        type: 'eventId',
       },
       {
         name: 'selected',
@@ -928,6 +942,7 @@ export const PendingInvoiceTransactionComponent: FC<Props> = ({
                       { name: 'Notes' },
                       { name: 'Vendor' },
                       { name: 'Department' },
+                      { name: 'Job Number' },
                       { name: 'Select' },
                     ]}
                   />
