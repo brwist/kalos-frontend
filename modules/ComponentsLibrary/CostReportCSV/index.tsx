@@ -1,11 +1,7 @@
 import { NULL_TIME } from '../../../@kalos-core/kalos-rpc/constants';
 import { TimesheetLine } from '../../../@kalos-core/kalos-rpc/TimesheetLine';
 import React, { FC, useCallback, useEffect, useState, useReducer } from 'react';
-import {
-  IRS_SUGGESTED_MILE_FACTOR,
-  MEALS_RATE,
-  ENDPOINT,
-} from '../../../constants';
+import { IRS_SUGGESTED_MILE_FACTOR, ENDPOINT } from '../../../constants';
 import {
   formatDate,
   usd,
@@ -392,11 +388,8 @@ export const CostReportCSV: FC<Props> = ({ serviceCallId, onClose }) => {
       let allTripsTotal = 0;
       trips.forEach(trip => {
         // Subtracting 30 miles flat from trip distance in accordance
-        // with reimbursement from home rule
-        allTripsTotal +=
-          trip.getDistanceInMiles() > 30 && trip.getHomeTravel()
-            ? (trip.getDistanceInMiles() - 30) * IRS_SUGGESTED_MILE_FACTOR
-            : trip.getDistanceInMiles() * IRS_SUGGESTED_MILE_FACTOR;
+
+        allTripsTotal += trip.getDistanceInMiles() * IRS_SUGGESTED_MILE_FACTOR;
       });
       let costCenterTemp: { [key: string]: number } = {};
       for (let i = 0; i < transactions.length; i++) {
@@ -511,9 +504,10 @@ export const CostReportCSV: FC<Props> = ({ serviceCallId, onClose }) => {
     });
   }, [serviceCallId, state.laborTotals, sortTransactions]);
   const createReport = (section: string) => {
-    const totalMeals =
-      state.perDiems.reduce((aggr, pd) => aggr + pd.getRowsList().length, 0) *
-      MEALS_RATE;
+    const totalMeals = state.perDiems.reduce(
+      (aggr, pd) => aggr + pd.getAmountProcessedMeals(),
+      0,
+    );
     const totalLodging = state.perDiems.reduce(
       (aggr, pd) => aggr + pd.getAmountProcessedLodging(),
       0,
@@ -632,7 +626,10 @@ export const CostReportCSV: FC<Props> = ({ serviceCallId, onClose }) => {
       for (let i = 0; i < state.perDiems.length; i++) {
         let t = state.perDiems[i];
         const rowsList = t.getRowsList();
-        const totalMeals = MEALS_RATE * rowsList.length;
+        const totalMeals = state.perDiems.reduce(
+          (aggr, pd) => aggr + pd.getAmountProcessedMeals(),
+          0,
+        );
         const totalLodging = state.perDiems.reduce(
           (aggr, pd) => aggr + pd.getAmountProcessedLodging(),
           0,
@@ -681,18 +678,9 @@ export const CostReportCSV: FC<Props> = ({ serviceCallId, onClose }) => {
           (t.getHomeTravel() == true ? 'Yes' : 'No') +
           ',' +
           usd(
-            t.getDistanceInMiles() > 30 && t.getHomeTravel()
-              ? Number(
-                  (
-                    (t.getDistanceInMiles() - 30) *
-                    IRS_SUGGESTED_MILE_FACTOR
-                  ).toFixed(2),
-                )
-              : Number(
-                  (t.getDistanceInMiles() * IRS_SUGGESTED_MILE_FACTOR).toFixed(
-                    2,
-                  ),
-                ),
+            Number(
+              (t.getDistanceInMiles() * IRS_SUGGESTED_MILE_FACTOR).toFixed(2),
+            ),
           ) +
           ',' +
           t.getNotes().replace(re, '') +
@@ -764,9 +752,10 @@ export const CostReportCSV: FC<Props> = ({ serviceCallId, onClose }) => {
       laborCostArray.push(value);
     }
   });
-  const totalMeals =
-    state.perDiems.reduce((aggr, pd) => aggr + pd.getRowsList().length, 0) *
-    MEALS_RATE;
+  const totalMeals = state.perDiems.reduce(
+    (aggr, pd) => aggr + pd.getAmountProcessedMeals(),
+    0,
+  );
   const totalLodging = state.perDiems.reduce(
     (aggr, pd) => aggr + pd.getAmountProcessedLodging(),
     0,
@@ -1008,7 +997,7 @@ export const CostReportCSV: FC<Props> = ({ serviceCallId, onClose }) => {
               let lodgingRows = rowsList.filter(
                 row => row.getMealsOnly() == false,
               );
-              const totalMeals = MEALS_RATE * rowsList.length;
+              const totalMeals = pd.getAmountProcessedMeals();
               const totalLodging = pd.getAmountProcessedLodging();
               if (totalMeals == 0 && totalLodging == 0) {
                 return null; // Don't show it
@@ -1143,7 +1132,9 @@ export const CostReportCSV: FC<Props> = ({ serviceCallId, onClose }) => {
                           formatDate(pdr.getDateString()),
                           pdr.getZipCode(),
                           pdr.getMealsOnly() ? 'Yes' : 'No',
-                          usd(MEALS_RATE),
+                          usd(
+                            pd.getAmountProcessedMeals() / lodgingRows.length,
+                          ),
                           pdr.getMealsOnly() === false
                             ? usd(
                                 pd.getAmountProcessedLodging() /
@@ -1295,24 +1286,13 @@ export const CostReportCSV: FC<Props> = ({ serviceCallId, onClose }) => {
                         trip.getNotes(),
                         trip.getHomeTravel(),
                         `${usd(
-                          trip.getDistanceInMiles() > 30 && trip.getHomeTravel()
-                            ? Number(
-                                (
-                                  (trip.getDistanceInMiles() - 30) *
-                                  IRS_SUGGESTED_MILE_FACTOR
-                                ).toFixed(2),
-                              )
-                            : Number(
-                                (
-                                  trip.getDistanceInMiles() *
-                                  IRS_SUGGESTED_MILE_FACTOR
-                                ).toFixed(2),
-                              ),
-                        )} ${
-                          trip.getDistanceInMiles() > 30 && trip.getHomeTravel()
-                            ? '(30 miles docked for home travel)'
-                            : ''
-                        }`,
+                          Number(
+                            (
+                              trip.getDistanceInMiles() *
+                              IRS_SUGGESTED_MILE_FACTOR
+                            ).toFixed(2),
+                          ),
+                        )}`,
                         trip.getPerDiemRowId(),
                       ],
                     ]}
@@ -1831,7 +1811,7 @@ export const CostReportCSV: FC<Props> = ({ serviceCallId, onClose }) => {
                           const lodgingRows = rowsList.filter(
                             row => row.getMealsOnly() == false,
                           );
-                          const totalMeals = MEALS_RATE * rowsList.length;
+                          const totalMeals = pd.getAmountProcessedMeals();
                           const totalLodging = pd.getAmountProcessedLodging();
                           return (
                             <div key={pd.getId().toString() + 'div'}>
@@ -1991,7 +1971,12 @@ export const CostReportCSV: FC<Props> = ({ serviceCallId, onClose }) => {
                                           ? 'Yes'
                                           : 'No',
                                       },
-                                      { value: usd(MEALS_RATE) },
+                                      {
+                                        value: usd(
+                                          pd.getAmountProcessedMeals() /
+                                            rowsList.length,
+                                        ),
+                                      },
                                       {
                                         value:
                                           pdr.getMealsOnly() === false
@@ -2259,27 +2244,14 @@ export const CostReportCSV: FC<Props> = ({ serviceCallId, onClose }) => {
                                   { value: trip.getHomeTravel() },
                                   {
                                     value: `${usd(
-                                      trip.getDistanceInMiles() > 30 &&
-                                        trip.getHomeTravel()
-                                        ? Number(
-                                            (
-                                              (trip.getDistanceInMiles() - 30) *
-                                              IRS_SUGGESTED_MILE_FACTOR
-                                            ).toFixed(2),
-                                          )
-                                        : Number(
-                                            (
-                                              trip.getDistanceInMiles() *
-                                              IRS_SUGGESTED_MILE_FACTOR
-                                            ).toFixed(2),
-                                          ),
+                                      Number(
+                                        (
+                                          trip.getDistanceInMiles() *
+                                          IRS_SUGGESTED_MILE_FACTOR
+                                        ).toFixed(2),
+                                      ),
                                     )} 
-                          ${
-                            trip.getDistanceInMiles() > 30 &&
-                            trip.getHomeTravel()
-                              ? '(30 miles docked for home travel)'
-                              : ''
-                          }`,
+                          ${''}`,
                                   },
                                   { value: trip.getPerDiemRowId() },
                                 ],

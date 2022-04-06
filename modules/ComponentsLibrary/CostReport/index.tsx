@@ -112,10 +112,7 @@ export const CostReport: FC<Props> = ({ serviceCallId }) => {
     allTrips.forEach(trip => {
       // Subtracting 30 miles flat from trip distance in accordance
       // with reimbursement from home rule
-      allTripsTotal +=
-        trip.getDistanceInMiles() > 30 && trip.getHomeTravel()
-          ? (trip.getDistanceInMiles() - 30) * IRS_SUGGESTED_MILE_FACTOR
-          : trip.getDistanceInMiles() * IRS_SUGGESTED_MILE_FACTOR;
+      allTripsTotal += trip.getDistanceInMiles() * IRS_SUGGESTED_MILE_FACTOR;
     });
 
     setTripsTotal(allTripsTotal);
@@ -123,9 +120,11 @@ export const CostReport: FC<Props> = ({ serviceCallId }) => {
     setPerDiems(arr);
   }, [serviceCallId, setPerDiems, setLodgings]);
 
-  const totalMeals =
-    perDiems.reduce((aggr, pd) => aggr + pd.getRowsList().length, 0) *
-    MEALS_RATE;
+  const totalMeals = perDiems.reduce(
+    (aggr, pd) => aggr + pd.getRowsList().length,
+    0,
+  );
+
   const totalLodging = perDiems
     .reduce((aggr, pd) => [...aggr, ...pd.getRowsList()], [] as PerDiemRow[])
     .filter(pd => !pd.getMealsOnly())
@@ -685,19 +684,11 @@ export const CostReport: FC<Props> = ({ serviceCallId }) => {
                     trip.getNotes(),
                     trip.getHomeTravel(),
                     `${usd(
-                      trip.getDistanceInMiles() > 30 && trip.getHomeTravel()
-                        ? Number(
-                            (
-                              (trip.getDistanceInMiles() - 30) *
-                              IRS_SUGGESTED_MILE_FACTOR
-                            ).toFixed(2),
-                          )
-                        : Number(
-                            (
-                              trip.getDistanceInMiles() *
-                              IRS_SUGGESTED_MILE_FACTOR
-                            ).toFixed(2),
-                          ),
+                      Number(
+                        (
+                          trip.getDistanceInMiles() * IRS_SUGGESTED_MILE_FACTOR
+                        ).toFixed(2),
+                      ),
                     )} ${
                       trip.getDistanceInMiles() > 30 && trip.getHomeTravel()
                         ? '(30 miles docked for home travel)'
