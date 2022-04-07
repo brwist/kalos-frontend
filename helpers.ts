@@ -39,7 +39,7 @@ import { StoredQuoteClient } from './@kalos-core/kalos-rpc/StoredQuote';
 import { QuotePartClient } from './@kalos-core/kalos-rpc/QuotePart';
 import { QuoteLinePartClient } from './@kalos-core/kalos-rpc/QuoteLinePart';
 import { QuoteLineClient } from './@kalos-core/kalos-rpc/QuoteLine';
-import { PerDiemClient } from './@kalos-core/kalos-rpc/PerDiem';
+import { PerDiemClient, PerDiemRow } from './@kalos-core/kalos-rpc/PerDiem';
 import { MapClient } from './@kalos-core/kalos-rpc/Maps';
 import { Trip } from './@kalos-core/kalos-rpc/compiled-protos/perdiem_pb';
 import { TimesheetDepartmentClient } from './@kalos-core/kalos-rpc/TimesheetDepartment';
@@ -241,6 +241,32 @@ async function slackNotify(id: string, text: string) {
       method: 'POST',
     },
   );
+}
+export function checkPerDiemRowIsEarliestOrLatest(
+  rows: PerDiemRow[],
+  pdr: PerDiemRow,
+) {
+  console.log('we been c alled');
+  console.log(rows);
+  if (rows.length <= 2) {
+    console.log('2 days or less');
+
+    return true;
+  }
+  const sorted = rows.sort((a, b) => {
+    const dateA = new Date(a.getDateString().split(' ')[0]);
+    const dateB = new Date(b.getDateString().split(' ')[0]);
+    return dateA.valueOf() - dateB.valueOf();
+  });
+  console.log('our sorted results', sorted);
+  if (
+    sorted[0].getDateString() === pdr.getDateString() ||
+    sorted[sorted.length - 1].getDateString() == pdr.getDateString()
+  ) {
+    return true;
+  } else {
+    return false;
+  }
 }
 
 async function getSlackList(skipCache = false): Promise<SlackUser[]> {

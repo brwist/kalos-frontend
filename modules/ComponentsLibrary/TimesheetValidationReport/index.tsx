@@ -128,6 +128,8 @@ export const TimesheetValidationReport: FC<Props> = ({
     timesheetReq.setDateRangeList(['>=', form.dateStarted, '<', tempDate]);
     timesheetReq.setNotEqualsList(['AdminApprovalUserId']);
     timesheetReq.setAdminApprovalUserId(0);
+    timesheetReq.setPayrollProcessed(true);
+    timesheetReq.addNotEquals('PayrollProcessed');
     const results = await TimesheetLineClientService.BatchGet(timesheetReq);
     setEntries(results.getResultsList());
     setCount(results.getTotalCount());
@@ -161,6 +163,8 @@ export const TimesheetValidationReport: FC<Props> = ({
     timesheetReq.setDateRangeList(['>=', form.dateStarted, '<', tempDate]);
     timesheetReq.setNotEqualsList(['AdminApprovalUserId']);
     timesheetReq.setAdminApprovalUserId(0);
+    timesheetReq.setPayrollProcessed(true);
+    timesheetReq.addNotEquals('PayrollProcessed');
     const results = await TimesheetLineClientService.BatchGet(timesheetReq);
     setPrintEntries(results.getResultsList());
   }, [setPrintEntries, form]);
@@ -204,6 +208,8 @@ export const TimesheetValidationReport: FC<Props> = ({
     timesheetReq.setDateRangeList(['>=', form.dateStarted, '<', tempDate]);
     timesheetReq.setNotEqualsList(['AdminApprovalUserId']);
     timesheetReq.setAdminApprovalUserId(0);
+    timesheetReq.setPayrollProcessed(true);
+    timesheetReq.addNotEquals('PayrollProcessed');
     setLoading(true);
 
     const results = await TimesheetLineClientService.BatchGet(timesheetReq);

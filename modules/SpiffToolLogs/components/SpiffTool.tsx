@@ -185,13 +185,21 @@ export const SpiffTool: FC<Props> = ({
     if (tempDepartments) {
       setDepartments(tempDepartments);
     }
-
+    if (
+      loggedUserId != ownerId &&
+      tempRole?.getName() != 'Manager' &&
+      tempRole?.getName() != 'Payroll'
+    ) {
+      setShowAlert(true);
+      return;
+    }
     setLoggedInUser(loggedInUser);
     setSearchFormKey(searchFormKey + 1);
   }, [
     loggedUserId,
     setLoggedInUser,
     searchFormKey,
+    ownerId,
     setSearchFormKey,
     loggedInUser,
   ]);
@@ -641,26 +649,22 @@ export const SpiffTool: FC<Props> = ({
     () => setUnlinkedSpiffJobNumber(''),
     [setUnlinkedSpiffJobNumber],
   );
-  const isAdmin = userRole == 'Manager' || userRole == 'Payroll';
   useEffect(() => {
-    if (loggedUserId != ownerId && !isAdmin) {
-      setLoaded(true);
-      setShowAlert(true);
-      return;
-    }
     if (!loaded) {
       setLoaded(true);
       loadLoggedInUser();
       load();
     }
-    if (isAdmin && !loadedTechnicians) {
+    if (
+      (userRole == 'Manager' || userRole == 'Payroll') &&
+      !loadedTechnicians
+    ) {
       setLoadedTechnicians(true);
       loadUserTechnicians();
     }
   }, [
     loaded,
     setLoaded,
-    isAdmin,
     loggedUserId,
     ownerId,
     loadedTechnicians,
@@ -824,13 +828,13 @@ export const SpiffTool: FC<Props> = ({
     } else {
       newTask.setToolpurchaseDate(timestamp());
     }
-    if (!isAdmin && ownerId) {
+    if (!userRole && ownerId) {
       newTask.setExternalId(ownerId);
     } else {
       newTask.setExternalId(loggedUserId);
     }
     return newTask;
-  }, [type, SPIFF_TYPES_OPTIONS, isAdmin, ownerId, loggedUserId]);
+  }, [type, SPIFF_TYPES_OPTIONS, userRole, ownerId, loggedUserId]);
 
   const data: Data = loading
     ? makeFakeRows(type === 'Spiff' ? 9 : 7, 3)
@@ -845,7 +849,7 @@ export const SpiffTool: FC<Props> = ({
           </Link>
         );
         let actions =
-          isAdmin && !disableActions
+          userRole && !disableActions
             ? [
                 needsManagerAction ? (
                   <IconButton
@@ -969,7 +973,7 @@ export const SpiffTool: FC<Props> = ({
               ]
             : []),
           {
-            value: isAdmin ? technicianValue : entry.getOwnerName(),
+            value: userRole ? technicianValue : entry.getOwnerName(),
             onClick: disableActions
               ? undefined
               : handleSetExtendedEditing(entry),

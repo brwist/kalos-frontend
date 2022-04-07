@@ -31,7 +31,7 @@ type Assignment = {
   columnIndex: number;
 };
 export interface Props {
-  loggedUserId: number;
+  userId: number;
 }
 type InvoiceTransaction = {
   amount: number;
@@ -149,7 +149,9 @@ export const reducer = (state: State, action: Action) => {
     case ACTIONS.UPDATE_SINGLE_ENTRY: {
       const entries = state.currentPageEntries;
       const entryIndex = entries.findIndex(el => el.id == action.data.id);
+
       if (entryIndex != -1) {
+        console.log('we update job number', action.data.jobNumber);
         entries[entryIndex] = action.data;
         const req = new PendingInvoiceTransaction();
         req.setAmount(action.data.amount.toString());
@@ -167,6 +169,7 @@ export const reducer = (state: State, action: Action) => {
           'DepartmentId',
           'Notes',
           'Timestamp',
+          'EventId',
         ]);
         PendingInvoiceTransactionClientService.Update(req);
       }
@@ -290,9 +293,7 @@ export const reducer = (state: State, action: Action) => {
   }
 };
 
-export const PendingInvoiceTransactionComponent: FC<Props> = ({
-  loggedUserId,
-}) => {
+export const PendingInvoiceTransactionComponent: FC<Props> = ({ userId }) => {
   const [state, dispatch] = useReducer(reducer, initialState);
 
   const handleFileLoad = useCallback(
@@ -368,6 +369,7 @@ export const PendingInvoiceTransactionComponent: FC<Props> = ({
   const loadInit = useCallback(async () => {
     const vendorReq = new Vendor();
     vendorReq.setIsActive(1);
+    vendorReq.setWithoutLimit(true);
     const vendors = await VendorClientService.BatchGet(vendorReq);
     dispatch({ type: ACTIONS.SET_VENDORS, data: vendors.getResultsList() });
   }, []);
@@ -396,7 +398,7 @@ export const PendingInvoiceTransactionComponent: FC<Props> = ({
         date: el.getTimestamp(),
         selected: state.currentToggle,
         duplicateFlag: false,
-        jobNumber: 0,
+        jobNumber: el.getEventId(),
       };
       mappedEntries.push(mappedResult);
     }
@@ -422,8 +424,9 @@ export const PendingInvoiceTransactionComponent: FC<Props> = ({
     if (!state.loadedInit) {
       dispatch({ type: ACTIONS.SET_LOADED_INIT, data: true });
       loadInit();
+      console.log(userId);
     }
-  }, [state.loaded, loadInit, state.loadedInit, load]);
+  }, [state.loaded, loadInit, userId, state.loadedInit, load]);
 
   const handleToggleSelectAll = () => {
     let toggleValue = state.currentToggle == 0 ? 1 : 0;
@@ -486,8 +489,7 @@ export const PendingInvoiceTransactionComponent: FC<Props> = ({
       txn.setDepartmentId(entry.departmentId);
       txn.setTimestamp(entry.date);
       txn.setNotes(entry.notes);
-      txn.setJobId(entry.jobNumber);
-      txn.setOwnerId(loggedUserId);
+      txn.setOwnerId(userId);
       txn.setJobId(entry.jobNumber);
       txn.setInvoiceNumber(entry.invoiceNumber);
       txn.setOrderNumber(entry.invoiceNumber);
