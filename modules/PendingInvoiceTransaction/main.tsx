@@ -10,6 +10,6 @@ export const PendingInvoiceTransaction: FC<Props & PageWrapperProps> = ({
   userID,
 }) => (
   <PageWrapper userID={userID} withHeader>
-    <PendingInvoiceTransactionComponent loggedUserId={userID} />
+    <PendingInvoiceTransactionComponent userId={userID} />
   </PageWrapper>
 );

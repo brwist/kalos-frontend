@@ -32,6 +32,7 @@ import {
   TimesheetDepartmentClientService,
   makeSafeFormObject,
   TimesheetLineClientService,
+  checkPerDiemRowIsEarliestOrLatest,
 } from '../../../helpers';
 import { User } from '../../../@kalos-core/kalos-rpc/User';
 import { JOB_STATUS_COLORS, MEALS_RATE, OPTION_ALL } from '../../../constants';
@@ -965,7 +966,17 @@ export const PerDiemComponent: FC<Props> = ({
                               {govPerDiems[entry.getZipCode()] && (
                                 <div className="PerDiemRow">
                                   <strong>Meals: </strong>
-                                  {usd(govPerDiems[entry.getZipCode()].meals)}
+                                  {checkPerDiemRowIsEarliestOrLatest(
+                                    allRowsList,
+                                    entry,
+                                  )
+                                    ? usd(
+                                        govPerDiems[entry.getZipCode()].meals *
+                                          0.75,
+                                      )
+                                    : usd(
+                                        govPerDiems[entry.getZipCode()].meals,
+                                      )}
                                 </div>
                               )}
                               {(govPerDiems[entry.getZipCode()] ||

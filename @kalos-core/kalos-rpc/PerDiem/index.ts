@@ -790,7 +790,7 @@ class PerDiemClient extends BaseClient {
       } = await (await fetch(endpoint)).json();
       return {
         [zipCode]: {
-          meals: MEALS_RATE,
+          meals: meals,
           lodging: months.month[month - 1].value,
         },
       };
