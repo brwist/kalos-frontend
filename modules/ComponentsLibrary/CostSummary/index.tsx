@@ -37,6 +37,7 @@ import {
   timestamp,
   SpiffToolAdminActionClientService,
   makeFakeRows,
+  checkPerDiemRowIsEarliestOrLatest,
 } from '../../../helpers';
 import { reducer } from './reducer';
 import { NULL_TIME_VALUE } from '../Timesheet/constants';
@@ -119,15 +120,8 @@ export const CostSummary: FC<Props> = ({
     setTrips(tempTripList);
     let distanceSubtotal = 0;
     for (let j = 0; j < tempTripList.length; j++) {
-      if (tempTripList[j].getHomeTravel()) {
-        if (tempTripList[j].getDistanceInMiles() < 30) {
-          distanceSubtotal += 0;
-        } else {
-          distanceSubtotal += tempTripList[j].getDistanceInMiles() - 30;
-        }
-      } else {
-        distanceSubtotal += tempTripList[j].getDistanceInMiles();
-      }
+      distanceSubtotal += tempTripList[j].getDistanceInMiles();
+
       if (tempTripList[j].getPayrollProcessed() === false) {
         processed = false;
       }
@@ -151,17 +145,7 @@ export const CostSummary: FC<Props> = ({
     ).getResultsList();
     let distanceSubtotal = 0;
     for (let j = 0; j < tempTripList.length; j++) {
-      if (tempTripList[j].getHomeTravel()) {
-        if (tempTripList[j].getDistanceInMiles() < 30) {
-          distanceSubtotal += 0;
-        } else {
-          tempTripList[j].setDistanceInMiles(
-            (distanceSubtotal += tempTripList[j].getDistanceInMiles() - 30),
-          );
-        }
-      } else {
-        distanceSubtotal += tempTripList[j].getDistanceInMiles();
-      }
+      distanceSubtotal += tempTripList[j].getDistanceInMiles();
       if (tempTripList[j].getPayrollProcessed() === false) {
         processed = false;
       }
@@ -214,14 +198,37 @@ export const CostSummary: FC<Props> = ({
         lodging: 0,
       };
     }
+    const uniqueWeekList: string[] = [];
+    for (let l = 0; l < resultsList.length; l++) {
+      if (uniqueWeekList.find(el => el === resultsList[l].getDateStarted())) {
+        console.log('do not add week to week list');
+      } else {
+        uniqueWeekList.push(resultsList[l].getDateStarted());
+      }
+    }
+
     let allRowsList = filteredPerDiems.reduce(
       (aggr, pd) => [...aggr, ...pd.getRowsList()],
       [] as PerDiemRow[],
     );
-    let totalMeals = allRowsList.reduce(
-      (aggr, pdr) => aggr + govPerDiemByZipCode(pdr.getZipCode()).meals,
-      0,
-    );
+    let totalMeals = 0;
+    for (let j = 0; j < uniqueWeekList.length; j++) {
+      let week = uniqueWeekList[j];
+      let allMealsRowsList = filteredPerDiems
+        .filter(el => el.getDateStarted() == week)
+        .reduce(
+          (aggr, pd) => [...aggr, ...pd.getRowsList()],
+          [] as PerDiemRow[],
+        );
+      for (let i = 0; i < allMealsRowsList.length; i++) {
+        const pdr = allMealsRowsList[i];
+        if (checkPerDiemRowIsEarliestOrLatest(allMealsRowsList, pdr)) {
+          totalMeals += govPerDiemByZipCode(pdr.getZipCode()).meals * 0.75;
+        } else {
+          totalMeals += govPerDiemByZipCode(pdr.getZipCode()).meals;
+        }
+      }
+    }
     let totalLodging = allRowsList.reduce(
       (aggr, pdr) =>
         aggr +
@@ -251,64 +258,30 @@ export const CostSummary: FC<Props> = ({
       await PerDiemClientService.BatchGet(perDiemReq)
     ).getResultsList();
 
-    //get PerDiems, set them
-    const year = +format(startDay, 'yyyy');
-    const month = +format(startDay, 'M');
-    const zipCodesList = [];
-    for (let i = 0; i < resultsList.length; i++) {
-      let zipCodes = [resultsList[i]]
-        .reduce(
-          (aggr, pd) => [...aggr, ...pd.getRowsList()],
-          [] as PerDiemRow[],
-        )
-        .map(pdr => pdr.getZipCode());
-      for (let j = 0; j < zipCodes.length; j++) {
-        zipCodesList.push(zipCodes[j]);
-      }
-    }
-    const govPerDiemsTemp = await PerDiemClientService.loadGovPerDiem(
-      zipCodesList,
-      year,
-      month,
+    let filteredPerDiems = resultsList.filter(
+      el => el.getPayrollProcessed() == true,
     );
 
-    let filteredPerDiems = resultsList;
-    function govPerDiemByZipCode(zipCode: string) {
-      const govPerDiem = govPerDiemsTemp[zipCode];
-      if (govPerDiem) return govPerDiem;
-      return {
-        meals: MEALS_RATE,
-        lodging: 0,
-      };
-    }
-    const processed = 1;
-    let allRowsList = filteredPerDiems.reduce(
-      (aggr: PerDiemRow[], pd) => [...aggr, ...pd.getRowsList()],
-      [],
-    );
-    let totalMeals = allRowsList.reduce(
-      (aggr, pdr) => aggr + govPerDiemByZipCode(pdr.getZipCode()).meals,
+    let totalMeals = filteredPerDiems.reduce(
+      (aggr, pdr) => aggr + pdr.getAmountProcessedMeals(),
       0,
     );
-    let totalLodging = allRowsList.reduce(
-      (aggr, pdr) =>
-        aggr +
-        (pdr.getMealsOnly()
-          ? 0
-          : govPerDiemByZipCode(pdr.getZipCode()).lodging),
+    let totalLodging = filteredPerDiems.reduce(
+      (aggr, pdr) => aggr + pdr.getAmountProcessedLodging(),
       0,
     );
+
     let totalMileage = 0;
 
     const totals = {
       totalMeals,
       totalLodging,
       totalMileage,
-      processed: processed,
+      processed: 1,
     };
 
     return totals;
-  }, [startDay, userId]);
+  }, [userId]);
   const getSpiffToolTotals = useCallback(
     async (spiffType: string, dateType = 'Weekly') => {
       const req = new Task();
@@ -541,13 +514,28 @@ export const CostSummary: FC<Props> = ({
     tempTrips.totalDistance = 0;
     tempPerDiem.totalLodging = 0;
     tempPerDiem.totalMeals = 0;
+    let allRowsList = perDiems.reduce(
+      (aggr: PerDiemRow[], pd) => [...aggr, ...pd.getRowsList()],
+      [],
+    );
+    let perDiemRowsAtStartOrEnd: PerDiemRow[] = [];
+    allRowsList.map(pdr => {
+      if (checkPerDiemRowIsEarliestOrLatest(allRowsList, pdr)) {
+        perDiemRowsAtStartOrEnd.push(pdr);
+      }
+    });
+
     for (let i = 0; i < perDiems.length; i++) {
-      let totalMeals = perDiems[i]
-        .getRowsList()
-        .reduce(
-          (aggr, pdr) => aggr + govPerDiemByZipCode(pdr.getZipCode()).meals,
-          0,
-        );
+      let totalMeals = 0;
+      for (let j = 0; j < perDiems[i].getRowsList().length; j++) {
+        let row = perDiems[i].getRowsList()[j];
+        if (perDiemRowsAtStartOrEnd.find(el => el.getId() == row.getId())) {
+          totalMeals += govPerDiemByZipCode(row.getZipCode()).meals * 0.75;
+        } else {
+          totalMeals += govPerDiemByZipCode(row.getZipCode()).meals;
+        }
+      }
+
       let totalLodging = perDiems[i]
         .getRowsList()
         .reduce(

@@ -27,16 +27,12 @@ import {
   usd,
   timestamp,
 } from '../../../../helpers';
-import {
-  NULL_TIME,
-  OPTION_ALL,
-  ROWS_PER_PAGE,
-  MEALS_RATE,
-} from '../../../../constants';
+import { NULL_TIME, OPTION_ALL, ROWS_PER_PAGE } from '../../../../constants';
 import { RoleType } from '../index';
 import { getDepartmentName } from '../../../../@kalos-core/kalos-rpc/Common';
 import { PerDiem, PerDiemRow } from '../../../../@kalos-core/kalos-rpc/PerDiem';
 import { result } from 'lodash';
+import { RowingSharp } from '@material-ui/icons';
 
 interface Props {
   loggedUserId: number;
@@ -95,7 +91,6 @@ export const PerDiems: FC<Props> = ({
     );
     const results = perDiems.getResultsList();
     for (let i = 0; i < results.length; i++) {
-      const totalMeals = results[i].getRowsList().length * MEALS_RATE;
       const year = +format(
         new Date(parseISO(results[i].getDateStarted())),
         'yyyy',
@@ -111,10 +106,12 @@ export const PerDiems: FC<Props> = ({
         month,
       );
       let totalLodging = 0;
+      let totalMeals = 0;
       for (let j = 0; j < results[i].getRowsList().length; j++) {
         let row = results[i].getRowsList()[j];
         if (row.getMealsOnly() == false) {
           totalLodging += govPerDiems[row.getZipCode()].lodging;
+          totalMeals += govPerDiems[row.getZipCode()].meals;
         }
       }
       results[i].setAmountProcessedLodging(totalLodging);
@@ -415,6 +412,7 @@ export const PerDiems: FC<Props> = ({
                           </span>
                         </Tooltip>
                       ) : null,
+                      /*
                       role === 'Payroll' ? (
                         <Tooltip
                           key="payroll process"
@@ -435,6 +433,7 @@ export const PerDiems: FC<Props> = ({
                           </span>
                         </Tooltip>
                       ) : null,
+                      */
                       role === 'Payroll' ? (
                         <Tooltip
                           key={'unprocess' + el.getId()}
