@@ -7,6 +7,7 @@ import { Transaction } from '../../../@kalos-core/kalos-rpc/Transaction';
 import { TransactionDocument } from '../../../@kalos-core/kalos-rpc/TransactionDocument';
 import { TransactionActivity } from '../../../@kalos-core/kalos-rpc/TransactionActivity';
 import { AccountPicker } from '../../ComponentsLibrary/Pickers';
+import { TransactionDocumentClientService } from '../../../helpers';
 import {
   TransactionAccount,
   TransactionAccountClient,
@@ -21,11 +22,11 @@ import {
   S3ClientService,
   getFileExt,
   FileClientService,
-  TransactionDocumentClientService,
   TransactionActivityClientService,
   EmailClientService,
   TaskClientService,
   TransactionClientService,
+  DocumentClientService,
 } from '../../../helpers';
 import { File } from '../../../@kalos-core/kalos-rpc/File';
 import { ENDPOINT } from '../../../constants';
@@ -159,7 +160,7 @@ export class TxnCard extends React.PureComponent<props, state> {
   updateDepartmentID = this.updateTransaction('setDepartmentId');
   updateStatus = this.updateTransaction('setStatusId');
   updateJobNumber = this.updateTransaction('setJobId');
-  handleUpdateCostCenterId() {}
+
   async submit() {
     const { txn } = this.state;
     try {
@@ -188,7 +189,7 @@ export class TxnCard extends React.PureComponent<props, state> {
           try {
             const d = new TransactionDocument();
             d.setTransactionId(this.state.txn.getId());
-            // const res = await this.DocsClient.Get(d);
+            const res = await TransactionDocumentClientService.Get(d);
           } catch (err) {
             throw 'Please attach a photo to this receipt before submitting';
           }
@@ -505,7 +506,7 @@ export class TxnCard extends React.PureComponent<props, state> {
   componentDidMount() {
     if (this.state.txn.getDepartmentId() === 0) {
       this.state.txn.setDepartmentId(this.props.userDepartmentID);
-      this.updateDepartmentID(this.state.txn.getDepartmentId);
+      // this.updateDepartmentID(this.state.txn.getDepartmentId);
     }
   }
 
@@ -572,7 +573,6 @@ export class TxnCard extends React.PureComponent<props, state> {
   render() {
     const { txn, pendingAddFromGallery, pendingAddFromSingleFile } = this.state;
     const { isManager, userID, allCostCenters } = this.props;
-    console.log('should we see allCostCenters?', allCostCenters);
     const t = txn;
     let subheader = `${t.getDescription().split(' ')[0]} - ${t.getVendor()}`;
 

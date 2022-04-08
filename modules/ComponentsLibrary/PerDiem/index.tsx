@@ -675,10 +675,15 @@ export const PerDiemComponent: FC<Props> = ({
     (aggr, pd) => [...aggr, ...pd.getRowsList()],
     [] as PerDiemRow[],
   );
-  const totalMeals = allRowsList.reduce(
-    (aggr, pdr) => aggr + govPerDiemByZipCode(pdr.getZipCode()).meals,
-    0,
-  );
+  let totalMeals = 0;
+  for (let i = 0; i < allRowsList.length; i++) {
+    const pdr = allRowsList[i];
+    if (checkPerDiemRowIsEarliestOrLatest(allRowsList, pdr)) {
+      totalMeals += govPerDiemByZipCode(pdr.getZipCode()).meals * 0.75;
+    } else {
+      totalMeals += govPerDiemByZipCode(pdr.getZipCode()).meals;
+    }
+  }
   const totalLodging = allRowsList.reduce(
     (aggr, pdr) =>
       aggr +
@@ -772,12 +777,15 @@ export const PerDiemComponent: FC<Props> = ({
             loading ||
             status.status === 'APPROVED' ||
             (isOwner && status.status !== 'PENDING_SUBMIT');
-          const totalMeals = entry
-            .getRowsList()
-            .reduce(
-              (aggr, pdr) => aggr + govPerDiemByZipCode(pdr.getZipCode()).meals,
-              0,
-            );
+          let totalMeals = 0;
+          for (let i = 0; i < allRowsList.length; i++) {
+            const pdr = allRowsList[i];
+            if (checkPerDiemRowIsEarliestOrLatest(allRowsList, pdr)) {
+              totalMeals += govPerDiemByZipCode(pdr.getZipCode()).meals * 0.75;
+            } else {
+              totalMeals += govPerDiemByZipCode(pdr.getZipCode()).meals;
+            }
+          }
           const totalLodging = entry
             .getRowsList()
             .reduce(

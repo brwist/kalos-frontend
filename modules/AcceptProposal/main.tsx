@@ -35,9 +35,9 @@ import { InfoTable } from '../ComponentsLibrary/InfoTable';
 import { Confirm } from '../ComponentsLibrary/Confirm';
 import { Field } from '../ComponentsLibrary/Field';
 import { Loader } from '../Loader/main';
-import { UserClientService, usd } from '../../helpers';
+import { UserClientService, usd, EventClientService } from '../../helpers';
 import { PageWrapper, PageWrapperProps } from '../PageWrapper/main';
-
+import { Event } from '../../@kalos-core/kalos-rpc/Event';
 // add any prop types here
 interface props extends PageWrapperProps {
   userID: number;
@@ -58,6 +58,7 @@ interface state {
   selected: number[];
   property: Property;
   customer: User;
+  event: Event;
   notes: string;
 }
 
@@ -82,6 +83,7 @@ export class AcceptProposal extends React.PureComponent<props, state> {
       selected: [],
       property: new Property(),
       customer: new User(),
+      event: new Event(),
       docID: 0,
     };
 
@@ -215,9 +217,13 @@ export class AcceptProposal extends React.PureComponent<props, state> {
     const u = new User();
     u.setId(this.props.userID);
     const theCustomer = await UserClientService.Get(u);
+    const e = new Event();
+    e.setId(this.props.jobNumber);
+    const theJob = await EventClientService.Get(e);
     this.setState({
       customer: theCustomer,
       property: theProperty,
+      event: theJob,
     });
   };
 
@@ -326,7 +332,8 @@ export class AcceptProposal extends React.PureComponent<props, state> {
   pingSlack = async () => {
     const key =
       'xoxp-11208000564-192623057299-291949462161-5d0e9acdefe3167cee18172908134b9a';
-    const channel = 'C0HMJ00P2';
+    const residentialChannel = 'C0HMJ00P2';
+    const commercialChannel = 'CD86VA8R5';
     const proposalUrl = `app.kalosflorida.com/index.cfm?action=admin:service.editServiceCall&id=${this.props.jobNumber}&user_id=${this.props.userID}&property_id=${this.props.propertyID}`;
     const post = [
       {
@@ -355,10 +362,15 @@ export class AcceptProposal extends React.PureComponent<props, state> {
         ],
       },
     ];
-    const slackUrl = `https://slack.com/api/chat.postMessage?token=${key}&text=<!here>, A proposal has been approved&channel=${channel}&icon_emoji=:white_check_mark:&as_user=false&username=Proposal&attachments=${encodeURIComponent(
+    const slackUrl = `https://slack.com/api/chat.postMessage?token=${key}&text=<!here>, A proposal has been approved&channel=${
+      this.state.event.getIsResidential() == 0
+        ? residentialChannel
+        : commercialChannel
+    }&icon_emoji=:white_check_mark:&as_user=false&username=Proposal&attachments=${encodeURIComponent(
       JSON.stringify(post),
     )}`;
-    await fetch(slackUrl, { method: 'POST' });
+    console.log(slackUrl);
+    //await fetch(slackUrl, { method: 'POST' });
   };
 
   finalize = async () => {
@@ -373,7 +385,9 @@ export class AcceptProposal extends React.PureComponent<props, state> {
       }
       await this.updateDocument();
       await this.createLog();
+
       await this.pingSlack();
+
       const name =
         this.props.useBusinessName &&
         this.state.customer.getBusinessname() != ''
