@@ -195,7 +195,7 @@ export const TripCalulator: FC<props> = ({ loggedUserId, onClose, role }) => {
     30
   ).toFixed();
   const hoursAfterHomeAdjustment = Math.floor(
-    state.distanceResults.duration! / 60 / 60,
+    (state.distanceResults.duration! / 60 - 30) / 60,
   );
   const remainingMinutesAfterAdjustment =
     parseInt(minutesAfterHomeAdjustment) - hoursAfterHomeAdjustment * 60;
@@ -287,7 +287,7 @@ export const TripCalulator: FC<props> = ({ loggedUserId, onClose, role }) => {
                 },
                 {
                   value: `${
-                    state.distanceResults.duration / 60 > 0
+                    state.distanceResults.duration / 60 - 30 > 0
                       ? `${hoursAfterHomeAdjustment} hours ${remainingMinutesAfterAdjustment.toFixed(
                           0,
                         )} minutes `
@@ -296,7 +296,7 @@ export const TripCalulator: FC<props> = ({ loggedUserId, onClose, role }) => {
                 },
                 {
                   value: `${
-                    state.distanceResults.duration / 60 > 0
+                    state.distanceResults.duration / 60 - 30 > 0
                       ? `${hoursAfterDoubleHomeAdjustment} hours ${remainingMinutesAfterDoubleHomeAdjustment.toFixed(
                           0,
                         )} minutes `
