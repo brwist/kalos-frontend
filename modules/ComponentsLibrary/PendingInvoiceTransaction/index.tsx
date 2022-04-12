@@ -504,6 +504,7 @@ export const PendingInvoiceTransactionComponent: FC<Props> = ({ userId }) => {
       }
 
       await TransactionClientService.Create(txn);
+      console.log('created txn', txn);
     }
 
     dispatch({ type: ACTIONS.SET_LOADED, data: false });

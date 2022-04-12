@@ -26,6 +26,7 @@ import {
   slackNotify,
   usd,
   timestamp,
+  checkPerDiemRowIsEarliestOrLatest,
 } from '../../../../helpers';
 import { NULL_TIME, OPTION_ALL, ROWS_PER_PAGE } from '../../../../constants';
 import { RoleType } from '../index';
@@ -91,31 +92,39 @@ export const PerDiems: FC<Props> = ({
     );
     const results = perDiems.getResultsList();
     for (let i = 0; i < results.length; i++) {
-      const year = +format(
-        new Date(parseISO(results[i].getDateStarted())),
-        'yyyy',
-      );
-      const month = +format(
-        new Date(parseISO(results[i].getDateStarted())),
-        'M',
-      );
-      const zipCodes = results[i].getRowsList().map(pd => pd.getZipCode());
-      const govPerDiems = await PerDiemClientService.loadGovPerDiem(
-        zipCodes,
-        year,
-        month,
-      );
-      let totalLodging = 0;
-      let totalMeals = 0;
-      for (let j = 0; j < results[i].getRowsList().length; j++) {
-        let row = results[i].getRowsList()[j];
-        if (row.getMealsOnly() == false) {
-          totalLodging += govPerDiems[row.getZipCode()].lodging;
-          totalMeals += govPerDiems[row.getZipCode()].meals;
+      if (results[i].getPayrollProcessed() == false) {
+        const year = +format(
+          new Date(parseISO(results[i].getDateStarted())),
+          'yyyy',
+        );
+        const month = +format(
+          new Date(parseISO(results[i].getDateStarted())),
+          'M',
+        );
+        const zipCodes = results[i].getRowsList().map(pd => pd.getZipCode());
+        const govPerDiems = await PerDiemClientService.loadGovPerDiem(
+          zipCodes,
+          year,
+          month,
+        );
+        let totalLodging = 0;
+        let totalMeals = 0;
+        for (let j = 0; j < results[i].getRowsList().length; j++) {
+          let row = results[i].getRowsList()[j];
+          if (row.getMealsOnly() == false) {
+            totalLodging += govPerDiems[row.getZipCode()].lodging;
+          }
+          if (
+            checkPerDiemRowIsEarliestOrLatest(results[i].getRowsList(), row)
+          ) {
+            totalMeals += govPerDiems[row.getZipCode()].meals * 0.75;
+          } else {
+            totalMeals += govPerDiems[row.getZipCode()].meals;
+          }
         }
+        results[i].setAmountProcessedLodging(totalLodging);
+        results[i].setAmountProcessedMeals(totalMeals);
       }
-      results[i].setAmountProcessedLodging(totalLodging);
-      results[i].setAmountProcessedMeals(totalMeals);
     }
     setPerDiems(results);
     setCount(perDiems.getTotalCount());
@@ -310,17 +319,18 @@ export const PerDiems: FC<Props> = ({
       )}
       {role === 'Manager' && (
         <Button
-          label={'Manage PerDiems'}
+          //label={'Manage PerDiems'}
+          label={'Manage PerDiems Disabled Pending Update'}
           onClick={() => setOpenManagerPerDiem(true)}
+          disabled={true}
         ></Button>
       )}
       <InfoTable
         columns={[
           { name: 'Employee' },
-          { name: 'Department' },
           { name: 'Week' },
-          { name: 'Total Lodging' },
-          { name: 'Total Meals' },
+          { name: `Total Lodging ${toggleButton ? 'Processed' : ''}` },
+          { name: `Total Meals ${toggleButton ? 'Processed' : ''}` },
           { name: 'Date' },
         ]}
         data={
@@ -333,19 +343,17 @@ export const PerDiems: FC<Props> = ({
                     onClick: handlePerDiemViewedToggle(el),
                   },
                   {
-                    value: getDepartmentName(el.getDepartment()),
-                    onClick: handlePerDiemViewedToggle(el),
-                  },
-                  {
                     value: formatWeek(el.getDateStarted()),
                     onClick: handlePerDiemViewedToggle(el),
                   },
                   {
                     value: usd(el.getAmountProcessedLodging()),
+
                     onClick: handlePerDiemViewedToggle(el),
                   },
                   {
                     value: usd(el.getAmountProcessedMeals()),
+
                     onClick: handlePerDiemViewedToggle(el),
                   },
                   {

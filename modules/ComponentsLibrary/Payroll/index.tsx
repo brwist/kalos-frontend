@@ -28,7 +28,6 @@ import { JobSummaryNew } from './components/JobSummaryNew';
 import { CostReportForEmployee } from '../CostReportForEmployee';
 import { Trips } from './components/Trips';
 import { PerDiem as pd } from '../../../@kalos-core/kalos-rpc/compiled-protos/perdiem_pb';
-import { dateTimePickerDefaultProps } from '@material-ui/pickers/constants/prop-types';
 import './Payroll.module.less';
 
 export type RoleType =

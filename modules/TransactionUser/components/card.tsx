@@ -61,6 +61,8 @@ interface state {
   pendingAddFromSingleFile: boolean;
   costCenters: TransactionAccountList;
   pendingEdit: Transaction | undefined;
+  documentExists: boolean;
+  initialDocumentCheck: boolean;
   notes: string;
 }
 
@@ -87,6 +89,8 @@ export class TxnCard extends React.PureComponent<props, state> {
       txn: props.txn,
       pendingAddFromGallery: false,
       pendingAddFromSingleFile: false,
+      documentExists: false,
+      initialDocumentCheck: false,
       costCenters: new TransactionAccountList(),
       pendingEdit: undefined,
       notes: props.txn.getNotes(),
@@ -224,7 +228,7 @@ export class TxnCard extends React.PureComponent<props, state> {
               subject: 'Receipts',
             };
             try {
-              await EmailClientService.sendMail(mailConfig);
+              //await EmailClientService.sendMail(mailConfig);
             } catch (err) {
               console.error('failed to send mail to accounting', err);
             }
@@ -358,6 +362,11 @@ export class TxnCard extends React.PureComponent<props, state> {
         severity: 'error',
         text: 'Please select a purchase category',
       };
+    if (this.state.documentExists == false)
+      return {
+        severity: 'error',
+        text: 'Please Upload a Document before Submitting',
+      };
     if (txn.getCostCenterId() === 601002 && txn.getNotes() === '')
       return {
         severity: 'error',
@@ -479,8 +488,23 @@ export class TxnCard extends React.PureComponent<props, state> {
   async refresh() {
     try {
       const req = new Transaction();
+      console.log('refresh transaction');
       req.setId(this.state.txn.getId());
       const refreshTxn = await TransactionClientService.Get(req);
+      const d = new TransactionDocument();
+      d.setTransactionId(this.state.txn.getId());
+      try {
+        const d = new TransactionDocument();
+        d.setTransactionId(this.state.txn.getId());
+        const res = await TransactionDocumentClientService.Get(d);
+        this.setState({
+          documentExists: true,
+        });
+      } catch (err) {
+        this.setState({
+          documentExists: false,
+        });
+      }
       this.setState({
         txn: refreshTxn,
       });
@@ -503,10 +527,28 @@ export class TxnCard extends React.PureComponent<props, state> {
     }
   }
 
-  componentDidMount() {
+  async componentDidMount() {
     if (this.state.txn.getDepartmentId() === 0) {
       this.state.txn.setDepartmentId(this.props.userDepartmentID);
       // this.updateDepartmentID(this.state.txn.getDepartmentId);
+    }
+    if (this.state.initialDocumentCheck == false) {
+      this.setState({
+        initialDocumentCheck: true,
+      });
+      try {
+        console.log('Check documents');
+        const d = new TransactionDocument();
+        d.setTransactionId(this.state.txn.getId());
+        const res = await TransactionDocumentClientService.Get(d);
+        this.setState({
+          documentExists: true,
+        });
+      } catch (err) {
+        this.setState({
+          documentExists: false,
+        });
+      }
     }
   }
 

@@ -795,7 +795,7 @@ class PerDiemClient extends BaseClient {
         },
       };
     } catch (e) {
-      return { [zipCode]: { meals: MEALS_RATE, lodging: 0 } };
+      return { [zipCode]: { meals: 0, lodging: 0 } };
     }
   };
   public loadPerDiemsLodging = async (perDiems: PerDiem[]) => {

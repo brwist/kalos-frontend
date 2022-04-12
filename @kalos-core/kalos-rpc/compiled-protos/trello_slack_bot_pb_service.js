@@ -29,6 +29,24 @@ TrelloSlackBot.Help = {
   responseType: common_pb.String
 };
 
+TrelloSlackBot.HelpTwo = {
+  methodName: "HelpTwo",
+  service: TrelloSlackBot,
+  requestStream: false,
+  responseStream: false,
+  requestType: trello_slack_bot_pb.HelpRequest,
+  responseType: common_pb.String
+};
+
+TrelloSlackBot.HelpThree = {
+  methodName: "HelpThree",
+  service: TrelloSlackBot,
+  requestStream: false,
+  responseStream: false,
+  requestType: trello_slack_bot_pb.HelpRequest,
+  responseType: common_pb.String
+};
+
 exports.TrelloSlackBot = TrelloSlackBot;
 
 function TrelloSlackBotClient(serviceHost, options) {
@@ -72,6 +90,68 @@ TrelloSlackBotClient.prototype.help = function help(requestMessage, metadata, ca
     callback = arguments[1];
   }
   var client = grpc.unary(TrelloSlackBot.Help, {
+    request: requestMessage,
+    host: this.serviceHost,
+    metadata: metadata,
+    transport: this.options.transport,
+    debug: this.options.debug,
+    onEnd: function (response) {
+      if (callback) {
+        if (response.status !== grpc.Code.OK) {
+          var err = new Error(response.statusMessage);
+          err.code = response.status;
+          err.metadata = response.trailers;
+          callback(err, null);
+        } else {
+          callback(null, response.message);
+        }
+      }
+    }
+  });
+  return {
+    cancel: function () {
+      callback = null;
+      client.close();
+    }
+  };
+};
+
+TrelloSlackBotClient.prototype.helpTwo = function helpTwo(requestMessage, metadata, callback) {
+  if (arguments.length === 2) {
+    callback = arguments[1];
+  }
+  var client = grpc.unary(TrelloSlackBot.HelpTwo, {
+    request: requestMessage,
+    host: this.serviceHost,
+    metadata: metadata,
+    transport: this.options.transport,
+    debug: this.options.debug,
+    onEnd: function (response) {
+      if (callback) {
+        if (response.status !== grpc.Code.OK) {
+          var err = new Error(response.statusMessage);
+          err.code = response.status;
+          err.metadata = response.trailers;
+          callback(err, null);
+        } else {
+          callback(null, response.message);
+        }
+      }
+    }
+  });
+  return {
+    cancel: function () {
+      callback = null;
+      client.close();
+    }
+  };
+};
+
+TrelloSlackBotClient.prototype.helpThree = function helpThree(requestMessage, metadata, callback) {
+  if (arguments.length === 2) {
+    callback = arguments[1];
+  }
+  var client = grpc.unary(TrelloSlackBot.HelpThree, {
     request: requestMessage,
     host: this.serviceHost,
     metadata: metadata,

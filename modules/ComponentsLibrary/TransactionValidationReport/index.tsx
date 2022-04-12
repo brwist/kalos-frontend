@@ -382,7 +382,7 @@ export const TransactionValidationReport: FC<Props> = ({
 
                 postedTimestamp: entry.getPostedTimestamp(),
 
-                amount: entry.getAmount(),
+                amount: parseFloat(entry.getAmount()).toFixed(2),
 
                 notes: entry.getNotes(),
 
