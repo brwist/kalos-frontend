@@ -42,6 +42,7 @@ import {
 import { reducer } from './reducer';
 import { NULL_TIME_VALUE } from '../Timesheet/constants';
 import { NULL_TIME } from '../../../@kalos-core/kalos-rpc/constants';
+import { time } from 'console';
 interface Props {
   userId: number;
   loggedUserId: number;
@@ -514,52 +515,90 @@ export const CostSummary: FC<Props> = ({
     tempTrips.totalDistance = 0;
     tempPerDiem.totalLodging = 0;
     tempPerDiem.totalMeals = 0;
-    let allRowsList = perDiems.reduce(
-      (aggr: PerDiemRow[], pd) => [...aggr, ...pd.getRowsList()],
-      [],
-    );
-    let perDiemRowsAtStartOrEnd: PerDiemRow[] = [];
-    allRowsList.map(pdr => {
-      if (checkPerDiemRowIsEarliestOrLatest(allRowsList, pdr)) {
-        perDiemRowsAtStartOrEnd.push(pdr);
+    const uniqueWeekList: string[] = [];
+    for (let l = 0; l < perDiems.length; l++) {
+      if (uniqueWeekList.find(el => el === perDiems[l].getDateStarted())) {
+        console.log('do not add week to week list');
+      } else {
+        uniqueWeekList.push(perDiems[l].getDateStarted());
       }
-    });
-
-    for (let i = 0; i < perDiems.length; i++) {
-      let totalMeals = 0;
-      for (let j = 0; j < perDiems[i].getRowsList().length; j++) {
-        let row = perDiems[i].getRowsList()[j];
-        if (perDiemRowsAtStartOrEnd.find(el => el.getId() == row.getId())) {
-          totalMeals += govPerDiemByZipCode(row.getZipCode()).meals * 0.75;
+    }
+    const updatePerDiems = perDiems;
+    for (let j = 0; j < uniqueWeekList.length; j++) {
+      let week = uniqueWeekList[j];
+      let allMealsRowsList = perDiems
+        .filter(el => el.getDateStarted() == week)
+        .reduce(
+          (aggr, pd) => [...aggr, ...pd.getRowsList()],
+          [] as PerDiemRow[],
+        );
+      for (let i = 0; i < allMealsRowsList.length; i++) {
+        const pdr = allMealsRowsList[i];
+        if (checkPerDiemRowIsEarliestOrLatest(allMealsRowsList, pdr)) {
+          updatePerDiems
+            .find(el => el.getId() == pdr.getPerDiemId())!
+            .setAmountProcessedMeals(
+              updatePerDiems
+                .find(el => el.getId() == pdr.getPerDiemId())!
+                .getAmountProcessedMeals() +
+                govPerDiemByZipCode(pdr.getZipCode()).meals * 0.75,
+            );
+          if (pdr.getMealsOnly() == false) {
+            updatePerDiems
+              .find(el => el.getId() == pdr.getPerDiemId())!
+              .setAmountProcessedLodging(
+                updatePerDiems
+                  .find(el => el.getId() == pdr.getPerDiemId())!
+                  .getAmountProcessedLodging() +
+                  govPerDiemByZipCode(pdr.getZipCode()).lodging,
+              );
+          }
         } else {
-          totalMeals += govPerDiemByZipCode(row.getZipCode()).meals;
+          updatePerDiems
+            .find(el => el.getId() == pdr.getPerDiemId())!
+            .setAmountProcessedMeals(
+              updatePerDiems
+                .find(el => el.getId() == pdr.getPerDiemId())!
+                .getAmountProcessedMeals() +
+                govPerDiemByZipCode(pdr.getZipCode()).meals,
+            );
+          if (pdr.getMealsOnly() == false) {
+            updatePerDiems
+              .find(el => el.getId() == pdr.getPerDiemId())!
+              .setAmountProcessedLodging(
+                updatePerDiems
+                  .find(el => el.getId() == pdr.getPerDiemId())!
+                  .getAmountProcessedLodging() +
+                  govPerDiemByZipCode(pdr.getZipCode()).lodging,
+              );
+          }
         }
       }
-
-      let totalLodging = perDiems[i]
-        .getRowsList()
-        .reduce(
-          (aggr, pdr) =>
-            aggr +
-            (pdr.getMealsOnly()
-              ? 0
-              : govPerDiemByZipCode(pdr.getZipCode()).lodging),
-          0,
-        );
-      let req = new PerDiem();
-      req.setId(perDiems[i].getId());
+    }
+    console.log(updatePerDiems);
+    for (let i = 0; i < updatePerDiems.length; i++) {
+      const data = updatePerDiems[i];
+      const req = new PerDiem();
+      req.setAmountProcessedLodging(data.getAmountProcessedLodging());
+      req.setAmountProcessedMeals(
+        parseInt(data.getAmountProcessedMeals().toString()),
+      );
+      req.setId(data.getId());
+      req.setDateProcessed(timestamp());
       req.setPayrollProcessed(true);
-      req.setAmountProcessedLodging(totalLodging);
-      req.setAmountProcessedMeals(totalMeals);
       req.setFieldMaskList([
         'PayrollProcessed',
-        'DateProcessed',
-        'AmountProcessedLodging',
         'AmountProcessedMeals',
+        'AmountProcessedLodging',
+        'DateProcessed',
       ]);
-      req.setDateProcessed(timestamp());
-
-      await PerDiemClientService.Update(req);
+      console.log('we updating perdiem processed', req);
+      try {
+        await PerDiemClientService.Update(req);
+        console.log('we updated perdiem processed', req);
+      } catch (err) {
+        console.log(err, 'we had this problem');
+      }
     }
     if (trips && trips.length > 0) {
       for (let i = 0; i < trips.length; i++) {
@@ -572,8 +611,6 @@ export const CostSummary: FC<Props> = ({
     promises.push(
       new Promise<void>(async (resolve, reject) => {
         try {
-          setLoaded(true);
-
           const processedHours = await getProcessedHoursTotals();
           setTotalHoursProcessed(processedHours);
           resolve();
@@ -586,8 +623,6 @@ export const CostSummary: FC<Props> = ({
     promises.push(
       new Promise<void>(async (resolve, reject) => {
         try {
-          setLoaded(true);
-
           const spiffToolTotals = await getSpiffToolTotals('Spiff');
           setTotalSpiffsWeekly(spiffToolTotals);
           resolve();
@@ -600,17 +635,14 @@ export const CostSummary: FC<Props> = ({
     promises.push(
       new Promise<void>(async (resolve, reject) => {
         try {
-          setLoaded(true);
-
-          resolve();
           const spiffToolTotalsProcessed = await getSpiffToolTotalsProcessed(
             'Spiff',
           );
-          console.log(spiffToolTotalsProcessed);
           dispatch({
             type: 'updateTotalSpiffsProcessed',
             value: spiffToolTotalsProcessed,
           });
+          resolve();
         } catch (err) {
           console.log('error fetching total spiffs processed', err);
           reject(err);
@@ -620,11 +652,9 @@ export const CostSummary: FC<Props> = ({
     promises.push(
       new Promise<void>(async (resolve, reject) => {
         try {
-          setLoaded(true);
-
-          resolve();
           const perDiemTotals = await getPerDiemTotals();
           dispatch({ type: 'updatePerDiemTotal', data: perDiemTotals });
+          resolve();
         } catch (err) {
           reject(err);
         }
@@ -633,10 +663,8 @@ export const CostSummary: FC<Props> = ({
     promises.push(
       new Promise<void>(async (resolve, reject) => {
         try {
-          setLoaded(true);
-
-          resolve();
           const perDiemTotals = await getPerDiemTotalsProcessed();
+          resolve();
           dispatch({
             type: 'updateTotalPerDiemProcessed',
             data: perDiemTotals,
@@ -649,10 +677,7 @@ export const CostSummary: FC<Props> = ({
     promises.push(
       new Promise<void>(async (resolve, reject) => {
         try {
-          setLoaded(true);
-
           const tripsData = await getTrips();
-          //setTripsTotal(tripsData);
           dispatch({ type: 'updateTripsTotal', data: tripsData });
           resolve();
         } catch (err) {
@@ -664,7 +689,6 @@ export const CostSummary: FC<Props> = ({
     promises.push(
       new Promise<void>(async (resolve, reject) => {
         try {
-          setLoaded(true);
           const tripsDataProcessed = await getTripsProcessed();
           dispatch({
             type: 'updateTotalTripsProcessed',
@@ -678,8 +702,10 @@ export const CostSummary: FC<Props> = ({
       }),
     );
     try {
-      await Promise.all(promises);
-      setLoading(false);
+      await Promise.all(promises).then(() => {
+        setLoading(false);
+      });
+
       console.log('all promises executed without error, setting loaded');
       return;
     } catch (err) {

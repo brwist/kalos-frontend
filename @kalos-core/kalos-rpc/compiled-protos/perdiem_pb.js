@@ -697,8 +697,8 @@ proto.PerDiem.toObject = function(includeInstance, msg) {
     dateRangeList: (f = jspb.Message.getRepeatedField(msg, 22)) == null ? undefined : f,
     dateTargetList: (f = jspb.Message.getRepeatedField(msg, 23)) == null ? undefined : f,
     dateProcessed: jspb.Message.getFieldWithDefault(msg, 24, ""),
-    amountProcessedLodging: jspb.Message.getFieldWithDefault(msg, 25, 0),
-    amountProcessedMeals: jspb.Message.getFieldWithDefault(msg, 26, 0),
+    amountProcessedLodging: jspb.Message.getFloatingPointFieldWithDefault(msg, 25, 0.0),
+    amountProcessedMeals: jspb.Message.getFloatingPointFieldWithDefault(msg, 26, 0.0),
     orderBy: jspb.Message.getFieldWithDefault(msg, 27, ""),
     orderDir: jspb.Message.getFieldWithDefault(msg, 28, ""),
     groupBy: jspb.Message.getFieldWithDefault(msg, 29, "")
@@ -838,11 +838,11 @@ proto.PerDiem.deserializeBinaryFromReader = function(msg, reader) {
       msg.setDateProcessed(value);
       break;
     case 25:
-      var value = /** @type {number} */ (reader.readInt32());
+      var value = /** @type {number} */ (reader.readDouble());
       msg.setAmountProcessedLodging(value);
       break;
     case 26:
-      var value = /** @type {number} */ (reader.readInt32());
+      var value = /** @type {number} */ (reader.readDouble());
       msg.setAmountProcessedMeals(value);
       break;
     case 27:
@@ -1058,15 +1058,15 @@ proto.PerDiem.serializeBinaryToWriter = function(message, writer) {
     );
   }
   f = message.getAmountProcessedLodging();
-  if (f !== 0) {
-    writer.writeInt32(
+  if (f !== 0.0) {
+    writer.writeDouble(
       25,
       f
     );
   }
   f = message.getAmountProcessedMeals();
-  if (f !== 0) {
-    writer.writeInt32(
+  if (f !== 0.0) {
+    writer.writeDouble(
       26,
       f
     );
@@ -1662,11 +1662,11 @@ proto.PerDiem.prototype.setDateProcessed = function(value) {
 
 
 /**
- * optional int32 amount_processed_lodging = 25;
+ * optional double amount_processed_lodging = 25;
  * @return {number}
  */
 proto.PerDiem.prototype.getAmountProcessedLodging = function() {
-  return /** @type {number} */ (jspb.Message.getFieldWithDefault(this, 25, 0));
+  return /** @type {number} */ (jspb.Message.getFloatingPointFieldWithDefault(this, 25, 0.0));
 };
 
 
@@ -1675,16 +1675,16 @@ proto.PerDiem.prototype.getAmountProcessedLodging = function() {
  * @return {!proto.PerDiem} returns this
  */
 proto.PerDiem.prototype.setAmountProcessedLodging = function(value) {
-  return jspb.Message.setProto3IntField(this, 25, value);
+  return jspb.Message.setProto3FloatField(this, 25, value);
 };
 
 
 /**
- * optional int32 amount_processed_meals = 26;
+ * optional double amount_processed_meals = 26;
  * @return {number}
  */
 proto.PerDiem.prototype.getAmountProcessedMeals = function() {
-  return /** @type {number} */ (jspb.Message.getFieldWithDefault(this, 26, 0));
+  return /** @type {number} */ (jspb.Message.getFloatingPointFieldWithDefault(this, 26, 0.0));
 };
 
 
@@ -1693,7 +1693,7 @@ proto.PerDiem.prototype.getAmountProcessedMeals = function() {
  * @return {!proto.PerDiem} returns this
  */
 proto.PerDiem.prototype.setAmountProcessedMeals = function(value) {
-  return jspb.Message.setProto3IntField(this, 26, value);
+  return jspb.Message.setProto3FloatField(this, 26, value);
 };
 
 

@@ -104,6 +104,7 @@ export class TransactionUserView extends React.PureComponent<props, state> {
     }*/
     reqObj.setIsActive(1);
     const res = await this.TxnClient.BatchGet(reqObj);
+    console.log(res.getResultsList());
     return res.getResultsList();
   }
   async fetchAllTxns() {

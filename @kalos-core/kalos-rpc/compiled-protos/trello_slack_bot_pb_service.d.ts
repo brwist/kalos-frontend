@@ -23,10 +23,30 @@ type TrelloSlackBotHelp = {
   readonly responseType: typeof common_pb.String;
 };
 
+type TrelloSlackBotHelpTwo = {
+  readonly methodName: string;
+  readonly service: typeof TrelloSlackBot;
+  readonly requestStream: false;
+  readonly responseStream: false;
+  readonly requestType: typeof trello_slack_bot_pb.HelpRequest;
+  readonly responseType: typeof common_pb.String;
+};
+
+type TrelloSlackBotHelpThree = {
+  readonly methodName: string;
+  readonly service: typeof TrelloSlackBot;
+  readonly requestStream: false;
+  readonly responseStream: false;
+  readonly requestType: typeof trello_slack_bot_pb.HelpRequest;
+  readonly responseType: typeof common_pb.String;
+};
+
 export class TrelloSlackBot {
   static readonly serviceName: string;
   static readonly Status: TrelloSlackBotStatus;
   static readonly Help: TrelloSlackBotHelp;
+  static readonly HelpTwo: TrelloSlackBotHelpTwo;
+  static readonly HelpThree: TrelloSlackBotHelpThree;
 }
 
 export type ServiceError = { message: string, code: number; metadata: grpc.Metadata }
@@ -77,6 +97,24 @@ export class TrelloSlackBotClient {
   ): UnaryResponse;
   help(
     requestMessage: trello_slack_bot_pb.Request,
+    callback: (error: ServiceError|null, responseMessage: common_pb.String|null) => void
+  ): UnaryResponse;
+  helpTwo(
+    requestMessage: trello_slack_bot_pb.HelpRequest,
+    metadata: grpc.Metadata,
+    callback: (error: ServiceError|null, responseMessage: common_pb.String|null) => void
+  ): UnaryResponse;
+  helpTwo(
+    requestMessage: trello_slack_bot_pb.HelpRequest,
+    callback: (error: ServiceError|null, responseMessage: common_pb.String|null) => void
+  ): UnaryResponse;
+  helpThree(
+    requestMessage: trello_slack_bot_pb.HelpRequest,
+    metadata: grpc.Metadata,
+    callback: (error: ServiceError|null, responseMessage: common_pb.String|null) => void
+  ): UnaryResponse;
+  helpThree(
+    requestMessage: trello_slack_bot_pb.HelpRequest,
     callback: (error: ServiceError|null, responseMessage: common_pb.String|null) => void
   ): UnaryResponse;
 }

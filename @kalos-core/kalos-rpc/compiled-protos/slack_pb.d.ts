@@ -17,6 +17,11 @@ export class DMReq extends jspb.Message {
   getEscape(): boolean;
   setEscape(value: boolean): void;
 
+  clearSectionsList(): void;
+  getSectionsList(): Array<SlackSectionBlock>;
+  setSectionsList(value: Array<SlackSectionBlock>): void;
+  addSections(value?: SlackSectionBlock, index?: number): SlackSectionBlock;
+
   serializeBinary(): Uint8Array;
   toObject(includeInstance?: boolean): DMReq.AsObject;
   static toObject(includeInstance: boolean, msg: DMReq): DMReq.AsObject;
@@ -33,6 +38,7 @@ export namespace DMReq {
     text: string,
     dispatcherId: number,
     escape: boolean,
+    sectionsList: Array<SlackSectionBlock.AsObject>,
   }
 }
 
@@ -133,6 +139,74 @@ export namespace FirstCallsEvent {
   export type AsObject = {
     eventId: string,
     userIdList: Array<string>,
+  }
+}
+
+export class TextBlockObject extends jspb.Message {
+  getType(): string;
+  setType(value: string): void;
+
+  getText(): string;
+  setText(value: string): void;
+
+  getEmoji(): boolean;
+  setEmoji(value: boolean): void;
+
+  getVerbatim(): boolean;
+  setVerbatim(value: boolean): void;
+
+  serializeBinary(): Uint8Array;
+  toObject(includeInstance?: boolean): TextBlockObject.AsObject;
+  static toObject(includeInstance: boolean, msg: TextBlockObject): TextBlockObject.AsObject;
+  static extensions: {[key: number]: jspb.ExtensionFieldInfo<jspb.Message>};
+  static extensionsBinary: {[key: number]: jspb.ExtensionFieldBinaryInfo<jspb.Message>};
+  static serializeBinaryToWriter(message: TextBlockObject, writer: jspb.BinaryWriter): void;
+  static deserializeBinary(bytes: Uint8Array): TextBlockObject;
+  static deserializeBinaryFromReader(message: TextBlockObject, reader: jspb.BinaryReader): TextBlockObject;
+}
+
+export namespace TextBlockObject {
+  export type AsObject = {
+    type: string,
+    text: string,
+    emoji: boolean,
+    verbatim: boolean,
+  }
+}
+
+export class SlackSectionBlock extends jspb.Message {
+  getType(): string;
+  setType(value: string): void;
+
+  hasText(): boolean;
+  clearText(): void;
+  getText(): TextBlockObject | undefined;
+  setText(value?: TextBlockObject): void;
+
+  getBlockId(): string;
+  setBlockId(value: string): void;
+
+  clearFieldsList(): void;
+  getFieldsList(): Array<TextBlockObject>;
+  setFieldsList(value: Array<TextBlockObject>): void;
+  addFields(value?: TextBlockObject, index?: number): TextBlockObject;
+
+  serializeBinary(): Uint8Array;
+  toObject(includeInstance?: boolean): SlackSectionBlock.AsObject;
+  static toObject(includeInstance: boolean, msg: SlackSectionBlock): SlackSectionBlock.AsObject;
+  static extensions: {[key: number]: jspb.ExtensionFieldInfo<jspb.Message>};
+  static extensionsBinary: {[key: number]: jspb.ExtensionFieldBinaryInfo<jspb.Message>};
+  static serializeBinaryToWriter(message: SlackSectionBlock, writer: jspb.BinaryWriter): void;
+  static deserializeBinary(bytes: Uint8Array): SlackSectionBlock;
+  static deserializeBinaryFromReader(message: SlackSectionBlock, reader: jspb.BinaryReader): SlackSectionBlock;
+}
+
+export namespace SlackSectionBlock {
+  export type AsObject = {
+    type: string,
+    text?: TextBlockObject.AsObject,
+    blockId: string,
+    fieldsList: Array<TextBlockObject.AsObject>,
   }
 }
 
