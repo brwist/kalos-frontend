@@ -113,6 +113,7 @@ export interface Props {
   editableCustomers?: boolean;
   deletableCustomers?: boolean;
   editableEmployees?: boolean;
+  showRecentServiceCallsForEmployee?: boolean;
   deletableEmployees?: boolean;
   printableEmployees?: boolean;
   editableProperties?: boolean;
@@ -146,6 +147,7 @@ export const AdvancedSearch: FC<Props> = ({
   deletableEvents,
   editableCustomers,
   deletableCustomers,
+  showRecentServiceCallsForEmployee,
   editableEmployees,
   printableEmployees = false,
   editableProperties,
@@ -178,9 +180,17 @@ export const AdvancedSearch: FC<Props> = ({
       jobSubtypeId: 0,
       logJobStatus: '',
       employeeDepartmentId: -1,
+      logTechnicianAssigned: showRecentServiceCallsForEmployee
+        ? loggedUserId.toString()
+        : undefined,
       userId: propertyCustomerId,
     }),
-    [kinds, propertyCustomerId],
+    [
+      kinds,
+      loggedUserId,
+      showRecentServiceCallsForEmployee,
+      propertyCustomerId,
+    ],
   );
   const [filter, setFilter] = useState<SearchForm>(defaultFilter);
   const [formKey, setFormKey] = useState<number>(0);
@@ -284,7 +294,6 @@ export const AdvancedSearch: FC<Props> = ({
     });
     setFlatRate(qlResults);
 
-    console.log(qlResults.length);
     if (kinds.includes('employees')) {
       //const departments = await TimesheetDepartmentClientService.loadTimeSheetDepartments();
       const departmentRequest = new TimesheetDepartment();
@@ -860,6 +869,11 @@ export const AdvancedSearch: FC<Props> = ({
           name: 'businessname',
           label: 'Business Name',
           type: 'search',
+        },
+        {
+          name: 'logTechnicianAssigned',
+          label: 'Technician Assigned',
+          type: 'technician',
         },
       ],
       [

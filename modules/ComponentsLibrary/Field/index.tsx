@@ -56,7 +56,6 @@ import { ClassCodePicker, DepartmentPicker } from '../Pickers';
 import { AdvancedSearch } from '../AdvancedSearch';
 import { Event } from '../../../@kalos-core/kalos-rpc/Event';
 import './Field.module.less';
-import { RadioGroup } from '@material-ui/core';
 
 type SelectOption = {
   getId: () => number;
@@ -113,6 +112,7 @@ export interface Props<T> extends SchemaProps<T> {
   placeholder?: string;
   style?: CSSProperties;
   compact?: boolean;
+  technicianIdForRecentServiceCalls?: number;
   white?: boolean;
   ref?: RefObject<T> | Ref<T>;
 }
@@ -139,6 +139,7 @@ export const Field: <T>(
       onBlur,
       onFileLoad,
       disabled = false,
+      technicianIdForRecentServiceCalls,
       required = false,
       validation = '',
       helperText = '',
@@ -1017,7 +1018,14 @@ export const Field: <T>(
           <Modal open onClose={handleEventsOpenedToggle(false)} fullScreen>
             <AdvancedSearch
               title="Service Calls Search"
-              loggedUserId={0}
+              loggedUserId={
+                technicianIdForRecentServiceCalls
+                  ? technicianIdForRecentServiceCalls
+                  : 0
+              }
+              showRecentServiceCallsForEmployee={
+                technicianIdForRecentServiceCalls ? true : false
+              }
               kinds={['serviceCalls']}
               onSelectEvent={handleEventSelect}
               onClose={handleEventsOpenedToggle(false)}

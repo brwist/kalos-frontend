@@ -363,14 +363,14 @@ export class AcceptProposal extends React.PureComponent<props, state> {
       },
     ];
     const slackUrl = `https://slack.com/api/chat.postMessage?token=${key}&text=<!here>, A proposal has been approved&channel=${
-      this.state.event.getIsResidential() == 0
+      this.state.event.getIsResidential() == 1
         ? residentialChannel
         : commercialChannel
     }&icon_emoji=:white_check_mark:&as_user=false&username=Proposal&attachments=${encodeURIComponent(
       JSON.stringify(post),
     )}`;
     console.log(slackUrl);
-    //await fetch(slackUrl, { method: 'POST' });
+    await fetch(slackUrl, { method: 'POST' });
   };
 
   finalize = async () => {

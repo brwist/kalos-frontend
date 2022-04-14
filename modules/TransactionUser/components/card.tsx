@@ -720,6 +720,7 @@ export class TxnCard extends React.PureComponent<props, state> {
               label="Job Number"
               value={t.getJobId()}
               onChange={val => this.updateJobNumber(() => +val)}
+              technicianIdForRecentServiceCalls={userID}
               type="eventId"
               style={{
                 alignItems: 'flex-start',
