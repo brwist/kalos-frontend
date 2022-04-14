@@ -7,7 +7,6 @@ import EditIcon from '@material-ui/icons/Edit';
 import FlagIcon from '@material-ui/icons/Flag';
 import ThumbsUpDownIcon from '@material-ui/icons/ThumbsUpDown';
 import AccountBalanceWalletIcon from '@material-ui/icons/AccountBalanceWallet';
-import CheckIcon from '@material-ui/icons/CheckCircleOutline';
 import RateReviewIcon from '@material-ui/icons/RateReview';
 import { SectionBar } from '../../ComponentsLibrary/SectionBar';
 import Alert from '@material-ui/lab/Alert';
@@ -45,9 +44,7 @@ import {
   makeSafeFormObject,
 } from '../../../helpers';
 import { ENDPOINT, ROWS_PER_PAGE, OPTION_ALL } from '../../../constants';
-import { Event } from '../../../@kalos-core/kalos-rpc/Event';
-import { Payroll, RoleType } from '../../ComponentsLibrary/Payroll';
-import { PropLinkServiceClient } from '../../../@kalos-core/kalos-rpc/compiled-protos/prop_link_pb_service';
+import { RoleType } from '../../ComponentsLibrary/Payroll';
 import { PermissionGroup } from '../../../@kalos-core/kalos-rpc/compiled-protos/user_pb';
 import './SpiffTool.module.less';
 
@@ -132,6 +129,7 @@ export const SpiffTool: FC<Props> = ({
 
   const [editing, setEditing] = useState<Task>();
   const [extendedEditing, setExtendedEditing] = useState<Task>();
+  const [reassign, setReassign] = useState<Task>();
   const [deleting, setDeleting] = useState<Task>();
   const [loggedInUser, setLoggedInUser] = useState<User>();
   const [entries, setEntries] = useState<Task[]>([]);
@@ -171,7 +169,6 @@ export const SpiffTool: FC<Props> = ({
     {},
   );
   const loadLoggedInUser = useCallback(async () => {
-    console.log(loggedUserId);
     const userResult = await UserClientService.loadUserById(loggedUserId);
     const tempRole = userResult
       .getPermissionGroupsList()
@@ -334,6 +331,12 @@ export const SpiffTool: FC<Props> = ({
     },
     [setExtendedEditing, setStatusEditing],
   );
+  const handleSetReassign = useCallback(
+    (reassign?: Task) => () => {
+      setReassign(reassign);
+    },
+    [setReassign],
+  );
   const handleSetEditing = useCallback(
     (editing?: Task) => () => setEditing(editing),
     [setEditing],
@@ -448,7 +451,7 @@ export const SpiffTool: FC<Props> = ({
     },
     [loggedUserId, editing, setSaving, setEditing, type, load],
   );
-  const handleSaveNewTool = useCallback(
+  const handleSaveNewToolAllowance = useCallback(
     async (data: Task) => {
       setSaving(true);
       const now = timestamp();
@@ -459,17 +462,20 @@ export const SpiffTool: FC<Props> = ({
       req.setSpiffToolId('');
       req.setExternalCode('user');
       req.setCreatorUserId(loggedUserId);
-      req.setBillableType('Tool Purchase');
+      req.setBillableType('Tool Allowance');
       req.setStatusId(1);
-      //req.addFieldMask('AdminActionId');
+      req.setAdminActionId(0);
+      req.addFieldMask('AdminActionId');
       req.setFieldMaskList([]);
       const res = await TaskClientService.Create(req);
+      /*
       const id = res.getId();
       const updateReq = new Task();
       updateReq.setId(id);
       updateReq.setFieldMaskList(['AdminActionId']);
       updateReq.setAdminActionId(0);
       await TaskClientService.Update(updateReq);
+      */
       setSaving(false);
       setPendingAdd(false);
       await load();
@@ -628,11 +634,22 @@ export const SpiffTool: FC<Props> = ({
         const url = `https://app.kalosflorida.com/index.cfm?action=admin:service.editServiceCall&id=${taskEvent.getId()}&user_id=${
           taskEvent?.getCustomerId() ? taskEvent.getCustomerId() : 0
         }&property_id=${taskEvent?.getPropertyId()}`;
-        console.log(url);
         window.open(url);
       }
     };
-
+  const handleChangeToolPurchaseOwner = async (
+    entry: Task,
+    newOwner: number,
+  ) => {
+    setSaving(true);
+    entry.setCreatorUserId(loggedUserId);
+    entry.setExternalId(newOwner);
+    entry.setFieldMaskList(['ExternalId', 'CreatorUserId']);
+    await TaskClientService.Update(entry);
+    setReassign(undefined);
+    setSaving(false);
+    setLoaded(false);
+  };
   const handleUnsetServiceCallEditing = useCallback(
     () => setServiceCallEditing(undefined),
     [setServiceCallEditing],
@@ -674,19 +691,19 @@ export const SpiffTool: FC<Props> = ({
     userRole,
     loadLoggedInUser,
   ]);
-  const actions = [
-    {
-      label: type === 'Spiff' ? 'Spiff Apply' : 'Tool Apply',
-      onClick: handleToggleAdd,
-    },
-  ];
+  const actions = [];
   if (onClose != undefined) {
     actions.push({
       label: 'Close',
       onClick: onClose,
     });
   }
-
+  if ((userRole == 'Manager' && type == 'Tool') || type == 'Spiff') {
+    actions.push({
+      label: type === 'Spiff' ? 'Spiff Apply' : 'Admin Add Tool Allowance',
+      onClick: handleToggleAdd,
+    });
+  }
   const SCHEMA: Schema<Task> =
     type === 'Spiff'
       ? [
@@ -752,7 +769,7 @@ export const SpiffTool: FC<Props> = ({
             },
             {
               name: 'getToolpurchaseCost',
-              label: 'Tool Purchase Cost',
+              label: 'Tool Allowance Amount',
               startAdornment: '$',
               type: 'number',
               required: true,
@@ -766,7 +783,6 @@ export const SpiffTool: FC<Props> = ({
             },
           ],
           [
-            { name: 'getReferenceNumber', label: 'Reference #' },
             {
               name: 'getBriefDescription',
               label: 'Tool Description',
@@ -774,6 +790,17 @@ export const SpiffTool: FC<Props> = ({
             },
           ],
         ];
+
+  const REASSIGN_SCHEMA: Schema<Task> = [
+    [
+      {
+        name: 'getExternalId',
+        label: 'Technician',
+        type: 'technician',
+        disabled: userRole != 'Manager' ? true : false,
+      },
+    ],
+  ];
   const COLUMNS: Columns = [
     { name: 'Claim Date' },
     { name: `${type === 'Spiff' ? 'Spiff' : 'Tool'} ID #` },
@@ -923,6 +950,7 @@ export const SpiffTool: FC<Props> = ({
                 <IconButton
                   key={0}
                   size="small"
+                  disabled={type == 'Tool' ? true : false}
                   onClick={handleSetExtendedEditing(entry)}
                 >
                   <SearchIcon />
@@ -936,8 +964,19 @@ export const SpiffTool: FC<Props> = ({
                   <DeleteIcon />
                 </IconButton>,
               ];
-        if (disableActions) {
+        if (disableActions || type == 'Tool') {
           actions = [];
+        }
+        if (disableActions || (type == 'Tool' && userRole == 'Manager')) {
+          actions = [
+            <IconButton
+              key={'reassignButton'}
+              size="small"
+              onClick={handleSetReassign(entry)}
+            >
+              <EditIcon />
+            </IconButton>,
+          ];
         }
         return [
           {
@@ -1192,6 +1231,25 @@ export const SpiffTool: FC<Props> = ({
           />
         </Modal>
       )}
+      {reassign && (
+        <Modal key="reassignModal" open onClose={handleSetReassign}>
+          <Form<Task>
+            key="reassignForm"
+            title={'Reassign Tool Purchase'}
+            schema={REASSIGN_SCHEMA}
+            onClose={handleSetReassign()}
+            data={reassign}
+            onSave={data => {
+              handleChangeToolPurchaseOwner(
+                reassign,
+                makeSafeFormObject(data, new Task()).getExternalId(),
+              );
+              handleSetReassign();
+            }}
+            disabled={saving}
+          />
+        </Modal>
+      )}
       {deleting && (
         <ConfirmDelete
           open
@@ -1264,7 +1322,9 @@ export const SpiffTool: FC<Props> = ({
             schema={SCHEMA}
             onClose={handleToggleAdd}
             data={makeNewTask()}
-            onSave={type == 'Spiff' ? handleSaveNewSpiff : handleSaveNewTool}
+            onSave={
+              type == 'Spiff' ? handleSaveNewSpiff : handleSaveNewToolAllowance
+            }
             disabled={saving}
           />
         </Modal>
