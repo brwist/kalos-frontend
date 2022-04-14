@@ -239,16 +239,19 @@ export const TransactionTable: FC<Props> = ({
     }
   };
 
-  const makeLog = async (description: string, id: number) => {
-    const client = new TransactionActivityClient(ENDPOINT);
-    const activity = new TransactionActivity();
-    activity.setIsActive(1);
-    activity.setTimestamp(timestamp());
-    activity.setUserId(loggedUserId);
-    activity.setDescription(description);
-    activity.setTransactionId(id);
-    await client.Create(activity);
-  };
+  const makeLog = useCallback(
+    async (description: string, id: number) => {
+      const client = new TransactionActivityClient(ENDPOINT);
+      const activity = new TransactionActivity();
+      activity.setIsActive(1);
+      activity.setTimestamp(timestamp());
+      activity.setUserId(loggedUserId);
+      activity.setDescription(description);
+      activity.setTransactionId(id);
+      await client.Create(activity);
+    },
+    [loggedUserId],
+  );
 
   const dispute = async (reason: string, txn: Transaction) => {
     const userReq = new User();
@@ -1264,12 +1267,15 @@ export const TransactionTable: FC<Props> = ({
         type: ACTIONS.SET_DELETE_FROM_LOCAL_LIST,
         data: state.transactionToDelete,
       });
-
+      await makeLog(
+        'Accounts Payable Record Deleted',
+        state.transactionToDelete.getId(),
+      );
       dispatch({ type: ACTIONS.SET_TRANSACTION_TO_DELETE, data: undefined });
     } catch (err) {
       console.error(`An error occurred while deleting a transaction: ${err}`);
     }
-  }, [state.transactionToDelete]);
+  }, [state.transactionToDelete, makeLog]);
 
   useEffect(() => {
     let abortController = new AbortController();
