@@ -94,6 +94,8 @@ import { DevlogClient } from './@kalos-core/kalos-rpc/Devlog';
 import { InvoiceClient } from './@kalos-core/kalos-rpc/Invoice';
 import { FirstCallClient } from './@kalos-core/kalos-rpc/FirstCall';
 import { MertricReportDataRequest } from './@kalos-core/kalos-rpc/compiled-protos/metrics_pb';
+import axios from 'axios';
+import Axios from 'axios';
 
 export type SimpleFile = {
   key: string;
@@ -242,6 +244,18 @@ async function slackNotify(id: string, text: string) {
     },
   );
 }
+
+export async function testSlackCommand() {
+  const baseURL = 'https://dev-core.kalosflorida.com/v1/trelloslackbot-test';
+  const fd = new FormData();
+  fd.set('message', 'test');
+  fd.set('user_id', '8418');
+  const res = await Axios.post(`${baseURL}`, fd, {
+    headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+  });
+  console.log('request complete', res, {});
+}
+
 export function checkPerDiemRowIsEarliestOrLatest(
   rows: PerDiemRow[],
   pdr: PerDiemRow,
