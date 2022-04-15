@@ -58,6 +58,15 @@ type PropertyServiceDelete = {
   readonly responseType: typeof property_pb.Property;
 };
 
+type PropertyServiceGetPropertyCoordinates = {
+  readonly methodName: string;
+  readonly service: typeof PropertyService;
+  readonly requestStream: false;
+  readonly responseStream: false;
+  readonly requestType: typeof property_pb.Property;
+  readonly responseType: typeof property_pb.PropertyCoordinates;
+};
+
 export class PropertyService {
   static readonly serviceName: string;
   static readonly Create: PropertyServiceCreate;
@@ -66,6 +75,7 @@ export class PropertyService {
   static readonly List: PropertyServiceList;
   static readonly Update: PropertyServiceUpdate;
   static readonly Delete: PropertyServiceDelete;
+  static readonly GetPropertyCoordinates: PropertyServiceGetPropertyCoordinates;
 }
 
 export type ServiceError = { message: string, code: number; metadata: grpc.Metadata }
@@ -145,6 +155,15 @@ export class PropertyServiceClient {
   delete(
     requestMessage: property_pb.Property,
     callback: (error: ServiceError|null, responseMessage: property_pb.Property|null) => void
+  ): UnaryResponse;
+  getPropertyCoordinates(
+    requestMessage: property_pb.Property,
+    metadata: grpc.Metadata,
+    callback: (error: ServiceError|null, responseMessage: property_pb.PropertyCoordinates|null) => void
+  ): UnaryResponse;
+  getPropertyCoordinates(
+    requestMessage: property_pb.Property,
+    callback: (error: ServiceError|null, responseMessage: property_pb.PropertyCoordinates|null) => void
   ): UnaryResponse;
 }
 

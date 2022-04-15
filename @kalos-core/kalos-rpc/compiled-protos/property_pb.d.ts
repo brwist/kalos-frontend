@@ -2,6 +2,29 @@
 // file: property.proto
 
 import * as jspb from "google-protobuf";
+import * as common_pb from "./common_pb";
+
+export class PropertyCoordinates extends jspb.Message {
+  clearCoordsList(): void;
+  getCoordsList(): Array<common_pb.LatLng>;
+  setCoordsList(value: Array<common_pb.LatLng>): void;
+  addCoords(value?: common_pb.LatLng, index?: number): common_pb.LatLng;
+
+  serializeBinary(): Uint8Array;
+  toObject(includeInstance?: boolean): PropertyCoordinates.AsObject;
+  static toObject(includeInstance: boolean, msg: PropertyCoordinates): PropertyCoordinates.AsObject;
+  static extensions: {[key: number]: jspb.ExtensionFieldInfo<jspb.Message>};
+  static extensionsBinary: {[key: number]: jspb.ExtensionFieldBinaryInfo<jspb.Message>};
+  static serializeBinaryToWriter(message: PropertyCoordinates, writer: jspb.BinaryWriter): void;
+  static deserializeBinary(bytes: Uint8Array): PropertyCoordinates;
+  static deserializeBinaryFromReader(message: PropertyCoordinates, reader: jspb.BinaryReader): PropertyCoordinates;
+}
+
+export namespace PropertyCoordinates {
+  export type AsObject = {
+    coordsList: Array<common_pb.LatLng.AsObject>,
+  }
+}
 
 export class Property extends jspb.Message {
   getId(): number;
@@ -83,6 +106,18 @@ export class Property extends jspb.Message {
   setNotEqualsList(value: Array<string>): void;
   addNotEquals(value: string, index?: number): string;
 
+  getOrderBy(): string;
+  setOrderBy(value: string): void;
+
+  getOrderDir(): string;
+  setOrderDir(value: string): void;
+
+  getGroupBy(): string;
+  setGroupBy(value: string): void;
+
+  getWithoutLimit(): boolean;
+  setWithoutLimit(value: boolean): void;
+
   serializeBinary(): Uint8Array;
   toObject(includeInstance?: boolean): Property.AsObject;
   static toObject(includeInstance: boolean, msg: Property): Property.AsObject;
@@ -120,6 +155,10 @@ export namespace Property {
     fieldMaskList: Array<string>,
     pageNumber: number,
     notEqualsList: Array<string>,
+    orderBy: string,
+    orderDir: string,
+    groupBy: string,
+    withoutLimit: boolean,
   }
 }
 
