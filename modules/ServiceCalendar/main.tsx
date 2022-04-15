@@ -41,8 +41,7 @@ import {
   TimeoffRequestClientService,
   TimeoffRequestTypes,
 } from '../../helpers';
-
-import { CodeSharp } from '@material-ui/icons';
+import './ServiceCalendar.module.less';
 
 type Props = PageWrapperProps & {
   userId: number;
