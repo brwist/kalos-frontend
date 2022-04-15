@@ -1,6 +1,6 @@
 import { grpc } from '@improbable-eng/grpc-web';
 import { PropertyService } from '../compiled-protos/property_pb_service';
-import { Property, PropertyList } from '../compiled-protos/property_pb';
+import { Property, PropertyList, PropertyCoordinates } from '../compiled-protos/property_pb';
 import {
   UnaryRpcOptions,
   UnaryOutput,
@@ -25,6 +25,24 @@ class PropertyClient extends BaseClient {
     });
   }
 
+  public async GetResidentialPropertyCoordinates() {
+    return new Promise<PropertyCoordinates>((resolve, reject) => {
+      const req = new Property();
+      req.setState("FL");
+      req.setGroupBy("user_id");
+      req.setIsActive(1);
+      req.setIsResidential(1);
+      req.setWithoutLimit(true);
+      const opts: UnaryRpcOptions<Property, PropertyCoordinates> = {
+        request: req,
+        host: this.host,
+        metadata: this.getMetaData(),
+        onEnd: this.onUnaryEnd(resolve, reject)
+      }
+      grpc.unary(PropertyService.GetPropertyCoordinates, opts)
+    })
+  }
+  
   public async Get(req: Property) {
     return new Promise<Property>((resolve, reject) => {
       const opts: UnaryRpcOptions<Property, Property> = {
@@ -144,4 +162,4 @@ class PropertyClient extends BaseClient {
 const getPropertyAddress = (p?: Property): string =>
   p ? `${p.getAddress()}, ${p.getCity()}, ${p.getState()} ${p.getZip()}` : '';
 
-export { Property, PropertyList, PropertyClient, getPropertyAddress };
+export { Property, PropertyList, PropertyClient, getPropertyAddress, PropertyCoordinates };
