@@ -264,11 +264,11 @@ export const CostSummary: FC<Props> = ({
     );
 
     let totalMeals = filteredPerDiems.reduce(
-      (aggr, pdr) => aggr + pdr.getAmountProcessedMeals(),
+      (aggr, pd) => aggr + pd.getAmountProcessedMeals(),
       0,
     );
     let totalLodging = filteredPerDiems.reduce(
-      (aggr, pdr) => aggr + pdr.getAmountProcessedLodging(),
+      (aggr, pd) => aggr + pd.getAmountProcessedLodging(),
       0,
     );
 
@@ -575,7 +575,6 @@ export const CostSummary: FC<Props> = ({
         }
       }
     }
-    console.log(updatePerDiems);
     for (let i = 0; i < updatePerDiems.length; i++) {
       const data = updatePerDiems[i];
       const req = new PerDiem();
