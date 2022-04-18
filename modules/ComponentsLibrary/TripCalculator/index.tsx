@@ -38,7 +38,7 @@ export type TripInfo = {
   employeeId: number;
   jobId: number;
 };
-export const TripCalulator: FC<props> = ({ loggedUserId, onClose, role }) => {
+export const TripCalculator: FC<props> = ({ loggedUserId, onClose, role }) => {
   const [state, dispatch] = useReducer(reducer, {
     isLoaded: false,
     error: undefined,
@@ -96,7 +96,7 @@ export const TripCalulator: FC<props> = ({ loggedUserId, onClose, role }) => {
         errorLog.setTimestamp(format(new Date(), 'yyyy-MM-dd hh:mm:ss'));
         errorLog.setIsError(1);
         errorLog.setDescription(
-          `An error occurred in TripCalulator: ${errorToSet}`,
+          `An error occurred in TripCalculator: ${errorToSet}`,
         );
         await DevlogClientService.Create(errorLog);
         dispatch({ type: ACTIONS.SET_ERROR, data: errorToSet });
