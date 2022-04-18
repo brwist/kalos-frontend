@@ -1096,6 +1096,7 @@ const NAMED_EXPORTS = {
   '@kalos-core/kalos-rpc/compiled-protos/property_pb.js': [
     'Property',
     'PropertyList',
+    'PropertyCoordinates'
   ],
   '@kalos-core/kalos-rpc/compiled-protos/quote_pb.js': [
     'Quote',

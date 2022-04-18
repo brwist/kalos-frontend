@@ -2333,10 +2333,9 @@ export const AdvancedSearch: FC<Props> = ({
                                 onClick={() => {
                                   window.open(
                                     [
-                                      '/index.cfm?action=admin:tasks.spiff_tool_logs',
-                                      `type=tool`,
-                                      `rt=all`,
-                                      `reportUserId=${id}`,
+                                      '/index.cfm?action=admin:tasks.spiff_tool_log_new',
+                                      `type=Tool`,
+                                      `user_id=${id}`,
                                     ].join('&'),
                                   );
                                   // TODO replace with ComponentsLibrary
