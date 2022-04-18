@@ -42,6 +42,7 @@ import {
   formatWeek,
   EventClientService,
   makeSafeFormObject,
+  usd,
 } from '../../../helpers';
 import { ENDPOINT, ROWS_PER_PAGE, OPTION_ALL } from '../../../constants';
 import { RoleType } from '../../ComponentsLibrary/Payroll';
@@ -126,7 +127,7 @@ export const SpiffTool: FC<Props> = ({
   const [saving, setSaving] = useState<boolean>(false);
   const [loading, setLoading] = useState<boolean>(true);
   const [showAlert, setShowAlert] = useState<boolean>(false);
-
+  const [toolBalance, setToolBalance] = useState<number>(0);
   const [editing, setEditing] = useState<Task>();
   const [extendedEditing, setExtendedEditing] = useState<Task>();
   const [reassign, setReassign] = useState<Task>();
@@ -136,6 +137,9 @@ export const SpiffTool: FC<Props> = ({
   const [count, setCount] = useState<number>(0);
   const [departments, setDepartments] = useState<PermissionGroup[]>();
   const [page, setPage] = useState<number>(0);
+  const [userId, setUserId] = useState<number>(
+    ownerId ? ownerId : loggedUserId,
+  );
   const [searchForm, setSearchForm] = useState<SearchType>(getSearchFormInit());
   const [searchFormKey, setSearchFormKey] = useState<number>(0);
   const [technicians, setTechnicians] = useState<User[]>([]);
@@ -168,6 +172,7 @@ export const SpiffTool: FC<Props> = ({
     (aggr, id) => ({ ...aggr, [id.getId()]: id.getType() }),
     {},
   );
+
   const loadLoggedInUser = useCallback(async () => {
     const userResult = await UserClientService.loadUserById(loggedUserId);
     const tempRole = userResult
@@ -212,6 +217,7 @@ export const SpiffTool: FC<Props> = ({
       }
 
       const { description, month, kind, technician } = searchForm;
+
       console.log('data given to request', searchForm);
       const req = new Task();
       req.setPageNumber(page);
@@ -252,6 +258,7 @@ export const SpiffTool: FC<Props> = ({
       }
       if (technician) {
         req.setExternalId(technician);
+        setUserId(technician);
       }
       req.setBillableType(type === 'Spiff' ? 'Spiff' : 'Tool Purchase');
       if (description !== '') {
@@ -1130,7 +1137,7 @@ export const SpiffTool: FC<Props> = ({
     [
       {
         name: 'description',
-        label: `Search ${type === 'Spiff' ? 'Spiffs' : 'Tool Purchases'}`,
+        label: `Search ${type === 'Spiff' ? 'Spiffs' : `Tool Purchases`}`,
       },
       ...(userRole == 'Manager'
         ? [
@@ -1185,7 +1192,8 @@ export const SpiffTool: FC<Props> = ({
         </Modal>
       )}
       <SectionBar
-        title={type === 'Spiff' ? 'Spiff Report' : 'Tool Purchases'}
+        title={type === 'Spiff' ? 'Spiff Report' : `Tool Purchases `}
+        subtitle={type == 'Spiff' ? '' : `Current Balance: ${usd(toolBalance)}`}
         actions={actions}
         fixedActions
         pagination={{
@@ -1222,7 +1230,7 @@ export const SpiffTool: FC<Props> = ({
             data={extendedEditing}
             role={userRole != undefined ? userRole : ''}
             loading={loading}
-            userId={ownerId}
+            userId={extendedEditing.getExternalId()}
             loggedUserId={loggedUserId}
             onSave={handleSaveExtended}
             onStatusChange={reloadExtendedEditing}
