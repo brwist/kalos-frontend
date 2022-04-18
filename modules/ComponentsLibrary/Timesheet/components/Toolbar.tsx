@@ -14,7 +14,7 @@ import './toolbar.less';
 import { Payroll as PayrollComponent } from '../../Payroll';
 import { Modal } from '../../Modal';
 import { SectionBar } from '../../SectionBar';
-import { TripCalulator } from '../../TripCalulator';
+import { TripCalculator } from '../../TripCalculator';
 type Props = {
   selectedDate: Date;
   handleDateChange: (value: Date) => void;
@@ -163,7 +163,7 @@ const Toolbar: FC<Props> = ({
               open={openCalculator}
               onClose={() => setOpenCalculator(false)}
             >
-              <TripCalulator
+              <TripCalculator
                 loggedUserId={userID}
                 role={role}
                 onClose={() => setOpenCalculator(false)}

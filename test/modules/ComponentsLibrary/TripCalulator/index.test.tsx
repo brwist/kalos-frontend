@@ -9,44 +9,42 @@
 
   Design Specification / Document: None Specified
  
-*/ 
+*/
 
 export {};
 
-import TripCalulator = require('../../../../modules/ComponentsLibrary/TripCalulator/index');
+import TripCalculator = require('../../../../modules/ComponentsLibrary/TripCalculator/index');
 import React = require('react');
 import Enzyme = require('enzyme');
 import Chai = require('chai');
 
 import LogModule = require('../../../test-tools/logging');
 
-const component = (<TripCalulator.TripCalulator loggedUserId={8418} />);
+const component = <TripCalculator.TripCalculator loggedUserId={8418} />;
 
 describe('ComponentsLibrary', () => {
-  describe('TripCalulator', () => {
-    describe(`<TripCalulator${Object.keys(component.props).map(
-    key =>
-      ` ${key}={${
-        typeof component.props[key] === 'string'
-          ? `"${component.props[key]}"`
-          : component.props[key]
-      }}`,
-  )} />`, () => {
-      let wrapper: Enzyme.ReactWrapper; 
+  describe('TripCalculator', () => {
+    describe(`<TripCalculator${Object.keys(component.props).map(
+      key =>
+        ` ${key}={${
+          typeof component.props[key] === 'string'
+            ? `"${component.props[key]}"`
+            : component.props[key]
+        }}`,
+    )} />`, () => {
+      let wrapper: Enzyme.ReactWrapper;
       before(() => {
-        wrapper = Enzyme.mount(
-          component,
-        );
+        wrapper = Enzyme.mount(component);
       });
       after(() => {
         wrapper.unmount();
       });
- 
+
       it('renders correctly', () => {
-        Chai.expect(wrapper.containsMatchingElement(component)).to.equal(true);      
-      })
+        Chai.expect(wrapper.containsMatchingElement(component)).to.equal(true);
+      });
 
       // Rest of the spec tests here, make them pass as you go
     });
-  })
+  });
 });
