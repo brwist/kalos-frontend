@@ -1,6 +1,6 @@
 import { grpc } from '@improbable-eng/grpc-web';
 import { PropertyService } from '../compiled-protos/property_pb_service';
-import { Property, PropertyList, PropertyCoordinates } from '../compiled-protos/property_pb';
+import { Property, PropertyList, PropertyCoordinates} from '../compiled-protos/property_pb';
 import {
   UnaryRpcOptions,
   UnaryOutput,
@@ -26,7 +26,7 @@ class PropertyClient extends BaseClient {
   }
 
   public async GetResidentialPropertyCoordinates() {
-    return new Promise<PropertyCoordinates>((resolve, reject) => {
+    return new Promise<Property>((resolve, reject) => {
       const req = new Property();
       req.setState("FL");
       req.setGroupBy("user_id");
@@ -162,4 +162,4 @@ class PropertyClient extends BaseClient {
 const getPropertyAddress = (p?: Property): string =>
   p ? `${p.getAddress()}, ${p.getCity()}, ${p.getState()} ${p.getZip()}` : '';
 
-export { Property, PropertyList, PropertyClient, getPropertyAddress, PropertyCoordinates };
+export { Property, PropertyList, PropertyClient, getPropertyAddress };

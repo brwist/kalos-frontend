@@ -558,6 +558,8 @@ export class AccountPicker extends Picker<
     this.Client = new TransactionAccountClient(ENDPOINT);
     this.req = new TransactionAccount();
     this.req.setIsActive(1);
+    this.req.setOrderBy('description');
+    this.req.setOrderDir('ASC');
   }
 }
 

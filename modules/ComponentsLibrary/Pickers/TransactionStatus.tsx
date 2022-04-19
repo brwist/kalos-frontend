@@ -91,6 +91,11 @@ export class TxnStatusPicker extends React.PureComponent<props, state> {
               Audited and Recorded
             </option>
           ) : undefined}
+          {this.props.hideAuditWorkflowFilters === false ? (
+            <option hidden={this.props.hideAuditWorkflowFilters} value={12}>
+              Deleted
+            </option>
+          ) : undefined}
         </NativeSelect>
       </FormControl>
     );
