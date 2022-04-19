@@ -147,7 +147,7 @@ export class TransactionAdminView extends React.Component<props, state> {
     this.makeAddJobNumber = this.makeAddJobNumber.bind(this);
     this.makeUpdateNotes = this.makeUpdateNotes.bind(this);
     this.markAsDuplicate = this.markAsDuplicate.bind(this);
-
+    this.reactivateTransaction = this.reactivateTransaction.bind(this);
     this.makeUpdateCostCenter = this.makeUpdateCostCenter.bind(this);
     this.toggleLoading = this.toggleLoading.bind(this);
     this.setSort = this.setSort.bind(this);
@@ -316,6 +316,18 @@ export class TransactionAdminView extends React.Component<props, state> {
       await this.fetchTxns();
     };
   }
+  reactivateTransaction(id: number) {
+    return async (notes: string) => {
+      const txn = new Transaction();
+      txn.setId(id);
+      txn.setIsActive(1);
+      txn.setFieldMaskList(['IsActive']);
+      await this.TxnClient.Update(txn);
+      await this.makeLog(`Transaction reactivated. Reason:${notes}`, id);
+
+      await this.fetchTxns();
+    };
+  }
   makeRecordTransaction(id: number) {
     return async () => {
       const txn = new Transaction();
@@ -412,6 +424,7 @@ export class TransactionAdminView extends React.Component<props, state> {
 
   applyFilters(obj: Transaction) {
     const { filters } = this.state;
+    obj.setIsActive(1);
     if (filters.userID) {
       obj.setOwnerId(filters.userID);
     }
@@ -469,6 +482,10 @@ export class TransactionAdminView extends React.Component<props, state> {
           obj.setIsRecorded(true);
           obj.setIsAudited(true);
           break;
+        case 12:
+          obj.setIsActive(0);
+          obj.addFieldMask('IsActive');
+          break;
         default:
           obj.setStatusId(filters.statusID);
           break;
@@ -516,7 +533,6 @@ export class TransactionAdminView extends React.Component<props, state> {
     let reqObj = new Transaction();
     reqObj = this.applyFilters(reqObj);
     reqObj.setPageNumber(this.state.page);
-    reqObj.setIsActive(1);
     reqObj.addNotEquals('VendorCategory');
     reqObj.setVendorCategory("'Receipt','PickTicket','Invoice'");
     this.setState({ isLoading: true });
@@ -1070,6 +1086,8 @@ export class TransactionAdminView extends React.Component<props, state> {
               onClick: () => this.setSort('department_id'),
             },
             { name: 'Job #', onClick: () => this.setSort('job_id') },
+            { name: 'ID' },
+
             {
               name: 'Amount',
               dir: 'DESC',
@@ -1106,6 +1124,9 @@ export class TransactionAdminView extends React.Component<props, state> {
                     updateNotes: this.makeUpdateNotes(txn.getId()),
                     markAsDuplicate: this.markAsDuplicate(txn.getId()),
                     updateStateTax: this.makeUpdateStateTax(txn),
+                    reactivateTransaction: this.reactivateTransaction(
+                      txn.getId(),
+                    ),
                     editingStateTax: this.state.editingStateTax[txn.getId()],
                     toggleEditingStateTax: () =>
                       this.toggleEditingStateTax(txn.getId()),
