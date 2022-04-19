@@ -504,7 +504,7 @@ function formatDay(datetime: string) {
       5: 'Fri',
       6: 'Sat',
     } as { [key: number]: string }
-  )[new Date(datetime.substring(0, 10)).getDay() + 1];
+  )[new Date(datetime).getDay()];
 }
 
 /**
@@ -513,7 +513,7 @@ function formatDay(datetime: string) {
  * @returns format M/D/YYYY h:MMa (ie. 6/1/2020 3:28PM)
  */
 function formatDateTime(datetime: string) {
-  return formatDate(datetime) + ' ' + formatTime(datetime.substr(11));
+  return formatDate(datetime) + ' ' + formatTime(datetime.substring(11));
 }
 
 /**
