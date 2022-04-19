@@ -319,10 +319,10 @@ export const PerDiems: FC<Props> = ({
       )}
       {role === 'Manager' && (
         <Button
-          //label={'Manage PerDiems'}
-          label={'Manage PerDiems Disabled Pending Update'}
+          label={'Manage PerDiems'}
+          //label={'Manage PerDiems Disabled Pending Update'}
           onClick={() => setOpenManagerPerDiem(true)}
-          disabled={true}
+          //disabled={true}
         ></Button>
       )}
       <InfoTable

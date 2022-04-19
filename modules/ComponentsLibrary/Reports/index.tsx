@@ -20,12 +20,13 @@ import { PromptPaymentReport } from '../PromptPaymentReport';
 import { TimeoffSummaryReport } from '../TimeoffSummaryReport';
 import { BillingAuditReport } from '../BillingAuditReport';
 import { format, parseISO } from 'date-fns';
-
+import { ResidentialHeatmap } from '../../ResidentialHeatmap/main';
 import {
   makeOptions,
   makeLast12MonthsOptions,
   getWeekOptions,
   trailingZero,
+  ApiKeyClientService,
 } from '../../../helpers';
 import {
   OPTION_ALL,
@@ -38,6 +39,7 @@ import {
 import { EditProject } from '../EditProject';
 import { CostReport } from '../CostReport';
 import './Reports.module.less';
+import { CostReportCSV } from '../CostReportCSV';
 
 export type FilterForm = {
   status?: string;
@@ -272,6 +274,8 @@ export const Reports: FC<Props> = ({ loggedUserId }) => {
     useState<boolean>(false);
   const [deletedServiceCallsReportOpen, setDeletedServiceCallsReportOpen] =
     useState<boolean>(false);
+  const [heatMapReportOpen, setHeatMapReportOpentOpen] =
+    useState<boolean>(false);
   const [callbackReport, setCallbackReport] = useState<FilterForm>({});
   const [callbackDatesError, setCallbackDatesError] = useState<boolean>(false);
   const [callbackReportOpen, setCallbackReportOpen] = useState<boolean>(false);
@@ -295,7 +299,7 @@ export const Reports: FC<Props> = ({ loggedUserId }) => {
     useState<boolean>(false);
   const [timesheetValidationError, setTimesheetValidationError] =
     useState<boolean>(false);
-
+  const [apiKey, setApiKey] = useState<string>();
   const [serviceCallZipCodeReportOpen, setServiceCallZipCodeReportOpen] =
     useState<boolean>(false);
   const [warrantyReportOpen, setWarrantyReportOpen] = useState<boolean>(false);
@@ -502,6 +506,16 @@ export const Reports: FC<Props> = ({ loggedUserId }) => {
     (open: boolean) => () => setTransactionValidationReportOpen(open),
     [setTransactionValidationReportOpen],
   );
+  const handleOpenHeatMap = useCallback(
+    (open: boolean) => async () => {
+      if (apiKey == undefined) {
+        const key = await ApiKeyClientService.getKeyByKeyName('google_maps');
+        setApiKey(key.getApiKey());
+      }
+      setHeatMapReportOpentOpen(open);
+    },
+    [setHeatMapReportOpentOpen, apiKey],
+  );
   const handleOpenServiceCallZipCodeReportToggle = useCallback(
     (open: boolean) => () => setServiceCallZipCodeReportOpen(open),
     [setServiceCallZipCodeReportOpen],
@@ -643,7 +657,7 @@ export const Reports: FC<Props> = ({ loggedUserId }) => {
       {
         name: 'jobNumber',
         label: 'Job Number for Report',
-        type: 'number',
+        type: 'eventId',
       },
     ],
   ];
@@ -792,6 +806,16 @@ export const Reports: FC<Props> = ({ loggedUserId }) => {
           {
             label: 'Report',
             onClick: handleOpenTimeoffSummaryReportToggle(true),
+          },
+        ]}
+        fixedActions
+      />
+      <SectionBar
+        title="Residential Heat Map"
+        actions={[
+          {
+            label: 'Report',
+            onClick: handleOpenHeatMap(true),
           },
         ]}
         fixedActions
@@ -971,6 +995,25 @@ export const Reports: FC<Props> = ({ loggedUserId }) => {
           {UNDER_CONSTRUCTION}
         </Modal>
       )}
+      {heatMapReportOpen && apiKey != undefined && (
+        <Modal
+          open
+          onClose={handleOpenServiceCallZipCodeReportToggle(false)}
+          fullScreen
+        >
+          <SectionBar
+            title="Residential Heat Map"
+            actions={[
+              {
+                label: 'Close',
+                onClick: () => handleOpenHeatMap(false)(),
+              },
+            ]}
+            fixedActions
+          />
+          <ResidentialHeatmap loggedUserId={loggedUserId} apiKey={apiKey} />
+        </Modal>
+      )}
       {warrantyReportOpen && (
         <Modal open onClose={handleOpenWarrantyReportToggle(false)} fullScreen>
           <WarrantyReport onClose={handleOpenWarrantyReportToggle(false)} />
@@ -1035,6 +1078,7 @@ export const Reports: FC<Props> = ({ loggedUserId }) => {
         <Modal
           open
           onClose={() => handleOpenJobNumberBasedReportToggle(undefined)}
+          fullScreen={true}
         >
           <SectionBar
             title="Job Number Report"
@@ -1046,7 +1090,7 @@ export const Reports: FC<Props> = ({ loggedUserId }) => {
             ]}
             fixedActions
           />
-          <CostReport
+          <CostReportCSV
             serviceCallId={jobNumberBasedReportOpen.jobNumber}
             loggedUserId={loggedUserId}
           />

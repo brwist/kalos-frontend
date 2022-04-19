@@ -18,8 +18,6 @@ import { PageWrapper } from '../PageWrapper/main';
 import { reducer, ACTIONS } from './reducer';
 import {
   GoogleMap,
-  LoadScript,
-  Marker,
   useJsApiLoader,
   HeatmapLayer,
 } from '@react-google-maps/api';
@@ -31,6 +29,7 @@ import {
 } from '../../@kalos-core/kalos-rpc/Property';
 import { format } from 'date-fns';
 import { ENDPOINT } from '../../constants';
+import { ApiKey } from '../../@kalos-core/kalos-rpc/ApiKey';
 
 // add any prop types here
 interface props {
@@ -43,6 +42,7 @@ export const ResidentialHeatmap: FC<props> = ({ loggedUserId, apiKey }) => {
     isLoaded: false,
     error: undefined, // use error for boolean checks
     heatmapData: [],
+    apiKey: '',
   });
   const client = useMemo(() => new PropertyClient(ENDPOINT), []);
 
