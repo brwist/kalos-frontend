@@ -18,7 +18,7 @@ import { UserClient, User } from '../../../@kalos-core/kalos-rpc/User';
 import { ENDPOINT } from '../../../constants';
 import { Tooltip } from '../../ComponentsLibrary/Tooltip';
 import { Confirm } from '../../ComponentsLibrary/Confirm';
-
+import Dialog from '@material-ui/core/Dialog';
 interface props {
   txnID: number;
   iconButton?: boolean;
@@ -142,7 +142,7 @@ export class TxnLog extends React.PureComponent<props, state> {
           </Confirm>
         )}
         {button}
-        <Modal
+        <Dialog
           open={this.state.isOpen}
           onClose={this.toggleVisibility}
           style={{
@@ -189,7 +189,7 @@ export class TxnLog extends React.PureComponent<props, state> {
               </TableBody>
             </Table>
           </Paper>
-        </Modal>
+        </Dialog>
       </>
     );
   }

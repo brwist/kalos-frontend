@@ -82,7 +82,6 @@ import { Devlog } from '../../../@kalos-core/kalos-rpc/Devlog';
 import { TxnDepartment } from '../../../@kalos-core/kalos-rpc/compiled-protos/transaction_pb';
 import { NULL_TIME_VALUE } from '../Timesheet/constants';
 import NotificationsActiveIcon from '@material-ui/icons/NotificationsActive';
-import { te } from 'date-fns/locale';
 export interface Props {
   loggedUserId: number;
   isSelector?: boolean; // Is this a selector table (checkboxes that return in on-change)?
@@ -1191,7 +1190,9 @@ export const TransactionTable: FC<Props> = ({
       }
       newTxn.setJobId(saved['Job #']);
       newTxn.setNotes(saved['Notes']);
-      newTxn.setCostCenterId(saved['Cost Center ID']);
+      newTxn.setCostCenterId(saved['Cost Center']);
+      newTxn.setInvoiceNumber(saved['Invoice #']);
+
       newTxn.setAmount(saved['Amount']);
       newTxn.setVendor(saved['Vendor']);
       newTxn.setStatusId(2);
@@ -1289,7 +1290,6 @@ export const TransactionTable: FC<Props> = ({
 
       resetTransactions();
     }
-    // your async action is here
     return () => {
       abortController.abort();
     };
@@ -1828,7 +1828,7 @@ export const TransactionTable: FC<Props> = ({
                 columnType: 'eventId',
               },
               {
-                columnName: 'Cost Center ID',
+                columnName: 'Cost Center',
                 columnType: 'number',
                 options: state.costCenters,
               },
@@ -1836,6 +1836,10 @@ export const TransactionTable: FC<Props> = ({
                 columnName: 'Order #',
                 columnType: 'text',
                 onBlur: value => handleSetOrderNumberToCheckDuplicate(value),
+              },
+              {
+                columnName: 'Invoice #',
+                columnType: 'text',
               },
               {
                 columnName: 'Amount',
@@ -1877,6 +1881,11 @@ export const TransactionTable: FC<Props> = ({
             onClick: () => changeSort('order_number'),
           },
           {
+            name: 'Invoice #',
+            dir: state.orderBy == 'invoice_number' ? state.orderDir : undefined,
+            onClick: () => changeSort('invoice_number'),
+          },
+          {
             name: 'Purchaser',
             dir: state.orderBy == 'owner_id' ? state.orderDir : undefined,
             onClick: () => changeSort('owner_id'),
@@ -1900,7 +1909,7 @@ export const TransactionTable: FC<Props> = ({
             onClick: () => changeSort('job_id'),
           },
           {
-            name: 'Cost Center ID',
+            name: 'Cost Center',
             dir: state.orderBy == 'cost_center_id' ? state.orderDir : undefined,
             onClick: () => changeSort('cost_center_id'),
           },
