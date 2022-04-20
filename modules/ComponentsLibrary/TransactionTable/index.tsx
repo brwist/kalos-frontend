@@ -1981,6 +1981,15 @@ export const TransactionTable: FC<Props> = ({
                     },
                     {
                       value: (
+                        <div key="invoiceNumber">{`${selectorParam.txn.getInvoiceNumber()}`}</div>
+                      ),
+                      key: '',
+                      onClick: isSelector
+                        ? () => setTransactionChecked(idx)
+                        : undefined,
+                    },
+                    {
+                      value: (
                         <div key="OwnernameValue">
                           {selectorParam.txn.getOwnerId() != 0
                             ? `${selectorParam.txn.getOwnerName()} (${selectorParam.txn.getOwnerId()})`
