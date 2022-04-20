@@ -1,5 +1,5 @@
-import { NULL_TIME } from '@kalos-core/kalos-rpc/constants';
-import { TimesheetLine } from '@kalos-core/kalos-rpc/TimesheetLine';
+import { NULL_TIME } from '../../../@kalos-core/kalos-rpc/constants';
+import { TimesheetLine } from '../../../@kalos-core/kalos-rpc/TimesheetLine';
 import React, { FC, useCallback, useEffect, useState } from 'react';
 import { IRS_SUGGESTED_MILE_FACTOR, MEALS_RATE } from '../../../constants';
 import {
@@ -16,12 +16,12 @@ import { PrintList } from '../PrintList';
 import { PrintPage, Status } from '../PrintPage';
 import { PrintParagraph } from '../PrintParagraph';
 import { PrintTable } from '../PrintTable';
-import { getPropertyAddress } from '@kalos-core/kalos-rpc/Property';
-import { PerDiem, PerDiemRow } from '@kalos-core/kalos-rpc/PerDiem';
-import { Transaction } from '@kalos-core/kalos-rpc/Transaction';
-import { Event } from '@kalos-core/kalos-rpc/Event';
-import { Trip } from '@kalos-core/kalos-rpc/compiled-protos/perdiem_pb';
-import { Task } from '@kalos-core/kalos-rpc/Task';
+import { getPropertyAddress } from '../../../@kalos-core/kalos-rpc/Property';
+import { PerDiem, PerDiemRow } from '../../../@kalos-core/kalos-rpc/PerDiem';
+import { Transaction } from '../../../@kalos-core/kalos-rpc/Transaction';
+import { Event } from '../../../@kalos-core/kalos-rpc/Event';
+import { Trip } from '../../../@kalos-core/kalos-rpc/compiled-protos/perdiem_pb';
+import { Task } from '../../../@kalos-core/kalos-rpc/Task';
 import { differenceInMinutes, parseISO } from 'date-fns';
 import { roundNumber } from '../../../helpers';
 export interface Props {
@@ -101,20 +101,18 @@ export const CostReport: FC<Props> = ({ serviceCallId }) => {
 
     const lodgings = await PerDiemClientService.loadPerDiemsLodging(arr); // first # is per diem id
     setLodgings(lodgings);
-    const transactions = await TransactionClientService.loadTransactionsByEventId(
-      serviceCallId,
-      true,
-    );
+    const transactions =
+      await TransactionClientService.loadTransactionsByEventId(
+        serviceCallId,
+        true,
+      );
     setTransactions(transactions);
 
     let allTripsTotal = 0;
     allTrips.forEach(trip => {
       // Subtracting 30 miles flat from trip distance in accordance
       // with reimbursement from home rule
-      allTripsTotal +=
-        trip.getDistanceInMiles() > 30 && trip.getHomeTravel()
-          ? (trip.getDistanceInMiles() - 30) * IRS_SUGGESTED_MILE_FACTOR
-          : trip.getDistanceInMiles() * IRS_SUGGESTED_MILE_FACTOR;
+      allTripsTotal += trip.getDistanceInMiles() * IRS_SUGGESTED_MILE_FACTOR;
     });
 
     setTripsTotal(allTripsTotal);
@@ -122,9 +120,11 @@ export const CostReport: FC<Props> = ({ serviceCallId }) => {
     setPerDiems(arr);
   }, [serviceCallId, setPerDiems, setLodgings]);
 
-  const totalMeals =
-    perDiems.reduce((aggr, pd) => aggr + pd.getRowsList().length, 0) *
-    MEALS_RATE;
+  const totalMeals = perDiems.reduce(
+    (aggr, pd) => aggr + pd.getRowsList().length,
+    0,
+  );
+
   const totalLodging = perDiems
     .reduce((aggr, pd) => [...aggr, ...pd.getRowsList()], [] as PerDiemRow[])
     .filter(pd => !pd.getMealsOnly())
@@ -143,10 +143,11 @@ export const CostReport: FC<Props> = ({ serviceCallId }) => {
       eventRes.getResultsList(),
     ); // first # is per diem id
     setLodgings(lodgingRes);
-    const transactions = await TransactionClientService.loadTransactionsByEventId(
-      serviceCallId,
-      true,
-    );
+    const transactions =
+      await TransactionClientService.loadTransactionsByEventId(
+        serviceCallId,
+        true,
+      );
     setTransactions(transactions);
     setPerDiems(eventRes.getResultsList());
   }, [serviceCallId, setPerDiems, setLodgings]);
@@ -156,9 +157,10 @@ export const CostReport: FC<Props> = ({ serviceCallId }) => {
     await loadResources();
     setPrintStatus('loaded');
   }, [loadResources]);
-  const handlePrinted = useCallback(() => setPrintStatus('idle'), [
-    setPrintStatus,
-  ]);
+  const handlePrinted = useCallback(
+    () => setPrintStatus('idle'),
+    [setPrintStatus],
+  );
 
   const loadEvent = useCallback(async () => {
     setLoadingEvent(true);
@@ -682,19 +684,11 @@ export const CostReport: FC<Props> = ({ serviceCallId }) => {
                     trip.getNotes(),
                     trip.getHomeTravel(),
                     `${usd(
-                      trip.getDistanceInMiles() > 30 && trip.getHomeTravel()
-                        ? Number(
-                            (
-                              (trip.getDistanceInMiles() - 30) *
-                              IRS_SUGGESTED_MILE_FACTOR
-                            ).toFixed(2),
-                          )
-                        : Number(
-                            (
-                              trip.getDistanceInMiles() *
-                              IRS_SUGGESTED_MILE_FACTOR
-                            ).toFixed(2),
-                          ),
+                      Number(
+                        (
+                          trip.getDistanceInMiles() * IRS_SUGGESTED_MILE_FACTOR
+                        ).toFixed(2),
+                      ),
                     )} ${
                       trip.getDistanceInMiles() > 30 && trip.getHomeTravel()
                         ? '(30 miles docked for home travel)'

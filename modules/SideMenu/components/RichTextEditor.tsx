@@ -2,7 +2,7 @@ import React, { FC } from 'react';
 import clsx from 'clsx';
 import { Editor, EditorState, RichUtils, ContentBlock } from 'draft-js';
 import Box from '@material-ui/core/Box';
-import './richTextEditor.less';
+import './RichTextEditor.module.less';
 
 function getBlockStyle(block: ContentBlock) {
   switch (block.getType()) {

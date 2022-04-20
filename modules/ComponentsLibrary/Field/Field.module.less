@@ -1,0 +1,192 @@
+@import '../../../styles/index.less';
+
+.Field {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  position: relative;
+  flex-shrink: 0;
+  flex-grow: 1;
+  &.type-hidden {
+    display: none;
+  }
+  &Input {
+    margin-top: 0 !important;
+    margin-bottom: .spacing(2) [] !important;
+    &.compact {
+      margin-bottom: 0 !important;
+    }
+    &.disabled {
+      filter: grayscale(1);
+    }
+  }
+  &Required {
+    color: @error-main;
+  }
+  &Headline {
+    background-color: @grey-200 !important;
+    padding-top: .spacing(0.5) [] !important;
+    padding-bottom: .spacing(0.5) [] !important;
+    padding-left: .spacing(2) [] !important;
+    padding-right: .spacing(2) [] !important;
+    margin-top: .spacing(-1) [] !important;
+    margin-left: .spacing(-2) [] !important;
+    margin-right: .spacing(-2) [] !important;
+    margin-bottom: .spacing() [] !important;
+    font-weight: 600 !important;
+    flex-grow: 1 !important;
+    display: flex !important;
+    width: 100% !important;
+    justify-content: space-between !important;
+    align-items: center !important;
+    color: @common-black !important;
+    box-sizing: content-box;
+    &.disabled {
+      color: @grey-500 !important;
+    }
+  }
+  &Description {
+    font-weight: 400;
+    margin-left: .spacing() [];
+    font-size: 12px;
+    color: @grey-600;
+  }
+  &Content {
+    width: 100%;
+  }
+  &Technicians {
+    margin-top: .spacing(2) [];
+  }
+  &Technician {
+    margin-top: .spacing(-1.5) [] !important;
+    margin-bottom: .spacing(-1.5) [] !important;
+  }
+  &SearchTechnician {
+    margin-top: .spacing(-2.5) [] !important;
+    margin-bottom: 0 !important;
+  }
+  &TechnicianButton {
+    align-self: flex-start;
+  }
+  &Color {
+    width: .spacing(2) [];
+    height: .spacing(2) [];
+    border-radius: 50%;
+    display: inline-flex;
+    margin-right: .spacing() [];
+    vertical-align: bottom;
+  }
+  &Option {
+    white-space: normal !important;
+  }
+  &Actions {
+    margin-left: .spacing() [];
+  }
+  &ActionsInLabel {
+    position: absolute;
+    top: -5px;
+    right: 0;
+  }
+  &HourWrapper {
+    flex-direction: column;
+    align-items: stretch;
+  }
+  &Hour {
+    display: flex;
+    flex-grow: 1;
+    margin-top: .spacing(-2) [] + 3;
+  }
+  &SignatureHeader {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: .spacing(0.5) [];
+  }
+  &Signature {
+    display: block;
+    width: 300px;
+    height: 160px;
+    border-width: 1px;
+    border-style: solid;
+    border-color: @grey-300;
+    position: relative;
+    box-sizing: content-box;
+    margin-bottom: .spacing(2) [];
+    &:before {
+      display: block;
+      content: ' ';
+      position: absolute;
+      bottom: .spacing(4) [];
+      left: .spacing() [];
+      right: .spacing() [];
+      height: 2px;
+      background-color: @grey-400;
+      pointer-events: none;
+      z-index: -1;
+    }
+  }
+  &Canvas {
+    display: block;
+    width: 300px;
+    height: 160px;
+  }
+  &Upload {
+    margin-left: 0 !important;
+    height: 25px !important;
+  }
+  &File {
+    display: none;
+  }
+  &Icon {
+    display: inline-flex;
+    margin-right: .spacing() [];
+    vertical-align: middle;
+    svg {
+      width: .spacing(2) [];
+      height: .spacing(2) [];
+    }
+  }
+  &DateTime {
+    display: flex;
+    align-items: flex-end;
+    width: 100%;
+    & > .Field {
+      width: calc(50% - .spacing() []);
+      &:first-of-type {
+        margin-right: .spacing(2) [];
+      }
+    }
+  }
+  &Event {
+    &Success {
+      color: @success-main;
+    }
+    &Failure {
+      color: @error-main;
+    }
+    &Unknown {
+      color: @primary-dark-lg-text;
+    }
+  }
+  &.white {
+    .MuiFormLabel-root,
+    .MuiInputBase-input,
+    .MuiSelect-icon {
+      color: @grey-A100 !important;
+    }
+    .MuiInput-underline:before {
+      border-bottom-color: @grey-A100 !important;
+    }
+  }
+}
+
+.Field input[type='color'] {
+  width: calc(100% + 4px);
+  height: 32px;
+  padding: 0;
+  margin: -2px;
+  margin-top: 0;
+  border: none;
+  outline: none;
+  cursor: context-menu;
+}

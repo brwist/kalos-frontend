@@ -1,7 +1,7 @@
 import React, { FC, ReactNode } from 'react';
 import clsx from 'clsx';
 import { PrintParagraph } from '../PrintParagraph';
-import './styles.css';
+import './PrintHeader.module.css';
 
 export interface Props {
   title?: string;

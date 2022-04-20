@@ -1,7 +1,7 @@
 import * as React from 'react';
 import * as ReactDOM from 'react-dom';
 import Transaction from './main';
-import { UserClient } from '@kalos-core/kalos-rpc/User';
+import { UserClient } from '../../@kalos-core/kalos-rpc/User';
 import { ENDPOINT } from '../../constants';
 
 const u = new UserClient(ENDPOINT);

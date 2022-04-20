@@ -4,7 +4,7 @@ import { PrintPage } from '../../PrintPage';
 import { PrintParagraph } from '../../PrintParagraph';
 import { PrintTable } from '../../PrintTable';
 import { usd, formatDate } from '../../../../helpers';
-import { Property } from '@kalos-core/kalos-rpc/Property';
+import { Property } from '../../../../@kalos-core/kalos-rpc/Property';
 
 interface Props {
   displayName: string;

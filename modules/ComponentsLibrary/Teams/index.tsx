@@ -3,7 +3,7 @@ import { InfoTable } from '../InfoTable';
 import { Modal } from '../Modal';
 import { SectionBar } from '../SectionBar';
 import { CreateNewTeam } from './components/CreateNewTeam';
-import { Team } from '@kalos-core/kalos-rpc/Team';
+import { Team } from '../../../@kalos-core/kalos-rpc/Team';
 import { TeamClientService } from '../../../helpers';
 import { Loader } from '../../Loader/main';
 import { Reducer } from './reducer';

@@ -1,7 +1,7 @@
 import React, { ReactNode, useEffect, useState, CSSProperties } from 'react';
 import ModalUI from '@material-ui/core/Modal';
 import Paper from '@material-ui/core/Paper';
-import './styles.less';
+import './Modal.module.less';
 
 type Style = {
   compact?: boolean;

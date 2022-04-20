@@ -1,10 +1,10 @@
-import { TimesheetDepartment } from '@kalos-core/kalos-rpc/TimesheetDepartment';
-import { Transaction } from '@kalos-core/kalos-rpc/Transaction';
-import { TransactionActivity } from '@kalos-core/kalos-rpc/TransactionActivity';
-import { User } from '@kalos-core/kalos-rpc/User';
+import { TimesheetDepartment } from '../../../@kalos-core/kalos-rpc/TimesheetDepartment';
+import { Transaction } from '../../../@kalos-core/kalos-rpc/Transaction';
+import { TransactionActivity } from '../../../@kalos-core/kalos-rpc/TransactionActivity';
+import { User } from '../../../@kalos-core/kalos-rpc/User';
 import { RoleType } from '../Payroll';
 import { OrderDir } from '../../../helpers';
-import { TransactionAccountList } from '@kalos-core/kalos-rpc/TransactionAccount';
+import { TransactionAccountList } from '../../../@kalos-core/kalos-rpc/TransactionAccount';
 
 export interface FilterType {
   departmentId: number;

@@ -16,7 +16,7 @@ import {
 } from '../PlainForm';
 import { Options as FieldOptions, getDefaultValueByType } from '../Field';
 import { ActionsProps } from '../Actions';
-import './styles.less';
+import './Form.module.less';
 
 export type Schema<T> = PlainFormSchema<T>;
 

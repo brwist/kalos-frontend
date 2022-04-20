@@ -15,20 +15,20 @@ import { OPTION_ALL } from '../../../constants';
 import { PayrollSummary } from './components/PayrollSummary';
 import { PerDiems } from './components/PerDiems';
 import { Timesheet } from './components/Timesheet';
-import { User } from '@kalos-core/kalos-rpc/User';
-import { TimesheetDepartment } from '@kalos-core/kalos-rpc/TimesheetDepartment';
+import { User } from '../../../@kalos-core/kalos-rpc/User';
+import { TimesheetDepartment } from '../../../@kalos-core/kalos-rpc/TimesheetDepartment';
 import { TimeoffRequests } from './components/TimeoffRequests';
 import { TimesheetPendingApproval } from './components/TimesheetPendingApproval';
 import { Spiffs } from './components/Spiffs';
 import { Modal } from '../Modal';
 import { ToolLogs } from './components/ToolLogs';
 import { Button } from '../Button';
-import './styles.less';
+
 import { JobSummaryNew } from './components/JobSummaryNew';
 import { CostReportForEmployee } from '../CostReportForEmployee';
 import { Trips } from './components/Trips';
-import { PerDiem as pd } from '@kalos-core/kalos-rpc/compiled-protos/perdiem_pb';
-import { dateTimePickerDefaultProps } from '@material-ui/pickers/constants/prop-types';
+import { PerDiem as pd } from '../../../@kalos-core/kalos-rpc/compiled-protos/perdiem_pb';
+import './Payroll.module.less';
 
 export type RoleType =
   | 'Manager'

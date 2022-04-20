@@ -9,7 +9,6 @@ import {
   Legend,
   ResponsiveContainer,
 } from 'recharts';
-import './styles.less';
 
 export type Data = {
   date: string;

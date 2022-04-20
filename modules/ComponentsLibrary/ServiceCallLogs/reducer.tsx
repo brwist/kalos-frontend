@@ -1,4 +1,4 @@
-import { ActivityLog } from '@kalos-core/kalos-rpc/ActivityLog';
+import { ActivityLog } from '../../../@kalos-core/kalos-rpc/ActivityLog';
 
 export type State = {
   isLoaded: boolean;

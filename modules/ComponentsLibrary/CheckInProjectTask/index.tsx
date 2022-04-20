@@ -3,7 +3,7 @@ import React, { FC, useCallback, useEffect, useState } from 'react';
 import { Button } from '../Button';
 import { ExtendedProjectTaskType } from '../EditProject';
 import { makeFakeRows, TaskClientService } from '../../../helpers';
-import { ProjectTask, Task } from '@kalos-core/kalos-rpc/Task';
+import { ProjectTask, Task } from '../../../@kalos-core/kalos-rpc/Task';
 import { Data, InfoTable } from '../InfoTable';
 import IconButton from '@material-ui/core/IconButton';
 import Typography from '@material-ui/core/Typography';
@@ -12,7 +12,7 @@ import { Tooltip } from '../Tooltip';
 import { Modal } from '../Modal';
 import { EnhancedField } from '../Field/examples';
 import { Alert } from '../Alert';
-import { Event } from '@kalos-core/kalos-rpc/Event/index';
+import { Event } from '../../../@kalos-core/kalos-rpc/Event/index';
 interface Props {
   projectToUse: Event;
   loggedUserId: number;

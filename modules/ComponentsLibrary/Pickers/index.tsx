@@ -6,14 +6,17 @@ import Select from '@material-ui/core/Select';
 import {
   TransactionAccount,
   TransactionAccountClient,
-} from '@kalos-core/kalos-rpc/TransactionAccount';
+} from '../../../@kalos-core/kalos-rpc/TransactionAccount';
 import {
   TimesheetDepartment,
   TimesheetDepartmentClient,
-} from '@kalos-core/kalos-rpc/TimesheetDepartment';
-import { ClassCode, ClassCodeClient } from '@kalos-core/kalos-rpc/ClassCode';
+} from '../../../@kalos-core/kalos-rpc/TimesheetDepartment';
+import {
+  ClassCode,
+  ClassCodeClient,
+} from '../../../@kalos-core/kalos-rpc/ClassCode';
 import { ENDPOINT } from '../../../constants';
-import { UserClient, User } from '@kalos-core/kalos-rpc/User';
+import { UserClient, User } from '../../../@kalos-core/kalos-rpc/User';
 
 const MaxCacheItemAge: number = 1; // Max age of the cache item in days before it removes itself
 const UseTests = false;
@@ -555,6 +558,8 @@ export class AccountPicker extends Picker<
     this.Client = new TransactionAccountClient(ENDPOINT);
     this.req = new TransactionAccount();
     this.req.setIsActive(1);
+    this.req.setOrderBy('description');
+    this.req.setOrderDir('ASC');
   }
 }
 

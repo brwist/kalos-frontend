@@ -1,7 +1,7 @@
 import {
   ActivityLog,
   ActivityLogList,
-} from '@kalos-core/kalos-rpc/ActivityLog';
+} from '../../../../@kalos-core/kalos-rpc/ActivityLog';
 import React, { FC, useCallback, useEffect, useState } from 'react';
 import { ActivityLogClientService, EventType } from '../../../../helpers';
 import { InfoTable, Row } from '../../InfoTable';

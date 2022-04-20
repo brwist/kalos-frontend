@@ -4,7 +4,7 @@ import isSameDay from 'date-fns/isSameDay';
 import parseISO from 'date-fns/parseISO';
 import format from 'date-fns/format';
 import { differenceInMinutes } from 'date-fns';
-import { Event } from '@kalos-core/kalos-rpc/Event';
+import { Event } from '../../../@kalos-core/kalos-rpc/Event';
 import Card from '@material-ui/core/Card';
 import Badge from '@material-ui/core/Badge';
 import CardActionArea from '@material-ui/core/CardActionArea';
@@ -13,7 +13,7 @@ import ExpandLessIcon from '@material-ui/icons/ExpandLess';
 import CardHeader from '@material-ui/core/CardHeader';
 import CardContent from '@material-ui/core/CardContent';
 import Typography from '@material-ui/core/Typography';
-import { TimeoffRequest } from '@kalos-core/kalos-rpc/TimeoffRequest';
+import { TimeoffRequest } from '../../../@kalos-core/kalos-rpc/TimeoffRequest';
 import { SkeletonCard } from '../../ComponentsLibrary/SkeletonCard';
 import { Modal } from '../../ComponentsLibrary/Modal';
 import { TimeOff } from '../../ComponentsLibrary/TimeOff';
@@ -29,7 +29,7 @@ import {
   roundNumber,
   TimeoffRequestClientService,
 } from '../../../helpers';
-import './callCard.less';
+import './CallCard.module.less';
 
 type ColorIndicatorProps = {
   type?: string;

@@ -1,14 +1,14 @@
-import { EmailConfig } from '@kalos-core/kalos-rpc/Email';
+import { EmailConfig } from '../../../@kalos-core/kalos-rpc/Email';
 import {
   Transaction,
   TransactionList,
-} from '@kalos-core/kalos-rpc/Transaction';
+} from '../../../@kalos-core/kalos-rpc/Transaction';
 import {
   TransactionActivity,
   TransactionActivityClient,
-} from '@kalos-core/kalos-rpc/TransactionActivity';
+} from '../../../@kalos-core/kalos-rpc/TransactionActivity';
 import CheckCircleOutlineIcon from '@material-ui/icons/CheckCircleOutline';
-import { User } from '@kalos-core/kalos-rpc/User';
+import { User } from '../../../@kalos-core/kalos-rpc/User';
 import IconButton from '@material-ui/core/IconButton';
 import AssignmentIndIcon from '@material-ui/icons/AssignmentInd';
 import CheckIcon from '@material-ui/icons/CheckCircleSharp';
@@ -24,8 +24,8 @@ import { format, parseISO } from 'date-fns';
 import {
   TransactionAccount,
   TransactionAccountList,
-} from '@kalos-core/kalos-rpc/TransactionAccount';
-import { Event } from '@kalos-core/kalos-rpc/Event';
+} from '../../../@kalos-core/kalos-rpc/TransactionAccount';
+import { Event } from '../../../@kalos-core/kalos-rpc/Event';
 import { PopoverComponent } from '../Popover';
 import React, { FC, useCallback, useEffect, useReducer } from 'react';
 import {
@@ -71,22 +71,17 @@ import LineWeightIcon from '@material-ui/icons/LineWeight';
 import DeleteIcon from '@material-ui/icons/Delete';
 import { UploadPhotoTransaction } from '../UploadPhotoTransaction';
 import { EditTransaction } from '../EditTransaction';
-import { TimesheetDepartment } from '@kalos-core/kalos-rpc/TimesheetDepartment';
+import { TimesheetDepartment } from '../../../@kalos-core/kalos-rpc/TimesheetDepartment';
 import { StatusPicker } from './components/StatusPicker';
 import { ErrorBoundary } from '../ErrorBoundary';
 import { ConfirmDelete } from '../ConfirmDelete';
 import { UploadPhotoToExistingTransaction } from '../UploadPhotoToExistingTransaction';
 import { Form } from '../Form';
 import { ACTIONS } from './reducer';
-import { Devlog } from '@kalos-core/kalos-rpc/Devlog';
-import { TxnDepartment } from '@kalos-core/kalos-rpc/compiled-protos/transaction_pb';
-import { stringify } from 'querystring';
-import { truncateSync } from 'fs';
-import { getMimeType } from '@kalos-core/kalos-rpc/Common';
-import { pdf } from '@react-pdf/renderer';
+import { Devlog } from '../../../@kalos-core/kalos-rpc/Devlog';
+import { TxnDepartment } from '../../../@kalos-core/kalos-rpc/compiled-protos/transaction_pb';
 import { NULL_TIME_VALUE } from '../Timesheet/constants';
 import NotificationsActiveIcon from '@material-ui/icons/NotificationsActive';
-import { te } from 'date-fns/locale';
 export interface Props {
   loggedUserId: number;
   isSelector?: boolean; // Is this a selector table (checkboxes that return in on-change)?
@@ -239,16 +234,19 @@ export const TransactionTable: FC<Props> = ({
     }
   };
 
-  const makeLog = async (description: string, id: number) => {
-    const client = new TransactionActivityClient(ENDPOINT);
-    const activity = new TransactionActivity();
-    activity.setIsActive(1);
-    activity.setTimestamp(timestamp());
-    activity.setUserId(loggedUserId);
-    activity.setDescription(description);
-    activity.setTransactionId(id);
-    await client.Create(activity);
-  };
+  const makeLog = useCallback(
+    async (description: string, id: number) => {
+      const client = new TransactionActivityClient(ENDPOINT);
+      const activity = new TransactionActivity();
+      activity.setIsActive(1);
+      activity.setTimestamp(timestamp());
+      activity.setUserId(loggedUserId);
+      activity.setDescription(description);
+      activity.setTransactionId(id);
+      await client.Create(activity);
+    },
+    [loggedUserId],
+  );
 
   const dispute = async (reason: string, txn: Transaction) => {
     const userReq = new User();
@@ -501,13 +499,17 @@ export const TransactionTable: FC<Props> = ({
     }
     if (accountRes) {
       dispatch({ type: ACTIONS.SET_COST_CENTER_DATA, data: accountRes });
-
-      dispatch({
-        type: ACTIONS.SET_COST_CENTERS,
-        data: accountRes.getResultsList().map(account => ({
+      let mappedResults = [{ value: 0, label: 'None' }];
+      accountRes.getResultsList().map(account =>
+        mappedResults.push({
           label: `${account.getId()}-${account.getDescription()}`,
           value: account.getId(),
-        })),
+        }),
+      );
+      mappedResults.push();
+      dispatch({
+        type: ACTIONS.SET_COST_CENTERS,
+        data: mappedResults,
       });
     }
 
@@ -1188,7 +1190,9 @@ export const TransactionTable: FC<Props> = ({
       }
       newTxn.setJobId(saved['Job #']);
       newTxn.setNotes(saved['Notes']);
-      newTxn.setCostCenterId(saved['Cost Center ID']);
+      newTxn.setCostCenterId(saved['Cost Center']);
+      newTxn.setInvoiceNumber(saved['Invoice #']);
+
       newTxn.setAmount(saved['Amount']);
       newTxn.setVendor(saved['Vendor']);
       newTxn.setStatusId(2);
@@ -1260,12 +1264,15 @@ export const TransactionTable: FC<Props> = ({
         type: ACTIONS.SET_DELETE_FROM_LOCAL_LIST,
         data: state.transactionToDelete,
       });
-
+      await makeLog(
+        'Accounts Payable Record Deleted',
+        state.transactionToDelete.getId(),
+      );
       dispatch({ type: ACTIONS.SET_TRANSACTION_TO_DELETE, data: undefined });
     } catch (err) {
       console.error(`An error occurred while deleting a transaction: ${err}`);
     }
-  }, [state.transactionToDelete]);
+  }, [state.transactionToDelete, makeLog]);
 
   useEffect(() => {
     let abortController = new AbortController();
@@ -1283,7 +1290,6 @@ export const TransactionTable: FC<Props> = ({
 
       resetTransactions();
     }
-    // your async action is here
     return () => {
       abortController.abort();
     };
@@ -1822,7 +1828,7 @@ export const TransactionTable: FC<Props> = ({
                 columnType: 'eventId',
               },
               {
-                columnName: 'Cost Center ID',
+                columnName: 'Cost Center',
                 columnType: 'number',
                 options: state.costCenters,
               },
@@ -1830,6 +1836,10 @@ export const TransactionTable: FC<Props> = ({
                 columnName: 'Order #',
                 columnType: 'text',
                 onBlur: value => handleSetOrderNumberToCheckDuplicate(value),
+              },
+              {
+                columnName: 'Invoice #',
+                columnType: 'text',
               },
               {
                 columnName: 'Amount',
@@ -1871,6 +1881,11 @@ export const TransactionTable: FC<Props> = ({
             onClick: () => changeSort('order_number'),
           },
           {
+            name: 'Invoice #',
+            dir: state.orderBy == 'invoice_number' ? state.orderDir : undefined,
+            onClick: () => changeSort('invoice_number'),
+          },
+          {
             name: 'Purchaser',
             dir: state.orderBy == 'owner_id' ? state.orderDir : undefined,
             onClick: () => changeSort('owner_id'),
@@ -1894,7 +1909,7 @@ export const TransactionTable: FC<Props> = ({
             onClick: () => changeSort('job_id'),
           },
           {
-            name: 'Cost Center ID',
+            name: 'Cost Center',
             dir: state.orderBy == 'cost_center_id' ? state.orderDir : undefined,
             onClick: () => changeSort('cost_center_id'),
           },
@@ -1958,6 +1973,15 @@ export const TransactionTable: FC<Props> = ({
                     {
                       value: (
                         <div key="orderNumber">{`${selectorParam.txn.getOrderNumber()}`}</div>
+                      ),
+                      key: '',
+                      onClick: isSelector
+                        ? () => setTransactionChecked(idx)
+                        : undefined,
+                    },
+                    {
+                      value: (
+                        <div key="invoiceNumber">{`${selectorParam.txn.getInvoiceNumber()}`}</div>
                       ),
                       key: '',
                       onClick: isSelector

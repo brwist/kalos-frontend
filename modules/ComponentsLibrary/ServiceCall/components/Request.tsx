@@ -18,7 +18,7 @@ import {
   OPTION_BLANK,
 } from '../../../../constants';
 
-import { Event } from '@kalos-core/kalos-rpc/Event';
+import { Event } from '../../../../@kalos-core/kalos-rpc/Event';
 
 const JOB_STATUS_OPTIONS: Option[] = EVENT_STATUS_LIST.map(label => ({
   label,

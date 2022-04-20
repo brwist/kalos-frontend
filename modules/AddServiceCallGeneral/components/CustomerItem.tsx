@@ -2,8 +2,11 @@ import React, { FC, useCallback } from 'react';
 import { Link } from '../../ComponentsLibrary/Link';
 import { InfoTable, Data, Columns } from '../../ComponentsLibrary/InfoTable';
 import { UserClientService } from '../../../helpers';
-import { getPropertyAddress, Property } from '@kalos-core/kalos-rpc/Property';
-import { User } from '@kalos-core/kalos-rpc/User';
+import {
+  getPropertyAddress,
+  Property,
+} from '../../../@kalos-core/kalos-rpc/Property';
+import { User } from '../../../@kalos-core/kalos-rpc/User';
 
 export interface Props {
   loggedUserId: number;

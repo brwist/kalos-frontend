@@ -6,56 +6,60 @@ import {
   URLObject,
   SUBJECT_TAGS,
   SUBJECT_TAGS_TRANSACTIONS,
-} from '@kalos-core/kalos-rpc/S3File/index';
-import { FileClient } from '@kalos-core/kalos-rpc/File';
-import { ApiKeyClient, ApiKey } from '@kalos-core/kalos-rpc/ApiKey';
-import { UserClient, User } from '@kalos-core/kalos-rpc/User';
-import { PropertyClient, Property } from '@kalos-core/kalos-rpc/Property';
-import { EventClient, Event } from '@kalos-core/kalos-rpc/Event';
-import { JobTypeClient } from '@kalos-core/kalos-rpc/JobType';
-import { TimeoffRequestClient } from '@kalos-core/kalos-rpc/TimeoffRequest';
+} from './@kalos-core/kalos-rpc/S3File/index';
+import { FileClient } from './@kalos-core/kalos-rpc/File';
+import { ApiKeyClient, ApiKey } from './@kalos-core/kalos-rpc/ApiKey';
+import { UserClient, User } from './@kalos-core/kalos-rpc/User';
+import { PropertyClient, Property } from './@kalos-core/kalos-rpc/Property';
+import { EventClient, Event } from './@kalos-core/kalos-rpc/Event';
+import { JobTypeClient } from './@kalos-core/kalos-rpc/JobType';
+import { TimeoffRequestClient } from './@kalos-core/kalos-rpc/TimeoffRequest';
 import {
   Transaction,
   TransactionClient,
-} from '@kalos-core/kalos-rpc/Transaction';
-import { TaskEvent, TaskEventClient } from '@kalos-core/kalos-rpc/TaskEvent';
-import { TaskClient } from '@kalos-core/kalos-rpc/Task';
-import { TaskAssignmentClient } from '@kalos-core/kalos-rpc/TaskAssignment';
+} from './@kalos-core/kalos-rpc/Transaction';
+import { TaskEvent, TaskEventClient } from './@kalos-core/kalos-rpc/TaskEvent';
+import { TaskClient } from './@kalos-core/kalos-rpc/Task';
+import { TaskAssignmentClient } from './@kalos-core/kalos-rpc/TaskAssignment';
 import {
   ActivityLog,
   ActivityLogClient,
-} from '@kalos-core/kalos-rpc/ActivityLog';
+} from './@kalos-core/kalos-rpc/ActivityLog';
 import {
   ReportClient,
   PromptPaymentReportLine,
   SpiffReportLine,
-} from '@kalos-core/kalos-rpc/Report';
-import { EmployeeFunctionClient } from '@kalos-core/kalos-rpc/EmployeeFunction';
-import { JobSubtypeClient } from '@kalos-core/kalos-rpc/JobSubtype';
-import { JobTypeSubtypeClient } from '@kalos-core/kalos-rpc/JobTypeSubtype';
-import { ServicesRenderedClient } from '@kalos-core/kalos-rpc/ServicesRendered';
-import { StoredQuoteClient } from '@kalos-core/kalos-rpc/StoredQuote';
-import { QuotePartClient } from '@kalos-core/kalos-rpc/QuotePart';
-import { QuoteLinePartClient } from '@kalos-core/kalos-rpc/QuoteLinePart';
-import { QuoteLineClient } from '@kalos-core/kalos-rpc/QuoteLine';
-import { PerDiemClient } from '@kalos-core/kalos-rpc/PerDiem';
-import { MapClient } from '@kalos-core/kalos-rpc/Maps';
-import { Trip } from '@kalos-core/kalos-rpc/compiled-protos/perdiem_pb';
-import { TimesheetDepartmentClient } from '@kalos-core/kalos-rpc/TimesheetDepartment';
-import { TimesheetLineClient } from '@kalos-core/kalos-rpc/TimesheetLine';
-import { MetricsClient } from '@kalos-core/kalos-rpc/Metrics';
-import { SpiffToolAdminActionClient } from '@kalos-core/kalos-rpc/SpiffToolAdminAction';
-import { GroupClient } from '@kalos-core/kalos-rpc/Group';
-import { UserGroupLinkClient } from '@kalos-core/kalos-rpc/UserGroupLink';
+} from './@kalos-core/kalos-rpc/Report';
+import { EmployeeFunctionClient } from './@kalos-core/kalos-rpc/EmployeeFunction';
+
+import { JobSubtypeClient } from './@kalos-core/kalos-rpc/JobSubtype';
+import { JobTypeSubtypeClient } from './@kalos-core/kalos-rpc/JobTypeSubtype';
+import { ServicesRenderedClient } from './@kalos-core/kalos-rpc/ServicesRendered';
+import { StoredQuoteClient } from './@kalos-core/kalos-rpc/StoredQuote';
+import { QuotePartClient } from './@kalos-core/kalos-rpc/QuotePart';
+import { QuoteLinePartClient } from './@kalos-core/kalos-rpc/QuoteLinePart';
+import { QuoteLineClient } from './@kalos-core/kalos-rpc/QuoteLine';
+import { PerDiemClient, PerDiemRow } from './@kalos-core/kalos-rpc/PerDiem';
+import { MapClient } from './@kalos-core/kalos-rpc/Maps';
+import { Trip } from './@kalos-core/kalos-rpc/compiled-protos/perdiem_pb';
+import { TimesheetDepartmentClient } from './@kalos-core/kalos-rpc/TimesheetDepartment';
+import { TimesheetLineClient } from './@kalos-core/kalos-rpc/TimesheetLine';
+import { MetricsClient } from './@kalos-core/kalos-rpc/Metrics';
+import { SpiffToolAdminActionClient } from './@kalos-core/kalos-rpc/SpiffToolAdminAction';
+import { GroupClient } from './@kalos-core/kalos-rpc/Group';
+import { UserGroupLinkClient } from './@kalos-core/kalos-rpc/UserGroupLink';
 import {
   TransactionDocument,
   TransactionDocumentClient,
-} from '@kalos-core/kalos-rpc/TransactionDocument';
-import { InternalDocumentClient } from '@kalos-core/kalos-rpc/InternalDocument';
-import { PDFClient } from '@kalos-core/kalos-rpc/PDF';
-import { DocumentClient } from '@kalos-core/kalos-rpc/Document';
-import { TeamClient } from '@kalos-core/kalos-rpc/Team';
-import { DispatchClient } from '@kalos-core/kalos-rpc/Dispatch';
+} from './@kalos-core/kalos-rpc/TransactionDocument';
+import { PendingInvoiceTransactionClient } from './@kalos-core/kalos-rpc/PendingInvoiceTransaction';
+import { VendorClient } from './@kalos-core/kalos-rpc/Vendor';
+
+import { InternalDocumentClient } from './@kalos-core/kalos-rpc/InternalDocument';
+import { PDFClient } from './@kalos-core/kalos-rpc/PDF';
+import { DocumentClient } from './@kalos-core/kalos-rpc/Document';
+import { TeamClient } from './@kalos-core/kalos-rpc/Team';
+import { DispatchClient } from './@kalos-core/kalos-rpc/Dispatch';
 import {
   ENDPOINT,
   MONTHS,
@@ -74,22 +78,24 @@ import {
   getRandomNumber,
   randomize,
 } from './modules/ComponentsLibrary/helpers';
-import { Contract, ContractClient } from '@kalos-core/kalos-rpc/Contract';
-import { NULL_TIME } from '@kalos-core/kalos-rpc/constants';
+import { Contract, ContractClient } from './@kalos-core/kalos-rpc/Contract';
+import { NULL_TIME } from './@kalos-core/kalos-rpc/constants';
 import {
   TransactionActivity,
   TransactionActivityClient,
-} from '@kalos-core/kalos-rpc/TransactionActivity';
-import { EmailClient } from '@kalos-core/kalos-rpc/Email';
-import { PropLinkClient } from '@kalos-core/kalos-rpc/PropLink';
-import { TransactionAccountClient } from '@kalos-core/kalos-rpc/TransactionAccount';
-import { EventAssignmentClient } from '@kalos-core/kalos-rpc/EventAssignment';
-import { SlackClient } from '@kalos-core/kalos-rpc/Slack';
-import { File } from '@kalos-core/kalos-rpc/File';
-import { DevlogClient } from '@kalos-core/kalos-rpc/Devlog';
-import { InvoiceClient } from '@kalos-core/kalos-rpc/Invoice';
-import { FirstCallClient } from '@kalos-core/kalos-rpc/FirstCall';
-import { MertricReportDataRequest } from '@kalos-core/kalos-rpc/compiled-protos/metrics_pb';
+} from './@kalos-core/kalos-rpc/TransactionActivity';
+import { EmailClient } from './@kalos-core/kalos-rpc/Email';
+import { PropLinkClient } from './@kalos-core/kalos-rpc/PropLink';
+import { TransactionAccountClient } from './@kalos-core/kalos-rpc/TransactionAccount';
+import { EventAssignmentClient } from './@kalos-core/kalos-rpc/EventAssignment';
+import { SlackClient } from './@kalos-core/kalos-rpc/Slack';
+import { File } from './@kalos-core/kalos-rpc/File';
+import { DevlogClient } from './@kalos-core/kalos-rpc/Devlog';
+import { InvoiceClient } from './@kalos-core/kalos-rpc/Invoice';
+import { FirstCallClient } from './@kalos-core/kalos-rpc/FirstCall';
+import { MertricReportDataRequest } from './@kalos-core/kalos-rpc/compiled-protos/metrics_pb';
+import axios from 'axios';
+import Axios from 'axios';
 
 export type SimpleFile = {
   key: string;
@@ -109,6 +115,8 @@ export const DocumentClientService = new DocumentClient(ENDPOINT);
 export const ReportClientService = new ReportClient(ENDPOINT);
 export const TaskClientService = new TaskClient(ENDPOINT);
 export const PDFClientService = new PDFClient(ENDPOINT);
+export const PendingInvoiceTransactionClientService =
+  new PendingInvoiceTransactionClient(ENDPOINT);
 export const UserClientService = new UserClient(ENDPOINT);
 export const PropertyClientService = new PropertyClient(ENDPOINT);
 export const ContractClientService = new ContractClient(ENDPOINT);
@@ -161,6 +169,7 @@ export const SlackClientService = new SlackClient(ENDPOINT);
 export const DevlogClientService = new DevlogClient(ENDPOINT);
 export const InvoiceClientService = new InvoiceClient(ENDPOINT);
 export const FirstCallClientService = new FirstCallClient(ENDPOINT);
+export const VendorClientService = new VendorClient(ENDPOINT);
 
 export const getCFAppUrl = (action: string) => `${BASE_URL}?action=${action}`;
 
@@ -234,6 +243,44 @@ async function slackNotify(id: string, text: string) {
       method: 'POST',
     },
   );
+}
+
+export async function testSlackCommand() {
+  const baseURL = 'https://dev-core.kalosflorida.com/v1/trelloslackbot-test';
+  const fd = new FormData();
+  fd.set('message', 'test');
+  fd.set('user_id', '8418');
+  const res = await Axios.post(`${baseURL}`, fd, {
+    headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+  });
+  console.log('request complete', res, {});
+}
+
+export function checkPerDiemRowIsEarliestOrLatest(
+  rows: PerDiemRow[],
+  pdr: PerDiemRow,
+) {
+  console.log('we been c alled');
+  console.log(rows);
+  if (rows.length <= 2) {
+    console.log('2 days or less');
+
+    return true;
+  }
+  const sorted = rows.sort((a, b) => {
+    const dateA = new Date(a.getDateString().split(' ')[0]);
+    const dateB = new Date(b.getDateString().split(' ')[0]);
+    return dateA.valueOf() - dateB.valueOf();
+  });
+  console.log('our sorted results', sorted);
+  if (
+    sorted[0].getDateString() === pdr.getDateString() ||
+    sorted[sorted.length - 1].getDateString() == pdr.getDateString()
+  ) {
+    return true;
+  } else {
+    return false;
+  }
 }
 
 async function getSlackList(skipCache = false): Promise<SlackUser[]> {
@@ -457,7 +504,7 @@ function formatDay(datetime: string) {
       5: 'Fri',
       6: 'Sat',
     } as { [key: number]: string }
-  )[new Date(datetime.substr(0, 10)).getDay()];
+  )[new Date(datetime).getDay()];
 }
 
 /**
@@ -466,7 +513,7 @@ function formatDay(datetime: string) {
  * @returns format M/D/YYYY h:MMa (ie. 6/1/2020 3:28PM)
  */
 function formatDateTime(datetime: string) {
-  return formatDate(datetime) + ' ' + formatTime(datetime.substr(11));
+  return formatDate(datetime) + ' ' + formatTime(datetime.substring(11));
 }
 
 /**

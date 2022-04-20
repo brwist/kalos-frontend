@@ -1,12 +1,13 @@
 import React, { RefObject, KeyboardEvent } from 'react';
-import { UserClient, User } from '@kalos-core/kalos-rpc/User';
+import { UserClient, User } from '../../@kalos-core/kalos-rpc/User';
 import {
   ActivityLog,
   ActivityLogClient,
-} from '@kalos-core/kalos-rpc/ActivityLog';
+} from '../../@kalos-core/kalos-rpc/ActivityLog';
 import TextField from '@material-ui/core/TextField';
 import Button from '@material-ui/core/Button';
 import Grid from '@material-ui/core/Grid';
+import { ENDPOINT } from '../../@kalos-core/kalos-rpc/constants';
 
 interface props {
   onSuccess?(): void;
@@ -31,8 +32,8 @@ export class Login extends React.PureComponent<props, state> {
         password: '',
       },
     };
-    this.LogClient = new ActivityLogClient();
-    this.UserClient = new UserClient();
+    this.LogClient = new ActivityLogClient(ENDPOINT);
+    this.UserClient = new UserClient(ENDPOINT);
 
     this.handleUsernameChange = this.handleUsernameChange.bind(this);
     this.handlePasswordChange = this.handlePasswordChange.bind(this);

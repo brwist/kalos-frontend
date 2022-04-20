@@ -1,4 +1,4 @@
-import { User } from '@kalos-core/kalos-rpc/User';
+import { User } from '../../@kalos-core/kalos-rpc/User';
 
 export interface State {
   techs: User[];

@@ -8,13 +8,13 @@ import {
   TimeoffRequest,
   TimeoffRequestClient,
   GetTimesheetConfig,
-} from '@kalos-core/kalos-rpc/TimeoffRequest';
+} from '../../../../@kalos-core/kalos-rpc/TimeoffRequest';
 import ThumbsUpDownIcon from '@material-ui/icons/ThumbsUpDown';
 import { SectionBar } from '../../../ComponentsLibrary/SectionBar';
 import { InfoTable } from '../../../ComponentsLibrary/InfoTable';
 import { Modal } from '../../../ComponentsLibrary/Modal';
 import { Tooltip } from '../../Tooltip';
-import { TimeOff } from '../../../ComponentsLibrary/Timeoff';
+import { TimeOff } from '../../../ComponentsLibrary/TimeOff';
 import FlashOff from '@material-ui/icons/FlashOff';
 import NotInterestedIcon from '@material-ui/icons/NotInterested';
 import { Confirm } from '../../Confirm';
@@ -28,8 +28,8 @@ import {
   getSlackID,
 } from '../../../../helpers';
 import { ROWS_PER_PAGE, OPTION_ALL } from '../../../../constants';
-import { TimeoffRequestServiceClient } from '@kalos-core/kalos-rpc/compiled-protos/timeoff_request_pb_service';
-import { NULL_TIME } from '@kalos-core/kalos-rpc/constants';
+import { TimeoffRequestServiceClient } from '../../../../@kalos-core/kalos-rpc/compiled-protos/timeoff_request_pb_service';
+import { NULL_TIME } from '../../../../@kalos-core/kalos-rpc/constants';
 
 interface Props {
   departmentId: number;

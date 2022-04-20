@@ -4,7 +4,6 @@ import { WeekPicker } from '../WeekPicker';
 import { DatePicker, TextField } from './';
 import DateFnsUtils from '@date-io/date-fns';
 import { MuiPickersUtilsProvider } from '@material-ui/pickers';
-import './examples.less';
 
 export default () => {
   const [week, setWeek] = useState(new Date());

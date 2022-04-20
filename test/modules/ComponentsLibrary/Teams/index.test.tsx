@@ -2,7 +2,7 @@ import React = require('react');
 import Enzyme = require('enzyme');
 import Chai = require('chai');
 import TeamsModule = require('../../../../modules/ComponentsLibrary/Teams/index');
-import TeamClient = require('@kalos-core/kalos-rpc/Team/index');
+import TeamClient = require('../../../@kalos-core/kalos-rpc/Team/index');
 import Loader = require('../../../../modules/Loader/main');
 import Stubs = require('../../../test-setup/stubs'); // ? Sets the auth token up in a one-liner
 

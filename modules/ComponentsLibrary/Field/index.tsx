@@ -14,7 +14,7 @@ import React, {
 } from 'react';
 import clsx from 'clsx';
 import { SvgIconProps } from '@material-ui/core/SvgIcon';
-import { User } from '@kalos-core/kalos-rpc/User';
+import { User } from '../../../@kalos-core/kalos-rpc/User';
 import CheckIcon from '@material-ui/icons/Check';
 import BlockIcon from '@material-ui/icons/Block';
 import CircularProgress from '@material-ui/core/CircularProgress';
@@ -54,9 +54,8 @@ import {
 } from '../../../helpers';
 import { ClassCodePicker, DepartmentPicker } from '../Pickers';
 import { AdvancedSearch } from '../AdvancedSearch';
-import { Event } from '@kalos-core/kalos-rpc/Event';
-import './styles.less';
-import { RadioGroup } from '@material-ui/core';
+import { Event } from '../../../@kalos-core/kalos-rpc/Event';
+import './Field.module.less';
 
 type SelectOption = {
   getId: () => number;
@@ -113,6 +112,7 @@ export interface Props<T> extends SchemaProps<T> {
   placeholder?: string;
   style?: CSSProperties;
   compact?: boolean;
+  technicianIdForRecentServiceCalls?: number;
   white?: boolean;
   ref?: RefObject<T> | Ref<T>;
 }
@@ -139,6 +139,7 @@ export const Field: <T>(
       onBlur,
       onFileLoad,
       disabled = false,
+      technicianIdForRecentServiceCalls,
       required = false,
       validation = '',
       helperText = '',
@@ -1017,7 +1018,14 @@ export const Field: <T>(
           <Modal open onClose={handleEventsOpenedToggle(false)} fullScreen>
             <AdvancedSearch
               title="Service Calls Search"
-              loggedUserId={0}
+              loggedUserId={
+                technicianIdForRecentServiceCalls
+                  ? technicianIdForRecentServiceCalls
+                  : 0
+              }
+              showRecentServiceCallsForEmployee={
+                technicianIdForRecentServiceCalls ? true : false
+              }
               kinds={['serviceCalls']}
               onSelectEvent={handleEventSelect}
               onClose={handleEventsOpenedToggle(false)}

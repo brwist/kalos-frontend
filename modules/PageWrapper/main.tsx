@@ -1,7 +1,7 @@
 import React, { FC, useEffect, useState } from 'react';
 import SideMenu, { Props as SideMenuProps } from '../SideMenu/main';
 import { StyledPage } from './styled';
-import './styles.less';
+import './PageWrapper.module.less';
 import { UserClientService } from '../../helpers';
 import { ErrorBoundary } from '../ComponentsLibrary/ErrorBoundary';
 
@@ -31,19 +31,19 @@ export const PageWrapper: FC<Props> = ({
   return (
     <StyledPage>
       <ErrorBoundary>
-      <div className="PageWrapper">
-        {withHeader && (
-          <div className="PageWrapperMenu">
-            <SideMenu {...props} />
+        <div className="PageWrapper">
+          {withHeader && (
+            <div className="PageWrapperMenu">
+              <SideMenu {...props} />
+            </div>
+          )}
+          <div
+            className="PageWrapperContent"
+            style={{ padding: `${padding}rem` }}
+          >
+            {children}
           </div>
-        )}
-        <div
-          className="PageWrapperContent"
-          style={{ padding: `${padding}rem` }}
-        >
-          {children}
         </div>
-      </div>
       </ErrorBoundary>
     </StyledPage>
   );

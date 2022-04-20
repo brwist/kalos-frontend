@@ -4,7 +4,7 @@ import {
   Task,
   TaskPriority,
   TaskStatus,
-} from '@kalos-core/kalos-rpc/Task';
+} from '../../../@kalos-core/kalos-rpc/Task';
 import kebabCase from 'lodash/kebabCase';
 import Typography from '@material-ui/core/Typography';
 import IconButton from '@material-ui/core/IconButton';
@@ -39,9 +39,9 @@ import {
   OPTION_ALL,
   OPTION_BLANK,
 } from '../../../constants';
-import './Tasks.less';
-import { Document } from '@kalos-core/kalos-rpc/Document';
-import { TaskEvent } from '@kalos-core/kalos-rpc/TaskEvent';
+import { Document } from '../../../@kalos-core/kalos-rpc/Document';
+import { TaskEvent } from '../../../@kalos-core/kalos-rpc/TaskEvent';
+import './Tasks.module.less';
 
 type ExternalCode = 'customers' | 'employee' | 'properties' | 'servicecalls';
 interface Props {

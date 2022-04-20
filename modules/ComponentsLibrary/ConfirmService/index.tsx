@@ -1,5 +1,6 @@
 import React, { createContext, useContext, useState, useRef } from 'react';
 import { Confirm } from '../Confirm';
+import './ConfirmService.module.less';
 
 export interface ConfirmOptions {
   catchOnCancel?: boolean;

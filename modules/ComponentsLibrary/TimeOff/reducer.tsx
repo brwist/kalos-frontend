@@ -1,10 +1,13 @@
 import { Options } from '../Form';
 
-import { User } from '@kalos-core/kalos-rpc/User';
-import { PTO, TimeoffRequest } from '@kalos-core/kalos-rpc/TimeoffRequest';
-import { ActivityLog } from '@kalos-core/kalos-rpc/ActivityLog';
-import { TimeoffRequestType } from '@kalos-core/kalos-rpc/compiled-protos/timeoff_request_pb';
-import { TimesheetDepartment } from '@kalos-core/kalos-rpc/TimesheetDepartment';
+import { User } from '../../../@kalos-core/kalos-rpc/User';
+import {
+  PTO,
+  TimeoffRequest,
+} from '../../../@kalos-core/kalos-rpc/TimeoffRequest';
+import { ActivityLog } from '../../../@kalos-core/kalos-rpc/ActivityLog';
+import { TimeoffRequestType } from '../../../@kalos-core/kalos-rpc/compiled-protos/timeoff_request_pb';
+import { TimesheetDepartment } from '../../../@kalos-core/kalos-rpc/TimesheetDepartment';
 
 export type State = {
   initiated: boolean;

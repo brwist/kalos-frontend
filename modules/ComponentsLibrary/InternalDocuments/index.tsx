@@ -10,6 +10,7 @@ import { Modal } from '../Modal';
 import { FileTags } from '../FileTags';
 import { Form } from '../Form';
 import { ConfirmDelete } from '../ConfirmDelete';
+import { FileObject } from '../../../@kalos-core/kalos-rpc/S3File';
 import {
   makeFakeRows,
   formatDate,
@@ -30,10 +31,10 @@ import {
   InternalDocumentsFilter,
   InternalDocumentsSort,
   DocumentKey,
-} from '@kalos-core/kalos-rpc/InternalDocument';
-import './styles.less';
+} from '../../../@kalos-core/kalos-rpc/InternalDocument';
+import './InternalDocuments.module.less';
 import { Tooltip } from '@material-ui/core';
-
+import { File } from '../../../@kalos-core/kalos-rpc/File';
 const defaultFilter: InternalDocumentsFilter = { tag: -1 };
 
 export const InternalDocuments: FC = () => {
@@ -119,8 +120,18 @@ export const InternalDocuments: FC = () => {
     [setFileTagsOpened],
   );
   const handleView = useCallback(
-    (entry: InternalDocument) => () => {
-      S3ClientService.openFile(entry.getFilename(), INTERNAL_DOCUMENTS_BUCKET);
+    (entry: InternalDocument) => async () => {
+      const bucket = entry.getFile()?.getBucket();
+      if (bucket && bucket != '') {
+        S3ClientService.openFile(entry.getFilename(), bucket);
+        console.log('bucket found, open file');
+      } else {
+        console.log('defaulting bucket');
+        S3ClientService.openFile(
+          entry.getFilename(),
+          INTERNAL_DOCUMENTS_BUCKET,
+        );
+      }
     },
     [],
   );
@@ -219,7 +230,7 @@ export const InternalDocuments: FC = () => {
   const getFileTagsOptions = useCallback(
     (options = []) => [
       ...options,
-      ...fileTags.map(file => ({label: file.getName(), value: file.getId()})),
+      ...fileTags.map(file => ({ label: file.getName(), value: file.getId() })),
     ],
     [fileTags],
   );
@@ -345,7 +356,7 @@ export const InternalDocuments: FC = () => {
                     key="edit"
                     size="small"
                     onClick={handleSetEditing(entry)}
-                    >
+                  >
                     <EditIcon />
                   </IconButton>
                 </Tooltip>,
@@ -354,7 +365,7 @@ export const InternalDocuments: FC = () => {
                     key="remove"
                     size="small"
                     onClick={handleSetDeleting(entry)}
-                    >
+                  >
                     <DeleteIcon />
                   </IconButton>
                 </Tooltip>,

@@ -6,8 +6,8 @@ import {
   UsersFilter,
   UsersSort,
   LoadUsersByFilter,
-} from '@kalos-core/kalos-rpc/User';
-import { getPropertyAddress } from '@kalos-core/kalos-rpc/Property';
+} from '../../../@kalos-core/kalos-rpc/User';
+import { getPropertyAddress } from '../../../@kalos-core/kalos-rpc/Property';
 import cloneDeep from 'lodash/cloneDeep';
 import compact from 'lodash/compact';
 import IconButton from '@material-ui/core/IconButton';
@@ -81,22 +81,22 @@ import {
   EVENT_STATUS_LIST,
   USA_STATES_OPTIONS,
 } from '../../../constants';
-import { Event } from '@kalos-core/kalos-rpc/Event';
-import { Property } from '@kalos-core/kalos-rpc/Property';
-import { Contract } from '@kalos-core/kalos-rpc/Contract';
-import { JobType } from '@kalos-core/kalos-rpc/JobType';
-import { JobSubtype } from '@kalos-core/kalos-rpc/JobSubtype';
-import { TimesheetDepartment } from '@kalos-core/kalos-rpc/TimesheetDepartment';
-import { EmployeeFunction } from '@kalos-core/kalos-rpc/EmployeeFunction';
-
-import './styles.less';
+import { Event } from '../../../@kalos-core/kalos-rpc/Event';
+import { Property } from '../../../@kalos-core/kalos-rpc/Property';
+import { Contract } from '../../../@kalos-core/kalos-rpc/Contract';
+import { JobType } from '../../../@kalos-core/kalos-rpc/JobType';
+import { JobSubtype } from '../../../@kalos-core/kalos-rpc/JobSubtype';
+import { TimesheetDepartment } from '../../../@kalos-core/kalos-rpc/TimesheetDepartment';
+import { EmployeeFunction } from '../../../@kalos-core/kalos-rpc/EmployeeFunction';
 import { log } from 'console';
-import { ActivityLog } from '@kalos-core/kalos-rpc/ActivityLog';
+import { ActivityLog } from '../../../@kalos-core/kalos-rpc/ActivityLog';
 import format from 'date-fns/esm/format';
 import { ServiceRequest } from '../ServiceCall/requestIndex';
-import { QuoteLine } from '@kalos-core/kalos-rpc/QuoteLine';
-import { ServicesRendered } from '@kalos-core/kalos-rpc/ServicesRendered';
+import { QuoteLine } from '../../../@kalos-core/kalos-rpc/QuoteLine';
+import { ServicesRendered } from '../../../@kalos-core/kalos-rpc/ServicesRendered';
 import { result } from 'lodash';
+import { FlatRateSheet } from '../FlatRate';
+import './AdvancedSearch.module.less';
 
 type Kind =
   | 'serviceCalls'
@@ -113,6 +113,7 @@ export interface Props {
   editableCustomers?: boolean;
   deletableCustomers?: boolean;
   editableEmployees?: boolean;
+  showRecentServiceCallsForEmployee?: boolean;
   deletableEmployees?: boolean;
   printableEmployees?: boolean;
   editableProperties?: boolean;
@@ -146,6 +147,7 @@ export const AdvancedSearch: FC<Props> = ({
   deletableEvents,
   editableCustomers,
   deletableCustomers,
+  showRecentServiceCallsForEmployee,
   editableEmployees,
   printableEmployees = false,
   editableProperties,
@@ -178,9 +180,17 @@ export const AdvancedSearch: FC<Props> = ({
       jobSubtypeId: 0,
       logJobStatus: '',
       employeeDepartmentId: -1,
+      logTechnicianAssigned: showRecentServiceCallsForEmployee
+        ? loggedUserId.toString()
+        : undefined,
       userId: propertyCustomerId,
     }),
-    [kinds, propertyCustomerId],
+    [
+      kinds,
+      loggedUserId,
+      showRecentServiceCallsForEmployee,
+      propertyCustomerId,
+    ],
   );
   const [filter, setFilter] = useState<SearchForm>(defaultFilter);
   const [formKey, setFormKey] = useState<number>(0);
@@ -284,7 +294,6 @@ export const AdvancedSearch: FC<Props> = ({
     });
     setFlatRate(qlResults);
 
-    console.log(qlResults.length);
     if (kinds.includes('employees')) {
       //const departments = await TimesheetDepartmentClientService.loadTimeSheetDepartments();
       const departmentRequest = new TimesheetDepartment();
@@ -861,6 +870,11 @@ export const AdvancedSearch: FC<Props> = ({
           label: 'Business Name',
           type: 'search',
         },
+        {
+          name: 'logTechnicianAssigned',
+          label: 'Technician Assigned',
+          type: 'technician',
+        },
       ],
       [
         {
@@ -1145,10 +1159,6 @@ export const AdvancedSearch: FC<Props> = ({
         label: 'Title',
         disabled: !isAdmin,
       },
-      // {
-      //   name: 'id', // TODO
-      //   label: 'Hire Date',
-      // },
       {
         name: 'getEmployeeDepartmentId',
         label: 'Employee Segment',
@@ -1741,6 +1751,22 @@ export const AdvancedSearch: FC<Props> = ({
             orderDir: usersSort.orderDir === 'ASC' ? 'DESC' : 'ASC',
           }),
         },
+        {
+          name: 'Badge Number',
+          ...(usersSort.orderByField === 'getId'
+            ? {
+                dir: usersSort.orderDir,
+              }
+            : {}),
+          onClick: handleUsersSortChange({
+            orderByField: 'getId',
+            orderBy: 'id',
+            orderDir: usersSort.orderDir === 'ASC' ? 'DESC' : 'ASC',
+          }),
+        },
+        {
+          name: '',
+        },
       ];
     if (kind === 'properties')
       return [
@@ -2175,7 +2201,7 @@ export const AdvancedSearch: FC<Props> = ({
             });
       if (kind === 'employees')
         return loading
-          ? makeFakeRows(5, 3)
+          ? makeFakeRows(6, 3)
           : users
               .filter(u => {
                 const usersFilter = filter as UsersFilter;
@@ -2221,6 +2247,7 @@ export const AdvancedSearch: FC<Props> = ({
                       .toLowerCase()
                       .includes(usersFilter.cellphone.toLowerCase())
                   : true;
+
                 //@ts-ignore
                 const intId = usersFilter.id ? parseInt(usersFilter.id, 10) : 0;
                 const matchedId = intId > 0 ? u.getId() === intId : true;
@@ -2286,6 +2313,13 @@ export const AdvancedSearch: FC<Props> = ({
                   {
                     value: cellphone,
                     onClick: handlePendingEmployeeViewingToggle(entry),
+                  },
+                  {
+                    value: entry.getId(),
+                    onClick: handlePendingEmployeeViewingToggle(entry),
+                  },
+                  {
+                    value: '',
                     actions: [
                       ...(isAdmin
                         ? [
@@ -2299,10 +2333,9 @@ export const AdvancedSearch: FC<Props> = ({
                                 onClick={() => {
                                   window.open(
                                     [
-                                      '/index.cfm?action=admin:tasks.spiff_tool_logs',
-                                      `type=tool`,
-                                      `rt=all`,
-                                      `reportUserId=${id}`,
+                                      '/index.cfm?action=admin:tasks.spiff_tool_log_new',
+                                      `type=Tool`,
+                                      `user_id=${id}`,
                                     ].join('&'),
                                   );
                                   // TODO replace with ComponentsLibrary
@@ -2328,10 +2361,9 @@ export const AdvancedSearch: FC<Props> = ({
                                   // TODO replace with ComponentsLibrary
                                   window.open(
                                     [
-                                      '/index.cfm?action=admin:tasks.spiff_tool_logs',
-                                      `type=spiff`,
-                                      `rt=all`,
-                                      `reportUserId=${id}`,
+                                      '/index.cfm?action=admin:tasks.spiff_tool_log_new',
+                                      `type=Spiff`,
+                                      `user_id=${id}`,
                                     ].join('&'),
                                   );
                                   /*document.location.href = [
@@ -2689,8 +2721,8 @@ export const AdvancedSearch: FC<Props> = ({
             ? [
                 {
                   label: 'Add New Customer',
-                  onClick: handlePendingCustomerEditingToggle(new User())
-                }
+                  onClick: handlePendingCustomerEditingToggle(new User()),
+                },
               ]
             : []),
           // ...(printableEmployees
@@ -2781,19 +2813,10 @@ export const AdvancedSearch: FC<Props> = ({
         hoverable
       />
       {flatRateIsOpen && flatRate && (
-        <Modal open onClose={() => setFlatRateIsOpen(false)}>
-          <InfoTable
-            columns={[{ name: 'Description' }, { name: 'Cost' }]}
-            data={flatRate.map(value => {
-              return [
-                {
-                  value: value.getDescription(),
-                },
-                {
-                  value: usd(parseInt(value.getAdjustment())),
-                },
-              ];
-            })}
+        <Modal open fullScreen onClose={() => setFlatRateIsOpen(false)}>
+          <FlatRateSheet
+            loggedUserId={loggedUserId}
+            onClose={() => setFlatRateIsOpen(false)}
           />
         </Modal>
       )}

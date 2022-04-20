@@ -1,6 +1,9 @@
 import React, { FC, useState, useCallback } from 'react';
-import { UserClient, User } from '@kalos-core/kalos-rpc/User';
-import { PropertyClient, Property } from '@kalos-core/kalos-rpc/Property';
+import { UserClient, User } from '../../../@kalos-core/kalos-rpc/User';
+import {
+  PropertyClient,
+  Property,
+} from '../../../@kalos-core/kalos-rpc/Property';
 import { ENDPOINT } from '../../../constants';
 import { Modal } from '../Modal';
 import { Form, Schema, Options } from '../Form';

@@ -10,7 +10,7 @@ import IconButton from '@material-ui/core/IconButton';
 import ViewDayIcon from '@material-ui/icons/ViewDay';
 import { SkeletonCard } from '../../ComponentsLibrary/SkeletonCard';
 import { getDateArgs } from '../../../helpers';
-import './styles.less';
+import './CalendarColumn.module.less';
 
 interface Props {
   date: string;

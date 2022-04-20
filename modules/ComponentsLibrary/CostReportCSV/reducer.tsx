@@ -1,12 +1,15 @@
-import { TimesheetLine } from '@kalos-core/kalos-rpc/TimesheetLine';
-import { PerDiem, PerDiemRow } from '@kalos-core/kalos-rpc/PerDiem';
-import { Transaction } from '@kalos-core/kalos-rpc/Transaction';
-import { Event } from '@kalos-core/kalos-rpc/Event';
-import { Trip } from '@kalos-core/kalos-rpc/compiled-protos/perdiem_pb';
-import { Task } from '@kalos-core/kalos-rpc/Task';
-import { TransactionAccount } from '@kalos-core/kalos-rpc/TransactionAccount';
-import { ClassCode, ClassCodeClient } from '@kalos-core/kalos-rpc/ClassCode';
-import { User } from '@kalos-core/kalos-rpc/User';
+import { TimesheetLine } from '../../../@kalos-core/kalos-rpc/TimesheetLine';
+import { PerDiem, PerDiemRow } from '../../../@kalos-core/kalos-rpc/PerDiem';
+import { Transaction } from '../../../@kalos-core/kalos-rpc/Transaction';
+import { Event } from '../../../@kalos-core/kalos-rpc/Event';
+import { Trip } from '../../../@kalos-core/kalos-rpc/compiled-protos/perdiem_pb';
+import { Task } from '../../../@kalos-core/kalos-rpc/Task';
+import { TransactionAccount } from '../../../@kalos-core/kalos-rpc/TransactionAccount';
+import {
+  ClassCode,
+  ClassCodeClient,
+} from '../../../@kalos-core/kalos-rpc/ClassCode';
+import { User } from '../../../@kalos-core/kalos-rpc/User';
 import { OrderDir } from '../../../helpers';
 
 export interface WeekClassCodeBreakdownSubtotal {

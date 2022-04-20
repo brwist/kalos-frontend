@@ -10,7 +10,7 @@ import { InfoTable, Columns, Data } from '../InfoTable';
 import { PlainForm, Schema, Option } from '../PlainForm';
 import { Confirm } from '../Confirm';
 import { Modal } from '../Modal';
-import { PerDiem, PerDiemList } from '@kalos-core/kalos-rpc/PerDiem';
+import { PerDiem, PerDiemList } from '../../../@kalos-core/kalos-rpc/PerDiem';
 import { PrintPage, Status } from '../PrintPage';
 import { PrintTable } from '../PrintTable';
 import { PrintParagraph } from '../PrintParagraph';
@@ -27,12 +27,13 @@ import {
   TimesheetDepartmentClientService,
 } from '../../../helpers';
 import { OPTION_ALL, ROWS_PER_PAGE, MEALS_RATE } from '../../../constants';
-import './styles.less';
+
 import { parseISO } from 'date-fns/esm';
 import { TripInfoTable } from '../TripInfoTable';
-import { NULL_TIME } from '@kalos-core/kalos-rpc/constants';
-import { TimesheetDepartment } from '@kalos-core/kalos-rpc/TimesheetDepartment';
-import { User } from '@kalos-core/kalos-rpc/User';
+import { NULL_TIME } from '../../../@kalos-core/kalos-rpc/constants';
+import { TimesheetDepartment } from '../../../@kalos-core/kalos-rpc/TimesheetDepartment';
+import { User } from '../../../@kalos-core/kalos-rpc/User';
+import './PerDiemsNeedsAuditing.module.less';
 
 interface Props {
   loggedUserId: number;

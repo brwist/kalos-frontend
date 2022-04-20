@@ -7,7 +7,7 @@ import Chip from '@material-ui/core/Chip';
 import InsertPhotoIcon from '@material-ui/icons/InsertPhoto';
 import { Button } from '../../ComponentsLibrary/Button';
 import { BugReportImage } from '../../../helpers';
-import './imageUploader.less';
+import './ImageUploader.module.less';
 
 type Props = {
   images: BugReportImage[];

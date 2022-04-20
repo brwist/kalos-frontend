@@ -1,4 +1,4 @@
-import { SpiffType, Task } from '@kalos-core/kalos-rpc/Task';
+import { SpiffType, Task } from '../../../../@kalos-core/kalos-rpc/Task';
 
 export type State = {
   loading: boolean;

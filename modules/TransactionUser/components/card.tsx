@@ -3,18 +3,18 @@ import * as React from 'react';
 import debounce from 'lodash/debounce';
 import Paper from '@material-ui/core/Paper';
 import Alert from '@material-ui/lab/Alert';
-import { Transaction } from '@kalos-core/kalos-rpc/Transaction';
-import { TransactionDocument } from '@kalos-core/kalos-rpc/TransactionDocument';
-import { TransactionActivity } from '@kalos-core/kalos-rpc/TransactionActivity';
+import { Transaction } from '../../../@kalos-core/kalos-rpc/Transaction';
+import { TransactionDocument } from '../../../@kalos-core/kalos-rpc/TransactionDocument';
+import { TransactionActivity } from '../../../@kalos-core/kalos-rpc/TransactionActivity';
 import { AccountPicker } from '../../ComponentsLibrary/Pickers';
+import { TransactionDocumentClientService } from '../../../helpers';
 import {
   TransactionAccount,
   TransactionAccountClient,
   TransactionAccountList,
-} from '@kalos-core/kalos-rpc/TransactionAccount';
+} from '../../../@kalos-core/kalos-rpc/TransactionAccount';
 import { GalleryData, AltGallery } from '../../AltGallery/main';
-import { Event } from '@kalos-core/kalos-rpc/Event';
-import CloseIcon from '@material-ui/icons/CloseSharp';
+import { Event } from '../../../@kalos-core/kalos-rpc/Event';
 import { PDFMaker } from '../../ComponentsLibrary/PDFMaker';
 import ReIcon from '@material-ui/icons/RefreshSharp';
 import {
@@ -22,27 +22,26 @@ import {
   S3ClientService,
   getFileExt,
   FileClientService,
-  TransactionDocumentClientService,
   TransactionActivityClientService,
   EmailClientService,
   TaskClientService,
   TransactionClientService,
+  DocumentClientService,
 } from '../../../helpers';
-import { File } from '@kalos-core/kalos-rpc/File';
+import { File } from '../../../@kalos-core/kalos-rpc/File';
 import { ENDPOINT } from '../../../constants';
-import { EmailConfig } from '@kalos-core/kalos-rpc/Email';
+import { EmailConfig } from '../../../@kalos-core/kalos-rpc/Email';
 import { Field } from '../../ComponentsLibrary/Field';
 import { SectionBar } from '../../ComponentsLibrary/SectionBar';
 import { Button } from '../../ComponentsLibrary/Button';
 import { NoteField } from './NoteField';
 import { FileGallery } from '../../ComponentsLibrary/FileGallery';
 import { Modal } from '../../ComponentsLibrary/Modal';
-import './card.css';
 import { parseISO } from 'date-fns';
 import { EditTransaction } from '../../ComponentsLibrary/EditTransaction';
 import format from 'date-fns/format';
 import { delay } from 'lodash';
-
+import './Card.module.css';
 interface props {
   txn: Transaction;
   userDepartmentID: number;
@@ -62,6 +61,8 @@ interface state {
   pendingAddFromSingleFile: boolean;
   costCenters: TransactionAccountList;
   pendingEdit: Transaction | undefined;
+  documentExists: boolean;
+  initialDocumentCheck: boolean;
   notes: string;
 }
 
@@ -88,6 +89,8 @@ export class TxnCard extends React.PureComponent<props, state> {
       txn: props.txn,
       pendingAddFromGallery: false,
       pendingAddFromSingleFile: false,
+      documentExists: false,
+      initialDocumentCheck: false,
       costCenters: new TransactionAccountList(),
       pendingEdit: undefined,
       notes: props.txn.getNotes(),
@@ -161,7 +164,7 @@ export class TxnCard extends React.PureComponent<props, state> {
   updateDepartmentID = this.updateTransaction('setDepartmentId');
   updateStatus = this.updateTransaction('setStatusId');
   updateJobNumber = this.updateTransaction('setJobId');
-  handleUpdateCostCenterId() {}
+
   async submit() {
     const { txn } = this.state;
     try {
@@ -190,7 +193,7 @@ export class TxnCard extends React.PureComponent<props, state> {
           try {
             const d = new TransactionDocument();
             d.setTransactionId(this.state.txn.getId());
-            // const res = await this.DocsClient.Get(d);
+            const res = await TransactionDocumentClientService.Get(d);
           } catch (err) {
             throw 'Please attach a photo to this receipt before submitting';
           }
@@ -225,7 +228,7 @@ export class TxnCard extends React.PureComponent<props, state> {
               subject: 'Receipts',
             };
             try {
-              await EmailClientService.sendMail(mailConfig);
+              //await EmailClientService.sendMail(mailConfig);
             } catch (err) {
               console.error('failed to send mail to accounting', err);
             }
@@ -359,6 +362,11 @@ export class TxnCard extends React.PureComponent<props, state> {
         severity: 'error',
         text: 'Please select a purchase category',
       };
+    if (this.state.documentExists == false)
+      return {
+        severity: 'error',
+        text: 'Please Upload a Document before Submitting',
+      };
     if (txn.getCostCenterId() === 601002 && txn.getNotes() === '')
       return {
         severity: 'error',
@@ -480,8 +488,23 @@ export class TxnCard extends React.PureComponent<props, state> {
   async refresh() {
     try {
       const req = new Transaction();
+      console.log('refresh transaction');
       req.setId(this.state.txn.getId());
       const refreshTxn = await TransactionClientService.Get(req);
+      const d = new TransactionDocument();
+      d.setTransactionId(this.state.txn.getId());
+      try {
+        const d = new TransactionDocument();
+        d.setTransactionId(this.state.txn.getId());
+        const res = await TransactionDocumentClientService.Get(d);
+        this.setState({
+          documentExists: true,
+        });
+      } catch (err) {
+        this.setState({
+          documentExists: false,
+        });
+      }
       this.setState({
         txn: refreshTxn,
       });
@@ -504,10 +527,28 @@ export class TxnCard extends React.PureComponent<props, state> {
     }
   }
 
-  componentDidMount() {
+  async componentDidMount() {
     if (this.state.txn.getDepartmentId() === 0) {
       this.state.txn.setDepartmentId(this.props.userDepartmentID);
-      this.updateDepartmentID(this.state.txn.getDepartmentId);
+      // this.updateDepartmentID(this.state.txn.getDepartmentId);
+    }
+    if (this.state.initialDocumentCheck == false) {
+      this.setState({
+        initialDocumentCheck: true,
+      });
+      try {
+        console.log('Check documents');
+        const d = new TransactionDocument();
+        d.setTransactionId(this.state.txn.getId());
+        const res = await TransactionDocumentClientService.Get(d);
+        this.setState({
+          documentExists: true,
+        });
+      } catch (err) {
+        this.setState({
+          documentExists: false,
+        });
+      }
     }
   }
 
@@ -574,7 +615,6 @@ export class TxnCard extends React.PureComponent<props, state> {
   render() {
     const { txn, pendingAddFromGallery, pendingAddFromSingleFile } = this.state;
     const { isManager, userID, allCostCenters } = this.props;
-    console.log('should we see allCostCenters?', allCostCenters);
     const t = txn;
     let subheader = `${t.getDescription().split(' ')[0]} - ${t.getVendor()}`;
 
@@ -622,7 +662,6 @@ export class TxnCard extends React.PureComponent<props, state> {
                   dateStr={t.getTimestamp()}
                   name={t.getOwnerName()}
                   title="Missing"
-                  icon={<CloseIcon />}
                   amount={t.getAmount()}
                   onCreate={this.onPDFGenerate}
                   jobNumber={`${t.getJobId()}`}
@@ -681,6 +720,7 @@ export class TxnCard extends React.PureComponent<props, state> {
               label="Job Number"
               value={t.getJobId()}
               onChange={val => this.updateJobNumber(() => +val)}
+              technicianIdForRecentServiceCalls={userID}
               type="eventId"
               style={{
                 alignItems: 'flex-start',

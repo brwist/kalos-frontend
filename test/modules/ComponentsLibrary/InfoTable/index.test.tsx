@@ -6,7 +6,7 @@ export {};
 import Helpers = require('../../../../helpers');
 
 import InfoTableModule = require('../../../../modules/ComponentsLibrary/InfoTable');
-import TransactionModule = require('@kalos-core/kalos-rpc/Transaction');
+import TransactionModule = require('../../../@kalos-core/kalos-rpc/Transaction');
 
 import React = require('react');
 import Enzyme = require('enzyme');

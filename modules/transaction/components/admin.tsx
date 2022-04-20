@@ -2,8 +2,8 @@ import * as React from 'react';
 import {
   Transaction,
   TransactionClient,
-} from '@kalos-core/kalos-rpc/Transaction';
-import { TransactionRow, prettyMoney } from './row';
+} from '../../../@kalos-core/kalos-rpc/Transaction';
+import { TransactionRow, prettyMoney } from './TransactionRow';
 import {
   AccountPicker,
   DepartmentPicker,
@@ -13,21 +13,25 @@ import { TxnStatusPicker } from '../../ComponentsLibrary/Pickers/TransactionStat
 import {
   TransactionActivityClient,
   TransactionActivity,
-} from '@kalos-core/kalos-rpc/TransactionActivity';
-import { PropertyClient, Property } from '@kalos-core/kalos-rpc/Property';
-import { User } from '@kalos-core/kalos-rpc/User';
-import { EventClient, Event } from '@kalos-core/kalos-rpc/Event';
+} from '../../../@kalos-core/kalos-rpc/TransactionActivity';
+import {
+  PropertyClient,
+  Property,
+} from '../../../@kalos-core/kalos-rpc/Property';
+import { User } from '../../../@kalos-core/kalos-rpc/User';
+import { EventClient, Event } from '../../../@kalos-core/kalos-rpc/Event';
 import { ENDPOINT } from '../../../constants';
 import {
   makeFakeRows,
   makeMonthsOptions,
   sortUserByLastname,
   TransactionActivityClientService,
+  UserClientService,
 } from '../../../helpers';
 import {
   RecordPageReq,
   TransactionList,
-} from '@kalos-core/kalos-rpc/compiled-protos/transaction_pb';
+} from '../../../@kalos-core/kalos-rpc/compiled-protos/transaction_pb';
 import { Prompt } from '../../Prompt/main';
 import { SectionBar } from '../../ComponentsLibrary/SectionBar';
 import { InfoTable } from '../../ComponentsLibrary/InfoTable';
@@ -50,6 +54,8 @@ interface state {
   isLoading: boolean;
   transactions: Transaction[];
   filters: IFilter;
+  accountingAdmin: boolean;
+  showWorkflowFilters: boolean;
   departmentView: boolean;
   count: number;
   acceptOverride: boolean;
@@ -88,7 +94,8 @@ type sortString =
   | 'department_id'
   | 'job_id'
   | 'amount'
-  | 'owner_name';
+  | 'owner_name'
+  | 'state_tax_applied';
 
 export class TransactionAdminView extends React.Component<props, state> {
   TxnClient: TransactionClient;
@@ -101,7 +108,9 @@ export class TransactionAdminView extends React.Component<props, state> {
       page: 0,
       // TODO: REPLACE HARDCODED VALUES WITH AN ACCEPT OVERRIDE ROLE
       acceptOverride: ![1734, 9646, 8418, 103323, 9809].includes(props.userID),
+      accountingAdmin: false,
       isLoading: false,
+      showWorkflowFilters: false,
       departmentView: !props.isSU,
       transactions: [],
       filters: {
@@ -137,6 +146,8 @@ export class TransactionAdminView extends React.Component<props, state> {
     this.copyPage = this.copyPage.bind(this);
     this.makeAddJobNumber = this.makeAddJobNumber.bind(this);
     this.makeUpdateNotes = this.makeUpdateNotes.bind(this);
+    this.markAsDuplicate = this.markAsDuplicate.bind(this);
+    this.reactivateTransaction = this.reactivateTransaction.bind(this);
     this.makeUpdateCostCenter = this.makeUpdateCostCenter.bind(this);
     this.toggleLoading = this.toggleLoading.bind(this);
     this.setSort = this.setSort.bind(this);
@@ -290,6 +301,33 @@ export class TransactionAdminView extends React.Component<props, state> {
     };
   }
 
+  markAsDuplicate(id: number) {
+    return async (notes: string) => {
+      const txn = new Transaction();
+      txn.setId(id);
+      txn.setIsActive(0);
+      txn.setFieldMaskList(['IsActive']);
+      await this.TxnClient.Update(txn);
+      await this.makeLog(
+        `Transaction marked as duplicate. Reason:${notes}`,
+        id,
+      );
+
+      await this.fetchTxns();
+    };
+  }
+  reactivateTransaction(id: number) {
+    return async (notes: string) => {
+      const txn = new Transaction();
+      txn.setId(id);
+      txn.setIsActive(1);
+      txn.setFieldMaskList(['IsActive']);
+      await this.TxnClient.Update(txn);
+      await this.makeLog(`Transaction reactivated. Reason:${notes}`, id);
+
+      await this.fetchTxns();
+    };
+  }
   makeRecordTransaction(id: number) {
     return async () => {
       const txn = new Transaction();
@@ -386,6 +424,7 @@ export class TransactionAdminView extends React.Component<props, state> {
 
   applyFilters(obj: Transaction) {
     const { filters } = this.state;
+    obj.setIsActive(1);
     if (filters.userID) {
       obj.setOwnerId(filters.userID);
     }
@@ -443,6 +482,10 @@ export class TransactionAdminView extends React.Component<props, state> {
           obj.setIsRecorded(true);
           obj.setIsAudited(true);
           break;
+        case 12:
+          obj.setIsActive(0);
+          obj.addFieldMask('IsActive');
+          break;
         default:
           obj.setStatusId(filters.statusID);
           break;
@@ -490,7 +533,6 @@ export class TransactionAdminView extends React.Component<props, state> {
     let reqObj = new Transaction();
     reqObj = this.applyFilters(reqObj);
     reqObj.setPageNumber(this.state.page);
-    reqObj.setIsActive(1);
     reqObj.addNotEquals('VendorCategory');
     reqObj.setVendorCategory("'Receipt','PickTicket','Invoice'");
     this.setState({ isLoading: true });
@@ -509,6 +551,29 @@ export class TransactionAdminView extends React.Component<props, state> {
     console.log(res);
   }
 
+  async fetchUser() {
+    let reqObj = new User();
+    reqObj.setId(this.props.userID);
+    const result = await UserClientService.Get(reqObj);
+    const permissionAccountingAdmin = result
+      .getPermissionGroupsList()
+      .find(item => item.getName() === 'AccountingAdmin')
+      ? true
+      : false;
+    const permissionOverride = result
+      .getPermissionGroupsList()
+      .find(item => item.getName() === 'AccountingAcceptOverride')
+      ? true
+      : false;
+    const permissionWorkflowFilter = result
+      .getPermissionGroupsList()
+      .find(item => item.getName() === 'AccountingWorkflowFilters')
+      ? true
+      : false;
+    this.setState({ accountingAdmin: permissionAccountingAdmin });
+    this.setState({ acceptOverride: !permissionOverride });
+    this.setState({ showWorkflowFilters: permissionWorkflowFilter });
+  }
   setSort(sortBy: sortString) {
     this.setState(prevState => {
       let newDir: 'desc' | 'asc' = 'desc';
@@ -652,6 +717,7 @@ export class TransactionAdminView extends React.Component<props, state> {
   }
 
   async componentDidMount() {
+    await this.fetchUser();
     await this.fetchTxns();
   }
 
@@ -742,6 +808,18 @@ export class TransactionAdminView extends React.Component<props, state> {
           return a.getVendor().localeCompare(b.getVendor());
         } else {
           return b.getVendor().localeCompare(a.getVendor());
+        }
+      });
+    }
+    if (sortBy === 'state_tax_applied') {
+      return this.state.transactions.sort((a, b) => {
+        const stateTaxA = a.getStateTaxApplied() == false ? 0 : 1;
+        const stateTaxB = b.getStateTaxApplied() == false ? 0 : 1;
+
+        if (sortDir === 'asc') {
+          return stateTaxA - stateTaxB;
+        } else {
+          return stateTaxB - stateTaxA;
         }
       });
     }
@@ -890,6 +968,9 @@ export class TransactionAdminView extends React.Component<props, state> {
           >
             <TxnStatusPicker
               disabled={this.state.isLoading}
+              hideAuditWorkflowFilters={
+                this.state.showWorkflowFilters == true ? false : true
+              }
               selected={this.state.filters.statusID || 0}
               onSelect={statusID => this.setFilter('statusID', statusID)}
               label="Filter by Status"
@@ -1005,13 +1086,23 @@ export class TransactionAdminView extends React.Component<props, state> {
               onClick: () => this.setSort('department_id'),
             },
             { name: 'Job #', onClick: () => this.setSort('job_id') },
+            { name: 'ID' },
+
             {
               name: 'Amount',
               dir: 'DESC',
               onClick: () => this.setSort('amount'),
             },
-            { name: 'Description' },
-            { name: 'State Tax Applied?' },
+            {
+              name: 'Description',
+              dir: 'DESC',
+              onClick: () => this.setSort('description'),
+            },
+            {
+              name: 'State Tax?',
+              dir: 'DESC',
+              onClick: () => this.setSort('state_tax_applied'),
+            },
             { name: 'Actions' },
           ]}
           data={
@@ -1028,9 +1119,14 @@ export class TransactionAdminView extends React.Component<props, state> {
                     accept: this.makeUpdateStatus(txn.getId(), 3, 'accepted'),
                     reject: this.makeUpdateStatus(txn.getId(), 4, 'rejected'),
                     refresh: this.fetchTxns,
+                    accountingAdmin: this.state.accountingAdmin,
                     addJobNumber: this.makeAddJobNumber(txn.getId()),
                     updateNotes: this.makeUpdateNotes(txn.getId()),
+                    markAsDuplicate: this.markAsDuplicate(txn.getId()),
                     updateStateTax: this.makeUpdateStateTax(txn),
+                    reactivateTransaction: this.reactivateTransaction(
+                      txn.getId(),
+                    ),
                     editingStateTax: this.state.editingStateTax[txn.getId()],
                     toggleEditingStateTax: () =>
                       this.toggleEditingStateTax(txn.getId()),

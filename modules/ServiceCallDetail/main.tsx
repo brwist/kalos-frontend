@@ -1,6 +1,6 @@
 // this files ts-ignore lines have been checked
 import React, { ChangeEvent, ReactNode } from 'react';
-import { Event, EventClient } from '@kalos-core/kalos-rpc/Event';
+import { Event, EventClient } from '../../@kalos-core/kalos-rpc/Event';
 import Grid from '@material-ui/core/Grid';
 import DateFnsUtils from '@date-io/date-fns';
 import {
@@ -23,7 +23,7 @@ import {
   FormControlLabel,
   Switch,
 } from '@material-ui/core';
-import { User, UserClient } from '@kalos-core/kalos-rpc/User';
+import { User, UserClient } from '../../@kalos-core/kalos-rpc/User';
 import {
   EVENT_STATUS_LIST,
   PAYMENT_TYPE_LIST,

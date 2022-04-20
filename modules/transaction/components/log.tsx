@@ -2,7 +2,7 @@ import React from 'react';
 import {
   TransactionActivity,
   TransactionActivityClient,
-} from '@kalos-core/kalos-rpc/TransactionActivity';
+} from '../../../@kalos-core/kalos-rpc/TransactionActivity';
 import Table from '@material-ui/core/Table';
 import TableBody from '@material-ui/core/TableBody';
 import TableCell from '@material-ui/core/TableCell';
@@ -14,11 +14,11 @@ import Button from '@material-ui/core/Button';
 import CloseIcon from '@material-ui/icons/CloseSharp';
 import IconButton from '@material-ui/core/IconButton';
 import ListIcon from '@material-ui/icons/ListSharp';
-import { UserClient, User } from '@kalos-core/kalos-rpc/User';
+import { UserClient, User } from '../../../@kalos-core/kalos-rpc/User';
 import { ENDPOINT } from '../../../constants';
 import { Tooltip } from '../../ComponentsLibrary/Tooltip';
 import { Confirm } from '../../ComponentsLibrary/Confirm';
-
+import Dialog from '@material-ui/core/Dialog';
 interface props {
   txnID: number;
   iconButton?: boolean;
@@ -142,7 +142,7 @@ export class TxnLog extends React.PureComponent<props, state> {
           </Confirm>
         )}
         {button}
-        <Modal
+        <Dialog
           open={this.state.isOpen}
           onClose={this.toggleVisibility}
           style={{
@@ -189,7 +189,7 @@ export class TxnLog extends React.PureComponent<props, state> {
               </TableBody>
             </Table>
           </Paper>
-        </Modal>
+        </Dialog>
       </>
     );
   }

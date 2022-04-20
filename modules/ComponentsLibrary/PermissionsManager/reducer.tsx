@@ -1,10 +1,10 @@
-import { User } from '@kalos-core/kalos-rpc/User';
+import { User } from '../../../@kalos-core/kalos-rpc/User';
 import { UserClientService } from '../../../helpers';
 import {
   PermissionGroup,
   PermissionGroupUserList,
   PermissionGroupUser,
-} from '@kalos-core/kalos-rpc/compiled-protos/user_pb';
+} from '../../../@kalos-core/kalos-rpc/compiled-protos/user_pb';
 export type FormData = {
   userIds: number[];
   permissionId: number;

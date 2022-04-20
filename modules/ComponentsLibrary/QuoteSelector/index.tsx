@@ -1,5 +1,5 @@
 import React, { FC, useState, useCallback, useEffect } from 'react';
-import { EventClient, Quotable } from '@kalos-core/kalos-rpc/Event';
+import { EventClient, Quotable } from '../../../@kalos-core/kalos-rpc/Event';
 import { SectionBar } from '../SectionBar';
 import { Modal } from '../Modal';
 import { InfoTable, Data, Columns } from '../InfoTable';
@@ -17,10 +17,13 @@ import {
   makeSafeFormObject,
   QuoteLineClientService,
 } from '../../../helpers';
-import { QuotableRead } from '@kalos-core/kalos-rpc/compiled-protos/event_pb';
-import { QuoteUsed, QuoteUsedClient } from '@kalos-core/kalos-rpc/QuoteUsed';
-import { ENDPOINT } from '@kalos-core/kalos-rpc/constants';
-import { QuoteLine } from '@kalos-core/kalos-rpc/QuoteLine';
+import { QuotableRead } from '../../../@kalos-core/kalos-rpc/compiled-protos/event_pb';
+import {
+  QuoteUsed,
+  QuoteUsedClient,
+} from '../../../@kalos-core/kalos-rpc/QuoteUsed';
+import { ENDPOINT } from '../../../@kalos-core/kalos-rpc/constants';
+import { QuoteLine } from '../../../@kalos-core/kalos-rpc/QuoteLine';
 import { ActionsProps } from '../Actions';
 export type SelectedQuote = {
   quotePart: Quotable;

@@ -6,9 +6,9 @@ import sortBy from 'lodash/sortBy';
 import {
   TimesheetDepartment,
   TimesheetDepartmentClient,
-} from '@kalos-core/kalos-rpc/TimesheetDepartment';
+} from '../../../@kalos-core/kalos-rpc/TimesheetDepartment';
 import { startOfWeek, format, addDays, parseISO } from 'date-fns';
-import { PerDiem, PerDiemRow } from '@kalos-core/kalos-rpc/PerDiem';
+import { PerDiem, PerDiemRow } from '../../../@kalos-core/kalos-rpc/PerDiem';
 import { Button } from '../Button';
 import { CalendarHeader } from '../CalendarHeader';
 import { Calendar } from '../Calendar';
@@ -22,22 +22,23 @@ import { ConfirmDelete } from '../ConfirmDelete';
 import { SectionBar } from '../SectionBar';
 import { LodgingByZipCode } from '../LodgingByZipCode';
 import { Loader } from '../../Loader/main';
-import { Trip } from '@kalos-core/kalos-rpc/compiled-protos/perdiem_pb';
+import { Trip } from '../../../@kalos-core/kalos-rpc/compiled-protos/perdiem_pb';
 import {
   formatDate,
   usd,
   UserClientService,
   PerDiemClientService,
-  MapClientService,
+  checkPerDiemRowIsEarliestOrLatest,
   TimesheetDepartmentClientService,
   makeSafeFormObject,
   TimesheetLineClientService,
 } from '../../../helpers';
-import { User } from '@kalos-core/kalos-rpc/User';
+import { User } from '../../../@kalos-core/kalos-rpc/User';
 import { JOB_STATUS_COLORS, MEALS_RATE, OPTION_ALL } from '../../../constants';
-import './styles.less';
-import { NULL_TIME, ENDPOINT } from '@kalos-core/kalos-rpc/constants';
+
+import { NULL_TIME, ENDPOINT } from '../../../@kalos-core/kalos-rpc/constants';
 import { RoleType } from '../Payroll';
+import './PerDiemManager.module.less';
 
 export interface Props {
   loggedUserId: number;
@@ -569,10 +570,19 @@ export const PerDiemManager: FC<Props> = ({
     (aggr, pd) => [...aggr, ...pd.getRowsList()],
     [] as PerDiemRow[],
   );
-  const totalMeals = allRowsList.reduce(
-    (aggr, pdr) => aggr + govPerDiemByZipCode(pdr.getZipCode()).meals,
-    0,
-  );
+  let totalMeals = 0;
+  for (let i = 0; i < filteredPerDiems.length; i++) {
+    const pd = filteredPerDiems[i];
+
+    for (let j = 0; j < pd.getRowsList().length; j++) {
+      const pdr = pd.getRowsList()[j];
+      if (checkPerDiemRowIsEarliestOrLatest(pd.getRowsList(), pdr)) {
+        totalMeals += govPerDiemByZipCode(pdr.getZipCode()).meals * 0.75;
+      } else {
+        totalMeals += govPerDiemByZipCode(pdr.getZipCode()).meals;
+      }
+    }
+  }
   const totalLodging = allRowsList.reduce(
     (aggr, pdr) =>
       aggr +
@@ -657,12 +667,15 @@ export const PerDiemManager: FC<Props> = ({
             loading ||
             status.status === 'APPROVED' ||
             (isOwner && status.status !== 'PENDING_SUBMIT');
-          const totalMeals = entry
-            .getRowsList()
-            .reduce(
-              (aggr, pdr) => aggr + govPerDiemByZipCode(pdr.getZipCode()).meals,
-              0,
-            );
+          let totalMeals = 0;
+          for (let i = 0; i < entry.getRowsList().length; i++) {
+            const pdr = entry.getRowsList()[i];
+            if (checkPerDiemRowIsEarliestOrLatest(entry.getRowsList(), pdr)) {
+              totalMeals += govPerDiemByZipCode(pdr.getZipCode()).meals * 0.75;
+            } else {
+              totalMeals += govPerDiemByZipCode(pdr.getZipCode()).meals;
+            }
+          }
           const totalLodging = entry
             .getRowsList()
             .reduce(
@@ -852,7 +865,17 @@ export const PerDiemManager: FC<Props> = ({
                               {govPerDiems[entry.getZipCode()] && (
                                 <div className="PerDiemRow">
                                   <strong>Meals: </strong>
-                                  {usd(govPerDiems[entry.getZipCode()].meals)}
+                                  {checkPerDiemRowIsEarliestOrLatest(
+                                    allRowsList,
+                                    entry,
+                                  )
+                                    ? usd(
+                                        govPerDiems[entry.getZipCode()].meals *
+                                          0.75,
+                                      )
+                                    : usd(
+                                        govPerDiems[entry.getZipCode()].meals,
+                                      )}
                                 </div>
                               )}
                               {(govPerDiems[entry.getZipCode()] ||

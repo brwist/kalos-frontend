@@ -1,6 +1,6 @@
 import React, { FC, ReactNode, CSSProperties } from 'react';
 import clsx from 'clsx';
-import './styles.css';
+import "./PrintTable.module.css";
 
 type Style = {
   noBorders?: boolean;

@@ -7,7 +7,7 @@ import Box from '@material-ui/core/Box';
 import { Button } from '../Button';
 import { WeekPicker } from '../WeekPicker';
 import { Actions, ActionsProps } from '../Actions';
-import './styles.less';
+import './CalendarHeader.module.less';
 
 interface Props {
   selectedDate: Date;

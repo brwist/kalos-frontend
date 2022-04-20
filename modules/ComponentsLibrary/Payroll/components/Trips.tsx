@@ -3,7 +3,7 @@ import { format } from 'date-fns';
 import { parseISO } from 'date-fns/esm';
 import IconButton from '@material-ui/core/IconButton';
 import Visibility from '@material-ui/icons/Visibility';
-import { Trip } from '@kalos-core/kalos-rpc/compiled-protos/perdiem_pb';
+import { Trip } from '../../../../@kalos-core/kalos-rpc/compiled-protos/perdiem_pb';
 import { Modal } from '../../Modal';
 import { SectionBar } from '../../SectionBar';
 import { InfoTable } from '../../InfoTable';
@@ -20,6 +20,7 @@ import { RoleType } from '../index';
 import { startOfWeek, subDays, addDays } from 'date-fns';
 import { truncate } from 'lodash';
 import { NULL_TIME_VALUE } from '../../Timesheet/constants';
+
 interface Props {
   loggedUserId: number;
   departmentId: number;
