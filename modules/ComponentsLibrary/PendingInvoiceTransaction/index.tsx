@@ -492,7 +492,6 @@ export const PendingInvoiceTransactionComponent: FC<Props> = ({ userId }) => {
       txn.setOwnerId(userId);
       txn.setJobId(entry.jobNumber);
       txn.setInvoiceNumber(entry.invoiceNumber);
-      txn.setOrderNumber(entry.invoiceNumber);
       txn.setStatusId(2);
       if (entry.vendorId != 0) {
         txn.setVendorId(entry.vendorId);

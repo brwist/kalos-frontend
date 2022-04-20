@@ -529,6 +529,22 @@ export function TransactionRow({
             ]
           : txn.getIsActive() == 0 && acceptOverride
           ? [
+              <TxnNotes
+                key="viewNotes"
+                iconButton
+                text="View notes"
+                notes={txn.getNotes()}
+                disabled={txn.getNotes() === ''}
+              />,
+              <TxnLog key="txnLog" iconButton txnID={txn.getId()} />,
+              <AltGallery
+                key="receiptPhotos"
+                title="Transaction Photos"
+                fileList={getGalleryData(txn)}
+                transactionID={txn.getId()}
+                text="View photos"
+                iconButton
+              />,
               <Prompt
                 key="makeActive"
                 confirmFn={reactivateTransaction}
