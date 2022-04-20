@@ -3,7 +3,7 @@ import Alert from '@material-ui/lab/Alert';
 import { ENDPOINT } from '../../constants';
 import { Button } from '../ComponentsLibrary/Button';
 import { Link } from '../ComponentsLibrary/Link';
-import { S3Client, URLObject } from '@kalos-core/kalos-rpc/S3File';
+import { S3Client, URLObject } from '../../@kalos-core/kalos-rpc/S3File';
 import { PageWrapper, PageWrapperProps } from '../PageWrapper/main';
 
 // add any prop types here

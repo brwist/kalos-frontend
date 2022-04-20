@@ -10,9 +10,10 @@ import { ConfirmDelete } from '../ConfirmDelete';
 import {
   StoredQuoteClient,
   StoredQuote,
-} from '@kalos-core/kalos-rpc/StoredQuote';
+} from '../../../@kalos-core/kalos-rpc/StoredQuote';
 import { makeFakeRows, makeSafeFormObject, usd } from '../../../helpers';
 import { ENDPOINT } from '../../../constants';
+import './StoredQuotes.module.less';
 
 const StoredQuoteClientService = new StoredQuoteClient(ENDPOINT);
 

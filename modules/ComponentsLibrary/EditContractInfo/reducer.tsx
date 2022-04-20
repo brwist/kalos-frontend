@@ -1,10 +1,10 @@
-import { Contract } from '@kalos-core/kalos-rpc/Contract';
-import { Event } from '@kalos-core/kalos-rpc/Event';
-import { Invoice } from '@kalos-core/kalos-rpc/Invoice';
-import { JobSubtype } from '@kalos-core/kalos-rpc/JobSubtype';
-import { JobType } from '@kalos-core/kalos-rpc/JobType';
-import { JobTypeSubtype } from '@kalos-core/kalos-rpc/JobTypeSubtype';
-import { Property } from '@kalos-core/kalos-rpc/Property';
+import { Contract } from '../../../@kalos-core/kalos-rpc/Contract';
+import { Event } from '../../../@kalos-core/kalos-rpc/Event';
+import { Invoice } from '../../../@kalos-core/kalos-rpc/Invoice';
+import { JobSubtype } from '../../../@kalos-core/kalos-rpc/JobSubtype';
+import { JobType } from '../../../@kalos-core/kalos-rpc/JobType';
+import { JobTypeSubtype } from '../../../@kalos-core/kalos-rpc/JobTypeSubtype';
+import { Property } from '../../../@kalos-core/kalos-rpc/Property';
 
 export type State = {
   isLoaded: boolean;

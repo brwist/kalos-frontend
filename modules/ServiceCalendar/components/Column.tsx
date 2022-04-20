@@ -7,7 +7,7 @@ import React, {
 import clsx from 'clsx';
 import compact from 'lodash/compact';
 import { format, parseISO } from 'date-fns';
-import { Event } from '@kalos-core/kalos-rpc/Event';
+import { Event } from '../../../@kalos-core/kalos-rpc/Event';
 import Tooltip from '@material-ui/core/Tooltip';
 import Typography from '@material-ui/core/Typography';
 import Box from '@material-ui/core/Box';
@@ -24,9 +24,9 @@ import { CallCard, TimeoffCard } from './CallCard';
 import { SkeletonCard } from '../../ComponentsLibrary/SkeletonCard';
 import { colorsMapping } from './constants';
 import { TimeoffRequestTypes } from '../../../helpers';
-import { CalendarDay } from '@kalos-core/kalos-rpc/compiled-protos/event_pb';
-import { TimeoffRequest } from '@kalos-core/kalos-rpc/compiled-protos/timeoff_request_pb';
-import './column.less';
+import { CalendarDay } from '../../../@kalos-core/kalos-rpc/compiled-protos/event_pb';
+import { TimeoffRequest } from '../../../@kalos-core/kalos-rpc/compiled-protos/timeoff_request_pb';
+import './Column.module.less';
 
 type Props = {
   date: string;

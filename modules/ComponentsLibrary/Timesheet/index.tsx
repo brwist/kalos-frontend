@@ -17,14 +17,14 @@ import AssessmentIcon from '@material-ui/icons/Assessment';
 import AssignmentIndIcon from '@material-ui/icons/AssignmentInd';
 import AddAlertIcon from '@material-ui/icons/AddAlert';
 import Alert from '@material-ui/lab/Alert';
-import { ServicesRendered } from '@kalos-core/kalos-rpc/ServicesRendered';
+import { ServicesRendered } from '../../../@kalos-core/kalos-rpc/ServicesRendered';
 import {
   TimesheetLineClient,
   TimesheetLine,
   TimesheetReq,
   TimesheetLineList,
-} from '@kalos-core/kalos-rpc/TimesheetLine';
-import { TransactionClient } from '@kalos-core/kalos-rpc/Transaction';
+} from '../../../@kalos-core/kalos-rpc/TimesheetLine';
+import { TransactionClient } from '../../../@kalos-core/kalos-rpc/Transaction';
 import { AddNewButton } from '../AddNewButton';
 import { ConfirmServiceProvider } from '../ConfirmService';
 import Toolbar from './components/Toolbar';
@@ -42,13 +42,14 @@ import { Action, getShownDates, reducer, State } from './reducer';
 import ReceiptsIssueDialog from './components/ReceiptsIssueDialog';
 import { Modal } from '../Modal';
 import { TimeOff } from '../TimeOff';
-import './styles.less';
+
 import { TripSummaryNew } from '../TripSummaryNew';
 import { RoleType } from '../Payroll';
 import { NULL_TIME_VALUE } from './constants';
-import { TimeoffRequest } from '@kalos-core/kalos-rpc/TimeoffRequest';
+import { TimeoffRequest } from '../../../@kalos-core/kalos-rpc/TimeoffRequest';
 import { Button } from '../Button';
-import { Document } from '@kalos-core/kalos-rpc/Document';
+import { Document } from '../../../@kalos-core/kalos-rpc/Document';
+import './Timesheet.module.less';
 
 const tslClient = new TimesheetLineClient(ENDPOINT);
 const txnClient = new TransactionClient(ENDPOINT);
@@ -760,7 +761,13 @@ export const Timesheet: FC<Props> = props => {
       </ConfirmServiceProvider>
       {receiptsIssue.shown && (
         <ReceiptsIssueDialog
-          isAdmin={user.getTimesheetAdministration() || isManager}
+          isAdmin={
+            user
+              .getPermissionGroupsList()
+              .find(pr => pr.getName() === 'Manager')
+              ? true
+              : false
+          }
           receiptsIssueStr={receiptsIssue.receiptsIssueStr}
           handleTimeout={handleTimeout}
         />

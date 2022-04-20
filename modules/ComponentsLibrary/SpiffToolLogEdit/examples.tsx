@@ -1,7 +1,7 @@
 import React, { useCallback, useEffect, useState } from 'react';
 import { SpiffToolLogEdit } from './';
 import { ExampleTitle } from '../helpers';
-import { Task } from '@kalos-core/kalos-rpc/Task';
+import { Task } from '../../../@kalos-core/kalos-rpc/Task';
 import { TaskClientService } from '../../../helpers';
 
 export default () => {

@@ -1,7 +1,7 @@
 import React, { FC, useState, useEffect, useCallback } from 'react';
 import kebabCase from 'lodash/kebabCase';
 import Typography from '@material-ui/core/Typography';
-import { SpiffToolAdminAction } from '@kalos-core/kalos-rpc/SpiffToolAdminAction';
+import { SpiffToolAdminAction } from '../../../@kalos-core/kalos-rpc/SpiffToolAdminAction';
 import IconButton from '@material-ui/core/IconButton';
 import DeleteIcon from '@material-ui/icons/Delete';
 import EditIcon from '@material-ui/icons/Edit';
@@ -10,11 +10,11 @@ import { Tooltip } from '../Tooltip';
 import { Modal } from '../Modal';
 import { Form, Schema } from '../Form';
 import { Option } from '../Field';
-import { EmailClient, SQSEmail } from '@kalos-core/kalos-rpc/Email';
-import { User } from '@kalos-core/kalos-rpc/User';
-import { Task, TaskClient } from '@kalos-core/kalos-rpc/Task';
-import { Document } from '@kalos-core/kalos-rpc/Document';
-import { SpiffType } from '@kalos-core/kalos-rpc/Task';
+import { EmailClient, SQSEmail } from '../../../@kalos-core/kalos-rpc/Email';
+import { User } from '../../../@kalos-core/kalos-rpc/User';
+import { Task, TaskClient } from '../../../@kalos-core/kalos-rpc/Task';
+import { Document } from '../../../@kalos-core/kalos-rpc/Document';
+import { SpiffType } from '../../../@kalos-core/kalos-rpc/Task';
 import { ConfirmDelete } from '../ConfirmDelete';
 import { InfoTable, Data, Columns } from '../InfoTable';
 import { Documents } from '../Documents';
@@ -31,11 +31,12 @@ import {
   makeSafeFormObject,
   usd,
 } from '../../../helpers';
-import './styles.less';
+
 import { stat } from 'fs';
 import { userInfo } from 'os';
-import { EmailServiceClient } from '@kalos-core/kalos-rpc/compiled-protos/email_pb_service';
-import { ENDPOINT } from '@kalos-core/kalos-rpc/constants';
+import { EmailServiceClient } from '../../../@kalos-core/kalos-rpc/compiled-protos/email_pb_service';
+import { ENDPOINT } from '../../../@kalos-core/kalos-rpc/constants';
+import "./SpiffToolLogEdit.module.less";
 
 type DocumentUpload = {
   filename: '';

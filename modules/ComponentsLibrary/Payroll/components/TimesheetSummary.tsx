@@ -3,7 +3,7 @@ import {
   TimesheetLine,
   TimesheetLineClient,
   TimesheetLineList,
-} from '@kalos-core/kalos-rpc/TimesheetLine';
+} from '../../../../@kalos-core/kalos-rpc/TimesheetLine';
 import { ENDPOINT, NULL_TIME } from '../../../../constants';
 import { Button } from '../../Button';
 import { SectionBar } from '../../../ComponentsLibrary/SectionBar';
@@ -28,10 +28,10 @@ import {
   TimeoffRequestClientService,
 } from '../../../../helpers';
 import { Loader } from '../../../Loader/main';
-import { User } from '@kalos-core/kalos-rpc/User';
+import { User } from '../../../../@kalos-core/kalos-rpc/User';
 import { Confirm } from '../../Confirm';
 
-import { TimeoffRequest } from '@kalos-core/kalos-rpc/TimeoffRequest';
+import { TimeoffRequest } from '../../../../@kalos-core/kalos-rpc/TimeoffRequest';
 import {
   BorderAllRounded,
   BorderAllSharp,
@@ -89,17 +89,12 @@ export const TimesheetSummary: FC<Props> = ({
     [setPendingPayrollReject],
   );
   const [mappedElements, setMappedElements] = useState<JSX.Element[]>();
-  const [
-    togglePendingApprovalAlert,
-    setTogglePendingApprovalAlert,
-  ] = useState<boolean>();
-  const [
-    togglePendingSubmitAlert,
-    setTogglePendingSubmitAlert,
-  ] = useState<boolean>();
-  const [mappedElementsNoJobs, setMappedElementsNoJobs] = useState<
-    JSX.Element[]
-  >();
+  const [togglePendingApprovalAlert, setTogglePendingApprovalAlert] =
+    useState<boolean>();
+  const [togglePendingSubmitAlert, setTogglePendingSubmitAlert] =
+    useState<boolean>();
+  const [mappedElementsNoJobs, setMappedElementsNoJobs] =
+    useState<JSX.Element[]>();
   const [today, setToday] = useState<Date>(new Date());
   const [startDay, setStartDay] = useState<Date>(
     startOfWeek(subDays(today, 7), { weekStartsOn: 6 }),
@@ -111,9 +106,8 @@ export const TimesheetSummary: FC<Props> = ({
     tempDayList.push([format(addDays(startDay, i), 'yyyy-MM-dd')]);
   }
   const [dayList, setDayList] = useState<string[][]>(tempDayList);
-  const [subTotalDayList, setSubTotalDayList] = useState<string[][]>(
-    tempDayList,
-  );
+  const [subTotalDayList, setSubTotalDayList] =
+    useState<string[][]>(tempDayList);
   const formatDateFns = (date: Date) => format(date, 'yyyy-MM-dd');
   const getTimeoff = useCallback(async () => {
     const startDate = format(startDay, 'yyyy-MM-dd');

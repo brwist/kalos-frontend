@@ -9,8 +9,8 @@ import {
   DocumentClientService,
   FileClientService,
 } from '../../../helpers';
-import './styles.less';
-import { File } from '@kalos-core/kalos-rpc/File';
+import { File } from '../../../@kalos-core/kalos-rpc/File';
+import './UploadPhoto.module.less';
 
 interface Props {
   loggedUserId: number;

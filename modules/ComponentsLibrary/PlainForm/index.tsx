@@ -21,7 +21,7 @@ import {
   Type,
   getDefaultValueByType,
 } from '../Field';
-import './styles.less';
+import "./PlainForm.module.less";
 
 export type Value = ValueType;
 export type Option = OptionType;

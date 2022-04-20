@@ -1,4 +1,4 @@
-import { TaskClient, Task } from '@kalos-core/kalos-rpc/Task';
+import { TaskClient, Task } from '../../../@kalos-core/kalos-rpc/Task';
 import { StarRateTwoTone } from '@material-ui/icons';
 
 export type PerDiemSum = {
@@ -68,21 +68,12 @@ export const reducer = (state: State, action: Action) => {
       };
     }
     case 'updateTotalPerDiemProcessed': {
-      if (action.data.totalLodging == 0 && action.data.totalMeals === 0) {
-        const temp = state.totalPerDiemProcessed;
-        temp.totalLodging += state.totalPerDiem.totalLodging;
-        temp.totalMeals += state.totalPerDiem.totalMeals;
-        return {
-          ...state,
-          totalPerDiemProcessed: temp,
-        };
-      } else {
-        return {
-          ...state,
-          totalPerDiemProcessed: action.data,
-        };
-      }
+      return {
+        ...state,
+        totalPerDiemProcessed: action.data,
+      };
     }
+
     case 'updateTotalTripsProcessed': {
       const temp = state.totalTripsProcessed;
       temp.totalDistance += action.data.totalDistance;

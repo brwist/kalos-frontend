@@ -1,4 +1,4 @@
-import { SpiffType, Task } from '@kalos-core/kalos-rpc/Task';
+import { SpiffType, Task } from '../../../../@kalos-core/kalos-rpc/Task';
 import {
   SavedSignatureType,
   ServicesRenderedPaymentType,
@@ -6,8 +6,8 @@ import {
   PaymentAndSignatureType,
   PaymentType,
 } from './Services';
-import { ServicesRendered } from '@kalos-core/kalos-rpc/ServicesRendered';
-import { EventClient, Quotable } from '@kalos-core/kalos-rpc/Event';
+import { ServicesRendered } from '../../../../@kalos-core/kalos-rpc/ServicesRendered';
+import { EventClient, Quotable } from '../../../../@kalos-core/kalos-rpc/Event';
 
 export type State = {
   paymentForm: PaymentAndSignatureType;

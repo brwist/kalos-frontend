@@ -1,5 +1,5 @@
 import React, { Component, ErrorInfo, ReactNode } from 'react';
-import '../../PageWrapper/styles.less';
+import { ReactElement } from 'react';
 
 interface Props {
   children: ReactNode;
@@ -25,11 +25,9 @@ export class ErrorBoundary extends Component<Props, State> {
   }
 
   public render() {
-    //console.log('Rendering an error boundary');
-
     if (this.state.hasError) {
       return (
-        <>
+        <div>
           <h1 style={{ textAlign: 'center' }}>Whoops! We had an error.</h1>
           <h2 style={{ textAlign: 'center' }}>
             Please report this to the webtech team in{' '}
@@ -48,10 +46,10 @@ export class ErrorBoundary extends Component<Props, State> {
           <h4 style={{ color: 'red' }}>
             {this.state.error !== undefined ? this.state.error.stack : ''}
           </h4>
-        </>
+        </div>
       );
     }
 
-    return this.props.children;
+    return this.props.children as ReactElement;
   }
 }

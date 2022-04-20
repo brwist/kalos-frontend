@@ -8,17 +8,17 @@
 
 import React, { useReducer, useEffect, useCallback, FC } from 'react';
 import { reducer, ACTIONS } from './reducer';
-import { Devlog } from '@kalos-core/kalos-rpc/Devlog';
+import { Devlog } from '../../../@kalos-core/kalos-rpc/Devlog';
 import { DevlogClientService, EmailClientService } from '../../../helpers';
 import { format } from 'date-fns';
 import Typography from '@material-ui/core/Typography';
-import { Document } from '@kalos-core/kalos-rpc/Document';
+import { Document } from '../../../@kalos-core/kalos-rpc/Document';
 import ReactHtmlParser from 'react-html-parser';
 import {
   InvoiceBodyRequest,
   SQSEmail,
   SQSEmailAndDocument,
-} from '@kalos-core/kalos-rpc/compiled-protos/email_pb';
+} from '../../../@kalos-core/kalos-rpc/compiled-protos/email_pb';
 
 // add any prop types here
 interface props {

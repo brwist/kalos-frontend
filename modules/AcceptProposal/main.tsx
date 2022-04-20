@@ -3,34 +3,41 @@ import Checkbox from '@material-ui/core/Checkbox';
 import Alert from '@material-ui/lab/Alert';
 import ReactPDF from '@react-pdf/renderer';
 import { Button } from '../ComponentsLibrary/Button';
-import { QuoteLine, QuoteLineClient } from '@kalos-core/kalos-rpc/QuoteLine';
+import {
+  QuoteLine,
+  QuoteLineClient,
+} from '../../@kalos-core/kalos-rpc/QuoteLine';
 import { ENDPOINT } from '../../constants';
 import { b64toBlob, timestamp } from '../../helpers';
 import {
   Property,
   PropertyClient,
   getPropertyAddress,
-} from '@kalos-core/kalos-rpc/Property';
-import { User } from '@kalos-core/kalos-rpc/User';
+} from '../../@kalos-core/kalos-rpc/Property';
+import { User } from '../../@kalos-core/kalos-rpc/User';
 import { ApprovedProposal } from './components/ApprovedProposal';
-import { S3Client, FileObject, URLObject } from '@kalos-core/kalos-rpc/S3File';
-import { Document, DocumentClient } from '@kalos-core/kalos-rpc/Document';
+import {
+  S3Client,
+  FileObject,
+  URLObject,
+} from '../../@kalos-core/kalos-rpc/S3File';
+import { Document, DocumentClient } from '../../@kalos-core/kalos-rpc/Document';
 import {
   QuoteDocument,
   QuoteDocumentClient,
-} from '@kalos-core/kalos-rpc/QuoteDocument';
+} from '../../@kalos-core/kalos-rpc/QuoteDocument';
 import {
   ActivityLog,
   ActivityLogClient,
-} from '@kalos-core/kalos-rpc/ActivityLog';
+} from '../../@kalos-core/kalos-rpc/ActivityLog';
 import { SectionBar } from '../ComponentsLibrary/SectionBar';
 import { InfoTable } from '../ComponentsLibrary/InfoTable';
 import { Confirm } from '../ComponentsLibrary/Confirm';
 import { Field } from '../ComponentsLibrary/Field';
 import { Loader } from '../Loader/main';
-import { UserClientService, usd } from '../../helpers';
+import { UserClientService, usd, EventClientService } from '../../helpers';
 import { PageWrapper, PageWrapperProps } from '../PageWrapper/main';
-
+import { Event } from '../../@kalos-core/kalos-rpc/Event';
 // add any prop types here
 interface props extends PageWrapperProps {
   userID: number;
@@ -51,6 +58,7 @@ interface state {
   selected: number[];
   property: Property;
   customer: User;
+  event: Event;
   notes: string;
 }
 
@@ -75,6 +83,7 @@ export class AcceptProposal extends React.PureComponent<props, state> {
       selected: [],
       property: new Property(),
       customer: new User(),
+      event: new Event(),
       docID: 0,
     };
 
@@ -208,9 +217,13 @@ export class AcceptProposal extends React.PureComponent<props, state> {
     const u = new User();
     u.setId(this.props.userID);
     const theCustomer = await UserClientService.Get(u);
+    const e = new Event();
+    e.setId(this.props.jobNumber);
+    const theJob = await EventClientService.Get(e);
     this.setState({
       customer: theCustomer,
       property: theProperty,
+      event: theJob,
     });
   };
 
@@ -319,7 +332,8 @@ export class AcceptProposal extends React.PureComponent<props, state> {
   pingSlack = async () => {
     const key =
       'xoxp-11208000564-192623057299-291949462161-5d0e9acdefe3167cee18172908134b9a';
-    const channel = 'C0HMJ00P2';
+    const residentialChannel = 'C0HMJ00P2';
+    const commercialChannel = 'CD86VA8R5';
     const proposalUrl = `app.kalosflorida.com/index.cfm?action=admin:service.editServiceCall&id=${this.props.jobNumber}&user_id=${this.props.userID}&property_id=${this.props.propertyID}`;
     const post = [
       {
@@ -348,9 +362,14 @@ export class AcceptProposal extends React.PureComponent<props, state> {
         ],
       },
     ];
-    const slackUrl = `https://slack.com/api/chat.postMessage?token=${key}&text=<!here>, A proposal has been approved&channel=${channel}&icon_emoji=:white_check_mark:&as_user=false&username=Proposal&attachments=${encodeURIComponent(
+    const slackUrl = `https://slack.com/api/chat.postMessage?token=${key}&text=<!here>, A proposal has been approved&channel=${
+      this.state.event.getIsResidential() == 1
+        ? residentialChannel
+        : commercialChannel
+    }&icon_emoji=:white_check_mark:&as_user=false&username=Proposal&attachments=${encodeURIComponent(
       JSON.stringify(post),
     )}`;
+    console.log(slackUrl);
     await fetch(slackUrl, { method: 'POST' });
   };
 
@@ -366,7 +385,9 @@ export class AcceptProposal extends React.PureComponent<props, state> {
       }
       await this.updateDocument();
       await this.createLog();
+
       await this.pingSlack();
+
       const name =
         this.props.useBusinessName &&
         this.state.customer.getBusinessname() != ''

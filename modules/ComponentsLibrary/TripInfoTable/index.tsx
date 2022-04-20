@@ -8,7 +8,7 @@ import Typography from '@material-ui/core/Typography';
 import {
   Trip,
   TripList,
-} from '@kalos-core/kalos-rpc/compiled-protos/perdiem_pb';
+} from '../../../@kalos-core/kalos-rpc/compiled-protos/perdiem_pb';
 import IconButton from '@material-ui/core/IconButton';
 import DeleteIcon from '@material-ui/icons/Delete';
 import {
@@ -21,7 +21,7 @@ import { AddressPair } from '../PlaceAutocompleteAddressForm/Address';
 import { ConfirmDelete } from '../ConfirmDelete';
 import { Schema } from '../Form';
 import { Loader } from '../../Loader/main';
-import { User } from '@kalos-core/kalos-rpc/compiled-protos/user_pb';
+import { User } from '../../../@kalos-core/kalos-rpc/compiled-protos/user_pb';
 
 // Schema will be adjusted down the line to include as many addresses as it can
 export const SCHEMA_GOOGLE_MAP_INPUT_FORM: Schema<AddressPair.AsObject> = [

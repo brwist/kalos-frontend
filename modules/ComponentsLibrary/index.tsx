@@ -113,8 +113,7 @@ import UploadPhotoTransaction from './UploadPhotoTransaction/examples';
 import WarrantyReport from './WarrantyReport/examples';
 import WeekPicker from './WeekPicker/examples';
 
-import './styles.less';
-import { UserClient } from '@kalos-core/kalos-rpc/User';
+import { UserClient } from '../../@kalos-core/kalos-rpc/User';
 import { ENDPOINT } from '../../constants';
 import { ErrorBoundary as ErrorBoundaryComponent } from './ErrorBoundary/index';
 

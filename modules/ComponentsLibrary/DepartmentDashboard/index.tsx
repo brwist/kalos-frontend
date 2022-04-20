@@ -16,8 +16,8 @@ import {
   TimesheetDepartmentClientService,
 } from '../../../helpers';
 import { OPTION_ALL } from '../../../constants';
-import { User } from '@kalos-core/kalos-rpc/User';
-import { TimesheetDepartment } from '@kalos-core/kalos-rpc/TimesheetDepartment';
+import { User } from '../../../@kalos-core/kalos-rpc/User';
+import { TimesheetDepartment } from '../../../@kalos-core/kalos-rpc/TimesheetDepartment';
 import { PermissionsManager } from '../PermissionsManager';
 import { VehicleView } from '../VehicleView/index';
 
@@ -37,14 +37,8 @@ export const DepartmentDashboard: FC<props> = function DepartmentDashboard({
     loggedUser: new User(),
     departmentOptions: [],
   });
-  const {
-    isLoaded,
-    departments,
-    filter,
-    role,
-    loggedUser,
-    departmentOptions,
-  } = state;
+  const { isLoaded, departments, filter, role, loggedUser, departmentOptions } =
+    state;
 
   const handleSetFilter = (d: FilterData) => {
     if (!d.departmentId) {

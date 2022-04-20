@@ -1,6 +1,5 @@
 import React, { FC, ReactNode } from 'react';
-import './styles.css';
-
+import './PrintFooter.module.css';
 export interface Props {
   height: number;
   children?: ReactNode;

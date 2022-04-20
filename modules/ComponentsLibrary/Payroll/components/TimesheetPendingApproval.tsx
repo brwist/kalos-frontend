@@ -14,8 +14,8 @@ import { ROWS_PER_PAGE, OPTION_ALL } from '../../../../constants';
 import {
   TimesheetLine,
   TimesheetLineClient,
-} from '@kalos-core/kalos-rpc/TimesheetLine';
-import { User } from '@kalos-core/kalos-rpc/User';
+} from '../../../../@kalos-core/kalos-rpc/TimesheetLine';
+import { User } from '../../../../@kalos-core/kalos-rpc/User';
 import { ENDPOINT, NULL_TIME } from '../../../../constants';
 import { RoleType } from '../index';
 import { TimesheetSummary } from './TimesheetSummary';
@@ -48,19 +48,15 @@ export const TimesheetPendingApproval: FC<Props> = ({
   const [page, setPage] = useState<number>(0);
   const [count, setCount] = useState<number>(0);
 
-  const [
-    timesheetSummaryToggle,
-    setTimesheetSummaryToggle,
-  ] = useState<TimesheetLine>();
+  const [timesheetSummaryToggle, setTimesheetSummaryToggle] =
+    useState<TimesheetLine>();
   const [startDay, setStartDay] = useState<Date>(
     startOfWeek(subDays(new Date(), 7), { weekStartsOn: 6 }),
   );
   const [endDay, setEndDay] = useState<Date>(addDays(startDay, 7));
   const [pendingView, setPendingView] = useState<TimesheetLine>();
-  const [
-    pendingCreateEmptyTimesheetLine,
-    setPendingCreateEmptyTimesheetLine,
-  ] = useState<TimesheetLine>();
+  const [pendingCreateEmptyTimesheetLine, setPendingCreateEmptyTimesheetLine] =
+    useState<TimesheetLine>();
   const load = useCallback(async () => {
     setLoading(true);
     const filter = {

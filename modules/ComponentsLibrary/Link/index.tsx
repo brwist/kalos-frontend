@@ -1,6 +1,5 @@
 import React, { FC } from 'react';
-import './styles.less';
-
+import './Link.module.less';
 interface Props {
   href?: string;
   onClick?: (event: React.MouseEvent<HTMLAnchorElement, MouseEvent>) => void;

@@ -5,18 +5,17 @@ import IconButton from '@material-ui/core/IconButton';
 import FlashOff from '@material-ui/icons/FlashOff';
 import Visibility from '@material-ui/icons/Visibility';
 import CheckCircleOutlineIcon from '@material-ui/icons/CheckCircleOutline';
-import AccountBalanceWalletIcon from '@material-ui/icons/AccountBalanceWallet';
 import { Modal } from '../../Modal';
 import { SectionBar } from '../../SectionBar';
 import { PerDiemComponent } from '../../PerDiem';
 import { InfoTable } from '../../InfoTable';
-import { startOfWeek, subDays } from 'date-fns';
 import NotInterestedIcon from '@material-ui/icons/NotInterested';
+import KeyboardReturnIcon from '@material-ui/icons/KeyboardReturn';
 import { Tooltip } from '../../Tooltip';
 import { Confirm } from '../../Confirm';
 import { Button } from '../../Button';
 import { PerDiemManager } from '../../PerDiemManager';
-import { TimesheetDepartment } from '@kalos-core/kalos-rpc/TimesheetDepartment';
+import { TimesheetDepartment } from '../../../../@kalos-core/kalos-rpc/TimesheetDepartment';
 import {
   makeFakeRows,
   formatDate,
@@ -25,17 +24,14 @@ import {
   slackNotify,
   usd,
   timestamp,
+  checkPerDiemRowIsEarliestOrLatest,
 } from '../../../../helpers';
-import {
-  NULL_TIME,
-  OPTION_ALL,
-  ROWS_PER_PAGE,
-  MEALS_RATE,
-} from '../../../../constants';
+import { NULL_TIME, OPTION_ALL, ROWS_PER_PAGE } from '../../../../constants';
 import { RoleType } from '../index';
-import { getDepartmentName } from '@kalos-core/kalos-rpc/Common';
-import { PerDiem, PerDiemRow } from '@kalos-core/kalos-rpc/PerDiem';
+import { getDepartmentName } from '../../../../@kalos-core/kalos-rpc/Common';
+import { PerDiem, PerDiemRow } from '../../../../@kalos-core/kalos-rpc/PerDiem';
 import { result } from 'lodash';
+import { RowingSharp } from '@material-ui/icons';
 
 interface Props {
   loggedUserId: number;
@@ -71,7 +67,10 @@ export const PerDiems: FC<Props> = ({
   const [toggleButton, setToggleButton] = useState<boolean>(false);
   const [openManagerPerDiem, setOpenManagerPerDiem] = useState<boolean>(false);
   const [pendingPayroll, setPendingPayroll] = useState<PerDiem>();
-  const [pendingPayrollReject, setPendingPayrollReject] = useState<PerDiem>();
+  const [pendingPayrollSendBackToManager, setPendingPayrollSendBackToManager] =
+    useState<PerDiem>();
+  const [pendingPayrollUnprocess, setPendingPayrollUnprocess] =
+    useState<PerDiem>();
   const managerFilter = role === 'Manager';
   const auditorFilter = role == 'Auditor';
   const payrollFilter = role == 'Payroll';
@@ -91,30 +90,39 @@ export const PerDiems: FC<Props> = ({
     );
     const results = perDiems.getResultsList();
     for (let i = 0; i < results.length; i++) {
-      const totalMeals = results[i].getRowsList().length * MEALS_RATE;
-      const year = +format(
-        new Date(parseISO(results[i].getDateStarted())),
-        'yyyy',
-      );
-      const month = +format(
-        new Date(parseISO(results[i].getDateStarted())),
-        'M',
-      );
-      const zipCodes = results[i].getRowsList().map(pd => pd.getZipCode());
-      const govPerDiems = await PerDiemClientService.loadGovPerDiem(
-        zipCodes,
-        year,
-        month,
-      );
-      let totalLodging = 0;
-      for (let j = 0; j < results[i].getRowsList().length; j++) {
-        let row = results[i].getRowsList()[j];
-        if (row.getMealsOnly() == false) {
-          totalLodging += govPerDiems[row.getZipCode()].lodging;
+      if (results[i].getPayrollProcessed() == false) {
+        const year = +format(
+          new Date(parseISO(results[i].getDateStarted())),
+          'yyyy',
+        );
+        const month = +format(
+          new Date(parseISO(results[i].getDateStarted())),
+          'M',
+        );
+        const zipCodes = results[i].getRowsList().map(pd => pd.getZipCode());
+        const govPerDiems = await PerDiemClientService.loadGovPerDiem(
+          zipCodes,
+          year,
+          month,
+        );
+        let totalLodging = 0;
+        let totalMeals = 0;
+        for (let j = 0; j < results[i].getRowsList().length; j++) {
+          let row = results[i].getRowsList()[j];
+          if (row.getMealsOnly() == false) {
+            totalLodging += govPerDiems[row.getZipCode()].lodging;
+          }
+          if (
+            checkPerDiemRowIsEarliestOrLatest(results[i].getRowsList(), row)
+          ) {
+            totalMeals += govPerDiems[row.getZipCode()].meals * 0.75;
+          } else {
+            totalMeals += govPerDiems[row.getZipCode()].meals;
+          }
         }
+        results[i].setAmountProcessedLodging(totalLodging);
+        results[i].setAmountProcessedMeals(totalMeals);
       }
-      results[i].setAmountProcessedLodging(totalLodging);
-      results[i].setAmountProcessedMeals(totalMeals);
     }
     setPerDiems(results);
     setCount(perDiems.getTotalCount());
@@ -152,11 +160,17 @@ export const PerDiems: FC<Props> = ({
     (perDiem?: PerDiem) => () => setPendingPayroll(perDiem),
     [setPendingPayroll],
   );
-  const handlePendingPayrollToggleReject = useCallback(
+  const handlePendingPayrollToggleUnprocess = useCallback(
     (perDiem?: PerDiem) => () => {
-      setPendingPayrollReject(perDiem);
+      setPendingPayrollUnprocess(perDiem);
     },
-    [setPendingPayrollReject],
+    [setPendingPayrollUnprocess],
+  );
+  const handlePendingPayrollToggleSendBackToManager = useCallback(
+    (perDiem?: PerDiem) => () => {
+      setPendingPayrollSendBackToManager(perDiem);
+    },
+    [setPendingPayrollSendBackToManager],
   );
   const handleToggleButton = useCallback(() => {
     setToggleButton(!toggleButton);
@@ -230,37 +244,52 @@ export const PerDiems: FC<Props> = ({
       load();
     }
   }, [load, pendingPayroll]);
-  const handlePayrollRejected = useCallback(async () => {
-    if (pendingPayrollReject) {
-      const id = pendingPayrollReject.getId();
-      const slackID = await getSlackID(pendingPayrollReject.getOwnerName());
-      if (slackID != '0') {
-        slackNotify(
-          slackID,
-          `Your PerDiem for ${formatWeek(
-            pendingPayrollReject.getDateStarted(),
-          )} was rejected by Payroll for the following reason:` +
-            rejectionMessage,
-        );
-      } else {
-        console.log('We could not find the user, but we will still reject');
-      }
+  const handlePayrollUnprocess = useCallback(async () => {
+    if (pendingPayrollUnprocess) {
+      const id = pendingPayrollUnprocess.getId();
       setLoading(true);
-      setPendingPayrollReject(undefined);
+      setPendingPayrollUnprocess(undefined);
       const req = new PerDiem();
       req.setPayrollProcessed(false);
       req.setId(id);
-      req.setDateApproved(NULL_TIME);
-      req.setApprovedById(0);
+      req.setAmountProcessedLodging(0);
+      req.setAmountProcessedMeals(0);
+      req.setDateProcessed(NULL_TIME);
       req.setFieldMaskList([
-        'DateApproved',
-        'ApprovedById',
+        'AmountProcessedLodging',
+        'AmountProcessedMeals',
         'PayrollProcessed',
+        `DateProcessed`,
       ]);
       await PerDiemClientService.Update(req);
     }
     load();
-  }, [load, pendingPayrollReject, rejectionMessage]);
+  }, [load, pendingPayrollUnprocess]);
+  const handlePayrollSendBackToManager = useCallback(async () => {
+    if (pendingPayrollSendBackToManager) {
+      const id = pendingPayrollSendBackToManager.getId();
+      setLoading(true);
+      setPendingPayrollSendBackToManager(undefined);
+      const req = new PerDiem();
+      req.setPayrollProcessed(false);
+      req.setId(id);
+      req.setDateApproved(NULL_TIME);
+      req.setDateProcessed(NULL_TIME);
+      req.setAmountProcessedLodging(0);
+      req.setAmountProcessedMeals(0);
+      req.setApprovedById(0);
+      req.setFieldMaskList([
+        'DateApproved',
+        'ApprovedById',
+        'AmountProcessedLodging',
+        'AmountProcessedMeals',
+        'PayrollProcessed',
+        'DateProcessed',
+      ]);
+      await PerDiemClientService.Update(req);
+    }
+    load();
+  }, [load, pendingPayrollSendBackToManager]);
   return (
     <div>
       <SectionBar
@@ -272,10 +301,14 @@ export const PerDiems: FC<Props> = ({
           onPageChange: setPage,
         }}
       />
-      {role === 'Payroll' && (
+      {(role === 'Payroll' || role == 'Manager') && (
         <Button
           label={
-            toggleButton === false
+            role === 'Manager'
+              ? toggleButton === false
+                ? 'Show Approved Records'
+                : 'Show Unapproved Records'
+              : toggleButton === false
               ? 'Show Processed Records'
               : 'Show Unprocessed Records'
           }
@@ -285,16 +318,17 @@ export const PerDiems: FC<Props> = ({
       {role === 'Manager' && (
         <Button
           label={'Manage PerDiems'}
+          //label={'Manage PerDiems Disabled Pending Update'}
           onClick={() => setOpenManagerPerDiem(true)}
+          //disabled={true}
         ></Button>
       )}
       <InfoTable
         columns={[
           { name: 'Employee' },
-          { name: 'Department' },
           { name: 'Week' },
-          { name: 'Total Lodging' },
-          { name: 'Total Meals' },
+          { name: `Total Lodging ${toggleButton ? 'Processed' : ''}` },
+          { name: `Total Meals ${toggleButton ? 'Processed' : ''}` },
           { name: 'Date' },
         ]}
         data={
@@ -307,19 +341,17 @@ export const PerDiems: FC<Props> = ({
                     onClick: handlePerDiemViewedToggle(el),
                   },
                   {
-                    value: getDepartmentName(el.getDepartment()),
-                    onClick: handlePerDiemViewedToggle(el),
-                  },
-                  {
                     value: formatWeek(el.getDateStarted()),
                     onClick: handlePerDiemViewedToggle(el),
                   },
                   {
                     value: usd(el.getAmountProcessedLodging()),
+
                     onClick: handlePerDiemViewedToggle(el),
                   },
                   {
                     value: usd(el.getAmountProcessedMeals()),
+
                     onClick: handlePerDiemViewedToggle(el),
                   },
                   {
@@ -350,6 +382,7 @@ export const PerDiems: FC<Props> = ({
                             <IconButton
                               size="small"
                               onClick={handlePendingApproveToggle(el)}
+                              disabled={el.getApprovedById() != 0}
                             >
                               <CheckCircleOutlineIcon />
                             </IconButton>
@@ -362,6 +395,7 @@ export const PerDiems: FC<Props> = ({
                             <IconButton
                               size="small"
                               onClick={handlePendingDenyToggle(el)}
+                              disabled={el.getApprovedById() != 0}
                             >
                               <NotInterestedIcon />
                             </IconButton>
@@ -384,6 +418,7 @@ export const PerDiems: FC<Props> = ({
                           </span>
                         </Tooltip>
                       ) : null,
+                      /*
                       role === 'Payroll' ? (
                         <Tooltip
                           key="payroll process"
@@ -404,20 +439,37 @@ export const PerDiems: FC<Props> = ({
                           </span>
                         </Tooltip>
                       ) : null,
+                      */
                       role === 'Payroll' ? (
                         <Tooltip
-                          key="payroll reject "
-                          content="Reject"
+                          key={'unprocess' + el.getId()}
+                          content="Unprocess"
                           placement="bottom"
                         >
                           <span>
                             <IconButton
                               size="small"
-                              onClick={handlePendingPayrollToggleReject(el)}
-                              disabled={
-                                el.getPayrollProcessed() ||
-                                el.getDateApproved() === NULL_TIME
-                              }
+                              onClick={handlePendingPayrollToggleUnprocess(el)}
+                              disabled={el.getPayrollProcessed() == false}
+                            >
+                              <KeyboardReturnIcon />
+                            </IconButton>
+                          </span>
+                        </Tooltip>
+                      ) : null,
+                      role === 'Payroll' ? (
+                        <Tooltip
+                          key={'sendBack' + el.getId()}
+                          content="Send Back To Manager/Coordinator"
+                          placement="bottom"
+                        >
+                          <span>
+                            <IconButton
+                              size="small"
+                              onClick={handlePendingPayrollToggleSendBackToManager(
+                                el,
+                              )}
+                              disabled={el.getPayrollProcessed()}
                             >
                               <NotInterestedIcon />
                             </IconButton>
@@ -520,26 +572,25 @@ export const PerDiems: FC<Props> = ({
           Are you sure you want to process payroll for this Per Diem?
         </Confirm>
       )}
-      {pendingPayrollReject && (
+      {pendingPayrollUnprocess && (
         <Confirm
-          title="Confirm Rejection"
-          open
-          onClose={handlePendingPayrollToggleReject()}
-          onConfirm={handlePayrollRejected}
+          title="Confirm Unprocess"
+          open={pendingPayrollUnprocess != undefined}
+          onClose={handlePendingPayrollToggleUnprocess()}
+          onConfirm={handlePayrollUnprocess}
         >
-          Are you sure you want to reject this Per Diem?
+          Are you sure you want to Un-process this Per Diem?
+        </Confirm>
+      )}
+      {pendingPayrollSendBackToManager && (
+        <Confirm
+          open
+          onClose={handlePendingPayrollToggleSendBackToManager()}
+          onConfirm={handlePayrollSendBackToManager}
+        >
+          Are you sure you want to send this Per Diem back to the
+          Manager/Coordinator?
           <br></br>
-          <label>
-            <strong>Reason:</strong>
-          </label>
-          <input
-            type="text"
-            value={rejectionMessage}
-            autoFocus
-            size={35}
-            placeholder="Enter a rejection reason"
-            onChange={e => setRejectionMessage(e.target.value)}
-          />
         </Confirm>
       )}
     </div>

@@ -1,6 +1,6 @@
 import React from 'react';
 import { KalosMap } from './';
-import { Place } from '@kalos-core/kalos-rpc/compiled-protos/kalosmaps_pb';
+import { Place } from '../../../@kalos-core/kalos-rpc/compiled-protos/kalosmaps_pb';
 
 // Setting these up here for convenience - set them up in code where you would like
 

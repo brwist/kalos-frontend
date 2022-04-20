@@ -1,5 +1,5 @@
 import React, { FC, useState, useEffect, useCallback, useMemo } from 'react';
-import { TaskClient, Task } from '@kalos-core/kalos-rpc/Task';
+import { TaskClient, Task } from '../../../@kalos-core/kalos-rpc/Task';
 import SearchIcon from '@material-ui/icons/Search';
 import IconButton from '@material-ui/core/IconButton';
 import DeleteIcon from '@material-ui/icons/Delete';
@@ -7,9 +7,9 @@ import EditIcon from '@material-ui/icons/Edit';
 import FlagIcon from '@material-ui/icons/Flag';
 import ThumbsUpDownIcon from '@material-ui/icons/ThumbsUpDown';
 import AccountBalanceWalletIcon from '@material-ui/icons/AccountBalanceWallet';
-import CheckIcon from '@material-ui/icons/CheckCircleOutline';
 import RateReviewIcon from '@material-ui/icons/RateReview';
 import { SectionBar } from '../../ComponentsLibrary/SectionBar';
+import Alert from '@material-ui/lab/Alert';
 import { Tooltip } from '../../ComponentsLibrary/Tooltip';
 import { Modal } from '../../ComponentsLibrary/Modal';
 import { Form, Schema } from '../../ComponentsLibrary/Form';
@@ -20,17 +20,17 @@ import { InfoTable, Data, Columns } from '../../ComponentsLibrary/InfoTable';
 import { PlainForm } from '../../ComponentsLibrary/PlainForm';
 import { Confirm } from '../../ComponentsLibrary/Confirm';
 import NotInterestedIcon from '@material-ui/icons/NotInterested';
+import { Loader } from '../../Loader/main';
 import {
   SpiffToolLogEdit,
   getStatusFormInit,
 } from '../../ComponentsLibrary/SpiffToolLogEdit';
 import { ServiceCall } from '../../ComponentsLibrary/ServiceCall';
-import { SpiffToolAdminAction } from '@kalos-core/kalos-rpc/SpiffToolAdminAction';
-import { User } from '@kalos-core/kalos-rpc/User';
-import { SpiffType, TaskEventData } from '@kalos-core/kalos-rpc/Task';
+import { SpiffToolAdminAction } from '../../../@kalos-core/kalos-rpc/SpiffToolAdminAction';
+import { User } from '../../../@kalos-core/kalos-rpc/User';
+import { SpiffType, TaskEventData } from '../../../@kalos-core/kalos-rpc/Task';
 
 import {
-  getRPCFields,
   timestamp,
   formatDate,
   makeFakeRows,
@@ -43,13 +43,12 @@ import {
   formatWeek,
   EventClientService,
   makeSafeFormObject,
+  usd,
 } from '../../../helpers';
 import { ENDPOINT, ROWS_PER_PAGE, OPTION_ALL } from '../../../constants';
-import './spiffTool.less';
-import { Event } from '@kalos-core/kalos-rpc/Event';
-import { Payroll, RoleType } from '../../ComponentsLibrary/Payroll';
-import { PropLinkServiceClient } from '@kalos-core/kalos-rpc/compiled-protos/prop_link_pb_service';
-import { PermissionGroup } from '@kalos-core/kalos-rpc/compiled-protos/user_pb';
+import { RoleType } from '../../ComponentsLibrary/Payroll';
+import { PermissionGroup } from '../../../@kalos-core/kalos-rpc/compiled-protos/user_pb';
+import './SpiffTool.module.less';
 
 const TaskClientService = new TaskClient(ENDPOINT);
 
@@ -128,14 +127,20 @@ export const SpiffTool: FC<Props> = ({
   const [loaded, setLoaded] = useState<boolean>(false);
   const [saving, setSaving] = useState<boolean>(false);
   const [loading, setLoading] = useState<boolean>(true);
+  const [showAlert, setShowAlert] = useState<boolean>(false);
+  const [toolBalance, setToolBalance] = useState<number>(0);
   const [editing, setEditing] = useState<Task>();
   const [extendedEditing, setExtendedEditing] = useState<Task>();
+  const [reassign, setReassign] = useState<Task>();
   const [deleting, setDeleting] = useState<Task>();
   const [loggedInUser, setLoggedInUser] = useState<User>();
   const [entries, setEntries] = useState<Task[]>([]);
   const [count, setCount] = useState<number>(0);
   const [departments, setDepartments] = useState<PermissionGroup[]>();
   const [page, setPage] = useState<number>(0);
+  const [userId, setUserId] = useState<number>(
+    ownerId ? ownerId : loggedUserId,
+  );
   const [searchForm, setSearchForm] = useState<SearchType>(getSearchFormInit());
   const [searchFormKey, setSearchFormKey] = useState<number>(0);
   const [technicians, setTechnicians] = useState<User[]>([]);
@@ -168,32 +173,6 @@ export const SpiffTool: FC<Props> = ({
     (aggr, id) => ({ ...aggr, [id.getId()]: id.getType() }),
     {},
   );
-  const loadLoggedInUser = useCallback(async () => {
-    console.log(loggedUserId);
-    const userResult = await UserClientService.loadUserById(loggedUserId);
-    const tempRole = userResult
-      .getPermissionGroupsList()
-      .find(p => p.getType() === 'role');
-    const tempDepartments = userResult
-      .getPermissionGroupsList()
-      .filter(p => p.getType() === 'department');
-    if (tempRole != undefined) {
-      setUserRole(tempRole.getName() as RoleType);
-    }
-    if (tempDepartments) {
-      setDepartments(tempDepartments);
-    }
-
-    setLoggedInUser(loggedInUser);
-    setSearchFormKey(searchFormKey + 1);
-  }, [
-    loggedUserId,
-    setLoggedInUser,
-    searchFormKey,
-    setSearchFormKey,
-    loggedInUser,
-  ]);
-
   const load = useCallback(async () => {
     setLoading(true);
     try {
@@ -205,6 +184,10 @@ export const SpiffTool: FC<Props> = ({
       }
 
       const { description, month, kind, technician } = searchForm;
+      const balance = await TaskClientService.GetToolFundBalanceByID(
+        technician,
+      );
+      setToolBalance(balance.getValue());
       console.log('data given to request', searchForm);
       const req = new Task();
       req.setPageNumber(page);
@@ -245,6 +228,7 @@ export const SpiffTool: FC<Props> = ({
       }
       if (technician) {
         req.setExternalId(technician);
+        setUserId(technician);
       }
       req.setBillableType(type === 'Spiff' ? 'Spiff' : 'Tool Purchase');
       if (description !== '') {
@@ -271,9 +255,11 @@ export const SpiffTool: FC<Props> = ({
       setCount(count);
       setEntries(resultsList);
       setLoading(false);
+
       return resultsList;
     } catch (err) {
       console.log(err);
+      setLoading(false);
     }
   }, [
     setEntries,
@@ -290,6 +276,44 @@ export const SpiffTool: FC<Props> = ({
     needsAuditAction,
     toggle,
   ]);
+  const loadLoggedInUser = useCallback(async () => {
+    const userResult = await UserClientService.loadUserById(loggedUserId);
+    const tempRole = userResult
+      .getPermissionGroupsList()
+      .find(p => p.getType() === 'role');
+    if (
+      loggedUserId != userId &&
+      tempRole?.getName() != 'Manager' &&
+      tempRole?.getName() != 'Payroll'
+    ) {
+      setShowAlert(true);
+      setLoading(false);
+      console.log('no permission');
+      return;
+    }
+    const tempDepartments = userResult
+      .getPermissionGroupsList()
+      .filter(p => p.getType() === 'department');
+    if (tempRole != undefined) {
+      setUserRole(tempRole.getName() as RoleType);
+    }
+    if (tempDepartments) {
+      setDepartments(tempDepartments);
+    }
+
+    setLoggedInUser(loggedInUser);
+    setSearchFormKey(searchFormKey + 1);
+    load();
+  }, [
+    loggedUserId,
+    setLoggedInUser,
+    searchFormKey,
+    userId,
+    setSearchFormKey,
+    loggedInUser,
+    load,
+  ]);
+
   const loadUserTechnicians = useCallback(async () => {
     const technicians = await UserClientService.loadTechnicians();
     setTechnicians(technicians);
@@ -323,6 +347,12 @@ export const SpiffTool: FC<Props> = ({
       setStatusEditing(undefined);
     },
     [setExtendedEditing, setStatusEditing],
+  );
+  const handleSetReassign = useCallback(
+    (reassign?: Task) => () => {
+      setReassign(reassign);
+    },
+    [setReassign],
   );
   const handleSetEditing = useCallback(
     (editing?: Task) => () => setEditing(editing),
@@ -438,7 +468,7 @@ export const SpiffTool: FC<Props> = ({
     },
     [loggedUserId, editing, setSaving, setEditing, type, load],
   );
-  const handleSaveNewTool = useCallback(
+  const handleSaveNewToolAllowance = useCallback(
     async (data: Task) => {
       setSaving(true);
       const now = timestamp();
@@ -449,17 +479,20 @@ export const SpiffTool: FC<Props> = ({
       req.setSpiffToolId('');
       req.setExternalCode('user');
       req.setCreatorUserId(loggedUserId);
-      req.setBillableType('Tool Purchase');
+      req.setBillableType('Tool Allowance');
       req.setStatusId(1);
-      //req.addFieldMask('AdminActionId');
+      req.setAdminActionId(0);
+      req.addFieldMask('AdminActionId');
       req.setFieldMaskList([]);
       const res = await TaskClientService.Create(req);
+      /*
       const id = res.getId();
       const updateReq = new Task();
       updateReq.setId(id);
       updateReq.setFieldMaskList(['AdminActionId']);
       updateReq.setAdminActionId(0);
       await TaskClientService.Update(updateReq);
+      */
       setSaving(false);
       setPendingAdd(false);
       await load();
@@ -545,7 +578,15 @@ export const SpiffTool: FC<Props> = ({
         setSearchFormKey(searchFormKey + 1);
       }
     },
-    [searchForm, setSearchFormKey, searchFormKey, MONTHS_OPTIONS, WEEK_OPTIONS],
+    [
+      searchForm,
+      setSearchFormKey,
+      loggedUserId,
+      userRole,
+      searchFormKey,
+      MONTHS_OPTIONS,
+      WEEK_OPTIONS,
+    ],
   );
   const handleMakeSearch = useCallback(() => setLoaded(false), [setLoaded]);
   const handleResetSearch = useCallback(() => {
@@ -610,11 +651,22 @@ export const SpiffTool: FC<Props> = ({
         const url = `https://app.kalosflorida.com/index.cfm?action=admin:service.editServiceCall&id=${taskEvent.getId()}&user_id=${
           taskEvent?.getCustomerId() ? taskEvent.getCustomerId() : 0
         }&property_id=${taskEvent?.getPropertyId()}`;
-        console.log(url);
         window.open(url);
       }
     };
-
+  const handleChangeToolPurchaseOwner = async (
+    entry: Task,
+    newOwner: number,
+  ) => {
+    setSaving(true);
+    entry.setCreatorUserId(loggedUserId);
+    entry.setExternalId(newOwner);
+    entry.setFieldMaskList(['ExternalId', 'CreatorUserId']);
+    await TaskClientService.Update(entry);
+    setReassign(undefined);
+    setSaving(false);
+    setLoaded(false);
+  };
   const handleUnsetServiceCallEditing = useCallback(
     () => setServiceCallEditing(undefined),
     [setServiceCallEditing],
@@ -631,21 +683,24 @@ export const SpiffTool: FC<Props> = ({
     () => setUnlinkedSpiffJobNumber(''),
     [setUnlinkedSpiffJobNumber],
   );
-  const isAdmin = userRole != undefined;
   useEffect(() => {
     if (!loaded) {
       setLoaded(true);
+      setLoading(true);
       loadLoggedInUser();
-      load();
     }
-    if ((isAdmin || userRole === 'Manager') && !loadedTechnicians) {
+    if (
+      (userRole == 'Manager' || userRole == 'Payroll') &&
+      !loadedTechnicians
+    ) {
       setLoadedTechnicians(true);
       loadUserTechnicians();
     }
   }, [
     loaded,
     setLoaded,
-    isAdmin,
+    loggedUserId,
+    ownerId,
     loadedTechnicians,
     setLoadedTechnicians,
     loadUserTechnicians,
@@ -653,6 +708,19 @@ export const SpiffTool: FC<Props> = ({
     userRole,
     loadLoggedInUser,
   ]);
+  const actions = [];
+  if (onClose != undefined) {
+    actions.push({
+      label: 'Close',
+      onClick: onClose,
+    });
+  }
+  if ((userRole == 'Manager' && type == 'Tool') || type == 'Spiff') {
+    actions.push({
+      label: type === 'Spiff' ? 'Spiff Apply' : 'Admin Add Tool Allowance',
+      onClick: handleToggleAdd,
+    });
+  }
   const SCHEMA: Schema<Task> =
     type === 'Spiff'
       ? [
@@ -718,7 +786,7 @@ export const SpiffTool: FC<Props> = ({
             },
             {
               name: 'getToolpurchaseCost',
-              label: 'Tool Purchase Cost',
+              label: 'Tool Allowance Amount',
               startAdornment: '$',
               type: 'number',
               required: true,
@@ -732,7 +800,6 @@ export const SpiffTool: FC<Props> = ({
             },
           ],
           [
-            { name: 'getReferenceNumber', label: 'Reference #' },
             {
               name: 'getBriefDescription',
               label: 'Tool Description',
@@ -740,6 +807,17 @@ export const SpiffTool: FC<Props> = ({
             },
           ],
         ];
+
+  const REASSIGN_SCHEMA: Schema<Task> = [
+    [
+      {
+        name: 'getExternalId',
+        label: 'Technician',
+        type: 'technician',
+        disabled: userRole != 'Manager' ? true : false,
+      },
+    ],
+  ];
   const COLUMNS: Columns = [
     { name: 'Claim Date' },
     { name: `${type === 'Spiff' ? 'Spiff' : 'Tool'} ID #` },
@@ -794,13 +872,13 @@ export const SpiffTool: FC<Props> = ({
     } else {
       newTask.setToolpurchaseDate(timestamp());
     }
-    if (!isAdmin && ownerId) {
-      newTask.setExternalId(ownerId);
+    if (!userRole && userId) {
+      newTask.setExternalId(userId);
     } else {
       newTask.setExternalId(loggedUserId);
     }
     return newTask;
-  }, [type, SPIFF_TYPES_OPTIONS, isAdmin, ownerId, loggedUserId]);
+  }, [type, SPIFF_TYPES_OPTIONS, userRole, userId, loggedUserId]);
 
   const data: Data = loading
     ? makeFakeRows(type === 'Spiff' ? 9 : 7, 3)
@@ -815,7 +893,7 @@ export const SpiffTool: FC<Props> = ({
           </Link>
         );
         let actions =
-          isAdmin && !disableActions
+          userRole && !disableActions
             ? [
                 needsManagerAction ? (
                   <IconButton
@@ -889,6 +967,7 @@ export const SpiffTool: FC<Props> = ({
                 <IconButton
                   key={0}
                   size="small"
+                  disabled={type == 'Tool' ? true : false}
                   onClick={handleSetExtendedEditing(entry)}
                 >
                   <SearchIcon />
@@ -902,8 +981,19 @@ export const SpiffTool: FC<Props> = ({
                   <DeleteIcon />
                 </IconButton>,
               ];
-        if (disableActions) {
+        if (disableActions || type == 'Tool') {
           actions = [];
+        }
+        if (disableActions || (type == 'Tool' && userRole == 'Manager')) {
+          actions = [
+            <IconButton
+              key={'reassignButton'}
+              size="small"
+              onClick={handleSetReassign(entry)}
+            >
+              <EditIcon />
+            </IconButton>,
+          ];
         }
         return [
           {
@@ -939,7 +1029,7 @@ export const SpiffTool: FC<Props> = ({
               ]
             : []),
           {
-            value: isAdmin ? technicianValue : entry.getOwnerName(),
+            value: userRole ? technicianValue : entry.getOwnerName(),
             onClick: disableActions
               ? undefined
               : handleSetExtendedEditing(entry),
@@ -1057,9 +1147,9 @@ export const SpiffTool: FC<Props> = ({
     [
       {
         name: 'description',
-        label: `Search ${type === 'Spiff' ? 'Spiffs' : 'Tool Purchases'}`,
+        label: `Search ${type === 'Spiff' ? 'Spiffs' : `Tool Purchases`}`,
       },
-      ...(isAdmin
+      ...(userRole == 'Manager'
         ? [
             {
               name: 'technician' as const,
@@ -1091,158 +1181,187 @@ export const SpiffTool: FC<Props> = ({
       },
     ],
   ];
-  return (
-    <div>
-      {payrollOpen && (
-        <Modal
-          open={true}
-          onClose={() => handleSetPayrollOpen(false)}
-          fullScreen
-        >
-          <SectionBar
-            title={'Process Payroll'}
-            actions={[
-              {
-                label: 'Close',
-                onClick: () => handleSetPayrollOpen(false),
-              },
-            ]}
-            fixedActions
-          />
-        </Modal>
-      )}
-      <SectionBar
-        title={type === 'Spiff' ? 'Spiff Report' : 'Tool Purchases'}
-        actions={[
-          {
-            label: 'Close',
-            onClick: onClose ? onClose : undefined,
-          },
-          {
-            label: type === 'Spiff' ? 'Spiff Apply' : 'Tool Apply',
-            onClick: handleToggleAdd,
-          },
-        ]}
-        fixedActions
-        pagination={{
-          count,
-          page,
-          rowsPerPage: ROWS_PER_PAGE,
-          onPageChange: handleChangePage,
-        }}
-      />
-      <PlainForm<SearchType>
-        key={searchFormKey}
-        data={searchForm}
-        schema={SCHEMA_SEARCH}
-        onChange={handleSearchFormChange}
-      />
-      <InfoTable columns={COLUMNS} data={data} loading={loading} />
-      {editing && (
-        <Modal open onClose={handleSetEditing()}>
-          <Form<Task>
-            title={`${type === 'Spiff' ? 'Spiff' : 'Tool Purchase'} Request`}
-            schema={SCHEMA}
-            onClose={handleSetEditing()}
-            data={editing}
-            onSave={handleSave}
-            disabled={saving}
-          />
-        </Modal>
-      )}
-      {extendedEditing && (
-        <Modal open onClose={handleSetExtendedEditing()} fullScreen>
-          <SpiffToolLogEdit
-            onClose={handleSetExtendedEditing()}
-            data={extendedEditing}
-            role={userRole != undefined ? userRole : ''}
-            loading={loading}
-            userId={ownerId}
-            loggedUserId={loggedUserId}
-            onSave={handleSaveExtended}
-            onStatusChange={reloadExtendedEditing}
-            type={type}
-            statusEditing={statusEditing}
-          />
-        </Modal>
-      )}
-      {deleting && (
-        <ConfirmDelete
-          open
-          kind={type === 'Spiff' ? 'Spiff' : 'Tool Request'}
-          name={deleting.getBriefDescription()}
-          onConfirm={handleDelete}
-          onClose={handleSetDeleting()}
+  return !loading ? (
+    !showAlert ? (
+      <div>
+        {payrollOpen && (
+          <Modal
+            open={true}
+            onClose={() => handleSetPayrollOpen(false)}
+            fullScreen
+          >
+            <SectionBar
+              title={'Process Payroll'}
+              actions={[
+                {
+                  label: 'Close',
+                  onClick: () => handleSetPayrollOpen(false),
+                },
+              ]}
+              fixedActions
+            />
+          </Modal>
+        )}
+        <SectionBar
+          title={type === 'Spiff' ? 'Spiff Report' : `Tool Purchases `}
+          subtitle={
+            type == 'Spiff' ? '' : `Current Balance: ${usd(toolBalance)}`
+          }
+          actions={actions}
+          loading={loading}
+          fixedActions
+          pagination={{
+            count,
+            page,
+            rowsPerPage: ROWS_PER_PAGE,
+            onPageChange: handleChangePage,
+          }}
         />
-      )}
-      {unlinkedSpiffJobNumber !== '' && (
-        <Modal open onClose={handleClearUnlinkedSpiffJobNumber}>
-          <SectionBar
-            title="Invalid Job #"
-            actions={[
-              { label: 'Close', onClick: handleClearUnlinkedSpiffJobNumber },
-            ]}
-            fixedActions
+
+        <PlainForm<SearchType>
+          key={searchFormKey}
+          data={searchForm}
+          schema={SCHEMA_SEARCH}
+          onChange={handleSearchFormChange}
+        />
+        <InfoTable columns={COLUMNS} data={data} loading={loading} />
+        {editing && (
+          <Modal open onClose={handleSetEditing()}>
+            <Form<Task>
+              title={`${type === 'Spiff' ? 'Spiff' : 'Tool Purchase'} Request`}
+              schema={SCHEMA}
+              onClose={handleSetEditing()}
+              data={editing}
+              onSave={handleSave}
+              disabled={saving}
+            />
+          </Modal>
+        )}
+        {extendedEditing && (
+          <Modal open onClose={handleSetExtendedEditing()} fullScreen>
+            <SpiffToolLogEdit
+              onClose={handleSetExtendedEditing()}
+              data={extendedEditing}
+              role={userRole != undefined ? userRole : ''}
+              loading={loading}
+              userId={extendedEditing.getExternalId()}
+              loggedUserId={loggedUserId}
+              onSave={handleSaveExtended}
+              onStatusChange={reloadExtendedEditing}
+              type={type}
+              statusEditing={statusEditing}
+            />
+          </Modal>
+        )}
+        {reassign && (
+          <Modal key="reassignModal" open onClose={handleSetReassign}>
+            <Form<Task>
+              key="reassignForm"
+              title={'Reassign Tool Purchase'}
+              schema={REASSIGN_SCHEMA}
+              onClose={handleSetReassign()}
+              data={reassign}
+              onSave={data => {
+                handleChangeToolPurchaseOwner(
+                  reassign,
+                  makeSafeFormObject(data, new Task()).getExternalId(),
+                );
+                handleSetReassign();
+              }}
+              disabled={saving}
+            />
+          </Modal>
+        )}
+        {deleting && (
+          <ConfirmDelete
+            open
+            kind={type === 'Spiff' ? 'Spiff' : 'Tool Request'}
+            name={deleting.getBriefDescription()}
+            onConfirm={handleDelete}
+            onClose={handleSetDeleting()}
           />
-          <div className="SpiffToolLogUnlinked">
-            Job # <strong>{unlinkedSpiffJobNumber}</strong> does not appear to
-            be connected to a valid Service Call.
-          </div>
-        </Modal>
-      )}
-      {serviceCallEditing && (
-        <Modal open onClose={handleUnsetServiceCallEditing} fullScreen>
-          <ServiceCall
-            loggedUserId={loggedUserId}
-            serviceCallId={serviceCallEditing.getId()}
-            onClose={handleUnsetServiceCallEditing}
-            propertyId={serviceCallEditing.getPropertyId()}
-            userID={serviceCallEditing.getCustomerId()}
-          />
-        </Modal>
-      )}
-      {pendingPayroll && (
-        <Confirm
-          title="Confirm Approve"
-          open
-          onClose={handlePendingPayrollToggle()}
-          onConfirm={handlePayroll}
-        >
-          Are you sure you want to process payroll for this Spiff/Tool?
-        </Confirm>
-      )}
-      {pendingPayrollReject && (
-        <Confirm
-          title="Confirm Reject"
-          open
-          onClose={handlePendingPayrollToggleReject()}
-          onConfirm={handlePayrollReject}
-        >
-          Are you sure you want to process payroll for this Spiff/Tool?
-        </Confirm>
-      )}
-      {pendingAudit && (
-        <Confirm
-          title="Confirm Approve"
-          open
-          onClose={handlePendingAuditToggle()}
-          onConfirm={handleAudit}
-        >
-          Are you sure you want complete Auditing for this Spiff/Tool?
-        </Confirm>
-      )}
-      {pendingAdd && (
-        <Modal open onClose={handleToggleAdd}>
-          <Form<Task>
-            title={type === 'Spiff' ? 'Add Spiff Request' : 'Add Tool Purchase'}
-            schema={SCHEMA}
-            onClose={handleToggleAdd}
-            data={makeNewTask()}
-            onSave={type == 'Spiff' ? handleSaveNewSpiff : handleSaveNewTool}
-            disabled={saving}
-          />
-        </Modal>
-      )}
-    </div>
+        )}
+        {unlinkedSpiffJobNumber !== '' && (
+          <Modal open onClose={handleClearUnlinkedSpiffJobNumber}>
+            <SectionBar
+              title="Invalid Job #"
+              actions={[
+                { label: 'Close', onClick: handleClearUnlinkedSpiffJobNumber },
+              ]}
+              fixedActions
+            />
+            <div className="SpiffToolLogUnlinked">
+              Job # <strong>{unlinkedSpiffJobNumber}</strong> does not appear to
+              be connected to a valid Service Call.
+            </div>
+          </Modal>
+        )}
+        {serviceCallEditing && (
+          <Modal open onClose={handleUnsetServiceCallEditing} fullScreen>
+            <ServiceCall
+              loggedUserId={loggedUserId}
+              serviceCallId={serviceCallEditing.getId()}
+              onClose={handleUnsetServiceCallEditing}
+              propertyId={serviceCallEditing.getPropertyId()}
+              userID={serviceCallEditing.getCustomerId()}
+            />
+          </Modal>
+        )}
+        {pendingPayroll && (
+          <Confirm
+            title="Confirm Approve"
+            open
+            onClose={handlePendingPayrollToggle()}
+            onConfirm={handlePayroll}
+          >
+            Are you sure you want to process payroll for this Spiff/Tool?
+          </Confirm>
+        )}
+        {pendingPayrollReject && (
+          <Confirm
+            title="Confirm Reject"
+            open
+            onClose={handlePendingPayrollToggleReject()}
+            onConfirm={handlePayrollReject}
+          >
+            Are you sure you want to process payroll for this Spiff/Tool?
+          </Confirm>
+        )}
+        {pendingAudit && (
+          <Confirm
+            title="Confirm Approve"
+            open
+            onClose={handlePendingAuditToggle()}
+            onConfirm={handleAudit}
+          >
+            Are you sure you want complete Auditing for this Spiff/Tool?
+          </Confirm>
+        )}
+        {pendingAdd && (
+          <Modal open onClose={handleToggleAdd}>
+            <Form<Task>
+              title={
+                type === 'Spiff' ? 'Add Spiff Request' : 'Add Tool Purchase'
+              }
+              schema={SCHEMA}
+              onClose={handleToggleAdd}
+              data={makeNewTask()}
+              onSave={
+                type == 'Spiff'
+                  ? handleSaveNewSpiff
+                  : handleSaveNewToolAllowance
+              }
+              disabled={saving}
+            />
+          </Modal>
+        )}
+      </div>
+    ) : (
+      <Alert severity="error">
+        You don&apos;t have permission to view this Log
+      </Alert>
+    )
+  ) : (
+    <Loader></Loader>
   );
 };

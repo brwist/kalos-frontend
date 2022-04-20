@@ -13,4 +13,5 @@ constants.js
 .circleci
 constants.js
 .nyc_output
+.next
 mochawesome-report

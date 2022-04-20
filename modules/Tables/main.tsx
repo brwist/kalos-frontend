@@ -1,5 +1,5 @@
 import React from 'react';
-import { Event, EventClient } from '@kalos-core/kalos-rpc/Event';
+import { Event, EventClient } from '../../@kalos-core/kalos-rpc/Event';
 
 interface props {
   userId: number;

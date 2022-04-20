@@ -1,16 +1,17 @@
-import { JobSubtype } from '@kalos-core/kalos-rpc/JobSubtype';
-import { JobType } from '@kalos-core/kalos-rpc/JobType';
-import { JobTypeSubtype } from '@kalos-core/kalos-rpc/JobTypeSubtype';
-import { Property } from '@kalos-core/kalos-rpc/Property';
-import { ServicesRendered } from '@kalos-core/kalos-rpc/ServicesRendered';
-import { User } from '@kalos-core/kalos-rpc/User';
-import { Event } from '@kalos-core/kalos-rpc/Event';
+import { JobSubtype } from '../../../@kalos-core/kalos-rpc/JobSubtype';
+import { JobType } from '../../../@kalos-core/kalos-rpc/JobType';
+import { JobTypeSubtype } from '../../../@kalos-core/kalos-rpc/JobTypeSubtype';
+import { Property } from '../../../@kalos-core/kalos-rpc/Property';
+import { ServicesRendered } from '../../../@kalos-core/kalos-rpc/ServicesRendered';
+import { User } from '../../../@kalos-core/kalos-rpc/User';
+import { Event } from '../../../@kalos-core/kalos-rpc/Event';
 import { Option } from '../Field';
-import { Payment } from '@kalos-core/kalos-rpc/Payment';
-import { ServiceItem } from '@kalos-core/kalos-rpc/ServiceItem';
-import { EventClient, Quotable } from '@kalos-core/kalos-rpc/Event';
-import { Invoice, Invoice as InvoiceType } from '@kalos-core/kalos-rpc/Invoice';
-import { Contract } from '@kalos-core/kalos-rpc/Contract';
+import { Payment } from '../../../@kalos-core/kalos-rpc/Payment';
+import {
+  Invoice,
+  Invoice as InvoiceType,
+} from '../../../@kalos-core/kalos-rpc/Invoice';
+import { Contract } from '../../../@kalos-core/kalos-rpc/Contract';
 import { returnCorrectTimeField } from './';
 export interface State {
   requestFields: string[];

@@ -8,7 +8,7 @@
 
 import React, { useReducer, useEffect, useCallback, FC } from 'react';
 import { reducer, ACTIONS } from './reducer';
-import { Devlog } from '@kalos-core/kalos-rpc/Devlog';
+import { Devlog } from '../../../@kalos-core/kalos-rpc/Devlog';
 import {
   ActivityLogClientService,
   DevlogClientService,
@@ -17,7 +17,7 @@ import { format } from 'date-fns';
 import Typography from '@material-ui/core/Typography';
 import { SectionBar } from '../SectionBar';
 import { Loader } from '../../Loader/main';
-import { ActivityLog } from '@kalos-core/kalos-rpc/ActivityLog';
+import { ActivityLog } from '../../../@kalos-core/kalos-rpc/ActivityLog';
 import { Alert } from '../Alert';
 import { InfoTable } from '../InfoTable';
 

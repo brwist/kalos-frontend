@@ -14,8 +14,15 @@ import MailIcon from '@material-ui/icons/Mail';
 import { Tooltip } from '../Tooltip/index';
 import DownloadIcon from '@material-ui/icons/CloudDownload';
 import { Prompt } from '../../Prompt/main';
-import { DocumentClient, Document } from '@kalos-core/kalos-rpc/Document';
-import { S3Client, URLObject, FileObject } from '@kalos-core/kalos-rpc/S3File';
+import {
+  DocumentClient,
+  Document,
+} from '../../../@kalos-core/kalos-rpc/Document';
+import {
+  S3Client,
+  URLObject,
+  FileObject,
+} from '../../../@kalos-core/kalos-rpc/S3File';
 import { InfoTable, Data } from '../InfoTable';
 import { SectionBar } from '../SectionBar';
 import { Link } from '../Link';

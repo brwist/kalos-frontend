@@ -10,13 +10,14 @@ import { CustomerDetails } from '../../CustomerDetails/components/CustomerDetail
 import { SearchForm } from './SearchForm';
 import { CustomerItem, Props as CustomerItemProps } from './CustomerItem';
 import { ROWS_PER_PAGE } from '../../../constants';
-import './addServiceCall.less';
-import { User, UsersFilter } from '@kalos-core/kalos-rpc/User';
-import { Property } from '@kalos-core/kalos-rpc/Property';
+import { User, UsersFilter } from '../../../@kalos-core/kalos-rpc/User';
+import { Property } from '../../../@kalos-core/kalos-rpc/Property';
+import './AddServiceCall.module.less';
+
 export type Props = Pick<CustomerItemProps, 'loggedUserId'> & {
   propertyId?: number;
   userId?: number;
-  openServiceCall?: boolean
+  openServiceCall?: boolean;
   onClose?: () => void;
   onSave?: () => void;
   asProject?: boolean;
@@ -24,12 +25,21 @@ export type Props = Pick<CustomerItemProps, 'loggedUserId'> & {
 };
 
 export const AddServiceCall: FC<Props> = props => {
-  const { propertyId = 0, userId = 0, openServiceCall = false, loggedUserId, onClose, onSave, asProject = false } = props;
+  const {
+    propertyId = 0,
+    userId = 0,
+    openServiceCall = false,
+    loggedUserId,
+    onClose,
+    onSave,
+    asProject = false,
+  } = props;
   const [addCustomer, setAddCustomer] = useState<boolean>(false);
   const [customerOpened, setCustomerOpened] = useState<User>();
   const [propertyOpened, setPropertyOpened] = useState<User>();
   const [serviceCallOpened, setServiceCallOpened] = useState<Property>();
-  const [defaultServiceCallOpen, setDefaultServiceCallOpen] = useState<boolean>(openServiceCall);
+  const [defaultServiceCallOpen, setDefaultServiceCallOpen] =
+    useState<boolean>(openServiceCall);
   const [loaded, setLoaded] = useState<boolean>(true);
   const [loading, setLoading] = useState<boolean>(false);
   const [page, setPage] = useState<number>(0);
@@ -102,16 +112,13 @@ export const AddServiceCall: FC<Props> = props => {
     () => setPropertyOpened(undefined),
     [setPropertyOpened],
   );
-  const handleServiceCallClose = useCallback(
-    () => {
-      setServiceCallOpened(undefined);
-      setDefaultServiceCallOpen(false);
-      if (onClose) {
-        onClose();
-      }
-    },
-    [setServiceCallOpened, onClose],
-  );
+  const handleServiceCallClose = useCallback(() => {
+    setServiceCallOpened(undefined);
+    setDefaultServiceCallOpen(false);
+    if (onClose) {
+      onClose();
+    }
+  }, [setServiceCallOpened, onClose]);
   const handleSetCustomerOpened = useCallback(
     (customerOpened?: User) => setCustomerOpened(customerOpened),
     [setCustomerOpened],
@@ -220,8 +227,12 @@ export const AddServiceCall: FC<Props> = props => {
             </div>
             <div className="AddServiceCallContent">
               <ServiceCall
-                propertyId={serviceCallOpened ? serviceCallOpened.getId() : propertyId}
-                userID={serviceCallOpened ? serviceCallOpened.getUserId() : userId}
+                propertyId={
+                  serviceCallOpened ? serviceCallOpened.getId() : propertyId
+                }
+                userID={
+                  serviceCallOpened ? serviceCallOpened.getUserId() : userId
+                }
                 loggedUserId={loggedUserId}
                 onSave={onSave}
                 asProject={asProject}

@@ -1,6 +1,6 @@
 import React from 'react';
 import ReactDOM from 'react-dom';
-import { UserClient } from '@kalos-core/kalos-rpc/User';
+import { UserClient } from '../../@kalos-core/kalos-rpc/User';
 import { ENDPOINT } from '../../constants';
 import { Timesheet } from './main';
 

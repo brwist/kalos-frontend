@@ -24,7 +24,7 @@ import {
   makeFakeRows,
 } from '../../../../helpers';
 import { ROWS_PER_PAGE } from '../../../../constants';
-import { SpiffType, Task } from '@kalos-core/kalos-rpc/Task';
+import { SpiffType, Task } from '../../../../@kalos-core/kalos-rpc/Task';
 import { last } from 'lodash';
 
 interface Props {

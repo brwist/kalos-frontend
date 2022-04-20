@@ -15,9 +15,9 @@ import {
   formatDate,
   UserClientService,
 } from '../../../helpers';
-import { getPropertyAddress } from '@kalos-core/kalos-rpc/Property';
-import { Event } from '@kalos-core/kalos-rpc/Event';
-import { User } from '@kalos-core/kalos-rpc/User';
+import { getPropertyAddress } from '../../../@kalos-core/kalos-rpc/Property';
+import { Event } from '../../../@kalos-core/kalos-rpc/Event';
+import { User } from '../../../@kalos-core/kalos-rpc/User';
 
 export interface Props {
   loggedUserId: number;

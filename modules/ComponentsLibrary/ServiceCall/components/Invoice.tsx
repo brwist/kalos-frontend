@@ -2,11 +2,11 @@ import React, { FC, useState, useCallback, useEffect, useMemo } from 'react';
 import {
   ServiceItem,
   ServiceItemClient,
-} from '@kalos-core/kalos-rpc/ServiceItem';
+} from '../../../../@kalos-core/kalos-rpc/ServiceItem';
 import {
   InvoiceClient,
   Invoice as InvoiceType,
-} from '@kalos-core/kalos-rpc/Invoice';
+} from '../../../../@kalos-core/kalos-rpc/Invoice';
 import { EventType, ServicesRenderedType } from '../';
 import { PlainForm, Schema } from '../../PlainForm';
 import { Field } from '../../Field';
@@ -17,10 +17,13 @@ import {
 } from '../../../../constants';
 import { formatDateTimeDay, makeSafeFormObject } from '../../../../helpers';
 import { ENDPOINT } from '../../../../constants';
-import { Event } from '@kalos-core/kalos-rpc/Event';
-import { ServicesRendered } from '@kalos-core/kalos-rpc/ServicesRendered';
-import { SQSEmailAndDocument } from '@kalos-core/kalos-rpc/compiled-protos/email_pb';
-import { Payment, PaymentClient } from '@kalos-core/kalos-rpc/Payment';
+import { Event } from '../../../../@kalos-core/kalos-rpc/Event';
+import { ServicesRendered } from '../../../../@kalos-core/kalos-rpc/ServicesRendered';
+import { SQSEmailAndDocument } from '../../../../@kalos-core/kalos-rpc/compiled-protos/email_pb';
+import {
+  Payment,
+  PaymentClient,
+} from '../../../../@kalos-core/kalos-rpc/Payment';
 import { type } from 'os';
 import { disconnect } from 'process';
 

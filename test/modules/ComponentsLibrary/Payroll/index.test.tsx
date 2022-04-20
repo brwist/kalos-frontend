@@ -5,15 +5,15 @@ export {};
 
 import Helpers = require('../../../../helpers');
 
-import TimesheetDepartmentProto = require('@kalos-core/kalos-rpc/TimesheetDepartment');
+import TimesheetDepartmentProto = require('../../../@kalos-core/kalos-rpc/TimesheetDepartment');
 
-import UserModule = require('@kalos-core/kalos-rpc/User');
+import UserModule = require('../../../@kalos-core/kalos-rpc/User');
 
 import PayrollModule = require('../../../../modules/ComponentsLibrary/Payroll/index');
 
 import LoaderModule = require('../../../../modules/Loader/main');
 
-import UserProto = require('@kalos-core/kalos-rpc/compiled-protos/user_pb');
+import UserProto = require('../../../@kalos-core/kalos-rpc/compiled-protos/user_pb');
 
 import React = require('react');
 import Enzyme = require('enzyme');

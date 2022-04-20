@@ -7,7 +7,7 @@ import {
 } from '../../helpers';
 import { PERMISSION_NAME_MANAGER } from '../../constants';
 import { PageWrapper, PageWrapperProps } from '../PageWrapper/main';
-import { User } from '@kalos-core/kalos-rpc/User';
+import { User } from '../../@kalos-core/kalos-rpc/User';
 import { RoleType } from '../ComponentsLibrary/Payroll';
 import { Button } from '../ComponentsLibrary/Button';
 import { Modal } from '../ComponentsLibrary/Modal';
@@ -18,7 +18,7 @@ import { UploadPhotoTransactionCreditCard } from '../ComponentsLibrary/UploadPho
 import {
   TransactionAccountList,
   TransactionAccount,
-} from '@kalos-core/kalos-rpc/TransactionAccount';
+} from '../../@kalos-core/kalos-rpc/TransactionAccount';
 import { SectionBar } from '../ComponentsLibrary/SectionBar';
 
 interface Props extends PageWrapperProps {
@@ -134,7 +134,12 @@ const Transaction: FC<Props> = props => {
               />
             </Modal>
           )}
-
+          {/*commenting out for now, since this subverts the workflow
+          <Button
+            label="Add Transaction"
+            onClick={() => handleToggleAddTransaction(true)}
+          />
+              */}
           {toggleAddTransaction ? (
             <Modal
               open={toggleAddTransaction}

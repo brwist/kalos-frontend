@@ -1,4 +1,4 @@
-import { Transaction } from '@kalos-core/kalos-rpc/Transaction';
+import { Transaction } from '../../../@kalos-core/kalos-rpc/Transaction';
 import React, { useCallback, useEffect, useState } from 'react';
 import { EditTransaction } from '.';
 import { TransactionClientService } from '../../../helpers';

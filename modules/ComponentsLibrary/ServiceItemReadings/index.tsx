@@ -3,12 +3,12 @@ import IconButton from '@material-ui/core/IconButton';
 import EditIcon from '@material-ui/icons/Edit';
 import DeleteIcon from '@material-ui/icons/Delete';
 import BuildIcon from '@material-ui/icons/Build';
-import { ReadingClient, Reading } from '@kalos-core/kalos-rpc/Reading';
+import { ReadingClient, Reading } from '../../../@kalos-core/kalos-rpc/Reading';
 import {
   MaintenanceQuestionClient,
   MaintenanceQuestion,
-} from '@kalos-core/kalos-rpc/MaintenanceQuestion';
-import { User } from '@kalos-core/kalos-rpc/User';
+} from '../../../@kalos-core/kalos-rpc/MaintenanceQuestion';
+import { User } from '../../../@kalos-core/kalos-rpc/User';
 import { ENDPOINT, API_FAILED_GENERAL_ERROR_MSG } from '../../../constants';
 import { SectionBar } from '../SectionBar';
 import { InfoTable, Data } from '../InfoTable';
@@ -487,28 +487,27 @@ export const ServiceItemReadings: FC<Props> = ({
           },
         ];
       });
-  const actions: ActionsProps = [];
+  let actions: ActionsProps = [];
   if (onClose) {
-    [
-      ...actions,
+    actions = actions.concat([
       {
         label: 'Close',
         onClick: onClose,
       },
-    ];
+    ]);
   }
   if (eventId) {
-    [
-      ...actions,
+    actions = actions.concat([
       {
         label: 'Add',
         onClick: setEditing(new Reading()),
       },
-    ];
+    ]);
   }
+
   return (
     <>
-      <SectionBar title="Readings" actions={actions} fixedActions />
+      <SectionBar title="Readings" actions={actions} />
       <InfoTable data={data} loading={loading} hoverable />
       {editedEntry && (
         <div className="ServiceItemsReadings">

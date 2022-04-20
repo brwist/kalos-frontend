@@ -8,7 +8,7 @@
 
 import React, { useReducer, useEffect, useCallback, FC } from 'react';
 import { reducer, ACTIONS } from './reducer';
-import { Devlog } from '@kalos-core/kalos-rpc/Devlog';
+import { Devlog } from '../../../@kalos-core/kalos-rpc/Devlog';
 import { DevlogClientService } from '../../../helpers';
 import { format } from 'date-fns';
 import { SectionBar } from '../SectionBar';

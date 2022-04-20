@@ -4,7 +4,7 @@ import Switch from '@material-ui/core/Switch';
 import FormControlLabel from '@material-ui/core/FormControlLabel';
 import { Form, Schema } from '../ComponentsLibrary/Form';
 import { Modal } from '../ComponentsLibrary/Modal';
-import { User } from '@kalos-core/kalos-rpc/User';
+import { User } from '../../@kalos-core/kalos-rpc/User';
 import { PageWrapper, PageWrapperProps } from '../PageWrapper/main';
 import {
   UserClientService,
@@ -13,7 +13,7 @@ import {
 } from '../../helpers';
 import { Loader } from '../Loader/main';
 import { SectionBar } from '../ComponentsLibrary/SectionBar';
-import { Vehicle } from '@kalos-core/kalos-rpc/compiled-protos/user_pb';
+import { Vehicle } from '../../@kalos-core/kalos-rpc/compiled-protos/user_pb';
 
 interface props extends PageWrapperProps {
   userId: number;

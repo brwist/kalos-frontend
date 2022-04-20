@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import Paper from '@material-ui/core/Paper';
-import { Spiff } from '@kalos-core/kalos-rpc/Task';
+import { Spiff } from '../../../@kalos-core/kalos-rpc/Task';
 import { SectionBar } from '../../ComponentsLibrary/SectionBar';
 import { InfoTable } from '../../ComponentsLibrary/InfoTable';
 import { Tooltip } from '../../ComponentsLibrary/Tooltip';
@@ -9,6 +9,8 @@ import { parseISO } from 'date-fns';
 import { Button } from '../../ComponentsLibrary/Button';
 import { SpiffTool } from '../../SpiffToolLogs/components/SpiffTool';
 import { Modal } from '../../ComponentsLibrary/Modal';
+import '../../SpiffToolLogs/components/SpiffTool.module.less';
+
 interface SpiffProps {
   spiffs: Spiff[];
   isLoading: boolean;

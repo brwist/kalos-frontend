@@ -1,12 +1,18 @@
 import React, { FC, useState, useEffect, useCallback, useMemo } from 'react';
 import AddCircleIcon from '@material-ui/icons/AddCircle';
-import { ContractClient, Contract } from '@kalos-core/kalos-rpc/Contract';
+import {
+  ContractClient,
+  Contract,
+} from '../../../@kalos-core/kalos-rpc/Contract';
 import {
   ContractFrequencyClient,
   ContractFrequency,
-} from '@kalos-core/kalos-rpc/ContractFrequency';
-import { InvoiceClient, Invoice } from '@kalos-core/kalos-rpc/Invoice';
-import { PropertyClient, Property } from '@kalos-core/kalos-rpc/Property';
+} from '../../../@kalos-core/kalos-rpc/ContractFrequency';
+import { InvoiceClient, Invoice } from '../../../@kalos-core/kalos-rpc/Invoice';
+import {
+  PropertyClient,
+  Property,
+} from '../../../@kalos-core/kalos-rpc/Property';
 import { ENDPOINT } from '../../../constants';
 import { InfoTable, Data } from '../../ComponentsLibrary/InfoTable';
 import { Modal } from '../../ComponentsLibrary/Modal';
@@ -18,8 +24,7 @@ import { PlainForm } from '../../ComponentsLibrary/PlainForm';
 import { Field, Value } from '../../ComponentsLibrary/Field';
 import { getRPCFields, formatDate, getCFAppUrl } from '../../../helpers';
 import { ContractDocuments } from './ContractDocuments';
-import './contractInfo.less';
-import { User } from '@kalos-core/kalos-rpc/User';
+import { User } from '../../../@kalos-core/kalos-rpc/User';
 import { EditContractInfo } from '../../ComponentsLibrary/EditContractInfo';
 
 const ContractClientService = new ContractClient(ENDPOINT);

@@ -6,9 +6,9 @@ import { SectionBar } from '../../ComponentsLibrary/SectionBar';
 import { InfoTable } from '../../ComponentsLibrary/InfoTable';
 import { Tooltip } from '../../ComponentsLibrary/Tooltip';
 import { makeFakeRows, formatDate, UserClientService } from '../../../helpers';
-import { getPropertyAddress } from '@kalos-core/kalos-rpc/Property';
+import { getPropertyAddress } from '../../../@kalos-core/kalos-rpc/Property';
 import { parseISO } from 'date-fns';
-import { Event } from '@kalos-core/kalos-rpc/Event';
+import { Event } from '../../../@kalos-core/kalos-rpc/Event';
 
 interface AssignmentProps {
   events: Event[];

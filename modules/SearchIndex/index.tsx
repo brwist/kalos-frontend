@@ -1,8 +1,8 @@
 import React from 'react';
 import ReactDOM from 'react-dom';
 import { SearchIndex } from './main';
-import { UserClient } from '@kalos-core/kalos-rpc/User';
-import { ENDPOINT } from '@kalos-core/kalos-rpc/constants';
+import { UserClient } from '../../@kalos-core/kalos-rpc/User';
+import { ENDPOINT } from '../../@kalos-core/kalos-rpc/constants';
 
 const u = new UserClient(ENDPOINT);
 u.GetToken('test', 'test').then(() => {

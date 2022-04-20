@@ -10,15 +10,19 @@ import { Button } from '../Button';
 import { Alert } from '../Alert';
 import ChevronLeftIcon from '@material-ui/icons/ChevronLeft';
 import ChevronRightIcon from '@material-ui/icons/ChevronRight';
+import { Loader } from '../../Loader/main';
 import {
   makeFakeRows,
   formatDate,
   ReportClientService,
+  TransactionClientService,
 } from '../../../helpers';
 import { format } from 'date-fns';
 import { ExportJSON } from '../ExportJSON';
+import { Transaction } from '../../../@kalos-core/kalos-rpc/Transaction';
 import { ROWS_PER_PAGE } from '../../../constants';
-import { TransactionReportLine } from '@kalos-core/kalos-rpc/Report';
+import { TransactionReportLine } from '../../../@kalos-core/kalos-rpc/Report';
+import { RecordPageReq } from '../../../@kalos-core/kalos-rpc/compiled-protos/transaction_pb';
 
 interface Props {
   loggedUserId: number;
@@ -125,11 +129,25 @@ export const TransactionValidationReport: FC<Props> = ({
   const [error, setError] = useState<string>('');
   const [count, setCount] = useState<number>(0);
   const [exportStatus, setExportStatus] = useState<Status>('idle');
+  const [recordedStatus, setRecordedStatus] = useState<Status>('idle');
+
   const [formKey, setFormKey] = useState<number>(0);
   const [form, setForm] = useState<FilterForm>({
     year,
   });
-  const [printStatus, setPrintStatus] = useState<Status>('idle');
+
+  const loadPrintEntries = useCallback(async () => {
+    if (printEntries.length === count) return;
+    const req = new TransactionReportLine();
+    req.setYear(form.year.toString());
+    req.setWithoutLimit(true);
+    const results = await ReportClientService.GetTransactionDumpData(req);
+    console.log({ results });
+    setEntries(results.getDataList());
+    setCount(results.getTotalCount());
+    setPrintEntries(results.getDataList());
+  }, [setPrintEntries, form, printEntries, count]);
+
   const load = useCallback(async () => {
     setLoading(true);
     console.log({ form });
@@ -143,12 +161,64 @@ export const TransactionValidationReport: FC<Props> = ({
 
     setLoading(false);
   }, [setLoading, page, form]);
+
+  const handleRecorded = useCallback(() => {
+    setRecordedStatus('idle');
+  }, [setRecordedStatus]);
+
+  const handleMarkAsRecorded = useCallback(async () => {
+    const ok = confirm(
+      'Are you sure you want to mark all transactions as recorded?',
+    );
+    if (ok) {
+      try {
+        setLoading(true);
+        const ids = printEntries.map(el => el.getTransactionId());
+        console.log('recording');
+        const req = new RecordPageReq();
+        req.setAdminId(loggedUserId);
+        req.setTransactionIdsList(ids);
+        const txn = new Transaction();
+
+        req.setRequestData(txn);
+
+        await TransactionClientService.RecordPage(req).then(response => {
+          confirm('Transactions Recorded');
+
+          setLoaded(false);
+        });
+      } catch (err) {
+        setLoaded(false);
+        setError('Could not record page, something went wrong');
+        return;
+      }
+    }
+  }, [printEntries, loggedUserId]);
+
+  const handleRecord = useCallback(async () => {
+    setRecordedStatus('loading');
+    await loadPrintEntries();
+    setRecordedStatus('loaded');
+  }, [loadPrintEntries, setRecordedStatus]);
+
   useEffect(() => {
     if (!loaded) {
-      setLoaded(true);
       load();
+      setLoaded(true);
     }
-  }, [setLoaded, loaded, load]);
+    if (recordedStatus == 'loaded') {
+      handleMarkAsRecorded();
+      handleRecorded();
+    }
+  }, [
+    setLoaded,
+    loaded,
+    handleRecorded,
+    handleMarkAsRecorded,
+    load,
+    handleRecord,
+    recordedStatus,
+  ]);
   const reload = useCallback(() => {
     setError('');
     setLoaded(false);
@@ -162,30 +232,7 @@ export const TransactionValidationReport: FC<Props> = ({
     },
     [setPage, reload],
   );
-  const loadPrintEntries = useCallback(async () => {
-    if (printEntries.length === count) return;
-    const req = new TransactionReportLine();
-    req.setYear(form.year.toString());
-    req.setWithoutLimit(true);
-    const results = await ReportClientService.GetTransactionDumpData(req);
-    console.log({ results });
-    setEntries(results.getDataList());
-    setCount(results.getTotalCount());
-    setPrintEntries(results.getDataList());
-  }, [setPrintEntries, form, printEntries, count]);
-  const handlePrint = useCallback(async () => {
-    setPrintStatus('loading');
-    await loadPrintEntries();
-    setPrintStatus('loaded');
-  }, [loadPrintEntries, setPrintStatus]);
-  const handlePrinted = useCallback(
-    () => setPrintStatus('idle'),
-    [setPrintStatus],
-  );
-  const handleSearch = useCallback(() => {
-    setPage(0);
-    setLoaded(false);
-  }, []);
+
   const handleYearChange = useCallback(
     (step: number) => () => {
       setForm({ year: form.year + step });
@@ -218,6 +265,7 @@ export const TransactionValidationReport: FC<Props> = ({
     await loadPrintEntries();
     setExportStatus('loaded');
   }, [loadPrintEntries, setExportStatus]);
+
   const handleExported = useCallback(
     () => setExportStatus('idle'),
     [setExportStatus],
@@ -302,6 +350,10 @@ export const TransactionValidationReport: FC<Props> = ({
         asideContent={
           <>
             <Alert open={error != ''} onClose={() => setError('')}></Alert>
+            <Button
+              label="Mark All As Recorded"
+              onClick={handleRecord}
+            ></Button>
             <ExportJSON
               json={printEntries.map(entry => ({
                 transactionId: entry.getTransactionId(),
@@ -330,7 +382,7 @@ export const TransactionValidationReport: FC<Props> = ({
 
                 postedTimestamp: entry.getPostedTimestamp(),
 
-                amount: entry.getAmount(),
+                amount: parseFloat(entry.getAmount()).toFixed(2),
 
                 notes: entry.getNotes(),
 
@@ -349,14 +401,24 @@ export const TransactionValidationReport: FC<Props> = ({
           </>
         }
       />
-
-      <PlainForm key={formKey} schema={SCHEMA} data={form} onChange={setForm} />
-      <InfoTable
-        columns={COLUMNS.map(name => ({ name }))}
-        data={getData(entries)}
-        loading={loading}
-        skipPreLine
-      />
+      {loading ? (
+        <Loader></Loader>
+      ) : (
+        <div>
+          <PlainForm
+            key={formKey}
+            schema={SCHEMA}
+            data={form}
+            onChange={setForm}
+          />
+          <InfoTable
+            columns={COLUMNS.map(name => ({ name }))}
+            data={getData(entries)}
+            loading={loading}
+            skipPreLine
+          />
+        </div>
+      )}
     </div>
   );
 };
