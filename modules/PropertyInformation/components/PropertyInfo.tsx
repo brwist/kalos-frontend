@@ -128,7 +128,10 @@ export const PropertyInfo: FC<Props> = props => {
   );
 
   const handleSetPendingChangeOwner = useCallback(
-    pendingChangeOwner => setPendingChangeOwner(pendingChangeOwner),
+    (pendingChangeOwner: User) => {
+      console.log('pending change user', pendingChangeOwner);
+      setPendingChangeOwner(pendingChangeOwner);
+    },
     [setPendingChangeOwner],
   );
 
@@ -167,7 +170,15 @@ export const PropertyInfo: FC<Props> = props => {
     }
     setLoading(false);
     return null;
-  }, [setLoading, userID, propertyId, setEntry, setError, setUser]);
+  }, [
+    setLoading,
+    userID,
+    propertyId,
+    loggedUserId,
+    setEntry,
+    setError,
+    setUser,
+  ]);
 
   useEffect(() => {
     if (!entry.getId() && !entry.getUserId()) {
@@ -260,7 +271,8 @@ export const PropertyInfo: FC<Props> = props => {
       const entry = new Property();
       entry.setId(propertyId);
       entry.setUserId(id);
-      // entry.setFieldMaskList(['UserId']);
+      entry.setFieldMaskList(['UserId']);
+      console.log('changing owner');
       try {
         await PropertyClientService.Update(entry); // FIXME: for some reason this call fails
         window.open(
@@ -557,7 +569,7 @@ export const PropertyInfo: FC<Props> = props => {
         kinds={['Customers']}
         open={changingOwner}
         onClose={handleSetChangingOwner(false)}
-        onSelect={handleSetPendingChangeOwner}
+        onSelect={data => handleSetPendingChangeOwner(data as User)}
         excludeId={userID}
       />
       <Search
