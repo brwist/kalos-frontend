@@ -248,7 +248,7 @@ proto.PropertyCoordinates.prototype.clearCoordsList = function() {
  * @private {!Array<number>}
  * @const
  */
-proto.Property.repeatedFields_ = [23,25];
+proto.Property.repeatedFields_ = [24,26];
 
 
 
@@ -285,31 +285,32 @@ proto.Property.toObject = function(includeInstance, msg) {
     userId: jspb.Message.getFieldWithDefault(msg, 2, 0),
     contractId: jspb.Message.getFieldWithDefault(msg, 3, 0),
     address: jspb.Message.getFieldWithDefault(msg, 4, ""),
-    city: jspb.Message.getFieldWithDefault(msg, 5, ""),
-    state: jspb.Message.getFieldWithDefault(msg, 6, ""),
-    zip: jspb.Message.getFieldWithDefault(msg, 7, ""),
-    subdivision: jspb.Message.getFieldWithDefault(msg, 8, ""),
-    directions: jspb.Message.getFieldWithDefault(msg, 9, ""),
-    notes: jspb.Message.getFieldWithDefault(msg, 10, ""),
-    dateCreated: jspb.Message.getFieldWithDefault(msg, 11, ""),
-    isActive: jspb.Message.getFieldWithDefault(msg, 12, 0),
-    isResidential: jspb.Message.getFieldWithDefault(msg, 13, 0),
-    notification: jspb.Message.getFieldWithDefault(msg, 14, ""),
-    firstname: jspb.Message.getFieldWithDefault(msg, 15, ""),
-    lastname: jspb.Message.getFieldWithDefault(msg, 16, ""),
-    businessname: jspb.Message.getFieldWithDefault(msg, 17, ""),
-    phone: jspb.Message.getFieldWithDefault(msg, 18, ""),
-    altphone: jspb.Message.getFieldWithDefault(msg, 19, ""),
-    email: jspb.Message.getFieldWithDefault(msg, 20, ""),
-    geolocationLat: jspb.Message.getFloatingPointFieldWithDefault(msg, 21, 0.0),
-    geolocationLng: jspb.Message.getFloatingPointFieldWithDefault(msg, 22, 0.0),
-    fieldMaskList: (f = jspb.Message.getRepeatedField(msg, 23)) == null ? undefined : f,
-    pageNumber: jspb.Message.getFieldWithDefault(msg, 24, 0),
-    notEqualsList: (f = jspb.Message.getRepeatedField(msg, 25)) == null ? undefined : f,
-    orderBy: jspb.Message.getFieldWithDefault(msg, 26, ""),
-    orderDir: jspb.Message.getFieldWithDefault(msg, 27, ""),
-    groupBy: jspb.Message.getFieldWithDefault(msg, 28, ""),
-    withoutLimit: jspb.Message.getBooleanFieldWithDefault(msg, 29, false)
+    additionalAddressLine: jspb.Message.getFieldWithDefault(msg, 5, ""),
+    city: jspb.Message.getFieldWithDefault(msg, 6, ""),
+    state: jspb.Message.getFieldWithDefault(msg, 7, ""),
+    zip: jspb.Message.getFieldWithDefault(msg, 8, ""),
+    subdivision: jspb.Message.getFieldWithDefault(msg, 9, ""),
+    directions: jspb.Message.getFieldWithDefault(msg, 10, ""),
+    notes: jspb.Message.getFieldWithDefault(msg, 11, ""),
+    dateCreated: jspb.Message.getFieldWithDefault(msg, 12, ""),
+    isActive: jspb.Message.getFieldWithDefault(msg, 13, 0),
+    isResidential: jspb.Message.getFieldWithDefault(msg, 14, 0),
+    notification: jspb.Message.getFieldWithDefault(msg, 15, ""),
+    firstname: jspb.Message.getFieldWithDefault(msg, 16, ""),
+    lastname: jspb.Message.getFieldWithDefault(msg, 17, ""),
+    businessname: jspb.Message.getFieldWithDefault(msg, 18, ""),
+    phone: jspb.Message.getFieldWithDefault(msg, 19, ""),
+    altphone: jspb.Message.getFieldWithDefault(msg, 20, ""),
+    email: jspb.Message.getFieldWithDefault(msg, 21, ""),
+    geolocationLat: jspb.Message.getFloatingPointFieldWithDefault(msg, 22, 0.0),
+    geolocationLng: jspb.Message.getFloatingPointFieldWithDefault(msg, 23, 0.0),
+    fieldMaskList: (f = jspb.Message.getRepeatedField(msg, 24)) == null ? undefined : f,
+    pageNumber: jspb.Message.getFieldWithDefault(msg, 25, 0),
+    notEqualsList: (f = jspb.Message.getRepeatedField(msg, 26)) == null ? undefined : f,
+    orderBy: jspb.Message.getFieldWithDefault(msg, 27, ""),
+    orderDir: jspb.Message.getFieldWithDefault(msg, 28, ""),
+    groupBy: jspb.Message.getFieldWithDefault(msg, 29, ""),
+    withoutLimit: jspb.Message.getBooleanFieldWithDefault(msg, 30, false)
   };
 
   if (includeInstance) {
@@ -364,101 +365,105 @@ proto.Property.deserializeBinaryFromReader = function(msg, reader) {
       break;
     case 5:
       var value = /** @type {string} */ (reader.readString());
-      msg.setCity(value);
+      msg.setAdditionalAddressLine(value);
       break;
     case 6:
       var value = /** @type {string} */ (reader.readString());
-      msg.setState(value);
+      msg.setCity(value);
       break;
     case 7:
       var value = /** @type {string} */ (reader.readString());
-      msg.setZip(value);
+      msg.setState(value);
       break;
     case 8:
       var value = /** @type {string} */ (reader.readString());
-      msg.setSubdivision(value);
+      msg.setZip(value);
       break;
     case 9:
       var value = /** @type {string} */ (reader.readString());
-      msg.setDirections(value);
+      msg.setSubdivision(value);
       break;
     case 10:
       var value = /** @type {string} */ (reader.readString());
-      msg.setNotes(value);
+      msg.setDirections(value);
       break;
     case 11:
       var value = /** @type {string} */ (reader.readString());
-      msg.setDateCreated(value);
+      msg.setNotes(value);
       break;
     case 12:
-      var value = /** @type {number} */ (reader.readInt32());
-      msg.setIsActive(value);
+      var value = /** @type {string} */ (reader.readString());
+      msg.setDateCreated(value);
       break;
     case 13:
       var value = /** @type {number} */ (reader.readInt32());
-      msg.setIsResidential(value);
+      msg.setIsActive(value);
       break;
     case 14:
-      var value = /** @type {string} */ (reader.readString());
-      msg.setNotification(value);
+      var value = /** @type {number} */ (reader.readInt32());
+      msg.setIsResidential(value);
       break;
     case 15:
       var value = /** @type {string} */ (reader.readString());
-      msg.setFirstname(value);
+      msg.setNotification(value);
       break;
     case 16:
       var value = /** @type {string} */ (reader.readString());
-      msg.setLastname(value);
+      msg.setFirstname(value);
       break;
     case 17:
       var value = /** @type {string} */ (reader.readString());
-      msg.setBusinessname(value);
+      msg.setLastname(value);
       break;
     case 18:
       var value = /** @type {string} */ (reader.readString());
-      msg.setPhone(value);
+      msg.setBusinessname(value);
       break;
     case 19:
       var value = /** @type {string} */ (reader.readString());
-      msg.setAltphone(value);
+      msg.setPhone(value);
       break;
     case 20:
       var value = /** @type {string} */ (reader.readString());
-      msg.setEmail(value);
+      msg.setAltphone(value);
       break;
     case 21:
-      var value = /** @type {number} */ (reader.readDouble());
-      msg.setGeolocationLat(value);
+      var value = /** @type {string} */ (reader.readString());
+      msg.setEmail(value);
       break;
     case 22:
       var value = /** @type {number} */ (reader.readDouble());
-      msg.setGeolocationLng(value);
+      msg.setGeolocationLat(value);
       break;
     case 23:
+      var value = /** @type {number} */ (reader.readDouble());
+      msg.setGeolocationLng(value);
+      break;
+    case 24:
       var value = /** @type {string} */ (reader.readString());
       msg.addFieldMask(value);
       break;
-    case 24:
+    case 25:
       var value = /** @type {number} */ (reader.readInt32());
       msg.setPageNumber(value);
       break;
-    case 25:
+    case 26:
       var value = /** @type {string} */ (reader.readString());
       msg.addNotEquals(value);
       break;
-    case 26:
+    case 27:
       var value = /** @type {string} */ (reader.readString());
       msg.setOrderBy(value);
       break;
-    case 27:
+    case 28:
       var value = /** @type {string} */ (reader.readString());
       msg.setOrderDir(value);
       break;
-    case 28:
+    case 29:
       var value = /** @type {string} */ (reader.readString());
       msg.setGroupBy(value);
       break;
-    case 29:
+    case 30:
       var value = /** @type {boolean} */ (reader.readBool());
       msg.setWithoutLimit(value);
       break;
@@ -519,178 +524,185 @@ proto.Property.serializeBinaryToWriter = function(message, writer) {
       f
     );
   }
-  f = message.getCity();
+  f = message.getAdditionalAddressLine();
   if (f.length > 0) {
     writer.writeString(
       5,
       f
     );
   }
-  f = message.getState();
+  f = message.getCity();
   if (f.length > 0) {
     writer.writeString(
       6,
       f
     );
   }
-  f = message.getZip();
+  f = message.getState();
   if (f.length > 0) {
     writer.writeString(
       7,
       f
     );
   }
-  f = message.getSubdivision();
+  f = message.getZip();
   if (f.length > 0) {
     writer.writeString(
       8,
       f
     );
   }
-  f = message.getDirections();
+  f = message.getSubdivision();
   if (f.length > 0) {
     writer.writeString(
       9,
       f
     );
   }
-  f = message.getNotes();
+  f = message.getDirections();
   if (f.length > 0) {
     writer.writeString(
       10,
       f
     );
   }
-  f = message.getDateCreated();
+  f = message.getNotes();
   if (f.length > 0) {
     writer.writeString(
       11,
       f
     );
   }
-  f = message.getIsActive();
-  if (f !== 0) {
-    writer.writeInt32(
+  f = message.getDateCreated();
+  if (f.length > 0) {
+    writer.writeString(
       12,
       f
     );
   }
-  f = message.getIsResidential();
+  f = message.getIsActive();
   if (f !== 0) {
     writer.writeInt32(
       13,
       f
     );
   }
-  f = message.getNotification();
-  if (f.length > 0) {
-    writer.writeString(
+  f = message.getIsResidential();
+  if (f !== 0) {
+    writer.writeInt32(
       14,
       f
     );
   }
-  f = message.getFirstname();
+  f = message.getNotification();
   if (f.length > 0) {
     writer.writeString(
       15,
       f
     );
   }
-  f = message.getLastname();
+  f = message.getFirstname();
   if (f.length > 0) {
     writer.writeString(
       16,
       f
     );
   }
-  f = message.getBusinessname();
+  f = message.getLastname();
   if (f.length > 0) {
     writer.writeString(
       17,
       f
     );
   }
-  f = message.getPhone();
+  f = message.getBusinessname();
   if (f.length > 0) {
     writer.writeString(
       18,
       f
     );
   }
-  f = message.getAltphone();
+  f = message.getPhone();
   if (f.length > 0) {
     writer.writeString(
       19,
       f
     );
   }
-  f = message.getEmail();
+  f = message.getAltphone();
   if (f.length > 0) {
     writer.writeString(
       20,
       f
     );
   }
-  f = message.getGeolocationLat();
-  if (f !== 0.0) {
-    writer.writeDouble(
+  f = message.getEmail();
+  if (f.length > 0) {
+    writer.writeString(
       21,
       f
     );
   }
-  f = message.getGeolocationLng();
+  f = message.getGeolocationLat();
   if (f !== 0.0) {
     writer.writeDouble(
       22,
       f
     );
   }
+  f = message.getGeolocationLng();
+  if (f !== 0.0) {
+    writer.writeDouble(
+      23,
+      f
+    );
+  }
   f = message.getFieldMaskList();
   if (f.length > 0) {
     writer.writeRepeatedString(
-      23,
+      24,
       f
     );
   }
   f = message.getPageNumber();
   if (f !== 0) {
     writer.writeInt32(
-      24,
+      25,
       f
     );
   }
   f = message.getNotEqualsList();
   if (f.length > 0) {
     writer.writeRepeatedString(
-      25,
+      26,
       f
     );
   }
   f = message.getOrderBy();
   if (f.length > 0) {
     writer.writeString(
-      26,
+      27,
       f
     );
   }
   f = message.getOrderDir();
   if (f.length > 0) {
     writer.writeString(
-      27,
+      28,
       f
     );
   }
   f = message.getGroupBy();
   if (f.length > 0) {
     writer.writeString(
-      28,
+      29,
       f
     );
   }
   f = message.getWithoutLimit();
   if (f) {
     writer.writeBool(
-      29,
+      30,
       f
     );
   }
@@ -770,10 +782,10 @@ proto.Property.prototype.setAddress = function(value) {
 
 
 /**
- * optional string city = 5;
+ * optional string additional_address_line = 5;
  * @return {string}
  */
-proto.Property.prototype.getCity = function() {
+proto.Property.prototype.getAdditionalAddressLine = function() {
   return /** @type {string} */ (jspb.Message.getFieldWithDefault(this, 5, ""));
 };
 
@@ -782,16 +794,16 @@ proto.Property.prototype.getCity = function() {
  * @param {string} value
  * @return {!proto.Property} returns this
  */
-proto.Property.prototype.setCity = function(value) {
+proto.Property.prototype.setAdditionalAddressLine = function(value) {
   return jspb.Message.setProto3StringField(this, 5, value);
 };
 
 
 /**
- * optional string state = 6;
+ * optional string city = 6;
  * @return {string}
  */
-proto.Property.prototype.getState = function() {
+proto.Property.prototype.getCity = function() {
   return /** @type {string} */ (jspb.Message.getFieldWithDefault(this, 6, ""));
 };
 
@@ -800,16 +812,16 @@ proto.Property.prototype.getState = function() {
  * @param {string} value
  * @return {!proto.Property} returns this
  */
-proto.Property.prototype.setState = function(value) {
+proto.Property.prototype.setCity = function(value) {
   return jspb.Message.setProto3StringField(this, 6, value);
 };
 
 
 /**
- * optional string zip = 7;
+ * optional string state = 7;
  * @return {string}
  */
-proto.Property.prototype.getZip = function() {
+proto.Property.prototype.getState = function() {
   return /** @type {string} */ (jspb.Message.getFieldWithDefault(this, 7, ""));
 };
 
@@ -818,16 +830,16 @@ proto.Property.prototype.getZip = function() {
  * @param {string} value
  * @return {!proto.Property} returns this
  */
-proto.Property.prototype.setZip = function(value) {
+proto.Property.prototype.setState = function(value) {
   return jspb.Message.setProto3StringField(this, 7, value);
 };
 
 
 /**
- * optional string subdivision = 8;
+ * optional string zip = 8;
  * @return {string}
  */
-proto.Property.prototype.getSubdivision = function() {
+proto.Property.prototype.getZip = function() {
   return /** @type {string} */ (jspb.Message.getFieldWithDefault(this, 8, ""));
 };
 
@@ -836,16 +848,16 @@ proto.Property.prototype.getSubdivision = function() {
  * @param {string} value
  * @return {!proto.Property} returns this
  */
-proto.Property.prototype.setSubdivision = function(value) {
+proto.Property.prototype.setZip = function(value) {
   return jspb.Message.setProto3StringField(this, 8, value);
 };
 
 
 /**
- * optional string directions = 9;
+ * optional string subdivision = 9;
  * @return {string}
  */
-proto.Property.prototype.getDirections = function() {
+proto.Property.prototype.getSubdivision = function() {
   return /** @type {string} */ (jspb.Message.getFieldWithDefault(this, 9, ""));
 };
 
@@ -854,16 +866,16 @@ proto.Property.prototype.getDirections = function() {
  * @param {string} value
  * @return {!proto.Property} returns this
  */
-proto.Property.prototype.setDirections = function(value) {
+proto.Property.prototype.setSubdivision = function(value) {
   return jspb.Message.setProto3StringField(this, 9, value);
 };
 
 
 /**
- * optional string notes = 10;
+ * optional string directions = 10;
  * @return {string}
  */
-proto.Property.prototype.getNotes = function() {
+proto.Property.prototype.getDirections = function() {
   return /** @type {string} */ (jspb.Message.getFieldWithDefault(this, 10, ""));
 };
 
@@ -872,16 +884,16 @@ proto.Property.prototype.getNotes = function() {
  * @param {string} value
  * @return {!proto.Property} returns this
  */
-proto.Property.prototype.setNotes = function(value) {
+proto.Property.prototype.setDirections = function(value) {
   return jspb.Message.setProto3StringField(this, 10, value);
 };
 
 
 /**
- * optional string date_created = 11;
+ * optional string notes = 11;
  * @return {string}
  */
-proto.Property.prototype.getDateCreated = function() {
+proto.Property.prototype.getNotes = function() {
   return /** @type {string} */ (jspb.Message.getFieldWithDefault(this, 11, ""));
 };
 
@@ -890,34 +902,34 @@ proto.Property.prototype.getDateCreated = function() {
  * @param {string} value
  * @return {!proto.Property} returns this
  */
-proto.Property.prototype.setDateCreated = function(value) {
+proto.Property.prototype.setNotes = function(value) {
   return jspb.Message.setProto3StringField(this, 11, value);
 };
 
 
 /**
- * optional int32 is_active = 12;
+ * optional string date_created = 12;
+ * @return {string}
+ */
+proto.Property.prototype.getDateCreated = function() {
+  return /** @type {string} */ (jspb.Message.getFieldWithDefault(this, 12, ""));
+};
+
+
+/**
+ * @param {string} value
+ * @return {!proto.Property} returns this
+ */
+proto.Property.prototype.setDateCreated = function(value) {
+  return jspb.Message.setProto3StringField(this, 12, value);
+};
+
+
+/**
+ * optional int32 is_active = 13;
  * @return {number}
  */
 proto.Property.prototype.getIsActive = function() {
-  return /** @type {number} */ (jspb.Message.getFieldWithDefault(this, 12, 0));
-};
-
-
-/**
- * @param {number} value
- * @return {!proto.Property} returns this
- */
-proto.Property.prototype.setIsActive = function(value) {
-  return jspb.Message.setProto3IntField(this, 12, value);
-};
-
-
-/**
- * optional int32 is_residential = 13;
- * @return {number}
- */
-proto.Property.prototype.getIsResidential = function() {
   return /** @type {number} */ (jspb.Message.getFieldWithDefault(this, 13, 0));
 };
 
@@ -926,34 +938,34 @@ proto.Property.prototype.getIsResidential = function() {
  * @param {number} value
  * @return {!proto.Property} returns this
  */
-proto.Property.prototype.setIsResidential = function(value) {
+proto.Property.prototype.setIsActive = function(value) {
   return jspb.Message.setProto3IntField(this, 13, value);
 };
 
 
 /**
- * optional string notification = 14;
+ * optional int32 is_residential = 14;
+ * @return {number}
+ */
+proto.Property.prototype.getIsResidential = function() {
+  return /** @type {number} */ (jspb.Message.getFieldWithDefault(this, 14, 0));
+};
+
+
+/**
+ * @param {number} value
+ * @return {!proto.Property} returns this
+ */
+proto.Property.prototype.setIsResidential = function(value) {
+  return jspb.Message.setProto3IntField(this, 14, value);
+};
+
+
+/**
+ * optional string notification = 15;
  * @return {string}
  */
 proto.Property.prototype.getNotification = function() {
-  return /** @type {string} */ (jspb.Message.getFieldWithDefault(this, 14, ""));
-};
-
-
-/**
- * @param {string} value
- * @return {!proto.Property} returns this
- */
-proto.Property.prototype.setNotification = function(value) {
-  return jspb.Message.setProto3StringField(this, 14, value);
-};
-
-
-/**
- * optional string firstname = 15;
- * @return {string}
- */
-proto.Property.prototype.getFirstname = function() {
   return /** @type {string} */ (jspb.Message.getFieldWithDefault(this, 15, ""));
 };
 
@@ -962,16 +974,16 @@ proto.Property.prototype.getFirstname = function() {
  * @param {string} value
  * @return {!proto.Property} returns this
  */
-proto.Property.prototype.setFirstname = function(value) {
+proto.Property.prototype.setNotification = function(value) {
   return jspb.Message.setProto3StringField(this, 15, value);
 };
 
 
 /**
- * optional string lastname = 16;
+ * optional string firstname = 16;
  * @return {string}
  */
-proto.Property.prototype.getLastname = function() {
+proto.Property.prototype.getFirstname = function() {
   return /** @type {string} */ (jspb.Message.getFieldWithDefault(this, 16, ""));
 };
 
@@ -980,16 +992,16 @@ proto.Property.prototype.getLastname = function() {
  * @param {string} value
  * @return {!proto.Property} returns this
  */
-proto.Property.prototype.setLastname = function(value) {
+proto.Property.prototype.setFirstname = function(value) {
   return jspb.Message.setProto3StringField(this, 16, value);
 };
 
 
 /**
- * optional string businessname = 17;
+ * optional string lastname = 17;
  * @return {string}
  */
-proto.Property.prototype.getBusinessname = function() {
+proto.Property.prototype.getLastname = function() {
   return /** @type {string} */ (jspb.Message.getFieldWithDefault(this, 17, ""));
 };
 
@@ -998,16 +1010,16 @@ proto.Property.prototype.getBusinessname = function() {
  * @param {string} value
  * @return {!proto.Property} returns this
  */
-proto.Property.prototype.setBusinessname = function(value) {
+proto.Property.prototype.setLastname = function(value) {
   return jspb.Message.setProto3StringField(this, 17, value);
 };
 
 
 /**
- * optional string phone = 18;
+ * optional string businessname = 18;
  * @return {string}
  */
-proto.Property.prototype.getPhone = function() {
+proto.Property.prototype.getBusinessname = function() {
   return /** @type {string} */ (jspb.Message.getFieldWithDefault(this, 18, ""));
 };
 
@@ -1016,16 +1028,16 @@ proto.Property.prototype.getPhone = function() {
  * @param {string} value
  * @return {!proto.Property} returns this
  */
-proto.Property.prototype.setPhone = function(value) {
+proto.Property.prototype.setBusinessname = function(value) {
   return jspb.Message.setProto3StringField(this, 18, value);
 };
 
 
 /**
- * optional string altphone = 19;
+ * optional string phone = 19;
  * @return {string}
  */
-proto.Property.prototype.getAltphone = function() {
+proto.Property.prototype.getPhone = function() {
   return /** @type {string} */ (jspb.Message.getFieldWithDefault(this, 19, ""));
 };
 
@@ -1034,16 +1046,16 @@ proto.Property.prototype.getAltphone = function() {
  * @param {string} value
  * @return {!proto.Property} returns this
  */
-proto.Property.prototype.setAltphone = function(value) {
+proto.Property.prototype.setPhone = function(value) {
   return jspb.Message.setProto3StringField(this, 19, value);
 };
 
 
 /**
- * optional string email = 20;
+ * optional string altphone = 20;
  * @return {string}
  */
-proto.Property.prototype.getEmail = function() {
+proto.Property.prototype.getAltphone = function() {
   return /** @type {string} */ (jspb.Message.getFieldWithDefault(this, 20, ""));
 };
 
@@ -1052,34 +1064,34 @@ proto.Property.prototype.getEmail = function() {
  * @param {string} value
  * @return {!proto.Property} returns this
  */
-proto.Property.prototype.setEmail = function(value) {
+proto.Property.prototype.setAltphone = function(value) {
   return jspb.Message.setProto3StringField(this, 20, value);
 };
 
 
 /**
- * optional double geolocation_lat = 21;
+ * optional string email = 21;
+ * @return {string}
+ */
+proto.Property.prototype.getEmail = function() {
+  return /** @type {string} */ (jspb.Message.getFieldWithDefault(this, 21, ""));
+};
+
+
+/**
+ * @param {string} value
+ * @return {!proto.Property} returns this
+ */
+proto.Property.prototype.setEmail = function(value) {
+  return jspb.Message.setProto3StringField(this, 21, value);
+};
+
+
+/**
+ * optional double geolocation_lat = 22;
  * @return {number}
  */
 proto.Property.prototype.getGeolocationLat = function() {
-  return /** @type {number} */ (jspb.Message.getFloatingPointFieldWithDefault(this, 21, 0.0));
-};
-
-
-/**
- * @param {number} value
- * @return {!proto.Property} returns this
- */
-proto.Property.prototype.setGeolocationLat = function(value) {
-  return jspb.Message.setProto3FloatField(this, 21, value);
-};
-
-
-/**
- * optional double geolocation_lng = 22;
- * @return {number}
- */
-proto.Property.prototype.getGeolocationLng = function() {
   return /** @type {number} */ (jspb.Message.getFloatingPointFieldWithDefault(this, 22, 0.0));
 };
 
@@ -1088,17 +1100,35 @@ proto.Property.prototype.getGeolocationLng = function() {
  * @param {number} value
  * @return {!proto.Property} returns this
  */
-proto.Property.prototype.setGeolocationLng = function(value) {
+proto.Property.prototype.setGeolocationLat = function(value) {
   return jspb.Message.setProto3FloatField(this, 22, value);
 };
 
 
 /**
- * repeated string field_mask = 23;
+ * optional double geolocation_lng = 23;
+ * @return {number}
+ */
+proto.Property.prototype.getGeolocationLng = function() {
+  return /** @type {number} */ (jspb.Message.getFloatingPointFieldWithDefault(this, 23, 0.0));
+};
+
+
+/**
+ * @param {number} value
+ * @return {!proto.Property} returns this
+ */
+proto.Property.prototype.setGeolocationLng = function(value) {
+  return jspb.Message.setProto3FloatField(this, 23, value);
+};
+
+
+/**
+ * repeated string field_mask = 24;
  * @return {!Array<string>}
  */
 proto.Property.prototype.getFieldMaskList = function() {
-  return /** @type {!Array<string>} */ (jspb.Message.getRepeatedField(this, 23));
+  return /** @type {!Array<string>} */ (jspb.Message.getRepeatedField(this, 24));
 };
 
 
@@ -1107,7 +1137,7 @@ proto.Property.prototype.getFieldMaskList = function() {
  * @return {!proto.Property} returns this
  */
 proto.Property.prototype.setFieldMaskList = function(value) {
-  return jspb.Message.setField(this, 23, value || []);
+  return jspb.Message.setField(this, 24, value || []);
 };
 
 
@@ -1117,7 +1147,7 @@ proto.Property.prototype.setFieldMaskList = function(value) {
  * @return {!proto.Property} returns this
  */
 proto.Property.prototype.addFieldMask = function(value, opt_index) {
-  return jspb.Message.addToRepeatedField(this, 23, value, opt_index);
+  return jspb.Message.addToRepeatedField(this, 24, value, opt_index);
 };
 
 
@@ -1131,11 +1161,11 @@ proto.Property.prototype.clearFieldMaskList = function() {
 
 
 /**
- * optional int32 page_number = 24;
+ * optional int32 page_number = 25;
  * @return {number}
  */
 proto.Property.prototype.getPageNumber = function() {
-  return /** @type {number} */ (jspb.Message.getFieldWithDefault(this, 24, 0));
+  return /** @type {number} */ (jspb.Message.getFieldWithDefault(this, 25, 0));
 };
 
 
@@ -1144,16 +1174,16 @@ proto.Property.prototype.getPageNumber = function() {
  * @return {!proto.Property} returns this
  */
 proto.Property.prototype.setPageNumber = function(value) {
-  return jspb.Message.setProto3IntField(this, 24, value);
+  return jspb.Message.setProto3IntField(this, 25, value);
 };
 
 
 /**
- * repeated string not_equals = 25;
+ * repeated string not_equals = 26;
  * @return {!Array<string>}
  */
 proto.Property.prototype.getNotEqualsList = function() {
-  return /** @type {!Array<string>} */ (jspb.Message.getRepeatedField(this, 25));
+  return /** @type {!Array<string>} */ (jspb.Message.getRepeatedField(this, 26));
 };
 
 
@@ -1162,7 +1192,7 @@ proto.Property.prototype.getNotEqualsList = function() {
  * @return {!proto.Property} returns this
  */
 proto.Property.prototype.setNotEqualsList = function(value) {
-  return jspb.Message.setField(this, 25, value || []);
+  return jspb.Message.setField(this, 26, value || []);
 };
 
 
@@ -1172,7 +1202,7 @@ proto.Property.prototype.setNotEqualsList = function(value) {
  * @return {!proto.Property} returns this
  */
 proto.Property.prototype.addNotEquals = function(value, opt_index) {
-  return jspb.Message.addToRepeatedField(this, 25, value, opt_index);
+  return jspb.Message.addToRepeatedField(this, 26, value, opt_index);
 };
 
 
@@ -1186,28 +1216,10 @@ proto.Property.prototype.clearNotEqualsList = function() {
 
 
 /**
- * optional string order_by = 26;
+ * optional string order_by = 27;
  * @return {string}
  */
 proto.Property.prototype.getOrderBy = function() {
-  return /** @type {string} */ (jspb.Message.getFieldWithDefault(this, 26, ""));
-};
-
-
-/**
- * @param {string} value
- * @return {!proto.Property} returns this
- */
-proto.Property.prototype.setOrderBy = function(value) {
-  return jspb.Message.setProto3StringField(this, 26, value);
-};
-
-
-/**
- * optional string order_dir = 27;
- * @return {string}
- */
-proto.Property.prototype.getOrderDir = function() {
   return /** @type {string} */ (jspb.Message.getFieldWithDefault(this, 27, ""));
 };
 
@@ -1216,16 +1228,16 @@ proto.Property.prototype.getOrderDir = function() {
  * @param {string} value
  * @return {!proto.Property} returns this
  */
-proto.Property.prototype.setOrderDir = function(value) {
+proto.Property.prototype.setOrderBy = function(value) {
   return jspb.Message.setProto3StringField(this, 27, value);
 };
 
 
 /**
- * optional string group_by = 28;
+ * optional string order_dir = 28;
  * @return {string}
  */
-proto.Property.prototype.getGroupBy = function() {
+proto.Property.prototype.getOrderDir = function() {
   return /** @type {string} */ (jspb.Message.getFieldWithDefault(this, 28, ""));
 };
 
@@ -1234,17 +1246,35 @@ proto.Property.prototype.getGroupBy = function() {
  * @param {string} value
  * @return {!proto.Property} returns this
  */
-proto.Property.prototype.setGroupBy = function(value) {
+proto.Property.prototype.setOrderDir = function(value) {
   return jspb.Message.setProto3StringField(this, 28, value);
 };
 
 
 /**
- * optional bool without_limit = 29;
+ * optional string group_by = 29;
+ * @return {string}
+ */
+proto.Property.prototype.getGroupBy = function() {
+  return /** @type {string} */ (jspb.Message.getFieldWithDefault(this, 29, ""));
+};
+
+
+/**
+ * @param {string} value
+ * @return {!proto.Property} returns this
+ */
+proto.Property.prototype.setGroupBy = function(value) {
+  return jspb.Message.setProto3StringField(this, 29, value);
+};
+
+
+/**
+ * optional bool without_limit = 30;
  * @return {boolean}
  */
 proto.Property.prototype.getWithoutLimit = function() {
-  return /** @type {boolean} */ (jspb.Message.getBooleanFieldWithDefault(this, 29, false));
+  return /** @type {boolean} */ (jspb.Message.getBooleanFieldWithDefault(this, 30, false));
 };
 
 
@@ -1253,7 +1283,7 @@ proto.Property.prototype.getWithoutLimit = function() {
  * @return {!proto.Property} returns this
  */
 proto.Property.prototype.setWithoutLimit = function(value) {
-  return jspb.Message.setProto3BooleanField(this, 29, value);
+  return jspb.Message.setProto3BooleanField(this, 30, value);
 };
 
 

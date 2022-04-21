@@ -14,7 +14,6 @@ import ChevronLeftIcon from '@material-ui/icons/ChevronLeft';
 import ChevronRightIcon from '@material-ui/icons/ChevronRight';
 import { CallbackReport } from '../CallbackReport';
 import { ServiceCallMetrics } from '../ServiceCallMetrics';
-import { SpiffReport } from '../SpiffReport';
 import { WarrantyReport } from '../WarrantyReport';
 import { PromptPaymentReport } from '../PromptPaymentReport';
 import { TimeoffSummaryReport } from '../TimeoffSummaryReport';
@@ -286,13 +285,7 @@ export const Reports: FC<Props> = ({ loggedUserId }) => {
 
   const [serviceCallMetricsReportOpen, setServiceCallMetricsReportOpen] =
     useState<boolean>(false);
-  const [spiffReport, setSpiffReport] = useState<FilterForm>({
-    month: LAST_12_MONTHS_1[0].value,
-    monthlyWeekly: 'Monthly',
-    users: '',
-  });
-  const [spiffReportKey, setSpiffReportKey] = useState<number>(0);
-  const [spiffReportOpen, setSpiffReportOpen] = useState<boolean>(false);
+
   const [timesheetValidationReportOpen, setTimesheetValidationReportOpen] =
     useState<boolean>(false);
   const [transactionValidationReportOpen, setTransactionValidationReportOpen] =
@@ -489,15 +482,7 @@ export const Reports: FC<Props> = ({ loggedUserId }) => {
     },
     [setServiceCallMetricsReport, setServiceCallMetricsReportOpen],
   );
-  const handleOpenSpiffReportToggle = useCallback(
-    (open: boolean) => (data?: FilterForm) => {
-      if (data && data.monthlyWeekly) {
-        setSpiffReport(data);
-      }
-      setSpiffReportOpen(open);
-    },
-    [setSpiffReport, setSpiffReportOpen],
-  );
+
   const handleOpenTimesheetValidationToggle = useCallback(
     (open: boolean) => () => setTimesheetValidationReportOpen(open),
     [setTimesheetValidationReportOpen],
@@ -605,53 +590,7 @@ export const Reports: FC<Props> = ({ loggedUserId }) => {
     (open: JobReportForm | undefined) => setJobNumberBasedReportOpen(open),
     [setJobNumberBasedReportOpen],
   );
-  const handleSpiffReportChange = useCallback(
-    (data: FilterForm) => {
-      const spiffReportData: FilterForm = { ...data };
-      if (data.monthlyWeekly !== spiffReport.monthlyWeekly) {
-        setSpiffReportKey(spiffReportKey + 1);
-        spiffReportData.month = LAST_12_MONTHS_1[0].value;
-        spiffReportData.week = getCurrWeek();
-      }
-      setSpiffReport(spiffReportData);
-    },
-    [spiffReport, setSpiffReport, spiffReportKey, setSpiffReportKey],
-  );
-  const SCHEMA_SPIFF_REPORT: Schema<FilterForm> = [
-    spiffReport.monthlyWeekly === 'Monthly'
-      ? [
-          {
-            name: 'month',
-            label: 'Select Report Date',
-            options: LAST_12_MONTHS_1,
-            required: true,
-          },
-        ]
-      : [
-          {
-            name: 'week',
-            label: 'Select Report Date',
-            options: WEEK_OPTIONS_1,
-            required: true,
-          },
-        ],
-    [
-      {
-        name: 'monthlyWeekly',
-        label: 'Type',
-        required: true,
-        options: makeOptions(SPIFF_KIND_TYPE_LIST),
-      },
-    ],
-    [
-      {
-        name: 'users',
-        label: 'Select Users',
-        type: 'technicians',
-        required: true,
-      },
-    ],
-  ];
+
   const SCHEMA_JOB_REPORTS: Schema<JobReportForm> = [
     [
       {
@@ -725,16 +664,7 @@ export const Reports: FC<Props> = ({ loggedUserId }) => {
         submitLabel="Report"
         onClose={null}
       />
-      <Form
-        key={spiffReportKey}
-        title="Spiff Report"
-        schema={SCHEMA_SPIFF_REPORT}
-        data={spiffReport}
-        onSave={handleOpenSpiffReportToggle(true)}
-        onChange={handleSpiffReportChange}
-        submitLabel="Report"
-        onClose={null}
-      />
+
       <Form
         title="Timesheet Validation Report"
         schema={SCHEMA_DATES_REPORT}
@@ -927,20 +857,6 @@ export const Reports: FC<Props> = ({ loggedUserId }) => {
           <ServiceCallMetrics
             week={serviceCallMetricsReport.week!}
             onClose={handleOpenServiceCallMetricsReportToggle(false)}
-          />
-        </Modal>
-      )}
-      {spiffReportOpen && (
-        <Modal open onClose={handleOpenSpiffReportToggle(false)} fullScreen>
-          <SpiffReport
-            onClose={handleOpenSpiffReportToggle(false)}
-            date={
-              spiffReport.monthlyWeekly! === 'Monthly'
-                ? spiffReport.month!
-                : spiffReport.week!
-            }
-            type={spiffReport.monthlyWeekly!}
-            users={spiffReport.users!.split(',').map((id: string) => +id)}
           />
         </Modal>
       )}
