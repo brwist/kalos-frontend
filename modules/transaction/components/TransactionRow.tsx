@@ -527,7 +527,7 @@ export function TransactionRow({
                 Icon={RejectIcon}
               />,
             ]
-          : txn.getIsActive() == 0 && acceptOverride
+          : txn.getIsActive() == 0 && !acceptOverride
           ? [
               <TxnNotes
                 key="viewNotes"
