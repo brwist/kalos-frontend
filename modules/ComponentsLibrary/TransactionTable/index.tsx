@@ -113,12 +113,13 @@ let filter: FilterType = {
   employeeId: 0,
   week: OPTION_ALL,
   jobNumber: 0,
-  isAccepted: false,
-  isRejected: false,
+  isAccepted: undefined,
+  isRejected: undefined,
+  isPending: undefined,
+  isProcessed: undefined,
   amount: undefined,
   billingRecorded: false,
   universalSearch: undefined,
-  processed: false,
 };
 
 let assigned: AssignedEmployeeType = {
@@ -166,7 +167,7 @@ export const TransactionTable: FC<Props> = ({
     error: undefined,
     loaded: false,
     changingPage: false,
-    status: 'Pending',
+    status: 'None',
     universalSearch: undefined,
     searching: false,
     fileData: undefined,
@@ -318,17 +319,14 @@ export const TransactionTable: FC<Props> = ({
 
     req.setIsActive(1);
     req.setVendorCategory("'PickTicket','Receipt','Invoice'");
-    if (state.transactionFilter.isAccepted) {
+    if (state.transactionFilter.isPending) {
+      req.setStatusId(2);
+    } else if (state.transactionFilter.isAccepted) {
       req.setStatusId(3);
-      req.setIsBillingRecorded(true);
     } else if (state.transactionFilter.isRejected) {
       req.setStatusId(4);
-      req.setIsBillingRecorded(true);
-    } else if (state.transactionFilter.processed) {
+    } else if (state.transactionFilter.isProcessed) {
       req.setStatusId(5);
-      req.setIsBillingRecorded(true);
-    } else {
-      req.setIsBillingRecorded(false);
     }
     if (state.transactionFilter.jobNumber)
       req.setJobId(state.transactionFilter.jobNumber);
@@ -338,7 +336,6 @@ export const TransactionTable: FC<Props> = ({
       req.setOwnerId(state.transactionFilter.employeeId);
     if (state.transactionFilter.amount)
       req.setAmount(state.transactionFilter.amount);
-    req.setFieldMaskList(['IsBillingRecorded']);
     let res: TransactionList | null = null;
     if (state.transactionFilter.universalSearch) {
       try {
@@ -463,10 +460,11 @@ export const TransactionTable: FC<Props> = ({
     state.transactionFilter.departmentId,
     state.transactionFilter.employeeId,
     state.transactionFilter.isAccepted,
+    state.transactionFilter.isPending,
     state.transactionFilter.isRejected,
     state.orderDir,
     state.orderBy,
-    state.transactionFilter.processed,
+    state.transactionFilter.isProcessed,
     state.transactionFilter.universalSearch,
     state.transactionFilter.jobNumber,
   ]);
@@ -909,42 +907,56 @@ export const TransactionTable: FC<Props> = ({
   );
   const handleStatus = (option: string) => {
     switch (option) {
-      case 'Pending':
+      case 'None':
         return 0;
-      case 'Accepted':
+      case 'Pending':
         return 1;
-      case 'Rejected':
+      case 'Accepted':
         return 2;
-      case 'Processed':
+      case 'Rejected':
         return 3;
+      case 'Processed':
+        return 4;
       default:
         return 0;
     }
   };
   const handleSetFilterAcceptedRejected = useCallback(
-    (option: 'Accepted' | 'Rejected' | 'Pending' | 'Processed') => {
+    (option: 'None' | 'Accepted' | 'Rejected' | 'Pending' | 'Processed') => {
       let tempFilter = state.transactionFilter;
       dispatch({ type: ACTIONS.SET_STATUS, data: option });
       switch (option) {
+        case 'None':
+          tempFilter.isAccepted = undefined;
+          tempFilter.isRejected = undefined;
+          tempFilter.isProcessed = undefined;
+          tempFilter.isPending = undefined;
+
+          break;
         case 'Accepted':
           tempFilter.isAccepted = true;
           tempFilter.isRejected = undefined;
-          tempFilter.processed = undefined;
+          tempFilter.isProcessed = undefined;
+          tempFilter.isPending = undefined;
           break;
         case 'Rejected':
           tempFilter.isRejected = true;
           tempFilter.isAccepted = undefined;
-          tempFilter.processed = undefined;
+          tempFilter.isProcessed = undefined;
+          tempFilter.isPending = undefined;
           break;
         case 'Pending':
           tempFilter.isAccepted = undefined;
           tempFilter.isRejected = undefined;
-          tempFilter.processed = undefined;
+          tempFilter.isProcessed = undefined;
+          tempFilter.isPending = true;
           break;
         case 'Processed':
-          tempFilter.processed = true;
+          tempFilter.isProcessed = true;
           tempFilter.isAccepted = undefined;
           tempFilter.isRejected = undefined;
+          tempFilter.isPending = undefined;
+
           break;
         default:
           console.error(
@@ -1104,7 +1116,7 @@ export const TransactionTable: FC<Props> = ({
         content: (
           <StatusPicker
             key={state.status}
-            options={['Pending', 'Accepted', 'Rejected', 'Processed']}
+            options={['None', 'Pending', 'Accepted', 'Rejected', 'Processed']}
             selected={handleStatus(state.status)}
             onSelect={(
               selected: 'Accepted' | 'Rejected' | 'Pending' | 'Processed',

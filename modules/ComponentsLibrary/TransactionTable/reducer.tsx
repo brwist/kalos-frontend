@@ -13,10 +13,11 @@ export interface FilterType {
   jobNumber: number;
   isAccepted: boolean | undefined;
   isRejected: boolean | undefined;
+  isPending: boolean | undefined;
   amount: number | undefined;
   billingRecorded: boolean;
   universalSearch: string | undefined;
-  processed: boolean | undefined;
+  isProcessed: boolean | undefined;
 }
 
 type SelectorParams = {
@@ -69,7 +70,7 @@ export type State = {
   notify: number;
   assignedEmployee: number | undefined;
   selectedTransactions: Transaction[];
-  status: 'Accepted' | 'Rejected' | 'Pending' | 'Processed';
+  status: 'None' | 'Accepted' | 'Rejected' | 'Pending' | 'Processed';
   departments: TimesheetDepartment[];
   universalSearch: string | undefined;
   fileData: any | undefined;
@@ -170,7 +171,7 @@ export type Action =
   | { type: ACTIONS.SET_ERROR; data: string | undefined }
   | {
       type: ACTIONS.SET_STATUS;
-      data: 'Accepted' | 'Rejected' | 'Pending' | 'Processed';
+      data: 'None' | 'Accepted' | 'Rejected' | 'Pending' | 'Processed';
     }
   | { type: ACTIONS.SET_DEPARTMENTS; data: TimesheetDepartment[] }
   | { type: ACTIONS.SET_SELECTED_TRANSACTIONS; data: Transaction[] }
