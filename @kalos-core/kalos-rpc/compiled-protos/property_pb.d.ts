@@ -39,6 +39,9 @@ export class Property extends jspb.Message {
   getAddress(): string;
   setAddress(value: string): void;
 
+  getAdditionalAddressLine(): string;
+  setAdditionalAddressLine(value: string): void;
+
   getCity(): string;
   setCity(value: string): void;
 
@@ -134,6 +137,7 @@ export namespace Property {
     userId: number,
     contractId: number,
     address: string,
+    additionalAddressLine: string,
     city: string,
     state: string,
     zip: string,

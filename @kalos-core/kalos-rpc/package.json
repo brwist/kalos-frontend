@@ -1,6 +1,6 @@
 {
   "name": "@kalos-core/kalos-rpc",
-  "version": "3.5.90",
+  "version": "3.5.91",
   "description": "Kalos RPC frontend client",
   "scripts": {
     "release": "cd .. && yarn protos && cd client && git pull && yarn docgen && printf 'Logging in to NPM...\n' && npm login && yarn publish --access restricted && git push",
