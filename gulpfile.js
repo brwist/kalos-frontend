@@ -1340,6 +1340,7 @@ const MODULE_MAP = [
   {
     name: 'AcceptProposal',
     location: 'customer',
+    skip:true,
     controller: 'service',
     filename: 'accept_proposal',
     released: true,

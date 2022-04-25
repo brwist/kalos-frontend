@@ -13,7 +13,7 @@ import { useConfirm } from '../../ConfirmService';
 import { Payroll as PayrollComponent } from '../../Payroll';
 import { Modal } from '../../Modal';
 import { SectionBar } from '../../SectionBar';
-import { TripCalulator } from '../../TripCalulator';
+import { TripCalculator } from '../../TripCalculator';
 import './Toolbar.module.less';
 
 type Props = {
