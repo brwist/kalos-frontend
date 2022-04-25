@@ -228,7 +228,7 @@ export class TxnCard extends React.PureComponent<props, state> {
               subject: 'Receipts',
             };
             try {
-              //await EmailClientService.sendMail(mailConfig);
+              await EmailClientService.sendMail(mailConfig);
             } catch (err) {
               console.error('failed to send mail to accounting', err);
             }
@@ -720,7 +720,7 @@ export class TxnCard extends React.PureComponent<props, state> {
               label="Job Number"
               value={t.getJobId()}
               onChange={val => this.updateJobNumber(() => +val)}
-              technicianIdForRecentServiceCalls={userID}
+              technicianIdForRecentServiceCalls={isManager ? undefined : userID}
               type="eventId"
               style={{
                 alignItems: 'flex-start',
