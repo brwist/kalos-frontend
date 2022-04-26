@@ -7,6 +7,9 @@ import {
   PromptPaymentReportLine,
   TransactionReportLine,
   TransactionDumpReport,
+  TimeoffReportLine,
+  TimeoffReportRequest,
+  TimeoffReport,
 } from '../compiled-protos/reports_pb';
 import {
   UnaryRpcOptions,
@@ -78,6 +81,24 @@ class ReportClient extends BaseClient {
       grpc.unary(ReportService.GetTransactionDumpData, opts);
     });
   }
+
+  public async GetTimeOffReport(req: TimeoffReportRequest) {
+    return new Promise<TimeoffReport>((resolve, reject) => {
+      const opts: UnaryRpcOptions<TimeoffReportRequest, TimeoffReport> = {
+        request: req,
+        host: this.host,
+        metadata: this.getMetaData(),
+        onEnd: (result: UnaryOutput<TimeoffReport>) => {
+          if (result.message) {
+            resolve(result.message);
+          } else {
+            reject(new Error(result.statusMessage));
+          }
+        },
+      };
+      grpc.unary(ReportService.GetTimeoffReportData, opts);
+    });
+  }
 }
 export {
   SpiffReport,
@@ -85,6 +106,9 @@ export {
   PromptPaymentReport,
   PromptPaymentReportLine,
   TransactionDumpReport,
+  TimeoffReport,
+  TimeoffReportRequest,
+  TimeoffReportLine,
   TransactionReportLine,
   ReportClient,
 };

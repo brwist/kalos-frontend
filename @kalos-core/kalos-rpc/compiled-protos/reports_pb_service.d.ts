@@ -31,11 +31,21 @@ type ReportServiceGetTransactionDumpData = {
   readonly responseType: typeof reports_pb.TransactionDumpReport;
 };
 
+type ReportServiceGetTimeoffReportData = {
+  readonly methodName: string;
+  readonly service: typeof ReportService;
+  readonly requestStream: false;
+  readonly responseStream: false;
+  readonly requestType: typeof reports_pb.TimeoffReportRequest;
+  readonly responseType: typeof reports_pb.TimeoffReport;
+};
+
 export class ReportService {
   static readonly serviceName: string;
   static readonly GetSpiffReportData: ReportServiceGetSpiffReportData;
   static readonly GetPromptPaymentData: ReportServiceGetPromptPaymentData;
   static readonly GetTransactionDumpData: ReportServiceGetTransactionDumpData;
+  static readonly GetTimeoffReportData: ReportServiceGetTimeoffReportData;
 }
 
 export type ServiceError = { message: string, code: number; metadata: grpc.Metadata }
@@ -96,6 +106,15 @@ export class ReportServiceClient {
   getTransactionDumpData(
     requestMessage: reports_pb.TransactionReportLine,
     callback: (error: ServiceError|null, responseMessage: reports_pb.TransactionDumpReport|null) => void
+  ): UnaryResponse;
+  getTimeoffReportData(
+    requestMessage: reports_pb.TimeoffReportRequest,
+    metadata: grpc.Metadata,
+    callback: (error: ServiceError|null, responseMessage: reports_pb.TimeoffReport|null) => void
+  ): UnaryResponse;
+  getTimeoffReportData(
+    requestMessage: reports_pb.TimeoffReportRequest,
+    callback: (error: ServiceError|null, responseMessage: reports_pb.TimeoffReport|null) => void
   ): UnaryResponse;
 }
 

@@ -37,6 +37,15 @@ ReportService.GetTransactionDumpData = {
   responseType: reports_pb.TransactionDumpReport
 };
 
+ReportService.GetTimeoffReportData = {
+  methodName: "GetTimeoffReportData",
+  service: ReportService,
+  requestStream: false,
+  responseStream: false,
+  requestType: reports_pb.TimeoffReportRequest,
+  responseType: reports_pb.TimeoffReport
+};
+
 exports.ReportService = ReportService;
 
 function ReportServiceClient(serviceHost, options) {
@@ -111,6 +120,37 @@ ReportServiceClient.prototype.getTransactionDumpData = function getTransactionDu
     callback = arguments[1];
   }
   var client = grpc.unary(ReportService.GetTransactionDumpData, {
+    request: requestMessage,
+    host: this.serviceHost,
+    metadata: metadata,
+    transport: this.options.transport,
+    debug: this.options.debug,
+    onEnd: function (response) {
+      if (callback) {
+        if (response.status !== grpc.Code.OK) {
+          var err = new Error(response.statusMessage);
+          err.code = response.status;
+          err.metadata = response.trailers;
+          callback(err, null);
+        } else {
+          callback(null, response.message);
+        }
+      }
+    }
+  });
+  return {
+    cancel: function () {
+      callback = null;
+      client.close();
+    }
+  };
+};
+
+ReportServiceClient.prototype.getTimeoffReportData = function getTimeoffReportData(requestMessage, metadata, callback) {
+  if (arguments.length === 2) {
+    callback = arguments[1];
+  }
+  var client = grpc.unary(ReportService.GetTimeoffReportData, {
     request: requestMessage,
     host: this.serviceHost,
     metadata: metadata,

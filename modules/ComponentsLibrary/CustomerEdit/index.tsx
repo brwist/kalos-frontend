@@ -5,16 +5,20 @@ import { SectionBar } from '../SectionBar';
 import { Form, Schema } from '../Form';
 import { Field, Value } from '../Field';
 import { InfoTable } from '../InfoTable';
+import { Property } from '../../../@kalos-core/kalos-rpc/Property';
 import {
   UserGroupLinkClientService,
   makeFakeRows,
   UserClientService,
+  PropertyClientService,
   GroupClientService,
   makeSafeFormObject,
+  MapClientService,
 } from '../../../helpers';
 import { USA_STATES_OPTIONS, BILLING_TERMS_OPTIONS } from '../../../constants';
 import { Group } from '../../../@kalos-core/kalos-rpc/Group';
 import './CustomerEdit.module.less';
+import { PropertyDropdown } from '../PropertyDropdown';
 
 interface Props {
   onSave?: (data: User) => void;
@@ -37,6 +41,8 @@ export const CustomerEdit: FC<Props> = ({
 }) => {
   const [userId, setUserId] = useState<number>(_userId);
   const [formKey, setFormKey] = useState<number>(0);
+  const [createPropertyFlag, setCreatePropertyFlag] = useState<number>(0);
+
   const [customer, setCustomer] = useState<User>(_customer || new User());
   const [groupLinks, setGroupLinks] = useState<UserGroupLink[]>(
     _groupLinks || [],
@@ -205,6 +211,33 @@ export const CustomerEdit: FC<Props> = ({
       const temp = makeSafeFormObject(data, new User());
       if (temp.getFieldMaskList().length > 0) {
         const result = await UserClientService.saveUser(temp, userId);
+        if (
+          createPropertyFlag &&
+          temp.getAddress() != '' &&
+          temp.getZip() != '' &&
+          temp.getCity() != '' &&
+          temp.getState() != ''
+        ) {
+          const property = new Property();
+          property.setUserId(result.getId());
+          property.setAddress(temp.getAddress());
+          property.setZip(temp.getZip());
+          property.setCity(temp.getCity());
+          property.setState(temp.getState());
+          try {
+            const geo = await MapClientService.loadGeoLocationByAddress(
+              `${temp.getAddress()}, ${temp.getCity()}, ${temp.getState()} ${temp.getZip()}`,
+            );
+            if (geo) {
+              property.setGeolocationLat(geo.geolocationLat);
+              property.setGeolocationLng(geo.geolocationLng);
+            }
+          } catch {
+            console.log('could not geolocate');
+          }
+          await PropertyClientService.Create(property);
+        }
+
         setCustomer(result);
         setUserId(result.getId());
         await saveGroupLinks(groupLinks, groupLinksInitial, result.getId());
@@ -227,6 +260,7 @@ export const CustomerEdit: FC<Props> = ({
       setCustomer,
       groupLinks,
       groupLinksInitial,
+      createPropertyFlag,
       onSave,
       saveGroupLinks,
     ],
@@ -257,7 +291,18 @@ export const CustomerEdit: FC<Props> = ({
         onClose={onClose}
         disabled={saving || loading}
         className="CustomerEditForm"
-      />
+      >
+        {!userId ? (
+          <Field
+            type="checkbox"
+            name={'createPropertyFlag'}
+            value={createPropertyFlag}
+            label="Create Property From Address?"
+            onChange={data => setCreatePropertyFlag(data as number)}
+          />
+        ) : undefined}
+      </Form>
+
       {!viewedAsCustomer && (
         <div className="CustomerEditGroups">
           <SectionBar title="Groups" />

@@ -1036,7 +1036,12 @@ const NAMED_EXPORTS = {
     'PromptPaymentReport',
     'PromptPaymentReportLine',
     'TransactionReportLine',
-    'TransactionDumpReport'
+    'TransactionDumpReport',
+    'TimeoffReportLine',
+    'TimeoffReportRequest',
+    'TimeoffReport'
+
+
   ],
   '@kalos-core/kalos-rpc/compiled-protos/internal_document_pb.js':
     [
