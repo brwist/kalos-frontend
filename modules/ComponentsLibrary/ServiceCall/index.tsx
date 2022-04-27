@@ -769,6 +769,7 @@ export const ServiceCall: FC<Props> = props => {
         temp.setLogVersion(1);
         temp.setDateStarted(returnLegactyDate(temp.getDateStarted()));
         temp.setDateEnded(returnLegactyDate(temp.getDateEnded()));
+        temp.setDiscount(state.customer.getDiscount().toString());
         const res = await EventClientService.Create(temp);
         const logNumber = `${format(new Date(), 'yy')}-${res.getId()}`;
         const newEvent = new Event();
