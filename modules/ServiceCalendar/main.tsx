@@ -435,17 +435,20 @@ export const ServiceCalendar: FC<Props> = props => {
       icon: <EventIcon />,
       name: 'Service Call',
       url: 'https://app.kalosflorida.com/index.cfm?action=admin:service.addServiceCallGeneral',
-    },*/
-    // {
-    //   icon: <PersonIcon />,
-    //   name: 'Add Customer',
-    //   url: 'https://app.kalosflorida.com/index.cfm?action=admin:customers.add',
-    // },
+    },
+    */
     {
       icon: <PersonIcon />,
       name: 'Add Customer',
-      action: () => handleToggleAddCustomer(true),
+      url: 'https://app.kalosflorida.com/index.cfm?action=admin:customers.add',
     },
+
+    /*{
+      icon: <PersonIcon />,
+      name: 'Add Customer',
+      action: () => handleToggleAddCustomer(true),
+    },*/
+
     {
       icon: <SearchIcon />,
       name: 'Search Calls',

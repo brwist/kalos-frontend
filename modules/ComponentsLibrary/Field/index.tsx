@@ -51,10 +51,13 @@ import {
   trailingZero,
   EventClientService,
   UserClientService,
+  VendorClientService,
 } from '../../../helpers';
 import { ClassCodePicker, DepartmentPicker } from '../Pickers';
 import { AdvancedSearch } from '../AdvancedSearch';
 import { Event } from '../../../@kalos-core/kalos-rpc/Event';
+import { Vendor } from '../../../@kalos-core/kalos-rpc/Vendor';
+
 import './Field.module.less';
 
 type SelectOption = {
@@ -84,6 +87,7 @@ export type Type =
   | 'technicians'
   | 'signature'
   | 'file'
+  | 'vendor'
   | 'department'
   | 'classCode'
   | 'hidden'
@@ -158,7 +162,6 @@ export const Field: <T>(
       displayEmpty = false,
       forceShrinkLabel = false,
       defaultLabel = '',
-
       minutesStep = 15,
       ...props
     },
@@ -170,14 +173,24 @@ export const Field: <T>(
     const value =
       type === 'date' ? (props.value + '').substr(0, 10) : props.value; // props.value set by "data" prop on Form
     const [technicians, setTechnicians] = useState<User[]>([]);
+    const [vendors, setVendors] = useState<Vendor[]>([]);
+
     const [loadedTechnicians, setLoadedTechnicians] = useState<boolean>(false);
+    const [loadedVendors, setLoadedVendors] = useState<boolean>(false);
+
     const [eventsOpened, setEventsOpened] = useState<boolean>(false);
     const [techniciansOpened, setTechniciansOpened] = useState<boolean>(false);
+    const [vendorsOpened, setVendorsOpened] = useState<boolean>(false);
     const [techniciansIds, setTechniciansIds] = useState<number[]>(
+      (value + '').split(',').map(id => +id),
+    );
+    const [vendorIds, setVendorIds] = useState<number[]>(
       (value + '').split(',').map(id => +id),
     );
     const [filename, setFilename] = useState<string>('');
     const [searchTechnician, setSearchTechnician] = useState<Value>('');
+    const [searchVendors, setSearchVendors] = useState<Value>('');
+
     const [eventStatus, setEventStatus] = useState<number>(
       +(value || '') > 0 ? 1 : -1,
     );
@@ -187,6 +200,16 @@ export const Field: <T>(
       setLoadedTechnicians(true);
       setTechnicians(technicians);
     }, [setLoadedTechnicians, setTechnicians]);
+
+    const loadVendors = useCallback(async () => {
+      const req = new Vendor();
+      req.setIsActive(1);
+      const vendors = (
+        await VendorClientService.BatchGet(req)
+      ).getResultsList();
+      setLoadedVendors(true);
+      setVendors(vendors);
+    }, []);
     const handleEventsOpenedToggle = useCallback(
       (opened: boolean) => () => setEventsOpened(opened),
       [setEventsOpened],
@@ -238,6 +261,18 @@ export const Field: <T>(
         loadUserTechnicians,
       ],
     );
+
+    const handleSetVendorsOpen = useCallback(
+      (opened: boolean) => () => {
+        setVendorsOpened(opened);
+        setSearchVendors('');
+        if (!loadedVendors) {
+          loadVendors();
+        }
+      },
+      [loadedVendors, loadVendors],
+    );
+
     useEffect(() => {
       if (
         (type === 'technicians' || type === 'technician') &&
@@ -261,6 +296,13 @@ export const Field: <T>(
       }
       setTechniciansOpened(false);
     }, [onChange, techniciansIds, setTechniciansOpened]);
+    const handleVendorSelect = useCallback(() => {
+      if (onChange) {
+        onChange(vendorIds.filter(id => id > 0).join(','));
+      }
+      setVendorsOpened(false);
+    }, [onChange, vendorIds, setVendorsOpened]);
+
     const handleTechnicianChecked = useCallback(
       (id: number) => (checked: Value) => {
         if (id === 0) {
@@ -280,6 +322,26 @@ export const Field: <T>(
         }
       },
       [techniciansIds, setTechniciansIds, type],
+    );
+    const handleVendorChecked = useCallback(
+      (id: number) => (checked: Value) => {
+        if (id === 0) {
+          setVendorIds([0]);
+        } else if (type === 'vendor') {
+          setVendorIds([id]);
+        } else {
+          const ids = [
+            ...vendorIds.filter(vendorId => {
+              if (vendorId === 0) return false;
+              if (!checked && id === vendorId) return false;
+              return true;
+            }),
+            ...(checked ? [id] : []),
+          ];
+          setVendorIds(ids.length > 0 ? ids : [0]);
+        }
+      },
+      [vendorIds, setVendorIds, type],
     );
     const { actions = [], description } = props;
     const handleChange = useCallback(
@@ -760,6 +822,118 @@ export const Field: <T>(
                 }
               />
               <InfoTable data={data} loading={!loadedTechnicians} />
+            </Modal>
+          )}
+        </>
+      );
+    }
+    if (type === 'vendor') {
+      const id = `${name}-vendor-label`;
+      const ids = (value + '').split(',').map(id => +id);
+      const valueVendors =
+        ids.length === 1 && ids[0] === 0
+          ? 'Unselected'
+          : ids
+              .map(id => {
+                const vendor = vendors.find(item => item.getId() === id);
+                if (!vendor) return 'Loading...';
+                return `${vendor.getVendorName()}`;
+              })
+              .join('\n');
+      const searchVendorPhrase = (searchVendors + '').toLowerCase();
+
+      const data: Data = loadedVendors
+        ? [
+            [
+              {
+                value: (
+                  <Field
+                    name="vendor-0"
+                    value={vendorIds.includes(0)}
+                    label="Unselected"
+                    type="checkbox"
+                    className="FieldVendor"
+                    onChange={handleVendorChecked(0)}
+                  />
+                ),
+              },
+            ],
+            ...vendors
+              .filter(v =>
+                v.getVendorName().toLowerCase().includes(searchVendorPhrase),
+              )
+              .map(v => [
+                {
+                  value: (
+                    <Field
+                      name={`vendor-${id}`}
+                      value={vendorIds.includes(v.getId())}
+                      label={`${v.getVendorName()}`}
+                      type="checkbox"
+                      className="FieldVendor"
+                      onChange={handleVendorChecked(v.getId())}
+                    />
+                  ),
+                },
+              ]),
+          ]
+        : makeFakeRows(1, 30);
+      return (
+        <>
+          <FormControl
+            className={clsx('FieldInput', className, { compact, disabled })}
+            fullWidth
+            disabled={disabled}
+            error={error}
+          >
+            <InputLabel htmlFor={id}>{inputLabel}</InputLabel>
+            <div className="FieldVendors">
+              <Input
+                id={id}
+                value={valueVendors}
+                readOnly
+                fullWidth
+                multiline
+                endAdornment={
+                  <InputAdornment position="end" className="FieldVendorButton">
+                    <Button
+                      label="Change"
+                      variant="outlined"
+                      size="xsmall"
+                      onClick={handleSetVendorsOpen(true)}
+                      disabled={disabled}
+                      compact
+                    />
+                  </InputAdornment>
+                }
+              />
+            </div>
+          </FormControl>
+          {vendorsOpened && (
+            <Modal open onClose={handleSetVendorsOpen(false)} fullHeight>
+              <SectionBar
+                title={`Vendors`}
+                actions={[
+                  { label: 'Select', onClick: handleVendorSelect },
+                  {
+                    label: 'Close',
+                    variant: 'outlined',
+                    onClick: handleSetVendorsOpen(false),
+                  },
+                ]}
+                fixedActions
+                footer={
+                  <Field
+                    className="FieldSearchVendor"
+                    name="searchVendor"
+                    value={searchVendors}
+                    placeholder={`Search Vendors...`}
+                    type="search"
+                    onChange={setSearchVendors}
+                  />
+                }
+              />
+              <InfoTable data={data} loading={!loadedVendors} />
             </Modal>
           )}
         </>
