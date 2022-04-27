@@ -721,11 +721,7 @@ export const PendingInvoiceTransactionComponent: FC<Props> = ({ userId }) => {
       },
       {
         name: 'vendorId',
-
-        options: state.vendors.map(el => ({
-          label: el.getVendorName(),
-          value: el.getId(),
-        })),
+        type: 'vendor',
       },
       {
         name: 'departmentId',
