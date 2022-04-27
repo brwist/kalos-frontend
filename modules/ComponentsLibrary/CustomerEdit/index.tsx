@@ -210,6 +210,10 @@ export const CustomerEdit: FC<Props> = ({
       setSaving(true);
       const temp = makeSafeFormObject(data, new User());
       if (temp.getFieldMaskList().length > 0) {
+        if (temp.getId() == 0) {
+          temp.setLogin(temp.getEmail());
+          temp.setPwd(temp.getPhone());
+        }
         const result = await UserClientService.saveUser(temp, userId);
         if (
           createPropertyFlag &&
@@ -224,6 +228,7 @@ export const CustomerEdit: FC<Props> = ({
           property.setZip(temp.getZip());
           property.setCity(temp.getCity());
           property.setState(temp.getState());
+
           try {
             const geo = await MapClientService.loadGeoLocationByAddress(
               `${temp.getAddress()}, ${temp.getCity()}, ${temp.getState()} ${temp.getZip()}`,

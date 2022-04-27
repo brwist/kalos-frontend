@@ -181,6 +181,9 @@ export const Field: <T>(
     const [eventsOpened, setEventsOpened] = useState<boolean>(false);
     const [techniciansOpened, setTechniciansOpened] = useState<boolean>(false);
     const [vendorsOpened, setVendorsOpened] = useState<boolean>(false);
+    const [openAddVendor, setOpenAddVendor] = useState<boolean>(false);
+    const [newVendor, setNewVendor] = useState<string>('');
+
     const [techniciansIds, setTechniciansIds] = useState<number[]>(
       (value + '').split(',').map(id => +id),
     );
@@ -273,6 +276,16 @@ export const Field: <T>(
       [loadedVendors, loadVendors],
     );
 
+    const handleSetAddVendorOpen = useCallback(
+      (opened: boolean) => () => {
+        setOpenAddVendor(opened);
+        if (!opened == false) {
+          loadVendors();
+        }
+      },
+      [loadVendors],
+    );
+
     useEffect(() => {
       if (
         (type === 'technicians' || type === 'technician') &&
@@ -302,6 +315,18 @@ export const Field: <T>(
       }
       setVendorsOpened(false);
     }, [onChange, vendorIds, setVendorsOpened]);
+
+    const handleCreateNewVendor = useCallback(async () => {
+      if (newVendor != '') {
+        const req = new Vendor();
+        req.setVendorName(newVendor);
+        await VendorClientService.Create(req);
+      }
+      setNewVendor('');
+      setOpenAddVendor(false);
+      setLoadedVendors(false);
+      loadVendors();
+    }, [newVendor, loadVendors]);
 
     const handleTechnicianChecked = useCallback(
       (id: number) => (checked: Value) => {
@@ -908,6 +933,36 @@ export const Field: <T>(
                 }
               />
             </div>
+            {openAddVendor && vendorsOpened && (
+              <Modal open onClose={handleSetAddVendorOpen(false)}>
+                <SectionBar
+                  title={`Add Vendor`}
+                  actions={[
+                    {
+                      label: 'Create',
+                      variant: 'outlined',
+                      onClick: handleCreateNewVendor,
+                    },
+                    {
+                      label: 'Close',
+                      variant: 'outlined',
+                      onClick: handleSetAddVendorOpen(false),
+                    },
+                  ]}
+                  fixedActions
+                  footer={
+                    <Field
+                      className="FieldSearchVendor"
+                      name="newVendor"
+                      value={newVendor}
+                      placeholder={`Create New Vendor`}
+                      type="text"
+                      onChange={data => setNewVendor(data as string)}
+                    />
+                  }
+                />
+              </Modal>
+            )}
           </FormControl>
           {vendorsOpened && (
             <Modal open onClose={handleSetVendorsOpen(false)} fullHeight>
@@ -915,6 +970,11 @@ export const Field: <T>(
                 title={`Vendors`}
                 actions={[
                   { label: 'Select', onClick: handleVendorSelect },
+                  {
+                    label: 'Add Vendor',
+                    variant: 'outlined',
+                    onClick: handleSetAddVendorOpen(true),
+                  },
                   {
                     label: 'Close',
                     variant: 'outlined',

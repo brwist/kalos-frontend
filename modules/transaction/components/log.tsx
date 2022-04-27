@@ -154,7 +154,7 @@ export class TxnLog extends React.PureComponent<props, state> {
             justifyContent: 'center',
           }}
         >
-          <Paper style={{ width: '60%', overflowX: 'scroll' }}>
+          <Paper style={{ width: '100%', overflowX: 'scroll' }}>
             <IconButton onClick={this.toggleVisibility}>
               <CloseIcon />
             </IconButton>
