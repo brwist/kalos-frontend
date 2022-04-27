@@ -688,10 +688,7 @@ export const PendingInvoiceTransactionComponent: FC<Props> = ({ userId }) => {
         name: 'selectedVendorId',
         label: 'Select Vendor',
         required: true,
-        options: state.vendors.map(el => ({
-          label: el.getVendorName(),
-          value: el.getId(),
-        })),
+        type: 'vendor',
       },
       {
         name: 'departmentId',
