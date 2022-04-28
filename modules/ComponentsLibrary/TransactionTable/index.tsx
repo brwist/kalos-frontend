@@ -20,6 +20,8 @@ import { PDFDocument, PDFImage, PDFPage, PageSizes } from 'pdf-lib';
 import CopyIcon from '@material-ui/icons/FileCopySharp';
 import RejectIcon from '@material-ui/icons/ThumbDownSharp';
 import SubmitIcon from '@material-ui/icons/ThumbUpSharp';
+import EditSharp from '@material-ui/icons/EditSharp';
+import KeyboardReturn from '@material-ui/icons/KeyboardReturn';
 import { format, parseISO } from 'date-fns';
 import {
   TransactionAccount,
@@ -27,7 +29,13 @@ import {
 } from '../../../@kalos-core/kalos-rpc/TransactionAccount';
 import { Event } from '../../../@kalos-core/kalos-rpc/Event';
 import { PopoverComponent } from '../Popover';
-import React, { FC, useCallback, useEffect, useReducer } from 'react';
+import React, {
+  ReactElement,
+  FC,
+  useCallback,
+  useEffect,
+  useReducer,
+} from 'react';
 import {
   ENDPOINT,
   NULL_TIME,
@@ -593,6 +601,12 @@ export const TransactionTable: FC<Props> = ({
     );
     if (ok) {
       await makeUpdateStatus(txn.getId(), 5, 'Recorded and Processed');
+    }
+  };
+  const updateStatusSubmit = async (txn: Transaction) => {
+    const ok = confirm(`Are you sure you want resubmitted this?`);
+    if (ok) {
+      await makeUpdateStatus(txn.getId(), 2, 'Re-submitted Transaction');
     }
   };
   const forceAccept = async (txn: Transaction) => {
@@ -1313,7 +1327,256 @@ export const TransactionTable: FC<Props> = ({
     state.loaded,
     state.searching,
   ]);
+  const returnTransactionActions = (t: Transaction) => {
+    let actions: ReactElement[] = [];
+    let status = t.getStatusId();
+    const isOwner =
+      loggedUserId == t.getOwnerId() ||
+      loggedUserId == t.getAssignedEmployeeId();
+    const isManager = state.role == 'Manager';
+    const isAdmin = state.accountsPayableAdmin;
+    const copyAction = (
+      <Tooltip key="copy" content="Copy data to clipboard">
+        <IconButton
+          key="copyIcon"
+          size="small"
+          onClick={() =>
+            copyToClipboard(
+              `${parseISO(
+                t.getTimestamp().split(' ').join('T'),
+              ).toLocaleDateString()},${t.getDescription()},${t.getAmount()},${t.getOwnerName()},${t.getVendor()}`,
+            )
+          }
+        >
+          <CopyIcon />
+        </IconButton>
+      </Tooltip>
+    );
+    const editAction = (
+      <Tooltip key="editAll" content="Edit this transaction">
+        <IconButton
+          key="editIcon"
+          size="small"
+          onClick={() =>
+            dispatch({
+              type: ACTIONS.SET_TRANSACTION_TO_EDIT,
+              data: t,
+            })
+          }
+        >
+          <EditSharp />
+        </IconButton>
+      </Tooltip>
+    );
+    const notifyAction = (
+      <Tooltip
+        key="notifyManager"
+        content={
+          t.getDepartmentId() == 0 || t.getDepartmentId() == undefined
+            ? 'No Department, Cannot Notify Manager'
+            : 'Notify Department Manager'
+        }
+      >
+        <IconButton
+          key="notifyIcon"
+          size="small"
+          onClick={() =>
+            dispatch({
+              type: ACTIONS.SET_PENDING_SEND_NOTIFICATION_FOR_EXISTING_TRANSACTION,
+              data: t,
+            })
+          }
+        >
+          <NotificationsActiveIcon />
+        </IconButton>
+      </Tooltip>
+    );
 
+    const uploadAction = (
+      <Tooltip key="upload" content="Upload File">
+        <IconButton
+          key={'uploadIcon'}
+          size="small"
+          onClick={() =>
+            dispatch({
+              type: ACTIONS.SET_PENDING_UPLOAD_PHOTO,
+              data: t,
+            })
+          }
+        >
+          <UploadIcon />
+        </IconButton>
+      </Tooltip>
+    );
+    const galleryAction = (
+      <AltGallery
+        key="Gallery"
+        fileList={[]}
+        title="Transaction Uploads"
+        text="View Photos and Documents"
+        transactionID={t.getId()}
+        iconButton
+        canDelete={isOwner || isManager || isAdmin}
+      />
+    );
+    const logAction = <TxnLog key="txnLog" iconButton txnID={t.getId()} />;
+    const noteAction = (
+      <TxnNotes
+        key="viewNotes"
+        iconButton
+        text="View notes"
+        notes={t.getNotes()}
+        disabled={t.getNotes() === ''}
+      />
+    );
+    const auditAction = (
+      <Tooltip
+        key="audit"
+        content={
+          t.getIsAudited() && loggedUserId !== 1734
+            ? 'This transaction has already been audited'
+            : 'Mark as correct'
+        }
+      >
+        <IconButton
+          key="auditIcon"
+          size="small"
+          onClick={
+            loggedUserId === 1734 ? () => forceAccept(t) : () => auditTxn(t)
+          }
+          disabled={t.getIsAudited() && loggedUserId !== 1734}
+        >
+          <CheckIcon />
+        </IconButton>
+      </Tooltip>
+    );
+    const approveAction = (
+      <Tooltip key="approve" content={'Mark as accepted'}>
+        <IconButton
+          key="submitIcon"
+          disabled={t.getStatusId() === 5}
+          size="small"
+          onClick={() => updateStatus(t)}
+        >
+          <SubmitIcon />
+        </IconButton>
+      </Tooltip>
+    );
+    const submitAction = (
+      <Tooltip key="submit" content={'Submit'}>
+        <IconButton
+          key="submitIcon"
+          size="small"
+          onClick={() => updateStatusSubmit(t)}
+        >
+          <KeyboardReturn />
+        </IconButton>
+      </Tooltip>
+    );
+    const assignAction = (
+      <Tooltip key="assign" content="Assign an employee to this task">
+        <IconButton
+          key="assignIcon"
+          size="small"
+          onClick={() => handleSetAssigningUser(true, t.getId())}
+        >
+          <AssignmentIndIcon />
+        </IconButton>
+      </Tooltip>
+    );
+    const processAction = (
+      <Tooltip key="Process" content="Mark As Processed">
+        <IconButton
+          key="ProcessIcon"
+          size="small"
+          onClick={() => updateStatusProcessed(t)}
+        >
+          <Save />
+        </IconButton>
+      </Tooltip>
+    );
+    const deleteAction = (
+      <Tooltip key="delete" content="Delete this task">
+        <IconButton
+          key="deleteIcon"
+          size="small"
+          onClick={() =>
+            dispatch({
+              type: ACTIONS.SET_TRANSACTION_TO_DELETE,
+              data: t,
+            })
+          }
+        >
+          <DeleteIcon />
+        </IconButton>
+      </Tooltip>
+    );
+    const rejectAction = (
+      <Prompt
+        key="reject"
+        confirmFn={reason => dispute(reason, t)}
+        disabled={t.getStatusId() === 5}
+        text="Reject transaction"
+        prompt="Enter reason for rejection: "
+        Icon={RejectIcon}
+      />
+    );
+
+    actions = [galleryAction, noteAction, logAction, copyAction];
+
+    if (status == 2) {
+      //all actions available to creator, owner, manager, or AccountingAdmin
+      if (isOwner || isManager || isAdmin) {
+        actions = [...actions, editAction, deleteAction, uploadAction];
+        if (isManager || isAdmin) {
+          actions = [...actions, assignAction];
+          if (isManager) {
+            actions = [...actions, approveAction, rejectAction];
+          }
+          if (isAdmin) {
+            actions = [...actions, notifyAction];
+          }
+        }
+      }
+    }
+    if (status == 3) {
+      //accepted, so only editable by accounting admin
+      if (isManager || isAdmin) {
+        actions = [
+          ...actions,
+          editAction,
+          uploadAction,
+          assignAction,
+          rejectAction,
+        ];
+      }
+      if (isAdmin) {
+        actions = [...actions, processAction];
+      }
+    }
+    if (status == 4) {
+      if (isOwner || isAdmin || isManager) {
+        actions = [
+          ...actions,
+          editAction,
+          deleteAction,
+          uploadAction,
+          submitAction,
+        ];
+        if (isAdmin || isManager) {
+          actions = [...actions, assignAction];
+        }
+      }
+
+      //rejected, needs to have new option to set back to pending
+      //Creator, owner, Accounting Admin, or Manager should be able to resubmit
+    }
+    if (status == 5) {
+      //its been processsed, so only view information, but some edting by AccountAdmin
+    }
+
+    return actions;
+  };
   const imageDimensionToFit = (
     image: PDFImage,
     container: { width: number; height: number },
@@ -2094,282 +2357,7 @@ export const TransactionTable: FC<Props> = ({
                         : undefined,
                     },
                     {
-                      actions:
-                        !isSelector &&
-                        (state.role == 'AccountsPayable' ||
-                          state.role == 'Manager') ? (
-                          [
-                            <Tooltip
-                              key="copy"
-                              content="Copy data to clipboard"
-                            >
-                              <IconButton
-                                key="copyIcon"
-                                size="small"
-                                onClick={() =>
-                                  copyToClipboard(
-                                    `${parseISO(
-                                      selectorParam.txn
-                                        .getTimestamp()
-                                        .split(' ')
-                                        .join('T'),
-                                    ).toLocaleDateString()},${selectorParam.txn.getDescription()},${selectorParam.txn.getAmount()},${selectorParam.txn.getOwnerName()},${selectorParam.txn.getVendor()}`,
-                                  )
-                                }
-                              >
-                                <CopyIcon />
-                              </IconButton>
-                            </Tooltip>,
-                            <Tooltip
-                              key="editAll"
-                              content="Edit this transaction"
-                            >
-                              <IconButton
-                                key="editIcon"
-                                size="small"
-                                onClick={() =>
-                                  dispatch({
-                                    type: ACTIONS.SET_TRANSACTION_TO_EDIT,
-                                    data: selectorParam.txn,
-                                  })
-                                }
-                              >
-                                <LineWeightIcon />
-                              </IconButton>
-                            </Tooltip>,
-                            ...(state.accountsPayableAdmin &&
-                            selectorParam.txn.getDepartmentId() != 0 &&
-                            selectorParam.txn.getDepartmentId() !== undefined
-                              ? [
-                                  <Tooltip
-                                    key="notifyManager"
-                                    content={
-                                      selectorParam.txn.getDepartmentId() ==
-                                        0 ||
-                                      selectorParam.txn.getDepartmentId() ==
-                                        undefined
-                                        ? 'No Department, Cannot Notify Manager'
-                                        : 'Notify Department Manager'
-                                    }
-                                  >
-                                    <IconButton
-                                      key="notifyIcon"
-                                      size="small"
-                                      onClick={() =>
-                                        dispatch({
-                                          type: ACTIONS.SET_PENDING_SEND_NOTIFICATION_FOR_EXISTING_TRANSACTION,
-                                          data: selectorParam.txn,
-                                        })
-                                      }
-                                    >
-                                      <NotificationsActiveIcon />
-                                    </IconButton>
-                                  </Tooltip>,
-                                ]
-                              : []),
-                            <Tooltip key="upload" content="Upload File">
-                              <IconButton
-                                key={'uploadIcon'}
-                                size="small"
-                                onClick={() =>
-                                  dispatch({
-                                    type: ACTIONS.SET_PENDING_UPLOAD_PHOTO,
-                                    data: selectorParam.txn,
-                                  })
-                                }
-                              >
-                                <UploadIcon />
-
-                                {/*<input
-                                type="file" 
-                                ref={FileInput}
-                                
-                                onChange={event => {
-                                  if (!transactionOfFileUploading) {
-                                    console.error(
-                                      'No transaction selected for upload.',
-                                    );
-                                    alert(
-                                      'No transaction selected for upload.',
-                                    );
-                                    return;
-                                  }
-                                  event.preventDefault();
-                                  handleFile(transactionOfFileUploading!);
-                                }}
-                                style={{ display: 'none' }}
-                              />*/}
-                              </IconButton>
-                            </Tooltip>,
-                            <AltGallery
-                              key="Gallery"
-                              fileList={[]}
-                              title="Transaction Uploads"
-                              text="View Photos and Documents"
-                              transactionID={selectorParam.txn.getId()}
-                              iconButton
-                              canDelete={true}
-                            />,
-                            <TxnLog
-                              key="txnLog"
-                              iconButton
-                              txnID={selectorParam.txn.getId()}
-                            />,
-                            <TxnNotes
-                              key="viewNotes"
-                              iconButton
-                              text="View notes"
-                              notes={selectorParam.txn.getNotes()}
-                              disabled={selectorParam.txn.getNotes() === ''}
-                            />,
-                            ...([9928, 9646, 1734].includes(loggedUserId)
-                              ? [
-                                  <Tooltip
-                                    key="audit"
-                                    content={
-                                      selectorParam.txn.getIsAudited() &&
-                                      loggedUserId !== 1734
-                                        ? 'This transaction has already been audited'
-                                        : 'Mark as correct'
-                                    }
-                                  >
-                                    <IconButton
-                                      key="auditIcon"
-                                      size="small"
-                                      onClick={
-                                        loggedUserId === 1734
-                                          ? () => forceAccept(selectorParam.txn)
-                                          : () => auditTxn(selectorParam.txn)
-                                      }
-                                      disabled={
-                                        selectorParam.txn.getIsAudited() &&
-                                        loggedUserId !== 1734
-                                      }
-                                    >
-                                      <CheckIcon />
-                                    </IconButton>
-                                  </Tooltip>,
-                                ]
-                              : []),
-
-                            <Tooltip key="submit" content={'Mark as accepted'}>
-                              <IconButton
-                                key="submitIcon"
-                                disabled={selectorParam.txn.getStatusId() === 5}
-                                size="small"
-                                onClick={() => updateStatus(selectorParam.txn)}
-                              >
-                                <SubmitIcon />
-                              </IconButton>
-                            </Tooltip>,
-                            <Tooltip
-                              key="assign"
-                              content="Assign an employee to this task"
-                            >
-                              <IconButton
-                                key="assignIcon"
-                                size="small"
-                                onClick={() =>
-                                  handleSetAssigningUser(
-                                    true,
-                                    selectorParam.txn.getId(),
-                                  )
-                                }
-                              >
-                                <AssignmentIndIcon />
-                              </IconButton>
-                            </Tooltip>,
-                            selectorParam.txn.getStatusId() === 3 &&
-                              loggedUserId === 98217 && (
-                                <Tooltip
-                                  key="Process"
-                                  content="Mark As Processed"
-                                >
-                                  <IconButton
-                                    key="ProcessIcon"
-                                    size="small"
-                                    onClick={() =>
-                                      updateStatusProcessed(selectorParam.txn)
-                                    }
-                                  >
-                                    <Save />
-                                  </IconButton>
-                                </Tooltip>
-                              ),
-
-                            <Tooltip key="delete" content="Delete this task">
-                              <IconButton
-                                key="deleteIcon"
-                                size="small"
-                                onClick={() =>
-                                  dispatch({
-                                    type: ACTIONS.SET_TRANSACTION_TO_DELETE,
-                                    data: selectorParam.txn,
-                                  })
-                                }
-                              >
-                                <DeleteIcon />
-                              </IconButton>
-                            </Tooltip>,
-                            <Prompt
-                              key="reject"
-                              confirmFn={reason =>
-                                dispute(reason, selectorParam.txn)
-                              }
-                              disabled={selectorParam.txn.getStatusId() === 5}
-                              text="Reject transaction"
-                              prompt="Enter reason for rejection: "
-                              Icon={RejectIcon}
-                            />,
-                          ]
-                        ) : (
-                          <div key={'NormalActions'}>
-                            <Tooltip key="upload" content="Upload File">
-                              <IconButton
-                                key={'uploadIcon'}
-                                size="small"
-                                onClick={() =>
-                                  dispatch({
-                                    type: ACTIONS.SET_PENDING_UPLOAD_PHOTO,
-                                    data: selectorParam.txn,
-                                  })
-                                }
-                              >
-                                <UploadIcon />
-                              </IconButton>
-                            </Tooltip>
-                            <AltGallery
-                              key="Gallery"
-                              fileList={[]}
-                              title="Transaction Uploads"
-                              text="View Photos and Documents"
-                              transactionID={selectorParam.txn.getId()}
-                              iconButton
-                            />
-                            {selectorParam.txn.getAssignedEmployeeId() ==
-                              loggedUserId ||
-                              (selectorParam.txn.getOwnerId() ==
-                                loggedUserId && (
-                                <Tooltip
-                                  key="editAll"
-                                  content="Edit this transaction"
-                                >
-                                  <IconButton
-                                    key="editIcon"
-                                    size="small"
-                                    onClick={() =>
-                                      dispatch({
-                                        type: ACTIONS.SET_TRANSACTION_TO_EDIT,
-                                        data: selectorParam.txn,
-                                      })
-                                    }
-                                  >
-                                    <LineWeightIcon />
-                                  </IconButton>
-                                </Tooltip>
-                              ))}
-                          </div>
-                        ),
+                      actions: returnTransactionActions(selectorParam.txn),
                       actionsFullWidth: true,
                     },
                     {
