@@ -13,8 +13,11 @@ import { PerDiem } from '../../../@kalos-core/kalos-rpc/compiled-protos/perdiem_
 interface Props {
   onClose: () => void;
   onSave: (addressPair: AddressPair.AddressPair) => void;
+  onSaveLabel?: string;
   addressFields: number;
+  title?: string;
   schema: Schema<AddressPair.AddressPair>;
+  noModal?: boolean;
   perDiemRowIds: number[];
 }
 
@@ -51,6 +54,7 @@ export class PlaceAutocompleteAddressForm extends React.PureComponent<
       formKey: 0,
       validationPopupOpen: false,
       noteLengthPopupOpen: false,
+
       saving: false,
       perDiemDropDownSelected: this.props.perDiemRowIds
         ? `${this.props.perDiemRowIds[0]} | 0`
@@ -373,9 +377,10 @@ export class PlaceAutocompleteAddressForm extends React.PureComponent<
     addressPair.FullAddressDestination = `${addressPair.StreetAddressDestination}, ${addressPair.CityDestination}, ${addressPair.StateDestination}, ${addressPair.CountryDestination}`;
 
     addressPair.PerDiemId = this.state.perDiemDropDownSelected.split(' ')[0];
+    this.setState({ saving: true });
 
     this.props.onSave(addressPair);
-    this.setState({ saving: true });
+    this.setState({ saving: false });
   };
 
   setPerDiemDropdown = (value: any) => {
@@ -409,11 +414,83 @@ export class PlaceAutocompleteAddressForm extends React.PureComponent<
             </Typography>
           </Alert>
         )}
-        <Modal open onClose={this.props.onClose}>
+        {this.props.noModal ? (
           <>
             {this.state.saving && <Loader />}
             <>
               {/*
+                <SectionBar title="Per Diem" uncollapsable>
+                  <FormControl>
+                    {this.state.perDiems ? (
+                      <InputLabel shrink htmlFor="per-diem-select">
+                        Per Diem
+                      </InputLabel>
+                    ) : (
+                      <></>
+                    )}
+                    {this.state.perDiems ? (
+                      <Select
+                        value={
+                          this.state.perDiems
+                            ? this.state.perDiemDropDownSelected
+                            : 'loading'
+                        }
+                        onChange={this.setPerDiemDropdown}
+                        label="Per Diem"
+                        inputProps={{
+                          name: 'age',
+                          id: 'per-diem-select',
+                        }}
+                      >
+                        {this.state.perDiems ? (
+                          this.state.perDiems.map((key, idx) => {
+                            return (
+                              <MenuItem
+                                value={key.getId() + ' | ' + idx}
+                                key={key.getId() + ' | ' + idx}
+                              >
+                                {key.getDepartment()?.getValue()} |{' '}
+                                {key.getNotes()}
+                              </MenuItem>
+                            );
+                          })
+                        ) : (
+                          <MenuItem value={'loading'} key="Loading">
+                            Loading...
+                          </MenuItem>
+                        )}
+                      </Select>
+                    ) : (
+                      <></>
+                    )}
+                  </FormControl>
+                </SectionBar>
+                */}
+            </>
+            <Form
+              title={
+                this.props.title
+                  ? this.props.title
+                  : 'Enter Trip Origin and Destination'
+              }
+              schema={this.props.schema}
+              onClose={null}
+              onSave={this.save}
+              submitLabel={
+                this.props.onSaveLabel ? this.props.onSaveLabel : undefined
+              }
+              data={this.state.address}
+              className="LocationForm"
+              key={this.state.formKey}
+              inputFieldRefs={this.inputArray}
+            />
+          </>
+        ) : (
+          <Modal open onClose={this.props.onClose}>
+            <>
+              {this.state.saving && <Loader />}
+              <>
+                {/*
               <SectionBar title="Per Diem" uncollapsable>
                 <FormControl>
                   {this.state.perDiems ? (
@@ -461,19 +538,27 @@ export class PlaceAutocompleteAddressForm extends React.PureComponent<
                 </FormControl>
               </SectionBar>
               */}
+              </>
+              <Form
+                title={
+                  this.props.title
+                    ? this.props.title
+                    : 'Enter Trip Origin and Destination'
+                }
+                schema={this.props.schema}
+                onClose={this.props.onClose}
+                onSave={this.save}
+                data={this.state.address}
+                submitLabel={
+                  this.props.onSaveLabel ? this.props.onSaveLabel : undefined
+                }
+                className="LocationForm"
+                key={this.state.formKey}
+                inputFieldRefs={this.inputArray}
+              />
             </>
-            <Form
-              title="Enter Trip Origin and Destination"
-              schema={this.props.schema}
-              onClose={this.props.onClose}
-              onSave={this.save}
-              data={this.state.address}
-              className="LocationForm"
-              key={this.state.formKey}
-              inputFieldRefs={this.inputArray}
-            />
-          </>
-        </Modal>
+          </Modal>
+        )}
       </>
     );
   }

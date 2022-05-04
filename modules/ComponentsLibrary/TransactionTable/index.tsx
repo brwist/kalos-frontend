@@ -1534,7 +1534,7 @@ export const TransactionTable: FC<Props> = ({
             actions = [...actions, approveAction, rejectAction];
           }
           if (isAdmin) {
-            actions = [...actions, notifyAction];
+            actions = [...actions, notifyAction, approveAction, rejectAction];
           }
         }
       }
@@ -1551,7 +1551,7 @@ export const TransactionTable: FC<Props> = ({
         ];
       }
       if (isAdmin) {
-        actions = [...actions, processAction];
+        actions = [...actions, processAction, deleteAction];
       }
     }
     if (status == 4) {
@@ -1564,15 +1564,15 @@ export const TransactionTable: FC<Props> = ({
           submitAction,
         ];
         if (isAdmin || isManager) {
-          actions = [...actions, assignAction];
+          actions = [...actions, assignAction, deleteAction];
         }
       }
-
-      //rejected, needs to have new option to set back to pending
-      //Creator, owner, Accounting Admin, or Manager should be able to resubmit
     }
     if (status == 5) {
       //its been processsed, so only view information, but some edting by AccountAdmin
+      if (isAdmin) {
+        actions = [...actions, editAction, uploadAction];
+      }
     }
 
     return actions;
