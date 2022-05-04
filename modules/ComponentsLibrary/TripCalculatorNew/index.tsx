@@ -50,8 +50,8 @@ type Home = {
   userId: number;
 };
 type Options = {
-  dropdown1: 'Employee' | 'Job' | 'Custom';
-  dropdown2: 'Employee' | 'Job' | 'Custom';
+  dropdown1: 'Home' | 'Job' | 'Custom';
+  dropdown2: 'Home' | 'Job' | 'Custom';
   date: string;
   roundTrip: boolean;
   jobNumber: number;
@@ -66,7 +66,7 @@ export const TripCalculatorNew: FC<props> = ({
     error: undefined,
     loadingData: false,
     origin: '',
-    dropDownValue1: 'Employee',
+    dropDownValue1: 'Home',
     dropDownValue2: 'Job',
     departmentNumber: 0,
     optionalFormData: {
@@ -83,7 +83,7 @@ export const TripCalculatorNew: FC<props> = ({
     distanceResults: { distance: undefined, duration: undefined },
   });
   const dropdownOptions = [
-    { label: 'Employee', value: 'Employee' },
+    { label: 'Home', value: 'Home' },
     { label: 'Job', value: 'Job' },
     { label: 'Custom', value: 'Custom' },
   ];
@@ -154,7 +154,7 @@ export const TripCalculatorNew: FC<props> = ({
     });
 
     dispatch({ type: ACTIONS.SET_FORM_VALUE_2, data: '' });
-    dispatch({ type: ACTIONS.SET_DROPDOWN_VALUE_1, data: 'Employee' });
+    dispatch({ type: ACTIONS.SET_DROPDOWN_VALUE_1, data: 'Home' });
     dispatch({
       type: ACTIONS.SET_DISTANCE_RESULTS,
       data: { distance: undefined, duration: undefined },
@@ -165,7 +165,7 @@ export const TripCalculatorNew: FC<props> = ({
     dispatch({ type: ACTIONS.SET_ORIGIN, data: '' });
   };
   const returnFormBasedOnSelection = (
-    option: 'Employee' | 'Job' | 'Custom',
+    option: 'Home' | 'Job' | 'Custom',
     dropdown: 1 | 2,
   ) => {
     console.log('returnFormBasedOnSelection');
@@ -229,7 +229,7 @@ export const TripCalculatorNew: FC<props> = ({
         />
       );
     }
-    if (option === 'Employee') {
+    if (option === 'Home') {
       return <div>{state.homeAddress}</div>;
     }
     if (option === 'Job') {
@@ -329,12 +329,12 @@ export const TripCalculatorNew: FC<props> = ({
     let destination = '';
     let homeTravel = false;
     let jobNumber = 0;
-    if (state.dropDownValue1 == 'Employee') {
+    if (state.dropDownValue1 == 'Home') {
       dispatch({ type: ACTIONS.SET_ORIGIN, data: state.homeAddress });
       origin = state.homeAddress;
       homeTravel = true;
     }
-    if (state.dropDownValue2 == 'Employee') {
+    if (state.dropDownValue2 == 'Home') {
       dispatch({ type: ACTIONS.SET_DESTINATION, data: state.homeAddress });
       destination = state.homeAddress;
       homeTravel = true;
