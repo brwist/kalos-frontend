@@ -22,7 +22,6 @@ import { format } from 'date-fns';
 import { Form, Schema } from '../Form';
 import { Alert } from '../Alert';
 import CircularProgress from '@material-ui/core/CircularProgress';
-
 import { InfoTable } from '../InfoTable';
 import { parseInt } from 'lodash';
 

@@ -506,7 +506,7 @@ function formatDay(datetime: string) {
       5: 'Fri',
       6: 'Sat',
     } as { [key: number]: string }
-  )[new Date(datetime).getDay()];
+  )[new Date(datetime.substring(0, 10)).getDay() + 1];
 }
 
 /**

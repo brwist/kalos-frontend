@@ -137,7 +137,6 @@ export const TransactionValidationReport: FC<Props> = ({
   });
 
   const loadPrintEntries = useCallback(async () => {
-    if (printEntries.length === count) return;
     const req = new TransactionReportLine();
     req.setYear(form.year.toString());
     req.setWithoutLimit(true);
@@ -146,11 +145,10 @@ export const TransactionValidationReport: FC<Props> = ({
     setEntries(results.getDataList());
     setCount(results.getTotalCount());
     setPrintEntries(results.getDataList());
-  }, [setPrintEntries, form, printEntries, count]);
+  }, [setPrintEntries, form]);
 
   const load = useCallback(async () => {
     setLoading(true);
-    console.log({ form });
     const req = new TransactionReportLine();
     req.setYear(form.year.toString());
     req.setPageNumber(page);
