@@ -13,7 +13,7 @@ import { useConfirm } from '../../ConfirmService';
 import { Payroll as PayrollComponent } from '../../Payroll';
 import { Modal } from '../../Modal';
 import { SectionBar } from '../../SectionBar';
-import { TripCalculatorNew } from '../../TripCalculatorNew';
+import { TripCalculator } from '../../TripCalculator';
 import './Toolbar.module.less';
 
 type Props = {
@@ -164,7 +164,7 @@ const Toolbar: FC<Props> = ({
               open={openCalculator}
               onClose={() => setOpenCalculator(false)}
             >
-              <TripCalculatorNew
+              <TripCalculator
                 loggedUserId={userID}
                 role={role}
                 onClose={() => setOpenCalculator(false)}
