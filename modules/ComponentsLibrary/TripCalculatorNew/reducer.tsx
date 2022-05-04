@@ -5,8 +5,8 @@ export type State = {
   error: string | undefined;
   origin: string;
   destination: string;
-  dropDownValue1: 'Employee' | 'Job' | 'Custom';
-  dropDownValue2: 'Employee' | 'Job' | 'Custom';
+  dropDownValue1: 'Home' | 'Job' | 'Custom';
+  dropDownValue2: 'Home' | 'Job' | 'Custom';
   formValue1: number | string;
   formValue2: number | string;
   optionalFormData: { date: string; roundTrip: boolean; jobNumber: number };
@@ -53,8 +53,8 @@ export type Action =
       type: ACTIONS.SET_OPTIONAL_FORM_DATA;
       data: { date: string; roundTrip: boolean; jobNumber: number };
     }
-  | { type: ACTIONS.SET_DROPDOWN_VALUE_1; data: 'Employee' | 'Job' | 'Custom' }
-  | { type: ACTIONS.SET_DROPDOWN_VALUE_2; data: 'Employee' | 'Job' | 'Custom' }
+  | { type: ACTIONS.SET_DROPDOWN_VALUE_1; data: 'Home' | 'Job' | 'Custom' }
+  | { type: ACTIONS.SET_DROPDOWN_VALUE_2; data: 'Home' | 'Job' | 'Custom' }
   | { type: ACTIONS.SET_DESTINATION; data: string }
   | { type: ACTIONS.SET_TRIP_ERROR; data: string | undefined }
   | {
