@@ -150,8 +150,10 @@ export const EditTransaction: FC<Props> = ({
     [
       {
         label: 'Vendor',
-        name: 'getVendor',
+        name: 'getVendorId',
+        type: 'vendor',
       },
+
       {
         label: 'Order #',
         name: 'getOrderNumber',

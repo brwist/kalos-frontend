@@ -2,6 +2,8 @@ import React, { FC, useState, useCallback } from 'react';
 import Alert from '@material-ui/lab/Alert';
 import { Form, Schema } from '../Form';
 import { Transaction } from '../../../@kalos-core/kalos-rpc/Transaction';
+import { Vendor } from '../../../@kalos-core/kalos-rpc/Vendor';
+
 import { TransactionAccountList } from '../../../@kalos-core/kalos-rpc/TransactionAccount';
 import {
   getFileExt,
@@ -10,6 +12,7 @@ import {
   TransactionActivityClientService,
   TransactionClientService,
   uploadPhotoToExistingTransaction,
+  VendorClientService,
 } from '../../../helpers';
 
 import { RoleType } from '../Payroll';
@@ -36,7 +39,7 @@ type Entry = {
   description: string;
   eventId: number;
   tag: string;
-  vendor: string;
+  vendor: number;
   cost: number;
   ownerId: number;
   costCenter: number;
@@ -91,7 +94,7 @@ export const UploadPhotoTransaction: FC<Props> = ({
       }
     ).value,
     ownerId: loggedUserId,
-    vendor: '',
+    vendor: 0,
     cost: 0,
     tag: (
       SUBJECT_TAGS_TRANSACTIONS.find(({ label }) => label === defaultTag) || {
@@ -131,7 +134,15 @@ export const UploadPhotoTransaction: FC<Props> = ({
       newTransaction.setAssignedEmployeeId(loggedUserId);
       newTransaction.setAmount(data.cost);
       newTransaction.setDescription(data.description);
-      newTransaction.setVendor(data.vendor);
+      newTransaction.setVendorId(data.vendor);
+
+      if (newTransaction.getVendorId() != 0) {
+        const vendorReq = new Vendor();
+        vendorReq.setIsActive(1);
+        vendorReq.setId(newTransaction.getVendorId());
+        const result = await VendorClientService.Get(vendorReq);
+        newTransaction.setVendor(result.getVendorName());
+      }
       newTransaction.setCostCenterId(data.costCenter);
       newTransaction.setTimestamp(timestamp());
       newTransaction.setIsRecorded(true);
@@ -331,6 +342,7 @@ export const UploadPhotoTransaction: FC<Props> = ({
       {
         name: 'vendor',
         label: 'Vendor',
+        type: 'vendor',
         required: true,
         // onBlur: handleSetVendorToCheckDuplicate,
       },

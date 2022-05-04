@@ -9,6 +9,7 @@ import {
 } from '../../../@kalos-core/kalos-rpc/TransactionActivity';
 import CheckCircleOutlineIcon from '@material-ui/icons/CheckCircleOutline';
 import { User } from '../../../@kalos-core/kalos-rpc/User';
+import { Vendor } from '../../../@kalos-core/kalos-rpc/Vendor';
 import IconButton from '@material-ui/core/IconButton';
 import AssignmentIndIcon from '@material-ui/icons/AssignmentInd';
 import CheckIcon from '@material-ui/icons/CheckCircleSharp';
@@ -50,6 +51,7 @@ import {
   timestamp,
   EventClientService,
   TransactionClientService,
+  VendorClientService,
   UserClientService,
   TransactionActivityClientService,
   EmailClientService,
@@ -123,7 +125,7 @@ let filter: FilterType = {
   jobNumber: 0,
   isAccepted: undefined,
   isRejected: undefined,
-  isPending: undefined,
+  isPending: true,
   isProcessed: undefined,
   amount: undefined,
   billingRecorded: false,
@@ -149,6 +151,7 @@ export const TransactionTable: FC<Props> = ({
     document1: '',
     document2: '',
     notify: 0,
+    vendors: [],
     accountsPayableAdmin: false,
     mergeDocumentAlert: '',
     costCenterData: new TransactionAccountList(),
@@ -175,7 +178,7 @@ export const TransactionTable: FC<Props> = ({
     error: undefined,
     loaded: false,
     changingPage: false,
-    status: 'None',
+    status: 'Pending',
     universalSearch: undefined,
     searching: false,
     fileData: undefined,
@@ -484,7 +487,7 @@ export const TransactionTable: FC<Props> = ({
       employees = await UserClientService.loadTechnicians();
     } catch (err) {
       console.error(
-        `An error occurred while loading technicians from the UserClientService: ${err}`,
+        `An error occurred while loading technicians/vendors: ${err}`,
       );
     }
     if (employees) {
@@ -785,6 +788,15 @@ export const TransactionTable: FC<Props> = ({
         );
       }
       try {
+        if (transactionToSave.getVendorId()) {
+          const vendorReq = new Vendor();
+          vendorReq.setId(transactionToSave.getVendorId());
+
+          const vendorResult = await VendorClientService.Get(vendorReq);
+          transactionToSave.setVendor(vendorResult.getVendorName());
+          transactionToSave.addFieldMask('VendorId');
+          transactionToSave.addFieldMask('Vendor');
+        }
         await TransactionClientService.Update(transactionToSave);
         const temp = transactionToSave;
         transactionToSave.setCostCenterId(
@@ -1218,9 +1230,14 @@ export const TransactionTable: FC<Props> = ({
       newTxn.setNotes(saved['Notes']);
       newTxn.setCostCenterId(saved['Cost Center']);
       newTxn.setInvoiceNumber(saved['Invoice #']);
-
+      newTxn.setVendorId(saved['Vendor']);
+      if (newTxn.getVendorId() != 0) {
+        const vendorReq = new Vendor();
+        vendorReq.setId(newTxn.getVendorId());
+        const vendorResult = await VendorClientService.Get(vendorReq);
+        newTxn.setVendor(vendorResult.getVendorName());
+      }
       newTxn.setAmount(saved['Amount']);
-      newTxn.setVendor(saved['Vendor']);
       newTxn.setStatusId(2);
       newTxn.setVendorCategory('Receipt');
       if (saved['Notes'] === '')
@@ -1272,6 +1289,7 @@ export const TransactionTable: FC<Props> = ({
       loggedUserId,
       handleResetDuplicateCheck,
       resetTransactions,
+      state.vendors,
       state.departments,
       state.notify,
       refresh,
@@ -2130,7 +2148,7 @@ export const TransactionTable: FC<Props> = ({
               },
               {
                 columnName: 'Vendor',
-                columnType: 'text',
+                columnType: 'vendor',
                 //onBlur: value => handleSetVendorToCheckDuplicate(value),
               },
               {

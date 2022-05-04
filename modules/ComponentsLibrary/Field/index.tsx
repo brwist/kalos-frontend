@@ -207,6 +207,8 @@ export const Field: <T>(
     const loadVendors = useCallback(async () => {
       const req = new Vendor();
       req.setIsActive(1);
+      req.setWithoutLimit(true);
+      req.setOrderBy('vendor_name');
       const vendors = (
         await VendorClientService.BatchGet(req)
       ).getResultsList();
@@ -294,7 +296,17 @@ export const Field: <T>(
       ) {
         loadUserTechnicians();
       }
-    }, [loadUserTechnicians, type, value, loadedTechnicians]);
+      if (type === 'vendor' && !loadedVendors && value !== '0') {
+        loadVendors();
+      }
+    }, [
+      loadUserTechnicians,
+      loadedVendors,
+      loadVendors,
+      type,
+      value,
+      loadedTechnicians,
+    ]);
     const eventAdornment = useMemo(() => {
       if (eventStatus === -1)
         return <BlockIcon className="FieldEventFailure" />;
@@ -855,12 +867,14 @@ export const Field: <T>(
     if (type === 'vendor') {
       const id = `${name}-vendor-label`;
       const ids = (value + '').split(',').map(id => +id);
+      console.log('vendors,', vendors);
       const valueVendors =
         ids.length === 1 && ids[0] === 0
           ? 'Unselected'
           : ids
               .map(id => {
                 const vendor = vendors.find(item => item.getId() === id);
+
                 if (!vendor) return 'Loading...';
                 return `${vendor.getVendorName()}`;
               })
@@ -919,6 +933,13 @@ export const Field: <T>(
                 readOnly
                 fullWidth
                 multiline
+                onKeyUp={event => {
+                  if (event.key === 'Enter') {
+                    event.stopPropagation();
+                    event.preventDefault();
+                    handleSetVendorsOpen(true)();
+                  }
+                }}
                 endAdornment={
                   <InputAdornment position="end" className="FieldVendorButton">
                     <Button
@@ -981,7 +1002,6 @@ export const Field: <T>(
                     onClick: handleSetVendorsOpen(false),
                   },
                 ]}
-                fixedActions
                 footer={
                   <Field
                     className="FieldSearchVendor"
