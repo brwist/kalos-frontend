@@ -364,40 +364,47 @@ export const TripCalculatorNew: FC<props> = ({
       destination = state.formValue2;
     }
     dispatch({ type: ACTIONS.SET_LOADING_DATA, data: true });
+    if (origin != ',,,,' && destination != ',,,') {
+      try {
+        const results = await MapClientService.getTripDistance(
+          origin,
+          destination,
+        );
 
-    try {
-      const results = await MapClientService.getTripDistance(
-        origin,
-        destination,
-      );
+        dispatch({ type: ACTIONS.SET_DISTANCE_RESULTS, data: results });
+        const trip = new Trip();
+        trip.setDestinationAddress(destination);
+        trip.setOriginAddress(origin);
+        const distance = parseFloat(results.distance.toFixed(2));
+        trip.setDepartmentId(state.departmentNumber);
+        trip.setDate(state.optionalFormData.date);
+        trip.setHomeTravel(homeTravel);
+        trip.setJobNumber(jobNumber);
+        trip.setDistanceInMiles(distance);
 
-      dispatch({ type: ACTIONS.SET_DISTANCE_RESULTS, data: results });
-      const trip = new Trip();
-      trip.setDestinationAddress(destination);
-      trip.setOriginAddress(origin);
-      const distance = parseFloat(results.distance.toFixed(2));
-      trip.setDepartmentId(state.departmentNumber);
-      trip.setDate(state.optionalFormData.date);
-      trip.setHomeTravel(homeTravel);
-      trip.setJobNumber(jobNumber);
-      trip.setDistanceInMiles(distance);
+        trip.setUserId(loggedUserId);
+        if (state.optionalFormData.jobNumber != 0) {
+          trip.setJobNumber(state.optionalFormData.jobNumber);
+        }
 
-      trip.setUserId(loggedUserId);
-      if (state.optionalFormData.jobNumber != 0) {
-        trip.setJobNumber(state.optionalFormData.jobNumber);
-      }
-
-      dispatch({ type: ACTIONS.SET_PENDING_TRIP, data: trip });
-    } catch (e) {
-      console.log('there was an issue getting the Trip Info');
-      dispatch({
-        type: ACTIONS.SET_TRIP_ERROR,
-        data: `There was an error fetching the data. 
+        dispatch({ type: ACTIONS.SET_PENDING_TRIP, data: trip });
+      } catch (e) {
+        console.log('there was an issue getting the Trip Info');
+        dispatch({
+          type: ACTIONS.SET_TRIP_ERROR,
+          data: `There was an error fetching the data. 
         It could be an error with one of the addresses \r\n
   `,
+        });
+      }
+    } else {
+      dispatch({
+        type: ACTIONS.SET_TRIP_ERROR,
+        data: `There was an error with one of the address the data. 
+      It could be an error with one of the addresses \r\n
+`,
       });
     }
-
     dispatch({ type: ACTIONS.SET_LOADING_DATA, data: false });
   };
 
