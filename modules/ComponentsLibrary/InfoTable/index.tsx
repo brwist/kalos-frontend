@@ -60,6 +60,7 @@ interface Props extends Styles {
   styles?: CSSProperties;
   className?: string;
   skipPreLine?: boolean;
+  onEnter?: () => void;
   onNotify?: (notifyValue: boolean) => void;
   onSaveRowButton?: (results: {}) => any;
   // row button
@@ -92,11 +93,13 @@ export const InfoTable = ({
   loading = false,
   error = false,
   compact = false,
+  onEnter,
   hoverable = true,
   skipPreLine = false,
   className = '',
   styles,
   onSaveRowButton,
+
   rowButton,
   ignoreNotify = false,
   ignoreImage = false,
@@ -315,6 +318,15 @@ export const InfoTable = ({
         data.map((items, idx) => (
           <div
             key={idx}
+            tabIndex={0}
+            onKeyUp={event => {
+              if (event.key === 'Enter' && onEnter) {
+                console.log('Info table enter');
+                event.stopPropagation();
+                event.preventDefault();
+                onEnter();
+              }
+            }}
             className={clsx('InfoTableRow', { compact, hoverable })}
           >
             {items.map(
