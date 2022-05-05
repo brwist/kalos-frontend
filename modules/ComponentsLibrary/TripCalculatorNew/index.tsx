@@ -140,6 +140,7 @@ export const TripCalculatorNew: FC<props> = ({
     const result = await UserClientService.Get(req);
     const address = `${result?.getAddress()},${result?.getCity()},${result?.getState()},${result?.getZip()}`;
     dispatch({ type: ACTIONS.SET_HOME_ADDRESS, data: address });
+    dispatch({ type: ACTIONS.SET_FORM_VALUE_1, data: address });
     dispatch({
       type: ACTIONS.SET_DEPARTMENT,
       data: result.getEmployeeDepartmentId(),
@@ -251,12 +252,19 @@ export const TripCalculatorNew: FC<props> = ({
         options: dropdownOptions,
         name: 'dropdown1',
         disabled: state.loadingData == true || role == undefined ? true : false,
-        onChange: () => {
+        onChange: value => {
           dispatch({
             type: ACTIONS.SET_DISTANCE_RESULTS,
             data: { distance: undefined, duration: undefined },
           });
-          dispatch({ type: ACTIONS.SET_FORM_VALUE_1, data: '' });
+          if (value == 'Home') {
+            dispatch({
+              type: ACTIONS.SET_FORM_VALUE_1,
+              data: state.homeAddress,
+            });
+          } else {
+            dispatch({ type: ACTIONS.SET_FORM_VALUE_1, data: '' });
+          }
           dispatch({ type: ACTIONS.SET_PENDING_TRIP, data: undefined });
         },
       },
@@ -264,12 +272,19 @@ export const TripCalculatorNew: FC<props> = ({
         options: dropdownOptions,
         name: 'dropdown2',
         disabled: state.loadingData == true || role == undefined ? true : false,
-        onChange: () => {
+        onChange: value => {
           dispatch({
             type: ACTIONS.SET_DISTANCE_RESULTS,
             data: { distance: undefined, duration: undefined },
           });
-          dispatch({ type: ACTIONS.SET_FORM_VALUE_2, data: '' });
+          if (value == 'Home') {
+            dispatch({
+              type: ACTIONS.SET_FORM_VALUE_2,
+              data: state.homeAddress,
+            });
+          } else {
+            dispatch({ type: ACTIONS.SET_FORM_VALUE_2, data: '' });
+          }
           dispatch({ type: ACTIONS.SET_PENDING_TRIP, data: undefined });
         },
       },
@@ -494,7 +509,7 @@ export const TripCalculatorNew: FC<props> = ({
         }}
         onSave={getTripData}
         submitLabel={'Calculate'}
-        submitDisabled={state.formValue1 == '' && state.formValue2 == ''}
+        submitDisabled={state.formValue1 == '' || state.formValue2 == ''}
         onClose={() => onClose()}
       ></Form>
 

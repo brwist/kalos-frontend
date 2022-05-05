@@ -31,6 +31,9 @@ import FormHelperText from '@material-ui/core/FormHelperText';
 import InputAdornment from '@material-ui/core/InputAdornment';
 import Input from '@material-ui/core/Input';
 import DateFnsUtils from '@date-io/date-fns';
+import Autocomplete from '@mui/material/Autocomplete';
+
+//import Autocomplete from '@material-ui/core/Au';
 import { format, parseISO } from 'date-fns';
 import {
   MuiPickersUtilsProvider,
@@ -719,6 +722,18 @@ export const Field: <T>(
           <FormControlLabel
             control={
               <Checkbox
+                contentEditable={true}
+                suppressContentEditableWarning={true}
+                onKeyUp={event => {
+                  if (event.keyCode == 32) {
+                    console.log('checkbox spacebar');
+                    event.stopPropagation();
+                    event.preventDefault();
+                    if (onChange) {
+                      onChange(+value);
+                    }
+                  }
+                }}
                 checked={+value === 1}
                 onChange={handleChangeCheckbox}
                 value={value}
@@ -1013,7 +1028,11 @@ export const Field: <T>(
                   />
                 }
               />
-              <InfoTable data={data} loading={!loadedVendors} />
+              <InfoTable
+                onEnter={handleVendorSelect}
+                data={data}
+                loading={!loadedVendors}
+              />
             </Modal>
           )}
         </>

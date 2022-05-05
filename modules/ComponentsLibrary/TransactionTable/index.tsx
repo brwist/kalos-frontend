@@ -1289,7 +1289,6 @@ export const TransactionTable: FC<Props> = ({
       loggedUserId,
       handleResetDuplicateCheck,
       resetTransactions,
-      state.vendors,
       state.departments,
       state.notify,
       refresh,
