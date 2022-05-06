@@ -91,6 +91,7 @@ export type Type =
   | 'signature'
   | 'file'
   | 'vendor'
+  | 'autocomplete'
   | 'department'
   | 'classCode'
   | 'hidden'
@@ -299,7 +300,11 @@ export const Field: <T>(
       ) {
         loadUserTechnicians();
       }
-      if (type === 'vendor' && !loadedVendors && value !== '0') {
+      if (
+        (type === 'vendor' || type == 'autocomplete') &&
+        !loadedVendors &&
+        value !== '0'
+      ) {
         loadVendors();
       }
     }, [
@@ -367,7 +372,7 @@ export const Field: <T>(
       (id: number) => (checked: Value) => {
         if (id === 0) {
           setVendorIds([0]);
-        } else if (type === 'vendor') {
+        } else if (type === 'vendor' || type == 'autocomplete') {
           setVendorIds([id]);
         } else {
           const ids = [
@@ -1038,6 +1043,42 @@ export const Field: <T>(
         </>
       );
     }
+    /*
+    if (type == 'autocomplete') {
+      console.log('auto complete bb');
+      let baseValue = { label: 'None', value: 0 };
+
+      const mappedVendorList = vendors.map(el => ({
+        label: el.getVendorName(),
+        value: el.getId(),
+      }));
+      const finalVendorList = [...mappedVendorList, baseValue];
+      return (
+        <>
+          <FormControl
+            className={clsx('FieldInput', className, { compact, disabled })}
+            fullWidth
+            disabled={disabled}
+            error={error}
+          >
+            <div className="FieldVendors">
+              <Autocomplete
+                options={finalVendorList}
+                renderInput={params => (
+                  <TextField {...params} label="Vendors" />
+                )}
+                
+                value={finalVendorList.find(el=>el.value==props.value as number)}
+                onSelect={handleVendorSelect}
+                onChange={handleVendorChecked(v.value)}
+
+              />
+            </div>
+          </FormControl>
+        </>
+      );
+    }
+    */
     if (options) {
       const id = `${name}-select-label`;
       return (
