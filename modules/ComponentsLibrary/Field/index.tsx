@@ -15,10 +15,10 @@ import React, {
 import clsx from 'clsx';
 import { SvgIconProps } from '@material-ui/core/SvgIcon';
 import { User } from '../../../@kalos-core/kalos-rpc/User';
-import CheckIcon from '@material-ui/icons/Check';
-import BlockIcon from '@material-ui/icons/Block';
+import CheckIcon from ''@mui/icons-material/Check';
+import BlockIcon from ''@mui/icons-material/Block';
 import CircularProgress from '@material-ui/core/CircularProgress';
-import HelpOutlineIcon from '@material-ui/icons/HelpOutline';
+import HelpOutlineIcon from ''@mui/icons-material/HelpOutline';
 import Typography from '@material-ui/core/Typography';
 import TextField from '@material-ui/core/TextField';
 import FormControl from '@material-ui/core/FormControl';
@@ -29,18 +29,16 @@ import Select from '@material-ui/core/Select';
 import MenuItem from '@material-ui/core/MenuItem';
 import FormHelperText from '@material-ui/core/FormHelperText';
 import InputAdornment from '@material-ui/core/InputAdornment';
-import Input from '@material-ui/core/Input';
+import Input from '@mui/material/Input';
 import DateFnsUtils from '@date-io/date-fns';
 import Autocomplete from '@mui/material/Autocomplete';
 
 //import Autocomplete from '@material-ui/core/Au';
 import { format, parseISO } from 'date-fns';
-import {
-  MuiPickersUtilsProvider,
-  DatePicker,
-  TimePicker,
-  DateTimePicker,
-} from '@material-ui/pickers';
+import { DatePicker } from '@mui/lab/DatePicker/index';
+import { TimePicker } from '@mui/lab/TimePicker';
+import { DateTimePicker } from '@mui/lab/DateTimePicker';
+
 //@ts-ignore
 import SignatureCanvas from 'react-signature-pad-wrapper';
 import { Button } from '../Button';
@@ -60,7 +58,8 @@ import { ClassCodePicker, DepartmentPicker } from '../Pickers';
 import { AdvancedSearch } from '../AdvancedSearch';
 import { Event } from '../../../@kalos-core/kalos-rpc/Event';
 import { Vendor } from '../../../@kalos-core/kalos-rpc/Vendor';
-
+import LocalizationProvider from '@mui/lab/LocalizationProvider';
+import AdapterDateFns from '@mui/lab/AdapterDateFns';
 import './Field.module.less';
 
 type SelectOption = {
@@ -91,7 +90,7 @@ export type Type =
   | 'signature'
   | 'file'
   | 'vendor'
-  | 'autocomplete'
+  | 'autocomplete-vendor'
   | 'department'
   | 'classCode'
   | 'hidden'
@@ -202,6 +201,12 @@ export const Field: <T>(
       +(value || '') > 0 ? 1 : -1,
     );
     const [eventIdValue, setEventIdValue] = useState<number>(+(value || ''));
+    const [autoCompleteValue, setAutoCompleteValue] = useState<{
+      id: number;
+      label: string;
+    }>({ id: 0, label: 'None' });
+    const [autoCompleteInputValue, setAutoCompleteInputValue] =
+      useState<string>('None');
     const loadUserTechnicians = useCallback(async () => {
       const technicians = await UserClientService.loadTechnicians();
       setLoadedTechnicians(true);
@@ -217,8 +222,24 @@ export const Field: <T>(
         await VendorClientService.BatchGet(req)
       ).getResultsList();
       setLoadedVendors(true);
+      const options = vendors.map(option => ({
+        id: option.getId(),
+        label: option.getVendorName(),
+      }));
+
+      const initValue = options.find(
+        el => el.id == (props.value as unknown as number),
+      );
+      if (initValue) {
+        console.log('found value', initValue);
+        setAutoCompleteInputValue(initValue.label);
+        setAutoCompleteValue(initValue);
+      } else {
+        setAutoCompleteInputValue('None');
+        setAutoCompleteValue({ id: 0, label: 'None' });
+      }
       setVendors(vendors);
-    }, []);
+    }, [props.value]);
     const handleEventsOpenedToggle = useCallback(
       (opened: boolean) => () => setEventsOpened(opened),
       [setEventsOpened],
@@ -301,7 +322,7 @@ export const Field: <T>(
         loadUserTechnicians();
       }
       if (
-        (type === 'vendor' || type == 'autocomplete') &&
+        (type === 'vendor' || type == 'autocomplete-vendor') &&
         !loadedVendors &&
         value !== '0'
       ) {
@@ -335,6 +356,11 @@ export const Field: <T>(
       }
       setVendorsOpened(false);
     }, [onChange, vendorIds, setVendorsOpened]);
+    const handleChangeAutoComplete = useCallback(() => {
+      if (onChange) {
+        onChange(autoCompleteValue.id);
+      }
+    }, [onChange, autoCompleteValue]);
 
     const handleCreateNewVendor = useCallback(async () => {
       if (newVendor != '') {
@@ -372,7 +398,7 @@ export const Field: <T>(
       (id: number) => (checked: Value) => {
         if (id === 0) {
           setVendorIds([0]);
-        } else if (type === 'vendor' || type == 'autocomplete') {
+        } else if (type === 'vendor' || type == 'autocomplete-vendor') {
           setVendorIds([id]);
         } else {
           const ids = [
@@ -652,11 +678,13 @@ export const Field: <T>(
 
     if (type === 'mui-datetime') {
       return (
-        <MuiPickersUtilsProvider utils={DateFnsUtils}>
+        <LocalizationProvider dateAdapter={AdapterDateFns}>
           <DateTimePicker
             className={clsx('FieldInput', className, { compact, disabled })}
             label={inputLabel}
             value={parseISO(props.value as unknown as string)}
+            //@ts-ignore
+
             onChange={value =>
               handleChange({
                 target: {
@@ -668,17 +696,18 @@ export const Field: <T>(
             disabled={disabled}
             fullWidth
           />
-        </MuiPickersUtilsProvider>
+        </LocalizationProvider>
       );
     }
 
     if (type === 'mui-date') {
       return (
-        <MuiPickersUtilsProvider utils={DateFnsUtils}>
+        <LocalizationProvider dateAdapter={AdapterDateFns}>
           <DatePicker
             className={clsx('FieldInput', className, { compact, disabled })}
             label={inputLabel}
             value={parseISO(props.value as unknown as string)}
+            //@ts-ignore
             onChange={value =>
               handleChange({
                 target: {
@@ -689,17 +718,18 @@ export const Field: <T>(
             disabled={disabled}
             fullWidth
           />
-        </MuiPickersUtilsProvider>
+        </LocalizationProvider>
       );
     }
 
     if (type === 'mui-time') {
       return (
-        <MuiPickersUtilsProvider utils={DateFnsUtils}>
+        <LocalizationProvider dateAdapter={AdapterDateFns}>
           <TimePicker
             className={clsx('FieldInput', className, { compact, disabled })}
             label={inputLabel}
             value={parseISO(props.value as unknown as string)}
+            //@ts-ignore
             onChange={value =>
               handleChange({
                 target: {
@@ -711,7 +741,7 @@ export const Field: <T>(
             disabled={disabled}
             fullWidth
           />
-        </MuiPickersUtilsProvider>
+        </LocalizationProvider>
       );
     }
 
@@ -1043,16 +1073,19 @@ export const Field: <T>(
         </>
       );
     }
-    /*
-    if (type == 'autocomplete') {
-      console.log('auto complete bb');
-      let baseValue = { label: 'None', value: 0 };
 
+    if (type == 'autocomplete-vendor' && loadedVendors) {
       const mappedVendorList = vendors.map(el => ({
         label: el.getVendorName(),
         value: el.getId(),
       }));
-      const finalVendorList = [...mappedVendorList, baseValue];
+      const defaultOption = { id: 0, label: 'None' };
+      const options = mappedVendorList.map(option => ({
+        id: option.value,
+        label: option.label,
+      }));
+
+      options.push(defaultOption);
       return (
         <>
           <FormControl
@@ -1061,24 +1094,35 @@ export const Field: <T>(
             disabled={disabled}
             error={error}
           >
-            <div className="FieldVendors">
+            <div className="FieldVendorAutocomplete">
               <Autocomplete
-                options={finalVendorList}
+                options={options}
                 renderInput={params => (
                   <TextField {...params} label="Vendors" />
                 )}
-                
-                value={finalVendorList.find(el=>el.value==props.value as number)}
-                onSelect={handleVendorSelect}
-                onChange={handleVendorChecked(v.value)}
-
+                value={autoCompleteValue}
+                onChange={(_, newValue) => {
+                  if (newValue != null) {
+                    setAutoCompleteValue(newValue);
+                  }
+                }}
+                onSelect={handleChangeAutoComplete}
+                isOptionEqualToValue={(option, value) => {
+                  console.log(option);
+                  console.log(value);
+                  return option.id === value.id;
+                }}
+                inputValue={autoCompleteInputValue}
+                onInputChange={(_, newInputValue) => {
+                  setAutoCompleteInputValue(newInputValue);
+                }}
               />
             </div>
           </FormControl>
         </>
       );
     }
-    */
+
     if (options) {
       const id = `${name}-select-label`;
       return (
