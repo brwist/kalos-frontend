@@ -790,7 +790,7 @@ export const PendingInvoiceTransactionComponent: FC<Props> = ({ userId }) => {
             {
               label: 'Invoice Upload',
               content: state.loading ? (
-                <Loader></Loader>
+                <Loader />
               ) : (
                 <div key={'Tab1Div'}>
                   <SectionBar
@@ -804,17 +804,17 @@ export const PendingInvoiceTransactionComponent: FC<Props> = ({ userId }) => {
                           : 'Save new records',
                         onClick: handleSaveNewRecords,
                         disabled:
-                          state.data.length == 0 ||
-                          !!state.error ||
-                          state.formData.selectedVendorId == 0 ||
-                          state.loading,
+                          state?.data?.length == 0 ||
+                          !!state?.error ||
+                          state?.formData?.selectedVendorId == 0 ||
+                          state?.loading,
                       },
                     ]}
                     fixedActions
                     loading={state.loading}
                   />
                   <PlainForm<FormData>
-                    key={`DefaultValueFormForUpload${state.formData.filename}`}
+                    key={`DefaultValueFormForUpload${state?.formData?.filename}`}
                     schema={SCHEMA}
                     data={state.formData}
                     onChange={data =>
@@ -830,7 +830,7 @@ export const PendingInvoiceTransactionComponent: FC<Props> = ({ userId }) => {
                       { name: 'Field Select' },
                     ]}
                     loading={state.loading || !state.loadedInit}
-                    data={state.columns.map((column, idx) => {
+                    data={state?.columns.map((column, idx) => {
                       return [
                         {
                           value: column.name,
@@ -839,7 +839,7 @@ export const PendingInvoiceTransactionComponent: FC<Props> = ({ userId }) => {
                           value: (
                             <div
                               key={`${idx}${column.name}${
-                                state.columnDropDownAssignment.find(
+                                state?.columnDropDownAssignment.find(
                                   el => el.columnIndex == idx,
                                 )?.columnIndex
                               }`}
@@ -847,18 +847,18 @@ export const PendingInvoiceTransactionComponent: FC<Props> = ({ userId }) => {
                               <Select
                                 key={idx}
                                 value={
-                                  state.columnDropDownAssignment.find(
+                                  state?.columnDropDownAssignment.find(
                                     el => el.columnIndex == idx,
                                   )!.dropDownValue
                                 }
                                 onChange={data =>
                                   handleToggleColumnToField(
                                     idx,
-                                    data.target.value as number,
+                                    data?.target.value as number,
                                   )
                                 }
                               >
-                                {state.dropDownFieldList.map((el, idx) => {
+                                {state?.dropDownFieldList.map((el, idx) => {
                                   return [
                                     <MenuItem
                                       key={idx.toString() + el.label}
@@ -915,14 +915,14 @@ export const PendingInvoiceTransactionComponent: FC<Props> = ({ userId }) => {
                         label: 'Commit Selected Records',
                         onClick: handleCreateSelected,
                         disabled:
-                          state.currentPageEntries.filter(el => el.selected)
+                          state?.currentPageEntries.filter(el => el.selected)
                             .length == 0 || !!state.error,
                       },
                       {
                         label: 'Delete Selected Records',
                         onClick: handleDeleteSelected,
                         disabled:
-                          state.currentPageEntries.filter(el => el.selected)
+                          state?.currentPageEntries.filter(el => el.selected)
                             .length == 0 || !!state.error,
                       },
                     ]}
@@ -957,7 +957,7 @@ export const PendingInvoiceTransactionComponent: FC<Props> = ({ userId }) => {
                             500,
                           )}
                           data={
-                            state.currentPageEntries.find(el => el.id == id)!
+                            state?.currentPageEntries.find(el => el.id == id)!
                           }
                         ></PlainForm>
                       </span>
