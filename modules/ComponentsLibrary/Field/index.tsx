@@ -15,10 +15,10 @@ import React, {
 import clsx from 'clsx';
 import { SvgIconProps } from '@material-ui/core/SvgIcon';
 import { User } from '../../../@kalos-core/kalos-rpc/User';
-import CheckIcon from ''@mui/icons-material/Check';
-import BlockIcon from ''@mui/icons-material/Block';
+import CheckIcon from '@material-ui/icons/Check';
+import BlockIcon from '@material-ui/icons/Block';
 import CircularProgress from '@material-ui/core/CircularProgress';
-import HelpOutlineIcon from ''@mui/icons-material/HelpOutline';
+import HelpOutlineIcon from '@material-ui/icons/HelpOutline';
 import Typography from '@material-ui/core/Typography';
 import TextField from '@material-ui/core/TextField';
 import FormControl from '@material-ui/core/FormControl';
@@ -29,16 +29,18 @@ import Select from '@material-ui/core/Select';
 import MenuItem from '@material-ui/core/MenuItem';
 import FormHelperText from '@material-ui/core/FormHelperText';
 import InputAdornment from '@material-ui/core/InputAdornment';
-import Input from '@mui/material/Input';
+import Input from '@material-ui/core/Input';
 import DateFnsUtils from '@date-io/date-fns';
 import Autocomplete from '@mui/material/Autocomplete';
+import useAutoComplete from '@mui/material/useAutocomplete';
 
-//import Autocomplete from '@material-ui/core/Au';
 import { format, parseISO } from 'date-fns';
-import { DatePicker } from '@mui/lab/DatePicker/index';
-import { TimePicker } from '@mui/lab/TimePicker';
-import { DateTimePicker } from '@mui/lab/DateTimePicker';
-
+import {
+  MuiPickersUtilsProvider,
+  DatePicker,
+  TimePicker,
+  DateTimePicker,
+} from '@material-ui/pickers';
 //@ts-ignore
 import SignatureCanvas from 'react-signature-pad-wrapper';
 import { Button } from '../Button';
@@ -58,8 +60,7 @@ import { ClassCodePicker, DepartmentPicker } from '../Pickers';
 import { AdvancedSearch } from '../AdvancedSearch';
 import { Event } from '../../../@kalos-core/kalos-rpc/Event';
 import { Vendor } from '../../../@kalos-core/kalos-rpc/Vendor';
-import LocalizationProvider from '@mui/lab/LocalizationProvider';
-import AdapterDateFns from '@mui/lab/AdapterDateFns';
+
 import './Field.module.less';
 
 type SelectOption = {
@@ -322,9 +323,8 @@ export const Field: <T>(
         loadUserTechnicians();
       }
       if (
-        (type === 'vendor' || type == 'autocomplete-vendor') &&
-        !loadedVendors &&
-        value !== '0'
+        type === 'vendor' ||
+        (type == 'autocomplete-vendor' && !loadedVendors && value !== '0')
       ) {
         loadVendors();
       }
@@ -678,7 +678,7 @@ export const Field: <T>(
 
     if (type === 'mui-datetime') {
       return (
-        <LocalizationProvider dateAdapter={AdapterDateFns}>
+        <MuiPickersUtilsProvider utils={DateFnsUtils}>
           <DateTimePicker
             className={clsx('FieldInput', className, { compact, disabled })}
             label={inputLabel}
@@ -696,13 +696,13 @@ export const Field: <T>(
             disabled={disabled}
             fullWidth
           />
-        </LocalizationProvider>
+        </MuiPickersUtilsProvider>
       );
     }
 
     if (type === 'mui-date') {
       return (
-        <LocalizationProvider dateAdapter={AdapterDateFns}>
+        <MuiPickersUtilsProvider utils={DateFnsUtils}>
           <DatePicker
             className={clsx('FieldInput', className, { compact, disabled })}
             label={inputLabel}
@@ -718,13 +718,13 @@ export const Field: <T>(
             disabled={disabled}
             fullWidth
           />
-        </LocalizationProvider>
+        </MuiPickersUtilsProvider>
       );
     }
 
     if (type === 'mui-time') {
       return (
-        <LocalizationProvider dateAdapter={AdapterDateFns}>
+        <MuiPickersUtilsProvider utils={DateFnsUtils}>
           <TimePicker
             className={clsx('FieldInput', className, { compact, disabled })}
             label={inputLabel}
@@ -741,7 +741,7 @@ export const Field: <T>(
             disabled={disabled}
             fullWidth
           />
-        </LocalizationProvider>
+        </MuiPickersUtilsProvider>
       );
     }
 
