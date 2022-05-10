@@ -688,7 +688,7 @@ export const PendingInvoiceTransactionComponent: FC<Props> = ({ userId }) => {
         name: 'selectedVendorId',
         label: 'Select Vendor',
         required: true,
-        type: 'vendor',
+        type: 'autocomplete-vendor',
       },
       {
         name: 'departmentId',

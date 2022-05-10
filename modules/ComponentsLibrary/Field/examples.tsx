@@ -1,8 +1,8 @@
 import React, { useState, useCallback } from 'react';
-import HighestIcon from '@mui/icons-material/Block';
-import HighIcon from '@mui/icons-material/ChangeHistory';
-import NormalIcon from '@mui/icons-material/RadioButtonUnchecked';
-import LowIcon from '@mui/icons-material/Details';
+import HighestIcon from '@material-ui/icons/Block';
+import HighIcon from '@material-ui/icons/ChangeHistory';
+import NormalIcon from '@material-ui/icons/RadioButtonUnchecked';
+import LowIcon from '@material-ui/icons/Details';
 import { Field, Props, Value, Options, Option } from './';
 
 type Model = {

@@ -21,6 +21,12 @@ plugins:
   - react
   - '@typescript-eslint'
 rules:
+    "no-restricted-imports": [
+      "error",
+      {
+        "patterns": ["@mui/*/*/*", "!@mui/material/test-utils/*"]
+      }
+    ]
   indent: 0
   linebreak-style:
     - error
