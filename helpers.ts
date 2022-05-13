@@ -1271,6 +1271,7 @@ export type EventsFilter = {
   city?: string;
   zip?: string;
   logDateCompleted?: string;
+  isResidential?: number;
   jobTypeId?: number;
   jobSubtypeId?: number;
   logJobStatus?: string;
@@ -1317,6 +1318,7 @@ export const loadEventsByFilter = async ({
     firstname,
     lastname,
     businessname,
+    isResidential,
     jobTypeId,
     jobSubtypeId,
     logJobStatus,
@@ -1344,6 +1346,17 @@ export const loadEventsByFilter = async ({
   }
   if (fieldMaskList) {
     req.setFieldMaskList(fieldMaskList);
+  }
+  if (isResidential != 0) {
+    if (isResidential == 1) {
+      req.setNotEqualsList(['IsResidential']);
+      req.setIsResidential(0);
+    }
+    if (isResidential == 2) {
+      console.log('Commercial');
+      req.setNotEqualsList(['IsResidential']);
+      req.setIsResidential(1);
+    }
   }
   if (isActive) {
     req.setIsActive(1);

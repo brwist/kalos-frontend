@@ -46,6 +46,15 @@ ReportService.GetTimeoffReportData = {
   responseType: reports_pb.TimeoffReport
 };
 
+ReportService.GetReceiptJournalReport = {
+  methodName: "GetReceiptJournalReport",
+  service: ReportService,
+  requestStream: false,
+  responseStream: false,
+  requestType: reports_pb.ReceiptJournalReportLine,
+  responseType: reports_pb.ReceiptJournalReport
+};
+
 exports.ReportService = ReportService;
 
 function ReportServiceClient(serviceHost, options) {
@@ -151,6 +160,37 @@ ReportServiceClient.prototype.getTimeoffReportData = function getTimeoffReportDa
     callback = arguments[1];
   }
   var client = grpc.unary(ReportService.GetTimeoffReportData, {
+    request: requestMessage,
+    host: this.serviceHost,
+    metadata: metadata,
+    transport: this.options.transport,
+    debug: this.options.debug,
+    onEnd: function (response) {
+      if (callback) {
+        if (response.status !== grpc.Code.OK) {
+          var err = new Error(response.statusMessage);
+          err.code = response.status;
+          err.metadata = response.trailers;
+          callback(err, null);
+        } else {
+          callback(null, response.message);
+        }
+      }
+    }
+  });
+  return {
+    cancel: function () {
+      callback = null;
+      client.close();
+    }
+  };
+};
+
+ReportServiceClient.prototype.getReceiptJournalReport = function getReceiptJournalReport(requestMessage, metadata, callback) {
+  if (arguments.length === 2) {
+    callback = arguments[1];
+  }
+  var client = grpc.unary(ReportService.GetReceiptJournalReport, {
     request: requestMessage,
     host: this.serviceHost,
     metadata: metadata,

@@ -31,8 +31,8 @@ import FormHelperText from '@material-ui/core/FormHelperText';
 import InputAdornment from '@material-ui/core/InputAdornment';
 import Input from '@material-ui/core/Input';
 import DateFnsUtils from '@date-io/date-fns';
-import Autocomplete from '@mui/material/Autocomplete';
-import useAutoComplete from '@mui/material/useAutocomplete';
+//import Autocomplete from '@mui/material/Autocomplete';
+//import useAutoComplete from '@mui/material/useAutocomplete';
 
 import { format, parseISO } from 'date-fns';
 import {
@@ -91,7 +91,7 @@ export type Type =
   | 'signature'
   | 'file'
   | 'vendor'
-  | 'autocomplete-vendor'
+  //| 'autocomplete-vendor'
   | 'department'
   | 'classCode'
   | 'hidden'
@@ -323,8 +323,9 @@ export const Field: <T>(
         loadUserTechnicians();
       }
       if (
-        type === 'vendor' ||
-        (type == 'autocomplete-vendor' && !loadedVendors && value !== '0')
+        type === 'vendor' /*|| type == 'autocomplete-vendor'*/ &&
+        !loadedVendors &&
+        value !== '0'
       ) {
         loadVendors();
       }
@@ -398,7 +399,7 @@ export const Field: <T>(
       (id: number) => (checked: Value) => {
         if (id === 0) {
           setVendorIds([0]);
-        } else if (type === 'vendor' || type == 'autocomplete-vendor') {
+        } else if (type === 'vendor' /* || type == 'autocomplete-vendor'*/) {
           setVendorIds([id]);
         } else {
           const ids = [
@@ -1073,7 +1074,7 @@ export const Field: <T>(
         </>
       );
     }
-
+    /*
     if (type == 'autocomplete-vendor' && loadedVendors) {
       const mappedVendorList = vendors.map(el => ({
         label: el.getVendorName(),
@@ -1122,7 +1123,7 @@ export const Field: <T>(
         </>
       );
     }
-
+*/
     if (options) {
       const id = `${name}-select-label`;
       return (

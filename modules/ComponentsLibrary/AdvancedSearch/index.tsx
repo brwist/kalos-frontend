@@ -93,8 +93,6 @@ import { ActivityLog } from '../../../@kalos-core/kalos-rpc/ActivityLog';
 import format from 'date-fns/esm/format';
 import { ServiceRequest } from '../ServiceCall/requestIndex';
 import { QuoteLine } from '../../../@kalos-core/kalos-rpc/QuoteLine';
-import { ServicesRendered } from '../../../@kalos-core/kalos-rpc/ServicesRendered';
-import { result } from 'lodash';
 import { FlatRateSheet } from '../FlatRate';
 import './AdvancedSearch.module.less';
 
@@ -177,6 +175,7 @@ export const AdvancedSearch: FC<Props> = ({
     () => ({
       kind: kinds[0],
       jobTypeId: 0,
+      isResidential: 0,
       jobSubtypeId: 0,
       logJobStatus: '',
       employeeDepartmentId: -1,
@@ -886,6 +885,15 @@ export const AdvancedSearch: FC<Props> = ({
           name: 'logPo',
           label: 'PO',
           type: 'search',
+        },
+        {
+          name: 'isResidential',
+          label: 'Sector',
+          options: [
+            { label: OPTION_ALL, value: 0 },
+            { label: 'Residential', value: 1 },
+            { label: 'Commercial', value: 2 },
+          ],
         },
         {
           name: 'jobTypeId',
