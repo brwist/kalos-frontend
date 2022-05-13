@@ -3,9 +3,6 @@ import ThemeProvider from '@material-ui/styles/ThemeProvider';
 import Drawer from '@material-ui/core/Drawer';
 import Button from '@material-ui/core/Button';
 import List from '@material-ui/core/List';
-import Paper from '@mui/material/Paper';
-import IconButton from '@material-ui/core/IconButton';
-import MenuSharp from '@material-ui/icons/MenuSharp';
 import { forceHTTPS, UserClientService } from '../../helpers';
 import { User, UserClient } from '../../@kalos-core/kalos-rpc/User';
 import { ENDPOINT } from '../../constants';
@@ -153,24 +150,13 @@ const SideMenu = ({
 
   return (
     <ThemeProvider theme={customTheme.lightTheme}>
-      <Paper sx={{ display: { xs: 'none', md: 'block' } }}>
-        <Button onClick={toggleMenu} style={{ margin: '10px' }}>
-          <img
-            src={imgURL}
-            alt="no img"
-            style={{ maxWidth: '100%', height: 'auto' }}
-          />
-        </Button>
-      </Paper>
-      <Paper sx={{ display: { xs: 'none', md: 'none', lg: 'block' } }}>
-        <IconButton
-          onClick={toggleMenu}
-          style={{ color: 'white', margin: '10px' }}
-        >
-          <MenuSharp />
-        </IconButton>
-      </Paper>
-
+      <Button onClick={toggleMenu} style={{ margin: '10px' }}>
+        <img
+          src={imgURL}
+          alt="no img"
+          style={{ maxWidth: '100%', height: 'auto' }}
+        />
+      </Button>
       <Drawer
         open={isOpen}
         onClose={toggleMenu}

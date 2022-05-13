@@ -18,6 +18,9 @@ import { WarrantyReport } from '../WarrantyReport';
 import { PromptPaymentReport } from '../PromptPaymentReport';
 import { TimeoffSummaryReport } from '../TimeoffSummaryReport';
 import { BillingAuditReport } from '../BillingAuditReport';
+import { ReceiptJournalReport } from '../ReceiptsJournalReport';
+import { SalesJournalReport } from '../SalesJournalReport';
+
 import { format, parseISO } from 'date-fns';
 import { ResidentialHeatmap } from '../../ResidentialHeatmap/main';
 import {
@@ -244,9 +247,14 @@ export const Reports: FC<Props> = ({ loggedUserId }) => {
   const [billingStatusReport, setBillingStatusReport] = useState<FilterForm>({
     status: OPTION_ALL,
   });
+  const [salesJournalReport, setSalesJournalReport] = useState<FilterForm>({
+    status: OPTION_ALL,
+  });
   const [billingStatusDatesError, setBillingStatusDatesError] =
     useState<boolean>(false);
   const [billingStatusReportOpen, setBillingStatusReportOpen] =
+    useState<boolean>(false);
+  const [salesJournalReportOpen, setSalesJournalReportOpen] =
     useState<boolean>(false);
   const [notificationsReport, setNotificationsReport] = useState<FilterForm>({
     status: OPTION_ALL,
@@ -259,8 +267,12 @@ export const Reports: FC<Props> = ({ loggedUserId }) => {
     useState<FilterForm>({});
   const [timesheetValidationReport, setTimesheetValidationReport] =
     useState<FilterForm>({});
+  const [receiptsJournalReport, setReceiptsJournalReport] =
+    useState<FilterForm>({});
+
   const [transactionValidationReport, setTransactionValidationReport] =
     useState<TransactionReport>({ year: new Date().getFullYear() });
+
   const [formKeyTransaction, setFormKeyTransaction] = useState<number>(0);
 
   const [performanceMetricsDatesError, setPerformanceMetricsDatesError] =
@@ -287,6 +299,8 @@ export const Reports: FC<Props> = ({ loggedUserId }) => {
     useState<boolean>(false);
 
   const [timesheetValidationReportOpen, setTimesheetValidationReportOpen] =
+    useState<boolean>(false);
+  const [receiptsJournalReportOpen, setReceiptsJournalReportOpen] =
     useState<boolean>(false);
   const [transactionValidationReportOpen, setTransactionValidationReportOpen] =
     useState<boolean>(false);
@@ -360,6 +374,26 @@ export const Reports: FC<Props> = ({ loggedUserId }) => {
       setBillingStatusDatesError,
     ],
   );
+
+  const handleOpenSalesJournalReportToggle = useCallback(
+    (open: boolean) => (data?: FilterForm) => {
+      setBillingStatusDatesError(false);
+      if (
+        data &&
+        data.endDate &&
+        data.startDate &&
+        data.endDate < data.startDate
+      ) {
+        return;
+      }
+      if (data && data.status) {
+        setSalesJournalReport(data);
+        setSalesJournalReportOpen(open);
+      }
+    },
+    [],
+  );
+
   const handleOpenNotificationsReportToggle = useCallback(
     (open: boolean) => (data?: FilterForm) => {
       setNotificationsDatesError(false);
@@ -429,6 +463,22 @@ export const Reports: FC<Props> = ({ loggedUserId }) => {
     },
     [setTransactionValidationReport, setTransactionValidationReportOpen],
   );
+
+  const handleSetReceiptsJournalReport = useCallback(
+    (open: boolean) => (data: FilterForm) => {
+      setReceiptsJournalReport(data);
+      setReceiptsJournalReportOpen(open);
+    },
+    [],
+  );
+  const handleSetSalesJournalReport = useCallback(
+    (open: boolean) => (data: FilterForm) => {
+      setSalesJournalReport(data);
+      setSalesJournalReportOpen(open);
+    },
+    [],
+  );
+
   const handleOpenDeletedServiceCallsReportToggle = useCallback(
     (open: boolean) => (data?: FilterForm) => {
       console.log({ data });
@@ -486,6 +536,15 @@ export const Reports: FC<Props> = ({ loggedUserId }) => {
   const handleOpenTimesheetValidationToggle = useCallback(
     (open: boolean) => () => setTimesheetValidationReportOpen(open),
     [setTimesheetValidationReportOpen],
+  );
+
+  const handleOpenReceiptJournalToggle = useCallback(
+    (open: boolean) => () => setReceiptsJournalReportOpen(open),
+    [],
+  );
+  const handleOpenSalesJournalToggle = useCallback(
+    (open: boolean) => () => setSalesJournalReportOpen(open),
+    [],
   );
   const handleOpenTransactionValidationToggle = useCallback(
     (open: boolean) => () => setTransactionValidationReportOpen(open),
@@ -681,6 +740,26 @@ export const Reports: FC<Props> = ({ loggedUserId }) => {
           schema={SCHEMA_YEAR}
           data={transactionValidationReport}
           onSave={handleOpenTransactionValidationReportToggle(true)}
+          submitLabel="Report"
+          onClose={null}
+        />
+      </div>
+      <div key="receiptReport">
+        <Form
+          title="Receipts Journal Report"
+          schema={SCHEMA_DATES_REPORT}
+          data={receiptsJournalReport}
+          onSave={handleSetReceiptsJournalReport(true)}
+          submitLabel="Report"
+          onClose={null}
+        />
+      </div>
+      <div key="salesReport">
+        <Form
+          title="Sales Journal Report"
+          schema={SCHEMA_BILLING_STATUS_REPORT}
+          data={salesJournalReport}
+          onSave={handleSetSalesJournalReport(true)}
           submitLabel="Report"
           onClose={null}
         />
@@ -889,6 +968,27 @@ export const Reports: FC<Props> = ({ loggedUserId }) => {
               year={transactionValidationReport.year}
             />
           </div>
+        </Modal>
+      )}
+      {receiptsJournalReportOpen && (
+        <Modal open onClose={handleOpenReceiptJournalToggle(false)} fullScreen>
+          <ReceiptJournalReport
+            loggedUserId={loggedUserId}
+            onClose={handleOpenReceiptJournalToggle(false)}
+            startDate={receiptsJournalReport.startDate!}
+            endDate={receiptsJournalReport.endDate!}
+          />
+        </Modal>
+      )}
+      {salesJournalReportOpen && (
+        <Modal open onClose={handleOpenSalesJournalToggle(false)} fullScreen>
+          <SalesJournalReport
+            loggedUserId={loggedUserId}
+            onClose={handleOpenSalesJournalToggle(false)}
+            startDate={salesJournalReport.startDate!}
+            endDate={salesJournalReport.endDate!}
+            paymentStatus={salesJournalReport.status!}
+          />
         </Modal>
       )}
       {serviceCallZipCodeReportOpen && (
