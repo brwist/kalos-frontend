@@ -788,12 +788,6 @@ export const Timesheet: FC<Props> = props => {
 
       {tripsOpen && perDiemRowId?.length != 0 && (
         <Modal open onClose={() => setTripsOpen(false)}>
-          {/*<TripInfoTable
-            canAddTrips
-            canDeleteTrips
-            loggedUserId={props.userId}
-            perDiemRowIds={perDiemRowId!}
-          />*/}
           <TripSummaryNew
             key={'key' + perDiemRowId}
             userId={props.timesheetOwnerId}
@@ -803,8 +797,6 @@ export const Timesheet: FC<Props> = props => {
               props.userId === 103285 || props.userId == 103896
             }
             role={role}
-            toggle={role === 'Payroll' ? false : undefined}
-            checkboxes={role === 'Payroll'}
             canDeleteTrips={props.userId === props.timesheetOwnerId}
             canAddTrips={props.userId === props.timesheetOwnerId}
             viewingOwn={props.userId === props.timesheetOwnerId}

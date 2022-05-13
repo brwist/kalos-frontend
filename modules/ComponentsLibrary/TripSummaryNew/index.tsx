@@ -52,12 +52,14 @@ type CheckboxesFilterType = {
   approved: number;
   payrollProcessed: number;
 };
-
+const tripStatus = ['Pending', 'Approved', 'Rejected', 'Processed'];
 class Checkboxes implements CheckboxesFilterType {
   approved: number = 0;
   payrollProcessed: number = 0;
 }
-
+type TripFormFilter = {
+  status: string;
+};
 interface Props {
   loggedUserId: number;
   perDiemRowIds: number[];
@@ -72,7 +74,6 @@ interface Props {
   canProcessPayroll?: boolean;
   role?: RoleType;
   viewingOwn?: boolean;
-  checkboxes?: boolean;
   searchable?: boolean;
   managerView?: boolean;
   toggle?: boolean;
@@ -88,7 +89,6 @@ export const TripSummaryNew: FC<Props> = ({
   departmentId,
   perDiemRowIds,
   userId,
-  toggle,
   canDeleteTrips,
   compact,
   canSlackMessage,
@@ -98,7 +98,6 @@ export const TripSummaryNew: FC<Props> = ({
   role,
   onClose,
   viewingOwn,
-  checkboxes,
   managerView,
   searchable,
   canAddTrips,
@@ -137,23 +136,29 @@ export const TripSummaryNew: FC<Props> = ({
   const [tripToView, setTripToView] = useState<Trip | undefined>();
   const [approvingTrips, setApprovingTrips] = useState<boolean>();
   const [openNewTripsCreation, setOpenNewTripsCreation] = useState<boolean>();
-
-  const [tripFilter, setFilter] = useState<TripFilter>({
-    role,
-    weekof: perDiemRowIds,
-    userId,
-    departmentId,
-    payrollProcessed: toggle != undefined ? toggle : undefined,
-    approved: role == 'Payroll' ? true : role == 'Manager' ? false : undefined,
-    adminActionDate: NULL_TIME,
-  } as TripFilter);
-  const [checkboxFilter, setCheckboxFilter] = useState<Checkboxes>(
-    new Checkboxes(),
-  );
   const [page, setPage] = useState<number>(0);
+  const [form, setForm] = useState<TripFormFilter>({
+    status: canProcessPayroll ? 'Approved' : 'Pending',
+  });
+
   const [totalTripDistance, setTotalTripDistance] = useState<number>(0);
   const [search, setSearch] = useState<Trip>(new Trip());
-
+  const SCHEMA: Schema<TripFormFilter> = [
+    [
+      {
+        name: 'status',
+        label: 'Trip Status',
+        options: tripStatus.map(el => ({ label: el, value: el })),
+      },
+    ],
+    [{}],
+  ];
+  const handleSetForm = async (data: TripFormFilter) => {
+    setForm(data);
+    console.log(data);
+    console.log(form);
+    await loadTrips(data);
+  };
   const handleAddTrip = useCallback(() => {
     if (perDiemRowIds == undefined || perDiemRowIds.length == 0) {
       //this.toggleWarningForNoPerDiem();
@@ -176,10 +181,6 @@ export const TripSummaryNew: FC<Props> = ({
   const handleSetSearch = useCallback(
     (newTrip: Trip) => setSearch(newTrip),
     [setSearch],
-  );
-  const handleSetCheckboxFilter = useCallback(
-    (newFilter: Checkboxes) => setCheckboxFilter(newFilter),
-    [setCheckboxFilter],
   );
   const handleSetPage = useCallback(
     (newPage: number) => setPage(newPage),
@@ -216,11 +217,13 @@ export const TripSummaryNew: FC<Props> = ({
     },
     [handleSetToggleApproveOrProcess],
   );
+
   const handleSetPendingTripToDeny = useCallback(
     (tripToDeny: Trip | undefined) => setPendingTripToDeny(tripToDeny),
     [setPendingTripToDeny],
   );
   let actions: any[] = [];
+  /*
   if (canDeleteTrips) {
     actions = [
       {
@@ -233,6 +236,7 @@ export const TripSummaryNew: FC<Props> = ({
       },
     ];
   }
+  */
   if (canApprove) {
     actions = [
       {
@@ -265,86 +269,6 @@ export const TripSummaryNew: FC<Props> = ({
     ],
   ];
 
-  const SCHEMA_TRIP_INFO: Schema<TripInfo> = [
-    [{ headline: true, label: 'Monetary' }],
-    [
-      {
-        label: 'Distance in Miles',
-        type: 'text',
-        name: 'distanceInMiles',
-      },
-      {
-        name: 'distanceInDollars',
-        type: 'text',
-        label: 'Amount for Trip',
-        readOnly: true,
-      },
-    ],
-    [{ headline: true, label: 'General' }],
-    [
-      {
-        label: 'Employee Name',
-        type: 'text',
-        name: 'nameOfEmployee',
-      },
-      {
-        label: 'Department',
-        type: 'text',
-        name: 'departmentName',
-      },
-    ],
-    [
-      {
-        label: 'Day Of',
-        type: 'text',
-        name: 'date',
-      },
-    ],
-    [
-      {
-        label: 'Origin Address',
-        type: 'text',
-        name: 'originAddress',
-      },
-    ],
-    [
-      {
-        label: 'Destination Address',
-        type: 'text',
-        name: 'destinationAddress',
-      },
-    ],
-    [
-      {
-        label: 'Notes',
-        type: 'text',
-        name: 'notes',
-        multiline: true,
-      },
-    ],
-    [
-      {
-        label: 'Job Number',
-        type: 'eventId',
-        name: 'jobNumber',
-      },
-    ],
-    [{ headline: true, label: 'Approval' }],
-    [
-      {
-        name: 'approved',
-        type: 'text',
-        label: 'Approved',
-        readOnly: true,
-      },
-      {
-        name: 'payrollProcessed',
-        type: 'text',
-        label: 'Payroll Processed',
-        readOnly: true,
-      },
-    ],
-  ];
   const SCHEMA_TRIP_INFO_LIMITED_EDITING: Schema<TripInfo> = [
     [{ headline: true, label: 'Monetary' }],
     [
@@ -440,76 +364,74 @@ export const TripSummaryNew: FC<Props> = ({
     ],
   ];
 
-  const CHECKBOXES_SCHEMA: Schema<CheckboxesFilterType> = [
-    [
-      {
-        name: 'approved',
-        type: 'checkbox',
-        label: 'Approved',
-      },
-      {
-        name: 'payrollProcessed',
-        type: 'checkbox',
-        label: 'Payroll Processed',
-      },
-    ],
-  ];
+  const loadTrips = useCallback(
+    async (form: TripFormFilter) => {
+      const today = new Date();
+      const startDay = startOfWeek(subDays(today, 7), { weekStartsOn: 6 });
+      const endDay = addDays(startDay, 7);
+      const req = new Trip();
+      req.setIsActive(true);
+      req.setUserId(userId);
 
-  const loadTrips = useCallback(async () => {
-    let tripReq = new Trip();
-    const today = new Date();
-    const startDay = startOfWeek(subDays(today, 7), { weekStartsOn: 6 });
-    const endDay = addDays(startDay, 7);
-    let criteria = {
-      page,
-      sort: {
-        orderByField: 'getUserId',
-        orderBy: 'getUserId',
-        orderDir: 'ASC',
-      } as TripsSort,
-      req: tripReq,
-      filter: {
-        ...tripFilter,
-        id: search.getId() ? search.getId() : tripFilter.id,
-        destinationAddress: search.getDestinationAddress()
-          ? search.getDestinationAddress()
-          : tripFilter.destinationAddress,
-        originAddress: search.getOriginAddress()
-          ? search.getOriginAddress()
-          : tripFilter.originAddress,
-        dateRange: managerView
-          ? ['>=', '0001-01-01', '<', formatDateFns(endDay)]
-          : undefined,
-        approved: checkboxFilter.approved ? true : tripFilter.approved,
-        payrollProcessed: checkboxFilter.payrollProcessed
-          ? true
-          : tripFilter.payrollProcessed,
-      },
-    };
-    try {
-      const results = await loadTripsByFilter(criteria);
-      setTripsLoaded(results.results);
-      setTotalTripCount(results.totalCount);
-      setTotalTripDistance(
-        results.results
-          .map(trip => trip.getDistanceInMiles())
-          .reduce((acc, curr) => acc + curr),
-      );
-    } catch (err) {
-      console.error(err);
-    }
-  }, [
-    page,
-    tripFilter,
-    search,
-    managerView,
-    checkboxFilter.approved,
-    checkboxFilter.payrollProcessed,
-  ]);
+      if (form.status == 'Pending') {
+        console.log('Pending');
+        req.setNotEqualsList(['Approved', 'AdminActionDate']);
+        req.setApproved(true);
+        req.setAdminActionDate('0001-01-01 00:00:00');
+      }
+      if (form.status == 'Approved') {
+        console.log('Approved');
+
+        req.setApproved(true);
+        req.setPayrollProcessed(false);
+      }
+      if (form.status == 'Rejected') {
+        console.log('Reject');
+
+        req.setNotEqualsList(['AdminActionDate']);
+        req.setApproved(false);
+        req.setAdminActionDate('0001-01-01 00:00:00');
+      }
+      if (form.status == 'Processed') {
+        console.log('Processed');
+
+        req.setPayrollProcessed(true);
+      }
+      //IF self, just view trips at self
+      //if manager, keep date range , set default to Pending
+      //of Payroll, keep date range, set default to Approved
+      if (managerView) {
+        req.setDateRangeList([
+          '>=',
+          format(startDay, 'yyyy-MM-dd'),
+          '<',
+          format(endDay, 'yyyy-MM-dd'),
+        ]);
+      }
+      try {
+        console.log(req);
+        const results = await PerDiemClientService.BatchGetTrips(req);
+        console.log('loading trips');
+
+        setTripsLoaded(results.getResultsList());
+        console.log(results.getResultsList());
+        setTotalTripCount(results.getTotalCount());
+        setTotalTripDistance(
+          results
+            .getResultsList()
+            .map(trip => trip.getDistanceInMiles())
+            .reduce((acc, curr) => acc + curr),
+        );
+      } catch (err) {
+        console.error(err);
+      }
+    },
+    [page, search, managerView],
+  );
   const handleSetTripToView = useCallback(
     (tripToView: Trip | undefined) => {
       setTripToView(tripToView);
-      loadTrips();
+      loadTrips(form);
     },
     [setTripToView, loadTrips],
   );
@@ -518,7 +440,7 @@ export const TripSummaryNew: FC<Props> = ({
       try {
         await PerDiemClientService.updateTripPayrollProcessed(id);
         setPendingTripToProcessPayroll(undefined);
-        loadTrips();
+        loadTrips(form);
       } catch (err) {
         console.error(
           'An error occurred while updating trip payroll processed status: ',
@@ -534,7 +456,7 @@ export const TripSummaryNew: FC<Props> = ({
       try {
         await PerDiemClientService.updateTripApproved(id);
         setPendingTripToApprove(undefined);
-        loadTrips();
+        loadTrips(form);
       } catch (err) {
         console.error(
           'An error occurred while updating trip approved status: ',
@@ -551,7 +473,7 @@ export const TripSummaryNew: FC<Props> = ({
       try {
         await PerDiemClientService.updateTripDeny(id);
         setPendingTripToDeny(undefined);
-        loadTrips();
+        loadTrips(form);
       } catch (err) {
         console.error(
           'An error occurred while updating trip approved status: ',
@@ -670,7 +592,7 @@ export const TripSummaryNew: FC<Props> = ({
     if (onSaveTrip) onSaveTrip();
 
     handleSetPendingTripToAdd(undefined);
-    loadTrips();
+    loadTrips(form);
   };
   const deleteTrip = useCallback(
     async (tripToDelete: Trip) => {
@@ -694,7 +616,7 @@ export const TripSummaryNew: FC<Props> = ({
         handleSetPendingTripToDelete(undefined);
         return Error(err);
       }
-      loadTrips();
+      loadTrips(form);
     },
     [
       handleSetPendingTripToDelete,
@@ -712,7 +634,7 @@ export const TripSummaryNew: FC<Props> = ({
         trip.setPerDiemRowId(id);
         await PerDiemClientService.BatchDeleteTrips(trip);
         if (onDeleteAllTrips) onDeleteAllTrips();
-        loadTrips();
+        loadTrips(form);
         handleSetPendingDeleteAllTrips(false);
       } catch (err: any) {
         console.error(
@@ -747,12 +669,12 @@ export const TripSummaryNew: FC<Props> = ({
         }
     }
     setApprovingTrips(false);
-    loadTrips();
+    loadTrips(form);
   }, [tripsLoaded, handleSetPendingApproveAllTrips, loadTrips]);
 
   const load = useCallback(async () => {
     setLoaded(false);
-    await loadTrips();
+    await loadTrips(form);
     setLoaded(true);
   }, [loadTrips, setLoaded]);
 
@@ -762,14 +684,6 @@ export const TripSummaryNew: FC<Props> = ({
 
   return (
     <>
-      {checkboxes && (
-        <PlainForm<Checkboxes>
-          schema={CHECKBOXES_SCHEMA}
-          data={checkboxFilter}
-          key="CheckBoxes"
-          onChange={handleSetCheckboxFilter}
-        />
-      )}
       {pendingTripToProcessPayroll && (
         <Confirm
           key="ConfirmProcessed"
@@ -862,7 +776,7 @@ export const TripSummaryNew: FC<Props> = ({
             handleSetToggleApproveOrProcess();
             handleSetTripToView(undefined);
           }}
-          reloadResults={loadTrips}
+          reloadResults={() => loadTrips(form)}
           onProcessPayroll={async processed => {
             await handleProcessPayroll(processed.id);
             handleSetToggleApproveOrProcess();
@@ -898,20 +812,23 @@ export const TripSummaryNew: FC<Props> = ({
           cancelLabel="Reset"
           schema={SCHEMA_TRIP_SEARCH}
           data={search}
-          onClose={() => loadTrips()}
+          onClose={() => loadTrips(form)}
           onSave={tripOut => {
             const safe = makeSafeFormObject(tripOut, new Trip());
             handleSetSearch(safe);
-            loadTrips();
+            loadTrips(form);
           }}
         />
       )}
+      <PlainForm
+        key={form.status}
+        schema={SCHEMA}
+        data={form}
+        onChange={data => handleSetForm(data)}
+      />
+
       <InfoTable
-        key={
-          loaded.toString() +
-          toggleApproveOrProcess.toString() +
-          pendingTripToDeny
-        }
+        key={form.status + loaded}
         loading={!loaded}
         columns={[
           { name: 'Origin' },
@@ -1103,6 +1020,7 @@ export const TripSummaryNew: FC<Props> = ({
             : []
         }
       />
+
       {pendingTripToDelete && (
         <ConfirmDelete
           key="DeleteTrip"

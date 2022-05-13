@@ -204,9 +204,10 @@ export const Trips: FC<Props> = ({
             canApprove={role === 'Manager'}
             canProcessPayroll={role === 'Payroll'}
             userId={TripViewed.getUserId()}
-            toggle={role === 'Payroll' ? toggleButton : undefined}
-            checkboxes={role === 'Payroll'}
             managerView={role === 'Manager'}
+            viewNewTripsCreation={
+              loggedUserId === 103285 || loggedUserId == 103896
+            }
           />
         </Modal>
       )}
