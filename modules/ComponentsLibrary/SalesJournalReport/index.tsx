@@ -112,7 +112,7 @@ export const SalesJournalReport: FC<Props> = ({
     req.setDateRangeList(['>=', form.startDate, '<=', form.endDate]);
     req.setLogPaymentStatus(form.paymentStatus);
     if (form.departmentId != 0) {
-      req.setDepartmentId(form.departmentId);
+      req.setDepartmentId(form.departmentId as number);
     }
     if (form.paymentStatus) {
       req.setLogPaymentStatus(form.paymentStatus);
@@ -127,9 +127,8 @@ export const SalesJournalReport: FC<Props> = ({
     const req = new Event();
     req.setDateTargetList(['date_started', 'date_started']);
     req.setDateRangeList(['>=', form.startDate, '<=', form.endDate]);
-    req.setLogPaymentStatus(form.paymentStatus);
     if (form.departmentId != 0) {
-      req.setDepartmentId(form.departmentId);
+      req.setDepartmentId(form.departmentId as number);
     }
     if (form.paymentStatus) {
       req.setLogPaymentStatus(form.paymentStatus);
