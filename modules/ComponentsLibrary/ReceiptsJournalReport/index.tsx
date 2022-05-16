@@ -10,7 +10,7 @@ import { Button } from '../Button';
 import { Alert } from '../Alert';
 import { ReportClientService, usd } from '../../../helpers';
 import { Loader } from '../../Loader/main';
-import { makeFakeRows, EventClientService } from '../../../helpers';
+import { makeFakeRows, EventClientService, formatDate } from '../../../helpers';
 import { ReceiptJournalReportLine } from '../../../@kalos-core/kalos-rpc/Report';
 import { format } from 'date-fns';
 import { ExportJSON } from '../ExportJSON';
@@ -210,7 +210,7 @@ export const ReceiptJournalReport: FC<Props> = ({
               json={printEntries.map(entry => ({
                 id: entry.getEventId(),
                 paidAmount: usd(entry.getAmountCollected()),
-                billingDate: entry.getSrDatetime(),
+                billingDate: formatDate(entry.getSrDatetime()),
                 paymentType: entry.getPaymentType(),
                 departmentId: entry.getDepartmentId(),
               }))}

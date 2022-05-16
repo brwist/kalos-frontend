@@ -48,6 +48,7 @@ import { SCHEMA_GOOGLE_MAP_INPUT_FORM } from '../TripInfoTable';
 import { Alert } from '../Alert';
 import { RoleType } from '../Payroll';
 import { subDays, addDays, startOfWeek, format } from 'date-fns';
+import { NULL_TIME_VALUE } from '../Timesheet/constants';
 type CheckboxesFilterType = {
   approved: number;
   payrollProcessed: number;
@@ -240,11 +241,15 @@ export const TripSummaryNew: FC<Props> = ({
   if (canApprove) {
     actions = [
       {
-        label: 'Approve All Trips',
+        label:
+          form.status != 'Pending'
+            ? 'Approve All Trips Disabled For Non-Pending Trips'
+            : 'Approve All Trips',
         compact: compact ? true : false,
         variant: 'outlined',
         size: 'xsmall',
         onClick: () => handleSetPendingApproveAllTrips(true),
+        disabled: form.status != 'Pending',
         burgeronly: 1,
       },
     ];
@@ -375,8 +380,6 @@ export const TripSummaryNew: FC<Props> = ({
 
       if (form.status == 'Pending') {
         console.log('Pending');
-        req.setNotEqualsList(['Approved', 'AdminActionDate']);
-        req.setApproved(true);
         req.setAdminActionDate('0001-01-01 00:00:00');
       }
       if (form.status == 'Approved') {
@@ -388,8 +391,9 @@ export const TripSummaryNew: FC<Props> = ({
       if (form.status == 'Rejected') {
         console.log('Reject');
 
-        req.setNotEqualsList(['AdminActionDate']);
-        req.setApproved(false);
+        req.setNotEqualsList(['AdminActionDate', 'Approved']);
+        req.addFieldMask('AdminActionDate');
+        req.setApproved(true);
         req.setAdminActionDate('0001-01-01 00:00:00');
       }
       if (form.status == 'Processed') {
@@ -802,6 +806,17 @@ export const TripSummaryNew: FC<Props> = ({
           }
           small={compact}
           key={tripsLoaded!.length}
+          asideContent={
+            onClose ? (
+              <Button
+                label="Close"
+                size="small"
+                key={'closeTrips'}
+                variant="contained"
+                onClick={() => onClose(false)}
+              />
+            ) : undefined
+          }
         />
       }
       {searchable && (
@@ -840,25 +855,40 @@ export const TripSummaryNew: FC<Props> = ({
           { name: 'Day of' },
           { name: 'Miles / Cost' },
           {
-            name: 'Approved?',
-          },
-          {
             name: 'Home Travel',
           },
           {
             name: 'Job Number',
           },
           {
-            name: 'Payroll Processed?',
-            actions: actions,
+            name: 'Current Status',
           },
           {
-            name: ' ',
+            name: ' Actions',
+            actions: actions,
           },
         ]}
         data={
           loaded
             ? tripsLoaded!.map((currentTrip: Trip, idx: number) => {
+                let status = '';
+                if (
+                  currentTrip.getApproved() == false &&
+                  currentTrip.getAdminActionDate() != NULL_TIME_VALUE &&
+                  currentTrip.getPayrollProcessed() == false
+                ) {
+                  status = 'Rejected';
+                } else if (
+                  currentTrip.getApproved() == true &&
+                  currentTrip.getAdminActionDate() != NULL_TIME_VALUE &&
+                  currentTrip.getPayrollProcessed() == false
+                ) {
+                  status = 'Approved';
+                } else if (currentTrip.getPayrollProcessed() == true) {
+                  status = 'Processed';
+                } else {
+                  status = 'Pending';
+                }
                 return [
                   { value: currentTrip.getOriginAddress() },
                   { value: currentTrip.getDestinationAddress() },
@@ -880,16 +910,13 @@ export const TripSummaryNew: FC<Props> = ({
                       ),
                   },
                   {
-                    value: currentTrip.getApproved() ? 'Yes' : 'No',
-                  },
-                  {
                     value: currentTrip.getHomeTravel() ? 'Yes' : 'No',
                   },
                   {
                     value: currentTrip.getJobNumber(),
                   },
                   {
-                    value: currentTrip.getPayrollProcessed() ? 'Yes' : 'No',
+                    value: status,
                   },
                   {
                     value: '',
@@ -949,6 +976,7 @@ export const TripSummaryNew: FC<Props> = ({
                       ),
                       canApprove &&
                       currentTrip.getDateProcessed() == NULL_TIME &&
+                      currentTrip.getAdminActionDate() == NULL_TIME &&
                       !currentTrip.getApproved() ? (
                         <Tooltip
                           key={'approve' + idx}
@@ -971,6 +999,7 @@ export const TripSummaryNew: FC<Props> = ({
                         <></>
                       ),
                       canApprove &&
+                      currentTrip.getAdminActionDate() == NULL_TIME &&
                       currentTrip.getDateProcessed() == NULL_TIME ? (
                         <Tooltip
                           key={'Reject' + idx}
@@ -993,6 +1022,7 @@ export const TripSummaryNew: FC<Props> = ({
                         <></>
                       ),
                       canProcessPayroll &&
+                      currentTrip.getAdminActionDate() != NULL_TIME &&
                       currentTrip.getPayrollProcessed() == false ? (
                         <Tooltip
                           key={'payroll' + idx}
@@ -1029,15 +1059,6 @@ export const TripSummaryNew: FC<Props> = ({
           kind="" // Purposely left blank for clarity purposes in the box
           name="this trip"
           onConfirm={() => deleteTrip(pendingTripToDelete!)}
-        />
-      )}
-      {onClose && (
-        <Button
-          label="Close"
-          size="small"
-          key={'closeTrips'}
-          variant="contained"
-          onClick={() => onClose(false)}
         />
       )}
       {pendingDeleteAllTrips && (
