@@ -1037,6 +1037,8 @@ const NAMED_EXPORTS = {
     'PromptPaymentReportLine',
     'TransactionReportLine',
     'TransactionDumpReport',
+    'ReceiptJournalReportLine',
+    'ReceiptJournalReport',
     'TimeoffReportLine',
     'TimeoffReportRequest',
     'TimeoffReport'

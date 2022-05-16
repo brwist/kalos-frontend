@@ -107,7 +107,7 @@ export const ReceiptJournalReport: FC<Props> = ({
     if (form.departmentId != 0) {
       req.setDepartmentId(form.departmentId);
     }
-    req.setWithoutLimit(true);
+    req.setPageNumber(page);
     const results = await ReportClientService.GetReceiptJournalReport(req);
     setEntries(results.getDataList());
     setCount(results.getTotalCount());
