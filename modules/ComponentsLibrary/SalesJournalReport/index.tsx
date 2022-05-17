@@ -161,12 +161,12 @@ export const SalesJournalReport: FC<Props> = ({
       {
         name: 'startDate',
         label: 'Start Date',
-        type: 'mui-date',
+        type: 'date',
       },
       {
         name: 'endDate',
         label: 'End Date',
-        type: 'mui-date',
+        type: 'date',
       },
       {
         name: 'departmentId',
