@@ -8,7 +8,7 @@ import { PrintHeaderSubtitleItem } from '../PrintHeader';
 import { PlainForm, Schema } from '../PlainForm';
 import { Button } from '../Button';
 import { Alert } from '../Alert';
-import { ReportClientService, usd } from '../../../helpers';
+import { ReportClientService, usd, formatDate } from '../../../helpers';
 import { Loader } from '../../Loader/main';
 import { makeFakeRows, EventClientService } from '../../../helpers';
 import { ReceiptJournalReportLine } from '../../../@kalos-core/kalos-rpc/Report';
@@ -16,7 +16,6 @@ import { format } from 'date-fns';
 import { ExportJSON } from '../ExportJSON';
 import { ROWS_PER_PAGE } from '../../../constants';
 import { TransactionReportLine } from '../../../@kalos-core/kalos-rpc/Report';
-
 interface Props {
   loggedUserId: number;
   onClose?: () => void;
@@ -48,8 +47,8 @@ const EXPORT_COLUMNS = [
     value: 'paidAmount',
   },
   {
-    label: 'Process Date',
-    value: 'processDate',
+    label: 'Billing Date',
+    value: 'billingDate',
   },
   {
     label: 'Process Method',
@@ -84,15 +83,15 @@ export const ReceiptJournalReport: FC<Props> = ({
     departmentId: 0,
   });
   const handleSetForm = (data: FilterForm) => {
+    console.log(data);
     setForm(data);
-    setLoaded(false);
   };
 
   const loadPrintEntries = useCallback(async () => {
     const req = new ReceiptJournalReportLine();
     req.setDateRangeList(['>=', form.startDate, '<=', form.endDate]);
-    if (form.departmentId != 0) {
-      req.setDepartmentId(form.departmentId);
+    if (form.departmentId != 0 && form.departmentId.toString() != '') {
+      req.setDepartmentId(form.departmentId as number);
     }
     req.setWithoutLimit(true);
     const results = await ReportClientService.GetReceiptJournalReport(req);
@@ -104,8 +103,8 @@ export const ReceiptJournalReport: FC<Props> = ({
 
     const req = new ReceiptJournalReportLine();
     req.setDateRangeList(['>=', form.startDate, '<=', form.endDate]);
-    if (form.departmentId != 0) {
-      req.setDepartmentId(form.departmentId);
+    if (form.departmentId != 0 && form.departmentId.toString() != '') {
+      req.setDepartmentId(form.departmentId as number);
     }
     req.setPageNumber(page);
     const results = await ReportClientService.GetReceiptJournalReport(req);
@@ -140,12 +139,12 @@ export const ReceiptJournalReport: FC<Props> = ({
       {
         name: 'startDate',
         label: 'Start Date',
-        type: 'mui-date',
+        type: 'date',
       },
       {
         name: 'endDate',
         label: 'End Date',
-        type: 'mui-date',
+        type: 'date',
       },
       {
         name: 'departmentId',
@@ -171,7 +170,7 @@ export const ReceiptJournalReport: FC<Props> = ({
       : entries.map(entry => {
           const id = entry.getEventId();
           const paidAmount = usd(entry.getAmountCollected());
-          const billingDate = entry.getSrDatetime();
+          const billingDate = formatDate(entry.getSrDatetime());
           const paymentMethod = entry.getPaymentType();
           const department = entry.getDepartmentId();
 
@@ -205,12 +204,13 @@ export const ReceiptJournalReport: FC<Props> = ({
         }}
         asideContent={
           <>
+            <Button label="Search" onClick={() => setLoaded(false)}></Button>
             <Alert open={error != ''} onClose={() => setError('')}></Alert>
             <ExportJSON
               json={printEntries.map(entry => ({
                 id: entry.getEventId(),
                 paidAmount: usd(entry.getAmountCollected()),
-                billingDate: entry.getSrDatetime(),
+                billingDate: formatDate(entry.getSrDatetime()),
                 paymentType: entry.getPaymentType(),
                 departmentId: entry.getDepartmentId(),
               }))}
