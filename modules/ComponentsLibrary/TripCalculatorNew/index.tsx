@@ -302,21 +302,15 @@ export const TripCalculatorNew: FC<props> = ({
       },
     ],
 
-    [
-      {
-        headline: true,
-        label:
-          'Job Associated with Trip (Ignore if you have selected Job from one of the Dropdowns)',
-      },
-    ],
-    [
-      {
-        name: 'jobNumber',
-        headline: true,
-        label: 'Job Associated with this Trip',
-        type: 'eventId',
-      },
-    ],
+    state.dropDownValue1 == 'Job' || state.dropDownValue2 == 'Job'
+      ? [{ type: 'hidden', name: 'jobNumber' }]
+      : [
+          {
+            name: 'jobNumber',
+            label: 'Job Associated With Trip',
+            type: 'eventId',
+          },
+        ],
     [
       {
         content: (
