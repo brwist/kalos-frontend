@@ -483,6 +483,86 @@ export namespace ReceiptJournalReportLine {
   }
 }
 
+export class SalesJournalReportLine extends jspb.Message {
+  getEventId(): number;
+  setEventId(value: number): void;
+
+  getServiceDate(): string;
+  setServiceDate(value: string): void;
+
+  getCustomerId(): number;
+  setCustomerId(value: number): void;
+
+  getCustomerName(): string;
+  setCustomerName(value: string): void;
+
+  getStatus(): string;
+  setStatus(value: string): void;
+
+  getJobTypeId(): number;
+  setJobTypeId(value: number): void;
+
+  getBillingDate(): string;
+  setBillingDate(value: string): void;
+
+  getDepartmentId(): number;
+  setDepartmentId(value: number): void;
+
+  getTotalAmount(): number;
+  setTotalAmount(value: number): void;
+
+  getWithoutLimit(): boolean;
+  setWithoutLimit(value: boolean): void;
+
+  getPageNumber(): number;
+  setPageNumber(value: number): void;
+
+  getOrderBy(): string;
+  setOrderBy(value: string): void;
+
+  getOrderDir(): string;
+  setOrderDir(value: string): void;
+
+  clearDateRangeList(): void;
+  getDateRangeList(): Array<string>;
+  setDateRangeList(value: Array<string>): void;
+  addDateRange(value: string, index?: number): string;
+
+  clearDateTargetList(): void;
+  getDateTargetList(): Array<string>;
+  setDateTargetList(value: Array<string>): void;
+  addDateTarget(value: string, index?: number): string;
+
+  serializeBinary(): Uint8Array;
+  toObject(includeInstance?: boolean): SalesJournalReportLine.AsObject;
+  static toObject(includeInstance: boolean, msg: SalesJournalReportLine): SalesJournalReportLine.AsObject;
+  static extensions: {[key: number]: jspb.ExtensionFieldInfo<jspb.Message>};
+  static extensionsBinary: {[key: number]: jspb.ExtensionFieldBinaryInfo<jspb.Message>};
+  static serializeBinaryToWriter(message: SalesJournalReportLine, writer: jspb.BinaryWriter): void;
+  static deserializeBinary(bytes: Uint8Array): SalesJournalReportLine;
+  static deserializeBinaryFromReader(message: SalesJournalReportLine, reader: jspb.BinaryReader): SalesJournalReportLine;
+}
+
+export namespace SalesJournalReportLine {
+  export type AsObject = {
+    eventId: number,
+    serviceDate: string,
+    customerId: number,
+    customerName: string,
+    status: string,
+    jobTypeId: number,
+    billingDate: string,
+    departmentId: number,
+    totalAmount: number,
+    withoutLimit: boolean,
+    pageNumber: number,
+    orderBy: string,
+    orderDir: string,
+    dateRangeList: Array<string>,
+    dateTargetList: Array<string>,
+  }
+}
+
 export class PromptPaymentReport extends jspb.Message {
   clearDataList(): void;
   getDataList(): Array<PromptPaymentReportLine>;
@@ -527,6 +607,32 @@ export class ReceiptJournalReport extends jspb.Message {
 export namespace ReceiptJournalReport {
   export type AsObject = {
     dataList: Array<ReceiptJournalReportLine.AsObject>,
+    totalCount: number,
+  }
+}
+
+export class SalesJournalReport extends jspb.Message {
+  clearDataList(): void;
+  getDataList(): Array<SalesJournalReportLine>;
+  setDataList(value: Array<SalesJournalReportLine>): void;
+  addData(value?: SalesJournalReportLine, index?: number): SalesJournalReportLine;
+
+  getTotalCount(): number;
+  setTotalCount(value: number): void;
+
+  serializeBinary(): Uint8Array;
+  toObject(includeInstance?: boolean): SalesJournalReport.AsObject;
+  static toObject(includeInstance: boolean, msg: SalesJournalReport): SalesJournalReport.AsObject;
+  static extensions: {[key: number]: jspb.ExtensionFieldInfo<jspb.Message>};
+  static extensionsBinary: {[key: number]: jspb.ExtensionFieldBinaryInfo<jspb.Message>};
+  static serializeBinaryToWriter(message: SalesJournalReport, writer: jspb.BinaryWriter): void;
+  static deserializeBinary(bytes: Uint8Array): SalesJournalReport;
+  static deserializeBinaryFromReader(message: SalesJournalReport, reader: jspb.BinaryReader): SalesJournalReport;
+}
+
+export namespace SalesJournalReport {
+  export type AsObject = {
+    dataList: Array<SalesJournalReportLine.AsObject>,
     totalCount: number,
   }
 }

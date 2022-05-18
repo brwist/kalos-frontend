@@ -60,6 +60,7 @@ class Checkboxes implements CheckboxesFilterType {
 }
 type TripFormFilter = {
   status: string;
+  dateOption:'Created' | 'Approved' | 'Processed'
 };
 interface Props {
   loggedUserId: number;

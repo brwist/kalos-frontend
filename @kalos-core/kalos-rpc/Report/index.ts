@@ -12,6 +12,8 @@ import {
   TimeoffReport,
   ReceiptJournalReportLine,
   ReceiptJournalReport,
+  SalesJournalReport,
+  SalesJournalReportLine,
 } from '../compiled-protos/reports_pb';
 import {
   UnaryRpcOptions,
@@ -122,7 +124,29 @@ class ReportClient extends BaseClient {
       grpc.unary(ReportService.GetReceiptJournalReport, opts);
     });
   }
+
+  public async GetSalesJournalReport(req: SalesJournalReportLine) {
+    return new Promise<SalesJournalReport>((resolve, reject) => {
+      const opts: UnaryRpcOptions<
+        SalesJournalReportLine,
+        SalesJournalReport
+      > = {
+        request: req,
+        host: this.host,
+        metadata: this.getMetaData(),
+        onEnd: (result: UnaryOutput<SalesJournalReport>) => {
+          if (result.message) {
+            resolve(result.message);
+          } else {
+            reject(new Error(result.statusMessage));
+          }
+        },
+      };
+      grpc.unary(ReportService.GetSalesJournalReport, opts);
+    });
+  }
 }
+
 export {
   SpiffReport,
   SpiffReportLine,
@@ -136,4 +160,6 @@ export {
   ReportClient,
   ReceiptJournalReport,
   ReceiptJournalReportLine,
+  SalesJournalReport,
+  SalesJournalReportLine,
 };

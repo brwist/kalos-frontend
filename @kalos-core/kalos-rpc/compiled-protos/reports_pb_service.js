@@ -55,6 +55,15 @@ ReportService.GetReceiptJournalReport = {
   responseType: reports_pb.ReceiptJournalReport
 };
 
+ReportService.GetSalesJournalReport = {
+  methodName: "GetSalesJournalReport",
+  service: ReportService,
+  requestStream: false,
+  responseStream: false,
+  requestType: reports_pb.SalesJournalReportLine,
+  responseType: reports_pb.SalesJournalReport
+};
+
 exports.ReportService = ReportService;
 
 function ReportServiceClient(serviceHost, options) {
@@ -191,6 +200,37 @@ ReportServiceClient.prototype.getReceiptJournalReport = function getReceiptJourn
     callback = arguments[1];
   }
   var client = grpc.unary(ReportService.GetReceiptJournalReport, {
+    request: requestMessage,
+    host: this.serviceHost,
+    metadata: metadata,
+    transport: this.options.transport,
+    debug: this.options.debug,
+    onEnd: function (response) {
+      if (callback) {
+        if (response.status !== grpc.Code.OK) {
+          var err = new Error(response.statusMessage);
+          err.code = response.status;
+          err.metadata = response.trailers;
+          callback(err, null);
+        } else {
+          callback(null, response.message);
+        }
+      }
+    }
+  });
+  return {
+    cancel: function () {
+      callback = null;
+      client.close();
+    }
+  };
+};
+
+ReportServiceClient.prototype.getSalesJournalReport = function getSalesJournalReport(requestMessage, metadata, callback) {
+  if (arguments.length === 2) {
+    callback = arguments[1];
+  }
+  var client = grpc.unary(ReportService.GetSalesJournalReport, {
     request: requestMessage,
     host: this.serviceHost,
     metadata: metadata,

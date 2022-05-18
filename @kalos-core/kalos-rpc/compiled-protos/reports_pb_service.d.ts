@@ -49,6 +49,15 @@ type ReportServiceGetReceiptJournalReport = {
   readonly responseType: typeof reports_pb.ReceiptJournalReport;
 };
 
+type ReportServiceGetSalesJournalReport = {
+  readonly methodName: string;
+  readonly service: typeof ReportService;
+  readonly requestStream: false;
+  readonly responseStream: false;
+  readonly requestType: typeof reports_pb.SalesJournalReportLine;
+  readonly responseType: typeof reports_pb.SalesJournalReport;
+};
+
 export class ReportService {
   static readonly serviceName: string;
   static readonly GetSpiffReportData: ReportServiceGetSpiffReportData;
@@ -56,6 +65,7 @@ export class ReportService {
   static readonly GetTransactionDumpData: ReportServiceGetTransactionDumpData;
   static readonly GetTimeoffReportData: ReportServiceGetTimeoffReportData;
   static readonly GetReceiptJournalReport: ReportServiceGetReceiptJournalReport;
+  static readonly GetSalesJournalReport: ReportServiceGetSalesJournalReport;
 }
 
 export type ServiceError = { message: string, code: number; metadata: grpc.Metadata }
@@ -134,6 +144,15 @@ export class ReportServiceClient {
   getReceiptJournalReport(
     requestMessage: reports_pb.ReceiptJournalReportLine,
     callback: (error: ServiceError|null, responseMessage: reports_pb.ReceiptJournalReport|null) => void
+  ): UnaryResponse;
+  getSalesJournalReport(
+    requestMessage: reports_pb.SalesJournalReportLine,
+    metadata: grpc.Metadata,
+    callback: (error: ServiceError|null, responseMessage: reports_pb.SalesJournalReport|null) => void
+  ): UnaryResponse;
+  getSalesJournalReport(
+    requestMessage: reports_pb.SalesJournalReportLine,
+    callback: (error: ServiceError|null, responseMessage: reports_pb.SalesJournalReport|null) => void
   ): UnaryResponse;
 }
 
