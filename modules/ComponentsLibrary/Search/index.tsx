@@ -54,7 +54,7 @@ interface Props {
   kinds: Kind[];
   open: boolean;
   onClose: () => void;
-  onSelect: (entry: SearchOutput) => void;
+  onSelect: (entry: User | Property) => void;
   excludeId?: number;
 }
 
@@ -198,9 +198,14 @@ export const Search: FC<Props> = ({
     [handlePropertySearch, handleUserSearch, propertySearch, userSearch],
   );
 
-  const handleSelect = useCallback((entry: User | Property) => {
-    console.log('Selected: ', entry);
-  }, []);
+  const handleSelect = useCallback(
+    (entry: User | Property) => {
+      console.log('Selected: ', entry);
+
+      onSelect(entry);
+    },
+    [onSelect],
+  );
 
   const data: Data = loading
     ? makeFakeRows()

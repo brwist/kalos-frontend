@@ -29,6 +29,7 @@ import {
   ReportClient,
   PromptPaymentReportLine,
   SpiffReportLine,
+  TimeoffReportRequest,
 } from './@kalos-core/kalos-rpc/Report';
 import { EmployeeFunctionClient } from './@kalos-core/kalos-rpc/EmployeeFunction';
 
@@ -96,6 +97,7 @@ import { FirstCallClient } from './@kalos-core/kalos-rpc/FirstCall';
 import { MertricReportDataRequest } from './@kalos-core/kalos-rpc/compiled-protos/metrics_pb';
 import axios from 'axios';
 import Axios from 'axios';
+import { ReportServiceClient } from './@kalos-core/kalos-rpc/compiled-protos/reports_pb_service';
 
 export type SimpleFile = {
   key: string;
@@ -504,7 +506,7 @@ function formatDay(datetime: string) {
       5: 'Fri',
       6: 'Sat',
     } as { [key: number]: string }
-  )[new Date(datetime).getDay()];
+  )[new Date(datetime.substring(0, 10)).getDay() + 1];
 }
 
 /**
@@ -765,19 +767,20 @@ export const loadCharityReport = async (month: string) => {
 };
 
 export const loadTimeoffSummaryReport = async (year: number) => {
-  //FIXME make this load real data, move to client
-  return [...Array(100)].map(() => ({
-    employeeName: getRandomName(),
-    hireDate: [
-      randomize([2015, 2016, 2017, 2018, 2019]),
-      trailingZero(+randomize([1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12])),
-      trailingZero(+randomize([...Array(30)].map((_, idx) => idx + 1))),
-    ].join('-'),
-    annualPtoAllowance: randomize([0, 40]),
-    pto: randomize([0, 8, 24, 32, 64]),
-    discretionary: randomize([0, 32, 40, 23, 14]),
-    mandatory: 0,
+  const req = new TimeoffReportRequest();
+  req.setYearShift(year);
+  const results = (
+    await ReportClientService.GetTimeOffReport(req)
+  ).getDataList();
+  const mappedResults = results.map(entry => ({
+    hireDate: entry.getHireDate(),
+    employeeName: `${entry.getUserFirstname()} ${entry.getUserLastname()}`,
+    annualPtoAllowance: entry.getAnnualHoursPto(),
+    pto: entry.getAnnualPto(),
+    mandatory: entry.getAnnualMandatory(),
+    discretionary: entry.getAnnualDiscretionary(),
   }));
+  return mappedResults;
 };
 
 export const loadWarrantyReport = async () => {
@@ -1268,6 +1271,7 @@ export type EventsFilter = {
   city?: string;
   zip?: string;
   logDateCompleted?: string;
+  isResidential?: number;
   jobTypeId?: number;
   jobSubtypeId?: number;
   logJobStatus?: string;
@@ -1314,6 +1318,7 @@ export const loadEventsByFilter = async ({
     firstname,
     lastname,
     businessname,
+    isResidential,
     jobTypeId,
     jobSubtypeId,
     logJobStatus,
@@ -1341,6 +1346,17 @@ export const loadEventsByFilter = async ({
   }
   if (fieldMaskList) {
     req.setFieldMaskList(fieldMaskList);
+  }
+  if (isResidential != 0) {
+    if (isResidential == 1) {
+      req.setNotEqualsList(['IsResidential']);
+      req.setIsResidential(0);
+    }
+    if (isResidential == 2) {
+      console.log('Commercial');
+      req.setNotEqualsList(['IsResidential']);
+      req.setIsResidential(1);
+    }
   }
   if (isActive) {
     req.setIsActive(1);

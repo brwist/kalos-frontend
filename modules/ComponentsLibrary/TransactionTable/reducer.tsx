@@ -2,6 +2,8 @@ import { TimesheetDepartment } from '../../../@kalos-core/kalos-rpc/TimesheetDep
 import { Transaction } from '../../../@kalos-core/kalos-rpc/Transaction';
 import { TransactionActivity } from '../../../@kalos-core/kalos-rpc/TransactionActivity';
 import { User } from '../../../@kalos-core/kalos-rpc/User';
+import { Vendor } from '../../../@kalos-core/kalos-rpc/Vendor';
+
 import { RoleType } from '../Payroll';
 import { OrderDir } from '../../../helpers';
 import { TransactionAccountList } from '../../../@kalos-core/kalos-rpc/TransactionAccount';
@@ -14,10 +16,11 @@ export interface FilterType {
   isPending: boolean | undefined;
   isAccepted: boolean | undefined;
   isRejected: boolean | undefined;
-  isProcessed: boolean | undefined;
+  isPending: boolean | undefined;
   amount: number | undefined;
   billingRecorded: boolean;
   universalSearch: string | undefined;
+  isProcessed: boolean | undefined;
 }
 
 type SelectorParams = {
@@ -31,7 +34,7 @@ export type MergeDocuments = {
 };
 export type DuplicateCheck = {
   orderNumber: string;
-  vendor: string;
+  invoiceNumber: string;
 };
 export type State = {
   transactionFilter: FilterType;
@@ -68,10 +71,12 @@ export type State = {
   employees: User[];
   searching: boolean;
   notify: number;
+
   assignedEmployee: number | undefined;
   selectedTransactions: Transaction[];
   status: 'None' | 'Accepted' | 'Rejected' | 'Pending' | 'Processed';
   departments: TimesheetDepartment[];
+  vendors: Vendor[];
   universalSearch: string | undefined;
   fileData: any | undefined;
   imageWaiverTypePopupOpen: boolean;
@@ -126,6 +131,8 @@ export enum ACTIONS {
   SET_UNIVERSAL_SEARCH = 'setUniversalSearch',
   SET_FILE_DATA = 'setFileData',
   SET_NOTIFY = 'setNotify',
+  SET_VENDORS = 'setVendors',
+
   SET_IMAGE_WAIVER_TYPE_POPUP_OPEN = 'setImageWaiverTypePopupOpen',
   SET_IMAGE_WAIVER_TYPE_FORM_DATA = 'setImageWaiverTypeFormData',
   SET_TRANSACTION_TO_SAVE = 'setTransactionToSave',
@@ -169,6 +176,7 @@ export type Action =
   | { type: ACTIONS.SET_PAGE; data: number }
   | { type: ACTIONS.SET_MERGE_DOCUMENT_ALERT; data: string }
   | { type: ACTIONS.SET_ERROR; data: string | undefined }
+  | { type: ACTIONS.SET_VENDORS; data: Vendor[] }
   | {
       type: ACTIONS.SET_STATUS;
       data: 'None' | 'Accepted' | 'Rejected' | 'Pending' | 'Processed';
@@ -345,6 +353,12 @@ export const reducer = (state: State, action: Action) => {
       return {
         ...state,
         departments: action.data,
+      };
+    }
+    case ACTIONS.SET_VENDORS: {
+      return {
+        ...state,
+        vendors: action.data,
       };
     }
     case ACTIONS.SET_TRANSACTION_TO_DELETE:

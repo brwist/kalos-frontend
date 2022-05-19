@@ -3,9 +3,6 @@ import ThemeProvider from '@material-ui/styles/ThemeProvider';
 import Drawer from '@material-ui/core/Drawer';
 import Button from '@material-ui/core/Button';
 import List from '@material-ui/core/List';
-import Hidden from '@material-ui/core/Hidden';
-import IconButton from '@material-ui/core/IconButton';
-import MenuSharp from '@material-ui/icons/MenuSharp';
 import { forceHTTPS, UserClientService } from '../../helpers';
 import { User, UserClient } from '../../@kalos-core/kalos-rpc/User';
 import { ENDPOINT } from '../../constants';
@@ -104,8 +101,17 @@ const SideMenu = ({
   useEffect(() => {
     (async () => {
       forceHTTPS();
-      await userClient.GetToken('test', 'test');
-      const userResult = await UserClientService.loadUserById(userID);
+      try {
+        await userClient.GetToken('test', 'test');
+      } catch (err) {
+        console.log('failed to get token', err);
+      }
+      let userResult = new User();
+      try {
+        userResult = await UserClientService.loadUserById(userID);
+      } catch (err) {
+        console.log('failed to get user', err);
+      }
       //customerCheck(userResult);
       if (userResult.getIsSu() === 1) {
         dispatch({ type: 'fetchedUser', user: userResult, isManager: true });
@@ -144,24 +150,13 @@ const SideMenu = ({
 
   return (
     <ThemeProvider theme={customTheme.lightTheme}>
-      <Hidden mdDown>
-        <Button onClick={toggleMenu} style={{ margin: '10px' }}>
-          <img
-            src={imgURL}
-            alt="no img"
-            style={{ maxWidth: '100%', height: 'auto' }}
-          />
-        </Button>
-      </Hidden>
-      <Hidden lgUp>
-        <IconButton
-          onClick={toggleMenu}
-          style={{ color: 'white', margin: '10px' }}
-        >
-          <MenuSharp />
-        </IconButton>
-      </Hidden>
-
+      <Button onClick={toggleMenu} style={{ margin: '10px' }}>
+        <img
+          src={imgURL}
+          alt="no img"
+          style={{ maxWidth: '100%', height: 'auto' }}
+        />
+      </Button>
       <Drawer
         open={isOpen}
         onClose={toggleMenu}

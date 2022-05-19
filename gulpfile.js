@@ -1036,7 +1036,14 @@ const NAMED_EXPORTS = {
     'PromptPaymentReport',
     'PromptPaymentReportLine',
     'TransactionReportLine',
-    'TransactionDumpReport'
+    'TransactionDumpReport',
+    'ReceiptJournalReportLine',
+    'ReceiptJournalReport',
+    'TimeoffReportLine',
+    'TimeoffReportRequest',
+    'TimeoffReport'
+
+
   ],
   '@kalos-core/kalos-rpc/compiled-protos/internal_document_pb.js':
     [
@@ -1340,6 +1347,7 @@ const MODULE_MAP = [
   {
     name: 'AcceptProposal',
     location: 'customer',
+    skip:true,
     controller: 'service',
     filename: 'accept_proposal',
     released: true,

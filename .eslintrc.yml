@@ -21,6 +21,12 @@ plugins:
   - react
   - '@typescript-eslint'
 rules:
+    "no-restricted-imports": [
+      "error",
+      {
+        "patterns": ["@mui/*/*/*", "!@mui/material/test-utils/*"]
+      }
+    ]
   indent: 0
   linebreak-style:
     - error
@@ -29,6 +35,11 @@ rules:
   semi: 0
   no-unused-vars: 0
   no-async-promise-executor: off
+  no-restricted-imports:
+    - error
+    - patterns:
+        - '@mui/*/*/*'
+        - '!@mui/material/test-utils/*'
   react/prop-types: off
   react/display-name: off
   react/jsx-key: off

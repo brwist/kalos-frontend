@@ -6,6 +6,7 @@ import * as google_api_annotations_pb from "./google/api/annotations_pb";
 import * as common_pb from "./common_pb";
 import * as google_protobuf_any_pb from "google-protobuf/google/protobuf/any_pb";
 import * as google_api_httpbody_pb from "./google/api/httpbody_pb";
+import * as google_rpc_error_details_pb from "./google/rpc/error_details_pb";
 
 export class HelpRequest extends jspb.Message {
   hasRawBody(): boolean;

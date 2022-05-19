@@ -2,6 +2,8 @@ import React, { FC, useState, useCallback } from 'react';
 import Alert from '@material-ui/lab/Alert';
 import { Form, Schema } from '../Form';
 import { Transaction } from '../../../@kalos-core/kalos-rpc/Transaction';
+import { Vendor } from '../../../@kalos-core/kalos-rpc/Vendor';
+
 import { TransactionAccountList } from '../../../@kalos-core/kalos-rpc/TransactionAccount';
 import {
   getFileExt,
@@ -10,6 +12,7 @@ import {
   TransactionActivityClientService,
   TransactionClientService,
   uploadPhotoToExistingTransaction,
+  VendorClientService,
 } from '../../../helpers';
 
 import { RoleType } from '../Payroll';
@@ -36,7 +39,7 @@ type Entry = {
   description: string;
   eventId: number;
   tag: string;
-  vendor: string;
+  vendor: number;
   cost: number;
   ownerId: number;
   costCenter: number;
@@ -66,7 +69,7 @@ export const UploadPhotoTransaction: FC<Props> = ({
   const [error, setError] = useState<boolean>(false);
   const [stringError, setStringError] = useState<string | undefined>();
   const [orderNumberCheck, setOrdeNumberCheck] = useState<string>('');
-  const [vendorCheck, setVendorCheck] = useState<string>('');
+  const [invoiceCheck, setInvoiceCheck] = useState<string>('');
 
   const [validateJobNumber, setValidateJobNumber] = useState<Entry | undefined>(
     undefined,
@@ -91,7 +94,7 @@ export const UploadPhotoTransaction: FC<Props> = ({
       }
     ).value,
     ownerId: loggedUserId,
-    vendor: '',
+    vendor: 0,
     cost: 0,
     tag: (
       SUBJECT_TAGS_TRANSACTIONS.find(({ label }) => label === defaultTag) || {
@@ -131,7 +134,15 @@ export const UploadPhotoTransaction: FC<Props> = ({
       newTransaction.setAssignedEmployeeId(loggedUserId);
       newTransaction.setAmount(data.cost);
       newTransaction.setDescription(data.description);
-      newTransaction.setVendor(data.vendor);
+      newTransaction.setVendorId(data.vendor);
+
+      if (newTransaction.getVendorId() != 0) {
+        const vendorReq = new Vendor();
+        vendorReq.setIsActive(1);
+        vendorReq.setId(newTransaction.getVendorId());
+        const result = await VendorClientService.Get(vendorReq);
+        newTransaction.setVendor(result.getVendorName());
+      }
       newTransaction.setCostCenterId(data.costCenter);
       newTransaction.setTimestamp(timestamp());
       newTransaction.setIsRecorded(true);
@@ -214,19 +225,40 @@ export const UploadPhotoTransaction: FC<Props> = ({
     (validate: Entry | undefined) => setValidateJobNumber(validate),
     [setValidateJobNumber],
   );
-  const handleCheckOrderNumber = useCallback(
-    async (orderNumber: string, vendor: string) => {
-      if (orderNumber != '' /*&& vendor != ''*/) {
+  const handleCheckOrderNumber = useCallback(async (orderNumber: string) => {
+    if (orderNumber != '') {
+      console.log('handleCheck Order number');
+      const transactionReq = new Transaction();
+      transactionReq.setOrderNumber(orderNumber);
+      transactionReq.setVendorCategory("'PickTicket','Receipt','Invoice'");
+      transactionReq.setIsActive(1);
+      try {
+        const result = await TransactionClientService.Get(transactionReq);
+        if (result) {
+          setStringError(
+            `This Order Number already exists. You can still create this transaction,
+        but it may result in duplicate transactions. It is recommended that you
+        search for the existing transaction and update it.`,
+          );
+        }
+      } catch (err) {
+        setStringError(undefined);
+      }
+    }
+  }, []);
+  const handleCheckInvoiceNumber = useCallback(
+    async (invoiceNumber: string) => {
+      if (invoiceNumber != '') {
+        console.log('we check invoice');
         const transactionReq = new Transaction();
-        transactionReq.setOrderNumber(orderNumber);
-        //transactionReq.setVendor(vendor);
+        transactionReq.setInvoiceNumber(invoiceNumber);
         transactionReq.setVendorCategory("'PickTicket','Receipt','Invoice'");
         transactionReq.setIsActive(1);
         try {
           const result = await TransactionClientService.Get(transactionReq);
           if (result) {
             setStringError(
-              `This Order Number already exists. You can still create this transaction,
+              `This Invoice Number already exists. You can still create this transaction,
         but it may result in duplicate transactions. It is recommended that you
         search for the existing transaction and update it.`,
             );
@@ -239,22 +271,22 @@ export const UploadPhotoTransaction: FC<Props> = ({
     [],
   );
 
+  const handleSetInvoiceNumberToCheckDuplicate = useCallback(
+    async (invoice: string) => {
+      setInvoiceCheck(invoice);
+      handleCheckInvoiceNumber(invoice);
+    },
+    [],
+  );
   const handleSetOrderNumberToCheckDuplicate = useCallback(
     async (orderNumber: string) => {
       setOrdeNumberCheck(orderNumber);
-      handleCheckOrderNumber(orderNumber, vendorCheck);
+      handleCheckOrderNumber(orderNumber);
     },
-    [vendorCheck, handleCheckOrderNumber],
-  );
-  const handleSetVendorToCheckDuplicate = useCallback(
-    async (vendor: string) => {
-      setVendorCheck(vendor);
-      handleCheckOrderNumber(orderNumberCheck, vendor);
-    },
-    [orderNumberCheck, handleCheckOrderNumber],
+    [],
   );
   const handleResetDuplicateCheck = useCallback(async () => {
-    setVendorCheck('');
+    setInvoiceCheck('');
     setOrdeNumberCheck('');
   }, []);
   const handleValidate = useCallback(
@@ -303,6 +335,7 @@ export const UploadPhotoTransaction: FC<Props> = ({
       {
         name: 'invoiceNumber',
         label: 'Invoice #',
+        onBlur: handleSetInvoiceNumberToCheckDuplicate,
       },
     ],
     [
@@ -331,8 +364,8 @@ export const UploadPhotoTransaction: FC<Props> = ({
       {
         name: 'vendor',
         label: 'Vendor',
+        type: 'vendor',
         required: true,
-        // onBlur: handleSetVendorToCheckDuplicate,
       },
       {
         name: 'costCenter',

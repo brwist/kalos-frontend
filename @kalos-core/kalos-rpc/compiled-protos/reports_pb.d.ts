@@ -333,6 +333,156 @@ export namespace TransactionReportLine {
   }
 }
 
+export class TimeoffReportRequest extends jspb.Message {
+  getYearShift(): number;
+  setYearShift(value: number): void;
+
+  serializeBinary(): Uint8Array;
+  toObject(includeInstance?: boolean): TimeoffReportRequest.AsObject;
+  static toObject(includeInstance: boolean, msg: TimeoffReportRequest): TimeoffReportRequest.AsObject;
+  static extensions: {[key: number]: jspb.ExtensionFieldInfo<jspb.Message>};
+  static extensionsBinary: {[key: number]: jspb.ExtensionFieldBinaryInfo<jspb.Message>};
+  static serializeBinaryToWriter(message: TimeoffReportRequest, writer: jspb.BinaryWriter): void;
+  static deserializeBinary(bytes: Uint8Array): TimeoffReportRequest;
+  static deserializeBinaryFromReader(message: TimeoffReportRequest, reader: jspb.BinaryReader): TimeoffReportRequest;
+}
+
+export namespace TimeoffReportRequest {
+  export type AsObject = {
+    yearShift: number,
+  }
+}
+
+export class TimeoffReportLine extends jspb.Message {
+  getEmployeeId(): number;
+  setEmployeeId(value: number): void;
+
+  getUserFirstname(): string;
+  setUserFirstname(value: string): void;
+
+  getUserLastname(): string;
+  setUserLastname(value: string): void;
+
+  getHireDate(): string;
+  setHireDate(value: string): void;
+
+  getAnnualHoursPto(): number;
+  setAnnualHoursPto(value: number): void;
+
+  getHireDateDiscretionary(): number;
+  setHireDateDiscretionary(value: number): void;
+
+  getHireDateMandatory(): number;
+  setHireDateMandatory(value: number): void;
+
+  getHireDatePto(): number;
+  setHireDatePto(value: number): void;
+
+  getHireDatePaidDowntime(): number;
+  setHireDatePaidDowntime(value: number): void;
+
+  getAnnualDiscretionary(): number;
+  setAnnualDiscretionary(value: number): void;
+
+  getAnnualMandatory(): number;
+  setAnnualMandatory(value: number): void;
+
+  getAnnualPto(): number;
+  setAnnualPto(value: number): void;
+
+  getAnnualPaidDowntime(): number;
+  setAnnualPaidDowntime(value: number): void;
+
+  serializeBinary(): Uint8Array;
+  toObject(includeInstance?: boolean): TimeoffReportLine.AsObject;
+  static toObject(includeInstance: boolean, msg: TimeoffReportLine): TimeoffReportLine.AsObject;
+  static extensions: {[key: number]: jspb.ExtensionFieldInfo<jspb.Message>};
+  static extensionsBinary: {[key: number]: jspb.ExtensionFieldBinaryInfo<jspb.Message>};
+  static serializeBinaryToWriter(message: TimeoffReportLine, writer: jspb.BinaryWriter): void;
+  static deserializeBinary(bytes: Uint8Array): TimeoffReportLine;
+  static deserializeBinaryFromReader(message: TimeoffReportLine, reader: jspb.BinaryReader): TimeoffReportLine;
+}
+
+export namespace TimeoffReportLine {
+  export type AsObject = {
+    employeeId: number,
+    userFirstname: string,
+    userLastname: string,
+    hireDate: string,
+    annualHoursPto: number,
+    hireDateDiscretionary: number,
+    hireDateMandatory: number,
+    hireDatePto: number,
+    hireDatePaidDowntime: number,
+    annualDiscretionary: number,
+    annualMandatory: number,
+    annualPto: number,
+    annualPaidDowntime: number,
+  }
+}
+
+export class ReceiptJournalReportLine extends jspb.Message {
+  getEventId(): number;
+  setEventId(value: number): void;
+
+  getPaymentType(): string;
+  setPaymentType(value: string): void;
+
+  getAmountCollected(): number;
+  setAmountCollected(value: number): void;
+
+  getSrDatetime(): string;
+  setSrDatetime(value: string): void;
+
+  getDepartmentId(): number;
+  setDepartmentId(value: number): void;
+
+  getWithoutLimit(): boolean;
+  setWithoutLimit(value: boolean): void;
+
+  getPageNumber(): number;
+  setPageNumber(value: number): void;
+
+  getOrderBy(): string;
+  setOrderBy(value: string): void;
+
+  getOrderDir(): string;
+  setOrderDir(value: string): void;
+
+  clearDateRangeList(): void;
+  getDateRangeList(): Array<string>;
+  setDateRangeList(value: Array<string>): void;
+  addDateRange(value: string, index?: number): string;
+
+  getDateTarget(): string;
+  setDateTarget(value: string): void;
+
+  serializeBinary(): Uint8Array;
+  toObject(includeInstance?: boolean): ReceiptJournalReportLine.AsObject;
+  static toObject(includeInstance: boolean, msg: ReceiptJournalReportLine): ReceiptJournalReportLine.AsObject;
+  static extensions: {[key: number]: jspb.ExtensionFieldInfo<jspb.Message>};
+  static extensionsBinary: {[key: number]: jspb.ExtensionFieldBinaryInfo<jspb.Message>};
+  static serializeBinaryToWriter(message: ReceiptJournalReportLine, writer: jspb.BinaryWriter): void;
+  static deserializeBinary(bytes: Uint8Array): ReceiptJournalReportLine;
+  static deserializeBinaryFromReader(message: ReceiptJournalReportLine, reader: jspb.BinaryReader): ReceiptJournalReportLine;
+}
+
+export namespace ReceiptJournalReportLine {
+  export type AsObject = {
+    eventId: number,
+    paymentType: string,
+    amountCollected: number,
+    srDatetime: string,
+    departmentId: number,
+    withoutLimit: boolean,
+    pageNumber: number,
+    orderBy: string,
+    orderDir: string,
+    dateRangeList: Array<string>,
+    dateTarget: string,
+  }
+}
+
 export class PromptPaymentReport extends jspb.Message {
   clearDataList(): void;
   getDataList(): Array<PromptPaymentReportLine>;
@@ -352,6 +502,32 @@ export class PromptPaymentReport extends jspb.Message {
 export namespace PromptPaymentReport {
   export type AsObject = {
     dataList: Array<PromptPaymentReportLine.AsObject>,
+  }
+}
+
+export class ReceiptJournalReport extends jspb.Message {
+  clearDataList(): void;
+  getDataList(): Array<ReceiptJournalReportLine>;
+  setDataList(value: Array<ReceiptJournalReportLine>): void;
+  addData(value?: ReceiptJournalReportLine, index?: number): ReceiptJournalReportLine;
+
+  getTotalCount(): number;
+  setTotalCount(value: number): void;
+
+  serializeBinary(): Uint8Array;
+  toObject(includeInstance?: boolean): ReceiptJournalReport.AsObject;
+  static toObject(includeInstance: boolean, msg: ReceiptJournalReport): ReceiptJournalReport.AsObject;
+  static extensions: {[key: number]: jspb.ExtensionFieldInfo<jspb.Message>};
+  static extensionsBinary: {[key: number]: jspb.ExtensionFieldBinaryInfo<jspb.Message>};
+  static serializeBinaryToWriter(message: ReceiptJournalReport, writer: jspb.BinaryWriter): void;
+  static deserializeBinary(bytes: Uint8Array): ReceiptJournalReport;
+  static deserializeBinaryFromReader(message: ReceiptJournalReport, reader: jspb.BinaryReader): ReceiptJournalReport;
+}
+
+export namespace ReceiptJournalReport {
+  export type AsObject = {
+    dataList: Array<ReceiptJournalReportLine.AsObject>,
+    totalCount: number,
   }
 }
 
@@ -377,6 +553,32 @@ export class TransactionDumpReport extends jspb.Message {
 export namespace TransactionDumpReport {
   export type AsObject = {
     dataList: Array<TransactionReportLine.AsObject>,
+    totalCount: number,
+  }
+}
+
+export class TimeoffReport extends jspb.Message {
+  clearDataList(): void;
+  getDataList(): Array<TimeoffReportLine>;
+  setDataList(value: Array<TimeoffReportLine>): void;
+  addData(value?: TimeoffReportLine, index?: number): TimeoffReportLine;
+
+  getTotalCount(): number;
+  setTotalCount(value: number): void;
+
+  serializeBinary(): Uint8Array;
+  toObject(includeInstance?: boolean): TimeoffReport.AsObject;
+  static toObject(includeInstance: boolean, msg: TimeoffReport): TimeoffReport.AsObject;
+  static extensions: {[key: number]: jspb.ExtensionFieldInfo<jspb.Message>};
+  static extensionsBinary: {[key: number]: jspb.ExtensionFieldBinaryInfo<jspb.Message>};
+  static serializeBinaryToWriter(message: TimeoffReport, writer: jspb.BinaryWriter): void;
+  static deserializeBinary(bytes: Uint8Array): TimeoffReport;
+  static deserializeBinaryFromReader(message: TimeoffReport, reader: jspb.BinaryReader): TimeoffReport;
+}
+
+export namespace TimeoffReport {
+  export type AsObject = {
+    dataList: Array<TimeoffReportLine.AsObject>,
     totalCount: number,
   }
 }

@@ -7,7 +7,7 @@ import {
   perDiemTripMilesToUsd,
 } from '../../../helpers';
 import { Tooltip } from '../Tooltip';
-import { differenceInMinutes, parseISO } from 'date-fns';
+import { TripCalculatorNew } from '../../ComponentsLibrary/TripCalculatorNew';
 import IconButton from '@material-ui/core/IconButton';
 import DeleteIcon from '@material-ui/icons/Delete';
 import NotInterestedIcon from '@material-ui/icons/NotInterested';
@@ -66,6 +66,7 @@ interface Props {
   canAddTrips?: boolean;
   canDeleteTrips?: boolean;
   compact?: boolean;
+  viewNewTripsCreation: boolean;
   canSlackMessage?: boolean;
   canApprove?: boolean;
   canProcessPayroll?: boolean;
@@ -92,6 +93,7 @@ export const TripSummaryNew: FC<Props> = ({
   compact,
   canSlackMessage,
   canApprove,
+  viewNewTripsCreation,
   canProcessPayroll,
   role,
   onClose,
@@ -134,6 +136,8 @@ export const TripSummaryNew: FC<Props> = ({
   const [totalTripCount, setTotalTripCount] = useState<number>(0);
   const [tripToView, setTripToView] = useState<Trip | undefined>();
   const [approvingTrips, setApprovingTrips] = useState<boolean>();
+  const [openNewTripsCreation, setOpenNewTripsCreation] = useState<boolean>();
+
   const [tripFilter, setFilter] = useState<TripFilter>({
     role,
     weekof: perDiemRowIds,
@@ -160,6 +164,10 @@ export const TripSummaryNew: FC<Props> = ({
   const handleSetTripsLoaded = useCallback(
     (tripsLoaded: Trip[]) => setTripsLoaded(tripsLoaded),
     [setTripsLoaded],
+  );
+  const handleSetOpenNewTripCreation = useCallback(
+    (open: boolean) => setOpenNewTripsCreation(open),
+    [],
   );
   const handleSetPendingTripToAdd = useCallback(
     (tripToAdd: Trip | undefined) => setPendingTripToAdd(tripToAdd),
@@ -809,7 +817,15 @@ export const TripSummaryNew: FC<Props> = ({
           onClick={handleAddTrip}
         />
       )}
-
+      {viewNewTripsCreation && (
+        <Button
+          label="Add Trips NEW AND IMPROVED"
+          size="small"
+          key={'addTripNew'}
+          variant="contained"
+          onClick={() => handleSetOpenNewTripCreation(true)}
+        />
+      )}
       {pendingTripToAdd && (
         <PlaceAutocompleteAddressForm
           key={'autocomplete'}
@@ -1116,6 +1132,16 @@ export const TripSummaryNew: FC<Props> = ({
           onConfirm={() => deleteAllTrips()}
         />
       )}
+      {openNewTripsCreation && (
+        <Modal onClose={() => handleSetOpenNewTripCreation(false)} open>
+          <TripCalculatorNew
+            loggedUserId={userId}
+            role={'Manager'}
+            onClose={() => handleSetOpenNewTripCreation(false)}
+          />
+        </Modal>
+      )}
+
       {approvingTrips && <Loader></Loader>}
       {pendingApproveAllTrips && (
         <Confirm

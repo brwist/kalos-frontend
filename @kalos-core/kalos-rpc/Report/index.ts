@@ -7,6 +7,11 @@ import {
   PromptPaymentReportLine,
   TransactionReportLine,
   TransactionDumpReport,
+  TimeoffReportLine,
+  TimeoffReportRequest,
+  TimeoffReport,
+  ReceiptJournalReportLine,
+  ReceiptJournalReport,
 } from '../compiled-protos/reports_pb';
 import {
   UnaryRpcOptions,
@@ -78,6 +83,45 @@ class ReportClient extends BaseClient {
       grpc.unary(ReportService.GetTransactionDumpData, opts);
     });
   }
+
+  public async GetTimeOffReport(req: TimeoffReportRequest) {
+    return new Promise<TimeoffReport>((resolve, reject) => {
+      const opts: UnaryRpcOptions<TimeoffReportRequest, TimeoffReport> = {
+        request: req,
+        host: this.host,
+        metadata: this.getMetaData(),
+        onEnd: (result: UnaryOutput<TimeoffReport>) => {
+          if (result.message) {
+            resolve(result.message);
+          } else {
+            reject(new Error(result.statusMessage));
+          }
+        },
+      };
+      grpc.unary(ReportService.GetTimeoffReportData, opts);
+    });
+  }
+
+  public async GetReceiptJournalReport(req: ReceiptJournalReportLine) {
+    return new Promise<ReceiptJournalReport>((resolve, reject) => {
+      const opts: UnaryRpcOptions<
+        ReceiptJournalReportLine,
+        ReceiptJournalReport
+      > = {
+        request: req,
+        host: this.host,
+        metadata: this.getMetaData(),
+        onEnd: (result: UnaryOutput<ReceiptJournalReport>) => {
+          if (result.message) {
+            resolve(result.message);
+          } else {
+            reject(new Error(result.statusMessage));
+          }
+        },
+      };
+      grpc.unary(ReportService.GetReceiptJournalReport, opts);
+    });
+  }
 }
 export {
   SpiffReport,
@@ -85,6 +129,11 @@ export {
   PromptPaymentReport,
   PromptPaymentReportLine,
   TransactionDumpReport,
+  TimeoffReport,
+  TimeoffReportRequest,
+  TimeoffReportLine,
   TransactionReportLine,
   ReportClient,
+  ReceiptJournalReport,
+  ReceiptJournalReportLine,
 };

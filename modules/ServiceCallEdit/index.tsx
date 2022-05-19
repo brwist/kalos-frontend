@@ -9,8 +9,8 @@ const u = new UserClient(ENDPOINT);
 u.GetToken('test', 'test').then(() => {
   ReactDOM.render(
     <ServiceCallEdit
-      serviceCallId={86246}
-      userID={2573}
+      serviceCallId={99775}
+      userID={103285}
       propertyId={6552}
       loggedUserId={1550}
       withHeader

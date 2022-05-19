@@ -9,6 +9,7 @@ import {
 } from '../../../@kalos-core/kalos-rpc/TransactionActivity';
 import CheckCircleOutlineIcon from '@material-ui/icons/CheckCircleOutline';
 import { User } from '../../../@kalos-core/kalos-rpc/User';
+import { Vendor } from '../../../@kalos-core/kalos-rpc/Vendor';
 import IconButton from '@material-ui/core/IconButton';
 import AssignmentIndIcon from '@material-ui/icons/AssignmentInd';
 import CheckIcon from '@material-ui/icons/CheckCircleSharp';
@@ -20,6 +21,8 @@ import { PDFDocument, PDFImage, PDFPage, PageSizes } from 'pdf-lib';
 import CopyIcon from '@material-ui/icons/FileCopySharp';
 import RejectIcon from '@material-ui/icons/ThumbDownSharp';
 import SubmitIcon from '@material-ui/icons/ThumbUpSharp';
+import EditSharp from '@material-ui/icons/EditSharp';
+import KeyboardReturn from '@material-ui/icons/KeyboardReturn';
 import { format, parseISO } from 'date-fns';
 import {
   TransactionAccount,
@@ -27,7 +30,13 @@ import {
 } from '../../../@kalos-core/kalos-rpc/TransactionAccount';
 import { Event } from '../../../@kalos-core/kalos-rpc/Event';
 import { PopoverComponent } from '../Popover';
-import React, { FC, useCallback, useEffect, useReducer } from 'react';
+import React, {
+  ReactElement,
+  FC,
+  useCallback,
+  useEffect,
+  useReducer,
+} from 'react';
 import {
   ENDPOINT,
   NULL_TIME,
@@ -42,6 +51,7 @@ import {
   timestamp,
   EventClientService,
   TransactionClientService,
+  VendorClientService,
   UserClientService,
   TransactionActivityClientService,
   EmailClientService,
@@ -82,6 +92,7 @@ import { Devlog } from '../../../@kalos-core/kalos-rpc/Devlog';
 import { TxnDepartment } from '../../../@kalos-core/kalos-rpc/compiled-protos/transaction_pb';
 import { NULL_TIME_VALUE } from '../Timesheet/constants';
 import NotificationsActiveIcon from '@material-ui/icons/NotificationsActive';
+import { de } from 'date-fns/locale';
 export interface Props {
   loggedUserId: number;
   isSelector?: boolean; // Is this a selector table (checkboxes that return in on-change)?
@@ -115,7 +126,7 @@ let filter: FilterType = {
   jobNumber: 0,
   isAccepted: undefined,
   isRejected: undefined,
-  isPending: undefined,
+  isPending: true,
   isProcessed: undefined,
   amount: undefined,
   billingRecorded: false,
@@ -141,6 +152,7 @@ export const TransactionTable: FC<Props> = ({
     document1: '',
     document2: '',
     notify: 0,
+    vendors: [],
     accountsPayableAdmin: false,
     mergeDocumentAlert: '',
     costCenterData: new TransactionAccountList(),
@@ -149,7 +161,7 @@ export const TransactionTable: FC<Props> = ({
     transactionToEdit: undefined,
     loading: true,
     creatingTransaction: false,
-    duplicateDataParameters: { orderNumber: '', vendor: '' },
+    duplicateDataParameters: { orderNumber: '', invoiceNumber: '' },
     mergingTransaction: false,
     pendingUploadPhoto: undefined,
     pendingSendNotificationForExistingTransaction: undefined,
@@ -476,7 +488,7 @@ export const TransactionTable: FC<Props> = ({
       employees = await UserClientService.loadTechnicians();
     } catch (err) {
       console.error(
-        `An error occurred while loading technicians from the UserClientService: ${err}`,
+        `An error occurred while loading technicians/vendors: ${err}`,
       );
     }
     if (employees) {
@@ -595,6 +607,12 @@ export const TransactionTable: FC<Props> = ({
       await makeUpdateStatus(txn.getId(), 5, 'Recorded and Processed');
     }
   };
+  const updateStatusSubmit = async (txn: Transaction) => {
+    const ok = confirm(`Are you sure you want resubmitted this?`);
+    if (ok) {
+      await makeUpdateStatus(txn.getId(), 2, 'Re-submitted Transaction');
+    }
+  };
   const forceAccept = async (txn: Transaction) => {
     const ok = confirm(
       `Are you sure you want to mark this transaction as accepted?`,
@@ -638,20 +656,54 @@ export const TransactionTable: FC<Props> = ({
     dispatch({ type: ACTIONS.SET_NOTIFY, data: notify });
   }, []);
 
-  const handleCheckOrderNumber = useCallback(
-    async (orderNumber: string /*vendor: string*/) => {
-      if (orderNumber != '' /*&& vendor != ''*/) {
+  const handleCheckOrderNumber = useCallback(async (orderNumber: string) => {
+    if (orderNumber) {
+      const transactionReq = new Transaction();
+      transactionReq.setOrderNumber(orderNumber);
+      transactionReq.setVendorCategory("'PickTicket','Receipt','Invoice'");
+      //transactionReq.setVendor(vendor);
+      transactionReq.setIsActive(1);
+      try {
+        const result = await TransactionClientService.Get(transactionReq);
+        if (result) {
+          dispatch({
+            type: ACTIONS.SET_ERROR,
+            data: `This Order Number already exists. You can still create this transaction,
+        but it may result in duplicate transactions. It is recommended that you
+        search for the existing transaction and update it.`,
+          });
+        }
+      } catch (err) {
+        dispatch({ type: ACTIONS.SET_ERROR, data: undefined });
+      }
+    }
+  }, []);
+
+  const handleSetOrderNumberToCheckDuplicate = useCallback(
+    async (orderNumber: string) => {
+      let temp = state.duplicateDataParameters;
+      dispatch({
+        type: ACTIONS.SET_DUPLICATE_PARAMETERS,
+        data: { orderNumber: orderNumber, invoiceNumber: temp.invoiceNumber },
+      });
+      handleCheckOrderNumber(orderNumber);
+    },
+    [state.duplicateDataParameters, handleCheckOrderNumber],
+  );
+  const handleCheckInvoiceNumber = useCallback(
+    async (invoiceNumber: string) => {
+      if (invoiceNumber != '') {
+        console.log('we check invoice');
         const transactionReq = new Transaction();
-        transactionReq.setOrderNumber(orderNumber);
+        transactionReq.setInvoiceNumber(invoiceNumber);
         transactionReq.setVendorCategory("'PickTicket','Receipt','Invoice'");
-        //transactionReq.setVendor(vendor);
         transactionReq.setIsActive(1);
         try {
           const result = await TransactionClientService.Get(transactionReq);
           if (result) {
             dispatch({
               type: ACTIONS.SET_ERROR,
-              data: `This Order Number already exists. You can still create this transaction,
+              data: `This Invoice Number already exists. You can still create this transaction,
         but it may result in duplicate transactions. It is recommended that you
         search for the existing transaction and update it.`,
             });
@@ -664,36 +716,24 @@ export const TransactionTable: FC<Props> = ({
     [],
   );
 
-  const handleSetOrderNumberToCheckDuplicate = useCallback(
-    async (orderNumber: string) => {
+  const handleSetInvoiceNumberToCheckDuplicate = useCallback(
+    async (invoice: string) => {
       let temp = state.duplicateDataParameters;
       dispatch({
         type: ACTIONS.SET_DUPLICATE_PARAMETERS,
-        data: { orderNumber: orderNumber, vendor: temp.vendor },
+        data: { orderNumber: temp.orderNumber, invoiceNumber: invoice },
       });
-      //handleCheckOrderNumber(orderNumber, temp.vendor);
-      handleCheckOrderNumber(orderNumber);
+      handleCheckInvoiceNumber(invoice);
     },
-    [state.duplicateDataParameters, handleCheckOrderNumber],
+    [],
   );
+
   const handleResetDuplicateCheck = useCallback(async () => {
     dispatch({
       type: ACTIONS.SET_DUPLICATE_PARAMETERS,
-      data: { orderNumber: '', vendor: '' },
+      data: { orderNumber: '', invoiceNumber: '' },
     });
   }, []);
-  const handleSetVendorToCheckDuplicate = useCallback(
-    async (vendor: string) => {
-      let temp = state.duplicateDataParameters;
-      dispatch({
-        type: ACTIONS.SET_DUPLICATE_PARAMETERS,
-        data: { vendor: vendor, orderNumber: temp.orderNumber },
-      });
-      //  handleCheckOrderNumber(temp.orderNumber, vendor);
-      handleCheckOrderNumber(temp.orderNumber);
-    },
-    [state.duplicateDataParameters, handleCheckOrderNumber],
-  );
 
   const handleNotifyUserOfExistingTransaction = useCallback(
     async (txn: Transaction) => {
@@ -771,6 +811,15 @@ export const TransactionTable: FC<Props> = ({
         );
       }
       try {
+        if (transactionToSave.getVendorId()) {
+          const vendorReq = new Vendor();
+          vendorReq.setId(transactionToSave.getVendorId());
+
+          const vendorResult = await VendorClientService.Get(vendorReq);
+          transactionToSave.setVendor(vendorResult.getVendorName());
+          transactionToSave.addFieldMask('VendorId');
+          transactionToSave.addFieldMask('Vendor');
+        }
         await TransactionClientService.Update(transactionToSave);
         const temp = transactionToSave;
         transactionToSave.setCostCenterId(
@@ -1204,9 +1253,14 @@ export const TransactionTable: FC<Props> = ({
       newTxn.setNotes(saved['Notes']);
       newTxn.setCostCenterId(saved['Cost Center']);
       newTxn.setInvoiceNumber(saved['Invoice #']);
-
+      newTxn.setVendorId(saved['Vendor']);
+      if (newTxn.getVendorId() != 0) {
+        const vendorReq = new Vendor();
+        vendorReq.setId(newTxn.getVendorId());
+        const vendorResult = await VendorClientService.Get(vendorReq);
+        newTxn.setVendor(vendorResult.getVendorName());
+      }
       newTxn.setAmount(saved['Amount']);
-      newTxn.setVendor(saved['Vendor']);
       newTxn.setStatusId(2);
       newTxn.setVendorCategory('Receipt');
       if (saved['Notes'] === '')
@@ -1313,7 +1367,256 @@ export const TransactionTable: FC<Props> = ({
     state.loaded,
     state.searching,
   ]);
+  const returnTransactionActions = (t: Transaction) => {
+    let actions: ReactElement[] = [];
+    let status = t.getStatusId();
+    const isOwner =
+      loggedUserId == t.getOwnerId() ||
+      loggedUserId == t.getAssignedEmployeeId();
+    const isManager = state.role == 'Manager';
+    const isAdmin = state.accountsPayableAdmin;
+    const copyAction = (
+      <Tooltip key="copy" content="Copy data to clipboard">
+        <IconButton
+          key="copyIcon"
+          size="small"
+          onClick={() =>
+            copyToClipboard(
+              `${parseISO(
+                t.getTimestamp().split(' ').join('T'),
+              ).toLocaleDateString()},${t.getDescription()},${t.getAmount()},${t.getOwnerName()},${t.getVendor()}`,
+            )
+          }
+        >
+          <CopyIcon />
+        </IconButton>
+      </Tooltip>
+    );
+    const editAction = (
+      <Tooltip key="editAll" content="Edit this transaction">
+        <IconButton
+          key="editIcon"
+          size="small"
+          onClick={() =>
+            dispatch({
+              type: ACTIONS.SET_TRANSACTION_TO_EDIT,
+              data: t,
+            })
+          }
+        >
+          <EditSharp />
+        </IconButton>
+      </Tooltip>
+    );
+    const notifyAction = (
+      <Tooltip
+        key="notifyManager"
+        content={
+          t.getDepartmentId() == 0 || t.getDepartmentId() == undefined
+            ? 'No Department, Cannot Notify Manager'
+            : 'Notify Department Manager'
+        }
+      >
+        <IconButton
+          key="notifyIcon"
+          size="small"
+          onClick={() =>
+            dispatch({
+              type: ACTIONS.SET_PENDING_SEND_NOTIFICATION_FOR_EXISTING_TRANSACTION,
+              data: t,
+            })
+          }
+        >
+          <NotificationsActiveIcon />
+        </IconButton>
+      </Tooltip>
+    );
 
+    const uploadAction = (
+      <Tooltip key="upload" content="Upload File">
+        <IconButton
+          key={'uploadIcon'}
+          size="small"
+          onClick={() =>
+            dispatch({
+              type: ACTIONS.SET_PENDING_UPLOAD_PHOTO,
+              data: t,
+            })
+          }
+        >
+          <UploadIcon />
+        </IconButton>
+      </Tooltip>
+    );
+    const galleryAction = (
+      <AltGallery
+        key="Gallery"
+        fileList={[]}
+        title="Transaction Uploads"
+        text="View Photos and Documents"
+        transactionID={t.getId()}
+        iconButton
+        canDelete={isOwner || isManager || isAdmin}
+      />
+    );
+    const logAction = <TxnLog key="txnLog" iconButton txnID={t.getId()} />;
+    const noteAction = (
+      <TxnNotes
+        key="viewNotes"
+        iconButton
+        text="View notes"
+        notes={t.getNotes()}
+        disabled={t.getNotes() === ''}
+      />
+    );
+    const auditAction = (
+      <Tooltip
+        key="audit"
+        content={
+          t.getIsAudited() && loggedUserId !== 1734
+            ? 'This transaction has already been audited'
+            : 'Mark as correct'
+        }
+      >
+        <IconButton
+          key="auditIcon"
+          size="small"
+          onClick={
+            loggedUserId === 1734 ? () => forceAccept(t) : () => auditTxn(t)
+          }
+          disabled={t.getIsAudited() && loggedUserId !== 1734}
+        >
+          <CheckIcon />
+        </IconButton>
+      </Tooltip>
+    );
+    const approveAction = (
+      <Tooltip key="approve" content={'Mark as accepted'}>
+        <IconButton
+          key="submitIcon"
+          disabled={t.getStatusId() === 5}
+          size="small"
+          onClick={() => updateStatus(t)}
+        >
+          <SubmitIcon />
+        </IconButton>
+      </Tooltip>
+    );
+    const submitAction = (
+      <Tooltip key="submit" content={'Submit'}>
+        <IconButton
+          key="submitIcon"
+          size="small"
+          onClick={() => updateStatusSubmit(t)}
+        >
+          <KeyboardReturn />
+        </IconButton>
+      </Tooltip>
+    );
+    const assignAction = (
+      <Tooltip key="assign" content="Assign an employee to this task">
+        <IconButton
+          key="assignIcon"
+          size="small"
+          onClick={() => handleSetAssigningUser(true, t.getId())}
+        >
+          <AssignmentIndIcon />
+        </IconButton>
+      </Tooltip>
+    );
+    const processAction = (
+      <Tooltip key="Process" content="Mark As Processed">
+        <IconButton
+          key="ProcessIcon"
+          size="small"
+          onClick={() => updateStatusProcessed(t)}
+        >
+          <Save />
+        </IconButton>
+      </Tooltip>
+    );
+    const deleteAction = (
+      <Tooltip key="delete" content="Delete this task">
+        <IconButton
+          key="deleteIcon"
+          size="small"
+          onClick={() =>
+            dispatch({
+              type: ACTIONS.SET_TRANSACTION_TO_DELETE,
+              data: t,
+            })
+          }
+        >
+          <DeleteIcon />
+        </IconButton>
+      </Tooltip>
+    );
+    const rejectAction = (
+      <Prompt
+        key="reject"
+        confirmFn={reason => dispute(reason, t)}
+        disabled={t.getStatusId() === 5}
+        text="Reject transaction"
+        prompt="Enter reason for rejection: "
+        Icon={RejectIcon}
+      />
+    );
+
+    actions = [galleryAction, noteAction, logAction, copyAction];
+
+    if (status == 2) {
+      //all actions available to creator, owner, manager, or AccountingAdmin
+      if (isOwner || isManager || isAdmin) {
+        actions = [...actions, editAction, deleteAction, uploadAction];
+        if (isManager || isAdmin) {
+          actions = [...actions, assignAction];
+          if (isManager) {
+            actions = [...actions, approveAction, rejectAction];
+          }
+          if (isAdmin) {
+            actions = [...actions, notifyAction, approveAction, rejectAction];
+          }
+        }
+      }
+    }
+    if (status == 3) {
+      //accepted, so only editable by accounting admin
+      if (isManager || isAdmin) {
+        actions = [
+          ...actions,
+          editAction,
+          uploadAction,
+          assignAction,
+          rejectAction,
+        ];
+      }
+      if (isAdmin) {
+        actions = [...actions, processAction, deleteAction];
+      }
+    }
+    if (status == 4) {
+      if (isOwner || isAdmin || isManager) {
+        actions = [
+          ...actions,
+          editAction,
+          deleteAction,
+          uploadAction,
+          submitAction,
+        ];
+        if (isAdmin || isManager) {
+          actions = [...actions, assignAction, deleteAction];
+        }
+      }
+    }
+    if (status == 5) {
+      //its been processsed, so only view information, but some edting by AccountAdmin
+      if (isAdmin) {
+        actions = [...actions, editAction, uploadAction, deleteAction];
+      }
+    }
+
+    return actions;
+  };
   const imageDimensionToFit = (
     image: PDFImage,
     container: { width: number; height: number },
@@ -1852,6 +2155,7 @@ export const TransactionTable: FC<Props> = ({
               {
                 columnName: 'Invoice #',
                 columnType: 'text',
+                onBlur: value => handleSetInvoiceNumberToCheckDuplicate(value),
               },
               {
                 columnName: 'Amount',
@@ -1867,7 +2171,7 @@ export const TransactionTable: FC<Props> = ({
               },
               {
                 columnName: 'Vendor',
-                columnType: 'text',
+                columnType: 'vendor',
                 //onBlur: value => handleSetVendorToCheckDuplicate(value),
               },
               {
@@ -2094,282 +2398,7 @@ export const TransactionTable: FC<Props> = ({
                         : undefined,
                     },
                     {
-                      actions:
-                        !isSelector &&
-                        (state.role == 'AccountsPayable' ||
-                          state.role == 'Manager') ? (
-                          [
-                            <Tooltip
-                              key="copy"
-                              content="Copy data to clipboard"
-                            >
-                              <IconButton
-                                key="copyIcon"
-                                size="small"
-                                onClick={() =>
-                                  copyToClipboard(
-                                    `${parseISO(
-                                      selectorParam.txn
-                                        .getTimestamp()
-                                        .split(' ')
-                                        .join('T'),
-                                    ).toLocaleDateString()},${selectorParam.txn.getDescription()},${selectorParam.txn.getAmount()},${selectorParam.txn.getOwnerName()},${selectorParam.txn.getVendor()}`,
-                                  )
-                                }
-                              >
-                                <CopyIcon />
-                              </IconButton>
-                            </Tooltip>,
-                            <Tooltip
-                              key="editAll"
-                              content="Edit this transaction"
-                            >
-                              <IconButton
-                                key="editIcon"
-                                size="small"
-                                onClick={() =>
-                                  dispatch({
-                                    type: ACTIONS.SET_TRANSACTION_TO_EDIT,
-                                    data: selectorParam.txn,
-                                  })
-                                }
-                              >
-                                <LineWeightIcon />
-                              </IconButton>
-                            </Tooltip>,
-                            ...(state.accountsPayableAdmin &&
-                            selectorParam.txn.getDepartmentId() != 0 &&
-                            selectorParam.txn.getDepartmentId() !== undefined
-                              ? [
-                                  <Tooltip
-                                    key="notifyManager"
-                                    content={
-                                      selectorParam.txn.getDepartmentId() ==
-                                        0 ||
-                                      selectorParam.txn.getDepartmentId() ==
-                                        undefined
-                                        ? 'No Department, Cannot Notify Manager'
-                                        : 'Notify Department Manager'
-                                    }
-                                  >
-                                    <IconButton
-                                      key="notifyIcon"
-                                      size="small"
-                                      onClick={() =>
-                                        dispatch({
-                                          type: ACTIONS.SET_PENDING_SEND_NOTIFICATION_FOR_EXISTING_TRANSACTION,
-                                          data: selectorParam.txn,
-                                        })
-                                      }
-                                    >
-                                      <NotificationsActiveIcon />
-                                    </IconButton>
-                                  </Tooltip>,
-                                ]
-                              : []),
-                            <Tooltip key="upload" content="Upload File">
-                              <IconButton
-                                key={'uploadIcon'}
-                                size="small"
-                                onClick={() =>
-                                  dispatch({
-                                    type: ACTIONS.SET_PENDING_UPLOAD_PHOTO,
-                                    data: selectorParam.txn,
-                                  })
-                                }
-                              >
-                                <UploadIcon />
-
-                                {/*<input
-                                type="file" 
-                                ref={FileInput}
-                                
-                                onChange={event => {
-                                  if (!transactionOfFileUploading) {
-                                    console.error(
-                                      'No transaction selected for upload.',
-                                    );
-                                    alert(
-                                      'No transaction selected for upload.',
-                                    );
-                                    return;
-                                  }
-                                  event.preventDefault();
-                                  handleFile(transactionOfFileUploading!);
-                                }}
-                                style={{ display: 'none' }}
-                              />*/}
-                              </IconButton>
-                            </Tooltip>,
-                            <AltGallery
-                              key="Gallery"
-                              fileList={[]}
-                              title="Transaction Uploads"
-                              text="View Photos and Documents"
-                              transactionID={selectorParam.txn.getId()}
-                              iconButton
-                              canDelete={true}
-                            />,
-                            <TxnLog
-                              key="txnLog"
-                              iconButton
-                              txnID={selectorParam.txn.getId()}
-                            />,
-                            <TxnNotes
-                              key="viewNotes"
-                              iconButton
-                              text="View notes"
-                              notes={selectorParam.txn.getNotes()}
-                              disabled={selectorParam.txn.getNotes() === ''}
-                            />,
-                            ...([9928, 9646, 1734].includes(loggedUserId)
-                              ? [
-                                  <Tooltip
-                                    key="audit"
-                                    content={
-                                      selectorParam.txn.getIsAudited() &&
-                                      loggedUserId !== 1734
-                                        ? 'This transaction has already been audited'
-                                        : 'Mark as correct'
-                                    }
-                                  >
-                                    <IconButton
-                                      key="auditIcon"
-                                      size="small"
-                                      onClick={
-                                        loggedUserId === 1734
-                                          ? () => forceAccept(selectorParam.txn)
-                                          : () => auditTxn(selectorParam.txn)
-                                      }
-                                      disabled={
-                                        selectorParam.txn.getIsAudited() &&
-                                        loggedUserId !== 1734
-                                      }
-                                    >
-                                      <CheckIcon />
-                                    </IconButton>
-                                  </Tooltip>,
-                                ]
-                              : []),
-
-                            <Tooltip key="submit" content={'Mark as accepted'}>
-                              <IconButton
-                                key="submitIcon"
-                                disabled={selectorParam.txn.getStatusId() === 5}
-                                size="small"
-                                onClick={() => updateStatus(selectorParam.txn)}
-                              >
-                                <SubmitIcon />
-                              </IconButton>
-                            </Tooltip>,
-                            <Tooltip
-                              key="assign"
-                              content="Assign an employee to this task"
-                            >
-                              <IconButton
-                                key="assignIcon"
-                                size="small"
-                                onClick={() =>
-                                  handleSetAssigningUser(
-                                    true,
-                                    selectorParam.txn.getId(),
-                                  )
-                                }
-                              >
-                                <AssignmentIndIcon />
-                              </IconButton>
-                            </Tooltip>,
-                            selectorParam.txn.getStatusId() === 3 &&
-                              loggedUserId === 98217 && (
-                                <Tooltip
-                                  key="Process"
-                                  content="Mark As Processed"
-                                >
-                                  <IconButton
-                                    key="ProcessIcon"
-                                    size="small"
-                                    onClick={() =>
-                                      updateStatusProcessed(selectorParam.txn)
-                                    }
-                                  >
-                                    <Save />
-                                  </IconButton>
-                                </Tooltip>
-                              ),
-
-                            <Tooltip key="delete" content="Delete this task">
-                              <IconButton
-                                key="deleteIcon"
-                                size="small"
-                                onClick={() =>
-                                  dispatch({
-                                    type: ACTIONS.SET_TRANSACTION_TO_DELETE,
-                                    data: selectorParam.txn,
-                                  })
-                                }
-                              >
-                                <DeleteIcon />
-                              </IconButton>
-                            </Tooltip>,
-                            <Prompt
-                              key="reject"
-                              confirmFn={reason =>
-                                dispute(reason, selectorParam.txn)
-                              }
-                              disabled={selectorParam.txn.getStatusId() === 5}
-                              text="Reject transaction"
-                              prompt="Enter reason for rejection: "
-                              Icon={RejectIcon}
-                            />,
-                          ]
-                        ) : (
-                          <div key={'NormalActions'}>
-                            <Tooltip key="upload" content="Upload File">
-                              <IconButton
-                                key={'uploadIcon'}
-                                size="small"
-                                onClick={() =>
-                                  dispatch({
-                                    type: ACTIONS.SET_PENDING_UPLOAD_PHOTO,
-                                    data: selectorParam.txn,
-                                  })
-                                }
-                              >
-                                <UploadIcon />
-                              </IconButton>
-                            </Tooltip>
-                            <AltGallery
-                              key="Gallery"
-                              fileList={[]}
-                              title="Transaction Uploads"
-                              text="View Photos and Documents"
-                              transactionID={selectorParam.txn.getId()}
-                              iconButton
-                            />
-                            {selectorParam.txn.getAssignedEmployeeId() ==
-                              loggedUserId ||
-                              (selectorParam.txn.getOwnerId() ==
-                                loggedUserId && (
-                                <Tooltip
-                                  key="editAll"
-                                  content="Edit this transaction"
-                                >
-                                  <IconButton
-                                    key="editIcon"
-                                    size="small"
-                                    onClick={() =>
-                                      dispatch({
-                                        type: ACTIONS.SET_TRANSACTION_TO_EDIT,
-                                        data: selectorParam.txn,
-                                      })
-                                    }
-                                  >
-                                    <LineWeightIcon />
-                                  </IconButton>
-                                </Tooltip>
-                              ))}
-                          </div>
-                        ),
+                      actions: returnTransactionActions(selectorParam.txn),
                       actionsFullWidth: true,
                     },
                     {

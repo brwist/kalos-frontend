@@ -22,6 +22,8 @@ var google_protobuf_any_pb = require('google-protobuf/google/protobuf/any_pb.js'
 goog.object.extend(proto, google_protobuf_any_pb);
 var google_api_httpbody_pb = require('./google/api/httpbody_pb.js');
 goog.object.extend(proto, google_api_httpbody_pb);
+var google_rpc_error_details_pb = require('./google/rpc/error_details_pb.js');
+goog.object.extend(proto, google_rpc_error_details_pb);
 goog.exportSymbol('proto.HelpRequest', null, global);
 goog.exportSymbol('proto.MessageBox', null, global);
 goog.exportSymbol('proto.Request', null, global);

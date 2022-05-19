@@ -799,6 +799,9 @@ export const Timesheet: FC<Props> = props => {
             userId={props.timesheetOwnerId}
             loggedUserId={props.userId}
             perDiemRowIds={perDiemRowId!}
+            viewNewTripsCreation={
+              props.userId === 103285 || props.userId == 103896
+            }
             role={role}
             toggle={role === 'Payroll' ? false : undefined}
             checkboxes={role === 'Payroll'}

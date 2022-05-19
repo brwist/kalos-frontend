@@ -9,7 +9,14 @@ import {
   VendorClientService,
   TransactionClientService,
 } from '../../../helpers';
-
+import {
+  State,
+  FormData,
+  ACTIONS,
+  Action,
+  InvoiceTransaction,
+  Assignment,
+} from './reducer';
 import { Transaction } from '../../../@kalos-core/kalos-rpc/Transaction';
 import { parseISO, format, parse as dateParse } from 'date-fns';
 import { Vendor, VendorClient } from '../../../@kalos-core/kalos-rpc/Vendor';
@@ -17,34 +24,11 @@ import { Select, MenuItem } from '@material-ui/core/';
 import { Loader } from '../../Loader/main';
 import { Tabs } from '../Tabs';
 import { debounce } from 'lodash/';
-type FormData = {
-  filename: string;
-  selectedVendorId: number;
-  departmentId: number;
-};
-type Field = {
-  label: string;
-  value: number;
-};
-type Assignment = {
-  dropDownValue: number;
-  columnIndex: number;
-};
+
 export interface Props {
   userId: number;
 }
-type InvoiceTransaction = {
-  amount: number;
-  invoiceNumber: string;
-  date: string;
-  notes: string;
-  vendorId: number;
-  departmentId: number;
-  selected: number;
-  id: number;
-  jobNumber: number;
-  duplicateFlag: boolean;
-};
+
 const initialState: State = {
   formData: { filename: '', selectedVendorId: 0, departmentId: 0 },
   columns: [],
@@ -69,80 +53,6 @@ const initialState: State = {
   error: '',
   data: [],
 };
-
-export type State = {
-  formData: FormData;
-  columns: Columns;
-  dropDownFieldList: Field[];
-  columnDropDownAssignment: Assignment[];
-  pendingInvoices: PendingInvoiceTransaction[];
-  pendingInvoicesCount: number;
-  loaded: boolean;
-  currentToggle: number;
-  currentPageEntries: InvoiceTransaction[];
-  vendors: Vendor[];
-  loadedInit: boolean;
-  recordCount: number;
-  loading: boolean;
-  error: string;
-  pendingInvoicePage: number;
-  data: string[][];
-};
-
-export enum ACTIONS {
-  SET_FORM_DATA = 'setFormData',
-  SET_COLUMNS = 'setColumns',
-  SET_DROP_DOWN_FIELD_LIST = 'setDropDownFieldList',
-  SET_COLUMN_DROPDOWN_ASSIGNMENT = 'setColumnDropdownAssigment',
-  SET_LOADING = 'setLoading',
-
-  SET_CURRENT_TOGGLE = 'setCurrentToggle',
-  SET_CURRENT_PAGE_ENTRIES = 'setCurrentPageEntries',
-  UPDATE_SINGLE_ENTRY = 'updateSingleEntry',
-  SET_VENDORS = 'setVendors',
-  SET_ON_FILE_LOAD_DATA = 'setOnFileLoadData',
-  SET_PENDING_INVOICES = 'setPendingInvoices',
-  SET_PENDING_INVOICES_COUNT = 'setPendingInvoicesCount',
-  SET_LOADED = 'setLoaded',
-  SET_LOADED_INIT = 'setLoadedInit',
-  SET_RECORD_COUNT = 'setRecordCount',
-  SET_ERROR = 'setError',
-  SET_DATA = 'setData',
-  SET_PENDING_INVOICE_PAGE = 'setPendingInvoicePage',
-}
-
-export type Action =
-  | { type: ACTIONS.SET_FORM_DATA; data: FormData }
-  | { type: ACTIONS.SET_COLUMNS; data: Columns }
-  | { type: ACTIONS.SET_RECORD_COUNT; data: number }
-  | { type: ACTIONS.SET_PENDING_INVOICE_PAGE; data: number }
-  | { type: ACTIONS.SET_DROP_DOWN_FIELD_LIST; data: Field[] }
-  | { type: ACTIONS.SET_VENDORS; data: Vendor[] }
-  | {
-      type: ACTIONS.SET_COLUMN_DROPDOWN_ASSIGNMENT;
-      data: Assignment[];
-    }
-  | { type: ACTIONS.SET_LOADING; data: boolean }
-  | { type: ACTIONS.UPDATE_SINGLE_ENTRY; data: InvoiceTransaction }
-  | { type: ACTIONS.SET_CURRENT_TOGGLE; data: number }
-  | { type: ACTIONS.SET_CURRENT_PAGE_ENTRIES; data: InvoiceTransaction[] }
-  | { type: ACTIONS.SET_PENDING_INVOICES; data: PendingInvoiceTransaction[] }
-  | { type: ACTIONS.SET_PENDING_INVOICES_COUNT; data: number }
-  | { type: ACTIONS.SET_LOADED; data: boolean }
-  | { type: ACTIONS.SET_LOADED_INIT; data: boolean }
-  | { type: ACTIONS.SET_ERROR; data: string }
-  | {
-      type: ACTIONS.SET_ON_FILE_LOAD_DATA;
-      data: {
-        columns: Columns;
-        formData: FormData;
-        recordCount: number;
-        assignment: Assignment[];
-        loading: boolean;
-        data: string[][];
-      };
-    }
-  | { type: ACTIONS.SET_DATA; data: string[][] };
 
 export const reducer = (state: State, action: Action) => {
   switch (action.type) {
@@ -688,10 +598,7 @@ export const PendingInvoiceTransactionComponent: FC<Props> = ({ userId }) => {
         name: 'selectedVendorId',
         label: 'Select Vendor',
         required: true,
-        options: state.vendors.map(el => ({
-          label: el.getVendorName(),
-          value: el.getId(),
-        })),
+        type: 'vendor',
       },
       {
         name: 'departmentId',
@@ -724,11 +631,7 @@ export const PendingInvoiceTransactionComponent: FC<Props> = ({ userId }) => {
       },
       {
         name: 'vendorId',
-
-        options: state.vendors.map(el => ({
-          label: el.getVendorName(),
-          value: el.getId(),
-        })),
+        type: 'vendor',
       },
       {
         name: 'departmentId',
@@ -797,7 +700,7 @@ export const PendingInvoiceTransactionComponent: FC<Props> = ({ userId }) => {
             {
               label: 'Invoice Upload',
               content: state.loading ? (
-                <Loader></Loader>
+                <Loader />
               ) : (
                 <div key={'Tab1Div'}>
                   <SectionBar
@@ -811,17 +714,17 @@ export const PendingInvoiceTransactionComponent: FC<Props> = ({ userId }) => {
                           : 'Save new records',
                         onClick: handleSaveNewRecords,
                         disabled:
-                          state.data.length == 0 ||
-                          !!state.error ||
-                          state.formData.selectedVendorId == 0 ||
-                          state.loading,
+                          state?.data?.length == 0 ||
+                          !!state?.error ||
+                          state?.formData?.selectedVendorId == 0 ||
+                          state?.loading,
                       },
                     ]}
                     fixedActions
                     loading={state.loading}
                   />
                   <PlainForm<FormData>
-                    key={`DefaultValueFormForUpload${state.formData.filename}`}
+                    key={`DefaultValueFormForUpload${state?.formData?.filename}`}
                     schema={SCHEMA}
                     data={state.formData}
                     onChange={data =>
@@ -837,7 +740,7 @@ export const PendingInvoiceTransactionComponent: FC<Props> = ({ userId }) => {
                       { name: 'Field Select' },
                     ]}
                     loading={state.loading || !state.loadedInit}
-                    data={state.columns.map((column, idx) => {
+                    data={state?.columns.map((column, idx) => {
                       return [
                         {
                           value: column.name,
@@ -846,7 +749,7 @@ export const PendingInvoiceTransactionComponent: FC<Props> = ({ userId }) => {
                           value: (
                             <div
                               key={`${idx}${column.name}${
-                                state.columnDropDownAssignment.find(
+                                state?.columnDropDownAssignment.find(
                                   el => el.columnIndex == idx,
                                 )?.columnIndex
                               }`}
@@ -854,18 +757,18 @@ export const PendingInvoiceTransactionComponent: FC<Props> = ({ userId }) => {
                               <Select
                                 key={idx}
                                 value={
-                                  state.columnDropDownAssignment.find(
+                                  state?.columnDropDownAssignment.find(
                                     el => el.columnIndex == idx,
                                   )!.dropDownValue
                                 }
                                 onChange={data =>
                                   handleToggleColumnToField(
                                     idx,
-                                    data.target.value as number,
+                                    data?.target.value as number,
                                   )
                                 }
                               >
-                                {state.dropDownFieldList.map((el, idx) => {
+                                {state?.dropDownFieldList.map((el, idx) => {
                                   return [
                                     <MenuItem
                                       key={idx.toString() + el.label}
@@ -922,14 +825,14 @@ export const PendingInvoiceTransactionComponent: FC<Props> = ({ userId }) => {
                         label: 'Commit Selected Records',
                         onClick: handleCreateSelected,
                         disabled:
-                          state.currentPageEntries.filter(el => el.selected)
+                          state?.currentPageEntries.filter(el => el.selected)
                             .length == 0 || !!state.error,
                       },
                       {
                         label: 'Delete Selected Records',
                         onClick: handleDeleteSelected,
                         disabled:
-                          state.currentPageEntries.filter(el => el.selected)
+                          state?.currentPageEntries.filter(el => el.selected)
                             .length == 0 || !!state.error,
                       },
                     ]}
@@ -964,7 +867,7 @@ export const PendingInvoiceTransactionComponent: FC<Props> = ({ userId }) => {
                             500,
                           )}
                           data={
-                            state.currentPageEntries.find(el => el.id == id)!
+                            state?.currentPageEntries.find(el => el.id == id)!
                           }
                         ></PlainForm>
                       </span>
