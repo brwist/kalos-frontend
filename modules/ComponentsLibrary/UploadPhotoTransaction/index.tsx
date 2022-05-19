@@ -69,7 +69,7 @@ export const UploadPhotoTransaction: FC<Props> = ({
   const [error, setError] = useState<boolean>(false);
   const [stringError, setStringError] = useState<string | undefined>();
   const [orderNumberCheck, setOrdeNumberCheck] = useState<string>('');
-  const [vendorCheck, setVendorCheck] = useState<string>('');
+  const [invoiceCheck, setInvoiceCheck] = useState<string>('');
 
   const [validateJobNumber, setValidateJobNumber] = useState<Entry | undefined>(
     undefined,
@@ -225,19 +225,40 @@ export const UploadPhotoTransaction: FC<Props> = ({
     (validate: Entry | undefined) => setValidateJobNumber(validate),
     [setValidateJobNumber],
   );
-  const handleCheckOrderNumber = useCallback(
-    async (orderNumber: string, vendor: string) => {
-      if (orderNumber != '' /*&& vendor != ''*/) {
+  const handleCheckOrderNumber = useCallback(async (orderNumber: string) => {
+    if (orderNumber != '') {
+      console.log('handleCheck Order number');
+      const transactionReq = new Transaction();
+      transactionReq.setOrderNumber(orderNumber);
+      transactionReq.setVendorCategory("'PickTicket','Receipt','Invoice'");
+      transactionReq.setIsActive(1);
+      try {
+        const result = await TransactionClientService.Get(transactionReq);
+        if (result) {
+          setStringError(
+            `This Order Number already exists. You can still create this transaction,
+        but it may result in duplicate transactions. It is recommended that you
+        search for the existing transaction and update it.`,
+          );
+        }
+      } catch (err) {
+        setStringError(undefined);
+      }
+    }
+  }, []);
+  const handleCheckInvoiceNumber = useCallback(
+    async (invoiceNumber: string) => {
+      if (invoiceNumber != '') {
+        console.log('we check invoice');
         const transactionReq = new Transaction();
-        transactionReq.setOrderNumber(orderNumber);
-        //transactionReq.setVendor(vendor);
+        transactionReq.setInvoiceNumber(invoiceNumber);
         transactionReq.setVendorCategory("'PickTicket','Receipt','Invoice'");
         transactionReq.setIsActive(1);
         try {
           const result = await TransactionClientService.Get(transactionReq);
           if (result) {
             setStringError(
-              `This Order Number already exists. You can still create this transaction,
+              `This Invoice Number already exists. You can still create this transaction,
         but it may result in duplicate transactions. It is recommended that you
         search for the existing transaction and update it.`,
             );
@@ -250,22 +271,22 @@ export const UploadPhotoTransaction: FC<Props> = ({
     [],
   );
 
+  const handleSetInvoiceNumberToCheckDuplicate = useCallback(
+    async (invoice: string) => {
+      setInvoiceCheck(invoice);
+      handleCheckInvoiceNumber(invoice);
+    },
+    [],
+  );
   const handleSetOrderNumberToCheckDuplicate = useCallback(
     async (orderNumber: string) => {
       setOrdeNumberCheck(orderNumber);
-      handleCheckOrderNumber(orderNumber, vendorCheck);
+      handleCheckOrderNumber(orderNumber);
     },
-    [vendorCheck, handleCheckOrderNumber],
-  );
-  const handleSetVendorToCheckDuplicate = useCallback(
-    async (vendor: string) => {
-      setVendorCheck(vendor);
-      handleCheckOrderNumber(orderNumberCheck, vendor);
-    },
-    [orderNumberCheck, handleCheckOrderNumber],
+    [],
   );
   const handleResetDuplicateCheck = useCallback(async () => {
-    setVendorCheck('');
+    setInvoiceCheck('');
     setOrdeNumberCheck('');
   }, []);
   const handleValidate = useCallback(
@@ -314,6 +335,7 @@ export const UploadPhotoTransaction: FC<Props> = ({
       {
         name: 'invoiceNumber',
         label: 'Invoice #',
+        onBlur: handleSetInvoiceNumberToCheckDuplicate,
       },
     ],
     [
@@ -344,7 +366,6 @@ export const UploadPhotoTransaction: FC<Props> = ({
         label: 'Vendor',
         type: 'vendor',
         required: true,
-        // onBlur: handleSetVendorToCheckDuplicate,
       },
       {
         name: 'costCenter',

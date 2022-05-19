@@ -758,7 +758,6 @@ export const Field: <T>(
           <FormControlLabel
             control={
               <Checkbox
-                contentEditable={true}
                 suppressContentEditableWarning={true}
                 onKeyUp={event => {
                   if (event.keyCode == 32) {

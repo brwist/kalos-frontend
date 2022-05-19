@@ -6,6 +6,7 @@ import {
   JobSubtypeClientService,
   JobTypeSubtypeClientService,
   EventAssignmentClientService,
+  timestamp,
 } from '../../../helpers';
 import { JobType } from '../../../@kalos-core/kalos-rpc/JobType';
 import { JobSubtype } from '../../../@kalos-core/kalos-rpc/JobSubtype';
@@ -220,7 +221,11 @@ export const ServiceRequest: FC<Props> = props => {
     },
     [state.requestFields],
   );
+  const returnLegacyDate = (time: string) => {
+    const splitString = time.split(' ');
 
+    return `${splitString[0]} 00:00:00`;
+  };
   const load = useCallback(async () => {
     serviceCall({ type: 'setLoading', data: true });
     const req = new Event();
@@ -249,6 +254,7 @@ export const ServiceRequest: FC<Props> = props => {
       console.log('created time', fullStartDate);
       entry.setDateStarted(fullStartDate);
       entry.setDateEnded(fullEndDate);
+      entry.setDateUpdated(timestamp());
 
       serviceCall({
         type: 'setData',
@@ -292,6 +298,8 @@ export const ServiceRequest: FC<Props> = props => {
     try {
       temp.setTimeStarted(returnCorrectTimeField(temp.getDateStarted()));
       temp.setTimeEnded(returnCorrectTimeField(temp.getDateEnded()));
+      temp.setDateStarted(returnLegacyDate(temp.getDateStarted()));
+      temp.setDateEnded(returnLegacyDate(temp.getDateEnded()));
       temp.addFieldMask('TimeStarted');
       temp.addFieldMask('TimeEnded');
       console.log('updating time to ', temp.getTimeStarted());

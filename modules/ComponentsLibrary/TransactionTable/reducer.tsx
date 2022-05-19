@@ -33,7 +33,7 @@ export type MergeDocuments = {
 };
 export type DuplicateCheck = {
   orderNumber: string;
-  vendor: string;
+  invoiceNumber: string;
 };
 export type State = {
   transactionFilter: FilterType;
@@ -70,6 +70,7 @@ export type State = {
   employees: User[];
   searching: boolean;
   notify: number;
+
   assignedEmployee: number | undefined;
   selectedTransactions: Transaction[];
   status: 'None' | 'Accepted' | 'Rejected' | 'Pending' | 'Processed';
