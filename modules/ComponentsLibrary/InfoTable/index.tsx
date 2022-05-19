@@ -318,7 +318,6 @@ export const InfoTable = ({
         data.map((items, idx) => (
           <div
             key={idx}
-            tabIndex={0}
             onKeyUp={event => {
               if (event.key === 'Enter' && onEnter) {
                 console.log('Info table enter');

@@ -92,6 +92,7 @@ import { Devlog } from '../../../@kalos-core/kalos-rpc/Devlog';
 import { TxnDepartment } from '../../../@kalos-core/kalos-rpc/compiled-protos/transaction_pb';
 import { NULL_TIME_VALUE } from '../Timesheet/constants';
 import NotificationsActiveIcon from '@material-ui/icons/NotificationsActive';
+import { de } from 'date-fns/locale';
 export interface Props {
   loggedUserId: number;
   isSelector?: boolean; // Is this a selector table (checkboxes that return in on-change)?
@@ -160,7 +161,7 @@ export const TransactionTable: FC<Props> = ({
     transactionToEdit: undefined,
     loading: true,
     creatingTransaction: false,
-    duplicateDataParameters: { orderNumber: '', vendor: '' },
+    duplicateDataParameters: { orderNumber: '', invoiceNumber: '' },
     mergingTransaction: false,
     pendingUploadPhoto: undefined,
     pendingSendNotificationForExistingTransaction: undefined,
@@ -655,20 +656,54 @@ export const TransactionTable: FC<Props> = ({
     dispatch({ type: ACTIONS.SET_NOTIFY, data: notify });
   }, []);
 
-  const handleCheckOrderNumber = useCallback(
-    async (orderNumber: string /*vendor: string*/) => {
-      if (orderNumber != '' /*&& vendor != ''*/) {
+  const handleCheckOrderNumber = useCallback(async (orderNumber: string) => {
+    if (orderNumber) {
+      const transactionReq = new Transaction();
+      transactionReq.setOrderNumber(orderNumber);
+      transactionReq.setVendorCategory("'PickTicket','Receipt','Invoice'");
+      //transactionReq.setVendor(vendor);
+      transactionReq.setIsActive(1);
+      try {
+        const result = await TransactionClientService.Get(transactionReq);
+        if (result) {
+          dispatch({
+            type: ACTIONS.SET_ERROR,
+            data: `This Order Number already exists. You can still create this transaction,
+        but it may result in duplicate transactions. It is recommended that you
+        search for the existing transaction and update it.`,
+          });
+        }
+      } catch (err) {
+        dispatch({ type: ACTIONS.SET_ERROR, data: undefined });
+      }
+    }
+  }, []);
+
+  const handleSetOrderNumberToCheckDuplicate = useCallback(
+    async (orderNumber: string) => {
+      let temp = state.duplicateDataParameters;
+      dispatch({
+        type: ACTIONS.SET_DUPLICATE_PARAMETERS,
+        data: { orderNumber: orderNumber, invoiceNumber: temp.invoiceNumber },
+      });
+      handleCheckOrderNumber(orderNumber);
+    },
+    [state.duplicateDataParameters, handleCheckOrderNumber],
+  );
+  const handleCheckInvoiceNumber = useCallback(
+    async (invoiceNumber: string) => {
+      if (invoiceNumber != '') {
+        console.log('we check invoice');
         const transactionReq = new Transaction();
-        transactionReq.setOrderNumber(orderNumber);
+        transactionReq.setInvoiceNumber(invoiceNumber);
         transactionReq.setVendorCategory("'PickTicket','Receipt','Invoice'");
-        //transactionReq.setVendor(vendor);
         transactionReq.setIsActive(1);
         try {
           const result = await TransactionClientService.Get(transactionReq);
           if (result) {
             dispatch({
               type: ACTIONS.SET_ERROR,
-              data: `This Order Number already exists. You can still create this transaction,
+              data: `This Invoice Number already exists. You can still create this transaction,
         but it may result in duplicate transactions. It is recommended that you
         search for the existing transaction and update it.`,
             });
@@ -681,36 +716,24 @@ export const TransactionTable: FC<Props> = ({
     [],
   );
 
-  const handleSetOrderNumberToCheckDuplicate = useCallback(
-    async (orderNumber: string) => {
+  const handleSetInvoiceNumberToCheckDuplicate = useCallback(
+    async (invoice: string) => {
       let temp = state.duplicateDataParameters;
       dispatch({
         type: ACTIONS.SET_DUPLICATE_PARAMETERS,
-        data: { orderNumber: orderNumber, vendor: temp.vendor },
+        data: { orderNumber: temp.orderNumber, invoiceNumber: invoice },
       });
-      //handleCheckOrderNumber(orderNumber, temp.vendor);
-      handleCheckOrderNumber(orderNumber);
+      handleCheckInvoiceNumber(invoice);
     },
-    [state.duplicateDataParameters, handleCheckOrderNumber],
+    [],
   );
+
   const handleResetDuplicateCheck = useCallback(async () => {
     dispatch({
       type: ACTIONS.SET_DUPLICATE_PARAMETERS,
-      data: { orderNumber: '', vendor: '' },
+      data: { orderNumber: '', invoiceNumber: '' },
     });
   }, []);
-  const handleSetVendorToCheckDuplicate = useCallback(
-    async (vendor: string) => {
-      let temp = state.duplicateDataParameters;
-      dispatch({
-        type: ACTIONS.SET_DUPLICATE_PARAMETERS,
-        data: { vendor: vendor, orderNumber: temp.orderNumber },
-      });
-      //  handleCheckOrderNumber(temp.orderNumber, vendor);
-      handleCheckOrderNumber(temp.orderNumber);
-    },
-    [state.duplicateDataParameters, handleCheckOrderNumber],
-  );
 
   const handleNotifyUserOfExistingTransaction = useCallback(
     async (txn: Transaction) => {
@@ -1588,7 +1611,7 @@ export const TransactionTable: FC<Props> = ({
     if (status == 5) {
       //its been processsed, so only view information, but some edting by AccountAdmin
       if (isAdmin) {
-        actions = [...actions, editAction, uploadAction];
+        actions = [...actions, editAction, uploadAction, deleteAction];
       }
     }
 
@@ -2132,6 +2155,7 @@ export const TransactionTable: FC<Props> = ({
               {
                 columnName: 'Invoice #',
                 columnType: 'text',
+                onBlur: value => handleSetInvoiceNumberToCheckDuplicate(value),
               },
               {
                 columnName: 'Amount',
