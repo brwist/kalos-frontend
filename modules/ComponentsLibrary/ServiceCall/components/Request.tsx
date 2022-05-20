@@ -261,24 +261,117 @@ export const Request: FC<Props> = forwardRef(
         ],
         [
           {
-            label: 'Property',
             name: 'getPropertyId',
             invisible: true,
           },
           {
-            label: 'Job Number',
             name: 'getLogJobNumber',
             invisible: true,
           },
           {
-            label: 'ID',
             name: 'getId',
             invisible: true,
           },
           {
-            label: 'Log Version',
             name: 'getLogVersion',
             invisible: true,
+          },
+          {
+            name: 'getNotes',
+            type: 'hidden',
+            invisible: true,
+          },
+          {
+            name: 'getPropertyBilling',
+            type: 'hidden',
+            invisible: true,
+          },
+          {
+            name: 'getLogPo',
+            type: 'hidden',
+            invisible: true,
+          },
+          {
+            name: 'getLogPaymentType',
+            type: 'hidden',
+            invisible: true,
+          },
+          {
+            name: 'getLogPaymentStatus',
+            type: 'hidden',
+            invisible: true,
+          },
+          {
+            name: 'getLogBillingDate',
+            type: 'hidden',
+            invisible: true,
+          },
+          {
+            name: 'getTotalamountrow1',
+            type: 'hidden',
+            invisible: true,
+          },
+          {
+            type: 'hidden',
+            invisible: true,
+            name: 'getServicesperformedrow1',
+          },
+          {
+            type: 'hidden',
+            invisible: true,
+            name: 'getServicesperformedrow2',
+          },
+
+          {
+            type: 'hidden',
+            invisible: true,
+            name: 'getTotalamountrow2',
+          },
+
+          {
+            type: 'hidden',
+            invisible: true,
+            name: 'getServicesperformedrow3',
+          },
+
+          {
+            type: 'hidden',
+            invisible: true,
+            name: 'getTotalamountrow3',
+          },
+
+          {
+            type: 'hidden',
+            invisible: true,
+            name: 'getServicesperformedrow4',
+          },
+
+          {
+            type: 'hidden',
+            invisible: true,
+            name: 'getTotalamountrow4',
+          },
+
+          {
+            name: 'getMaterialUsed',
+            type: 'hidden',
+            invisible: true,
+          },
+          {
+            type: 'hidden',
+            invisible: true,
+            name: 'getMaterialTotal',
+          },
+
+          {
+            type: 'hidden',
+            invisible: true,
+            name: 'getDiscount',
+          },
+          {
+            type: 'hidden',
+            invisible: true,
+            name: 'getDiscountcost',
           },
         ],
       ],

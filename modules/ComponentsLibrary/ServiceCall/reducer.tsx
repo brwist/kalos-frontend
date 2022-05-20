@@ -158,8 +158,6 @@ export type Action =
   | { type: 'setOpenSpiffApply'; data: boolean }
   | { type: 'setNotificationEditing'; data: boolean }
   | { type: 'setNotificationViewing'; data: boolean }
-  | { type: 'updateRequestData'; data: Event }
-  | { type: 'updateInvoiceData'; data: { data: Event; servicesForm: boolean } }
   | {
       type: 'setOpenJobActivity';
       data: boolean;
@@ -218,70 +216,7 @@ export const reducer = (state: State, action: Action) => {
         ...state,
         entry: action.data,
       };
-    case 'updateRequestData': {
-      const data = action.data;
-      const existingEntry = state.entry;
-      existingEntry.setDateStarted(data.getDateStarted());
-      existingEntry.setTimeStarted(
-        returnCorrectTimeField(data.getDateStarted()),
-      );
-      existingEntry.setColor(data.getColor());
-      existingEntry.setName(data.getName());
-      existingEntry.setDateEnded(data.getDateEnded());
-      existingEntry.setTimeEnded(returnCorrectTimeField(data.getDateEnded()));
-      existingEntry.setDepartmentId(data.getDepartmentId());
-      existingEntry.setIsResidential(data.getIsResidential());
-      existingEntry.setJobTypeId(data.getJobTypeId());
-      existingEntry.setJobSubtypeId(data.getJobSubtypeId());
-      existingEntry.setLogJobStatus(data.getLogJobStatus());
-      existingEntry.setLogTechnicianAssigned(data.getLogTechnicianAssigned());
-      existingEntry.setAmountQuoted(data.getAmountQuoted());
-      existingEntry.setDiagnosticQuoted(data.getDiagnosticQuoted());
-      existingEntry.setIsLmpc(data.getIsLmpc());
-      existingEntry.setIsCallback(data.getIsCallback());
-      existingEntry.setDescription(data.getDescription());
-      existingEntry.setServices(data.getServices());
-      existingEntry.setLogNotes(data.getLogNotes());
-      existingEntry.setLogPaymentType(data.getLogPaymentType());
-      existingEntry.setHighPriority(data.getHighPriority());
-      console.log('stuff', data);
-      return {
-        ...state,
-        entry: existingEntry,
-        pendingSave: false,
-      };
-    }
-    case 'updateInvoiceData': {
-      const data = action.data.data;
-      const existingEntry = state.entry;
 
-      if (action.data.servicesForm) {
-        existingEntry.setServicesperformedrow1(data.getServicesperformedrow1());
-        existingEntry.setServicesperformedrow2(data.getServicesperformedrow2());
-        existingEntry.setServicesperformedrow3(data.getServicesperformedrow3());
-        existingEntry.setServicesperformedrow4(data.getServicesperformedrow4());
-        existingEntry.setTotalamountrow1(data.getTotalamountrow1());
-        existingEntry.setTotalamountrow2(data.getTotalamountrow2());
-        existingEntry.setTotalamountrow3(data.getTotalamountrow3());
-        existingEntry.setTotalamountrow4(data.getTotalamountrow4());
-        existingEntry.setMaterialTotal(data.getMaterialTotal());
-        existingEntry.setMaterialUsed(data.getMaterialUsed());
-        existingEntry.setDiscount(data.getDiscount());
-        existingEntry.setDiscountcost(data.getDiscountcost().toString());
-      } else {
-        existingEntry.setLogBillingDate(data.getLogBillingDate());
-        existingEntry.setLogPaymentType(data.getLogPaymentType());
-        existingEntry.setLogPaymentStatus(data.getLogPaymentStatus());
-        existingEntry.setLogPo(data.getLogPo());
-        existingEntry.setPropertyBilling(data.getPropertyBilling());
-        existingEntry.setNotes(data.getNotes());
-      }
-      return {
-        ...state,
-        entry: existingEntry,
-        pendingSave: false,
-      };
-    }
     case 'setContractData':
       return {
         ...state,

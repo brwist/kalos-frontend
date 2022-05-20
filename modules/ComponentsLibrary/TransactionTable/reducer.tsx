@@ -13,7 +13,6 @@ export interface FilterType {
   employeeId: number;
   week: string;
   jobNumber: number;
-  isPending: boolean | undefined;
   isAccepted: boolean | undefined;
   isRejected: boolean | undefined;
   isPending: boolean | undefined;

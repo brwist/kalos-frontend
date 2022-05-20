@@ -300,10 +300,11 @@ export const ServiceRequest: FC<Props> = props => {
       temp.setTimeEnded(returnCorrectTimeField(temp.getDateEnded()));
       temp.setDateStarted(returnLegacyDate(temp.getDateStarted()));
       temp.setDateEnded(returnLegacyDate(temp.getDateEnded()));
-      temp.addFieldMask('TimeStarted');
-      temp.addFieldMask('TimeEnded');
-      console.log('updating time to ', temp.getTimeStarted());
-      await EventClientService.Update(temp);
+      if (temp.getFieldMaskList().length > 0) {
+        temp.addFieldMask('TimeStarted');
+        temp.addFieldMask('TimeEnded');
+        await EventClientService.Update(temp);
+      }
       const idArray = temp.getLogTechnicianAssigned().split(',');
       let results: EventAssignment[] = [];
       try {

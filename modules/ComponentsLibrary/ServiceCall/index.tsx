@@ -567,15 +567,14 @@ export const ServiceCall: FC<Props> = props => {
         loading: true,
       },
     });
-    const temp = state.entry;
-    let res = new Event();
+    let res = state.entry;
     try {
       if (state.serviceCallId) {
-        const idArray = temp.getLogTechnicianAssigned().split(',');
+        const idArray = state.entry.getLogTechnicianAssigned().split(',');
         let results: EventAssignment[] = [];
         try {
           const assignmentReq = new EventAssignment();
-          assignmentReq.setEventId(temp.getId());
+          assignmentReq.setEventId(state.entry.getId());
           const assignedEvents = await EventAssignmentClientService.BatchGet(
             assignmentReq,
           );
@@ -598,57 +597,56 @@ export const ServiceCall: FC<Props> = props => {
         } catch (err) {
           console.log('error updating event assignment');
         }
-        temp.setId(state.serviceCallId);
-        let activityName = `${temp.getLogJobNumber()} Edited Service Call`;
-        temp.setFieldMaskList([
-          'DateEnded',
-          'DateStarted',
-          'Name',
-          'TimeStarted',
-          'TimeEnded',
-          'DepartmentId',
-          'isResidential',
-          'JobTypeId',
-          'JobSubtypeId',
-          'LogJobStatus',
-          'LogTechnicianAssigned',
-          'AmountQuoted',
-          'DiagnosticQuoted',
-          'IsLmpc',
-          'IsCallback',
-          'Color',
-          'Description',
-          'Services',
-          'LogNotes',
-          'LogPaymentType',
-          'HighPriority',
-          'Servicesperformedrow1',
-          'Servicesperformedrow2',
-          'Servicesperformedrow3',
-          'Servicesperformedrow4',
-          'Totalamountrow1',
-          'Totalamountrow2',
-          'Totalamountrow3',
-          'Totalamountrow4',
-          'MaterialTotal',
-          'MaterialUsed',
-          'Discount',
-          'DiscountCost',
-          'LogBillingDate',
-          'LogPaymentType',
-          'LogPaymentStatus',
-          'LogPo',
-          'PropertyBilling',
-          'Notes',
-        ]);
-        temp.setDateStarted(returnLegactyDate(temp.getDateStarted()));
-        temp.setDateEnded(returnLegactyDate(temp.getDateEnded()));
-        await EventClientService.Update(temp);
-
+        res.setId(state.serviceCallId);
+        let activityName = `${state.entry.getLogJobNumber()} Edited Service Call`;
+        if (state.entry.getFieldMaskList().length > 0) {
+          console.log('we changed something, save');
+          res.setFieldMaskList([
+            'DateEnded',
+            'DateStarted',
+            'Name',
+            'TimeStarted',
+            'TimeEnded',
+            'DepartmentId',
+            'isResidential',
+            'JobTypeId',
+            'JobSubtypeId',
+            'LogJobStatus',
+            'LogTechnicianAssigned',
+            'AmountQuoted',
+            'DiagnosticQuoted',
+            'IsLmpc',
+            'IsCallback',
+            'Color',
+            'Description',
+            'Services',
+            'LogNotes',
+            'LogPaymentType',
+            'HighPriority',
+            'Servicesperformedrow1',
+            'Servicesperformedrow2',
+            'Servicesperformedrow3',
+            'Servicesperformedrow4',
+            'Totalamountrow1',
+            'Totalamountrow2',
+            'Totalamountrow3',
+            'Totalamountrow4',
+            'MaterialTotal',
+            'MaterialUsed',
+            'Discount',
+            'DiscountCost',
+            'LogBillingDate',
+            'LogPaymentStatus',
+            'LogPo',
+            'PropertyBilling',
+            'Notes',
+          ]);
+          await EventClientService.Update(res);
+        }
         if (state.saveInvoice == true) {
           const invoice = new InvoiceType();
-          temp.setIsGeneratedInvoice(state.saveInvoice);
-          temp.addFieldMask('IsGeneratedInvoice');
+          state.entry.setIsGeneratedInvoice(state.saveInvoice);
+          state.entry.addFieldMask('IsGeneratedInvoice');
           invoice.setEventId(state.serviceCallId);
           invoice.setContractId(state.entry.getContractId());
           invoice.setPropertyId(state.entry.getPropertyId());
@@ -765,6 +763,7 @@ export const ServiceCall: FC<Props> = props => {
         }
       } else {
         console.log('creating new one');
+        const temp = state.entry;
         temp.setPropertyId(propertyId);
         temp.setLogVersion(1);
         temp.setDateStarted(returnLegactyDate(temp.getDateStarted()));
@@ -933,22 +932,6 @@ export const ServiceCall: FC<Props> = props => {
     });
   }, []);
   */
-  const handleChangeEntry = useCallback((data: Event) => {
-    updateServiceCallState({
-      type: 'updateRequestData',
-      data: data,
-    });
-  }, []);
-
-  const handleChangeEntryInvoice = useCallback(
-    (data: Event, dataFromServicesForm: boolean) => {
-      updateServiceCallState({
-        type: 'updateInvoiceData',
-        data: { data: data, servicesForm: dataFromServicesForm },
-      });
-    },
-    [],
-  );
 
   const handleSetNotificationEditing = useCallback(
     (notificationEditing: boolean) => () =>
@@ -1325,7 +1308,12 @@ export const ServiceCall: FC<Props> = props => {
                     loading={state.loading}
                     jobTypeOptions={jobTypeOptions}
                     jobSubtypeOptions={jobSubtypeOptions}
-                    onChange={handleChangeEntry}
+                    onChange={data =>
+                      updateServiceCallState({
+                        type: 'setEntry',
+                        data: data,
+                      })
+                    }
                     disabled={state.saving}
                     onValid={data => {
                       updateServiceCallState({
@@ -1391,10 +1379,16 @@ export const ServiceCall: FC<Props> = props => {
                         <Invoice
                           event={state.entry}
                           onChangeServices={data =>
-                            handleChangeEntryInvoice(data, true)
+                            updateServiceCallState({
+                              type: 'setEntry',
+                              data: data,
+                            })
                           }
                           onChangePayment={data =>
-                            handleChangeEntryInvoice(data, false)
+                            updateServiceCallState({
+                              type: 'setEntry',
+                              data: data,
+                            })
                           }
                           disabled={state.saving}
                           servicesRendered={state.servicesRendered}

@@ -115,8 +115,153 @@ export const Invoice: FC<Props> = ({
     +data.getMaterialTotal() +
     parseInt(data.getTotalamountrow4()) -
     (totalPaid + discountAmount);
+
   const SCHEMA: Schema<Event> = useMemo(
     () => [
+      [
+        {
+          name: 'getDateStarted',
+          type: 'hidden',
+          invisible: true,
+        },
+        {
+          name: 'getDateEnded',
+          type: 'hidden',
+          invisible: true,
+        },
+        {
+          name: 'getIsCallback',
+          type: 'hidden',
+          invisible: true,
+        },
+        {
+          name: 'getIsResidential',
+          type: 'hidden',
+          invisible: true,
+        },
+        {
+          name: 'getIsLmpc',
+          type: 'hidden',
+          invisible: true,
+        },
+        {
+          name: 'getDepartmentId',
+          type: 'hidden',
+          invisible: true,
+        },
+        {
+          name: 'getLogJobStatus',
+          type: 'hidden',
+          invisible: true,
+        },
+        {
+          name: 'getDescription',
+          type: 'hidden',
+          invisible: true,
+        },
+        {
+          name: 'getLogVersion',
+          type: 'hidden',
+          invisible: true,
+        },
+
+        {
+          name: 'getLogNotes',
+          type: 'hidden',
+          invisible: true,
+        },
+        {
+          name: 'getId',
+          type: 'hidden',
+          invisible: true,
+        },
+        {
+          name: 'getDiagnosticQuoted',
+          type: 'hidden',
+          invisible: true,
+        },
+        {
+          name: 'getLogJobNumber',
+          type: 'hidden',
+          invisible: true,
+        },
+        {
+          name: 'getName',
+          type: 'hidden',
+          invisible: true,
+        },
+        {
+          name: 'getPropertyId',
+          type: 'hidden',
+          invisible: true,
+        },
+        {
+          name: 'getLogTechnicianAssigned',
+          type: 'hidden',
+          invisible: true,
+        },
+        {
+          name: 'getJobTypeId',
+          type: 'hidden',
+          invisible: true,
+        },
+        {
+          name: 'getJobSubtypeId',
+          type: 'hidden',
+          invisible: true,
+        },
+
+        {
+          name: 'getLogPaymentType',
+          type: 'hidden',
+          invisible: true,
+        },
+        {
+          name: 'getAmountQuoted',
+          type: 'hidden',
+          invisible: true,
+        },
+        {
+          name: 'getCallbackOriginalId',
+          type: 'hidden',
+          invisible: true,
+        },
+        {
+          name: 'getHighPriority',
+          type: 'hidden',
+          invisible: true,
+        },
+        {
+          name: 'getNotes',
+          type: 'hidden',
+          invisible: true,
+        },
+        {
+          name: 'getPropertyBilling',
+          type: 'hidden',
+          invisible: true,
+        },
+        {
+          name: 'getLogPo',
+          type: 'hidden',
+          invisible: true,
+        },
+        {
+          name: 'getLogPaymentType',
+          type: 'hidden',
+          invisible: true,
+        },
+        {
+          name: 'getLogPaymentStatus',
+          type: 'hidden',
+          invisible: true,
+        },
+        {
+          name: 'getLogBillingDate',
+          type: 'hidden',
+          invisible: true,
+        },
+      ],
       [
         {
           label: 'Services Performed (1)',
@@ -271,6 +416,187 @@ export const Invoice: FC<Props> = ({
   const SCHEMA_PART_2: Schema<Event> = useMemo(
     () => [
       [{}],
+      [
+        {
+          name: 'getDateStarted',
+          type: 'hidden',
+          invisible: true,
+        },
+        {
+          name: 'getDateEnded',
+          type: 'hidden',
+          invisible: true,
+        },
+        {
+          name: 'getIsCallback',
+          type: 'hidden',
+          invisible: true,
+        },
+        {
+          name: 'getIsResidential',
+          type: 'hidden',
+          invisible: true,
+        },
+        {
+          name: 'getIsLmpc',
+          type: 'hidden',
+          invisible: true,
+        },
+        {
+          name: 'getDepartmentId',
+          type: 'hidden',
+          invisible: true,
+        },
+        {
+          name: 'getLogJobStatus',
+          type: 'hidden',
+          invisible: true,
+        },
+        {
+          name: 'getDescription',
+          type: 'hidden',
+          invisible: true,
+        },
+        {
+          name: 'getLogVersion',
+          type: 'hidden',
+          invisible: true,
+        },
+
+        {
+          name: 'getLogNotes',
+          type: 'hidden',
+          invisible: true,
+        },
+        {
+          name: 'getId',
+          type: 'hidden',
+          invisible: true,
+        },
+        {
+          name: 'getDiagnosticQuoted',
+          type: 'hidden',
+          invisible: true,
+        },
+        {
+          name: 'getLogJobNumber',
+          type: 'hidden',
+          invisible: true,
+        },
+        {
+          name: 'getName',
+          type: 'hidden',
+          invisible: true,
+        },
+        {
+          name: 'getPropertyId',
+          type: 'hidden',
+          invisible: true,
+        },
+        {
+          name: 'getLogTechnicianAssigned',
+          type: 'hidden',
+          invisible: true,
+        },
+        {
+          name: 'getJobTypeId',
+          type: 'hidden',
+          invisible: true,
+        },
+        {
+          name: 'getJobSubtypeId',
+          type: 'hidden',
+          invisible: true,
+        },
+
+        {
+          name: 'getLogPaymentType',
+          type: 'hidden',
+          invisible: true,
+        },
+        {
+          name: 'getAmountQuoted',
+          type: 'hidden',
+          invisible: true,
+        },
+        {
+          name: 'getCallbackOriginalId',
+          type: 'hidden',
+          invisible: true,
+        },
+        {
+          name: 'getHighPriority',
+          type: 'hidden',
+          invisible: true,
+        },
+        {
+          type: 'hidden',
+          invisible: true,
+          name: 'getServicesperformedrow1',
+        },
+        {
+          name: 'getTotalamountrow1',
+          type: 'hidden',
+        },
+
+        {
+          type: 'hidden',
+          invisible: true,
+          name: 'getServicesperformedrow2',
+        },
+
+        {
+          type: 'hidden',
+          invisible: true,
+          name: 'getTotalamountrow2',
+        },
+
+        {
+          type: 'hidden',
+          invisible: true,
+          name: 'getServicesperformedrow3',
+        },
+
+        {
+          type: 'hidden',
+          invisible: true,
+          name: 'getTotalamountrow3',
+        },
+
+        {
+          type: 'hidden',
+          invisible: true,
+          name: 'getServicesperformedrow4',
+        },
+
+        {
+          type: 'hidden',
+          invisible: true,
+          name: 'getTotalamountrow4',
+        },
+
+        {
+          name: 'getMaterialUsed',
+          type: 'hidden',
+          invisible: true,
+        },
+        {
+          type: 'hidden',
+          invisible: true,
+          name: 'getMaterialTotal',
+        },
+
+        {
+          type: 'hidden',
+          invisible: true,
+          name: 'getDiscount',
+        },
+        {
+          type: 'hidden',
+          invisible: true,
+          name: 'getDiscountcost',
+        },
+      ],
       [
         {
           label: 'Billing Date',
